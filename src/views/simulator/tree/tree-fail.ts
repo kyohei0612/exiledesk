@@ -8,7 +8,6 @@ import { boxAims, GAP_Y, type TreeBox, type TreeDoc } from "../../../services/si
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 import { depthRows } from "../../../services/simulator/tree/tree-row-tops";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -16,16 +15,16 @@ import { craftStage as s } from "../../../state/craft-stage";
 /** 箱の段 (始まり = 1 段目、画面の段の並び。戻り方の文は全部「n 段目へ戻る」、10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」「1段目へ戻るとかにするか？全て、矢印は違うから段が同じもどり方でも」) */
 export function stepOf(doc: TreeDoc, id: string): number {
   // 画面の段 (箱の高さ ÷ 段の間)。親をたどる深さではない (整列は揃った狙いの数で段を分けるので、深さ 2 の箱が 3 段目に並ぶ)
-  // 行の高さを詰めた後 (スイッチ lineShort) は高さで割れないので、親からの深さ (行は深さ = tidyUnder) で数える
-  if (flag("lineShort")) { const r = depthRows(doc).get(id); if (r != null) return r + 1; }
+  // 行の高さを詰めた後  は高さで割れないので、親からの深さ (行は深さ = tidyUnder) で数える
+  { const r = depthRows(doc).get(id); if (r != null) return r + 1; }
   const b = doc.boxes[id], s = doc.boxes.start;
   return b && s ? Math.max(1, Math.round((b.y - s.y) / GAP_Y) + 1) : 1;
 }
 /**
- * 行き先が from の箱より前の段でない (同じ段・後ろの段・別の枝の先) = 「進む」(S-87d、スイッチ goWord。10-29 深夜オーナー「戻るはその段の前へ戻るとき、それ以外は進むだね」)。
+ * 行き先が from の箱より前の段でない (同じ段・後ろの段・別の枝の先) = 「進む」(S-87d。10-29 深夜オーナー「戻るはその段の前へ戻るとき、それ以外は進むだね」)。
  * from が無い・始まりへ・スイッチが閉じている時は今までどおり「戻る」
  */
-export const isForward = (doc: TreeDoc, from: string | undefined, to: string): boolean => !!from && flag("goWord") && to !== "start" && stepOf(doc, to) >= stepOf(doc, from);
+export const isForward = (doc: TreeDoc, from: string | undefined, to: string): boolean => !!from && to !== "start" && stepOf(doc, to) >= stepOf(doc, from);
 /**
  * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
  * 前の版の「形の合う箱へ」(MATCH) も行きうる箱の名前で出す (複数なら「○○ ほか n か所」)。PC の木と見るだけの全体図で同じ文
@@ -76,10 +75,10 @@ export function routeKind(doc: TreeDoc, id: string): RouteKind {
   return b.autoBack ? "auto" : "other";
 }
 
-/** 行き先の見本と品質が違う箱の添え書き「 · 品質 40% のまま」(S-50c、スイッチ backQuality。品質は箱の比べに入らない S-60b ので、持ったまま行くと文で見せる)。同じなら空 */
+/** 行き先の見本と品質が違う箱の添え書き「 · 品質 40% のまま」(S-50c。品質は箱の比べに入らない S-60b ので、持ったまま行くと文で見せる)。同じなら空 */
 export function qualityNote(doc: TreeDoc, id: string): string {
   const d = s.data.value;
-  if (!flag("backQuality") || !d) return "";
+  if (!d) return "";
   const q = (x: string): number => sampleOf(d, doc, x, 1).item?.quality ?? 0;
   const mine = q(id);
   return backTargetsOf(doc, id).some((x) => q(x) !== mine) ? tr(` · 品質 ${mine}% のまま`, ` · keeps ${mine}% quality`) : "";
@@ -102,7 +101,7 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   const steps = [...new Set(to.map((x) => stepOf(doc, x)))].sort((a, b) => a - b);
   const names = name ? `: ${to.map(name).join(tr("・", ", "))}` : "";
   const head = isRetry(doc, id) ? tr("再度挑戦 · ", "Retry · ") : "";
-  // 行き先が全部前の段でない時は「→ n 段目へ進む」(S-87d、スイッチ goWord)
+  // 行き先が全部前の段でない時は「→ n 段目へ進む」(S-87d)
   if (routeArrow(doc, id, to) === "→") return tr(`→ ${head}${steps.join("・")} 段目へ進む${note}${names}`, `→ ${head}Go to step ${steps.join(", ")}${note}${names}`);
   return tr(`↩ ${head}${steps.join("・")} 段目へ戻る${note}${names}`, `↩ ${head}Back to step ${steps.join(", ")}${note}${names}`);
 }

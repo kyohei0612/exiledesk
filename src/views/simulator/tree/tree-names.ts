@@ -54,7 +54,7 @@ export function splitWhenText(w: SplitWhen): string {
 /** 箱の数の英語 (1 box / 2 boxes、word = "hit " などの前置き) */
 export const boxesEn = (n: number, word = ""): string => `${n} ${word}box${n === 1 ? "" : "es"}`;
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
-/** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」、スイッチ boneLater) */
+/** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」) */
 export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
   if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   // 印の無い木の狙い無しのフラクチャー (スイッチ fracPick)
@@ -76,7 +76,7 @@ export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "")
 export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
-  // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(スイッチ fracMulti、S-42)
+  // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(S-42)
   const fixed = ph?.pick === "random" || (!!ph && effectOf(ph.currency) === "fracture");
   const free = fixed && !!ph?.free;
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
@@ -87,14 +87,14 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
     return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
   }
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
-  // 骨を未発現のまま次へ (スイッチ boneLater)
+  // 骨を未発現のまま次へ 
   const k = (b as { junkKey?: string }).junkKey;
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
   // 手で付けたエッセンスの MOD が消えた箱は「<MOD> が消えた」(S-33c。題だけ、鍵と保存は替えない)
   const gone = s.data.value && "id" in b ? midGoneOf(s.data.value, useTree().doc.value, b.id as string) : null;
   const base = gone ? tr(`${modShort(modText(gone))}が消えた`, `${modShort(modText(gone))} removed`) : b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
-  // 側で分けた箱 (S-65、スイッチ junkSide): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
-  // 削減の手で外れの順位で分けた箱 (S-65b、スイッチ whittleRank): 順位の鍵があればいつも付ける
+  // 側で分けた箱 (S-65): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
+  // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
   const rk = k && b.parent ? rankLabel(k) : null;
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
   // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
@@ -114,7 +114,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   return rk ? tr(`${base} (${rk[0]})`, `${base} (${rk[1]})`) : base;
 }
 /**
- * 確定フラクチャーの素材の倍と当たり (S-43・S-44): 固定されうる MOD の数 p (費用と同じ FRACTURE_POOL) と ✦ の数 k (p まで) で ×(p ÷ k)・k/p。スイッチ fracMulti が閉じている間は ×3 = 33%。
+ * 確定フラクチャーの素材の倍と当たり (S-43・S-44): 固定されうる MOD の数 p (費用と同じ FRACTURE_POOL) と ✦ の数 k (p まで) で ×(p ÷ k)・k/p が閉じている間は ×3 = 33%。
  * 文は「×3 = 33%」の形 (日本語・英語で同じ)
  */
 export function sureFracText(k: number): string {
@@ -134,7 +134,7 @@ export function handLabel(h: Hand): string {
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
   const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : veilPick(h) && !isRevealHand(h.currency) ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
-  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」、スイッチ noSpam。中は今まで通り当たるまで)
+  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」。中は今まで通り当たるまで)
   return label;
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */

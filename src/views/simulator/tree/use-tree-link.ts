@@ -18,7 +18,7 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
     const id = from.value, d = s.data.value;
     if (!id || !d) return out;
     const item = sampleOf(d, doc.value, id, 1).item;
-    // スイッチ judgeOne: 戻せるかは「箱どうし」の判定 (中身が同じ箱だけ、S-50b・S-62)
+    // 戻せるかは「箱どうし」の判定 (中身が同じ箱だけ、S-50b・S-62)
     const j = judgeOf(doc.value);
     const fits = (to: string): boolean => (j ? j.fitsBox(id, to) : shapeFits(doc.value, id, to));
     const diff = j ? tr("中身が違う: この箱の見本と、ここから来る人の狙いの組・外れ・✦・レアリティ・品質のどれかが違う (同じ中身の箱だけ選べる)", "Different contents: the targets, misses, fractures, rarity or quality differ from the runs coming in (only boxes with the same contents can be picked)") : null;
@@ -35,7 +35,7 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
-      // 品質の上限が足りない人はカタリストの n % の箱へ行かない (S-60c、スイッチ keepOutside)
+      // 品質の上限が足りない人はカタリストの n % の箱へ行かない (S-60c)
       const cap = j?.capShort(id, b.id);
       if (cap) { out.set(b.id, tr(`品質の上限が ${cap}% に届かない`, `Max quality can't reach ${cap}%`)); continue; }
       // 形 (付いている狙いの組) が違う箱へは戻せない (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」、tree-shape の shapeFits)

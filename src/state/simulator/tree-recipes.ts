@@ -8,7 +8,6 @@ import { computed, ref } from "vue";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
-import { flag } from "../../web/release-flags";
 import { clone, newId, parseList } from "./recipe-store-util";
 
 const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
@@ -71,10 +70,10 @@ export const currentTreeRecipe = computed(() => treeRecipes.value.find((r) => r.
 /** 一覧の並び・「更新」に出す時刻 */
 export const touchedAtTree = (r: TreeRecipe): number => r.updatedAt;
 /** 中身が同じか (保存していない変更があるか)。箱の位置も木の一部として比べる */
-/** スイッチ recipeV1 の下は打ち方だけを比べる (組み直した木と保存した形の打ち方が同じなら同じ、S-104) */
-export const sameTree = (a: TreeDoc, b: TreeDoc): boolean => JSON.stringify(flag("recipeV1") ? toRecipeV1(a) : a) === JSON.stringify(flag("recipeV1") ? toRecipeV1(b) : b);
-/** 保存する形 (スイッチ recipeV1 の下は打ち方だけの v1、S-104。ほかは木を丸ごと) */
-const stored = (t: TreeDoc): TreeDoc => (flag("recipeV1") ? toRecipeV1(t) : clone(t));
+/** 打ち方だけを比べる (組み直した木と保存した形の打ち方が同じなら同じ、S-104) */
+export const sameTree = (a: TreeDoc, b: TreeDoc): boolean => JSON.stringify(toRecipeV1(a)) === JSON.stringify(toRecipeV1(b));
+/** 保存する形 (打ち方だけの v1、S-104) */
+const stored = (t: TreeDoc): TreeDoc => toRecipeV1(t);
 
 export function saveTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   const now = Date.now();

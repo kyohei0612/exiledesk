@@ -1,5 +1,5 @@
 <!--
-  TreeGoalQuality.vue — 完成形の品質 (10-27 夕オーナー、モンキー 7「品質 +40% を入れる所が見当たらない」。スイッチ goalQuality)。
+  TreeGoalQuality.vue — 完成形の品質 (10-27 夕オーナー、モンキー 7「品質 +40% を入れる所が見当たらない」)。
   既定はオフ (品質は見ない)。☑「品質も狙う」でオンにすると、エミュのクラフト台と同じ品質の帯 (StageQualityBar: 品質・上限・種類) で値を決める。
   ベースの最大品質 (アクセサリーは 20%) を超える品質は、途中でブリーチのエッセンス (essence:breach、品質の最大値 +20%) を付けて品質を上げる。
   品質はその後でブリーチの MOD が消えても残る (エンジンの applyCurrency で確かめた) ので、完成の狙いには足さない (狙いの枠を使わない)。
@@ -10,7 +10,6 @@ import { computed, ref, watch } from "vue";
 import StageQualityBar from "../../../components/for-share/item/StageQualityBar.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { CATALYSTS, maxQualityOf, qualityFieldMax, type StageItem } from "../../../services/craft-stage/engine";
-import { flag } from "../../../web/release-flags";
 import { essenceTarget } from "../../../services/craft-stage/apply-essence";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
@@ -45,13 +44,13 @@ function setOn(v: boolean): void {
 }
 /**
  * 完成形で届く品質の上限 = エミュのクラフト台と同じ出し方 (qualityFieldMax: ベース + 暗黙などの「品質の最大値」) + 途中で付けるブリーチのエッセンスの +20 (付くベースだけ)。
- * 帯の上限のプルダウン (80% まで) で上げても、この値より上にはしない (指輪で上限 80% にすると +41% にできた、10-27 夜モンキー 2 回目 11。スイッチ qualityLimit)
+ * 帯の上限のプルダウン (80% まで) で上げても、この値より上にはしない (指輪で上限 80% にすると +41% にできた、10-27 夜モンキー 2 回目 11)
  */
 const limit = computed(() => (t.goalItem.value ? qualityFieldMax(t.goalItem.value.item) + (hasBreach.value ? 20 : 0) : 100));
-const clampQ = (n: number): number => (flag("qualityLimit") ? Math.min(n, limit.value) : n);
+const clampQ = (n: number): number => Math.min(n, limit.value);
 function setQuality(n: number, tag?: string): void { const q = clampQ(n); t.edit((d) => { if (q > 0) d.goalQuality = q; else delete d.goalQuality; if (tag) d.goalQualityTag = tag; }); }
 /**
- * スイッチ qualityAsk: カタリストの部位は「品質を狙う / 狙わない」の 2 択 (どちらか 1 つ、最初はどちらも外し、S-31c)。
+ * カタリストの部位は「品質を狙う / 狙わない」の 2 択 (どちらか 1 つ、最初はどちらも外し、S-31c)。
  * 狙うにした時は上限 = 今付けられる上限、値 = 上限 (決めてあればそのまま)。上限を選ぶと値も上限に (10-29 深夜オーナー「わざわざ最大ぼたんおすのダルイ」)
  */
 const ask = computed(() => askQuality(t.goalItem.value?.item));
@@ -81,8 +80,8 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
 </script>
 
 <template>
-  <div data-tree-goal-quality class="flex flex-col gap-1 px-1 text-[12px]" :class="flag('qualityFit') ? 'goal-q-fit' : ''">
-    <!-- カタリストの部位: 狙う / 狙わないの 2 択 + 上限と種類のプルダウン (S-31c、スイッチ qualityAsk) -->
+  <div data-tree-goal-quality class="goal-q-fit flex flex-col gap-1 px-1 text-[12px]">
+    <!-- カタリストの部位: 狙う / 狙わないの 2 択 + 上限と種類のプルダウン (S-31c) -->
     <template v-if="ask">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sim-body">
         <label class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11"><input data-tree-goal-quality-yes type="checkbox" :checked="on" @change="choose(($event.target as HTMLInputElement).checked ? 'on' : null)" />{{ tr("品質を狙う", "Aim for quality") }}</label>
@@ -106,7 +105,7 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
     <label class="flex min-h-7 cursor-pointer items-center gap-2 text-sim-body">
       <input data-tree-goal-quality-on type="checkbox" :checked="on" @change="setOn(($event.target as HTMLInputElement).checked)" />{{ tr("品質も狙う", "Also aim for quality") }}
     </label>
-    <StageQualityBar v-if="on && item" :item="item" :cap-limit="flag('goalAskFix') ? limit : undefined" @quality="setQuality" @cap="setCap" @catalyst="() => {}" />
+    <StageQualityBar v-if="on && item" :item="item" :cap-limit="limit" @quality="setQuality" @cap="setCap" @catalyst="() => {}" />
     </template>
     <p v-if="over && !needBreach" data-tree-goal-quality-infuser class="break-words text-amber-200/90">{{ tr(`${baseMax}% を超える分 (+10% まで) はヴァールのインフューザーで届く`, `Up to +10% above ${baseMax}% is reachable with an Infuser`) }}</p>
     <p v-else-if="needBreach && hasBreach" data-tree-goal-quality-breach class="break-words text-amber-200/90">{{ tr(`${baseMax + 10}% を超えるには、途中でブリーチのエッセンス (品質の最大値 +20%) を付けて品質を上げる。その後でブリーチの MOD が消えても品質は残る (完成形のカードの「途中で消える」の行。完成の MOD の枠には数えない)`, `Above ${baseMax + 10}% needs a Perfect Essence of the Breach (+20% to Maximum Quality) on the way. The quality stays even if that mod is removed later (the "Removed on the way" row on the final item; not counted as a final mod slot)`) }}</p>

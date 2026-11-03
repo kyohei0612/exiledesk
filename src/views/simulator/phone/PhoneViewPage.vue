@@ -1,5 +1,5 @@
 <!--
-  PhoneViewPage.vue — シミュのスマホの見るだけの 1 画面 (S-94〜S-94f、幅 768 未満 + スイッチ phoneView。オーナー 11-01「完全にスマホ版は見るだけに特化させた作りに変えよう修正もできない完全に観賞用」)。
+  PhoneViewPage.vue — シミュのスマホの見るだけの 1 画面 (S-94〜S-94f、幅 768 未満 + オーナー 11-01「完全にスマホ版は見るだけに特化させた作りに変えよう修正もできない完全に観賞用」)。
   上の帯 (タブ)・レシピとシェア・10 人回す、その下に開いたままのシート (小さな完成形 + 完成までの道 PhoneViewRoute、「詳細」で全体図 PhoneViewMap、S-94h)。木を変える入口は無い。
   完成形は倍率で縮めるだけで文は切らず、押すと今の大きさ (D6)。10 人の結果はカードに載せない (D2、use-tree-run の view)。木が無い時は PhoneViewEmpty (S-94f)
 -->
@@ -17,7 +17,6 @@ import { useTreeRun, VIEW_N } from "../tree/use-tree-run";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track";
 import PhoneViewEmpty from "./PhoneViewEmpty.vue";
 import PhoneViewMap from "./PhoneViewMap.vue";
@@ -32,11 +31,11 @@ const noTree = computed(() => { const d = t.doc.value; return t.needBase.value |
 /** 穴チェック: 結果は読むだけ (S-94e、一覧も直す入口も出さない) */
 const check = useTreeCheck(t.doc, () => !noTree.value);
 /**
- * スイッチ holeButton の下は自動で回らないので開いた時にここで回す (58 の holeButton に合わせる繋ぎ目)。
+ * 穴チェックは自動で回らない (S-70) ので開いた時にここで回す。
  * 回している間に木が読み替わった時 (pruneBacks) は、終わってからもう 1 回
  */
 let ranKey = "";
-if (flag("holeButton")) watch([() => routeKeyOf(t.doc.value), () => !!s.data.value && !noTree.value, check.checking], ([key, ok, busy]) => { if (!ok || busy || ranKey === key) return; ranKey = key; void check.runCheck(); }, { immediate: true });
+watch([() => routeKeyOf(t.doc.value), () => !!s.data.value && !noTree.value, check.checking], ([key, ok, busy]) => { if (!ok || busy || ranKey === key) return; ranKey = key; void check.runCheck(); }, { immediate: true });
 const routeKey = computed(() => routeKeyOf(t.doc.value));
 /** 穴チェックが終わった木の形 (終わるまで「回せない」と言わない) */
 const doneKey = ref("");

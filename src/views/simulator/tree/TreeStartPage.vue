@@ -16,7 +16,7 @@ import { useTree } from "./use-tree";
 import { useEditReset } from "./use-edit-reset";
 
 const t = useTree();
-/** 始め方・始まりの MOD を変えたら木はスタートだけに (出る時に保存を聞く。S-67、スイッチ resetOnEdit) */
+/** 始め方・始まりの MOD を変えたら木はスタートだけに (出る時に保存を聞く。S-67) */
 const edits = useEditReset(t);
 edits.remember();
 onBeforeUnmount(edits.forgetIfClosed);

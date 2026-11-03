@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * TreeRevealCard.vue — 未発現の冒涜が付いた箱の棚の「発現」の札 (10-27 夜オーナー「未発現のまま次へ」の後で打つ発現、スイッチ boneLater)。
+ * TreeRevealCard.vue — 未発現の冒涜が付いた箱の棚の「発現」の札 (10-27 夜オーナー「未発現のまま次へ」の後で打つ発現)。
  * 形はカオススパムオーブの札と同じ (棚の札の枠・名前)。絵は相場に無いのでアビスの反響のお告げの絵。持つと発現で出うる MOD から当たりを ☑ で選ぶ
  */
 import { handIcon as iconOf } from "./tree-names";

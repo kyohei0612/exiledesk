@@ -9,7 +9,6 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { flag } from "../../../web/release-flags";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
@@ -24,7 +23,7 @@ export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   if (!b?.back || b.back === RESTART) return [];
   // 全部消えてよい消去の後は、止まりうる形の箱 (tree-outcome の stripStops、10-27 オーナー)
   const data = craftStage.data.value, strip = b.back === MATCH && data ? stripTargetsOf(data, doc, id) : null;
-  // スイッチ judgeOne: 前の版の「形の合う箱へ」の行き先は、中身の同じ手のある箱 (箱どうしの判定)
+  // 前の版の「形の合う箱へ」の行き先は、中身の同じ手のある箱 (箱どうしの判定)
   const j = b.back === MATCH && !strip ? judgeOf(doc) : null;
   const to = strip ?? (b.back === MATCH ? (j ? Object.values(doc.boxes).filter((t) => !!t.hand && j.fitsBox(id, t.id)).map((t) => t.id) : matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []))) : [b.back]);
   return [...new Set(to)].filter((x) => !!doc.boxes[x]);
@@ -70,8 +69,8 @@ export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>): { r
       // 統合 (当たり → 当たり) は戻りの線の道でなく、向き合う辺どうしを箱を避けて結ぶ (joinPath を呼ぶ側で)
       if (b.out === "hit" && doc.boxes[t]?.out === "hit") { lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: "join" }); continue; }
       const flip = p.x + p.w / 2 > to.x + to.w / 2;
-      // スイッチ backRoute: 行き先へは箱の上の、段の間の空いた高さ (箱の上 24) で入る。箱の上の端の高さは同じ段のほかの箱で塞がり、木の外を大回りした (10-28 夜オーナー「水色の…ふるい感じのきょどう」)。前は箱の横の辺の真ん中 = MOD の行に刺さった
-      reqs.push({ id: lid, from: p, to, end: flag("backRoute") ? { x: flip ? to.x + to.w - 24 : to.x + 24, y: to.y - 24 } : { x: flip ? to.x + to.w : to.x, y: to.y + to.h / 2 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
+      // 行き先へは箱の上の、段の間の空いた高さ (箱の上 24) で入る。箱の上の端の高さは同じ段のほかの箱で塞がり、木の外を大回りした (10-28 夜オーナー「水色の…ふるい感じのきょどう」)。前は箱の横の辺の真ん中 = MOD の行に刺さった
+      reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w - 24 : to.x + 24, y: to.y - 24 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
       const ph = doc.boxes[b.parent!]?.hand;
       lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back", ...(ph && effectOf(ph.currency) === "remove" && ph.keep && !ph.keep.length ? { viaStrip: true } : {}) });
     }
@@ -100,7 +99,7 @@ function hits(ax: number, ay: number, bx: number, by: number, boxes: readonly Bo
  * どれかへ入る、縦と横だけの道のうち、ほかの箱を通らずに一番短い物 (折れ目 1 つを BEND px と数える)。通り道は箱の辺から M 離した縦横の線の格子。
  * mark = つながりの印を置く所 (一番長い区間の真ん中)。どうしても無ければ真っすぐ (null にはしない)
  */
-/** lanes = 横の区間を通す高さ (段の間の決まった所、tree-row-tops の laneYs。スイッチ lineShort) */
+/** lanes = 横の区間を通す高さ (段の間の決まった所、tree-row-tops の laneYs) */
 export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: readonly Seg[] = [], lanes: readonly number[] = []): { d: string; mark: Pos } {
   const others = others0.map((r) => ({ ...r, y: r.y - CHIP, h: r.h + CHIP }));
   /** この区間が木の線の上を同じ向きに走るか */
@@ -108,7 +107,7 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
     ? Math.abs(g.y0 - g.y1) < 1 && Math.abs(g.y0 - ay) < 6 && Math.min(g.x0, g.x1) < Math.max(ax, bx) && Math.max(g.x0, g.x1) > Math.min(ax, bx)
     : Math.abs(g.x0 - g.x1) < 1 && Math.abs(g.x0 - ax) < 6 && Math.min(g.y0, g.y1) < Math.max(ay, by) && Math.max(g.y0, g.y1) > Math.min(ay, by));
   // 2 つの箱が横に並ぶ (高さが重なる) 時は左右の辺を重なる高さの真ん中から、縦に並ぶ (幅が重なる) 時は上下の辺を重なる幅の真ん中から出す。
-  // 間に箱が無ければ 1 本の直線になる (10-27 オーナー images 22「マークの所で線が段違い」。前は辺の真ん中どうしで、高さの違う箱だと段が付いた。スイッチ goalShape)
+  // 間に箱が無ければ 1 本の直線になる (10-27 オーナー images 22「マークの所で線が段違い」。前は辺の真ん中どうしで、高さの違う箱だと段が付いた)
   const sy0 = Math.max(from.y, to.y), sy1 = Math.min(from.y + from.h, to.y + to.h), sx0 = Math.max(from.x, to.x), sx1 = Math.min(from.x + from.w, to.x + to.w);
   const shareY = sy1 - sy0 >= 8 ? (sy0 + sy1) / 2 : null, shareX = sx1 - sx0 >= 8 ? (sx0 + sx1) / 2 : null;
   const ports = (r: Box): Array<{ p: Pos; q: Pos }> => {

@@ -5,7 +5,6 @@
  * - 進む線の横の棒: 同じ段で別の親の棒が横に重なると 1 本に見える (赤と灰が合流して見分けにくい) ので、重なる物は段を 1 つずつ上へずらす
  * 座標は全部ツリーの座標 (Vue Flow の倍率を掛ける前)
  */
-import { flag } from "../../../web/release-flags";
 import { gridRoute } from "./tree-lines-grid";
 import { BOX_H, BOX_W } from "../../../services/simulator/tree/tree-model";
 
@@ -52,8 +51,7 @@ export function mirrorPath(d: string): string {
 }
 /** 平行に走る線どうしの間 */
 const LANE = 7;
-/** 戻りの線の引き方を揃える (S-87b、スイッチ backRoute) */
-const BACK_ROUTE = flag("backRoute");
+/** 戻りの線の引き方を揃える (S-87b) */
 /** 出口の横の線を通す帯 (箱の下 +20〜+34。手の札 +40〜 より上、箱の枠に沿わない高さ) */
 const BAND = [CLEAR_Y, 34] as const;
 /** 跨ぐ形の半径 */
@@ -64,7 +62,7 @@ const HOP = 5;
  * 1 本ずつ、箱の下から帯の中の空いた高さへ下り → 横へ → 札より左の箱の無い縦の通り道 (先に引いた線と重ならない所) を上 (下) へ → 札の高さで右へ入る。
  * 同じ札へ入る線は札の高さの中で少しずつずらす。進む線・先に引いた戻りの線と交わる所は跨ぐ。通り道が無ければ木の左の外側
  */
-/** avoid = inside の時にほかの箱と同じく避ける物 (手の札、線の見張り L3)。inside = 木の中に縦の通り道が無い線は引かない (返さない。呼ぶ側が左右を替えて引き直す、S-87c スイッチ retryHover) */
+/** avoid = inside の時にほかの箱と同じく避ける物 (手の札、線の見張り L3)。inside = 木の中に縦の通り道が無い線は引かない (返さない。呼ぶ側が左右を替えて引き直す、S-87c) */
 export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd: readonly Seg[], o: { bundle?: boolean; inside?: boolean; avoid?: readonly Pos[] } = {}): Map<string, string> {
   // bundle = 同じ行き先の線を 1 本に束ねる (先に引いた同じ行き先の縦の通り道に合流して、札へは 1 本で入る。10-22 オーナー「線を減らす」)
   const vs: Array<{ x: number; y0: number; y1: number; to?: string }> = [];
@@ -84,16 +82,7 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
     const at = (a: Pos, b: Pos): boolean => a.x === b.x && a.y === b.y;
     const others = [...boxes.filter((b) => !at(b, r.from) && !at(b, r.to)), ...(o.inside ? o.avoid ?? [] : [])];
     const all = [...others, r.from, r.to];
-    // 行き先が上にある時は、出元の上の辺の左寄りから真上へ上り、行き先の箱の左の辺へ入る (隣の箱の下と横を回らない、10-25 オーナー「関係ない箱を囲まない」)。
-    // 上の縦と横に箱があれば下の回り道へ
-    const ux = r.from.x + ENTER + 4, uy = r.from.y;
-    // スイッチ backRoute: この近道は箱の縁ぎりぎりを上ったので使わない (いつも下の帯 → 箱から間を空けた縦の通り道 → 行き先の上の札の高さ、10-28 夜オーナー「こういう線おかしくね右端の」)
-    if (!BACK_ROUTE && r.end.y < uy - 16 && ux <= r.end.x - 16 && freeColumn(ux, r.end.y, uy - 1, others) && freeRow(r.end.y, ux, r.end.x, [...others, r.from]) && !vBusy(ux, r.end.y, uy)) {
-      vs.push({ x: ux, y0: r.end.y, y1: uy });
-      hs.push({ y: r.end.y, x0: ux, x1: r.end.x, id: r.id });
-      polys.push({ id: r.id, pts: [{ x: ux, y: uy }, { x: ux, y: r.end.y }, { x: r.end.x, y: r.end.y }] });
-      continue;
-    }
+    // 箱の縁ぎりぎりを上る近道は使わない (いつも下の帯 → 箱から間を空けた縦の通り道 → 行き先の上の札の高さ、10-28 夜オーナー「こういう線おかしくね右端の」)
     const sx = r.start?.x ?? r.from.x + ENTER, sy = r.start?.y ?? r.from.y + (r.from.h ?? BOX_H);
     // 横へ出る帯は段の下 (札は箱より背が低いので、札の下からはまだ隣の箱の高さの中。段の下の辺まで下りてから横へ)
     const yb = Math.max(sy, r.from.y + BOX_H);

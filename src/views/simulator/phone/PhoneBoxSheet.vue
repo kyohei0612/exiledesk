@@ -19,7 +19,6 @@ import type { StageItem } from "../../../services/craft-stage/types";
 import { mapPick, phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneMap from "./PhoneMap.vue";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 import { stepOf } from "../tree/tree-fail";
 import PhoneBoxPeek from "./PhoneBoxPeek.vue";
 
@@ -38,8 +37,8 @@ const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.
 /** カードの幅 = 窓の中いっぱい (左右の余白 12 ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 24;
 const name = (x: string): string => q.boxTitle(x);
-/** 完成 / 失敗の札 (スイッチ sim1031: 失敗の箱も「✓ 完成」と出ていた。言い方は PhoneOutRow の答えと同じ) */
-const doneWord = (d: "main" | "fail"): string => (d === "fail" && flag("sim1031") ? tr("✗ 失敗 (ここで終わり)", "✗ Failed (ends here)") : tr("✓ 完成", "✓ Done"));
+/** 完成 / 失敗の札 (失敗の箱も「✓ 完成」と出ていた。言い方は PhoneOutRow の答えと同じ) */
+const doneWord = (d: "main" | "fail"): string => (d === "fail" ? tr("✗ 失敗 (ここで終わり)", "✗ Failed (ends here)") : tr("✓ 完成", "✓ Done"));
 const route = computed(() => (box.value ? routeText(t.doc.value, id.value, name) : null));
 const run = computed(() => runText(phoneRun.value, id.value));
 /** この回の手の結果ごとの行き先 (次の手 / 戻り / 完成 / まだ) */
@@ -63,8 +62,7 @@ function returnHere(): void {
   mapPick.value = null;
   sheet.value = null;
 }
-/** 木の中の位置: 今の段を横に書き、小さい箱を押すとその箱のアイテムと打つカレンシーの窓 (10-27 昼オーナー、スイッチ phone1027) */
-const P27 = flag("phone1027");
+// 木の中の位置: 今の段を横に書き、小さい箱を押すとその箱のアイテムと打つカレンシーの窓 (10-27 昼オーナー)
 const peek = ref<string | null>(null);
 watch(id, () => { peek.value = null; });
 // Esc は上の窓から 1 つずつ (アイテムの窓が開いていればそれだけ閉じる)
@@ -89,7 +87,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <p class="break-words text-[11px] text-sim-dim">{{ q.pathText(id) }}</p>
         <StageItemCard v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
-        <p v-else-if="box.done" class="mt-2 text-[13px]" :class="box.done === 'fail' && flag('sim1031') ? 'text-rose-300' : 'text-emerald-300'">{{ doneWord(box.done) }}</p>
+        <p v-else-if="box.done" class="mt-2 text-[13px]" :class="box.done === 'fail' ? 'text-rose-300' : 'text-emerald-300'">{{ doneWord(box.done) }}</p>
         <p v-if="run" data-phone-sheet-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[id] ? 'text-rose-200' : 'text-amber-100/90'">{{ run }}</p>
         <!-- 箱のメモ (書いてあれば全文、✎ で書く。PC の箱のメモと同じ Box.note) -->
         <div data-phone-sheet-note class="mt-2">
@@ -108,8 +106,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
             </li>
           </ul>
         </template>
-        <p class="mt-2 text-[11px] text-sim-dim">{{ tr("木の中の位置", "Where it is in the tree") }}<template v-if="P27"> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></template></p>
-        <PhoneMap :mini="id" :peek="P27" @peek="(x) => (peek = x)" />
+        <p class="mt-2 text-[11px] text-sim-dim">{{ tr("木の中の位置", "Where it is in the tree") }}<span> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></span></p>
+        <PhoneMap :mini="id" peek @peek="(x) => (peek = x)" />
       </div>
       <div class="flex gap-2 border-t border-white/10 px-3 py-2">
         <!-- 戻り先を選んでいる時は「ここへ戻る」。普段は閉じるだけ (箱の中身とこの箱からの手を見る窓、10-26 夜オーナー) -->

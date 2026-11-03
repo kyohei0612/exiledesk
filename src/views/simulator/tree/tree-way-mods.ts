@@ -1,5 +1,5 @@
 /**
- * tree-way-mods.ts — 完成形の「途中で消える」クラフト MOD (エッセンス・合金などのエッセンスの MOD、ブリーチも。10-27 夜オーナー、スイッチ goalQuality)。
+ * tree-way-mods.ts — 完成形の「途中で消える」クラフト MOD (エッセンス・合金などのエッセンスの MOD、ブリーチも。10-27 夜オーナー)。
  * 完成形の MOD 一覧でクラフト MOD を 2 つ目以降も足せる。足した物は完成の狙い (memoAims) に入り、カードの下の切り替えで「途中で消える」にすると
  * TreeDoc.wayMods へ移る (完成の狙い・MOD の枠・完成の判定には数えない。品質で自動で出るブリーチの行と同じ扱い)。戻すと完成の狙いへ戻る。
  * 残る (完成の狙いにある) クラフト MOD はエンジンのクラフト MOD の上限 (craftedLimitOf: 1 つ、アストリッドの創造性で増える) まで。
@@ -10,7 +10,6 @@ import { craftedLimitOf } from "../../../services/craft-stage/apply-essence";
 import { placeMods } from "../../../services/simulator/sim-engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 
 /** 途中で消える物の打つ順 (札の横の ? と、カードの札に乗せた時の説明。10-27 夜オーナー) */
@@ -39,17 +38,10 @@ export function toggleWay(d: TreeDoc, modId: string): void {
 export function dropWay(d: TreeDoc, modId: string): void { d.wayMods = (d.wayMods ?? []).filter((a) => a.modId !== modId); if (!d.wayMods.length) delete d.wayMods; }
 /** 残るクラフト MOD の上限 (完成形のアイテムのルーンから、エンジンの craftedLimitOf) */
 export const craftLimit = (goal: StageItem): number => craftedLimitOf(goal);
-/** 決めていない = 完成の狙いに残るクラフト MOD が上限を超えている時の理由 (無ければ null) */
-export function wayUndecided(data: PatchData, doc: TreeDoc, goal: StageItem | null): string | null {
-  // 上限を溢れた物は束 (どれか n つ) で見せるので決めさせない (S-30b、スイッチ attachWay)
-  if (!goal || flag("attachWay")) return null;
-  const n = (doc.memoAims ?? []).filter((a) => isCraftAim(data, a)).length, lim = craftLimit(goal);
-  return n > lim ? tr(`クラフト MOD を「途中で消える」か残すかに決める (残るのは ${lim} つまで、今 ${n} つ)`, `Decide which crafted mods are "removed on the way" (up to ${lim} can stay, now ${n})`) : null;
-}
 /** 品質のためのブリーチのエッセンス (途中で消す前提。束に入れず独立、S-30b) */
 export const isBreachAim = (a: Aim): boolean => !!a.forQuality || /LocalMaximumQuality/.test(a.modId);
 /**
- * 上限を溢れたクラフト MOD の束 (S-30b、スイッチ attachWay、10-31 オーナー「固定で上限は今まで通りで、溢れたら、消えるかどっちかみたいな表記にする？」)。
+ * 上限を溢れたクラフト MOD の束 (S-30b、10-31 オーナー「固定で上限は今まで通りで、溢れたら、消えるかどっちかみたいな表記にする？」)。
  * 完成の狙いのクラフト MOD (ブリーチは除く) が上限を超えたら、その全部を「どれか n つ」の束にする。木の判定は替えない (ゲームどおり同時には付かない)
  */
 export function craftBundle(data: PatchData, doc: TreeDoc, goal: StageItem | null): { aims: Aim[]; lim: number } | null {
@@ -58,7 +50,7 @@ export function craftBundle(data: PatchData, doc: TreeDoc, goal: StageItem | nul
   return aims.length > lim ? { aims, lim } : null;
 }
 /**
- * 冒涜の束 (S-30b、スイッチ attachWay、10-31 オーナー「A」= エッセンスの束と同じ形)。冒涜の MOD はアイテムに 1 つまでなので、
+ * 冒涜の束 (S-30b、10-31 オーナー「A」= エッセンスの束と同じ形)。冒涜の MOD はアイテムに 1 つまでなので、
  * 冒涜で付く狙い (冒涜専用 MOD と「冒涜」で付けた狙い) が 2 つ以上なら全部を「どれか 1 つ」の束にする。骨の発現の窓・木の判定は替えない (S-32)
  */
 export function desecratedBundle(data: PatchData, doc: TreeDoc): Aim[] | null {

@@ -14,11 +14,10 @@ import { mapFolded } from "./map-fold";
 import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
 import { handIcon as iconOf } from "../tree/tree-names";
-import { flag } from "../../../web/release-flags";
 import { stripChains, stripFolds, stripHidden, stripOpen, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
 
 const props = defineProps<{ /** 重ね窓の中の小さな図: その箱を光らせ、押せない (peek を聞く時だけ押すと peek) */ mini?: string; peek?: boolean }>();
-/** 小さな図で押した箱 (10-27 昼オーナー「小さい箱を押したらモーダルでその箱のアイテム枠とカレンシー」、スイッチ phone1027) */
+/** 小さな図で押した箱 (10-27 昼オーナー「小さい箱を押したらモーダルでその箱のアイテム枠とカレンシー」) */
 const emit = defineEmits<{ peek: [id: string] }>();
 const q = usePhoneQuiz();
 const wrap = ref<HTMLElement | null>(null);
@@ -82,10 +81,9 @@ const shortOf = (id: string): string => { const s = SHORT[q.doc.value.boxes[id]?
 const legend = computed(() => [...new Set(Object.values(q.doc.value.boxes).map((b) => b.out))].map((o) => ({ o, c: OUT_LOOK[o].c, name: outName(o) })));
 /**
  * 手のある箱の次の手の絵 (カレンシーの絵が無ければ無し)。箱が狭い時 (幅 56px 未満) は出さない
- * (字の上に絵が乗って「当たり」が読めなかった、10-27 夕モンキー 12。スイッチ phoneResult1027)
+ * (字の上に絵が乗って「当たり」が読めなかった、10-27 夕モンキー 12)
  */
-const RES27 = flag("phoneResult1027");
-const handIcon = (id: string): string | null => { const h = q.doc.value.boxes[id]?.hand; if (RES27 && (view.value?.w ?? 0) < 56) return null; return h ? iconOf(h.currency) || null : null; };
+const handIcon = (id: string): string | null => { const h = q.doc.value.boxes[id]?.hand; if ((view.value?.w ?? 0) < 56) return null; return h ? iconOf(h.currency) || null : null; };
 /** 線 (親 → 結果の箱) */
 const lines = computed(() => {
   const v = view.value;

@@ -20,56 +20,82 @@
 ## スイッチごと (多い順)
 旧の側 = そのスイッチが無い時の動き (FLAGS の説明の逆)。「一緒に消える」は今の読みで、消す時に `vue-tsc` と使い手の grep で決める。
 
-| スイッチ | 数 | 旧の側がしていた事 | 一緒に消える物 (見込み) | 危うい所 |
-|---|---|---|---|---|
-| keepOutside | 20 | 消えない MOD を残したい MOD に数えない・外れが消えた箱は手に関係なく前へ自動で戻す・出ない結果の手は判定を返さない | tree-veil.ts の `blockHand` の flag の項、tree-judge-link.ts:144 の早帰り | 判定 (tree-judge・tree-model・tree-outcome) に掛かる。消した後に見張りの 100 人の比べ |
-| treeLight | 17 | 早送り・覚え (contentsOf・boxKeyOf・chipSeen) を使わず毎回全部数え直す | tree-sample.ts の旧の数え直しの塊 (220〜260)、tree-sample-key.ts の id 入りの鍵 | 上の 1: light.mjs・light-edit.mjs が旧の側を比べの相手に使う |
-| keepAll | 7 | 残したい MOD は消去の手だけ (カオス・パーフェクトエッセンス・満杯の骨では選べない) | use-hand-keep.ts の isRemove の分かれ | tutorial.md 95 も同じ名前を書いている |
-| attachWay | 6 | 付け方 3 択のボタン・クラフト MOD の上限超えは「決めた」を押せない (wayUndecided) | tree-way-mods.ts の `wayUndecided` (常に null になる) と TreeGoalPage.vue の使い手 | — |
-| judgeOne | 6 | 箱の判定を形 (shapeFit) で見る | tree-sample-shape.ts の `shapeFit` の呼び (使い手 1 つだけ → 関数ごと消える見込み) | 10-29 の handoff の off=judgeOne の手順は経緯として残す |
-| recipeV1 | 4 | レシピを木そのまま (clone) で保存・比べる | tree-recipes.ts の clone の分かれ | 上の 1・2: v1-dry.mjs。古い保存 (形が v1 前) の読みは toRecipeV1 側にあるかを先に見る |
-| phoneResult1027 | 3 | スマホの結果の画面の古い作り (結果を 1 つずつ送らない・手を替えるボタン) | PhoneAsk.vue の `!P27` の要素 | — |
-| sim1031 | 3 | 失敗の箱も「✓ 完成」と出る・フラックスを隠さない | — | — |
-| phoneMap | 3 | スマホの全体図・箱の重ね窓が無く、行き先は一覧 (listOpen) で選ぶ | PhoneOutRow.vue の listOpen と data-phone-other の一覧 | — |
-| freeNoHit | 3 | 狙い無しの手・ルーンの手にも当たりの箱を出す | — | — |
-| goalAskFix | 3 | 完成形の設定の Esc・品質の上限の古い動き | TreeGoalQuality.vue の cap-limit を渡さない側 | — |
-| fracMulti | 3 | ✦ は 1 つだけ (付けるとほかの印を外す) | use-tree.ts:332 の外す塊 | fracOne と組み (✦ が 2 つ以上の時の始め方) |
-| mergeOpen | 3 | 同じ形の手の無い箱を先の箱へまとめない | — | — |
-| phone1027 | 2 | スマホの進み具合の帯が上 (古い位置)・箱の窓の覗きが無い | PhoneTreePage.vue の `!P27` の帯 | — |
-| holeButton | 2 | 穴チェックを木が変わるたびに自動で走らせる | — | — |
-| phoneView | 2 (+外 1) | 768 未満もスマホの質問の形 (PhoneTreePage) | — (PhoneTreePage は 768〜1280 で今も使う) | 外: StageSettings.vue |
-| lineShort | 2 | 段の間を決まった高さ・線は箱から | — | — |
-| qualityAsk | 2 | 品質の 2 択の窓を出さない | — | — |
-| backRoute | 2 | 戻りの線を箱の角から直に | — | — |
-| goalNeedMod | 2 | MOD 0 個でも注意無しで進む | — | — |
-| rowNear | 2 | 兄弟の間を木全体の箱で決める | tree-place.ts の near を使わない側 | — |
-| oldBone | 2 | 前の版の骨の手を「発現させる」に読み替えない | — | 上の 2: 新の側 (oldVeil) が古い保存を読む口なので消さない |
-| boneLater | 2 | 骨の手に「発現させる」☑ が無い (いつも発現まで) | — | — |
-| failEnd | 1 | スマホの答えに「失敗 (ここで終わり)」が無い | — | — |
-| simPhone | 1 (+外 1) | スマホは「PC で開いてください」(SimPcOnly) | `SimPcOnly.vue` (StageRecipesPage・SimTreePage の使い手を見てから) | 外: ModeTabs.vue |
-| holeCheck | 1 | 「穴チェック」でなく「テスト / テストで回す」の字 | hole-check.ts の `HOLE_CHECK` (使い手 5 か所、チュートリアルを含む) | チュートリアル (tut-route.ts・use-sim-tutorial.ts) も読む |
-| goWord | 1 | 戻りの札がいつも「n 段目へ」 | — | — |
-| backQuality | 1 | 戻りの札に品質の違いを書かない | — | — |
-| goalQuality | 1 | 貼り付けで品質を取り込まない | — | 上の 2 (貼り付けの読み) |
-| pickOff | 1 | 人が選ぶ「まとめる」「戻り先を選ぶ」を常に出す | — | — |
-| goalBig | 1 | 完成形の窓を 1.2 倍にしない | — | — |
-| clickFracture | 1 (+外 1) | 完成形のカードの左クリックでフラクチャーしない | — | 外: CraftStage.vue (エミュ部の持ち物) |
-| qualityLimit | 1 | 品質の上限を絞らない | — | — |
-| qualityFit | 1 | 品質の欄の幅の直し無し | `goal-q-fit` の CSS | — |
-| noSpam | 1 | カオススパムオーブを手の札に出す | TreeHandChip.vue の SPAM の分かれ | — |
-| goalShape | 1 | 消去の手の「外れ」の注意の字を出す | — | — |
-| hoverLines | 1 | 合流の線をいつも全部描く | — | — |
-| retryHover | 1 | 再挑戦の線をいつも描く | — | — |
-| settleStrict | 1 | 止まりの文の古い書き方 | — | — |
-| stopPill | 1 | 止まりの赤い札を箱のカードに被せる | — | — |
-| fracOne | 1 | ✦ が 2 つ以上でもフラクチャーから始められる | — | fracMulti と組み |
-| revealGrey | 1 | 発現の窓で発現できない MOD も灰色にしない | — | — |
-| resetOnEdit | 1 | 前提を替えても木を消さない | — | — |
-| goalDesecRow | 1 | 冒涜の狙いの行の印を出さない | — | — |
-| firstVisit1024 | 1 (+外 3) | 札の窓を押した瞬間に開く | — | 外: ShelfButton・BaseCardGrid・BaseCatalog |
-| junkSide | 1 | 外れの箱を側ごとに分けない | tree-junk-side.ts の早帰り | — |
-| rowPack | 1 | 横の置き場を段ごとの帯で詰めない | — | — |
-| whittleRank | 1 | 削減のお告げの手を MOD レベルで分けない | — | — |
+| スイッチ | 数 | 旧の側がしていた事 | 一緒に消える物 (見込み) | 危うい所 | 残す / 消す |
+|---|---|---|---|---|---|
+| keepOutside | 20 | 消えない MOD を残したい MOD に数えない・外れが消えた箱は手に関係なく前へ自動で戻す・出ない結果の手は判定を返さない | tree-veil.ts の `blockHand` の flag の項、tree-judge-link.ts:144 の早帰り | 判定 (tree-judge・tree-model・tree-outcome) に掛かる。消した後に見張りの 100 人の比べ | 消す |
+| treeLight | 17 | 早送り・覚え (contentsOf・boxKeyOf・chipSeen) を使わず毎回全部数え直す | tree-sample.ts の旧の数え直しの塊 (220〜260)、tree-sample-key.ts の id 入りの鍵 | 上の 1: light.mjs・light-edit.mjs が旧の側を比べの相手に使う | 消す |
+| keepAll | 7 | 残したい MOD は消去の手だけ (カオス・パーフェクトエッセンス・満杯の骨では選べない) | use-hand-keep.ts の isRemove の分かれ | tutorial.md 95 も同じ名前を書いている | 消す |
+| attachWay | 6 | 付け方 3 択のボタン・クラフト MOD の上限超えは「決めた」を押せない (wayUndecided) | tree-way-mods.ts の `wayUndecided` (常に null になる) と TreeGoalPage.vue の使い手 | — | 消す |
+| judgeOne | 6 | 箱の判定を形 (shapeFit) で見る | tree-sample-shape.ts の `shapeFit` の呼び (使い手 1 つだけ → 関数ごと消える見込み) | 10-29 の handoff の off=judgeOne の手順は経緯として残す | 消す |
+| recipeV1 | 4 | レシピを木そのまま (clone) で保存・比べる | tree-recipes.ts の clone の分かれ | 上の 1・2: v1-dry.mjs。古い保存 (形が v1 前) の読みは toRecipeV1 側にあるかを先に見る | 消す |
+| phoneResult1027 | 3 | スマホの結果の画面の古い作り (結果を 1 つずつ送らない・手を替えるボタン) | PhoneAsk.vue の `!P27` の要素 | — | 消す |
+| sim1031 | 3 | 失敗の箱も「✓ 完成」と出る・フラックスを隠さない | — | — | 消す |
+| phoneMap | 3 | スマホの全体図・箱の重ね窓が無く、行き先は一覧 (listOpen) で選ぶ | PhoneOutRow.vue の listOpen と data-phone-other の一覧 | — | 消す |
+| freeNoHit | 3 | 狙い無しの手・ルーンの手にも当たりの箱を出す | — | — | 消す |
+| goalAskFix | 3 | 完成形の設定の Esc・品質の上限の古い動き | TreeGoalQuality.vue の cap-limit を渡さない側 | — | 消す |
+| fracMulti | 3 | ✦ は 1 つだけ (付けるとほかの印を外す) | use-tree.ts:332 の外す塊 | fracOne と組み (✦ が 2 つ以上の時の始め方) | 消す |
+| mergeOpen | 3 | 同じ形の手の無い箱を先の箱へまとめない | — | — | 消す |
+| phone1027 | 2 | スマホの進み具合の帯が上 (古い位置)・箱の窓の覗きが無い | PhoneTreePage.vue の `!P27` の帯 | — | 消す |
+| holeButton | 2 | 穴チェックを木が変わるたびに自動で走らせる | — | — | 消す |
+| phoneView | 2 (+外 1) | 768 未満もスマホの質問の形 (PhoneTreePage) | — (PhoneTreePage は 768〜1280 で今も使う) | 外: StageSettings.vue | 消す (シミュの中だけ。外の分かれは各部の物で残る) |
+| lineShort | 2 | 段の間を決まった高さ・線は箱から | — | — | 消す |
+| qualityAsk | 2 | 品質の 2 択の窓を出さない | — | — | 消す |
+| backRoute | 2 | 戻りの線を箱の角から直に | — | — | 消す |
+| goalNeedMod | 2 | MOD 0 個でも注意無しで進む | — | — | 消す |
+| rowNear | 2 | 兄弟の間を木全体の箱で決める | tree-place.ts の near を使わない側 | — | 消す |
+| oldBone | 2 | 前の版の骨の手を「発現させる」に読み替えない | — | 上の 2: 新の側 (oldVeil) が古い保存を読む口なので消さない | 消す |
+| boneLater | 2 | 骨の手に「発現させる」☑ が無い (いつも発現まで) | — | — | 消す |
+| failEnd | 1 | スマホの答えに「失敗 (ここで終わり)」が無い | — | — | 消す |
+| simPhone | 1 (+外 1) | スマホは「PC で開いてください」(SimPcOnly) | `SimPcOnly.vue` (StageRecipesPage・SimTreePage の使い手を見てから) | 外: ModeTabs.vue | 消す (シミュの中だけ。外の分かれは各部の物で残る) |
+| holeCheck | 1 | 「穴チェック」でなく「テスト / テストで回す」の字 | hole-check.ts の `HOLE_CHECK` (使い手 5 か所、チュートリアルを含む) | チュートリアル (tut-route.ts・use-sim-tutorial.ts) も読む | 消す |
+| goWord | 1 | 戻りの札がいつも「n 段目へ」 | — | — | 消す |
+| backQuality | 1 | 戻りの札に品質の違いを書かない | — | — | 消す |
+| goalQuality | 1 | 貼り付けで品質を取り込まない | — | 上の 2 (貼り付けの読み) | 消す |
+| pickOff | 1 | 人が選ぶ「まとめる」「戻り先を選ぶ」を常に出す | — | — | 消す |
+| goalBig | 1 | 完成形の窓を 1.2 倍にしない | — | — | 消す |
+| clickFracture | 1 (+外 1) | 完成形のカードの左クリックでフラクチャーしない | — | 外: CraftStage.vue (エミュ部の持ち物) | 消す (シミュの中だけ。外の分かれは各部の物で残る) |
+| qualityLimit | 1 | 品質の上限を絞らない | — | — | 消す |
+| qualityFit | 1 | 品質の欄の幅の直し無し | `goal-q-fit` の CSS | — | 消す |
+| noSpam | 1 | カオススパムオーブを手の札に出す | TreeHandChip.vue の SPAM の分かれ | — | 消す |
+| goalShape | 1 | 消去の手の「外れ」の注意の字を出す | — | — | 消す |
+| hoverLines | 1 | 合流の線をいつも全部描く | — | — | 消す |
+| retryHover | 1 | 再挑戦の線をいつも描く | — | — | 消す |
+| settleStrict | 1 | 止まりの文の古い書き方 | — | — | 消す |
+| stopPill | 1 | 止まりの赤い札を箱のカードに被せる | — | — | 消す |
+| fracOne | 1 | ✦ が 2 つ以上でもフラクチャーから始められる | — | fracMulti と組み | 消す |
+| revealGrey | 1 | 発現の窓で発現できない MOD も灰色にしない | — | — | 消す |
+| resetOnEdit | 1 | 前提を替えても木を消さない | — | — | 消す |
+| goalDesecRow | 1 | 冒涜の狙いの行の印を出さない | — | — | 消す |
+| firstVisit1024 | 1 (+外 3) | 札の窓を押した瞬間に開く | — | 外: ShelfButton・BaseCardGrid・BaseCatalog | 消す (シミュの中だけ。外の分かれは各部の物で残る) |
+| junkSide | 1 | 外れの箱を側ごとに分けない | tree-junk-side.ts の早帰り | — | 消す |
+| rowPack | 1 | 横の置き場を段ごとの帯で詰めない | — | — | 消す |
+| whittleRank | 1 | 削減のお告げの手を MOD レベルで分けない | — | — | 消す |
+
+「残す / 消す」の決め方 (ブラック 36、オーナー「かち合う奴と判断したものやいらないもの整理してけすべ」): 新とかち合う旧の部品と、通らなくなって要らない旧の部品は消す。新とかち合わず、新の側でも使う部品は残す (例: oldVeil は新の側が古い保存を読む口、shapeFit の関数は今も呼べる形で残す)。結果は全部「消す」で、旧の側だけで使っていた部品も一緒に消した (wayUndecided・strip・SimPcOnly.vue ほか、下の「済み」)。
+
+## 退役させる見張りの道具 3 つ (archive へ、消さない = メモ feedback-keep-verify-tools)
+- light.mjs・light-edit.mjs: treeLight のオンとオフ (`?off=treeLight`) で精査・n 人・木の中身が同じかを比べる道具。treeLight は RELEASED に入り `?off=` が効かず、commit 5 で旧の側 (毎回の数え直し) も消したので、比べる相手が無い。
+- v1-dry.mjs: 共有の木の移し替えの空打ちで、`--off` で recipeV1 の前の形と比べる。recipeV1 は RELEASED に入り `--off` が効かず、commit 4 で旧の側 (木を丸ごと保存) も消したので、比べる片方が無い。移し替えの空打ちそのものは 10-29 の組み直しの 1 回物 (docs/org/dev/sim-watch.md「見られない所」)。
+- 置き場 scripts/sim-watch は持ち場が「共通」(ジン部長、scripts/owner-of.mjs) なので、移すのはジン部長かブラックの決め。シミュ部は動かさない。
+
+## 見張りの結果 (シミュ部長 69、11-03 夜。6 回を全部載せた後 = worktree の dev 1471、前 = origin/main 985630355)
+前は素の origin/main を別の場所に出した dev 1472 (1440 は長く動いた物で、ページの中の MOD のデータが空のまま回る時があった)。どれも見張り (前と同じか) で、外の正解ではない。
+- lines: 前 (1440) と後で全部同じ、線の合わない所 0。1472 は bone1a の線を測る所で台本ごと落ちた (後の側は通る)。
+- place: 木を 1 本ずつ回すと前後同じ (okPcmPyY 0・bone1a 17)。まとめて回すと開いた時の待ちのぶれで件数が前後どちらも揺れる。
+- judge (30 人): 前 (1472) と後で全部同じ。合わないのは ownerWhittle の 5 件で、前も同じ 5 件 (前からの物)。1440 では facts が MOD のデータ空で落ちた。
+- 100 人: judge --people 100 で amuB・okPcmPyY・goalQ・pass-weapon・kamasan を前 (1472) と後で回し、回しの数 (完成・止まり) と合わない 0 が全部同じ。
+- fullcheck --trees: 親 9 つ (白〜レア確定外れ、729 行) の 1 行ずつが前 (1472) と後で全部同じ。残りの親は 1 本 10 分の上限で回していない。
+- watch: 前 (1440・1472) も後も、始めのページの式 (reading 'x') で台本ごと落ちる = 台本が今の画面と合っていない、前からの壊れ (6 回とは関係なし)。直すのは見張りの道具の持ち主。
+
+## 済み (シミュ部長 69、11-03)
+- commit 1 (28 種) 済み: 旧の側は全部「消す」(新とかち合う物・要らない物)。「残す」にした旧の部品は 0。FLAGS・RELEASED の名前を抜く差分は release-flags.ts (デザイン部) でフックが止めたので、ブラック 36 の共有メモ sim69-flags-commit1.patch に置いた (当てると型 0 = 使い手 0 は確かめ済み)。説明の「スイッチ 名前」と設計図の括弧も外した (⑤ の確かめの記録・shared-ui 92・sim-tree 460 は経緯なので残す)。
+- 確かめ: 見張り = 型 0・build:web 通過だけ。見張りの fullcheck・画面は未。push はしていない (出しが済むまで止める、ブラック 36)。
+- commit 2 (rowNear・rowPack・mergeOpen) 済み: 前の置き方 strip は使い手 0 で消す。place.mjs・lines.mjs の比べは未。
+- commit 3 (keepOutside・keepAll・attachWay・judgeOne・freeNoHit・junkSide・whittleRank・fracMulti・fracOne) 済み: 旧の側は全部「消す」。一緒に消えた物 = wayUndecided (いつも null)・TreeStartAsk の ✦ 複数と 1 つ選びの節 (fracOne が開いて通らない)・shapeSampleWithNote の形の比べ (shapeFit の関数は残す)。start-cost の fracMulti の引数はエンジン側なので true を渡すだけで残す。確かめ: 型 0・build:web 通過 (vue-tsc は template の重なった属性を見ないので、build で 1 つ見つけて直した)。judge.mjs・見本の木の 100 人の比べは未。
+- commit 4 (recipeV1・oldBone・goalQuality) 済み: 旧の側は全部「消す」(保存はいつも v1、前の骨の手は「発現させない」に読み替え、貼り付けはいつも品質を取り込む)。読む側 (migrateTreeDoc・oldVeil) は新の側なので残る。確かめ: 型 0・build:web 通過。古い保存・共有 URL を画面で開く確かめは未。v1-dry.mjs の archive 行きは scripts/sim-watch が「共通」(ジン部長) の持ち場なので未 (ブラック 36 へ回す。RELEASED に入ったスイッチには --off が効かないので、今も --off は空振り = docs/org/dev/sim-watch.md 44)。
+- commit 5 (treeLight) 済み: 旧の側は全部「消す」(毎回の数え直し・id 入りの鍵・線の通り道の総当たり・穴チェックと走行の別回し)。打ち直しの上限は TRIES_LIGHT だけ。確かめ: 型 0・build:web 通過。100 人の時間の比べは未。light.mjs・light-edit.mjs の archive 行きは v1-dry と同じく「共通」の持ち場なので未 (ブラック 36 へ)。
+- commit 6 (phoneView・simPhone・clickFracture・firstVisit1024 のシミュの中の分) 済み: シミュの中の分かれは全部「消す」。SimPcOnly.vue は使い手 0 で消した。外の分かれ (StageSettings・ModeTabs・CraftStage・ShelfButton・BaseCardGrid・BaseCatalog、emu.md・shared-ui.md の書き方) は各部の物なので触らず、名前も FLAGS・RELEASED に残る。確かめ: 型 0・build:web 通過。
+- 6 回の後に残る事: FLAGS・RELEASED から外に使い手の無い 44 種の名前を抜く (デザイン部。44 種全部の差分はブラック 36 の共有メモ sim69-flags-all44.patch、当てると型 0 = 使い手 0。commit1 の 28 種分の patch は要らなくなった)・light.mjs・light-edit.mjs・v1-dry.mjs の archive 行き (共通)・見張りの台本 (judge・place・lines・fullcheck) と画面の確かめ。
 
 ## 消す段取り (合図 1 つで始める)
 オーナーの確認が終わってから (1440 が空いてから)。シミュ部長 1 人で、worktree で。commit ごとに `pnpm -s exec vue-tsc --noEmit -p tsconfig.json` (型 0)。

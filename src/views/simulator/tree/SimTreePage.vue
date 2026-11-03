@@ -23,7 +23,7 @@ import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-/** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
+/** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
@@ -53,7 +53,6 @@ import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
-import { flag } from "../../../web/release-flags";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { applyPick, drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
@@ -65,9 +64,9 @@ import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 const t = useTree();
 const doc = t.doc;
-/** 見るだけの幅 (768 未満、S-94g) + スイッチ phoneView = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
+/** 見るだけの幅 (768 未満、S-94g) = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
 const viewWidth = useViewOnlyWidth();
-const viewPhone = computed(() => viewWidth.value && flag("phoneView"));
+const viewPhone = computed(() => viewWidth.value);
 // エンジンの設定 (触媒・聖別の倍率・MOD の重み) は開いている間この木の値 (use-tree-tune.ts)
 useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */
@@ -236,7 +235,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
-/** 失敗 (ここで終わり) の印を付ける・外す (スイッチ failEnd) */
+/** 失敗 (ここで終わり) の印を付ける・外す  */
 function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
 /** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
 function pickBack(to: string): void { const from = picking.value; if (!from) return; simOp("set-back"); picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
@@ -263,10 +262,9 @@ function showGone(n: number): void { goneN.value = n; clearTimeout(goneTimer); g
 /** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b) */
 const holeN = computed(() => new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size);
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
-/** 穴チェックのボタン: 精査と 30 人の走行 (treeLight は精査の 30 人を走行に使い回す、S-71b) */
+/** 穴チェックのボタン: 精査と 30 人の走行 (精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {
   if (jt.on.value && await jt.sort()) return; // 整理で未設定が出たらそこで止める (S-190)
-  if (!flag("treeLight")) { void onCheck(); void tr100.run({ test: true }); return; }
   await onCheck();
   void tr100.run({ test: true, reuse: checkRun() });
 }
@@ -307,12 +305,12 @@ const chipNatural = (id: string): number | undefined => {
   const name = el.querySelector<HTMLElement>(".truncate");
   return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value);
 };
-// 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す。スイッチ lineShort)
+// 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す)
 const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
 const tidyOf = (d: typeof doc.value): void => void placeTree(d, boxHeightOf(measureBox), chipNatural);
 useRowSettle(doc, measureBox, chipNatural);
 /** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
-/** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ。スイッチ hoverLines、S-85b) */
+/** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ、S-85b) */
 const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
 const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
 

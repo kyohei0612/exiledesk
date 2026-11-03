@@ -11,7 +11,6 @@ import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../
 import { pathKeyOf } from "./tree-recipe-v1";
 import { docPartOf, itemKeyOf, pathKeyOfBox, type PathLink } from "./tree-sample-key";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
-import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
@@ -27,8 +26,7 @@ import { mainSideOf } from "./tree-uncountable";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
-const TRIES = 3000;
-/** スイッチ treeLight の打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
+/** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
 const TRIES_LIGHT = 1000;
 export interface Sample { item: StageItem; note: string | null }
 
@@ -42,7 +40,7 @@ export const aimOpts = (data: PatchData): AimHitOpts => ({ data, sameText: true 
  */
 export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readonly Aim[] {
   const b = doc.boxes[id];
-  // 発現で選ぶ手 (骨の「発現させる」・後から打つ発現) は、その手の当たりの箱の札 (☑。完成の狙いに無い置き石も) だけで選ぶ (スイッチ boneLater)
+  // 発現で選ぶ手 (骨の「発現させる」・後から打つ発現) は、その手の当たりの箱の札 (☑。完成の狙いに無い置き石も) だけで選ぶ 
   if (veilPick(b?.hand)) return b!.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // ✦ の木の確定フラクチャーは ✦ の印だけを固定する (S-42。木の狙い全部を渡すと印の無い狙いまで固定され、✦ の無い側の ✦ の人に行き先が無く止まった、金の指輪 10-31)
   if (b?.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureMarks(doc).length) return fractureMarks(doc);
@@ -61,7 +59,7 @@ export function aimsOf(doc: TreeDoc): Aim[] {
   const byGoals = goals.some((g) => !g.fractured);
   const label = (b: TreeBox): boolean => {
     const h = b.parent ? doc.boxes[b.parent]?.hand : null;
-    // 発現で選んだ置き石 (完成の狙いに無い MOD) は、その手の時だけ当たり。以降の手では冒涜の外れ MOD (10-27 夜オーナー、スイッチ boneLater)
+    // 発現で選んだ置き石 (完成の狙いに無い MOD) は、その手の時だけ当たり。以降の手では冒涜の外れ MOD (10-27 夜オーナー)
     if ((veilPick(h) || fracFree(doc, h)) && !goals.some((g) => g.modId === b.aim!.modId)) return true;
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => g.modId === b.aim!.modId);
   };
@@ -164,7 +162,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
   // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
   const ts = targetsOf(data, aims);
-  // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (スイッチ boneLater。
+  // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (
   // 前は手の後に未発現があれば必ず発現まで打っていた = 骨の手の後だけだった)
   const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
   const once = (): ReturnType<typeof applyHand> => applyHand(data, item, h.currency, rng, { qualityTo: h.quality || undefined, omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
@@ -216,15 +214,8 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
-  // スイッチ treeLight: 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
-  if (flag("treeLight")) {
-    if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); memoSig = ""; memoData = data; }
-    return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
-  }
-  // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
-  // 整列・段揃え・引っ張るなど位置だけの変化で全部の箱をエンジンで作り直し、整列が毎回約 1 秒かかった (10-28 夜オーナー「サイトが重い」)
-  const sig = heldDoc === doc ? heldSig : docSig(doc);
-  if (sig !== memoSig || data !== memoData) { memo.clear(); memoSig = sig; memoData = data; }
+  // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
+  if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); memoSig = ""; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
 /** 覚えた見本 (木の中身の鍵が変わったら全部捨てる。treeLight は holdDocSig の間の早道だけ) */
@@ -232,12 +223,12 @@ const memo = new Map<string, Sample>();
 let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
 const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" || k === "doneNow" || k === "tidied" || k === "tidyRan" ? undefined : v));
-/** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
+/** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b) */
 const heldLinks = new Map<string, PathLink>();
 let heldDoc: TreeDoc | null = null, heldSig = "", heldPart: string | null = null, heldLazy = false, holdNo = 0;
 /** lazy = 木全体の鍵は要る時だけ作る (判定と見本作りの短い間。作るだけで箱の数の分だけ掛かる) */
 export function holdDocSig<T>(doc: TreeDoc, fn: () => T, lazy = false): T {
-  if (!flag("treeLight") || heldDoc) return fn();
+  if (heldDoc) return fn();
   heldDoc = doc; heldLazy = lazy; heldSig = lazy ? "" : docSig(doc); heldPart = null; heldLinks.clear(); holdNo++;
   try { return fn(); } finally { heldDoc = null; }
 }
@@ -254,11 +245,6 @@ let sigSeq = 0;
 const sigNo = (sig: string): number => { let n = sigNos.get(sig); if (!n) sigNos.set(sig, (n = ++sigSeq)); return n; };
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
-  if (!flag("treeLight")) {
-    let r = memo.get(k);
-    if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
-    return r;
-  }
   const held = heldDoc === doc, fast = held && !heldLazy;
   if (fast && memoSig !== heldSig) { memo.clear(); memoSig = heldSig; }
   let r = fast ? memo.get(k) : undefined;
@@ -353,28 +339,27 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
-  const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A、スイッチ recipeV1。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
+  const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
-  // スイッチ judgeOne: 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
+  // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
   let loose: Sample | null = null;
-  const light = flag("treeLight");
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
   let held: ReadonlySet<string> | undefined;
-  const aimedNow = (): ReadonlySet<string> | undefined => (held ??= flag("keepAll") && flag("judgeOne") ? aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed) : undefined);
-  // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ印で見る、S-33c。スイッチ judgeOne)
+  const aimedNow = (): ReadonlySet<string> | undefined => (held ??= aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed));
+  // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ印で見る、S-33c)
   const stop = stripStop(data, doc, p, aimedNow());
   if (stop?.(base.item)) return { item: base.item, note: "cant:stripStop" };
   // 数え上げられない手の側の鍵の無い箱は一番多い形だけ (ほかの形は整理で足す箱へ行く、S-21・S-74)
   const main = !b.junkKey && (b.out === "any" || b.out === "junk" || b.out === "hit") ? mainSideOf(data, base.item, p.hand) : undefined;
-  const fk = light && !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
+  const fk = !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
-  for (let i = 0, tries = light ? TRIES_LIGHT : TRIES; i < tries; i++) {
+  for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stop);
     if (!r.applied) { last = r; break; }
     last = r;
-    // スイッチ keepAll: 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)
+    // 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)
     const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims, aimedNow());
     // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
     if (p.hand.repeat && o.out !== "hit") break;
@@ -466,7 +451,7 @@ interface UseSpec {
  */
 function canUse(data: PatchData, item: StageItem, key: string, spec: UseSpec = {}): string | null {
   const now = handOmens(key, spec.omens ?? []).now;
-  // 後から打つ発現の手: 未発現の MOD があれば打てる (スイッチ boneLater)
+  // 後から打つ発現の手: 未発現の MOD があれば打てる 
   if (isRevealHand(key)) return unrevealedOf(item) ? null : tr("未発現の MOD が無い", "No unrevealed mod");
   const cat = spec.catalyst && now.includes(CATALYSING_OMEN) ? spec.catalyst : null;
   const filled = cat ? fillCatalyst(data, item, cat, mulberry32(1)).item : item;
@@ -528,7 +513,7 @@ function applyHand(data: PatchData, item: StageItem, key: string, rng: () => num
     return { ...r, applied: r.applied || r.count > 0 || catalystFull(item, key) || (!!spec.qualityTo && catalystOf(item).pct >= spec.qualityTo), catalystCount: r.count, handOmensUsed: [], echoUsed: false };
   }
   const { now, reveal } = handOmens(key, spec.omens ?? []);
-  // 後から打つ発現の手 (スイッチ boneLater): 候補 3 つから ☑ の物 (無ければ 1 つ目)。反響はこの手のお告げ
+  // 後から打つ発現の手 : 候補 3 つから ☑ の物 (無ければ 1 つ目)。反響はこの手のお告げ
   if (isRevealHand(key)) {
     if (!unrevealedOf(item)) return { applied: false, item, added: [], removed: [], reason: tr("未発現の MOD が無い", "No unrevealed mod"), catalystCount: 0, handOmensUsed: [], echoUsed: false };
     const echo = now.includes(ABYSSAL_ECHO_OMEN);

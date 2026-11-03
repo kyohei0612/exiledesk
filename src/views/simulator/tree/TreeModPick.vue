@@ -21,7 +21,7 @@ import { hitAimsOf, kindOf } from "./tree-hand-plan";
 import { takenBeside } from "./tree-side-aims";
 
 /** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
-const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean; /** 当たりの箱 (前の箱で付いている狙いをグレーに) */ boxId?: string; /** 横の ＋ で足す (boxId は押した横の箱) */ adding?: boolean; /** この MOD だけの全部の一覧 (完成の狙いの一覧にしない。骨の手の置き石、スイッチ boneLater) */ allow?: readonly string[] }>();
+const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean; /** 当たりの箱 (前の箱で付いている狙いをグレーに) */ boxId?: string; /** 横の ＋ で足す (boxId は押した横の箱) */ adding?: boolean; /** この MOD だけの全部の一覧 (完成の狙いの一覧にしない。骨の手の置き石) */ allow?: readonly string[] }>();
 const emit = defineEmits<{ pick: [aim: Aim]; close: [] }>();
 const t = useTree();
 

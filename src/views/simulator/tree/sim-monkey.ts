@@ -17,7 +17,7 @@
  *   __simMonkey.setGoal([{ modId, tier, fractured? }])  完成の MOD を決め直す (tier = 表の段の番号、その段以上が当たり。fractured = フラクチャーの印) → { ok, goals, left, unknown }
  *   __simMonkey.setAim(id, modId, tier)                当たりの箱の MOD を選ぶ (完成の MOD があればその中から、画面の MOD を選ぶ窓と同じ)
  *   __simMonkey.setBack(id, to)                        戻り先 (箱の id、"start" = 始めに戻る、null で外す。画面と同じく作り直し・形の合う箱は無し)
- *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)。on = "fail" で失敗 (ここで終わり、結果の箱ならどれでも。スイッチ failEnd)
+ *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)。on = "fail" で失敗 (ここで終わり、結果の箱ならどれでも)
  *   await __simMonkey.check()                          テストラン (ルート精査) → { passed, done: [完成の箱], issues: [{ boxId, kind, text }] }
  *   await __simMonkey.result(n = 100, seed = 1)        画面の「100 人回す」と同じ値段 (相場、神建て) と始めの値段で回す → { finished, perItem, median, … }
  * 見張りの「つながった箱どうしは同じ形」(10-28 最終チェック長の頼み。中身は自動のつなぎと同じ tree-box-shape):
@@ -212,12 +212,12 @@ export function installSimMonkey(): () => void {
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv: 2000, capSteps: 20000 };
     },
-    // スイッチ judgeOne: 箱の中身 (見本の中身の鍵、見本ごとに違えば mixed) と「箱どうし」の判定 (S-50b。見張りが同じ物差しで見る)
+    // 箱の中身 (見本の中身の鍵、見本ごとに違えば mixed) と「箱どうし」の判定 (S-50b。見張りが同じ物差しで見る)
     shapeOf(id: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) { const c = [...(j.contents(id) ?? [])].sort(); return t.doc.value.boxes[id] ? { held: c, body: c.length > 1 ? `mixed:${id}` : c[0] ?? null } : null; } return d ? boxShape(d, t.doc.value, id) : null; },
     sameShape(from: string, to: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) return to === "match" || to === "restart" ? true : j.fitsBox(from, to); return d ? sameShape(d, t.doc.value, from, to) : null; },
     /** 自動の ↩ の見直し (tree-shape の pruneBacks、judgeOne の下では箱どうしの判定) を写しに掛けて、外れる戻りの箱を返す (木は変えない) */
     prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
-    /** 全部の箱の見本 seeds 個 (item・note) と ☑ (スイッチ treeLight のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
+    /** 全部の箱の見本 seeds 個 (item・note) と ☑ ( のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
     /** 木全部の結果の箱の割合 (箱の札と同じ useTreeOdds) */
     odds() { return Object.fromEntries(useTreeOdds().value); },

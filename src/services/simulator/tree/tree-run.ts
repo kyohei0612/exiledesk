@@ -20,7 +20,6 @@ import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { aimedAfterAnnul, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { playableTwin, routeOf, twinAimed, canPlay } from "./tree-judge-link";
-import { flag } from "../../../web/release-flags";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -75,11 +74,11 @@ export interface TreeRunResult {
   /** 組んでいない芽・打てない手で止まった人 */
   stuck: number;
   stuckAt: Record<string, number>;
-  /** 失敗 (ここで終わり) の箱で止めた人の数と箱ごとの数 (スイッチ failEnd) */
+  /** 失敗 (ここで終わり) の箱で止めた人の数と箱ごとの数  */
   failed: number;
   failAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順、スイッチ settleStrict) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
+  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。穴チェックの走行の「どこでループしたか」、10-27 オーナー) */
   loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
@@ -114,7 +113,7 @@ export const FRACTURE_MISS = 2;
 const FRACTURE_PICK = 2;
 /**
  * ✦ の木の確定フラクチャーで外れた分の回数 (S-43): 固定されうる MOD n のうち ✦ が k なら n ÷ k − 1 回 (✦ 1 つ・3 MOD = 2 回、2 つ = 0.5 回、3 つ = 0 回)。
- * スイッチ fracMulti が閉じている間・✦ が付いていない時は FRACTURE_MISS (10-24 オーナー「2 回外れて 1 回当たり」)
+ * ✦ が付いていない時は FRACTURE_MISS (10-24 オーナー「2 回外れて 1 回当たり」)
  */
 function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
   const outs = (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void), marks = new Set(fractureMarks(doc).map((a) => a.modId));
@@ -126,14 +125,14 @@ function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], j: Judge | null, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand">): Person {
-  // 輪の早送り (S-71b、スイッチ treeLight): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
-  const light = flag("treeLight") && !o.onHand;
+  // 輪の早送り (S-71b): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
+  const light = !o.onHand;
   let rolls = 0, seenRolls = -1;
   const rng = light ? (): number => { rolls++; return rng0(); } : rng0;
   const seen = new Map<string, { at: number; steps: number; cost: number }>();
   let ops: LoopOp[] = [];
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
-  // この人の ☑ で付いた狙い (スイッチ judgeOne、tree-judge。当たりの箱に着いたらその札、消えたら外れる)
+  // この人の ☑ で付いた狙い (tree-judge。当たりの箱に着いたらその札、消えたら外れる)
   let aimed: ReadonlySet<string> = j ? startAimed(data, doc, item) : new Set();
   const arrive = (box: string, it: StageItem, was?: StageItem): void => { if (j) aimed = nextAimed(data, doc, aimed, box, it, was); };
   let cost = o.startCost;
@@ -161,12 +160,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const b = doc.boxes[at];
     if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
     visit(at);
-    // 完成の狙いが全部そろった人は、どの箱でもその場で完成 (回し方だけ、tree-sample の goalsHeld)。スイッチ judgeOne の下では完成は押した箱だけ (S-05・S-54)
+    // 完成の狙いが全部そろった人は、どの箱でもその場で完成 (回し方だけ、tree-sample の goalsHeld) の下では完成は押した箱だけ (S-05・S-54)
     if (!j && goalsHeld(data, doc, item)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
     // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
-    // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える (スイッチ failEnd)
+    // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail") return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     if (b.done === "main" && j) {
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。品質も狙う ☑ の時だけ品質を見る)
@@ -253,7 +252,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const miss = effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     // 全部消えてよい消去の直線で、もう手のある箱と同じ中身 = 打たずにその箱へ (S-28)。前は打たずに次の箱へ通し、次の箱に人の手があるとその手を打った
-    // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた。スイッチ judgeOne)
+    // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた)
     const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item, false, aimedAfterAnnul(data, doc, b.hand, aimed, item)) : null;
     // 飛び先の手がこの人に打てない時は飛ばずにここで打つ (飛ぶと playableTwin がここへ戻し、費用 0 の往復が手の上限まで続いた、11-02 S-28c)
     if (stopAt && canPlay(data, item, doc.boxes[stopAt]!.hand!)) { visit(at, true); at = stopAt; continue; }
@@ -261,11 +260,11 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 止まる所は上の stopAt で決めたので、ここでは打つ (中で別の印で止まりを見直すと打たずに通り、費用 0 の往復になった、S-33c)
     const r = playHand(data, item, b.hand, rng, own, use, false, j ? undefined : stripStop(data, doc, b));
     if (!r.applied) {
-      // 中身の同じ箱のうち手が打てる箱へ (S-64、スイッチ keepOutside)
+      // 中身の同じ箱のうち手が打てる箱へ (S-64)
       const twin = j ? playableTwin(data, doc, j, at, item, aimed) : null;
       if (twin) { visit(at, true); aimed = twinAimed(doc, j!, twin, item, aimed); at = twin; continue; }
       // 打てないが、この手の当たりの狙いがもう付いている = 打たずにその当たりの箱へ (tree-sample の heldHitOf)
-      // スイッチ judgeOne: 打てない手の当たりの箱へ飛ぶ特別扱いはしない (中身の同じ箱へは着いた時に routeOf が移す、大本 2)
+      // 打てない手の当たりの箱へ飛ぶ特別扱いはしない (中身の同じ箱へは着いた時に routeOf が移す、大本 2)
       const held = j ? null : heldHitOf(data, doc, b, item);
       if (held && ++hops <= 1000) { arrive(held, item); at = held; continue; }
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } });
@@ -331,7 +330,7 @@ function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string,
     `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${en(s.item)}): this run has ${en(item)}. No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
 }
 /**
- * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」、スイッチ settleStrict): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
+ * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
  * 精査の一覧と止まりの札の乗せた時の文が使う
  */
 export function stuckDetail(doc: TreeDoc, w: { item: StageItem; backs: readonly string[]; moved?: readonly string[] }): string {

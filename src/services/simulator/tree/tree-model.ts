@@ -13,7 +13,6 @@ import type { RecipeOrphan, RecipePick } from "./tree-recipe-v1";
 import type { StageItem } from "../../craft-stage/engine";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
-import { flag } from "../../../web/release-flags";
 import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
 
 /**
@@ -27,7 +26,7 @@ export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "b
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture" | "strip";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
-  /** 付け方の覚え (完成の狙いだけ、S-10b・スイッチ attachWay)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated";
+  /** 付け方の覚え (完成の狙いだけ、S-10b)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated";
   /** 完成形の品質のために自動で足したブリーチのエッセンスの MOD (品質の欄、TreeGoalQuality。品質を 20% 以下に戻すと外す) */ forQuality?: true;
   /** 貼り付けで取り込んだ素の値 (完成の狙いだけ。完成形のカードにそのまま出す、段の中央でなく。段を替えたら外す、10-25 オーナー「コピペした時数値の変更が若干ある」) */ values?: number[] }
 /**
@@ -60,11 +59,11 @@ export interface Hand {
   /** フラクチャーの手を ✦ の印の無い木で打った = どの MOD が固定されるかはエンジンの乱数のまま (当たり = 完成の狙いが固定された、外れ = ほかが固定された。10-27 夜オーナー、要望 8a159e29、スイッチ fracRandom) */
   pick?: "random";
   /**
-   * 骨 (冒涜) の手の発現 (10-27 夜オーナー、スイッチ boneLater): keep = 発現させない (未発現のまま次へ、結果は「未発現の冒涜が付いた」)、
+   * 骨 (冒涜) の手の発現 (10-27 夜オーナー): keep = 発現させない (未発現のまま次へ、結果は「未発現の冒涜が付いた」)、
    * pick = 発現させる (発現で出うる MOD から ☑ の物が出て選べたら当たり、ほかは外れ)。無い (前の版の木) = 前のまま同じ手で発現 (完成の狙いの候補を選ぶ)
    */
   veil?: "keep" | "pick";
-  /** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside): 付いた MOD を発現で選んだ MOD と同じく箱の中身に持つ。無い = 外れ */
+  /** エッセンスの「ブロックに使う」☑ (S-33b): 付いた MOD を発現で選んだ MOD と同じく箱の中身に持つ。無い = 外れ */
   block?: true;
 }
 export interface TreeBox {
@@ -86,7 +85,7 @@ export interface TreeBox {
    */
   mergedOuts?: OutKind[];
   /** 外れの枝の鍵: 狙い無しの乱数のフラクチャー = 固定された外れ MOD の側と種類 ("suffix|normal" など、固定後の形が同じ外れは 1 枝。スイッチ fracPick)。
-   * 外れ・打った後・外れが消えた = 側ごとの MOD の数の増減 ("s:1|0" など、tree-junk-side。S-65、スイッチ junkSide) */
+   * 外れ・打った後・外れが消えた = 側ごとの MOD の数の増減 ("s:1|0" など、tree-junk-side。S-65) */
   junkKey?: string;
   /** この箱から打つ次の手 (矢印) */
   hand: Hand | null;
@@ -95,7 +94,7 @@ export interface TreeBox {
   /** 戻りの矢印の先 (hand と一緒には持たない) */
   back: string | null;
   /** 完成の印 (前の版の "compromise" = 妥協は読む時に null = 未完成へ、use-tree の load) */
-  /** fail = 失敗 (ここで終わり)。回す時はそこで止めた人を失敗と数える (結果の箱ならどれでも、スイッチ failEnd) */
+  /** fail = 失敗 (ここで終わり)。回す時はそこで止めた人を失敗と数える (結果の箱ならどれでも) */
   done: "main" | "fail" | null;
   parent: string | null;
   /** 箱ごとの短いメモ (オーナー 10-22、既定は閉じる) */
@@ -120,7 +119,7 @@ export interface TreeBox {
   noLost?: true;
   /** 要確認 (tree-migrate の読み替えで読めなかった所: out = 結果の種類・aim = 狙い・hand = 打つ手・link = 矢印の先)。checkRaw = 読めなかった元の値 (捨てない) */
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
-  /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107。スイッチ recipeV1) */ handBack?: Hand; fresh?: true;
+  /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107) */ handBack?: Hand; fresh?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -151,7 +150,7 @@ export type TreeRarity = "normal" | "magic" | "rare";
 /** フラクチャーの始め方 (10-24 夜オーナー): fractured = フラクチャー済みを買う、four = フラクチャー前 (4 MOD のレア) から。必ず成功として 1/3 で素材とオーブ ×3 (tree-base-cost の four) */
 export type StartFrom = "fractured" | "four";
 export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number; from?: StartFrom;
-  /** ✦ が 2 つ以上で白ベースからに自動で替えた (✦ が 1 つに戻ったらフラクチャー済みからへ戻す、スイッチ fracOne) */ autoWhite?: true }
+  /** ✦ が 2 つ以上で白ベースからに自動で替えた (✦ が 1 つに戻ったらフラクチャー済みからへ戻す) */ autoWhite?: true }
 /** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
@@ -185,7 +184,7 @@ export interface TreeDoc {
   goalQuality?: number;
   /** 品質も狙う (☑、既定はオフ = 品質は見ない。10-27 夕オーナー)。オンの時だけ完成の箱でも品質を見る (足りない人は止まり) */
   goalQualityOn?: true;
-  /** 品質は狙わないを選んだ (カタリストの部位は狙う / 狙わないのどちらかを必ず選ぶ。どちらも無い = 未定で「決めた」を止める、S-31c、スイッチ qualityAsk) */
+  /** 品質は狙わないを選んだ (カタリストの部位は狙う / 狙わないのどちらかを必ず選ぶ。どちらも無い = 未定で「決めた」を止める、S-31c) */
   goalQualityNo?: true;
   /** 完成形の品質の上限 (エミュの品質の帯の「上限」と同じ。無ければ足し算の上限) と種類 (アクセサリーの品質の種類のタグ) */
   goalQualityCap?: number;
@@ -194,7 +193,7 @@ export interface TreeDoc {
   fracAsked?: true;
   /** ハズレ整理を 1 度押した (S-192。保存しない) */
   tidyRan?: true;
-  /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー、スイッチ goalQuality) */
+  /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー) */
   wayMods?: Aim[];
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
@@ -224,7 +223,7 @@ export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", m
 /** フラクチャーの印 (完成の狙いのうち ✦ の候補。どれか 1 つが固定されればよい、10-23 オーナー) */
 export const fractureMarks = (d: TreeDoc): Aim[] => (d.memoAims ?? []).filter((a) => a.fractured);
 /** 印があってもフラクチャー前から (start.from four) は白 (ノーマル) から始める (10-24 夜オーナー「後者選んだ場合必ず白からはじまる」)。true = ✦ の付いたレアから */
-/** ✦ が 2 つ以上で、フラクチャーから始められない (白ベースからだけ。10-28 オーナー「単発のみフラクチャースタートできるようにさせるか」、スイッチ fracOne) */
+/** ✦ が 2 つ以上で、フラクチャーから始められない (白ベースからだけ。10-28 オーナー「単発のみフラクチャースタートできるようにさせるか」) */
 export const multiFracWhite = (d: TreeDoc): boolean => fractureMarks(d).length > 1;
 export const startsFractured = (d: TreeDoc): boolean => fractureMarks(d).length > 0 && d.start?.from !== "four";
 /**
@@ -255,7 +254,7 @@ export function migrateStart(d: TreeDoc): void {
     d.memoAims = list;
   }
   d.start = { ...st, mods: st.mods.filter((m) => !m.fractured) };
-  // ✦ が 2 つ以上なら始まりは白ベースから (フラクチャーは木の中で、S-13、スイッチ fracOne)
+  // ✦ が 2 つ以上なら始まりは白ベースから (フラクチャーは木の中で、S-13)
   if (multiFracWhite(d)) { if (d.start.from !== "four") { d.start.from = "four"; d.start.autoWhite = true; } }
   else if (d.start.autoWhite) { d.start.from = "fractured"; delete d.start.autoWhite; }
   delete d.fracture;
@@ -343,7 +342,7 @@ const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 /** 同じ手か (カレンシーとお告げ。違えば結果が同じでも下を消す、S-57) */
 export const sameHand = (a: Hand, b: Hand): boolean => a.currency === b.currency && a.omens.join() === b.omens.join();
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string, holds?: boolean): void {
-  // holds = この箱の見本に消せる ☑ の狙いがあるか (スイッチ judgeOne、tree-hand-plan の holdsAimOf)。渡すと道の数え (mayHoldAim) の代わり (大本 1)
+  // holds = この箱の見本に消せる ☑ の狙いがあるか (tree-hand-plan の holdsAimOf)。渡すと道の数え (mayHoldAim) の代わり (大本 1)
   const hold = (): boolean => holds ?? mayHoldAim(d, id);
   const b = d.boxes[id];
   if (!b) return;
@@ -362,7 +361,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
   if (noLost || (only && !want.includes("lost") && outsOf.includes("lost") && !hold())) b.noLost = true; else delete b.noLost;
-  // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)
+  // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)
   const keysOf = (k: OutKind): string[] => (only ?? []).flatMap((o) => (o.out === k && o.junkKey ? [o.junkKey] : []));
   const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();
   // 鍵の組が今の箱と違えば作り直す (前の版の 1 箱の外れに同じ手を選び直すと側ごとに分かれる)
@@ -402,8 +401,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
     // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
     // スイッチ bodyStrict: 外れの前の箱への既定の戻りも自動の ↩ として印を付け、戻り先の 1 か所の判定 (tree-shape の returnFits) で見直す (applyPick の pruneBacks)。
     // 形の合う箱へ (MATCH) は人が選べなくなった (S-52b) ので付けない = 未設定 (10-29 FmNY7Wwv の b24 → b19 は体の違う既定の戻りだった)
-    // 自動の ↩ は消去の結果だけ (S-50d、スイッチ keepOutside)
-    if (c.out === "junkGone" && (!flag("keepOutside") || effectOf(hand.currency) === "remove")) { c.back = before ?? null; if (before) c.autoBack = true; }
+    // 自動の ↩ は消去の結果だけ (S-50d)
+    if (c.out === "junkGone" && effectOf(hand.currency) === "remove") { c.back = before ?? null; if (before) c.autoBack = true; }
     // 全部消えてよい消去は、消していく途中で木の箱と同じ形になった所で止めてそこへ戻る (回す時に形で決める、tree-outcome の stripBackOf。10-27 オーナー)
     if (kind === "strip") c.back = MATCH_BACK;
   }

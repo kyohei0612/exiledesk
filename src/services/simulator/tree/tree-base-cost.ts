@@ -14,7 +14,6 @@ import { startCalc, startCostOf } from "../start-cost";
 import { FRACTURE_POOL } from "../sim-odds";
 import { fractureMarks, startOf, type TreeBasePrices, type TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 type TreeStartKind = Extract<SimStartKind, "white" | "four" | "fractured">;
 interface TreeBaseCost {
@@ -37,13 +36,13 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   const ex = (v: number | undefined): number | null => (v != null && Number.isFinite(v) && v >= 0 ? v * div : null);
   const ixOf = (modId: string, tier: number): number => tierIndexOf(data, modId, tier);
   const item = freshItem(data, doc.base, doc.itemLevel, "normal");
-  // ✦ が複数なら全部を候補に (どれか 1 つが固定されれば良い = start-cost の anyOf・fractureOdds が候補の数で確率を数える、スイッチ fracMulti)
+  // ✦ が複数なら全部を候補に (どれか 1 つが固定されれば良い = start-cost の anyOf・fractureOdds が候補の数で確率を数える)
   const fracMembers = marks.map((a) => ({ modId: a.modId, minTierIndex: ixOf(a.modId, a.tier), text: a.modId, rank: `T${a.tier}` }));
   const targets: SimTargetIn[] = [
     { modId: fr.modId, minTierIndex: ixOf(fr.modId, fr.tier), method: "fracture" },
     ...others.map((o): SimTargetIn => ({ modId: o.modId, minTierIndex: ixOf(o.modId, o.tier), method: methodsFor(data, o.modId)[0]! })),
   ];
-  const c = startCalc({ data, item, itemLevel: doc.itemLevel, fracModId: fr.modId, fracMembers, allTargets: targets, targets, white: ex(prices.white), four: ex(prices.four), price, name, fracMulti: flag("fracMulti") && marks.length > 1 });
+  const c = startCalc({ data, item, itemLevel: doc.itemLevel, fracModId: fr.modId, fracMembers, allTargets: targets, targets, white: ex(prices.white), four: ex(prices.four), price, name, fracMulti: true && marks.length > 1 });
   if (!c) return none(tr("計算できない形", "Can't calculate this shape"));
   // 反対側でない MOD (フラクチャーと同じ側) は ③ でも費用に入らない
   const sameSide = !c.greater && others.some((o) => sideOfMod(data, o.modId) === sideOfMod(data, fr.modId));

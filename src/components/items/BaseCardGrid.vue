@@ -29,7 +29,7 @@ const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
  * 指の端末 (hover の無い画面) では出さない。押したら消す
  */
 const touchOnly = isTouchOnly();
-/** マウスが動くのを待っている時の取り消し (画面が動いて下に来ただけでは開かない、utils/pointer-moved。本番はスイッチ firstVisit1024 まで前の形) */
+/** マウスが動くのを待っている時の取り消し (画面が動いて下に来ただけでは開かない、utils/pointer-moved) */
 let stopWait = (): void => undefined;
 function enter(e: MouseEvent, b: CatalogRow): void {
   if (touchOnly) return;
@@ -40,7 +40,7 @@ function enter(e: MouseEvent, b: CatalogRow): void {
     hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
   };
   stopWait();
-  if (flag("firstVisit1024")) stopWait = afterPointerMoves(e, open); else open();
+  stopWait = afterPointerMoves(e, open);
 }
 function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);

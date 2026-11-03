@@ -1,5 +1,5 @@
 /**
- * tree-rebuild.ts — 保存の形 v1 (打ち方だけ) から木を組み直す (S-105〜S-107、スイッチ recipeV1)。
+ * tree-rebuild.ts — 保存の形 v1 (打ち方だけ) から木を組み直す (S-105〜S-107)。
  * スタートから上の段の順 (同じ段は結果の順) に、決めのある箱で保存した手を打ち直す = 画面で手を決めた時と同じ applyPick (結果の箱は今の決まり、自動の ↩ も付け直す)。
  * 人の手のある箱は人の手が先 (自動の ↩ で上書きしない)、完成 / 失敗だけの箱は付いた自動の ↩ を外して印を付ける。
  * 札の無くなった決めは要確認 (orphans、⑦20)。前の形の木から開いた時だけ、前に無かった札の箱に「組み直しで増えた」(fresh、⑦19、保存しない)
@@ -10,13 +10,12 @@ import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../..
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
 import { staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
-import { flag } from "../../../web/release-flags";
 import { judgeMemo, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 
-/** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32。スイッチ freeNoHit)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
-const noHitHand = (h: Hand): boolean => flag("freeNoHit") && ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
+/** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
+const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
 
 export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   const g = rebuildSteps(data, src);
@@ -65,7 +64,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
       if (p.back) backs.push([id, p.back, at]);
       // エッセンスの MOD の ☑ は木の狙いの段にそろえる (保存した ☑ が一般の段だと当たりの箱が落ちた、alignEssenceAims)
       // 前の版の骨の手 (veil 無し) は ☑ があれば発現させる・無ければ未発現のまま (S-59、tree-veil の oldVeil)
-      // 狙い無し・ルーン・未発現のままの手は保存の当たりの札を渡さない (当たりの箱を出さない、S-23・S-31e、スイッチ freeNoHit)
+      // 狙い無し・ルーン・未発現のままの手は保存の当たりの札を渡さない (当たりの箱を出さない、S-23・S-31e)
       if (p.hand) { const h = oldVeil(p.hand, p.aims ?? []), aims = noHitHand(h) ? [] : alignEssenceAims(data, d, p.aims ?? []), pre = p.pre ?? null; applyPick(d, id, h, kindOf(h), aims, pre, onlyOf(data, d, id, h, pre, aims)); }
       const b = d.boxes[id];
       if (b) {
@@ -106,8 +105,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
   const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !p.at.includes(";w:")).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
-  // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107、スイッチ keepOutside)
-  const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => !flag("keepOutside") || o.why !== "gone" || !now.has(o.at));
+  // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107)
+  const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => o.why !== "gone" || !now.has(o.at));
   const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
   if (orphans.length) d.orphans = orphans;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる
@@ -119,7 +118,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
 }
 
 /**
- * 札の無くなった決めの、札の残る一番近い上の箱 (要確認の印を付ける箱、use-tree-check の orphanIssues と同じ辿り) が自動の ↩ を持つか (S-107 ③、スイッチ judgeOne)。
+ * 札の無くなった決めの、札の残る一番近い上の箱 (要確認の印を付ける箱、use-tree-check の orphanIssues と同じ辿り) が自動の ↩ を持つか (S-107 ③)。
  * その箱の人は中身の同じ ↩ 先へ行くので下の決めは使われない。前は ↩ 再度挑戦の箱 (2 本目の木の b29) に要確認の赤い「!」が出た (10-29 深夜オーナー「あとここ再挑戦でもどるくせにない判定かも？」)
  */
 function underAutoBack(d: TreeDoc, at: string): boolean {
@@ -155,10 +154,10 @@ function relinkSameHand(data: PatchData, d: TreeDoc): void {
 function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact: ReadonlySet<string>): string {
   const bare = (t: string): string => t.replace(/\[[^\]]*\](~\d+)?$/, "");
   const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
-  // 狙いの札の無い当たり (打てない見本で 1 通りと読めなかったエッセンス) の決めも、今の「打った後」の箱の決めとして読む (スイッチ keepOutside)
-  const swapHit = (t: string): string | null => (flag("keepOutside") && t === "/any" ? "/hit" : null);
+  // 狙いの札の無い当たり (打てない見本で 1 通りと読めなかったエッセンス) の決めも、今の「打った後」の箱の決めとして読む 
+  const swapHit = (t: string): string | null => (t === "/any" ? "/hit" : null);
   // 削減の順位の鍵 (`;w:`、S-65b より前の保存には無い) を外した札 = 順位で分かれた箱の全部へ (側の鍵の無い札と同じ読み方)
-  // 狙いが付いた の鍵 (`;g:`、S-27d より前の保存には無い) も外して同じ読み方 (付いた / 付かないで分かれた狙いが消えたの箱の全部へ、スイッチ keepAll)
+  // 狙いが付いた の鍵 (`;g:`、S-27d より前の保存には無い) も外して同じ読み方 (付いた / 付かないで分かれた狙いが消えたの箱の全部へ)
   const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;[gxuf]:[^\];]*/g, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
@@ -211,7 +210,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   }
 }
 
-/** 開く木の形 (use-tree の open): スイッチ recipeV1 の下と v1 の木は組み直す。データがまだ無ければ前提だけ (wait = データが来たら開き直す) */
+/** 開く木の形 (use-tree の open): v1 の木は組み直す。データがまだ無ければ前提だけ (wait = データが来たら開き直す) */
 export function openForm(tree: TreeDoc, data: PatchData | null | undefined): { doc: TreeDoc; wait: boolean } {
   return data ? { doc: rebuildTree(data, tree), wait: false } : { doc: premiseOf(toRecipeV1(tree), `exiledesk-tree/${TREE_SCHEMA_N}`), wait: true };
 }

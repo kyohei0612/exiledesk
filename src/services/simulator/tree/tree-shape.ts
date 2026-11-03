@@ -45,14 +45,14 @@ export function splitTo(data: PatchData, rules: readonly SplitRule[], item: Stag
  * 形の鍵 = 付いている狙いの組 + 外れがあるか。外れの側・種類・数・✦・レアリティ (体) は tree-box-shape で比べる (決まりは docs/spec/sim-tree.md の S-60〜S-64)
  */
 const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
-/** sig = その箱の体 (tree-box-shape の boxBody。shapesOf に data を渡した時だけ、スイッチ goalShape) */
+/** sig = その箱の体 (tree-box-shape の boxBody。shapesOf に data を渡した時だけ) */
 export type Shape = { key: string; box: string; hand?: Hand | null; sig?: string | null };
 /**
  * 箱の道の札の組 (始まりから親をたどった当たりの札、aimKey)。「どれか」の当たりの箱 (anyOf、同じ側の狙いのどれか 1 つ) を通ると、
  * どれが付いたかで組が分かれる (10-26)。組は 64 で打ち切る
  */
 /**
- * 形に数える当たりの札 (スイッチ goalShape): 完成の狙い (memoAims) にある物だけ。エッセンス・冒涜で付いた狙いでない MOD は外れ MOD と同じで形に数えない
+ * 形に数える当たりの札 : 完成の狙い (memoAims) にある物だけ。エッセンス・冒涜で付いた狙いでない MOD は外れ MOD と同じで形に数えない
  * (10-27 昼オーナー「指定 (☑) の MOD 以外はいらない MOD なので、何が付いても外れ MOD として付ける形」、メモ feedback-unchecked-is-junk と同じ)。完成の狙いが無い木は今まで通り全部
  */
 function hitKeys(doc: TreeDoc, c: TreeBox): string[] {
@@ -62,7 +62,7 @@ function hitKeys(doc: TreeDoc, c: TreeBox): string[] {
   const g = new Set(goals.map(aimKey));
   return ks.filter((k) => g.has(k));
 }
-/** 完成の狙いに無い MOD だけが付いた当たりの箱 = 外れの箱と同じ形 (スイッチ goalShape) */
+/** 完成の狙いに無い MOD だけが付いた当たりの箱 = 外れの箱と同じ形  */
 const junkLike = (doc: TreeDoc, b: TreeBox): boolean => b.out === "hit" && !!b.aim && !!(doc.memoAims ?? []).length && !hitKeys(doc, b).length;
 /**
  * 当たりの箱を通った組 = 今の組に、その箱で新しく付いた狙い (ks のどれか) を足した物。当たりは新しく付いた物なので、もう持っている狙いが
@@ -104,7 +104,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている
       const p = c.parent ? doc.boxes[c.parent] : undefined;
       // 当たりの箱が無い時 (結果が「狙いが消えた」1 通り) も、手のエッセンスの MOD が完成の狙いにあれば付いている (10-27 夕モンキー 1: スピリット + ✦ だけの箱で
-      // 強化のエッセンスを打つとスピリットが消えてグローバル防御が付くのに、狙い 0 の形に見えて始まりへ戻り、エッセンスを持ったまま回って止まった。スイッチ goalShape)
+      // 強化のエッセンスを打つとスピリットが消えてグローバル防御が付くのに、狙い 0 の形に見えて始まりへ戻り、エッセンスを持ったまま回って止まった)
       const essKey = p?.hand && effectOf(p.hand.currency) === "essence" ? p.hand.currency.split(":").slice(2).join(":") : null;
       const ess = p?.hand && effectOf(p.hand.currency) === "essence"
         ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim ?? (doc.memoAims ?? []).find((g) => g.modId === essKey)
@@ -126,7 +126,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
 export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
   if (to === MATCH || to === RESTART) return true;
   // 全部消えてよい消去の後の自動の戻りは、戻り先をエンジンで打った結果の形で選んでいる (tree-hand-plan の stripToShape)。この箱の組は「狙い 0」と数える作りなので比べない
-  // (10-27 夕モンキー 2、スイッチ goalShape)
+  // (10-27 夕モンキー 2)
   const fb = doc.boxes[from], fp = fb?.parent ? doc.boxes[fb.parent] : undefined;
   if (fb?.autoBack && fp?.hand && effectOf(fp.hand.currency) === "remove" && fp.hand.keep && !fp.hand.keep.length) return true;
   const t = doc.boxes[to];
@@ -163,7 +163,7 @@ export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
  * at = 今のアイテム (あればその箱の手が打てる時だけ。光 + 消去の箱は普通の MOD の外れを消せず、兜で 93 人止まった)
  */
 function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem; doc?: TreeDoc }): string | null {
-  // 同じ形の箱が幾つかあれば、体 (tree-box-shape の bodyOf) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (スイッチ goalShape。合う箱が無くても止まりは増やさない)
+  // 同じ形の箱が幾つかあれば、体 (tree-box-shape の bodyOf) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (合う箱が無くても止まりは増やさない)
   // ✦ の側とレアリティが違う箱へは行かない (✦ は消せない。外れが固定された枝の箱に狙いが固定された人が入り、見本の ✦ が箱ごとに変わった、10-28 モンキー 7。スイッチ boxShape)
   const held = heldOfKey(key);
   const fixed = at?.doc ? bodyFixed(bodyOf(at.data, at.doc, at.item, held)) : "";
@@ -280,7 +280,7 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
  * 形の合う箱へと、狙いが消えた → 始まりは同じ形の箱へ付け替える)
  */
 /**
- * loose = 箱の体 (tree-box-shape の bodyMemo。applyPick が渡す、スイッチ goalShape)。渡すと体の同じ箱だけ (sameBody)。形の鍵は外れの有無だけなので、外れの数が違う箱
+ * loose = 箱の体 (tree-box-shape の bodyMemo。applyPick が渡す)。渡すと体の同じ箱だけ (sameBody)。形の鍵は外れの有無だけなので、外れの数が違う箱
  * (高貴の外れの外れなど) へはつながない・戻らない (10-27 夕モンキー 8: 外れ 2 つの箱が外れ 1 つの箱へ自動で戻り、回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった)
  */
 export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: BodyOf): void {
@@ -325,7 +325,7 @@ const hitStateKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map(
  * まとまらなかった。前は上の箱も除いていた。まとめで消すのは自分の下だけなので、上の箱は触らない)。
  * 戻りの矢印を持つ箱 (もうどこかへつないだ箱) と分かれ目も除く。並びは先に作った箱から
  */
-/** loose = 箱の体 (tree-box-shape の bodyMemo)。渡すと外れの側・種類・数まで同じ箱だけ (置き石も冒涜の外れ MOD に数える。10-28 オーナー「全く = じゃないのに、なんでつながってる」、スイッチ boneLater) */
+/** loose = 箱の体 (tree-box-shape の bodyMemo)。渡すと外れの側・種類・数まで同じ箱だけ (置き石も冒涜の外れ MOD に数える。10-28 オーナー「全く = じゃないのに、なんでつながってる」) */
 export function sameHitsOf(doc: TreeDoc, id: string, loose?: BodyOf): string[] {
   const b = doc.boxes[id];
   if (!b || b.out !== "hit" || !b.aim || b.back || b.split) return [];
@@ -412,7 +412,7 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
   return outBoxOfRaw(doc, b, oc, after);
 }
 function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
-  // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)。
+  // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)。
   // 鍵の合う箱が無ければ (前の版の 1 箱の外れ、見本で出なかった側) 今までどおり種類の合う箱
   // 狙いが消えたの箱も側の鍵を持つので (S-71g)、外れの人を同じ鍵の狙いが消えたの箱へ入れない
   if (oc.junkKey) { const k = b.outs.find((id) => doc.boxes[id]?.junkKey === oc.junkKey && (oc.out !== "lost" || doc.boxes[id]?.out === "lost") && (oc.out === "lost" || doc.boxes[id]?.out !== "lost") && (oc.out !== "hit" || !oc.hits.length || (doc.boxes[id]?.out === "hit" && boxAims(doc.boxes[id]!).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier))))); if (k) return k; }
@@ -436,7 +436,7 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; 
 
 /**
  * 結果の箱 (外れ・狙いが消えた・打った後・当たり) で手 h を選んだ時の戻り先 (当たりも同じ、10-27 夕オーナー「同じ手・同じ狙い・同じ挙動の箱を自動で見つける話」) (シミュのルール = PC・スマホ共通、tree-hand-plan の applyPick が呼ぶ。
- * 10-27 オーナー「ここの挙動はシミュのルールだから共通でしょ」、スイッチ goalShape)。新しい段は作らずその箱へ戻る:
+ * 10-27 オーナー「ここの挙動はシミュのルールだから共通でしょ」)。新しい段は作らずその箱へ戻る:
  * ① 打つ前の箱 (親) と同じ手 = 再度挑戦 (10-27 オーナー「ハズレでかつ同じ MOD 群で 1 段上に進むことはない」)
  * ② 木の中でこの箱と同じ形 (形の鍵 = 狙いの組 + 外れの有無、shapeFits も合う) で同じ手の箱 (候補が幾つもあれば上の段。r/okPcmPyY: 冒涜の外れで、同じ形の外れのエッセンスと同じ手)。
  * 自分と自分の下は除く。同じ手 = 同じカレンシーとお告げ (狙いの選び方は問わない)。無ければ null = 今までどおり新しい段

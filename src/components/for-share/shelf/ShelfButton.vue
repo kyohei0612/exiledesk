@@ -81,13 +81,13 @@ const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : sh
  * (2026-10-08 オーナー iPhone「付けたいカレンシーをタップしたら説明が出て、付けたい時に押せなかったり説明が邪魔」)
  */
 const touchOnly = isTouchOnly();
-/** マウスが動くのを待っている時の取り消し (画面が動いて下に来ただけでは開かない、utils/pointer-moved。本番はスイッチ firstVisit1024 まで前の形) */
+/** マウスが動くのを待っている時の取り消し (画面が動いて下に来ただけでは開かない、utils/pointer-moved) */
 let stopWait = (): void => undefined;
 function enter(e: MouseEvent): void {
   if (touchOnly) return;
   const el = e.currentTarget as HTMLElement;
   stopWait();
-  if (flag("firstVisit1024")) stopWait = afterPointerMoves(e, () => openCard(el)); else openCard(el);
+  stopWait = afterPointerMoves(e, () => openCard(el));
 }
 function openCard(el: HTMLElement): void {
   let r: { left: number; right: number; top: number; bottom: number } = el.getBoundingClientRect();

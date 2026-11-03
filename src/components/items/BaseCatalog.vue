@@ -292,11 +292,10 @@ function revealPhoneHead(): void {
 watch(cls, (v, was) => { if (phone.value && OPEN_FIX && family.value && v && was && v !== was && !query.value.trim()) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPhoneHead))); });
 /**
  * 送っている間と止まってから少しの間は、一覧の中の押しを捨てる (送る前に狙ったベースの位置を押すと、滑ってきた上の札「知性」などに当たっていた。
- * 2026-10-24 モンキー初めての人の回、シミュの完成形の設定・エミュのベースのページとも)。本番はスイッチ firstVisit1024 が入るまで前の形
+ * 2026-10-24 モンキー初めての人の回、シミュの完成形の設定・エミュのベースのページとも)
  */
 let holdUntil = 0;
 function holdClicks(p: Promise<unknown>): void {
-  if (!flag("firstVisit1024")) return;
   holdUntil = Infinity;
   void p.finally(() => { holdUntil = performance.now() + 350; });
 }

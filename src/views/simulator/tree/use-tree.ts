@@ -18,7 +18,6 @@ import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped,
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
-import { flag } from "../../../web/release-flags";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 
@@ -234,7 +233,7 @@ function setTreeNote(text: string): void {
 /** 別の木を開いた回数 (開いた木の箱を上から順に出し直す、use-tree-reveal.ts) */
 const opened = ref(0);
 const putTree = (t: TreeDoc): void => { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(t))); migrateStart(d); }, true); };
-/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる)。スイッチ recipeV1 の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
+/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
 function open(tree: TreeDoc, stepped = false): void {
   if (stepped && s.data.value && tidyOn()) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
   const f = openForm(tree, s.data.value);
@@ -272,7 +271,7 @@ function setBase(base: string, itemLevel: number): Aim[] {
     const { memoAims = [], goal } = d, mods = startOf(d).mods, fit = d.ilvlFit;
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
     Object.assign(d, newTree(base, itemLevel), { baseChosen: true });
-    // 手で入れたアイテムレベル (適正を外した) はベースを替えても外したまま (10-27 夕モンキー 6: スマホで 80 にしてからベースを選ぶと適正に戻り、狙いを足すと 75 になった。スイッチ goalShape)
+    // 手で入れたアイテムレベル (適正を外した) はベースを替えても外したまま (10-27 夕モンキー 6: スマホで 80 にしてからベースを選ぶと適正に戻り、狙いを足すと 75 になった)
     if (!fit) delete d.ilvlFit;
     if (!data) return;
     const aims = carryAims(data, base, itemLevel, memoAims);
@@ -328,8 +327,7 @@ function toggleFracture(modId: string, tier: number): void {
   edit((d) => {
     const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId);
     // 印は 1 つだけ: 付けるとほかの印は外れる (10-26 夜オーナー「PC もスマホも 1 つだけ」。始め方はツリーへ行く時の窓 TreeStartAsk)
-    // 複数付けられる時は外さない (10-28 オーナー「✦ を複数設定してよい」、スイッチ fracMulti)
-    if (!flag("fracMulti") && !(g?.fractured && g.tier === tier)) for (const a of list) if (a.modId !== modId) delete a.fractured;
+    // 複数付けられるので外さない (10-28 オーナー「✦ を複数設定してよい」)
     if (!g) list.push({ modId, tier, fractured: true });
     else if (g.fractured && g.tier === tier) delete g.fractured;
     else { if (g.tier !== tier) delete g.values; g.tier = tier; g.fractured = true; }

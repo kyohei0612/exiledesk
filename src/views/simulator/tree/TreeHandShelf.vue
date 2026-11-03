@@ -38,7 +38,6 @@ import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
-import { flag } from "../../../web/release-flags";
 import { useHandLater } from "./use-hand-later";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -125,7 +124,7 @@ const shelfItem = computed(() => preFill.value?.item ?? item.value);
 /** スマホの下の帯に出す持った札の説明 (PC は札に乗せると出るカードと同じ文、** の太字の印は外す。省略しない。10-26 夜オーナー「スマホも PC と同じ動きに」) */
 const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value, shelfItem.value).map((l) => l.replace(/\*\*/g, "")) : []));
 /**
- * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く、スイッチ noSpam と同じ扱い。
+ * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く と同じ扱い。
  * 前の木に入っている錯乱の手は開けば今まで通り (持ち直さなければ替わらない)
  */
 /** 錯乱のエッセンスの鍵 (名前はデータから handName で引く) */
@@ -151,15 +150,15 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
  * 付く MOD を選べない手だけ (足す・カオス。10-25 オーナー「全カレンシーで上記の表示して、カオスとか対応してない」、エッセンス・合金は出さない)
  */
 /**
- * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) = 付きうる能力値のうち完成の狙いにある物を ☑ で当たりにする (10-27 オーナー、スイッチ goalShape。
+ * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) = 付きうる能力値のうち完成の狙いにある物を ☑ で当たりにする (10-27 オーナー。
  * ☑ の無い能力値は外れ MOD)。完成の狙いに 1 つも無ければ欄を出さず、結果は外れだけ (オーナー「狙い MOD に無いなら全部等しく外れ。ここは外れ MOD をただ付ける作業」)
  */
 const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
-/** 骨の手の「発現させる」☑ (既定は無し = 未発現のまま次へ。スイッチ boneLater、TreeVeilCheck)。発現させる時は発現で出うる MOD 全部が狙いの候補 */
+/** 骨の手の「発現させる」☑ (既定は無し = 未発現のまま次へ、TreeVeilCheck)。発現させる時は発現で出うる MOD 全部が狙いの候補 */
 const veilOn = ref(!!props.current && isBone(props.current.currency) && props.current.veil !== "keep"); // 前の版の骨の手 (veil 無し) は同じ手で発現 = ☑ あり
 const boneVeil = computed(() => !!held.value && isBone(held.value));
-/** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b、スイッチ keepOutside) */
-const pagedAims = computed(() => (flag("keepOutside") && ((boneVeil.value && veilOn.value) || held.value === "reveal") ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : aimChoices.value));
+/** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b) */
+const pagedAims = computed(() => ((boneVeil.value && veilOn.value) || held.value === "reveal" ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : aimChoices.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
 function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); } // 反響は外す時だけ外す (付けるのは任意の ☑)
 const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
@@ -217,14 +216,14 @@ watch(held, (k, old) => {
   // 持ち替えたら前の物のお告げは外す (エミュの M-13。元の手に持ち直したら元のお告げ)
   if (k && old) omens.value = k === props.current?.currency ? [...props.current.omens] : [];
 });
-/** 残したい MOD (消去 S-27 と、スイッチ keepAll の消える手 S-27d。use-hand-keep) */
+/** 残したい MOD (消去 S-27 と の消える手 S-27d。use-hand-keep) */
 const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf });
 const keepAsk = k.ask;
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
-const addLabels = computed((): string[] => (flag("keepAll") && keepAsk.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
-/** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside)。付く MOD が完成形の狙いの手には出さない */
+const addLabels = computed((): string[] => (keepAsk.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
+/** エッセンスの「ブロックに使う」☑ (S-33b)。付く MOD が完成形の狙いの手には出さない */
 const blockOn = ref(!!props.current?.block);
-const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return flag("keepOutside") && !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
+const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
 function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
 watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
@@ -283,11 +282,11 @@ const gone = later(handKey, goneNow);
 const phone = usePhone();
 const aimStep = ref(false);
 /**
- * スマホの 10-27 昼の直し (スイッチ phone1027): 持った物の説明は既定で閉じる (開くのは任意)。
+ * スマホの 10-27 昼の直し : 持った物の説明は既定で閉じる (開くのは任意)。
  * 消去は高貴・カオスと同じく、まず持って「使う ›」→ 次のページで残したい MOD (上に ☑ の並び、一番下に全部消えてよい、既定オン。「n MOD 外れ MOD」は出さない)
  */
 const P27 = computed(() => phone.value);
-/** カオススパムオーブの札と呼び名を出さない (スイッチ noSpam、10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
+/** カオススパムオーブの札と呼び名を出さない (10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
 const helpOpen = ref(false);
 const keepStep = ref(false);
 watch(held, () => { aimStep.value = false; keepStep.value = false; helpOpen.value = false; });

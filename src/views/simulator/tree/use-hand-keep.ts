@@ -1,5 +1,5 @@
 /**
- * use-hand-keep.ts — 手の窓の「残したい MOD」(TreeHandShelf.vue から分けた、2026-10-31)。消去 (S-27、10-27 オーナー) と、スイッチ keepAll では
+ * use-hand-keep.ts — 手の窓の「残したい MOD」(TreeHandShelf.vue から分けた、2026-10-31)。消去 (S-27、10-27 オーナー) と では
  * 消去でない消える手 (カオス・パーフェクトエッセンス・満杯の側の骨、S-27d、10-31 朝オーナー決め 7)。
  * 消去の既定 = 全部消えてよい (☑ 無し)、消える手の既定 = 持っている狙い (☑ の印) 全部 = 今までの数え。候補が 1 つ以下なら聞かない (S-27b)
  */
@@ -17,14 +17,13 @@ import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { useTree } from "./use-tree";
 import { modText, tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
 export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem }) {
   const t = useTree();
   /** 消去 (全部消えてよい = 消去の箱を並べる、全部は残せない) か */
   const isRemove = computed(() => !!o.held.value && effectOf(o.held.value) === "remove");
-  const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h && (isRemove.value || flag("keepAll")) ? keepChoicesOf(d, it, h, o.omens.value) : []; });
+  const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h ? keepChoicesOf(d, it, h, o.omens.value) : []; });
   /** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value); });
   /** カードの見本の ☑ の印 (箱のカードと同じ見本、S-82) */
@@ -40,10 +39,10 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     const am = aimedNow(d, o.item.value), mid = choices.value.filter((c) => am.has(c.aim.modId) && midAims(t.doc.value).some((a) => a.modId === c.aim.modId));
     return mid.length && mid.length < choices.value.length ? mid.map((c) => aimKey(c.aim)) : [];
   };
-  /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。スイッチ keepOutside。✦ は出さない。候補を聞く時だけ) */
+  /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。✦ は出さない。候補を聞く時だけ) */
   const fixed = computed((): StageMod[] => {
     const d = s.data.value, it = o.item.value, h = o.held.value;
-    if (!flag("keepOutside") || !d || !it || !h || !ask.value) return [];
+    if (!d || !it || !h || !ask.value) return [];
     const am = aimedNow(d, it), stay = new Set(outsideAimed(d, t.doc.value, { currency: h, omens: o.omens.value, catalyst: null, quality: 0 }, am, it));
     const goals = [...(t.doc.value.memoAims ?? []), ...midAims(t.doc.value)].filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
     return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !choices.value.some((c) => c.mod.modId === m.modId) && goals.some((g) => aimOn(d, m, g)));

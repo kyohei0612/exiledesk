@@ -40,7 +40,7 @@ export const bodyFixed = (body: string): string => { if (body.startsWith("mixed"
 export const bodyKinds = (body: string): string => {
   if (body.startsWith("mixed")) return body;
   const { p, s } = partsOf(body), k = p.map((v, i) => ((v + (s[i] ?? 0)) > 0 ? 1 : 0));
-  // スイッチ judgeOne: 外れは種類を見ない (普通・エッセンス・冒涜の発現済みは 1 つ)。種類が違う (mixed) のは未発現が混ざる時だけ (S-63、10-29 深夜オーナー「未発現のみ別枠として全然おｋ」)
+  // 外れは種類を見ない (普通・エッセンス・冒涜の発現済みは 1 つ)。種類が違う (mixed) のは未発現が混ざる時だけ (S-63、10-29 深夜オーナー「未発現のみ別枠として全然おｋ」)
   return `${k.slice(0, 3).some(Boolean) ? 1 : 0}${k[3] ?? 0}`;
 };
 /** 冒涜 (発現済み・未発現) の外れがあるか (mixed = 見本ごとに種類が違う箱も含める) */

@@ -1,5 +1,5 @@
 /**
- * tree-row-tops.ts — 箱の縦の置き場を、縦の線が全部同じ長さになるように決める (スイッチ lineShort、S-68)。
+ * tree-row-tops.ts — 箱の縦の置き場を、縦の線が全部同じ長さになるように決める (S-68)。
  * 10-28 夜オーナー「下に伸びる線とかれんしーから伸びる線同じでいいよ…なげーよ」「えだわかれするところもいっしょのながさに」
  * 「整列前からそもそもそういう普通に設定してくれ。カレンしー、枝、カレンシーから伸びる線全て同じ長さで今のカレンシーから次の枠までの長さに統一せよ」。
  * 前は行 = 深さ × 360 の決まった高さ (整列の時だけ詰めた) で、開いた木・背の低い箱の下の線が長かった。
@@ -7,7 +7,6 @@
  * 札と枝分かれの高さは use-tree-edges が同じ式で引く。画面は木を開いた時・手を足した時・箱の高さが変わった時にいつも掛け直す (use-row-settle、1 つ戻すには入れない)
  */
 import { BOX_W, type TreeBox, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
 import { foldOuts, stripFolds, stripHidden } from "./tree-strip-fold";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
@@ -21,7 +20,7 @@ export const EST_H = 230;
 
 /** まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) */
 const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
-const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back);
+const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back);
 /** 描く子 (まとめた箱はまとめ先へ線が行くので数えない。畳んだ消去の直線は札から最後の箱へ、S-28b) */
 export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => foldOuts(d, b).filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
 /** 横の枝分かれを描くか (線の行き先が 2 つ以上、まとめ先への線を含む) */

@@ -6,7 +6,6 @@ import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { flag } from "../../../web/release-flags";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { FOLD_H, foldOuts, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 
@@ -22,11 +21,10 @@ const PASS_R = 16;
  * (10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」→「ここと同じにしようか」= 箱 → 札の縦の線と同じ形。18 → 34 → 40)。棒は札のすぐ下 (段の間 240 で札の下から 8)
  */
 const BUS_DY = HAND_DY - CHIP_HALF;
-const SHORT = flag("lineShort");
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
 const CHIP_MAX = 340;
 
-/** layout = 段の決め (スイッチ lineShort、tree-row-tops の rowLayout)。渡すと札と枝分かれを段で揃える */
+/** layout = 段の決め (tree-row-tops の rowLayout)。渡すと札と枝分かれを段で揃える */
 export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }, layout?: () => RowLayout | null) {
   /** 箱の真ん中 */
   const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
@@ -45,15 +43,15 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // まとめて描かない箱 (案 A) は、まとめ先の箱へ直に線を引く (同じまとめ先が 2 つあれば 1 本)
     const kids = [...new Map(outsOf(b).map((o) => { const c0 = doc.value.boxes[o]!, to = mergedAway(doc.value, c0) ? c0.back! : o; return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
-    // スイッチ lineShort: 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
+    // 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
     // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
     const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
     const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H);
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
-    const Lr = SHORT ? layout?.() ?? null : null, r = Lr?.rows.get(b.id);
+    const Lr = layout?.() ?? null, r = Lr?.rows.get(b.id);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
-    const jy = pass ? p.y : rowJy ?? (SHORT ? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF : top - BUS_DY - CHIP_HALF - 8);
-    const busY = (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : SHORT ? top - (multi ? LINE_Y : LINE_Y / 2) : top - BUS_DY) - (busShift.value.get(b.id) ?? 0);
+    const jy = pass ? p.y : rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
+    const busY = (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {

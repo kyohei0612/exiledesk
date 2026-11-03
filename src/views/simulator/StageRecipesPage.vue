@@ -10,9 +10,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
-import SimPcOnly from "./SimPcOnly.vue";
-import { usePhone, useViewOnlyWidth } from "../../utils/use-phone";
-import { flag } from "../../web/release-flags";
+import { useViewOnlyWidth } from "../../utils/use-phone";
 import { quickSave, unsaved } from "./tree/tree-save";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { askLeave, openTreePage, setLeaveGuard } from "../../web/page";
@@ -27,14 +25,14 @@ import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
 const t = useTree();
-/** シミュの見るだけの幅 (S-94d、スイッチ phoneView): できるのは 開く・URL をコピー・URL を貼って開く・消すだけ */
+/** シミュの見るだけの幅 (S-94d): できるのは 開く・URL をコピー・URL を貼って開く・消すだけ */
 const viewWidth = useViewOnlyWidth();
-const view = computed(() => viewWidth.value && flag("phoneView"));
+const view = computed(() => viewWidth.value);
 const baseName = (r: TreeRecipe): string => tr(jaTypeName(r.tree.base), r.tree.base);
 /** 1 枚の要約 (ベースの絵・完成の狙い・印・空の木か。帯の小窓と同じ) */
 const sumOf = (r: TreeRecipe) => recipeSummary(r.tree);
 const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
-  // 保存の形 v1 (打ち方だけ、スイッチ recipeV1) は箱を持たないので、決めた箱の数を数える
+  // 保存の形 v1 (打ち方だけ) は箱を持たないので、決めた箱の数を数える
   const bs = r.tree.picks ? r.tree.picks : Object.values(r.tree.boxes);
   return { boxes: bs.length, done: bs.filter((b) => b.done).length };
 };
@@ -142,15 +140,10 @@ onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEven
 onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value, { save: () => void quickSave() }));
 onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value) t.resetAll(); });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
-/** スマホの形 (1280 未満、U-53) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone が入っていれば PC と同じ中身 (縦積みは max-md の寸法) */
-const phone = usePhone();
-const SIM_PHONE = flag("simPhone");
 </script>
 
 <template>
   <section data-recipes-page class="min-w-0 flex-1 p-4 max-md:px-2">
-    <SimPcOnly v-if="phone && !SIM_PHONE" />
-    <template v-else>
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("レシピ", "Recipes") }}</h1>
       <!-- ツリーへ戻る道は題の横 (ここから戻る道がほかに無い。右上でなく題の横、10-24 オーナー)。Esc でも戻る -->
@@ -225,6 +218,5 @@ const SIM_PHONE = flag("simPhone");
         </li>
       </ul>
     </div>
-    </template>
   </section>
 </template>
