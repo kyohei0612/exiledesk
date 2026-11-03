@@ -14,12 +14,12 @@ import { TUT_EDITABLE, tutDirty } from "./tut-data";
 import SimTutorialEditor from "./SimTutorialEditor.vue";
 import { isPhoneWidth } from "../../../utils/use-phone";
 import { handOpen, inView } from "./tut-dom";
-import { clipRect, litRect, maskPath, type Rect } from "./tut-mask";
+import { clipRect, litRect, maskPath, softPath, type Rect } from "./tut-mask";
 
 const tut = useSimTutorial();
 const ring = ref<Rect | null>(null);
-/** 灰色の幕の形 (SVG の d) と大きさ */
-const mask = ref<{ d: string; w: number; h: number } | null>(null);
+/** 灰色の幕の形 (SVG の d、dark = 黒 0.6・soft = 薄い黒 0.3) と大きさ */
+const mask = ref<{ d: string; soft: string; w: number; h: number } | null>(null);
 const narrow = ref(false);
 /** 書く所を開いている (dev だけ) */
 const editing = ref(false);
@@ -90,14 +90,17 @@ function placePhone(r: { y: number; h: number } | null, W: number, H: number, ch
 const zoomOf = (): number => Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
 /** 幕から抜く結果 (最終チェックの ✓・100 人のまとめ) */
 const LIT_RESULTS = "[data-tree-test-ok], [data-tree-run-report]";
+/** 完成形 (木のページの左上の札・完成形のページのカード)。全部の段で薄い幕にする (T-30 の光り方) */
+const GOAL = "[data-tree-goal], [data-tree-goal-card]";
 /**
- * 幕の穴: 光る所 (枠と同じ四角) + 道の箱 (今の手順までの手順の箱。窓が開いている時は窓の下なので出さない、木の枠の中で切る) + 結果。
+ * 幕の穴 (T-30 の光り方): clear = 幕なし (光る所・結果)、soft = 薄い幕 (完成形・道の箱。道の箱は窓が開いている時は窓の下なので出さず、木の枠の中で切る)。
  * 前に見えていない物 (窓などの下) は抜かない (抜くと上の窓が明るく見える)
  */
-function holes(el: HTMLElement | null, z: number): Rect[] {
-  const out: Rect[] = [];
+function holes(el: HTMLElement | null, z: number): { clear: Rect[]; soft: Rect[] } {
+  const clear: Rect[] = [], out: Rect[] = [];
   const t = el ? litRect(el, z, 4) : null;
-  if (t) out.push(t);
+  if (t) clear.push(t);
+  for (const e of document.querySelectorAll<HTMLElement>(GOAL)) { const r = e.getClientRects().length && !covered(e) ? litRect(e, z, 4) : null; if (r) out.push(r); }
   const fr = document.querySelector("[data-tree-frame]");
   const f = fr ? litRect(fr, z) : null;
   if (f && !handOpen()) {
@@ -109,8 +112,8 @@ function holes(el: HTMLElement | null, z: number): Rect[] {
       if (c) out.push(c);
     }
   }
-  for (const e of document.querySelectorAll<HTMLElement>(LIT_RESULTS)) { const r = e.getClientRects().length && !covered(e) ? litRect(e, z, 4) : null; if (r) out.push(r); }
-  return out;
+  for (const e of document.querySelectorAll<HTMLElement>(LIT_RESULTS)) { const r = e.getClientRects().length && !covered(e) ? litRect(e, z, 4) : null; if (r) clear.push(r); }
+  return { clear, soft: out };
 }
 function frame(): void {
   const el = tutOn.value ? targetEl(tut.target.value) : null;
@@ -128,9 +131,9 @@ function frame(): void {
   // (11-03 オーナー「案内する所さえグレアウトしてるしなんなん」。1440 の dev が HMR の後に木の状態を 2 つ持ち、完成形のカードに目印が無かった)
   const lost = !!tut.target.value && !el;
   const hs = tutOn.value && !off.value && !lost ? holes(el, z) : null;
-  mask.value = hs ? { d: maskPath(W, H, hs), w: W, h: H } : null;
-  // 光る所が動かなければ札も動かない (打っている間も)。書く所を開いて背が伸びた時は画面に収まる所へ。明るくした所 (穴の 2 つ目から) もなるべく避ける
-  place(ring.value, hs?.slice(el ? 1 : 0) ?? []);
+  mask.value = hs ? { d: maskPath(W, H, [...hs.clear, ...hs.soft]), soft: softPath(W, H, hs.soft, hs.clear), w: W, h: H } : null;
+  // 光る所が動かなければ札も動かない (打っている間も)。書く所を開いて背が伸びた時は画面に収まる所へ。明るくした所 (光る所の外) もなるべく避ける
+  place(ring.value, hs ? [...hs.clear.slice(el ? 1 : 0), ...hs.soft] : []);
   raf = requestAnimationFrame(frame);
 }
 onMounted(() => {
@@ -163,8 +166,11 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
   <!-- body へ出す (木のページの中は transform のある親があり、fixed の枠が親の分ずれた) -->
   <Teleport to="body"><template v-if="tutOn">
     <!-- 灰色の幕 (z 1100、U-17 の 4)。塗った所だけが押し・ホバー・ホイールを受け止め、穴の所は下へ届く。押しても窓の「枠の外」に数えない (data-dismiss-keep)、Esc の窓には数えない (data-overlay を付けない、U-17 の 8) -->
-    <svg v-if="mask" data-tut-mask data-dismiss-keep aria-hidden="true" class="pointer-events-none fixed left-0 top-0 z-[1100]" :width="mask.w" :height="mask.h" :viewBox="`0 0 ${mask.w} ${mask.h}`" shape-rendering="crispEdges">
-      <path :d="mask.d" class="tut-mask pointer-events-auto" @pointerdown.stop.prevent @mousedown.stop.prevent @click.stop.prevent @dblclick.stop.prevent @contextmenu.prevent @wheel.prevent @touchstart.stop.prevent />
+    <!-- 光り方 (T-30): 濃い幕 (押しを受け止める) + 完成形・道の箱の薄い幕 (押せる)。縁はぼかす (押しの形はぼかす前のまま) -->
+    <svg v-if="mask" data-tut-mask data-dismiss-keep aria-hidden="true" class="pointer-events-none fixed left-0 top-0 z-[1100]" :width="mask.w" :height="mask.h" :viewBox="`0 0 ${mask.w} ${mask.h}`">
+      <defs><filter id="tut-feather" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="6" /></filter></defs>
+      <path :d="mask.d" filter="url(#tut-feather)" class="tut-mask pointer-events-auto" @pointerdown.stop.prevent @mousedown.stop.prevent @click.stop.prevent @dblclick.stop.prevent @contextmenu.prevent @wheel.prevent @touchstart.stop.prevent />
+      <path :d="mask.soft" filter="url(#tut-feather)" class="tut-mask-soft" />
     </svg>
     <div v-if="ring && !off" data-tut-ring aria-hidden="true" class="tut-ring pointer-events-none fixed z-[1200] rounded-lg" :style="{ left: `${ring.x}px`, top: `${ring.y}px`, width: `${ring.w}px`, height: `${ring.h}px` }" />
     <!-- メモ帳の札 (光る所のそばへ動く。無ければ左下) -->
@@ -198,6 +204,8 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
 <style scoped>
 /* 灰色の幕 (黒 0.6、彩度は残す。U-17 の 7) */
 .tut-mask { fill: rgba(0, 0, 0, 0.6); }
+/* 完成形・道の箱の薄い幕 (一段弱い明るさ、T-30 の光り方) */
+.tut-mask-soft { fill: rgba(0, 0, 0, 0.3); }
 /* 押す所の光る枠 (ゆっくり明るさだけ揺らす) */
 .tut-ring { box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.95), 0 0 18px 4px rgba(251, 191, 36, 0.55); animation: tut-pulse 1.4s ease-in-out infinite; }
 @keyframes tut-pulse { 50% { box-shadow: 0 0 0 3px rgba(253, 230, 138, 1), 0 0 26px 8px rgba(251, 191, 36, 0.75); } }
