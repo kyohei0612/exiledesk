@@ -14,6 +14,13 @@ type SectionLike = { columns: Array<{ items: ListRow[] }>; rune?: unknown; socke
 /** 持っている物 (key = カレンシー・骨などのキー、name = 画面の名前) */
 export interface HeldAt { data: PatchData; item: StageItem; key: string; omens: readonly string[]; name: string }
 
+/** 灰色の行の理由は止めた物に合わせる (M-43a): family = 同じ系統 (E-11a)、tag = 付いている MOD が足すタグ (E-11i) */
+export function blockedTitle(r: ListRow): string {
+  return r.blockedBy === "tag"
+    ? tr("付いている MOD が止めるので、今は付かない", "A mod on the item prevents this from rolling now")
+    : tr("同じ系統の MOD が付いているので、今は付かない", "A mod from the same group is already on the item, so this cannot roll now");
+}
+
 export function useHeldShares(held: () => HeldAt | null, data: () => PatchData | null) {
   /** 持っている物で次に付く確率 (null = 持っていない / MOD を足さない物) */
   const heldCands = computed(() => {
@@ -49,7 +56,7 @@ export function useHeldShares(held: () => HeldAt | null, data: () => PatchData |
   const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
   const tierShareOf = (r: ListRow, t: ListTier): string => (!cannow(r) ? "0%" : heldCands.value ? fmtPct(heldTierShare(r, t)) : t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "");
   const rowDim = (r: ListRow): boolean => r.blocked || (!!heldCands.value && !heldShare(r)) || (r.group === "rune" && !r.socketed);
-  const rowTitle = (r: ListRow): string | undefined => (r.blocked ? tr("同じ系統の MOD が付いているので、今は付かない", "A mod from the same group is already on the item, so this cannot roll now") : heldCands.value && !heldShare(r) ? tr(`持っている ${heldCands.value.name} では付かない`, `Cannot roll with the held ${heldCands.value.name}`) : undefined);
+  const rowTitle = (r: ListRow): string | undefined => (r.blocked ? blockedTitle(r) : heldCands.value && !heldShare(r) ? tr(`持っている ${heldCands.value.name} では付かない`, `Cannot roll with the held ${heldCands.value.name}`) : undefined);
   const tierDim = (r: ListRow, t: ListTier): boolean => !!heldCands.value && !heldTierShare(r, t);
   const tierTitle = (r: ListRow, t: ListTier): string | undefined => (heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
   function shareTitle(r: ListRow): string {

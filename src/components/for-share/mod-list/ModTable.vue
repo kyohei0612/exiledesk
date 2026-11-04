@@ -16,6 +16,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import { flag } from "../../../web/release-flags";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
+import { blockedTitle } from "./use-held-shares";
 import { TIER } from "../../../state/for-share/tier-word";
 import { isPhoneWidth } from "../../../utils/use-phone";
 /** ティアの列の幅: 「ティア」が 1 行で入る分 (段・英語の T は前のまま) */
@@ -267,7 +268,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               :data-rec="`mod:${r.id}`"
               class="relative min-w-0 flex-1 overflow-hidden rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]"
               :class="[dimOf(r) ? 'opacity-40' : '', expanded === `${sec.sid}:${r.id}` ? 'bg-white/[0.06]' : '']"
-              :title="props.rowTitle ? props.rowTitle(r) : r.blocked ? tr('同じ系統の MOD が付いているので、今は付かない', 'A mod from the same group is already on the item, so this cannot roll now') : undefined"
+              :title="props.rowTitle ? props.rowTitle(r) : r.blocked ? blockedTitle(r) : undefined"
               @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
             >
               <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(shareOf(r) / colTop(col.items)) * 100}%` }" />
