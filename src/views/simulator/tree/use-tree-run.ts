@@ -6,7 +6,7 @@
  * (10-22 オーナー「回す前に 1 人通して木が正しいか確かめる」)
  */
 import { devLog } from "../../../web/dev-log";
-import { computed, nextTick, ref, watch, type Ref } from "vue";
+import { computed, nextTick, ref, shallowRef, watch, type Ref } from "vue";
 import { runTreeSteps, withStartCost, type TreeRunOpts, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -57,10 +57,17 @@ export function runPrice(priceOf: (key: string) => number): (key: string) => num
   return (k) => { let v = memo.get(k); if (v === undefined) { v = priceOf(k) / div; memo.set(k, v); } return v; };
 }
 /**
+ * 木を外から持たせる画面 (デイリーの挑戦、D-41 ④) が回す時の種・値段・ベースの値段 (S-70c)。null = 普段 (種 1・木の相場・木のベースの値段)。
+ * price は相場のまま (高貴建て、priceOfKey と同じ形)。神に直すのは runPrice。入れた画面が出る時に null に戻す
+ */
+export type TreeRunRig = { seed: number; price: (key: string) => number; startCost?: number };
+export const treeRunRig = shallowRef<TreeRunRig | null>(null);
+/**
  * onHalt = 止まった人が出て止めた時 (その箱へ寄る)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ)。
  * view = スマホの見るだけの 1 画面 (VIEW_N 人、1 人目の再生なし、印は sim:run-view、結果はカード絵に載せない = D2)
  */
-export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: (key: string) => number, onHalt: (box: string) => void, onWalk: (box: string, i: number) => void, view = false) {
+export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, priceOf: (key: string) => number, onHalt: (box: string) => void, onWalk: (box: string, i: number) => void, view = false) {
+  const startCost = (): number => treeRunRig.value?.startCost ?? treeStartCost();
   /** 回した結果 (回した時のベースの値段で)。外へは今のベースの値段で足し直した result を渡す (回し直さない、tree-run の withStartCost、10-25 オーナー) */
   const raw = ref<TreeRunResult | null>(null);
   const result = computed(() => (raw.value ? withStartCost(raw.value, startCost()) : null));
@@ -77,7 +84,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   let skip = false;
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
-  watch(() => routeKeyOf(doc.value), () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
+  watch([() => routeKeyOf(doc.value), treeRunRig], () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
   /** 開発版の記録 (S-197)。test = 最終チェックの 30 人 */
   const logRun = (): void => { const r = result.value; if (r) devLog("tree-run", { test: test.value, n: r.n, finished: r.finished, failed: r.failed, swamped: r.capped, stuck: r.stuck, perItem: Math.round(r.perItem), loopAt: r.loopAt, stuckAt: r.stuckAt, failAt: r.failAt, boxes: Object.keys(doc.value.boxes).length }); };
   /** opt.test = 穴チェックの走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
@@ -90,18 +97,19 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test || view;
     const d = doc.value;
     // 精査で回した同じ 30 人を使い回す (S-71b)。走行は 1 人 2,000 神で打ち止めなので、誰も届いていない時だけ同じ結果になる
-    const re = opt.reuse;
-    if (re && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
+    const re = opt.reuse, rig = treeRunRig.value;
+    // 種・値段を外から持たせている間は使い回さない (精査は種 1・木の相場で回している)
+    if (re && !rig && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
       await nextTick();
       if (my === token) { raw.value = re.run; running.value = false; logRun(); }
       return;
     }
-    const priceIn = runPrice(priceOf);
+    const priceIn = runPrice(rig?.price ?? priceOf);
     let last: TreeRunResult | null = null;
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {
@@ -158,7 +166,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       for (;;) {
         const r = withTreeTune(d, () => g.next());
         if (my !== token) return;
-        if (r.done) { raw.value = r.value; if (!opt.test && !view) noteCardRun(d, withStartCost(r.value, startCost())); break; }
+        if (r.done) { raw.value = r.value; if (!opt.test && !view && !rig) noteCardRun(d, withStartCost(r.value, startCost())); break; }
         // 1 人でも止まったらそこで止める (直してから回し直す)。打ち止め (神・手の上限) は止まりではないので続ける
         const st = last ? Object.keys((last as TreeRunResult).stuckAt)[0] : undefined;
         if (st && !opt.test) { halted.value = { box: st, n: r.value }; onHalt(st); break; }
