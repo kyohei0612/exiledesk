@@ -71,6 +71,9 @@
 [data-daily-slot="today"] .daily-tile-name { color: var(--skin-title); }
 .daily-post-entry .g-btn { width: 100%; }
 .daily-box { max-height: 76px; margin-top: 4px; overflow-y: auto; }
+/* 自分の投稿の行は名前 → 説明の縦積み (横並びだと説明に押されて名前が幅 0 に潰れ、1 字ずつ折れて下の行に重なった、11-04) */
+.daily-box .daily-row { flex-direction: column; align-items: stretch; gap: 0; }
+.daily-box .daily-row > span { flex: none; overflow-wrap: anywhere; }
 
 .daily-row { display: flex; width: 100%; align-items: center; gap: 12px; padding: 4px 8px; text-align: left; font-size: 14px; }
 .daily-row > span { min-width: 0; flex: 1; }
