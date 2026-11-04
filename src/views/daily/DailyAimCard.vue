@@ -3,7 +3,7 @@
   共有の木 (useTree) には触らない (締めた日のお題・投稿のページで木を壊さない)。値は段の真ん中
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../state/craft-stage";
@@ -14,6 +14,13 @@ import type { DailyAim } from "./daily-api";
 /** width = カードの幅 (無ければ PC 400・スマホ 340) */
 const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number }>();
 const phone = usePhone();
+/** 入れ物の幅 (カードはこれを超えない。拡大した狭い画面ではみ出した) */
+const box = ref<HTMLElement | null>(null);
+const room = ref(Infinity);
+let ro: ResizeObserver | null = null;
+onMounted(() => { ro = new ResizeObserver(() => { if (box.value) room.value = box.value.clientWidth; }); if (box.value) ro.observe(box.value); });
+onBeforeUnmount(() => ro?.disconnect());
+const cardW = computed(() => Math.max(200, Math.min(props.width ?? (phone.value ? 340 : 400), room.value)));
 const placed = computed(() => {
   const data = s.data.value;
   if (!data) return null;
@@ -25,8 +32,8 @@ const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.fin
 </script>
 
 <template>
-  <div data-daily-aim-card class="daily-aim-card">
-    <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="width ?? (phone ? 340 : 400)" compact tier-at-least />
+  <div ref="box" data-daily-aim-card class="daily-aim-card">
+    <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact tier-at-least />
     <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
     <ul v-if="left.length" data-daily-aim-left class="mt-2 text-[14px]">
       <li v-for="a in left" :key="a.modId">{{ tr(`カードに乗らない狙い: ${a.ja}`, `Not on the card: ${a.en}`) }} <small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small></li>

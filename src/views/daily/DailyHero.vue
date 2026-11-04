@@ -13,9 +13,13 @@ import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
+import { usePlateFit } from "./daily-plate";
 
 const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>();
 const phone = usePhone();
+const titleEl = ref<HTMLElement | null>(null);
+const textEl = ref<HTMLElement | null>(null);
+const { style: plateStyle, band: plateBand } = usePlateFit(titleEl, textEl);
 const art = computed(() => baseArt(props.topic.base));
 const name = computed(() => tr(props.topic.baseJa, props.topic.base));
 const slot = computed(() => SLOT_NAMES[props.topic.slot] ?? null);
@@ -38,7 +42,7 @@ const action = computed(() => {
 
 <template>
   <section data-daily-hero class="daily-hero">
-    <h2 class="daily-title">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</h2>
+    <h2 ref="titleEl" class="daily-title" :data-plate-band="plateBand || undefined" :style="plateStyle"><span ref="textEl" class="daily-title-text">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</span></h2>
     <div class="daily-hero-main">
       <div class="daily-veil">
         <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t || closed ? 'open' : ''" /></span>
