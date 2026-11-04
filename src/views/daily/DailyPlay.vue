@@ -8,7 +8,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
-import { treeStep } from "../../web/page";
+import { openDailyPage, treeStep } from "../../web/page";
 import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
@@ -125,6 +125,12 @@ const REFUSED: Record<StartError, () => string> = {
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
     <DailyPlayBar v-if="tryOf" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" />
+    <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
+    <div v-else class="daily-band2" data-daily-band2>
+      <div class="daily-band2-btns ml-auto">
+        <button type="button" class="g-btn sm" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+      </div>
+    </div>
 
     <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
     <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
