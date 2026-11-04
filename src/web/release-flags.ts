@@ -167,6 +167,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "siteLook",
   // 0.1.665 段の表の T4 以下は「もっと見る」(U-34、オーナー 11-05「それはリリースしておｋもっと見るＵＩ」、ブラック 43 の頼み)。閉じたままは daily・simTutorial
   "tierMore",
+  // 0.1.668 シミュのルーンをカードのソケットに置く・使用ルーン・エミュから枠で削らず取り込む (S-31f・S-20・S-31g・S-08d、オーナー 11-05 夜「おｋ　リリースでこれはフルチェック込みで」、猿 release-668 の後のブラック 44 の「出して」)。閉じたままは daily・simTutorial
+  "runeSocket", "pasteLoose", "useRunes",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
