@@ -187,7 +187,7 @@ const canUndo = shallowRef(false);
 /** やり直し (1 つ戻した物を戻す。新しく組み替えると消える、10-23 モンキー 1「戻した物がやり直しで戻らない」) */
 const redoStack: string[] = [];
 const canRedo = shallowRef(false);
-
+const STEP_MANY = 20; let bigDoc: TreeDoc | null = null; const bigStepNow = (): boolean => !!bigDoc && bigDoc === doc.value; // 1 つ戻す・やり直しで箱がこれ以上増えた木は箱を段ごとに順に出す (S-196c)
 /** 組み替えを 1 回 (写しを書き換えて差し替える。前の形は 1 つ戻す用に控える) */
 function edit(fn: (d: TreeDoc) => void, open = false): void {
   if (loading.value) return; // 開いている間は木を変えない (S-196)
@@ -211,9 +211,9 @@ function step(from: string[], to: string[]): void {
   if (prev) {
     to.push(JSON.stringify(doc.value));
     const d = JSON.parse(prev) as TreeDoc;
-    d.note = doc.value.note;
-    doc.value = d;
-    save(d);
+    // 箱が一度に多く増える時 (白紙の後の 1 つ戻すなど) は箱を段ごとに順に出す (S-196c、use-tree-reveal。木の中身は一度に置く)
+    d.note = doc.value.note; if (Object.keys(d.boxes).length - Object.keys(doc.value.boxes).length >= STEP_MANY) bigDoc = d;
+    doc.value = d; save(d);
   }
   canUndo.value = undoStack.length > 0;
   canRedo.value = redoStack.length > 0;
@@ -496,5 +496,5 @@ export const allowCost = allow;
  */
 if (import.meta.hot) import.meta.hot.dispose(() => location.reload());
 export function useTree() {
-  return { loading, tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { loading, bigStepNow, tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

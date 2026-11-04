@@ -22,7 +22,8 @@ function rowsOf(list: readonly TreeBox[]): string[][] {
   return rows.map((r) => r.sort((a, z) => a.x - z.x).map((b) => b.id));
 }
 
-export function useTreeReveal(list: ComputedRef<TreeBox[]>, ready: () => boolean, opened: Ref<number>) {
+/** big = 今の木が 1 つ戻す・やり直しで箱が多く増えた木か (S-196c。データを待っていなくても段ごとに出す。56 箱を一度に描くと 150〜180ms 固まった) */
+export function useTreeReveal(list: ComputedRef<TreeBox[]>, ready: () => boolean, opened: Ref<number>, big: () => boolean = () => false) {
   const seen = ref(new Set<string>());
   /** 段ごとに出している途中の段の数 (n/of)。無ければ出し終わり */
   const run = ref<{ n: number; of: number } | null>(null);
@@ -33,10 +34,13 @@ export function useTreeReveal(list: ComputedRef<TreeBox[]>, ready: () => boolean
    */
   let waited = !ready();
   function sync(): void {
+    // 木から消えた箱は出した箱から外す (白紙の後の 1 つ戻すで同じ id の箱が戻った時に新しい箱として段ごとに出す、S-196c)
+    const ids = new Set(list.value.map((b) => b.id));
+    if ([...seen.value].some((id) => !ids.has(id))) seen.value = new Set([...seen.value].filter((id) => ids.has(id)));
     if (!ready() || timer) return;
     const fresh = list.value.filter((b) => !seen.value.has(b.id));
     if (!fresh.length) return;
-    if (fresh.length <= AT_ONCE || !waited) { seen.value = new Set([...seen.value, ...fresh.map((b) => b.id)]); waited = false; return; }
+    if (fresh.length <= AT_ONCE || (!waited && !big())) { seen.value = new Set([...seen.value, ...fresh.map((b) => b.id)]); waited = false; return; }
     const rows = rowsOf(fresh);
     let i = 0;
     const step = (): void => {

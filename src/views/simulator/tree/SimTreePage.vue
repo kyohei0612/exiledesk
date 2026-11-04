@@ -103,7 +103,7 @@ const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => 
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
-const rv = useTreeReveal(shown, () => !!s.data.value, t.opened); watch(t.loading, (on) => { if (!on) void v.openView(); });
+const rv = useTreeReveal(shown, () => !!s.data.value, t.opened, t.bigStepNow); watch(t.loading, (on) => { if (!on) void v.openView(); });
 /** 出ている箱どうしの線と札だけ描く (通り抜けは箱が無いので数えない) */
 const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(id))));
 
@@ -299,7 +299,7 @@ const checkBusy = computed((): { text: string; n?: number; of?: number } | null 
   const p = progress.value;
   return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Running"), n: p.n, of: p.of };
 });
-async function goIssue(id: string): Promise<void> { await sf.openFor(id); void v.reveal(id, true); }
+async function goIssue(id: string): Promise<void> { if (!doc.value.boxes[id]) return; await sf.openFor(id); void v.reveal(id, true); } // 箱の無い要確認 (S-89c ③) は寄らない
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
 // 札の幅は名前を切らない幅 (… で切れている分を足す) × 今の倍率で拡げる分 (全体表示で並んでも重ならない)
 const chipNatural = (id: string): number | undefined => {

@@ -46,6 +46,7 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 - **ログ**: ダッシュボードの Workers → exiledesk-live → ログ に 1 回ごとの記録 (path・status・ms・国。無料は 3 日分)。手元で見るなら `pnpm tail`
 
 - **D1 の記録の整理** (2026-10-28 オーナー「３ＧＢ上限で設定あふっれたら古い奴から整理」、設計図 Y-66): 毎朝 9:00 (JST、cron `0 0 * * *`) に D1 の大きさが 3 GB を超え、中身 (logs + 要望の画像) も 3 GB を超えていたら、logs を古い日から 2.7 GB まで消す (src/logs-prune.ts)。消したら alertlog の `記録の整理`。今の大きさは `pull-server-notes.mjs` の `d1`
+- **デイリーの週の取得** (2026-11-05、設計図 D-80b・Y-53、まだ本番に無い): 日曜 16:00〜月曜 16:00 JST に cron `*/5 * * * SUN,MON` (UTC) が 5 分おきに起き、poe.ninja の上位プレイヤーの装備を 1 回 3 本ずつ取る (src/ninja/、migrations/0014)。口・人の選び方・間隔・429 / 5xx の待ち方と取り直しはアプリ (`src-tauri/src/poe_ninja_client/`) のまま、人数だけ 7 アセ × ビルド 3 × 3 人 (最大 63 人)。待ちは D1 の `ninja_job.not_before` で起動をまたぐ。済んだら型の材料を `daily_fetch_items` に書き、名前の入った `ninja_memo` を消し、alertlog に 1 行。16:00 の生成の側は `GET /daily/fetch.json?week=<月曜>` (ヘッダー x-exiledesk-key) で読む。止め: `pnpm exec wrangler d1 execute exiledesk-logs --remote --command "INSERT OR REPLACE INTO ninja_ctl VALUES ('stop','1')"` (戻すは '0')。リーグを決め打ちする時は vars の `NINJA_LEAGUE` (無ければ economyLeagues[0])。手元の `wrangler dev` から cron を叩かない (家の IP から ninja へ出る、Y-53)
 - **Discord を読むだけの Bot** (2026-10-24、10-26 に本番): 毎朝 9:03 (JST、cron `3 0 * * *`) に、サーバー (vars の `DISCORD_GUILD_ID`) の文字のチャンネル・お知らせ・スレッドを拾い、それぞれ前回より後の書き込みを D1 の `discord_daily` に 1 日 1 行 (src/discord.ts、migrations/0009)。見る権限の無いチャンネルは飛ばす、1 回 45 回まで叩く。トークンは secret の `DISCORD_BOT_TOKEN`。Bot は何も書かない。作り方は docs/org/analytics/notes/2026-10-24-discord-bot.md
 
 ## オーナーがやること (初回だけ、全部無料)
