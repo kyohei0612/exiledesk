@@ -75,7 +75,8 @@ const craftPage = computed(() => page.value === "");
 /** スマホのヘッダーのアイコンのボタン (ブログ・使い方・要望。1 段に収める、2026-10-25)。絵の下に小さな名前 (絵だけだと押すまで分からない、モンキー 10-26 の 14・オーナー「直して」) */
 const PHONE_ICON = "!flex !h-10 !min-h-0 !w-9 max-[374px]:!w-[32px] max-[374px]:![border-inline-width:16px] max-[374px]:![border-image-width:0_16px] !min-w-0 shrink-0 flex-col items-center justify-center !gap-0.5 !p-0"; // 幅は前と同じ決め打ち (g-btn sm の左右の枠 18px ずつで中身の幅は 0、絵と名前は真ん中に寄せてはみ出させる)。375 未満は枠を 16px ずつにして 32px (320 で帯からはみ出した、10-26 夜)
 const PHONE_LABEL = "whitespace-nowrap text-[9px] leading-none";
-const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value || skinsPage.value);
+// デイリーの挑戦 (フラクチャー選び・木) は操作の画面なので枠を置かない (D-61)。一覧・お題・投稿は文章のページ
+const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || (!!dailyPage.value && dailyPage.value.view !== "start") || skinsPage.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
@@ -252,8 +253,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
       <div v-if="textPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pr-4 empty:hidden"><AdSlot id="page-right" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
       <!-- スマホのシミュ (ツリー) では出さない (空いた所にシミュがツリーの全体図を置く。2026-10-26 オーナー「スマホ版が死ぬほど使いづらい」、シミュ部長 30)。
-           シミュのレシピのページも出さない (同日オーナー「シミュレータースマホに関してはブログやらチャンネルやらは載せなくてよろしい。邪魔なだけ」、シミュ部長 32) -->
-      <aside v-show="(phone && !treePage && !recipesPage) || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+           シミュのレシピのページも出さない (同日オーナー「シミュレータースマホに関してはブログやらチャンネルやらは載せなくてよろしい。邪魔なだけ」、シミュ部長 32)。デイリーの挑戦も木の操作の画面なので出さない (D-61) -->
+      <aside v-show="(phone && !treePage && !recipesPage && dailyPage?.view !== 'start') || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
           <!-- 読み物 (関係する記事・新しい記事・使い方) を上、チャンネルを下 (2026-10-22、開発版だけ。右の列の広告の枠は外した) -->
           <SideReads v-if="BLOG_ON" class="mb-3" />

@@ -196,8 +196,6 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-play] [data-tree-start-under],
 [data-daily-play] [data-tree-note-mark],
 [data-daily-play] [data-tree-run-report-start] { display: none; }
-/* 挑戦は操作の画面なので広告の枠を出さない (D-61。textPage から外すまでの形) */
-main:has([data-daily-play]) > .sticky { display: none; }
 [data-daily-play] [data-tree-goal-side] { pointer-events: none; }
 [data-daily-play] [data-tree-page] { padding: 0; }
 [data-daily-play] [data-tree-frame] { background: var(--skin-bg); }
