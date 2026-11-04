@@ -166,7 +166,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
       for (;;) {
         const r = withTreeTune(d, () => g.next());
         if (my !== token) return;
-        if (r.done) { raw.value = r.value; if (!opt.test && !view && !rig) noteCardRun(d, withStartCost(r.value, startCost())); break; }
+        if (r.done) { raw.value = r.value; if (!opt.test && !view) noteCardRun(d, withStartCost(r.value, startCost())); break; }
         // 1 人でも止まったらそこで止める (直してから回し直す)。打ち止め (神・手の上限) は止まりではないので続ける
         const st = last ? Object.keys((last as TreeRunResult).stuckAt)[0] : undefined;
         if (st && !opt.test) { halted.value = { box: st, n: r.value }; onHalt(st); break; }
