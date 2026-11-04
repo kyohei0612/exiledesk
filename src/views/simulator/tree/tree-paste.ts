@@ -8,7 +8,9 @@
  * 貼った時に作りかけ (保存していない手のある木) を置き換えるなら pastePrev に控え、② から木へ戻る時に TreeGoalPage が保存を聞く
  */
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { goalBlock } from "../../../services/simulator/sim-engine";
+import { GOAL_RUNE_MAX, goalBlock } from "../../../services/simulator/sim-engine";
+import { goalBlockLoose } from "./tree-goal-cap";
+import { flag } from "../../../web/release-flags";
 import { parseItemText } from "../../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextReading } from "../../../services/simulator/paste/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -72,7 +74,7 @@ export function requestEmuItem(item: StageItem): void {
     const tier = of && !m.unrevealed ? { index: m.tierIndex, of, label: `T${of - m.tierIndex}`, name: m.affix, fits: true } : null;
     return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: !!m.fractured, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
   });
-  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], { base: item.base, rollSeed: item.rollSeed, implicitRoll: item.implicitRoll, implicitFixed: item.implicitFixed }, item.quality ? { value: item.quality, tag: item.qualityTag ?? null } : null); track("sim:fromEmu"); };
+  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], { base: item.base, rollSeed: item.rollSeed, implicitRoll: item.implicitRoll, implicitFixed: item.implicitFixed }, item.quality ? { value: item.quality, tag: item.qualityTag ?? null } : null, (item.augments ?? []).map((a) => a.en)); track("sim:fromEmu"); };
   // 作りかけの木を置き換える時は貼り付けと同じ 3 択
   if (unsaved(useTree().doc.value)) askLeave(go, () => void quickSave());
   else go();
@@ -81,7 +83,7 @@ export function requestEmuItem(item: StageItem): void {
 /** 読めたアイテム (ベース・アイテムレベル・読み方) を木に入れて ② 完成の MOD のページへ (貼り付けとエミュの共通) */
 /** emu = エミュから来た時の暗黙の振り (TreeDoc.goalImplicit)。貼り付けは無し */
 /** quality = 貼った文・エミュのアイテムの品質と種類。完成形の品質の欄に入れておき、「品質も狙う」☑ をオンにした時にその値で出す (☑ は既定オフのまま。10-27 夜オーナー) */
-function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null, quality: { value: number; tag: string | null } | null = null): void {
+function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null, quality: { value: number; tag: string | null } | null = null, runes: readonly string[] = []): void {
   const t = useTree();
   t.setBase(base.en, itemLevel ?? t.doc.value.itemLevel);
   // 貼った文のアイテムレベルを使う (白紙の木は適正で作られ、狙いに合わせて変わるので外す。文に無ければ今のまま)
@@ -98,6 +100,8 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   t.needBase.value = false;
   // 新しく取り込んだ完成形は、フラクチャーの設定をまだ答えていない扱い (スイッチ fracFirst)
   t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; delete d.fracAsked; });
+  // エミュで嵌めていたルーンはソケットの順で使用ルーンへ (S-31g、スイッチ useRunes)。貼り付けは無し
+  t.edit((d) => { if (runes.length && flag("useRunes")) d.goalRunes = runes.slice(0, GOAL_RUNE_MAX); else delete d.goalRunes; });
   const g = t.goalItem.value?.item;
   t.edit((d) => {
     delete d.goalQualityOn; delete d.goalQualityNo; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
@@ -126,7 +130,9 @@ function aimsOfReading(rd: ItemTextReading): { aims: Aim[]; bad: Array<{ line: s
     const tier = Number(m.tier.label.replace(/^T/, ""));
     if (!known.has(`${m.modId}|${tier}`)) { bad.push({ line: m.text, why: tr("完成の MOD の表に無い", "Not in the final-mod table") }); continue; }
     if (aims.some((a) => a.modId === m.modId)) continue;
-    const why = goalBlock(data, t.doc.value.base, lv, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId: m.modId, tier });
+    // スイッチ pasteLoose: 枠 (プレ・サフィの数) では削らず、完成形の表で足す時と同じ断り (S-08d、11-05 オーナー「シミュに入れたら減らされるんだよな」)
+    const have = aims.map((a) => ({ modId: a.modId, tier: a.tier }));
+    const why = flag("pasteLoose") ? goalBlockLoose(data, t.doc.value.base, lv, have, { modId: m.modId, tier }, false) : goalBlock(data, t.doc.value.base, lv, have, { modId: m.modId, tier });
     if (why) { bad.push({ line: m.text, why }); continue; }
     // 冒涜の MOD はフラクチャーできない (完成形の窓と同じ)。印は付けず狙いだけ
     // 貼った素の値も持つ (完成形のカードにそのまま出す、use-tree の goalItem)

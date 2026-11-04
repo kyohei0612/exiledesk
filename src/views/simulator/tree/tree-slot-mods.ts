@@ -7,8 +7,12 @@
  */
 import { freshItem, limitOf, mulberry32, SIDES, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { placeMods } from "../../../services/simulator/sim-engine";
+import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { flag } from "../../../web/release-flags";
 
 type TierMod = { modId: string; tier: number; fractured?: boolean };
+/** 完成形のカードに嵌める使用ルーン (S-31g、スイッチ useRunes。閉じていれば無し) */
+export const goalRunesOf = (d: TreeDoc): readonly string[] => (flag("useRunes") ? d.goalRunes ?? [] : []);
 
 const slotMemo = new Map<string, number>();
 /** その MOD を付けると増える枠の数 (プレ・サフィの合計。増えなければ 0) */
@@ -31,11 +35,11 @@ export function slotsAdded(data: PatchData, base: string, itemLevel: number, m: 
  * 完成形のカードの形: 枠を増やす MOD (完成の狙い・途中で消える物) を先に付け、ほかの狙いを渡した順に付け、途中で消える物を外す。
  * left は placeMods と同じ (付けられなかった狙いと理由)。途中で消える物は left に入れない
  */
-export function placeWithSlots(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], way: readonly TierMod[], rng: () => number): ReturnType<typeof placeMods> {
+export function placeWithSlots(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], way: readonly TierMod[], rng: () => number, runes: readonly string[] = []): ReturnType<typeof placeMods> {
   const adds = (m: TierMod): boolean => slotsAdded(data, base, itemLevel, m) > 0;
   const wayFirst = way.filter(adds);
   const order = [...wayFirst, ...aims.filter(adds), ...aims.filter((m) => !adds(m))];
-  const r = placeMods(data, base, itemLevel, order, rng);
+  const r = placeMods(data, base, itemLevel, order, rng, {}, runes);
   if (!wayFirst.length) return r;
   const gone = new Set(wayFirst.map((m) => m.modId));
   const item: StageItem = { ...r.item, prefixes: r.item.prefixes.filter((m) => !gone.has(m.modId)), suffixes: r.item.suffixes.filter((m) => !gone.has(m.modId)) };

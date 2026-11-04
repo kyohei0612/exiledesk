@@ -153,6 +153,9 @@ const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.i
  * 使用可能のタブ (実験、2026-10-05 オーナー「他のエッセンスとかも。使用可能ってタブを足して、そこに使える物だけ全部」)。
  * オーブ・骨 / エッセンス / カタリスト / ルーン (ソウルコア・アイドルも) のうち、今のアイテムに打てる物だけを種類ごとに。お告げは掛けておく物なので入れない
  */
+/** 先頭に出すルーン (棚の文脈の runeFirst、シミュの使用ルーン) */
+const first = computed(() => craftStage.runeFirst?.() ?? []);
+const notFirst = (k: string): boolean => !first.value.includes(k);
 const usableAll = computed(() => {
   const it = craftStage.item.value;
   void craftStage.omens.value;
@@ -165,11 +168,13 @@ const usableAll = computed(() => {
     { label: tr("エッセンス", "Essences"), keys: essences.value.filter((g) => g.keys.some((k) => ok(k) && !craftStage.hidden?.(k))).map((g) => g.kind), kind: "essence-families" } as { label: string; keys: string[]; kind?: string; fold?: boolean },
     // 液化した感情 (デリリウム、ジュエル。2026-10-11): そのジュエルで使える物だけ (古代の版は時を失ったジュエル)
     sec(tr("液化した感情 (デリリウム)", "Liquid Emotions (Delirium)"), emotionKeysFor(it)),
+    // シミュの完成形の使用ルーン (S-31g) はルーンの節の先頭に。ほかの節からは外す
+    ...(hasSockets.value && first.value.length ? [sec(tr("使用ルーン", "Runes in use"), [...first.value])] : []),
     // ルーンはルーンのタブと同じ段ごとのまとまり (クラフトに関わる物だけ)
-    ...(hasSockets.value ? runes.value.map((g) => sec(g.label, g.keys, g.kind)) : []),
+    ...(hasSockets.value ? runes.value.map((g) => sec(g.label, g.keys.filter(notFirst), g.kind)) : []),
     // 「使用可能」だけの時は、クラフトに関わらない物を 4 つの節に分けて一番下に (どれも最初は畳む。2026-10-10 オーナー
     // 「ルーン (クラフトルーン以外)・遺産・ソウルコア・アイドルはたたんで」)。ルーンは段をまとめて 1 つ (押すとレッサー〜パーフェクト)
-    ...(!props.full && hasSockets.value ? otherSecs.value.map((x) => ({ ...sec(x.label, x.keys, x.kind), fold: true })) : []),
+    ...(!props.full && hasSockets.value ? otherSecs.value.map((x) => ({ ...sec(x.label, x.keys.filter(notFirst), x.kind), fold: true })) : []),
   ].filter((x) => x.keys.length);
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));

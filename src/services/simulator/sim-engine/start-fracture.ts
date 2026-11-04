@@ -9,6 +9,7 @@ import { forceKey } from "../../craft-stage/apply-force";
 import { hits } from "../../craft-stage/aim-odds";
 import { freshItem } from "../../craft-stage/run-plan";
 import { baseSocketsOf } from "../../craft-stage/stage-runes";
+import { socketGoalRunes } from "./goal-runes";
 import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem, StageMod } from "../../craft-stage/types";
@@ -125,9 +126,11 @@ export function runeSocketed(data: PatchData, base: string, itemLevel: number, a
 export function placeMods(
   data: PatchData, base: string, itemLevel: number, mods: readonly TierMod[], rng: () => number,
   room: { runes?: number; crafted?: number } = {},
+  runes: readonly string[] = [],
 ): { item: StageItem; left: Array<TierMod & { reason: string }> } {
-  // 完成形は規格外でルーンの嵌まった形から (runeSocketed)。ルーンの MOD はそのルーンが嵌まっているので指名の手で付く
-  let item = runeSocketed(data, base, itemLevel, mods, rng, room);
+  // 完成形は規格外でルーンの嵌まった形から (runeSocketed)。ルーンの MOD はそのルーンが嵌まっているので指名の手で付く。
+  // 使用ルーン (S-31g) はその後に使う順で嵌める (セールの凱旋のサフィ +1 などが枠に効く)
+  let item = socketGoalRunes(data, runeSocketed(data, base, itemLevel, mods, rng, room), runes, rng);
   const left: Array<TierMod & { reason: string }> = [];
   for (const m of mods) {
     const r = applyCurrency(data, item, keyOf(data, m), rng);

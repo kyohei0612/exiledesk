@@ -34,7 +34,7 @@ const otherRune = (key: string): boolean => !flag("runeSocket") && key.startsWit
 export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || otherRune(key);
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
-export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null) {
+export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {
   function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
   function release(): void { held.value = null; omens.value = []; }
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
@@ -72,6 +72,7 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
     hidden: treeHidden,
     // 木の箱は何人もの集まりなので、側を決めるお告げの「今は意味なし」では灰色にしない (sim-tree.md S-20b)
     omenBlock: (h, om, o) => treeOmenBlock(s.data.value, item.value, h, om, o),
+    runeFirst,
   });
   return { held, omens, toggleOmen, release, onHold, onShelfDown };
 }

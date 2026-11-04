@@ -46,6 +46,7 @@ import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
 import { useDismiss } from "../../../utils/use-dismiss";
 import TreeAttachPick from "./TreeAttachPick.vue";
+import TreeGoalRunes from "./TreeGoalRunes.vue";
 import { wayName } from "./tree-attach";
 import { simOp } from "../../../web/track";
 /** 段の行のボタンを「付ける」1 つに (S-10b) */
@@ -379,7 +380,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
           </div>
         </div>
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
-        <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
+        <TreeGoalRunes v-if="flag('useRunes')" />
+        <p v-else-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="overLeft.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${overLeft.length} つ (枠の外。どれかが付けば当たり)`, `${overLeft.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>

@@ -132,7 +132,8 @@ const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value
 /** 錯乱のエッセンスの鍵 (名前はデータから handName で引く) */
 const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
 const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k));
+// 完成形の使用ルーンは棚のルーンの節の先頭に (S-31g、スイッチ useRunes、11-05 オーナー「おｋ先頭で」)
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k), () => (flag("useRunes") ? (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`) : []));
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
   simOp("hold", k);

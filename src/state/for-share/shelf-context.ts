@@ -22,6 +22,8 @@ interface ShelfCtx {
   hidden?: (key: string) => boolean;
   /** お告げを掛けると進めない・意味が無い理由 (無ければエンジンの omenBlock。渡した画面では omenNote の一言を出さない。シミュの木 2026-11-03) */
   omenBlock?: (held: string | null, omens: string[], omen: string) => string | null;
+  /** ルーンの節の先頭に「使用ルーン」として並べるルーンのキー (シミュの完成形の使用ルーン S-31g。無ければ節を出さない) */
+  runeFirst?: () => readonly string[];
 }
 /**
  * シミュレーションの棚に出さない物 (2026-10-09 オーナー「基本的な動きはエンジン産、品質とか必要ないクラフトアイテムはそもそも削るってだけ」)。
