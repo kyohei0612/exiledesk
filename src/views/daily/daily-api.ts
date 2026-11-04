@@ -212,6 +212,14 @@ async function nickPost(body: { name: string; code?: string }): Promise<DailyNic
   save();
   return r;
 }
+/** 開発版だけのリセット (D-37h): 端末の控えを全部消し、新しい名前で入り直す (挑戦は名前ごとなので始め直せる)。名前を作れなかった時は NickError */
+export async function devResetLocal(): Promise<DailyNick | NickError> {
+  try { localStorage.removeItem(KEY); } catch { /* 消せなくても控えは空にする */ }
+  daily.local = { tries: {}, box: [] };
+  const r = await createNick(`dev${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`);
+  await refreshDaily();
+  return r;
+}
 /** POST /daily/nick (決める)。引き継ぎコードはここで 1 度だけ返る */
 export const createNick = (name: string): Promise<DailyNick | NickError> => nickPost({ name });
 /** POST /daily/nick (引き継ぎコードで戻す) */
