@@ -12,7 +12,7 @@
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
  *   POST /ai-review/flush  … D1 の ai_review に置かれた AI の評価と見解を #日報 へ流す (ai-review.ts)
  *   GET  /refresh(ヘッダー x-exiledesk-key)    … 配信の見張りを今すぐ
- *   GET  /daily.json・POST /daily/nick・/daily/start・/daily/submit・/daily/title・/daily/box・GET /daily/box.json?ids= … GET /daily/recipe.json?id=&name= (締めた日の順位の行のレシピ)・デイリー (daily/、設計図 D-56)
+ *   GET  /daily.json・POST /daily/nick・/daily/start・/daily/submit・/daily/title・/daily/giveup・/daily/box・GET /daily/box.json?ids= … GET /daily/recipe.json?id=&name= (締めた日の順位の行のレシピ)・デイリー (daily/、設計図 D-56)
  *   GET  /daily/roll.json・POST /daily/topic (ヘッダー x-exiledesk-key) … 16:00 の切り替えの台本 (scripts/daily-roll.mjs) が読む・書く (D-59)
  *   GET  /daily/fetch.json?week=(ヘッダー x-exiledesk-key) … デイリーの週の取得の結果と型の材料 (ninja/job.ts、Y-53)。16:00 の生成の側が読む
  *   scheduled (5 分おき、UTC の日・月) … デイリーの週の取得。日曜 16:00〜月曜 16:00 JST の窓の中だけ poe.ninja を数本ずつ (ninja/job.ts)

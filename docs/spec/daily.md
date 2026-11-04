@@ -126,7 +126,7 @@
 | `daily_nicks` (名前) | id・name (表示)・name_key (そろえた形、一意)・pass_hash・created・title_pick (札に出す称号、空なら一番格上、D-54)・ip_hash (作る数の制限だけ、1 IP 1 時間 5 個) |
 | `daily_box` (投稿) | id・created・ip_hash・nick_id・note・item (JSON: ベース・アイテムレベル・MOD)・status (wait / ok / no / used)・why (落ちた訳) |
 | `daily_topics` (お題) | id・box_id (投稿から出した時)・sample_id (週の型から出した時)・day (出た日)・week・slot (曜日の部位 D-05)・item_class・base・ilvl・type_snap (出た時の並びの写し)・aims (JSON: 段の下限つき)・prices (JSON: 写し)・seed・engine_ver・rules_ver (D-05 の表・D-04 の決まりの版)・shown_by |
-| `daily_tries` (挑戦) | topic_id・nick_id・started_at (サーバーの時計)・submitted_at・cost・rate・recipe (exiledesk-recipe/1)・checked (検算)・PK (topic_id, nick_id)。使った時間 = submitted_at − started_at (D-32) |
+| `daily_tries` (挑戦) | topic_id・nick_id・started_at (サーバーの時計)・submitted_at・cost・rate・recipe (exiledesk-recipe/1)・checked (検算)・gave_up_at (諦めた時刻、D-37b、migrations/0016。入っていれば提出は受けない)・PK (topic_id, nick_id)。使った時間 = submitted_at − started_at (D-32) |
 | ~~`daily_weeks` (週間)~~ | 11-05 やめ (D-53) |
 | `daily_results` (日の結果) | day・topic_id・nick_id・place (解決の順位、未解決は null)・cost・rate・used_ms・solved_n (その日の解決者の数)・entered_n (挑んだ人の数)・slot・item_class・base・checked・engine_ver・facts (JSON、`facts_v` つき: recipe から数えた事実 = 使ったカレンシーの種類と数の期待値・箱の数など)。締め (D-59) で書き、消さない。順位と facts は `daily_tries` から何度でも作り直せる (D-100) |
 | `daily_awards` (称号) | nick_id・title_id・title_ver・first_day・count (満たした回数)・retired (決まりを消した称号、「昔の称号」で残す)。全部の記録から計算し直した写し (D-101) |

@@ -16,7 +16,7 @@ const NOTE_MAX = 100;
 
 type Aim = { modId: string; tier: number; ja: string; en: string };
 type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string };
-type TryRow = { topic_id: string; nick_id: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; checked: number | null };
+type TryRow = { topic_id: string; nick_id: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; checked: number | null; gave_up_at?: number | null };
 
 /** 台本が回らなかった日 (今日まで) を週の予定から出す。出した後は変えない (INSERT OR IGNORE) */
 export async function settleFromPlan(db: D1Database, upTo: number, prices: string | null): Promise<void> {
@@ -88,7 +88,7 @@ async function titlesOf(db: D1Database, names: string[]): Promise<Record<string,
 
 type Body = Record<string, unknown>;
 const tryOut = (t: TryRow, topic: TopicRow) => ({
-  topicId: t.topic_id, startedAt: t.started_at, aims: JSON.parse(topic.aims) as Aim[], base: topic.base, ilvl: topic.ilvl, seed: topic.seed, prices: topic.prices ? JSON.parse(topic.prices) : null,
+  topicId: t.topic_id, startedAt: t.started_at, ...(t.gave_up_at ? { ended: true, gaveUpAt: t.gave_up_at } : {}), aims: JSON.parse(topic.aims) as Aim[], base: topic.base, ilvl: topic.ilvl, seed: topic.seed, prices: topic.prices ? JSON.parse(topic.prices) : null,
   ...(t.cost != null ? { best: t.rate! >= SOLVE_RATE ? { cost: t.cost, rate: t.rate, ms: t.submitted_at! - t.started_at, at: t.submitted_at } : undefined, last: { cost: t.cost, rate: t.rate, ms: t.submitted_at! - t.started_at, at: t.submitted_at } } : {}),
 });
 
@@ -123,7 +123,7 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
   if (recipe && recipe.length > RECIPE_MAX) return { error: "large" };
   const t = await db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>();
   const best = (r: TryRow | null) => (r && r.cost != null && r.rate! >= SOLVE_RATE ? { cost: r.cost, rate: r.rate, ms: r.submitted_at! - r.started_at, at: r.submitted_at } : null);
-  if (!t || now > t.started_at + TIME_LIMIT_MS + SUBMIT_GRACE_MS) return { ok: false, best: best(t) };
+  if (!t || t.gave_up_at || now > t.started_at + TIME_LIMIT_MS + SUBMIT_GRACE_MS) return { ok: false, best: best(t) };
   const hadSolved = t.cost != null && t.rate! >= SOLVE_RATE, solved = rate >= SOLVE_RATE;
   // 解決があれば、もっと安い解決だけで書き替える。解決が無ければ最後の提出を残す
   if (!hadSolved || (solved && cost < t.cost!)) {
@@ -131,6 +131,24 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
     return { ok: true, best: best({ ...t, submitted_at: now, cost, rate }) };
   }
   return { ok: true, best: best(t) };
+}
+
+/**
+ * POST /daily/giveup: 挑戦を提出なしで終える (D-37b)。今日のお題で、始めていて、まだ終えていない時だけ。始め直しはできない (D-33 のまま)。
+ * 前に出した提出の記録は消さない (諦めた後の提出は受けない)。返りは start と同じ形 + ended
+ */
+export async function dailyGiveup(db: D1Database, b: Body, now: number): Promise<unknown> {
+  const nick = await authNick(db, b.nickId, b.code);
+  if (!nick) return { error: "nick" };
+  const id = typeof b.id === "string" ? b.id : "";
+  if (id !== idOf(dayNoOf(now))) return { error: "notToday" };
+  await db.prepare("UPDATE daily_tries SET gave_up_at = ? WHERE topic_id = ? AND nick_id = ? AND gave_up_at IS NULL").bind(now, id, nick.id).run();
+  const [t, topic] = await Promise.all([
+    db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>(),
+    db.prepare("SELECT * FROM daily_topics WHERE id = ?").bind(id).first<TopicRow>(),
+  ]);
+  if (!t || !topic) return { error: "notStarted" };
+  return tryOut(t, topic);
 }
 
 /** POST /daily/title: 持っている称号だけ選べる。null で「一番格上」に戻す (D-54) */
