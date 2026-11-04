@@ -197,7 +197,8 @@ const run = async () => {
 
   cur.act = "最初の画面を開く";
   await c.go(URL_);
-  await c.until("document.body && document.body.innerText.includes('シミュレーター')", 30000);
+  // 読み込み前の説明文 (web.html の boot-about) にも「シミュレーター」があるので、Vue が載ったのを待つ (11-04 dev の初回の読み込みが遅く、起動の幕のまま探して止まった)
+  await c.until("!!document.querySelector('[data-v-app]') && document.body.innerText.includes('シミュレーター')", 60000);
   await calm();
   cur.act = "シミュレーター";
   const start = (await c.ev(CANDIDATES)).find((x) => /シミュレーター/.test(x.t));
