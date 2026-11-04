@@ -169,6 +169,21 @@ export async function dailyBoxStatus(db: D1Database, ids: string[]): Promise<unk
   return { box: results };
 }
 
+/**
+ * GET /daily/recipe.json?id=&name=: 順位の行のレシピ (D-50b、オーナー 11-05「ランキングーはレシピ見れるようにできるよね」)。
+ * 締めた日だけ (今日の分は 16:00 に締めるまで見せない)。順位と同じ条件 = 解決・検算で外れていない行だけ
+ */
+export async function dailyRecipe(db: D1Database, id: string, name: string, now: number): Promise<{ recipe: string | null } | { error: string }> {
+  const no = noOfId(id);
+  if (no == null || !name || name.length > 40) return { error: "id" };
+  if (no >= dayNoOf(now)) return { error: "open" };
+  const r = await db
+    .prepare(`SELECT t.recipe FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id WHERE t.topic_id = ? AND n.name = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0)`)
+    .bind(id, name)
+    .first<{ recipe: string | null }>();
+  return { recipe: r?.recipe ?? null };
+}
+
 /** その日の始まり (16:00) より前の投稿だけ候補 (D-84)。台本が使う */
 export const boxCutoff = (no: number): number => startAt(no);
 export { weekOf };

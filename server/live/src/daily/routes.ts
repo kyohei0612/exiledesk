@@ -3,7 +3,7 @@
  * 相場の写し (お題の prices) は KV の "market" (1 時間おきの cron が書く物) をそのまま使う
  */
 import type { Env } from "../types";
-import { dailyBox, dailyBoxStatus, dailyJson, dailyStart, dailySubmit, dailyTitle } from "./api";
+import { dailyBox, dailyBoxStatus, dailyJson, dailyRecipe, dailyStart, dailySubmit, dailyTitle } from "./api";
 import { nickPost } from "./nick";
 import { rollJson, rollPost } from "./roll";
 
@@ -31,6 +31,11 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
     const res = json(body, 200, { "cache-control": ready ? `public, max-age=${DAILY_TTL}` : "no-store" });
     if (cache && ready) ctx.waitUntil(cache.put(key, res.clone()));
     return res;
+  }
+  if (req.method === "GET" && p === "/daily/recipe.json") {
+    const out = await dailyRecipe(db, url.searchParams.get("id") ?? "", url.searchParams.get("name") ?? "", now);
+    // 締めた日の行は変わらない (称号・検算で外れるのは締めの時だけ) ので端と端末に 1 日覚えさせる。今日の分・誤りは覚えない
+    return json(out, "error" in out ? 400 : 200, { "cache-control": "error" in out ? "no-store" : "public, max-age=86400" });
   }
   if (req.method === "GET" && p === "/daily/box.json") return json(await dailyBoxStatus(db, (url.searchParams.get("ids") ?? "").split(",")), 200, { "cache-control": "no-store" });
   if (req.method === "GET" && p === "/daily/roll.json") {
