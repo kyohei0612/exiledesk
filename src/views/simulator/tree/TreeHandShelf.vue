@@ -15,7 +15,8 @@ import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
-import { effectOf } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { RUNE_PREFIX, runeNameOf } from "../../../services/craft-stage/engine";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
@@ -39,6 +40,7 @@ import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
+import { flag } from "../../../web/release-flags";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -226,7 +228,17 @@ const blockOn = ref(!!props.current?.block);
 const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
 function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
 watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
+/**
+ * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (置き換え、エンジンの rune:名前@n)、
+ * 本体 (と空き) = 規格外でソケットを足して嵌める。足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
+ */
+const runeAt = ref<number | null>(null);
+watch(held, () => { runeAt.value = null; });
+const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
+const runeNote = computed(() => (runeHold.value ? tr("ルーンのソケットを押すと置き換え · カードを押すとソケットを足して嵌める · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to add a socket for it · Right-click / Esc to drop") : undefined));
+function onSocket(n: number): void { if (!runeHold.value) return; runeAt.value = n; ok(); }
+const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
+const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
@@ -311,7 +323,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :note="runeNote" @socket="onSocket" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->

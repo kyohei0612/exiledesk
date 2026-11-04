@@ -112,7 +112,7 @@ export { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
 export { inAny } from "../mods/item-classes";
 export { baseCatalog } from "../items/base-catalog";
 export { jaOfOmen } from "../htc/game-names";
-export { runeNameOf, RUNE_PREFIX } from "./stage-runes";
+export { parseRuneKey, runeNameOf, RUNE_PREFIX } from "./stage-runes";
 export { hasExtraCatalyst, stageRuneIds } from "./stage-core";
 export { reqOfItem } from "./stage-bases";
 export { planSpec } from "./spec/run-spec";

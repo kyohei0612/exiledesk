@@ -5,15 +5,19 @@
  * その手より前には効かない。一度嵌まったルーンはアイテムに残るので、戻りの道でまた来ても嵌まったまま (同じルーンの手は打たずに通す、費用も数えない)。
  * ほかの「打たずに通す」回し方だけの扱い (10-25) もここ (tree-sample から分けた、500 行を超えた)
  */
-import { catalystOf, kindOf, mulberry32, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { catalystOf, kindOf, mulberry32, parseRuneKey, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { unboundedBefore } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { boxAims, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
 /** その手 (カレンシーの key) を打つ前のアイテム。要らなければそのまま */
 export const prepFor = (data: PatchData, item: StageItem, key: string): StageItem => unboundedBefore(data, item, key, mulberry32(1));
-/** ルーンの手で、そのルーンがもう嵌まっている (打たずに通す) */
-export const runeHeld = (item: StageItem, h: Hand): boolean => h.currency.startsWith(RUNE_PREFIX) && (item.augments ?? []).some((a) => `${RUNE_PREFIX}${a.en}` === h.currency);
+/** ルーンの手で、そのルーンがもう嵌まっている (打たずに通す)。ソケットを指した手 (rune:名前@n) はそのソケットに同じルーンがある時だけ (S-31f) */
+export const runeHeld = (item: StageItem, h: Hand): boolean => {
+  const p = parseRuneKey(h.currency), now = item.augments ?? [];
+  if (!p) return false;
+  return p.socket != null ? now[p.socket - 1]?.en === p.en : now.some((a) => a.en === p.en);
+};
 /** 打つ前に自動で嵌めたルーンの key (アストリッドの創造性。費用と箱の印) */
 export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
   (after.augments ?? []).filter((a) => !(before.augments ?? []).some((b) => b.en === a.en)).map((a) => `${RUNE_PREFIX}${a.en}`);

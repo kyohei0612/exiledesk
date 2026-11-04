@@ -9,7 +9,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { applyCurrency, kindOf } from "../../craft-stage/apply-currency";
 import { craftedLimitOf } from "../../craft-stage/apply-essence";
-import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
+import { parseRuneKey, RUNE_PREFIX } from "../../craft-stage/stage-runes";
 import type { StageApply, StageItem } from "../../craft-stage/types";
 
 /** クラフト MOD の上限を +1 するルーン (英語名) */
@@ -30,6 +30,9 @@ export function socketRunes(data: PatchData, item: StageItem, runes: readonly st
 
 /** 規格外で打つ前のアイテム (ルーンの手ならソケットを足す、クラフト MOD が上限ならアストリッドの創造性を嵌める)。要らなければそのまま */
 export function unboundedBefore(data: PatchData, item: StageItem, key: string, rng: () => number): StageItem {
+  // はまったソケットを指した手 (rune:名前@n) は置き換えなので足さない (S-31f、11-05)
+  const at = parseRuneKey(key)?.socket;
+  if (at != null && at <= (item.sockets ?? 0)) return item;
   if (key.startsWith(RUNE_PREFIX)) return empty(item) > 0 ? item : { ...item, sockets: (item.sockets ?? 0) + 1 };
   if (kindOf(key).startsWith("essence") && craftedOn(item) >= craftedLimitOf(item)) return socketRunes(data, item, [ASTRID], rng);
   return item;
