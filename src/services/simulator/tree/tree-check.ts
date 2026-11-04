@@ -49,20 +49,27 @@ export interface CheckProgress { phase: "walk" | "run"; n: number; of: number; /
 const openText = (b: TreeBox, holds: boolean): string => (holds ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
 const noDoneText = (): string => tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
 /**
- * 「完成の箱が無い」の印を付ける箱 (S-89b・S-77・S-89c): 末端の箱 (手・戻り・完成の無い箱、スタートは除く) の当たり → ほかの末端。
- * 末端が無い木 (どの箱にも手か ↩ が付いた組み終わった木) は一番深い段の当たりの箱 (当たりが無ければ一番深い段の箱)。空 = スタートしか無い木
- * (前は末端が無いとスタートに落ちた、11-03 オーナー「フルでツリー作った後スタートが未設定ですなんて馬鹿な話ないだろ」)
+ * 「完成の箱が無い」の印 (S-89b・S-77・S-89c): 末端の箱 (手・戻り・完成の無い箱、スタートは除く) の当たり → ほかの末端に「完成の箱が無い」。
+ * 末端が無い木 (どの箱にも手か ↩ が付いた組み終わった木) は一番深い段の当たりの箱 (当たりが無ければ一番深い段の箱) に未設定 (open)「未設定: 完成にする箱が無い」
+ * (前は末端が無いとスタートに落ちた、11-03 オーナー「フルでツリー作った後スタートが未設定ですなんて馬鹿な話ないだろ」・11-05「完成の箱がないなら末端に未設定を出すべきでは」)。
+ * スタートしか無い木だけスタート
  */
-function noDoneTips(doc: TreeDoc): TreeBox[] {
+function noDoneMarks(doc: TreeDoc): CheckIssue[] {
+  const tips = noDoneTips(doc);
+  if (tips.box.length) return tips.box.map((b) => (tips.end ? { boxId: b.id, kind: "noDone", text: noDoneText() } : { boxId: b.id, kind: "open", text: tr("未設定: 完成にする箱が無い", "Unset: no box is marked as done") }));
+  return [{ boxId: "start", kind: "noDone", text: noDoneText() }];
+}
+/** 印を付ける箱 (end = 末端の箱) */
+function noDoneTips(doc: TreeDoc): { box: TreeBox[]; end: boolean } {
   const boxes = Object.values(doc.boxes);
   const tip = (b: TreeBox): boolean => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split;
   const ends = boxes.filter((b) => tip(b) && b.out === "hit");
-  if (ends.length) return ends;
+  if (ends.length) return { box: ends, end: true };
   const tips = boxes.filter(tip);
-  if (tips.length) return tips;
+  if (tips.length) return { box: tips, end: true };
   const rest = boxes.filter((b) => b.id !== "start" && b.out !== "pass"), hits = rest.filter((b) => b.out === "hit"), pool = hits.length ? hits : rest;
   const depth = depthRows(doc), deepest = Math.max(-1, ...pool.map((b) => depth.get(b.id) ?? -1));
-  return pool.filter((b) => (depth.get(b.id) ?? -1) === deepest);
+  return { box: pool.filter((b) => (depth.get(b.id) ?? -1) === deepest), end: false };
 }
 /**
  * 見本も人も使わず形だけで数える未設定 (S-70): 穴チェックを押していない間の「! 未設定」の帯と箱の赤枠。
@@ -75,7 +82,7 @@ export function unsetIssues(doc: TreeDoc): CheckIssue[] {
     if (!b.hand && !b.back && !b.done && !b.split && !isGrayBox(b)) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
     if (b.out === "hit" && !b.aim) out.push({ boxId: b.id, kind: "noAim", text: tr("付く MOD を選んでいない", "No mod picked for this hit") });
   }
-  if (!boxes.some((b) => b.done === "main")) { const tips = noDoneTips(doc); for (const b of tips) out.push({ boxId: b.id, kind: "noDone", text: noDoneText() }); if (!tips.length) out.push({ boxId: "start", kind: "noDone", text: noDoneText() }); }
+  if (!boxes.some((b) => b.done === "main")) out.push(...noDoneMarks(doc));
   return ranked(out);
 }
 /** ルート精査 (木の設定 tune で打つ。一気に回す、台本・テスト用) */
@@ -203,12 +210,9 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   const done = boxes.filter((b) => b.done === "main");
   // 完成にしていない完成の箱 (unfinished) があれば、回す時はそこで完成する (S-54) ので「完成の箱が無い」で合格を止めない (⑦12 → ブラック案・オーナー「進めてくれ」10-28)
   if (!done.length && (J || !out.some((x) => x.kind === "unfinished"))) {
-    const msg = noDoneText();
     // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
     // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
-    const tips = noDoneTips(doc);
-    if (tips.length) for (const b of tips) add(b.id, "noDone", msg);
-    else add("start", "noDone", msg);
+    for (const x of noDoneMarks(doc)) add(x.boxId, x.kind, x.text);
   }
   const reach = new Set(boxes.filter((b) => b.done).map((b) => b.id));
   for (let changed = true; changed;) {
