@@ -1,7 +1,7 @@
 <!--
   DailyPlay.vue — 挑戦のページ (D-30〜D-36)。お題を開いて 1 時間。順番: フラクチャーを選ぶ → シミュの木 → 100 人回す → 提出。
   木は SimTreePage をそのまま中に置き、上の帯だけここの物 (D-31)。外す部品は daily-skin.css が隠す (D-90。シミュ部長の切り出しまでの形、D-41)。
-  木はこのブラウザに覚え、開き直すと戻る。時間はこのページを開いている間だけ進む (D-32)
+  木はこのブラウザに覚え、開き直すと戻る。時間はスタートからの実際の時計で、ページを閉じても進む (D-32)。挑戦は 1 日 1 回で始め直せない (D-33)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -15,7 +15,7 @@ import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
-import { aimsOfTopic, getTry, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyAim, type DailyTopic, type DailyTry } from "./daily-api";
+import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyAim, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const t = useTree();
@@ -24,29 +24,24 @@ const treeOn = ref(false);
 const sent = ref<{ rate: number; cost: number; solved: boolean } | null>(null);
 const art = computed(() => baseArt(props.topic.base));
 
-/** 開いている間の時間を足す。寝ていた分は数えない (1 回 2 分まで) */
-const used = ref(tryOf.value?.usedMs ?? 0);
-let lastTick = Date.now();
-const tick = setInterval(() => {
-  const n = Date.now(), dt = Math.min(120_000, n - lastTick);
-  lastTick = n;
-  if (!tryOf.value || over.value) return;
-  used.value += dt;
-  tryOf.value.usedMs = used.value;
-  updateTry(props.topic.id, { usedMs: used.value });
-}, 1000);
-const left = computed(() => (tryOf.value ? TIME_LIMIT_MS - used.value : TIME_LIMIT_MS));
+/** 時計は 1 秒ごとに読み直すだけ (残りはスタートの時刻から数える) */
+const now = ref(Date.now());
+const tick = setInterval(() => (now.value = Date.now()), 1000);
+const left = computed(() => (tryOf.value ? leftMs(tryOf.value, now.value) : TIME_LIMIT_MS));
 const over = computed(() => left.value <= 0);
 const clock = computed(() => { const s2 = Math.max(0, Math.ceil(left.value / 1000)); const m = Math.floor(s2 / 60); return `${String(m).padStart(2, "0")}:${String(s2 % 60).padStart(2, "0")}`; });
 /** 残りの割合 (導火線の長さ、D-60b) */
 const fuse = computed(() => Math.max(0, Math.min(1, left.value / TIME_LIMIT_MS)));
 const heat = computed(() => (left.value < 60_000 ? "last" : left.value < 600_000 ? "near" : ""));
 
-/** スタートを押してここへ来た時に挑戦が始まる。データが来るまで待つ */
+/** スタートを押してここへ来た時に挑戦が始まる。データが来るまで待つ。今日でない・14:50 を過ぎた時は始めない */
+const refused = ref<StartError | null>(null);
 function begin(): void {
   if (tryOf.value) return;
-  const d = s.data.value, a = d ? aimsOfTopic(d, props.topic.id) : null;
-  if (a?.length) tryOf.value = startTry(props.topic.id, a);
+  const d = s.data.value;
+  if (!d) return;
+  const r = startTry(d, props.topic.id);
+  if (typeof r === "string") refused.value = r; else tryOf.value = r;
 }
 watch(() => s.data.value, begin, { immediate: true });
 
@@ -105,7 +100,7 @@ const best = computed(() => tryOf.value?.best ?? null);
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
-        <div class="min-w-0"><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まる', 'Pauses the clock')" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></div>
+        <div class="min-w-0"><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></div>
       </div>
       <div class="daily-time" data-daily-time><b>{{ clock }}</b></div>
       <div class="daily-band-score">
@@ -116,7 +111,8 @@ const best = computed(() => tryOf.value?.best ?? null);
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
 
-    <p v-if="over" data-daily-over class="daily-note">{{ tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
+    <p v-if="refused" data-daily-refused class="daily-note">{{ refused === "closed" ? tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") : tr("このお題は今日の物ではないので挑戦できない。", "This isn't today's challenge, so it can't be taken.") }}</p>
+    <p v-else-if="over" data-daily-over class="daily-note">{{ tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
     <p v-else-if="sent" data-daily-sent class="daily-note">
       {{ sent.solved ? tr(`提出した: ${sent.cost} 神 (完成率 ${sent.rate}%)。解決。時間内ならもっと安くできる。`, `Submitted: ${sent.cost} div (${sent.rate}% finished). Solved. You can still go cheaper in time.`) : tr(`提出した: 完成率 ${sent.rate}% で未解決。${SOLVE_RATE}% まで上げる。`, `Submitted: ${sent.rate}% finished, unsolved. Reach ${SOLVE_RATE}%.`) }}
       <span v-if="best">{{ tr(`今の記録 ${best.cost} 神`, `Best ${best.cost} div`) }}</span>
@@ -130,6 +126,6 @@ const best = computed(() => tryOf.value?.best ?? null);
       </ul>
     </section>
     <SimTreePage v-else-if="treeOn" />
-    <p v-else class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
+    <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
   </div>
 </template>
