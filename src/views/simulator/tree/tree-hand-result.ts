@@ -8,7 +8,6 @@ export const RESULT: Record<HandKind, [string, string]> = {
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
   fracture: ["印の狙いが ✦ になった (必ず印の狙いを固定)", "The marked target fractured (always fixes it)"],
-  strip: ["外れが消えた (消去 1 回ごとに箱を並べ、木の箱と同じ形になった所でその段へ戻る)", "Miss removed (one box per annul, back to the step whose box has the same shape)"],
 };
 /** カタリストの手で「何 % まで」を決めた時 (S-31b、スイッチ catHand) */
 export const RESULT_CAT: [string, string] = ["打った後 1 つ (品質を指定の % まで上げた箱)", "One result box (quality raised to the set %)"];

@@ -172,6 +172,20 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const gone = /^(.*\[c:[^~\]]*)~[0-9a-z]+(\](?:~\d+)?)$/.exec(tail);
   const loose = gone ? [...onPath].find((k) => k.startsWith(at + gone[1] + "~") && k.endsWith(gone[2]!) && !exact.has(k)) : undefined;
   if (loose) return loose;
+  // 消去の結果の札は 11-04 からほかの手と同じ側の増減の鍵 (`s:<プレ>|<サフィ>`、S-28d の中身の鍵は撤回)。前の保存の `c:` (消した後の数) は、
+  // 兄弟の組で親の数をそろえて読む (親の数 = c − 増減が一番多く合う物)
+  const side = /^\/(junkGone|lost)\[s:(-?\d+)\|(-?\d+)/.exec(tail);
+  if (side) {
+    const nums = (k: string): [number, number] | null => { const m = /\[c:(\d+)\.[^|]*\|(\d+)\./.exec(k); return m ? [Number(m[1]), Number(m[2])] : null; };
+    const olds = [...onPath].filter((k) => k.startsWith(`${at}/${side[1]}[c:`) && !k.slice(at.length + 1).includes("/"));
+    const deltas = [...exact].flatMap((k) => { const m = new RegExp(`^${at.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/${side[1]}\\[s:(-?\\d+)\\|(-?\\d+)`).exec(k); return m ? [[Number(m[1]), Number(m[2])] as const] : []; });
+    const votes = new Map<string, number>();
+    for (const o of olds) { const c = nums(o); if (c) for (const [dp, ds] of deltas) { const k = `${c[0] - dp}|${c[1] - ds}`; votes.set(k, (votes.get(k) ?? 0) + 1); } }
+    const parent = [...votes].sort((x, y) => y[1] - x[1])[0]?.[0].split("|").map(Number);
+    const want = parent ? `${parent[0]! + Number(side[2])}|${parent[1]! + Number(side[3])}` : null;
+    const old = want ? olds.find((o) => { const c = nums(o); return !!c && `${c[0]}|${c[1]}` === want; }) : undefined;
+    if (old) return old;
+  }
   // 順位で分けていた前の保存 (`;w:` 付きの札) は、まとまった箱の決めとして読む。一番浅い順位の札を使う (S-65b)
   const heads = [at + tail.replace(/\](~\d+)?$/, ";w:"), `${at + bare(tail)}[w:`]; // 側の鍵の無い前の保存 (`[w:1]`) は側で分かれた箱の全部へ
   return [...onPath].filter((k) => heads.some((h) => k.startsWith(h))).sort()[0] ?? at + tail;

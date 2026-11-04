@@ -16,7 +16,7 @@ import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
-import { boxOutcomeOf, isStrip, stripStop } from "./tree-outcome";
+import { boxOutcomeOf } from "./tree-outcome";
 import { isWhittleHand, rankVariants } from "./tree-whittle";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
@@ -126,13 +126,7 @@ const VOID_RETRIES = 200;
  * 繰り返しの手 (repeat) は、当たりの札 (aims) のどれかが新しく付くまで (か上限まで) 打ち続けた結果を 1 回分として返す。
  * use を渡すと使った物 (カタリストの数・カレンシー・お告げ) を数える (100 人回し tree-run)
  */
-export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false, stop?: (it: StageItem) => boolean): StageApply {
-  // 消去で全部消えてよい (残したい MOD の ☑ が 0、10-27 オーナー): 消去 1 回ごとに箱を直線に並べる (tree-hand-plan の stripChain)。1 箱でエンジンの消去を 1 回、
-  // もう木の箱と同じ形 (stop、tree-outcome の stripStop) か消せる物が無ければ打たずに通す (オーナー「消去 1 つ損する」)
-  if (h.keep && !h.keep.length && effectOf(h.currency) === "remove") {
-    const c = stop?.(item) ? null : playHand(data, item, { ...h, keep: undefined }, rng, aims, use, miss);
-    return c?.applied ? c : { applied: true, item, added: [], removed: [] };
-  }
+export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false): StageApply {
   if (h.repeat) {
     // カオススパム = まとめた設定 (10-25 オーナー・ブラック): 狙いの側に空きがあれば高貴を 1 回 → カオス (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり。
     // 1 手ずつはエンジンの applyCurrency (applyHand)、当たりはエンジンの aimDone。ツリーの物は繰り返す順番だけ (スパムシミュは使わない、オーナー「あっちはカオスオーブ全部打つ仕組み」)
@@ -348,16 +342,13 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
   let held: ReadonlySet<string> | undefined;
   const aimedNow = (): ReadonlySet<string> | undefined => (held ??= aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed));
-  // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ印で見る、S-33c)
-  const stop = stripStop(data, doc, p, aimedNow());
-  if (stop?.(base.item)) return { item: base.item, note: "cant:stripStop" };
   // 数え上げられない手の側の鍵の無い箱は一番多い形だけ (ほかの形は整理で足す箱へ行く、S-21・S-74)
   const main = !b.junkKey && (b.out === "any" || b.out === "junk" || b.out === "hit") ? mainSideOf(data, base.item, p.hand) : undefined;
-  const fk = !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
+  const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
   for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
-    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stop);
+    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost");
     if (!r.applied) { last = r; break; }
     last = r;
     // 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)

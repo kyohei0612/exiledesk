@@ -11,9 +11,7 @@
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
-import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
-import { craftStage } from "../../../state/craft-stage";
 import { judgeOf } from "./tree-hand-plan";
 import type { BackReq, Pos, Seg } from "./tree-lines";
 
@@ -21,11 +19,9 @@ import type { BackReq, Pos, Seg } from "./tree-lines";
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b?.back || b.back === RESTART) return [];
-  // 全部消えてよい消去の後は、止まりうる形の箱 (tree-outcome の stripStops、10-27 オーナー)
-  const data = craftStage.data.value, strip = b.back === MATCH && data ? stripTargetsOf(data, doc, id) : null;
   // 前の版の「形の合う箱へ」の行き先は、中身の同じ手のある箱 (箱どうしの判定)
-  const j = b.back === MATCH && !strip ? judgeOf(doc) : null;
-  const to = strip ?? (b.back === MATCH ? (j ? Object.values(doc.boxes).filter((t) => !!t.hand && j.fitsBox(id, t.id)).map((t) => t.id) : matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []))) : [b.back]);
+  const j = b.back === MATCH ? judgeOf(doc) : null;
+  const to = b.back === MATCH ? (j ? Object.values(doc.boxes).filter((t) => !!t.hand && j.fitsBox(id, t.id)).map((t) => t.id) : matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []))) : [b.back];
   return [...new Set(to)].filter((x) => !!doc.boxes[x]);
 }
 
@@ -89,6 +85,28 @@ const CHIP = 14;
 const ALONG = 600;
 /** 統合の線の縦の区間の一番短い長さ (段の間の高さへ寄せる時、これより短くなるなら寄せない) */
 const MIN_V = 16;
+/**
+ * 道探しの候補 (重さの軽い順、同じ重さは入れた順 = 前の「毎回 sort して先頭」と同じ順)。前は取り出すたびに全部を並べ直し、
+ * 白紙の後の 1 つ戻すで 56 箱が一度に戻ると線の引き直しが 3 回 140〜190ms 固まった (11-05 オーナー「白紙ご1つ戻るボタンでぎゃっと固まる」)
+ */
+function minHeap(): { push: (c: number, k: number) => void; pop: () => [number, number]; size: () => number } {
+  const h: Array<[number, number, number]> = [];
+  let seq = 0;
+  const less = (a: number, b: number): boolean => h[a]![0] < h[b]![0] || (h[a]![0] === h[b]![0] && h[a]![2] < h[b]![2]);
+  const swap = (a: number, b: number): void => { const t = h[a]!; h[a] = h[b]!; h[b] = t; };
+  return {
+    size: () => h.length,
+    push: (c, k) => { h.push([c, k, seq++]); for (let i = h.length - 1; i > 0 && less(i, (i - 1) >> 1); i = (i - 1) >> 1) swap(i, (i - 1) >> 1); },
+    pop: () => {
+      const top = h[0]!, last = h.pop()!;
+      if (h.length) {
+        h[0] = last;
+        for (let i = 0; ;) { const l = i * 2 + 1, r = l + 1; let m = i; if (l < h.length && less(l, m)) m = l; if (r < h.length && less(r, m)) m = r; if (m === i) break; swap(i, m); i = m; }
+      }
+      return [top[0], top[1]];
+    },
+  };
+}
 /** 線の 1 本 (縦か横) がほかの箱 (周りを M - 2 空ける) を通るか */
 function hits(ax: number, ay: number, bx: number, by: number, boxes: readonly Box[]): boolean {
   const x0 = Math.min(ax, bx), x1 = Math.max(ax, bx), y0 = Math.min(ay, by), y1 = Math.max(ay, by), m = M - 2;
@@ -125,15 +143,14 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
   const key = (i: number, j: number, d: number): number => (i * Y.length + j) * 3 + d; // d = 0 着いたばかり / 1 横に来た / 2 縦に来た
   const dist = new Map<number, number>(), prev = new Map<number, number>();
   const ix = new Map(X.map((x, i) => [x, i])), iy = new Map(Y.map((y, j) => [y, j]));
-  const open: Array<[number, number]> = [];
-  const push = (k: number, c: number, from?: number): void => { if (c < (dist.get(k) ?? Infinity)) { dist.set(k, c); if (from !== undefined) prev.set(k, from); open.push([c, k]); } };
+  const open = minHeap();
+  const push = (k: number, c: number, from?: number): void => { if (c < (dist.get(k) ?? Infinity)) { dist.set(k, c); if (from !== undefined) prev.set(k, from); open.push(c, k); } };
   for (const e of A) { if (hits(e.p.x, e.p.y, e.q.x, e.q.y, others)) continue; push(key(ix.get(e.q.x)!, iy.get(e.q.y)!, 0), M); }
   const goal = new Map<number, Pos>();
   for (const e of Z) goal.set(ix.get(e.q.x)! * Y.length + iy.get(e.q.y)!, e.p);
   let end: number | null = null;
-  while (open.length) {
-    open.sort((a, b) => a[0] - b[0]);
-    const [c, k] = open.shift()!;
+  while (open.size()) {
+    const [c, k] = open.pop();
     if (c > (dist.get(k) ?? Infinity)) continue;
     const d = k % 3, cell = (k - d) / 3, i = Math.floor(cell / Y.length), j = cell % Y.length;
     if (goal.has(cell) && !hits(X[i]!, Y[j]!, goal.get(cell)!.x, goal.get(cell)!.y, others)) { end = k; break; }

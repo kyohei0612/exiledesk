@@ -18,7 +18,7 @@ import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
+import { boxOutcomeOf } from "./tree-outcome";
 import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
@@ -127,8 +127,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     if (split) return split.flatMap((r) => (r.to ? [r.to] : []));
     const back = doc.boxes[id]?.back;
     if (!back) return [];
-    if (back === MATCH && J) return stripTargetsOf(data, doc, id) ?? boxes.filter((t) => t.hand && J.fitsBox(id, t.id)).map((t) => t.id);
-    if (back === MATCH) return stripTargetsOf(data, doc, id) ?? matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
+    if (back === MATCH && J) return boxes.filter((t) => t.hand && J.fitsBox(id, t.id)).map((t) => t.id);
+    if (back === MATCH) return matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
     return [back === RESTART ? "start" : back];
   };
 
@@ -181,8 +181,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
   // 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (10-29 オーナー「直して」)。
-  // 全部消えてよい消去の直線の止まり (fromStrip) が自動で付けた物は除く
-  for (const b of boxes) if (b.back === MATCH && !b.autoBack && !fromStrip(doc, b.id)) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
+  for (const b of boxes) if (b.back === MATCH && !b.autoBack) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
   if (!J) for (const b of boxes) if (b.back === MATCH) {
     const miss = matchTargets(doc, b.id).filter((x) => !x.to);
     if (miss.length) add(b.id, "noMatch", tr(`続きの箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box to continue from (${miss.length} shape(s)); add a box with that shape and a craft`));
@@ -271,8 +270,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (b.back && !viaBack) {
           // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
           const to = J
-            ? (b.back === MATCH ? stripBackOf(data, doc, id, item, aimed) ?? (fromStrip(doc, id) ? null : routeOf(data, doc, J, null, item, aimed)) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed))
-            : b.back === MATCH ? stripBackOf(data, doc, id, item) ?? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
+            ? (b.back === MATCH ? routeOf(data, doc, J, null, item, aimed) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed))
+            : b.back === MATCH ? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
           if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
           walk(to, b.back === RESTART ? start : item, true, b.back === RESTART && J ? startAimed(data, doc, start) : aimed);
           return;
@@ -280,7 +279,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (!b.hand) return;
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
         const why = handProblem(data, item, b.hand);
-        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b, J ? aimed : null));
+        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (!first.applied && !J && heldHitOf(data, doc, b, item)) { const hb = heldHitOf(data, doc, b, item)!; walk(hb, item, viaBack, J ? nextAimed(data, doc, aimed, hb, item) : aimed); return; }
@@ -317,7 +316,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
           for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
-            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b, J ? aimed : null));
+            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
             const res = boxOutcomeOf(data, doc, b, item, r.item, aims, J ? aimed : null);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)

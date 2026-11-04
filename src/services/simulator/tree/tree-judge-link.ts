@@ -13,7 +13,7 @@ import { junkPath } from "./tree-junk-tidy";
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
 const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
-const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
+export const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
 const keepSig = (h: Hand): string => (h.keep ?`k:${h.keep.map((a) => a.modId).sort().join()}` : "");
 const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && !x.block === !h.block && [...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);

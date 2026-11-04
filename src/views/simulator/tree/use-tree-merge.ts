@@ -2,7 +2,7 @@
  * use-tree-merge.ts — SimTreePage の戻りの見え方の動き (2026-10-22、SimTreePage が 500 行を超えるので分けた): 戻りの矢印だけの箱から行き先へ流れ込む線
  * (tree-merge.ts の mergeReqs → tree-lines の routeBacks、同じ行き先は束ねる)・&lines=a の「線を全部表示」・乗せている箱とホバーのカード
  */
-import { computed, ref, watch, type Ref } from "vue";
+import { onScopeDispose, ReactiveEffect, ref, shallowRef, watch, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, roundPath, routeBacks, type BackReq, type Seg } from "./tree-lines";
 import { sideRoute } from "./tree-lines-grid";
@@ -19,7 +19,19 @@ export function useTreeMerge(o: {
   let before: { paths: Map<string, string>; marks: Map<string, { x: number; y: number } | undefined> } | null = null;
   /** 線の入力 → 引いた線 (1 手で同じ線を何度も全部引き直し、1 つ戻すでも引いていた、S-71b ⑫) */
   const drawn = new Map<string, { lines: ReturnType<typeof mergeReqs>["lines"]; paths: Map<string, string> }>();
-  const merged = computed(() => {
+  /**
+   * 引いた線。入力が変わったら次のコマで 1 回だけ引き直す (引っ張っている間はすぐ)。前は computed で、白紙の後の 1 つ戻すで 56 箱が戻ると
+   * 箱の高さが測れて並べ直すたびに途中の形で 8 回引き直した (1 回 20〜30ms、11-05 オーナー「白紙ご1つ戻るボタンでぎゃっと固まる」)
+   */
+  const merged = shallowRef<ReturnType<typeof draw>>();
+  let frame = 0;
+  const eff = new ReactiveEffect(() => draw());
+  const later = (): void => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; merged.value = eff.run(); }); };
+  eff.scheduler = () => { if (o.moving?.()) { cancelAnimationFrame(frame); frame = 0; merged.value = eff.run(); } else later(); };
+  // 最初も次のコマで (呼ぶ側の段の決め rowL などはこの後に作られる)
+  later();
+  onScopeDispose(() => { cancelAnimationFrame(frame); eff.stop(); });
+  function draw() {
     const d = o.doc.value;
     const mv = o.moving?.() ?? null;
     /** 引っ張っている間、この線は前の道のまま (引っ張っている箱に触れない・前の道がある) */
@@ -95,7 +107,7 @@ export function useTreeMerge(o: {
     before = { paths, marks: new Map(lines.map((l) => [l.id, l.mark])) };
     if (inputKey) { if (drawn.size >= 8) drawn.delete(drawn.keys().next().value!); drawn.set(inputKey, { lines, paths }); }
     return { lines, paths };
-  });
+  }
   /** 帯の「線を全部表示」(このブラウザに覚える) */
   const KEY = "exiledesk.tree.lines-all";
   const linesAll = ref((() => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } })());

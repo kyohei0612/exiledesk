@@ -5,8 +5,8 @@
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import type { OutKind, TreeBox, TreeDoc } from "./tree-model";
 
-/** 外れの道 = 狙いを持って打って狙い通りにいかなかった結果 (外れ・狙いが消えた) と消去の結果 (外れが消えた、11-04)。狙い無しの結果はグレーにしない (S-191・S-190b) */
-const JUNK: ReadonlySet<OutKind | "start"> = new Set(["junk", "lost", "junkGone"]);
+/** 外れの道 = 狙いを持って打って狙い通りにいかなかった結果 (外れ・狙いが消えた)。狙い無しの結果 (打った後・消去の外れが消えた) はグレーにしない (S-191・S-190b。消去もほかの手と同じ、11-04) */
+const JUNK: ReadonlySet<OutKind | "start"> = new Set(["junk", "lost"]);
 /** 外れの道の箱 = 自動の ↩ を付けない箱 (人が手を決める・同じ枠探しでだけつながる、S-190b) */
 export const junkPath = (b: TreeBox): boolean => JUNK.has(b.out);
 /** 見るだけの幅の外 = ツリーを組める幅だけ (S-197・S-94g) */

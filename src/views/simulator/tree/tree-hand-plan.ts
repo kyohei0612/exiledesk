@@ -18,11 +18,9 @@ import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleFrom, sampleOf }
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
-import { aimedAfterAnnul } from "../../../services/simulator/tree/tree-judge";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
-import { stripKeyOf, stripStopByContent } from "../../../services/simulator/tree/tree-outcome";
-import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
-import { arrivalsOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { arrivalsOf, depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -276,13 +274,16 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const data = craftStage.data.value;
   // 比べは判定の「箱どうし」だけ (S-50b)。同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す)。選んだ手は handBack に残す (保存の v1 はこれを打ち方として持ち、開いた時にまた同じ手で戻る、S-105)
   const j0 = data ? judgeMemo(data, d) : null;
-  const to = j0 ? sameHandByContent(d, id, h, j0) : null;
+  const found = j0 ? sameHandByContent(d, id, h, j0) : null;
+  // 同じ枠・同じ手の箱が 2 つになる時は浅い方が幹 (S-51c、オーナー 11-04「浅い方でおk」): 相手が自分より深い段なら、自分に手を置き、相手の下を消して相手を ↩ 自分にする
+  const trunk = found && depthOf(d, found) > depthOf(d, id) ? found : null;
+  const to = trunk ? null : found;
+  if (trunk) { clearHand(d, trunk); setBack(d, trunk, id); d.boxes[trunk]!.autoBack = true; d.boxes[trunk]!.handBack = { ...h }; }
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; afterHandSet(data, d, id, to, h, null, pre); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
-  if (kind === "strip") stripChain(d, at, h); // 消去の結果は未設定 (↩ も続きの消去も自動で付けない、S-190b)
   joinSameShape(d, id);
   if (data) relinkByContent(data, d, had);
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
@@ -395,31 +396,6 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
   return made;
 }
 
-/** 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、stripSplit)。前の直線 (stripToShape・stripStops) は R5 で消した */
-function stripChain(d: TreeDoc, id: string, h: Hand): void {
-  const data = craftStage.data.value;
-  if (data && d.boxes[id]) stripSplit(data, d, id, h);
-}
-/**
- * 全部消えてよい消去の結果は、消した後の中身ごとに箱を分ける (S-28d、10-29 深夜オーナー「消去でも同じ枠なのにな まだ駄目だわ」)。
- * 結果の箱は未設定 (11-04 S-190b。前は中身の同じ手のある箱へ自動の ↩、無ければその箱でまた消去を自動で足した)。
- * 前は 1 本の直線で、消去 1 回の後の中身が人ごとに違うと箱が混ざり (どれが消えたかで プレ / サフィ)、全員が合う箱に着いた所でも消去を 1 箱足した
- * (木の b24 → b25 = 誰も来ない止まり、b33 と b37 = 同じ中身の消去が 2 本)。結果はこの箱の見本 4 つにエンジンの stepOutcomes で打った物
- */
-function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand): void {
-  const firsts = new Map<string, StageItem>();
-  for (const seed of [1, 2, 3, 4]) {
-    const s = sampleOf(data, d, id, seed);
-    // 打つ前にもう手のある箱と同じ中身の人は打たずにその箱へ行く (回す時の stripStop) ので結果に数えない
-    if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-    // 消した後の ☑ は候補の外の印も残す (S-27e)
-    const am = aimedAfterAnnul(data, d, h, sampleAimed(data, d, id, seed), s.item);
-    if (stripStopByContent(data, d, id, s.item, false, am)) continue;
-    for (const o of stepOutcomes(data, prepFor(data, s.item, h.currency), h.currency, engineOmens(h)) ?? []) { const k = o.void ? null : stripKeyOf(data, d, o.item, am); if (k && !firsts.has(k)) firsts.set(k, o.item); }
-  }
-  if (!firsts.size) return;
-  setHand(d, id, h, "strip", [], [...firsts.keys()].map((junkKey) => ({ out: "junkGone" as OutKind, aim: null, junkKey })));
-}
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;

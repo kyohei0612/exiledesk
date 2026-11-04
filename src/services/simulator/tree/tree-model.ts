@@ -22,8 +22,7 @@ import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
  */
 export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch";
 /** fracture = フラクチャーのオーブ (10-22 オーナー「フラクチャーする所から回す」。結果 = 狙いが ✦ になった / 外れが ✦ になった) */
-/** strip = 消去で「全部消えてよい」(残したい MOD の ☑ が 0、10-27 オーナー): 消去 1 回の箱。同じ形の箱になるまで直線に並べる (tree-hand-plan の stripChain) */
-export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture" | "strip";
+export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
   /** 付け方の覚え (完成の狙いだけ、S-10b)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated";
@@ -290,8 +289,6 @@ const OUTS_OF: Record<HandKind, OutKind[]> = {
   // エッセンス (10-22 オーナー「エッセンスの道」): 付く MOD は必ず付く (当たりの箱の札 = その MOD)。分けるのは何が消えたか =
   // 付いた (何も消えない・外れが消えた) / 狙いが消えた (付いた MOD はある)。消えない種類は 1 通りの判定で箱 1 つ
   essence: ["hit", "lost"],
-  // 消去で全部消えてよい: ☑ が無いので消えた / 残ったで分けず、結果は外れが消えたの 1 つ
-  strip: ["junkGone"],
 };
 /**
  * 残したい MOD を決めた消去の結果の箱なら、その時点で持っている狙い = 残したい MOD (☑ の無い MOD は外れ MOD、全部消えてよいなら []。10-27 オーナー)。
@@ -330,7 +327,7 @@ export function drop(d: TreeDoc, ids: readonly string[]): void {
 /** 結果の箱の並び (起こりうる結果の一覧から作る時) */
 const OUT_ORDER: OutKind[] = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk"];
 /** 手の種類 (繰り返しの手は spam) */
-export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base === "remove" && h.keep && !h.keep.length ? "strip" : base);
+export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base);
 
 /**
  * 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す。
