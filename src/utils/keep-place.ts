@@ -69,7 +69,9 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
 let gliding = 0;
 /** 送り終わったら解ける (途中で別の送りに替わった時も解ける)。d は画面の座標の差 (拡大率込み)、中で CSS の px に換算する */
 export function glideBy(box: HTMLElement | null, dScreen: number, ms = 260): Promise<void> {
-  return glideCss(box, toCss(dScreen), ms);
+  // 比は枠の中の物 (ページなら body) でその場で測る (拡大率で割る換算は今の Chrome で動いた量の 15% ほどずれた、11-05)
+  const probe = box ? box.firstElementChild : document.body;
+  return glideCss(box, probe ? dScreen / rectRate(box, probe, dScreen) : toCss(dScreen), ms);
 }
 /**
  * el の位置の差 (getBoundingClientRect の単位) だけ送る。スクロール量との比をその場で測ってから 1 回で滑らせる
