@@ -17,7 +17,7 @@ import { allMods, effectiveCls, oneOfMod, stageRuneIds, takenFamilies } from "./
 import { RUNES } from "./stage-runes";
 import { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
 import { TAG_STYLE } from "../mods/tag-ja";
-import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
+import { familyBlocked, familyKeysOf, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
 import { jewelEmotionsOf } from "../htc/patch";
@@ -83,6 +83,8 @@ export interface ListRow {
   /** 今のアイテムに付いている / 同じ系統が付いていて付かない */
   on: boolean;
   blocked: boolean;
+  /** 付かない訳 (blocked の時だけ): family = 同じ系統が付いている (E-11a)、tag = 付いている MOD が足すタグで止まる (E-11i) */
+  blockedBy?: "family" | "tag";
   /** ルーンの特殊 MOD: どのルーンの物か (日本語名) と、今差しているか */
   runeJa?: string;
   socketed?: boolean;
@@ -142,9 +144,11 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-1
     });
     const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
     const on = onIds.has(m.id);
+    const blocked = !on && familyBlocked(m, taken);
     return {
       id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...new Set([...(m.displayTags ?? m.tags), ...m.tags.filter((t) => FACTION_TAGS.includes(t))])], tiers, weight,
-      topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
+      topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked,
+      ...(blocked ? { blockedBy: familyKeysOf(m).some((f) => taken.has(f)) ? "family" as const : "tag" as const } : {}),
     };
   };
   const modsOf = (ids: readonly string[]) => ids.map((id) => data.mods.get(id)).filter((m): m is Mod => !!m);
@@ -155,8 +159,9 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-1
     if (!pool) continue;
     for (const side of ["prefix", "suffix"] as const) {
       const rows = modsOf(side === "prefix" ? pool.prefixes : pool.suffixes).map((m) => rowOf(m, side, group === "essence" ? essenceKindOf(m) ?? "essence" : group));
-      // 割合を普通と一緒に出してから、差したルーンの MOD の行を「ルーン」の種類に
-      out.push(...fillShares(rows).map((r) => {
+      // 割合を普通と一緒に出してから、差したルーンの MOD の行を「ルーン」の種類に。
+      // 今付かない行 (付いている・同じ系統・タグで止まる) は分子・分母に入れない = 側ごとに付く物の合計が 100% (M-43a)
+      out.push(...fillShares(rows, rows, (r) => !r.on && !r.blocked).map((r) => {
         const rune = group === "normal" ? data.mods.get(r.id)?.rune : undefined;
         return rune ? { ...r, group: "rune" as const, runeJa: runeJaOf(rune), socketed: true } : r;
       }));
@@ -212,6 +217,8 @@ function mergeFamilies(rows: ListRow[]): ListRow[] {
       topLevel: Math.max(...g.map((r) => r.topLevel)),
       on: g.some((r) => r.on),
       blocked: g.every((r) => r.blocked),
+      // 出やすさは付く MOD の分だけ (付かない MOD の share は 0)。訳は止まった物の 1 つ目 (同じ系統なら全部同じ系統で止まる)
+      ...(g.every((r) => r.blocked) ? { blockedBy: g.find((r) => r.blockedBy)?.blockedBy } : { blockedBy: undefined }),
     });
   }
   return out;

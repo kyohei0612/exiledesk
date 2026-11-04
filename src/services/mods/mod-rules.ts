@@ -62,14 +62,15 @@ type ShareKey = { side: string; group: string; weight: number };
 /**
  * 出やすさ = 同じ側・同じ種類の重みの合計に対する割合 (0〜1)。rows の share を書き換える。
  * MOD の一覧 (クラフトステージ・計算機の狙う MOD) はどちらもこれで割る。重みの合計が 0 の組 (エッセンス = 確定) は 0。
- * base = 合計を取る元 (検索で絞る前の全部。省略時は rows)
+ * base = 合計を取る元 (検索で絞る前の全部。省略時は rows)。
+ * live = 今付くか (M-43a。付かない行は分子・分母に入れず 0。省略時は全部付く = 品を見ない計算機の狙う MOD)
  */
-export function fillShares<T extends ShareKey & { share: number }>(rows: T[], base: readonly ShareKey[] = rows): T[] {
+export function fillShares<T extends ShareKey & { share: number }, B extends ShareKey = ShareKey>(rows: T[], base: readonly B[] = rows as unknown as B[], live: (r: T | B) => boolean = () => true): T[] {
   const totals = new Map<string, number>();
-  for (const r of base) totals.set(`${r.side}|${r.group}`, (totals.get(`${r.side}|${r.group}`) ?? 0) + r.weight);
+  for (const r of base) if (live(r)) totals.set(`${r.side}|${r.group}`, (totals.get(`${r.side}|${r.group}`) ?? 0) + r.weight);
   for (const r of rows) {
     const t = totals.get(`${r.side}|${r.group}`) ?? 0;
-    r.share = t > 0 ? r.weight / t : 0;
+    r.share = t > 0 && live(r) ? r.weight / t : 0;
   }
   return rows;
 }
