@@ -118,21 +118,24 @@
 
 | 表 | 列 |
 |---|---|
-| `daily_nicks` (名前) | id・name (表示)・name_key (そろえた形、一意)・pass_hash・created・title_pick (札に出す称号、空なら一番格上、D-54) |
-| `daily_box` (投稿) | id・created・ip_hash・nick_id・note・item (JSON: ベース・アイテムレベル・MOD)・status (wait / ok / no) |
+| `daily_nicks` (名前) | id・name (表示)・name_key (そろえた形、一意)・pass_hash・created・title_pick (札に出す称号、空なら一番格上、D-54)・ip_hash (作る数の制限だけ、1 IP 1 時間 5 個) |
+| `daily_box` (投稿) | id・created・ip_hash・nick_id・note・item (JSON: ベース・アイテムレベル・MOD)・status (wait / ok / no / used)・why (落ちた訳) |
 | `daily_topics` (お題) | id・box_id (投稿から出した時)・sample_id (週の型から出した時)・day (出た日)・week・slot (曜日の部位 D-05)・item_class・base・ilvl・type_snap (出た時の並びの写し)・aims (JSON: 段の下限つき)・prices (JSON: 写し)・seed・engine_ver・rules_ver (D-05 の表・D-04 の決まりの版)・shown_by |
 | `daily_tries` (挑戦) | topic_id・nick_id・started_at (サーバーの時計)・submitted_at・cost・rate・recipe (exiledesk-recipe/1)・checked (検算)・PK (topic_id, nick_id)。使った時間 = submitted_at − started_at (D-32) |
 | ~~`daily_weeks` (週間)~~ | 11-05 やめ (D-53) |
 | `daily_results` (日の結果) | day・topic_id・nick_id・place (解決の順位、未解決は null)・cost・rate・used_ms・solved_n (その日の解決者の数)・entered_n (挑んだ人の数)・slot・item_class・base・checked・engine_ver・facts (JSON、`facts_v` つき: recipe から数えた事実 = 使ったカレンシーの種類と数の期待値・箱の数など)。締め (D-59) で書き、消さない。順位と facts は `daily_tries` から何度でも作り直せる (D-100) |
 | `daily_awards` (称号) | nick_id・title_id・title_ver・first_day・count (満たした回数)・retired (決まりを消した称号、「昔の称号」で残す)。全部の記録から計算し直した写し (D-101) |
 | `daily_samples` (週の型) | week・item_class・base・mods (JSON: MOD の行の名前と段)・n (同じ並びの人数)。キャラ名・アカウント名は持たない (D-80c) |
-| `daily_plan` (週の予定) | week・day・slot・item_class・base・sample_id。週の取得の時に月〜日を書く (D-06) |
+| `daily_plan` (週の予定) | week・day・slot・item_class・base・base_ja・sample_id・ilvl・aims。週の取得の時に月〜日を書く (D-06)。aims・ilvl は台本が回らなかった日に Worker がそのままお題にする写し (D-59) |
 | ~~`daily_types`~~ | 11-05 やめ。手の辞書 `daily-types.ts` は週のファイルが 1 つも無い時の控えだけ (D-80) |
 
 - **D-56 口**: `GET /daily.json` (今週のお題と順位の上位。締めた日は全部見せる、端のキャッシュ 60 秒、デイリーのページを開いた時だけ。スタート前の伏せたお題の MOD は入れない = D-32b) / `POST /daily/nick` (名前を決める・合言葉で戻す) / `POST /daily/box` (投稿) / `POST /daily/start` (ここで初めて MOD を返す。今日のお題でない・14:50 を過ぎた・もう始めた時は断る) / `POST /daily/submit` / `POST /daily/title` (札の称号を選ぶ、持っている物だけ、D-54)。提出・スタートは合言葉の控え (端末が持つトークン) で本人を見る。誰でも書ける口は Y-94 (IP ごとの数・大きさの上限・bot よけ)。投稿は同じ IP から 1 時間 5 件・item 4KB まで、recipe 32KB まで。提出はサーバーの始めた時刻から 1 時間 + 30 秒まで (D-32、端末の報告に頼らない)。
+  - 作り (11-05、サーバー管理人): `server/live/src/daily/` (表 migrations/0015)。形は `daily-api.ts` の関数と同じ JSON (スタートの返りに種・値段・ベースも足す)。本人は nickId + code。投稿は待ち (wait) で受け、悪口だけ受けた時に落とす。自分の投稿の状態は `GET /daily/box.json?ids=`。画面の中身を fetch に替えるのはデイリー部長。
 - **D-57 Y-100 の例外**: スタートと提出と投稿は「押した時の 1 回」なので、Y-100 の例外に足す (打つ・回す間は 0 のまま)。普段の枠の 1 割以下 (Y-73) に収まるかはサーバー管理人が見る。
 - **D-58 回し直しはサーバーでしない**: Workers の無料の枠は 1 回の CPU が 10ms なので 100 人回しはできず、有料にもしない (Y-76)。費用は端末が出した数字を受け、順位の上位だけ切り替え (16:00) の時の台本 (Y-45 と同じ形) が同じ種・同じ値段で回し直し、合わない物を外す。本物の値を見るのは順位の上位だけ。
-- **D-59 16:00 の切り替え**: 16:00 JST に ① 前の日を締める (検算 D-58 の後に `daily_results` を書き、称号を計算し直す D-101) ② 次のお題を 1 つ `daily_topics` に書く (選ぶ順は D-84)。月曜は ② の前に、週の取得 (D-80b) で取れた分から `daily_plan` に月〜日を書く。前の「毎朝 7:00・月曜に週間を締めて未解決を畳む」はやめ。生成はエンジンを使うので Worker の CPU に入らない見込みで、予定のタスクで組み `POST /daily/topic` (鍵つき、Y-93) で入れる口の形にする。実行の所はサーバー管理人の持ち場。 — オーナー 11-05「1６時リセット」「基本俺の介入が無くて回るのがベストだね」
+- **D-59 16:00 の切り替え**: 16:00 JST に ① 前の日を締める (検算 D-58 の後に `daily_results` を書き、称号を計算し直す D-101) ② 次のお題を 1 つ `daily_topics` に書く (選ぶ順は D-84)。月曜は ② の前に、週の取得 (D-80b) で取れた分から `daily_plan` に月〜日を書く。前の「毎朝 7:00・月曜に週間を締めて未解決を畳む」はやめ。生成はエンジンを使うので Worker の CPU に入らない見込みで、予定のタスクで組み `POST /daily/topic` (鍵つき、Y-93) で入れる口の形にする。実行の所はサーバー管理人の持ち場。
+  - 作り (11-05): 台本 `scripts/daily-roll.mjs` (エンジンの所は `scripts/_daily-roll-entry.ts`、daily-gen・boxCheck・awardsOf を import) を予定のタスクで毎日 15:55 に回す。`GET /daily/roll.json` → 組む → `POST /daily/topic` (どちらも鍵つき)。順は ① その週の予定が無ければ取った品を `parseItemText` で型 (読めない行のある品は外す) → `planWeek`。取得が done でなければ前の週の型を足す。曜日の部位の型が無い日はその日だけ前の週・手の辞書の見本で埋める (毎日 1 個 D-01 が先) ② 投稿の確かめ ③ 前の日を締める (挑戦が全部終わる 15:50:30 の後だけ) ④ お題。何度回しても二重に書かない。台本が回らなかった日は、Worker が `GET /daily.json`・スタートの時に週の予定からお題を出す (箱は使われず、締めは次に回った時)。
+  - 検算 (D-58) はまだ (費用の数え方・種・値段をデイリー部長に確かめ中。今は checked = null で全員を順位に入れる)。 — オーナー 11-05「1６時リセット」「基本俺の介入が無くて回るのがベストだね」
 
 ## ④ 表示の決まり
 
@@ -207,7 +210,7 @@
 
 | # | 何 | 今 |
 |---|---|---|
-| 1 | 週の取得の口と形 | リサーチ長がアプリのコードを解析中。実行はサーバー管理人の持ち場 (D-80b) |
+| 1 | 週の取得の口と形 | 11-05 作った (server/live/src/ninja/、system.md Y-53)。本番への出しと初回の確かめはオーナーの「出して」の後。検算 (D-58) は費用の数え方待ち |
 | 3 | D-06 のベースの選び方 | 甘ければ後で決め直す (オーナー 11-05) |
 | 4 | 作りを 11-05 の形へ | 手元の開発版 (D-90) は済み (11-05)。サーバーの表・口・16:00 の実行・週の取得は D-91 のサーバー管理人の所。見た目の OK はオーナー (G-08) |
 
