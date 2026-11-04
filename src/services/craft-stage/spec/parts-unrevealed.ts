@@ -4,7 +4,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, effectiveCls, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { allMods, candidates, effectiveCls, makeStageMod, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import type { Mods, PartCtx } from "./parts";
@@ -98,6 +98,8 @@ export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): 
     side = pick.s;
   }
   if (!(weights.find((x) => x.s === side)!.w > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
+  // 上限を超えている側 (侮蔑・合金が消えた後) には付かない。お告げで決めた側なら打てない、側が当たり所なら手ごと不成立 (E-25。オーナー 11-05 ゲームの事実)
+  if (!mark && overLimit(item, side)) return (fixed ? skip : skipRandom)(item, tr("その側は上限を超えているので冒涜の MOD を付けられない", "That side is over its limit, so no Desecrated mod can be added"));
   let cur = item;
   const removed: StageMod[] = [];
   if (mark) {

@@ -14,7 +14,7 @@ import type { PatchData, ItemState } from "../../vendor/poe2htc/engine/types";
 import { DES_BOSS_TAG, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { applyCurrency } from "./apply-currency";
 import { mulberry32 } from "../htc/rng";
-import { allMods, effectiveCls, makeStageMod, room, SIDES, withMod, without, type Candidate } from "./stage-core";
+import { allMods, effectiveCls, makeStageMod, overLimit, room, SIDES, withMod, without, type Candidate } from "./stage-core";
 import { revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
@@ -157,16 +157,18 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
     for (const r of rem) runs.push({ p: p / rem.length, it: without(item, r), side });
   };
   if (sp.mark) runs.push({ p: 1, it: without(item, sp.mark), side: sp.mark.side });
-  else if (sp.fixed) { if (room(item, sp.fixed)) runs.push({ p: 1, it: item, side: sp.fixed }); else removal(sp.fixed, 1); }
+  // 上限を超えている側は付かない (E-25、打つ処理と同じ)。お告げで決めた側なら全部 0%、当たり所の側は数えない (カオスの不成立の枝と同じ)
+  else if (sp.fixed) { if (overLimit(item, sp.fixed)) return { byMod, total: 1, bone: true }; if (room(item, sp.fixed)) runs.push({ p: 1, it: item, side: sp.fixed }); else removal(sp.fixed, 1); }
   // 空きがある時は空いた側から等しく (両側なら半々、2026-10-16 Craft of Exile と同じ)
   else if (SIDES.some((sd) => room(item, sd))) {
     const W = sp.weights.reduce((x, y) => x + y.w, 0);
     if (!(W > 0)) return { byMod, total: 1, bone: true };
     for (const { s, w } of sp.weights) if (w > 0) runs.push({ p: w / W, it: item, side: s });
   } else {
-    const W = sp.weights.reduce((x, y) => x + y.w, 0);
+    const ws = sp.weights.filter((x) => !overLimit(item, x.s));
+    const W = ws.reduce((x, y) => x + y.w, 0);
     if (!(W > 0)) return { byMod, total: 1, bone: true };
-    for (const { s, w } of sp.weights) if (w > 0) removal(s, w / W);
+    for (const { s, w } of ws) if (w > 0) removal(s, w / W);
   }
   const boss = plan.mods.guaranteeTag ? BOSS_OF_TAG.get(plan.mods.guaranteeTag) : undefined;
   const opts: BoneOpts = { floor: sp.floor, altered: a.pools.includes("otherworldly"), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };
