@@ -8,7 +8,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "triggers": {
-    "crons": ["0 * * * *", "0 0 * * *", "3 0 * * *"]
+    // 4 本目 = デイリーの週の取得 (UTC の日・月に 5 分おき、日曜 16:00〜月曜 16:00 JST の窓の中だけ動く、src/ninja/job.ts・設計図 Y-53)
+    "crons": ["0 * * * *", "0 0 * * *", "3 0 * * *", "*/5 * * * SUN,MON"]
   },
   "kv_namespaces": [
     {

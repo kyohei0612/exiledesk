@@ -81,6 +81,10 @@ export interface Env {
   DISCORD_CHANNELS?: string;
   /** 読む Discord のサーバー (guild) の id (vars、秘密ではない)。毎回このサーバーの文字のチャンネルを全部拾って読む (DISCORD_CHANNELS が無い時。オーナー 10-26「全部読んで」) */
   DISCORD_GUILD_ID?: string;
+  /** デイリーの週の取得 (src/ninja/、Y-53) のリーグ (poe.ninja の url。無ければアプリと同じく economyLeagues[0]) */
+  NINJA_LEAGUE?: string;
+  /** 週の取得の 1 回の起動で取る本数 (無ければ 3、1〜10) */
+  NINJA_PER_RUN?: string;
 }
 
 export type Fetch = typeof fetch;

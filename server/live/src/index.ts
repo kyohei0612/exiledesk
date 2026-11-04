@@ -12,6 +12,8 @@
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
  *   POST /ai-review/flush  … D1 の ai_review に置かれた AI の評価と見解を #日報 へ流す (ai-review.ts)
  *   GET  /refresh(ヘッダー x-exiledesk-key)    … 配信の見張りを今すぐ
+ *   GET  /daily/fetch.json?week=(ヘッダー x-exiledesk-key) … デイリーの週の取得の結果と型の材料 (ninja/job.ts、Y-53)。16:00 の生成の側が読む
+ *   scheduled (5 分おき、UTC の日・月) … デイリーの週の取得。日曜 16:00〜月曜 16:00 JST の窓の中だけ poe.ninja を数本ずつ (ninja/job.ts)
  *   GET  /health
  *
  * 見る人が何人いても YouTube / Twitch への問い合わせは 8 時間に 1 回なので、無料枠 (Workers 10 万/日、KV 読み 10 万/日・書き 1,000/日、
@@ -32,6 +34,7 @@ import { pullDiscord } from "./discord";
 import { flushAiReview } from "./ai-review";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
+import { fetchItemsJson, ninjaTick } from "./ninja/job";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -271,6 +274,12 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
       return new Response(await dayLogs(env, day), { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" } });
     }
+    case "/daily/fetch.json": {
+      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
+      const week = url.searchParams.get("week");
+      if (week !== null && !/^\d{4}-\d{2}-\d{2}$/.test(week)) return json({ error: "week=YYYY-MM-DD (月曜)" }, 400);
+      return json(await fetchItemsJson(env, week), 200, { "cache-control": "no-store" });
+    }
     case "/feedback.json":
       if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       return json(await listFeedback(env.LIVE), 200, { "cache-control": "no-store" });
@@ -335,6 +344,11 @@ export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は画像の掃除
     // 毎朝 9:03 (JST = 0:03 UTC): Discord を読むだけの Bot が前回より後の書き込みを D1 に置く (discord.ts、毎朝 9 時の AI の評価と見解が読む)
+    // デイリーの週の取得 (5 分おき、UTC の日・月。窓の中だけ動く、ninja/job.ts・設計図 Y-53)
+    if (controller.cron === "*/5 * * * SUN,MON") {
+      ctx.waitUntil(ninjaTick(env, new Date(controller.scheduledTime)).catch((e) => alert(env, "デイリーの週の取得", `止まった: ${String(e).slice(0, 200)}`)));
+      return;
+    }
     if (controller.cron === "3 0 * * *") {
       ctx.waitUntil(pullDiscord(env).then(() => undefined).catch((e) => console.warn("discord:", String(e).slice(0, 200))));
       return;
