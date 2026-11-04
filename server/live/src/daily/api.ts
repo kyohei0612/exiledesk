@@ -134,7 +134,8 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
 }
 
 /**
- * POST /daily/giveup: 挑戦を提出なしで終える (D-37b)。今日のお題で、始めていて、まだ終えていない時だけ。始め直しはできない (D-33 のまま)。
+ * POST /daily/giveup: 挑戦を提出なしで終える (D-37b)。今日のお題で、まだ終えていない時だけ。始め直しはできない (D-33 のまま)。
+ * 始める前でも効く (D-50c、今日のレシピを見る前の諦め): 行が無ければ started_at = gave_up_at = 今 の行を入れる。14:50 の締めは見ない。
  * 前に出した提出の記録は消さない (諦めた後の提出は受けない)。返りは start と同じ形 + ended
  */
 export async function dailyGiveup(db: D1Database, b: Body, now: number): Promise<unknown> {
@@ -142,7 +143,11 @@ export async function dailyGiveup(db: D1Database, b: Body, now: number): Promise
   if (!nick) return { error: "nick" };
   const id = typeof b.id === "string" ? b.id : "";
   if (id !== idOf(dayNoOf(now))) return { error: "notToday" };
-  await db.prepare("UPDATE daily_tries SET gave_up_at = ? WHERE topic_id = ? AND nick_id = ? AND gave_up_at IS NULL").bind(now, id, nick.id).run();
+  if (!(await db.prepare("SELECT 1 FROM daily_topics WHERE id = ?").bind(id).first())) return { error: "notToday" };
+  await db.batch([
+    db.prepare("INSERT OR IGNORE INTO daily_tries (topic_id, nick_id, started_at, gave_up_at) VALUES (?, ?, ?, ?)").bind(id, nick.id, now, now),
+    db.prepare("UPDATE daily_tries SET gave_up_at = ? WHERE topic_id = ? AND nick_id = ? AND gave_up_at IS NULL").bind(now, id, nick.id),
+  ]);
   const [t, topic] = await Promise.all([
     db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>(),
     db.prepare("SELECT * FROM daily_topics WHERE id = ?").bind(id).first<TopicRow>(),
@@ -189,12 +194,13 @@ export async function dailyBoxStatus(db: D1Database, ids: string[]): Promise<unk
 
 /**
  * GET /daily/recipe.json?id=&name=: 順位の行のレシピ (D-50b、オーナー 11-05「ランキングーはレシピ見れるようにできるよね」)。
- * 締めた日だけ (今日の分は 16:00 に締めるまで見せない)。順位と同じ条件 = 解決・検算で外れていない行だけ
+ * 締めた日と今日 (今日は見る前に画面が「見たら諦めた扱い」の窓を出す、D-50c)。順位と同じ条件 = 解決・検算で外れていない行だけ
  */
 export async function dailyRecipe(db: D1Database, id: string, name: string, now: number): Promise<{ recipe: string | null } | { error: string }> {
   const no = noOfId(id);
   if (no == null || !name || name.length > 40) return { error: "id" };
-  if (no >= dayNoOf(now)) return { error: "open" };
+  // 今日のお題も返す (D-50c、カンニングの窓は画面が出す)。来ていない日は無い
+  if (no > dayNoOf(now)) return { error: "open" };
   const r = await db
     .prepare(`SELECT t.recipe FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id WHERE t.topic_id = ? AND n.name = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0)`)
     .bind(id, name)

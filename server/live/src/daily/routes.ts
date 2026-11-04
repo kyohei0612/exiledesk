@@ -5,6 +5,7 @@
 import type { Env } from "../types";
 import { dailyBox, dailyBoxStatus, dailyGiveup, dailyJson, dailyRecipe, dailyStart, dailySubmit, dailyTitle } from "./api";
 import { nickPost } from "./nick";
+import { dayNoOf, noOfId } from "./time";
 import { rollJson, rollPost } from "./roll";
 
 type Json = (body: unknown, status?: number, extra?: Record<string, string>) => Response;
@@ -34,8 +35,9 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
   }
   if (req.method === "GET" && p === "/daily/recipe.json") {
     const out = await dailyRecipe(db, url.searchParams.get("id") ?? "", url.searchParams.get("name") ?? "", now);
-    // 締めた日の行は変わらない (称号・検算で外れるのは締めの時だけ) ので端と端末に 1 日覚えさせる。今日の分・誤りは覚えない
-    return json(out, "error" in out ? 400 : 200, { "cache-control": "error" in out ? "no-store" : "public, max-age=86400" });
+    // 締めた日の行は変わらない (称号・検算で外れるのは締めの時だけ) ので 1 日覚えさせる。今日の分は安い提出で替わるので 60 秒、誤りは覚えない
+    const closed = (noOfId(url.searchParams.get("id") ?? "") ?? Infinity) < dayNoOf(now);
+    return json(out, "error" in out ? 400 : 200, { "cache-control": "error" in out ? "no-store" : `public, max-age=${closed ? 86400 : 60}` });
   }
   if (req.method === "GET" && p === "/daily/box.json") return json(await dailyBoxStatus(db, (url.searchParams.get("ids") ?? "").split(",")), 200, { "cache-control": "no-store" });
   if (req.method === "GET" && p === "/daily/roll.json") {
