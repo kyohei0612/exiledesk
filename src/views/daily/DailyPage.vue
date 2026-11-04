@@ -9,13 +9,12 @@ import "./daily-skin.css";
 import "./look.css";
 import { tr } from "../../i18n/lang";
 import { dailyPage } from "../../state/web-page";
-import { craftStage as s } from "../../state/craft-stage";
 import { jaTypeName } from "../../i18n/item-names-ja";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { pageZoom } from "../../utils/zoom";
 import { isPhoneWidth } from "../../utils/use-phone";
-import { dayNoOf, getTry, myAwards, myBox, myNick, myTitlePick, setTitlePick, SLOT_NAMES, todayId, topicOfId, untilRefresh, weekBoard, yesterdayTop, type DailyBoxItem, type DailyTopic } from "./daily-api";
+import { daily, dayNoOf, getTry, myAwards, myBox, myNick, myTitlePick, refreshDaily, setTitlePick, SLOT_NAMES, todayId, topicOfId, untilRefresh, weekBoard, yesterdayTop, type DailyBoxItem, type DailyTopic } from "./daily-api";
 import { baseArt } from "../../components/art/base-art";
 import { skinById, skinOfDay, skinVars } from "./skin/skin";
 import DailyHero from "./DailyHero.vue";
@@ -36,22 +35,28 @@ const timer = setInterval(() => (now.value = Date.now()), 1000);
 onBeforeUnmount(() => clearInterval(timer));
 /** 日が替わる (16:00) までは同じ棚。秒ごとに組み直さない */
 const dayNo = computed(() => dayNoOf(now.value));
-const week = computed(() => { void dayNo.value; void dailyPage.value; const d = s.data.value; return d ? weekBoard(d, jaTypeName) : []; });
+/** 一覧はサーバー (GET /daily.json) から。開いた時・ページを移った時・16:00 を越えた時に読み直す */
+watch([dayNo, () => dailyPage.value?.view], () => void refreshDaily(), { immediate: true });
+const week = computed(() => weekBoard(jaTypeName));
 const today = computed(() => week.value.find((x) => x.today)?.t ?? null);
-const topic = computed(() => { void dayNo.value; const d = s.data.value; return d && q.value ? topicOfId(d, jaTypeName, q.value) : null; });
+const topic = computed(() => (q.value ? topicOfId(jaTypeName, q.value) : null));
 const solved = (t: DailyTopic): boolean => !!getTry(t.id)?.best;
-const box = computed(() => { void dailyPage.value; return myBox().filter((b) => b.status !== "used"); });
+const box = computed(() => myBox().filter((b) => b.status !== "used"));
 const boxWhy = (b: DailyBoxItem): string => (b.why === "no-mods" ? tr("お題にできる MOD が無い", "No usable mods") : b.why === "bad-word" ? tr("名前か一言に使えない言葉がある", "The name or note has a banned word") : b.why ?? "");
-const nick = computed(() => { void dailyPage.value; return myNick(); });
+const boxText = (b: DailyBoxItem): string =>
+  b.status === "ok" ? tr("箱の中。選ばれた日の 16:00 に出る", "In the box. It goes out at 16:00 on the day it's picked")
+  : b.status === "wait" ? tr("箱に入った。16:00 に確かめる", "In the box. Checked at 16:00 JST")
+  : tr(`落ちた: ${boxWhy(b)}`, `Rejected: ${boxWhy(b)}`);
+const nick = computed(() => myNick());
 /** 卓の右 = 昨日の上位 3 人と札 (D-60d) */
-const top3 = computed(() => { void dayNo.value; return yesterdayTop(); });
+const top3 = computed(() => yesterdayTop());
 
 const left = computed(() => untilRefresh(now.value));
 const hm = (ms: number): string => { const m = Math.floor(ms / 60_000); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
 
 /** 自分の称号と札の選び (D-54)。空 = 一番格上 */
 const awards = computed(() => { void stamp.value; void dayNo.value; return nick.value ? myAwards() : []; });
-const pick = computed({ get: () => { void stamp.value; return myTitlePick() ?? ""; }, set: (v: string) => { setTitlePick(v || null); stamp.value++; } });
+const pick = computed({ get: () => { void stamp.value; return myTitlePick() ?? ""; }, set: (v: string) => void setTitlePick(v || null).then(() => stamp.value++) });
 
 /** 今週の棚: 月〜日の 7 枠。来ていない日は曜日の部位だけ出す (D-05・D-60d) */
 const WD: readonly (readonly [string, string])[] = [["月", "Mon"], ["火", "Tue"], ["水", "Wed"], ["木", "Thu"], ["金", "Fri"], ["土", "Sat"], ["日", "Sun"]];
@@ -88,7 +93,8 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
         <DailySkins @pick="(id) => (picked = id)" />
         <button type="button" class="g-btn m-4" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
       </template>
-      <p v-else-if="!s.data.value" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
+      <p v-else-if="!daily.remote && daily.failed" data-daily-offline class="daily-note">{{ tr("サーバーにつながらない。少し待って開き直す。", "Couldn't reach the server. Try again in a moment.") }}</p>
+      <p v-else-if="!daily.remote" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
       <p v-else-if="view === 'list' && !today" data-daily-none class="daily-note">{{ tr("今日のお題を組めなかった。次のお題は 16:00。", "Today's challenge couldn't be built. The next one opens at 16:00 JST.") }}</p>
       <div v-else-if="view === 'list'" ref="board" class="g-panel daily-board" :style="boardH ? { minHeight: `${boardH}px` } : {}">
         <DailyHero v-if="today" :topic="today" today :now="now" />
@@ -123,7 +129,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
             <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("お題を投稿", "Post a challenge") }}</h3></div>
             <button type="button" class="g-btn" data-daily-post-open @click="openDailyPage({ view: 'detail', q: 'post' })">{{ tr("作ってほしい装備を投稿", "Post an item to be crafted") }}</button>
             <ul v-if="box.length" data-daily-box class="daily-box">
-              <li v-for="b in box" :key="b.id" class="daily-row" :data-daily-box-status="b.status"><span>{{ tr(b.baseJa, b.base) }}</span><small>{{ b.status === "ok" ? tr("箱の中。選ばれた日の 16:00 に出る", "In the box. It goes out at 16:00 on the day it's picked") : tr(`落ちた: ${boxWhy(b)}`, `Rejected: ${boxWhy(b)}`) }}</small></li>
+              <li v-for="b in box" :key="b.id" class="daily-row" :data-daily-box-status="b.status"><span>{{ tr(b.baseJa, b.base) }}</span><small>{{ boxText(b) }}</small></li>
             </ul>
           </section>
         </div>

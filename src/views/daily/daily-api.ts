@@ -1,14 +1,15 @@
 /**
- * daily-api.ts — デイリーのサーバーの口 (D-56) と同じ形の関数。今はサーバーが無いので中身はこのブラウザの localStorage (D-90)。
- * サーバーができたら関数の中だけを fetch に替える。画面はここしか呼ばない。お題の狙いは startTry か締めた日だけ返す (伏せる、D-32b)。
- * 日は 16:00 JST 区切り (D-01)、スタートは 14:50 まで、挑戦は実際の時計で 1 時間 (D-32)。お題は箱が先、無ければ週の予定 (D-84・D-06)。
- * 型のファイルは今はサーバーに無いので手の辞書の見本 (D-80)。順位の相手と札は見本で意味は無い (daily-samples)
+ * daily-api.ts — デイリーのサーバーの口 (D-56、server/live/src/daily/)。画面はここしか呼ばない。
+ * 一覧 (GET /daily.json) は reactive な控え `daily.remote` に入れ、画面は同期の関数で読む。書く口 (名前・スタート・提出・札・投稿) は async。
+ * この端末に残すのは名前の控え (nickId + 引き継ぎコード)・挑戦の写しと木 (D-32「木は端末に残す」)・自分の投稿 (D-15) だけ。
+ * 時刻の式 (16:00 区切り・14:50 締め切り・1 時間) は server/live/src/daily/time.ts と同じ (直す時は両方)。時刻と 1 日 1 回の正はサーバー (D-32)
  */
+import { reactive, toRaw } from "vue";
 import type { PatchData } from "../../services/craft-stage/engine";
-import { goalBlock } from "../../services/simulator/sim-engine";
-import { classOfBase, devSamples, floorAims, planWeek, slotOfClass, SLOTS, topicOfPlan, type DailySample, type GenAim, type PlanDay, type PlanHistory } from "./daily-gen";
+import { WEB_API_BASE } from "../../web/config";
+import { floorAims, SLOTS, type GenAim } from "./daily-gen";
+import { boxCheck } from "./daily-check";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
-import { SAMPLE_TITLES, sampleRank } from "./daily-samples";
 
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
 /** 解決の完成率 (%、D-02) */
@@ -21,252 +22,202 @@ export type DailyAim = GenAim;
 /** 一覧に出す形。aims は締めた日だけ入る (D-32b) */
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
-/** startedAt = スタートを押した時刻 (サーバーの時計、D-32) */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; fractured?: string; tree?: string; best?: DailyRecord; last?: DailyRecord };
+/** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・tree はこの端末だけ */
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; seed?: number; prices?: unknown; fractured?: string; tree?: string; best?: DailyRecord; last?: DailyRecord };
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean };
-export type DailyNick = { name: string; code: string };
-/** status: ok = 機械の確かめを通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
-export type DailyBoxItem = { id: string; at: number; note: string; base: string; baseJa: string; ilvl: number; aims: DailyAim[]; status: "ok" | "no" | "used"; why?: string };
-/** 出たお題の控え (daily_topics の写し)。箱から出た物は boxId、予定から出た物は sampleId */
-type Shown = { base: string; slot: number; cls: string; boxId?: string; sampleId?: string };
-type Db = { nick?: DailyNick; names: Record<string, string>; tries: Record<string, DailyTry>; box: DailyBoxItem[]; shown: Record<string, Shown>; titlePick?: string; awards?: Award[] };
+export type DailyNick = { id: string; name: string; code: string };
+/** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
+export type DailyBoxItem = { id: string; at: number; note: string; base: string; baseJa: string; ilvl: number; aims: DailyAim[]; status: "wait" | "ok" | "no" | "used"; why?: string };
+type Title = { ja: string; en: string; rank: number };
+type WeekDay = { id: string; wd: number; md: string; today: boolean; t: DailyTopic | null };
+/** GET /daily.json の形 (server/live/src/daily/api.ts の dailyJson) */
+type Remote = { now: number; today: string; yesterday: string; week: WeekDay[]; yesterdayTopic: DailyTopic | null; ranks: Record<string, DailyRankRow[]>; yesterdayTop: DailyRankRow[]; titles: Record<string, Title> };
+type Local = { nick?: DailyNick; tries: Record<string, DailyTry>; box: DailyBoxItem[]; titlePick?: string; awards?: Award[] };
 
-const KEY = "exiledesk.daily.v3";
-const empty = (): Db => ({ names: {}, tries: {}, box: [], shown: {} });
-function load(): Db { try { return { ...empty(), ...(JSON.parse(localStorage.getItem(KEY) ?? "null") as Partial<Db> | null) }; } catch { return empty(); } }
-function store(d: Db): void { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { /* 覚えられなくてもその場は動く */ } }
+const KEY = "exiledesk.daily.v4";
+function loadLocal(): Local {
+  const empty: Local = { tries: {}, box: [] };
+  try { return { ...empty, ...(JSON.parse(localStorage.getItem(KEY) ?? "null") as Partial<Local> | null) }; } catch { return empty; }
+}
+function save(): void { try { localStorage.setItem(KEY, JSON.stringify(toRaw(daily.local))); } catch { /* 覚えられなくてもその場は動く */ } }
+
+/** 画面が読む控え。remote = 最後に読んだ GET /daily.json、failed = 読めなかった */
+export const daily = reactive<{ remote: Remote | null; failed: boolean; local: Local }>({ remote: null, failed: false, local: loadLocal() });
+
+/** サーバーへ 1 回。POST は text/plain で送る (CORS の下見を出さない、no-log.ts と同じ)。つながらない・200 でない時は null */
+async function call<T>(path: string, body?: unknown): Promise<T | null> {
+  try {
+    const r = await fetch(`${WEB_API_BASE}${path}`, body === undefined ? { credentials: "omit" } : { method: "POST", credentials: "omit", headers: { "content-type": "text/plain;charset=UTF-8" }, body: JSON.stringify(body) });
+    return r.ok ? ((await r.json()) as T) : null;
+  } catch { return null; }
+}
+const auth = (): { nickId: string; code: string } | null => { const n = daily.local.nick; return n ? { nickId: n.id, code: n.code } : null; };
+
+/** 一覧を読み直す (ページを開いた時・16:00 を越えた時)。端のキャッシュで 60 秒は古いことがある (D-56)。自分の投稿の状態も読む */
+export async function refreshDaily(): Promise<void> {
+  const r = await call<Remote>("/daily.json");
+  daily.failed = !r;
+  if (r) daily.remote = r;
+  const ids = daily.local.box.filter((b) => b.status === "wait" || b.status === "ok").map((b) => b.id);
+  if (!ids.length) return;
+  const st = await call<{ box: Array<{ id: string; status: DailyBoxItem["status"]; why: string | null }> }>(`/daily/box.json?ids=${ids.join(",")}`);
+  for (const x of st?.box ?? []) {
+    const b = daily.local.box.find((y) => y.id === x.id);
+    if (b) { b.status = x.status; if (x.why) b.why = x.why; else delete b.why; }
+  }
+  save();
+}
 
 const JST = 9 * 3600_000, H16 = 16 * 3600_000, DAY = 24 * 3600_000;
 /** スタートの締め切り = 16:00 から 22 時間 50 分 = 14:50 (D-01) */
 const START_CLOSE = 22 * 3600_000 + 50 * 60_000;
 /** 16:00 JST 区切りの日の番号。その日の 16:00 の日付で呼ぶ */
 export const dayNoOf = (now: number): number => Math.floor((now + JST - H16) / DAY);
-const dayName = (no: number): string => new Date(no * DAY).toISOString().slice(0, 10);
-const dayNoOfName = (s: string): number => Math.round(Date.parse(`${s}T00:00:00Z`) / DAY);
-/** 0 = 月 */
-const weekdayOf = (no: number): number => (new Date(no * DAY).getUTCDay() + 6) % 7;
-/** その日が始まる時刻 (16:00 JST) */
-const startAt = (no: number): number => no * DAY + H16 - JST;
-const idOf = (no: number): string => `d${dayName(no)}`;
-const noOfId = (id: string): number | null => (/^d\d{4}-\d\d-\d\d$/.test(id) ? dayNoOfName(id.slice(1)) : null);
+const idOf = (no: number): string => `d${new Date(no * DAY).toISOString().slice(0, 10)}`;
 /** 今スタートできる時間か (16:00〜14:50) */
 export const canStartAt = (now: number): boolean => (now + JST - H16) % DAY < START_CLOSE;
-
 /** 次の切り替え (16:00) と今日のスタートの締め切り (14:50) までの ms。締め切りを過ぎたら close は 0 */
 export function untilRefresh(now: number): { next: number; close: number } {
   const into = (now + JST - H16) % DAY;
   return { next: DAY - into, close: Math.max(0, START_CLOSE - into) };
 }
-
-// --- 型のファイルと週の予定 (D-80b・D-06) ---
-
-/** 型のファイルを読む口 (GET /daily/samples の形)。サーバーができるまでは手の辞書の見本 */
-let samplesMemo: DailySample[] | null = null;
-export function weekSamples(data: PatchData): { list: DailySample[]; sample: boolean } {
-  samplesMemo ??= devSamples(data);
-  return { list: samplesMemo, sample: true };
-}
-const historyBefore = (d: Db, no: number): PlanHistory =>
-  Object.entries(d.shown).filter(([day]) => dayNoOfName(day) < no).sort(([a], [b]) => a.localeCompare(b)).map(([, s]) => ({ slot: s.slot, cls: s.cls, base: s.base }));
-let planMemo: { monday: number; size: number; days: Array<PlanDay | null> } | null = null;
-/** その週の予定 (月〜日)。週の取得の時に先に決める物 (daily_plan) */
-function weekPlan(data: PatchData, monday: number): Array<PlanDay | null> {
-  const d = load(), size = Object.keys(d.shown).filter((day) => dayNoOfName(day) < monday).length;
-  if (planMemo?.monday === monday && planMemo.size === size) return planMemo.days;
-  const w = weekSamples(data), days = planWeek(data, Array.from({ length: 7 }, (_, i) => dayName(monday + i)), w.list, historyBefore(d, monday), w.sample);
-  planMemo = { monday, size, days };
-  return days;
-}
-
-/** 16:00 に出すお題を決める (D-84): ① 箱にその日の予定のベース ② 箱から抽選 ③ 予定。決めた物は控えに書き、後から変えない */
-function settle(data: PatchData, no: number): Shown | null {
-  const d = load(), day = dayName(no);
-  if (d.shown[day]) return d.shown[day]!;
-  const plan = weekPlan(data, no - weekdayOf(no))[weekdayOf(no)] ?? null;
-  const box = d.box.filter((b) => b.status === "ok" && b.at < startAt(no));
-  const pick = box.find((b) => plan && b.base === plan.base) ?? (box.length ? box[Math.abs(Math.imul(no, 2654435761)) % box.length]! : null);
-  let s: Shown | null = null;
-  if (pick) {
-    const cls = classOfBase(pick.base) ?? "";
-    s = { base: pick.base, slot: slotOfClass(cls) ?? weekdayOf(no), cls, boxId: pick.id };
-    pick.status = "used";
-  } else if (plan) s = { base: plan.base, slot: plan.slot, cls: classOfBase(plan.base) ?? "", sampleId: plan.sampleId };
-  if (!s) return null;
-  d.shown[day] = s;
-  store(d);
-  return s;
-}
-function aimsOf(data: PatchData, no: number): { aims: DailyAim[]; ilvl: number; sample: boolean } | null {
-  const s = settle(data, no);
-  if (!s) return null;
-  if (s.boxId) { const b = load().box.find((x) => x.id === s.boxId); return b ? { aims: b.aims, ilvl: b.ilvl, sample: false } : null; }
-  const plan = weekPlan(data, no - weekdayOf(no))[weekdayOf(no)];
-  const g = plan ? topicOfPlan(data, plan, weekSamples(data).list) : null;
-  return g ? { aims: g.aims, ilvl: g.ilvl, sample: true } : null;
-}
-
-/** お題 1 つ (GET /daily.json の 1 行)。まだ来ていない日は null */
-export function topicOfId(data: PatchData, baseJa: (en: string) => string, id: string, now = Date.now()): DailyTopic | null {
-  const no = noOfId(id);
-  if (no == null || no > dayNoOf(now)) return null;
-  const s = settle(data, no), a = s ? aimsOf(data, no) : null;
-  if (!s || !a) return null;
-  const closed = no < dayNoOf(now);
-  return { id, day: dayName(no).slice(5).replace("-", "/"), dayNo: no, base: s.base, baseJa: baseJa(s.base), ilvl: a.ilvl, modCount: a.aims.length, slot: s.slot, tries: 0, sample: a.sample, fromBox: !!s.boxId, ...(closed ? { aims: a.aims } : {}) };
-}
 export const todayId = (now = Date.now()): string => idOf(dayNoOf(now));
-export const yesterdayId = (now = Date.now()): string => idOf(dayNoOf(now) - 1);
 
+// --- お題と棚 (GET /daily.json) ---
+
+const withJa = (t: DailyTopic, baseJa: (en: string) => string): DailyTopic => ({ ...t, baseJa: baseJa(t.base) });
 /** 今週の棚 (月〜日、16:00 区切り)。来ていない日はお題無しで曜日の部位だけ (D-60d) */
-export function weekBoard(data: PatchData, baseJa: (en: string) => string, now = Date.now()): Array<{ id: string; wd: number; md: string; today: boolean; t: DailyTopic | null }> {
-  const t = dayNoOf(now), m = t - weekdayOf(t);
-  return Array.from({ length: 7 }, (_, i) => ({ id: idOf(m + i), wd: i, md: dayName(m + i).slice(5).replace("-", "/"), today: m + i === t, t: m + i <= t ? topicOfId(data, baseJa, idOf(m + i), now) : null }));
+export function weekBoard(baseJa: (en: string) => string): WeekDay[] {
+  return (daily.remote?.week ?? []).map((d) => ({ ...d, t: d.t ? withJa(d.t, baseJa) : null }));
+}
+/** お題 1 つ。サーバーが返すのは今週と昨日だけ。無ければ null */
+export function topicOfId(baseJa: (en: string) => string, id: string): DailyTopic | null {
+  const r = daily.remote;
+  const t = r?.week.find((d) => d.id === id)?.t ?? (r?.yesterdayTopic?.id === id ? r.yesterdayTopic : null);
+  return t ? withJa(t, baseJa) : null;
 }
 
 // --- 挑戦 (D-32・D-33・D-56) ---
 
-export const getTry = (id: string): DailyTry | null => load().tries[id] ?? null;
-export type StartError = "notToday" | "closed";
-/** POST /daily/start。今日のお題だけ、14:50 まで、1 日 1 回 (もう始めていれば同じ挑戦を返し、始め直せない) */
-export function startTry(data: PatchData, id: string, now = Date.now()): DailyTry | StartError {
-  const d = load();
-  if (d.tries[id]) return d.tries[id]!;
-  if (id !== todayId(now)) return "notToday";
-  if (!canStartAt(now)) return "closed";
-  const a = aimsOf(data, dayNoOf(now));
-  if (!a) return "notToday";
-  d.tries[id] = { topicId: id, startedAt: now, aims: a.aims };
-  store(d);
-  return d.tries[id]!;
+export const getTry = (id: string): DailyTry | null => daily.local.tries[id] ?? null;
+export type StartError = "notToday" | "closed" | "nick" | "net";
+/** POST /daily/start。今日のお題だけ、14:50 まで、1 日 1 回 (もう始めていれば同じ挑戦が返り、始め直せない)。ここで初めて MOD が来る */
+export async function startTry(id: string): Promise<DailyTry | StartError> {
+  const a = auth();
+  if (!a) return "nick";
+  const r = await call<(DailyTry & { error?: undefined }) | { error: string }>("/daily/start", { ...a, id });
+  if (!r) return "net";
+  if (r.error !== undefined) return r.error === "closed" ? "closed" : r.error === "nick" ? "nick" : "notToday";
+  const had = daily.local.tries[id];
+  daily.local.tries[id] = { ...(r as DailyTry), ...(had?.fractured ? { fractured: had.fractured } : {}), ...(had?.tree ? { tree: had.tree } : {}) };
+  save();
+  return daily.local.tries[id]!;
 }
 export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "tree">>): void {
-  const d = load();
-  if (d.tries[id]) { Object.assign(d.tries[id]!, patch); store(d); }
+  const t = daily.local.tries[id];
+  if (t) { Object.assign(t, patch); save(); }
 }
 /** 残り時間 (実際の時計、ページを閉じても進む) */
 export const leftMs = (t: DailyTry, now = Date.now()): number => t.startedAt + TIME_LIMIT_MS - now;
-/** POST /daily/submit。何回でも出せて、記録は解決の中で一番安い物。始めた時刻から 1 時間 + 30 秒を過ぎたら受けない */
-export function submitTry(id: string, cost: number, rate: number, now = Date.now()): { ok: boolean; best: DailyRecord | null } {
-  const d = load(), t = d.tries[id];
-  if (!t || leftMs(t, now) < -30_000) return { ok: false, best: t?.best ?? null };
-  const rec: DailyRecord = { cost, rate, ms: now - t.startedAt, at: now };
-  t.last = rec;
-  if (rate >= SOLVE_RATE && (!t.best || cost < t.best.cost)) t.best = rec;
-  store(d);
+/** POST /daily/submit。何回でも出せて、記録は解決の中で一番安い物。木 (recipe) も一緒に送る (D-55、検算 D-58 の材料)。1 時間 + 30 秒を過ぎたらサーバーが断る */
+export async function submitTry(id: string, cost: number, rate: number, now = Date.now()): Promise<{ ok: boolean; best: DailyRecord | null }> {
+  const a = auth(), t = daily.local.tries[id];
+  if (!a || !t) return { ok: false, best: t?.best ?? null };
+  const r = await call<{ ok?: boolean; best?: DailyRecord | null; error?: string }>("/daily/submit", { ...a, id, cost, rate, recipe: t.tree ?? null });
+  if (!r?.ok) return { ok: false, best: t.best ?? null };
+  t.last = { cost, rate, ms: now - t.startedAt, at: now };
+  if (r.best) t.best = r.best; else delete t.best;
+  save();
   return { ok: true, best: t.best ?? null };
 }
 
 // --- 順位と称号 (D-50・D-54・D-100〜103) ---
 
-/** 順位 (D-50)。解決だけ、費用の安い順、同じなら先の人 */
+/** 順位 (D-50)。解決だけ、費用の安い順、同じなら先の人。サーバーの表は 60 秒古いことがあるので、自分の記録はこの端末の物で上書きする */
 export function rankOf(id: string): DailyRankRow[] {
-  const d = load(), best = d.tries[id]?.best;
-  const rows: DailyRankRow[] = [...sampleRank(id), ...(best && d.nick ? [{ name: d.nick.name, cost: best.cost, rate: best.rate, ms: best.ms, me: true }] : [])];
+  const me = daily.local.nick?.name, best = daily.local.tries[id]?.best;
+  const rows = (daily.remote?.ranks[id] ?? []).filter((r) => !(best && r.name === me)).map((r) => (r.name === me ? { ...r, me: true } : r));
+  if (best && me) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true });
   return rows.sort((a, b) => a.cost - b.cost);
 }
 /** 卓の右 = 昨日の上位 3 人 (D-60d) */
-export const yesterdayTop = (now = Date.now()): DailyRankRow[] => rankOf(yesterdayId(now)).slice(0, 3);
+export const yesterdayTop = (): DailyRankRow[] => (daily.remote ? rankOf(daily.remote.yesterday).slice(0, 3) : []);
 
-/** 日の結果 (daily_results)。締めた日の自分の挑戦から作る (サーバーでは全員分) */
-function myResults(now: number): DayResult[] {
-  const d = load();
-  if (!d.nick) return [];
-  return Object.values(d.tries).flatMap((t) => {
-    const no = noOfId(t.topicId), s = no == null ? null : d.shown[dayName(no)];
-    if (no == null || no >= dayNoOf(now) || !s) return [];
-    const rows = rankOf(t.topicId), place = t.best ? rows.findIndex((r) => r.me) + 1 : null;
-    return [{ day: dayName(no), nick: d.nick!.name, place: place || null, cost: t.best?.cost ?? 0, rate: (t.best ?? t.last)?.rate ?? 0, ms: (t.best ?? t.last)?.ms ?? 0, solvedN: rows.length, enteredN: rows.length, slot: s.slot, base: s.base }];
+/** 日の結果 (daily_results の形)。サーバーに自分の称号を返す口がまだ無いので、締めた日の自分の挑戦からこの端末で数える (TITLES は空、D-103) */
+function myResults(): DayResult[] {
+  const nick = daily.local.nick, today = daily.remote?.today;
+  if (!nick || !today) return [];
+  return Object.values(daily.local.tries).flatMap((t) => {
+    const top = topicOfId((x) => x, t.topicId);
+    if (!top || t.topicId >= today) return [];
+    const rows = rankOf(t.topicId), place = t.best ? rows.findIndex((r) => r.me) + 1 : 0;
+    return [{ day: t.topicId.slice(1), nick: nick.name, place: place || null, cost: t.best?.cost ?? 0, rate: (t.best ?? t.last)?.rate ?? 0, ms: (t.best ?? t.last)?.ms ?? 0, solvedN: rows.length, enteredN: top.tries, slot: top.slot, base: top.base }];
   });
 }
-/** 自分の称号 (計算し直して覚える。消した称号は昔の称号で残る) */
-export function myAwards(now = Date.now()): Award[] {
-  const d = load();
-  if (!d.nick) return [];
-  const a = awardsOf(d.nick.name, myResults(now), d.awards ?? []);
-  if (JSON.stringify(a) !== JSON.stringify(d.awards ?? [])) { d.awards = a; store(d); }
+/** 自分の称号 (計算し直して覚える。消した称号は昔の称号で残る)。控えは toRaw に書く (computed の中から呼ばれるので画面を揺らさない) */
+export function myAwards(): Award[] {
+  const raw = toRaw(daily.local);
+  if (!raw.nick) return [];
+  const a = awardsOf(raw.nick.name, myResults(), raw.awards ?? []);
+  if (JSON.stringify(a) !== JSON.stringify(raw.awards ?? [])) { raw.awards = a; save(); }
   return a;
 }
-export const myTitlePick = (): string | null => load().titlePick ?? null;
+export const myTitlePick = (): string | null => daily.local.titlePick ?? null;
 /** POST /daily/title。持っている称号だけ選べる。null で「一番格上」に戻す */
-export function setTitlePick(id: string | null): boolean {
-  const d = load();
-  if (id && !myAwards().some((a) => a.id === id)) return false;
-  if (id) d.titlePick = id; else delete d.titlePick;
-  store(d);
+export async function setTitlePick(id: string | null): Promise<boolean> {
+  const a = auth();
+  if (!a || (id && !myAwards().some((x) => x.id === id))) return false;
+  const r = await call<{ ok?: boolean }>("/daily/title", { ...a, titleId: id });
+  if (!r?.ok) return false;
+  if (id) daily.local.titlePick = id; else delete daily.local.titlePick;
+  save();
   return true;
 }
-/** 名前の横の札 (D-54)。自分は計算した称号、ほかの人は見本 */
-export function titleOfName(name: string): { ja: string; en: string; rank: number } | null {
-  const me = load().nick?.name;
-  if (name === me) return shownAward(myAwards(), myTitlePick());
-  return SAMPLE_TITLES[name] ?? null;
+/** 名前の横の札 (D-54)。自分は計算した称号、ほかの人はサーバーの札 */
+export function titleOfName(name: string): Title | null {
+  if (name === daily.local.nick?.name) return shownAward(myAwards(), myTitlePick()) ?? daily.remote?.titles[name] ?? null;
+  return daily.remote?.titles[name] ?? null;
 }
 
 // --- ニックネーム (D-51・D-52) ---
 
-export const myNick = (): DailyNick | null => load().nick ?? null;
-/** 同じ名前の見分け (全角半角・大文字小文字をそろえる、D-52) */
-const nameKey = (s: string): string => s.normalize("NFKC").trim().toLowerCase();
-const RESERVED = /exiledesk|運営|admin|公式|official/;
-/** 悪口の表 (D-20・D-51)。名前と一言の両方で見る */
-const BAD = /死ね|しね|氏ね|殺す|ころす|くそ|クソ|ゴミ|カス|きもい|キモい|fuck|shit|bitch|cunt|nigg|retard/i;
-export const hasBadWord = (s: string): boolean => BAD.test(s.normalize("NFKC"));
-const CODE_ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function newCode(): string {
-  const a = crypto.getRandomValues(new Uint8Array(12));
-  return Array.from(a, (x) => CODE_ABC[x % CODE_ABC.length]).join("");
+export const myNick = (): DailyNick | null => daily.local.nick ?? null;
+/** 名前の断りの訳 (server/live/src/daily/nick.ts の NickError と同じ)。net = つながらない */
+export type NickError = "empty" | "long" | "url" | "reserved" | "bad" | "taken" | "wrong" | "busy" | "net";
+async function nickPost(body: { name: string; code?: string }): Promise<DailyNick | NickError> {
+  const r = await call<DailyNick | { error: NickError }>("/daily/nick", body);
+  if (!r) return "net";
+  if ("error" in r) return r.error;
+  daily.local.nick = r;
+  save();
+  return r;
 }
-export type NickError = "empty" | "long" | "url" | "reserved" | "bad" | "taken" | "wrong";
-function nickError(name: string): NickError | null {
-  const k = nameKey(name);
-  if (!k || !/[\p{L}\p{N}]/u.test(k)) return "empty";
-  if ([...name.trim()].length > NICK_MAX) return "long";
-  if (/https?:|www\.|\.[a-z]{2,}\//.test(k)) return "url";
-  if (RESERVED.test(k)) return "reserved";
-  if (hasBadWord(k)) return "bad";
-  if (k in load().names) return "taken";
-  return null;
-}
-/** POST /daily/nick (決める)。引き継ぎコードはここで 1 度だけ返す */
-export function createNick(name: string): DailyNick | NickError {
-  const e = nickError(name);
-  if (e) return e;
-  const d = load(), nick = { name: name.trim(), code: newCode() };
-  d.names[nameKey(name)] = nick.code;
-  d.nick = nick;
-  store(d);
-  return nick;
-}
+/** POST /daily/nick (決める)。引き継ぎコードはここで 1 度だけ返る */
+export const createNick = (name: string): Promise<DailyNick | NickError> => nickPost({ name });
 /** POST /daily/nick (引き継ぎコードで戻す) */
-export function restoreNick(name: string, code: string): DailyNick | NickError {
-  const d = load(), k = nameKey(name);
-  if (d.names[k] !== code.trim().toUpperCase()) return "wrong";
-  d.nick = { name: name.trim(), code: d.names[k]! };
-  store(d);
-  return d.nick;
-}
+export const restoreNick = (name: string, code: string): Promise<DailyNick | NickError> => nickPost({ name, code });
 
-// --- 投稿と機械の確かめ (D-20) ---
+// --- 投稿 (D-11〜D-15・D-20) ---
 
-/** 機械の確かめ (D-20)。エンジンで作れるか (同じ系統の重なりも goalBlock が見る)・名前と一言に悪口が無いか。落ちたら訳、通れば null */
-export function boxCheck(data: PatchData, item: Pick<DailyBoxItem, "base" | "ilvl" | "aims" | "note">, nick: string): string | null {
-  if (!item.aims.length) return "no-mods";
-  if (hasBadWord(item.note) || hasBadWord(nick)) return "bad-word";
-  const done: DailyAim[] = [];
-  for (const a of item.aims) {
-    const why = goalBlock(data, item.base, item.ilvl, done.map((x) => ({ modId: x.modId, tier: x.tier })), { modId: a.modId, tier: a.tier });
-    if (why) return why;
-    done.push(a);
+/** 投稿の断りの訳。item・large = 形が悪い、busy = 1 時間 5 件を越えた、net = つながらない */
+export type BoxError = "item" | "large" | "busy" | "net";
+/**
+ * POST /daily/box。段の下限は D-04 (T1 は T1、ほかは T2 以上) に上げ、先にこの端末で機械の確かめ (D-20) をする。
+ * 落ちた物は送らずに訳を付けて残し、通った物は送る (サーバーは wait で受け、16:00 の台本がもう一度確かめて ok / no にする)
+ */
+export async function postBox(data: PatchData, item: Omit<DailyBoxItem, "id" | "at" | "status" | "why">): Promise<DailyBoxItem | BoxError> {
+  const aims = floorAims(data, item.base, item.ilvl, item.aims);
+  const why = boxCheck(data, { ...item, aims }, daily.local.nick?.name ?? "");
+  let b: DailyBoxItem;
+  if (why) b = { ...item, aims, id: `x${Date.now().toString(36)}`, at: Date.now(), status: "no", why };
+  else {
+    const r = await call<DailyBoxItem | { error: BoxError }>("/daily/box", { ...(auth() ?? {}), ...item, aims });
+    if (!r) return "net";
+    if ("error" in r) return r.error;
+    b = r;
   }
-  return null;
-}
-/** POST /daily/box。段の下限は D-04 (T1 は T1、ほかは T2 以上) に上げてから確かめ、通れば箱へ、落ちれば訳を付けて残す (日報の材料) */
-export function postBox(data: PatchData, item: Omit<DailyBoxItem, "id" | "at" | "status" | "why">): DailyBoxItem {
-  const d = load(), aims = floorAims(data, item.base, item.ilvl, item.aims);
-  const why = boxCheck(data, { ...item, aims }, d.nick?.name ?? "");
-  const b: DailyBoxItem = { ...item, aims, id: `p${Date.now().toString(36)}`, at: Date.now(), status: why ? "no" : "ok", ...(why ? { why } : {}) };
-  d.box.push(b);
-  store(d);
+  daily.local.box.push(b);
+  save();
   return b;
 }
-export const myBox = (): DailyBoxItem[] => load().box;
+export const myBox = (): DailyBoxItem[] => daily.local.box;

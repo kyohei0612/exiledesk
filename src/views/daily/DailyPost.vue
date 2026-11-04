@@ -1,6 +1,6 @@
 <!--
   DailyPost.vue — お題の投稿 (D-11〜D-15)。口は 2 か所: 上 = エミュのアイテム、下 = poe.ninja / トレード / ゲームのコピーを貼る欄 (読みは 1 つ)。
-  どちらも同じ確かめの画面へ。投稿は機械が確かめて、通れば箱へ、落ちれば訳を出す (D-20)。サーバーの口 (daily-api) の形で、今はこのブラウザに溜まる (D-90)
+  どちらも同じ確かめの画面へ。投稿は機械が確かめて、通れば箱へ、落ちれば訳を出す (D-20)。サーバーの口 (daily-api → POST /daily/box) へ送り、16:00 の台本がもう一度確かめる
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -9,7 +9,7 @@ import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
-import { myNick, postBox, type DailyBoxItem } from "./daily-api";
+import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
 import DailyNick from "./DailyNick.vue";
 
 const item = ref<PostItem | null>(null);
@@ -29,13 +29,22 @@ function read(raw: string): void {
   if (typeof r === "string") { why.value = r; item.value = null; } else { why.value = null; item.value = r; }
 }
 const onPaste = (e: ClipboardEvent): void => { const v = e.clipboardData?.getData("text") ?? ""; if (v) { e.preventDefault(); text.value = v; read(v); } };
-function send(): void {
+const sendFail = ref<BoxError | null>(null);
+const sending = ref(false);
+async function send(): Promise<void> {
   const p = item.value;
   const d = s.data.value;
-  if (!p || !d || block.value) return;
+  if (!p || !d || block.value || sending.value) return;
   if (!myNick()) { asking.value = true; return; }
-  sent.value = postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims });
+  sending.value = true;
+  const r = await postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims });
+  sending.value = false;
+  if (typeof r === "string") sendFail.value = r; else { sendFail.value = null; sent.value = r; }
 }
+const failText = (e: BoxError): string =>
+  e === "busy" ? tr("投稿は 1 時間に 5 件まで。少し待って投稿し直す。", "Up to 5 posts per hour. Wait a bit and post again.")
+  : e === "net" ? tr("サーバーにつながらない。少し待って投稿し直す。", "Couldn't reach the server. Try again in a moment.")
+  : tr("この形では送れない。選び直す。", "This item can't be sent. Choose again.");
 </script>
 
 <template>
@@ -43,6 +52,7 @@ function send(): void {
     <template v-if="sent">
       <h2 class="g-brush daily-hero-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
       <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
+      <p v-else-if="sent.status === 'wait'" data-daily-post-wait class="mb-4 text-[15px]">{{ tr("16:00 に機械が確かめて、通れば箱のお題になる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "It's checked at 16:00 JST, and if it passes it becomes a challenge from the box. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "Posts in the box are used first for the 16:00 challenge. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <button type="button" class="g-btn" data-daily-post-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
     </template>
@@ -62,10 +72,11 @@ function send(): void {
       <label class="mb-3 block text-[14px]">{{ tr("ひと言 (なくてもよい)", "A short note (optional)") }}
         <input v-model="note" data-daily-post-note type="text" maxlength="80" class="daily-input mt-1 w-full" />
       </label>
+      <p v-if="sendFail" data-daily-post-fail class="mb-3 text-[14px] text-[var(--exile-color-signal-down)]">{{ failText(sendFail) }}</p>
       <p v-if="block" data-daily-post-block class="mb-3 text-[14px] text-[var(--exile-color-signal-down)]">{{ block }}</p>
       <div class="flex gap-2">
         <button type="button" class="g-btn" @click="item = null">{{ tr("選び直す", "Choose again") }}</button>
-        <button type="button" class="g-btn-red" data-daily-post-send :disabled="!!block" @click="send">{{ tr("投稿する", "Post") }}</button>
+        <button type="button" class="g-btn-red" data-daily-post-send :disabled="!!block || sending" @click="send">{{ tr("投稿する", "Post") }}</button>
       </div>
     </template>
     <template v-else>

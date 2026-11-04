@@ -23,6 +23,5 @@ const mins = (ms: number): string => tr(`${Math.round(ms / 60_000)} 分`, `${Mat
       </li>
     </ol>
     <p v-else class="text-[14px] opacity-70">{{ tr("まだ誰も解決していない。最初の 1 人になれる。", "No one has solved this yet.") }}</p>
-    <p v-if="topic.sample" class="mt-2 text-[12px] opacity-50">{{ tr("順位の相手は見本", "Other names are samples") }}</p>
   </div>
 </template>

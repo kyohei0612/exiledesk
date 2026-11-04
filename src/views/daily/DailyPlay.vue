@@ -34,16 +34,17 @@ const clock = computed(() => { const s2 = Math.max(0, Math.ceil(left.value / 100
 const fuse = computed(() => Math.max(0, Math.min(1, left.value / TIME_LIMIT_MS)));
 const heat = computed(() => (left.value < 60_000 ? "last" : left.value < 600_000 ? "near" : ""));
 
-/** スタートを押してここへ来た時に挑戦が始まる。データが来るまで待つ。今日でない・14:50 を過ぎた時は始めない */
+/** スタートを押してここへ来た時に挑戦が始まる (POST /daily/start)。データが来るまで待つ。今日でない・14:50 を過ぎた時はサーバーが断る。始めていれば同じ挑戦が返る */
 const refused = ref<StartError | null>(null);
-function begin(): void {
-  if (tryOf.value) return;
-  const d = s.data.value;
-  if (!d) return;
-  const r = startTry(d, props.topic.id);
+let starting = false;
+async function begin(): Promise<void> {
+  if (tryOf.value || starting || !s.data.value) return;
+  starting = true;
+  const r = await startTry(props.topic.id);
+  starting = false;
   if (typeof r === "string") refused.value = r; else tryOf.value = r;
 }
-watch(() => s.data.value, begin, { immediate: true });
+watch(() => s.data.value, () => void begin(), { immediate: true });
 
 /** 選ぶ前の字。t.aimShort はベースの木で読むのでここでベースを開く */
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
@@ -84,15 +85,23 @@ onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeE
 
 /** 今の木の 100 人の結果 (recipe-card の控え。組み替えると消える) */
 const run = computed(() => { if (!treeOn.value) return null; const c = recipeCardOf(t.doc.value); return c.n === 100 && c.p != null && c.c != null ? { rate: c.p, cost: c.c } : null; });
-function submit(): void {
+const sendFail = ref(false);
+async function submit(): Promise<void> {
   const r = run.value;
   if (!r || over.value) return;
-  const a = submitTry(props.topic.id, r.cost, r.rate);
+  const a = await submitTry(props.topic.id, r.cost, r.rate);
+  sendFail.value = !a.ok;
   if (!a.ok) return;
   tryOf.value = getTry(props.topic.id);
   sent.value = { ...r, solved: r.rate >= SOLVE_RATE };
 }
 const best = computed(() => tryOf.value?.best ?? null);
+const REFUSED: Record<StartError, () => string> = {
+  closed: () => tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00."),
+  notToday: () => tr("このお題は今日の物ではないので挑戦できない。", "This isn't today's challenge, so it can't be taken."),
+  nick: () => tr("ニックネームを決めてから一覧のスタートを押す。", "Choose a nickname, then press Start on the list."),
+  net: () => tr("サーバーにつながらない。少し待って開き直す。", "Couldn't reach the server. Try again in a moment."),
+};
 </script>
 
 <template>
@@ -111,8 +120,9 @@ const best = computed(() => tryOf.value?.best ?? null);
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
 
-    <p v-if="refused" data-daily-refused class="daily-note">{{ refused === "closed" ? tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") : tr("このお題は今日の物ではないので挑戦できない。", "This isn't today's challenge, so it can't be taken.") }}</p>
+    <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
     <p v-else-if="over" data-daily-over class="daily-note">{{ tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
+    <p v-else-if="sendFail" data-daily-send-fail class="daily-note">{{ tr("提出が届かなかった。もう一度「提出する」を押す。", "The submission didn't go through. Press Submit again.") }}</p>
     <p v-else-if="sent" data-daily-sent class="daily-note">
       {{ sent.solved ? tr(`提出した: ${sent.cost} 神 (完成率 ${sent.rate}%)。解決。時間内ならもっと安くできる。`, `Submitted: ${sent.cost} div (${sent.rate}% finished). Solved. You can still go cheaper in time.`) : tr(`提出した: 完成率 ${sent.rate}% で未解決。${SOLVE_RATE}% まで上げる。`, `Submitted: ${sent.rate}% finished, unsolved. Reach ${SOLVE_RATE}%.`) }}
       <span v-if="best">{{ tr(`今の記録 ${best.cost} 神`, `Best ${best.cost} div`) }}</span>

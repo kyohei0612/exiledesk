@@ -1,6 +1,6 @@
 /**
  * _daily-roll-entry.ts — daily-roll.mjs が束ねる入口 (2026-11-05、設計図 D-59)。16:00 の切り替えで組む物を、画面と同じエンジン・同じ関数で組む
- * (型 → 予定は daily-gen.ts、投稿の確かめは daily-api.ts の boxCheck、称号は daily-titles.ts。写さない)。
+ * (型 → 予定は daily-gen.ts、投稿の確かめは daily-check.ts の boxCheck、称号は daily-titles.ts。写さない)。
  * roll() は純粋な関数: GET /daily/roll.json の中身を受け、POST /daily/topic に送る物を返す。読み書きは daily-roll.mjs
  */
 import type { PatchData } from "../src/services/craft-stage/engine";
@@ -9,7 +9,7 @@ import { modListFor } from "../src/services/craft-stage/mod-list";
 import { parseItemText } from "../src/services/simulator/paste/item-text";
 import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, floorAims, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
-import { boxCheck } from "../src/views/daily/daily-api";
+import { boxCheck } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
 export { loadPatchSync } from "./_htc-bridge-entry";
 

@@ -25,16 +25,18 @@ const WHY: Record<NickError, () => string> = {
   bad: () => tr("使えない言葉が入っている", "This name has a banned word"),
   taken: () => tr("もう使われている名前。別の名前にするか、自分の名前なら引き継ぎコードで戻す", "That name is taken. Pick another, or restore it with your transfer code if it's yours"),
   wrong: () => tr("名前か引き継ぎコードが違う", "Name or transfer code doesn't match"),
+  busy: () => tr("名前を作りすぎた。1 時間待ってから決める", "Too many names made. Wait an hour and try again"),
+  net: () => tr("サーバーにつながらない。少し待ってもう一度押す", "Couldn't reach the server. Try again in a moment"),
 };
 const why = computed(() => (fail.value ? WHY[fail.value]() : ""));
 
-function decide(): void {
-  const r = createNick(name.value);
+async function decide(): Promise<void> {
+  const r = await createNick(name.value);
   if (typeof r === "string") { fail.value = r; return; }
   fail.value = null; made.value = r;
 }
-function back(): void {
-  const r = restoreNick(name.value, code.value);
+async function back(): Promise<void> {
+  const r = await restoreNick(name.value, code.value);
   if (typeof r === "string") { fail.value = r; return; }
   emit("done", r);
 }

@@ -4,7 +4,7 @@
 
 ## 決まり (10 行まで)
 1. 持ち物は src/views/daily/ と docs/org/daily/。後から server/live のデイリーの所・D1 の表・src/state/daily*.ts も持つ (作る時に owners.txt に足す)。
-2. 決まりの正は設計図 docs/spec/daily.md (D-xx)。今の段は D-90 = 持ち場の中で動く形 (サーバーは daily-api.ts の localStorage の仮)、開発版だけ。よその部の物は D-91 の一覧にして返す。
+2. 決まりの正は設計図 docs/spec/daily.md (D-xx)。今の段は D-90 = 持ち場の中で動く形 (サーバーは 11-05 に server/live の口へつないだ、本番には未出し)、開発版だけ。よその部の物は D-91 の一覧にして返す。
 3. よその部の物はブラック経由で頼む (ページの入口・タブ・部品・見た目はデザイン部長、シミュの画面を開く口はシミュ部長、サーバーの共通の所はサーバー管理人)。
 4. 画面は shared-ui.md (U-xx)、広告の枠は Y-20 (別のページ・両脇に縦長の枠)、英語は U-60〜62。
 5. 構想は動かさない: 中身の正は設計図 daily.md の D-01〜04 (元の文の全部は notes/2026-10-23-rules-archive.md)。
@@ -15,5 +15,5 @@
 - 構想: メモ craft-challenge (10-22 の節)、docs/craft-challenge.md (古い 2 コースの記述は 10-22 に 1 本へまとまった、反映はシミュレーター完成後)。
 - 書きかけ: ブランチ wip/craft-challenge (10-16 の古い形、今は使わない・参考だけ)。
 - ページの作り: src/web/page.ts の頭のコメント (?page=○○ と題)、広告の枠 utils/ads.ts の pageTick。
-- 作り (11-01): src/views/daily/DailyPage.vue (出し分け)・DailyHero (お題の顔)・DailyRank (順位)・DailyName (名前とタグ)・DailyNick (名前の窓)・DailyPost (投稿)・DailyPlay (挑戦、SimTreePage を中に置く)・DailySkins (皮の見比べ)・daily-api.ts (サーバーの口の形)・daily-gen.ts (毎朝の生成)・daily-types.ts (型の辞書)・daily-aims.ts (読み・お題の木)・daily-samples.ts (順位の見本)・skin/skin.ts (皮、1 行 1 色)・daily-skin.css (形だけ、色を書かない)・look.css (挑戦の木の周り、D-60d)。
+- 作り (11-01): src/views/daily/DailyPage.vue (出し分け)・DailyHero (お題の顔)・DailyRank (順位)・DailyName (名前とタグ)・DailyNick (名前の窓)・DailyPost (投稿)・DailyPlay (挑戦、SimTreePage を中に置く)・DailySkins (皮の見比べ)・daily-api.ts (サーバーの口 D-56 を fetch で)・daily-check.ts (投稿の機械の確かめ、台本と共用)・daily-gen.ts (毎朝の生成)・daily-types.ts (型の辞書)・daily-aims.ts (読み・お題の木)・skin/skin.ts (皮、1 行 1 色)・daily-skin.css (形だけ、色を書かない)・look.css (挑戦の木の周り、D-60d)。
 - やる事・OK 待ちは todo.md、記録は notes/。
