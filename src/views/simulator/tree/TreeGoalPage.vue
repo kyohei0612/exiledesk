@@ -18,6 +18,7 @@ import { tr } from "../../../i18n/lang";
 import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { goalBlockLoose } from "./tree-goal-cap";
+import { rowBlockLines } from "../../../services/simulator/sim-engine";
 import { TIER } from "../../../state/for-share/tier-word";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
@@ -205,12 +206,8 @@ function blockOf(modId: string, tier: number): string | null {
   return blockMemo.get(k) ?? null;
 }
 /** 開いた行の頭に出す押せない理由 (理由ごとに段をまとめる。全部の段が押せる・もう狙いの行は無し。10-26 モンキー 7 の 6「灰色のボタンが並ぶだけで理由が見えない、スマホは乗せる事もできない」) */
-function rowBlocks(r: { id: string; tiers: Array<{ modId?: string; tier: number; rank: string }> }): Array<{ why: string; ranks: string }> {
-  if (rowGoal(r)) return [];
-  const by = new Map<string, string[]>();
-  for (const x of r.tiers) { const w = blockOf(x.modId ?? r.id, x.tier); if (w) by.set(w, [...(by.get(w) ?? []), x.rank]); }
-  const n = r.tiers.length;
-  return [...by].map(([why, rs]) => ({ why, ranks: rs.length === n ? "" : rs.length > 2 ? `${rs[0]}〜${rs[rs.length - 1]}` : rs.join(tr("・", ", ")) }));
+function rowBlocks(r: Parameters<typeof rowBlockLines>[0]): Array<{ why: string; ranks: string }> {
+  return rowGoal(r) ? [] : rowBlockLines(r, blockOf);
 }
 /** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、穴チェックで「始まりの形が作れない」) */
 const DESECRATED_NO_FRACTURE = (): string => tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured");

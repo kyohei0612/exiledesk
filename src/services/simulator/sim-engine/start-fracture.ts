@@ -163,10 +163,9 @@ export function goalBlock(data: PatchData, base: string, itemLevel: number, aims
   const src = (m: TierMod): string => String(data.mods.get(m.modId)?.source ?? "");
   const all = [...aims, add];
   if (src(add) === "desecrated" && all.filter((m) => src(m) === "desecrated").length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
-  // 同じ系統 (同じ MOD の別の段も): 指名の手は段を置き換えて通るので、ここで断る。エッセンスの MOD と同じ系統の普通の MOD は一緒に付く (確認済みの決まり) ので通す
-  const ess = (m: TierMod): boolean => /essence/.test(src(m));
+  // 同じ系統 (同じ MOD の別の段も): 指名の手は段を置き換えて通るので、ここで断る。エッセンスの MOD も例外なし (E-11a、11-02 にエッセンスだけ別の系統はやめた)
   const same = (a: TierMod): boolean => { const x = data.mods.get(a.modId), y = data.mods.get(add.modId); return !!x && !!y && sharesFamily(x, y); };
-  if (aims.some((a) => ess(a) === ess(add) && same(a))) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
+  if (aims.some(same)) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
   if (aims.some((a) => tagClash(data, a, add))) return TAG_CLASH();
   // 完成形は規格外 (placeMods): add がルーンの MOD ならソケットを 1 つ、クラフト MOD ならアストリッドの創造性の分を空けておいた形に付けてみる (オーナー 10-26)
   const room = { runes: data.mods.get(add.modId)?.rune ? 1 : 0, crafted: isCrafted(data, add) ? 1 : 0 };
