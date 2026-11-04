@@ -44,10 +44,12 @@ function save(): void { try { localStorage.setItem(KEY, JSON.stringify(toRaw(dai
 /** 画面が読む控え。remote = 最後に読んだ GET /daily.json、failed = 読めなかった */
 export const daily = reactive<{ remote: Remote | null; failed: boolean; local: Local }>({ remote: null, failed: false, local: loadLocal() });
 
+/** 行き先。開発の時だけ手元の口 (`pnpm dev:daily-api` が立てる wrangler dev、VITE_DAILY_API で替えられる)。本番は WEB_API_BASE */
+const API = import.meta.env.DEV ? ((import.meta.env.VITE_DAILY_API as string | undefined) ?? "http://localhost:8797") : WEB_API_BASE;
 /** サーバーへ 1 回。POST は text/plain で送る (CORS の下見を出さない、no-log.ts と同じ)。つながらない・200 でない時は null */
 async function call<T>(path: string, body?: unknown): Promise<T | null> {
   try {
-    const r = await fetch(`${WEB_API_BASE}${path}`, body === undefined ? { credentials: "omit" } : { method: "POST", credentials: "omit", headers: { "content-type": "text/plain;charset=UTF-8" }, body: JSON.stringify(body) });
+    const r = await fetch(`${API}${path}`, body === undefined ? { credentials: "omit" } : { method: "POST", credentials: "omit", headers: { "content-type": "text/plain;charset=UTF-8" }, body: JSON.stringify(body) });
     return r.ok ? ((await r.json()) as T) : null;
   } catch { return null; }
 }
@@ -107,9 +109,12 @@ export async function startTry(id: string): Promise<DailyTry | StartError> {
   if (!a) return "nick";
   const r = await call<(DailyTry & { error?: undefined }) | { error: string }>("/daily/start", { ...a, id });
   if (!r) return "net";
-  if (r.error !== undefined) return r.error === "closed" ? "closed" : r.error === "nick" ? "nick" : "notToday";
-  const had = daily.local.tries[id];
-  daily.local.tries[id] = { ...(r as DailyTry), ...(had?.fractured ? { fractured: had.fractured } : {}), ...(had?.tree ? { tree: had.tree } : {}) };
+  // 合言葉が通らない = サーバーにこの名前が無い (置き場を作り直した等)。端末の名前を消して決め直してもらう
+  if (r.error === "nick") { delete daily.local.nick; save(); return "nick"; }
+  if (r.error !== undefined) return r.error === "closed" ? "closed" : "notToday";
+  // 木を引き継ぐのは同じ挑戦 (始めた時刻が同じ) の時だけ
+  const had = daily.local.tries[id], same = had?.startedAt === (r as DailyTry).startedAt;
+  daily.local.tries[id] = { ...(r as DailyTry), ...(same && had?.fractured ? { fractured: had.fractured } : {}), ...(same && had?.tree ? { tree: had.tree } : {}) };
   save();
   return daily.local.tries[id]!;
 }
