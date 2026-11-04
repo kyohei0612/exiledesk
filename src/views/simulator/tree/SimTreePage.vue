@@ -103,7 +103,7 @@ const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => 
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
-const rv = useTreeReveal(shown, () => !!s.data.value, t.opened); watch(t.loading, (on) => { if (!on) void v.openView(); });
+const rv = useTreeReveal(shown, () => !!s.data.value, t.opened, t.bigStepNow); watch(t.loading, (on) => { if (!on) void v.openView(); });
 /** 出ている箱どうしの線と札だけ描く (通り抜けは箱が無いので数えない) */
 const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(id))));
 
