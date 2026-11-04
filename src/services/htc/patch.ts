@@ -18,6 +18,7 @@ import { applyWeightOverrides } from "./weight-overrides";
 import poolFixes from "./poe2db-pool-fixes.json";
 import { applyPoe2dbTagFixes } from "./poe2db-tag-fixes";
 import { applyAbyssSuffix } from "./poe2db-abyss-fix";
+import { applySpellTags } from "./spell-tags";
 import { flag } from "../../web/release-flags";
 import { applyPoe2dbValueFixes } from "./poe2db-value-fixes";
 import { applyPoe2dbImplicitFixes, implicitStatOrder } from "./poe2db-implicit-fixes";
@@ -286,7 +287,8 @@ export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBa
   // タグも poe2db に合わせる (陣営・札のタグ。scripts/audit-poe2db-tags.mjs、2026-10-18)
   // アビスの紋章のサフィックスは本番で隠す OK 待ち (スイッチ abyssSuffix)
   const abyss = flag("abyssSuffix") ? applyAbyssSuffix : (d: PatchData): PatchData => d;
-  return applyPoe2dbValueFixes(abyss(applyPoe2dbTagFixes(applyPoe2dbFixes(splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data))));
+  // MOD が品に足すタグで付かなくなる組 (E-11i、spell-tags.ts)
+  return applySpellTags(applyPoe2dbValueFixes(abyss(applyPoe2dbTagFixes(applyPoe2dbFixes(splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data)))));
 }
 
 type Poe2dbFixes = {

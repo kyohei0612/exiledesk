@@ -1,6 +1,6 @@
 import type { AffixType, CurrencyTier, ItemBase, ItemState, Mod, PatchData, PlacedMod } from './types.ts';
 import { CURRENCY_FLOOR } from './types.ts';
-import { CRAFTED_SOURCES, familiesOf, familyAvailable, floorKeepIndex, itemFamilies, modTierWeight, poolTotalWeight, resolveMod } from './pool.ts';
+import { CRAFTED_SOURCES, excluded, familiesOf, familyAvailable, floorKeepIndex, itemFamilies, modTierWeight, occupiedFamiliesOf, poolTotalWeight, resolveMod } from './pool.ts';
 import { limitsOf, prefixCount, prefixesFull, suffixCount, suffixesFull, whiteItem } from './item.ts';
 import { inAny, kindOf } from '../../../services/mods/item-classes';
 
@@ -389,11 +389,11 @@ function multiDrawProbability(
     ids.map((id) => {
       const m = resolveMod(data, id);
       return {
-        id, side, families: familiesOf(m),
+        id, side, mod: m, families: occupiedFamiliesOf(m), // E-11i: also the tags it adds to the item
         w: modTierWeight(m, floor, cap, 0),
         good: modTierWeight(m, floor, cap, goodOf.get(id) ?? 0),
       };
-    }).filter((x) => x.w > 0 && !x.families.some((f) => held.has(f)));
+    }).filter((x) => x.w > 0 && !excluded(x.mod, held));
   const pre = build(item.base.pools.normal.prefixes, 'prefix');
   const suf = build(item.base.pools.normal.suffixes, 'suffix');
   const reachable = new Map([...pre, ...suf].map((x) => [x.id, x]));
@@ -404,7 +404,7 @@ function multiDrawProbability(
     if (need.size === 0) return 1;      // every target already landed
     if (left < need.size) return 0;     // too few draws left to catch them all
     const pool = [...(pf < limits.prefixes ? pre : []), ...(sf < limits.suffixes ? suf : [])]
-      .filter((x) => !x.families.some((fam) => occupied.has(fam)));
+      .filter((x) => !excluded(x.mod, occupied));
     let total = 0;
     for (const x of pool) total += x.w;
     if (total === 0) return 0;

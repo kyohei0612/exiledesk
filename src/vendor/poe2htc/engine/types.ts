@@ -35,6 +35,14 @@ export interface Mod {
    * in both Strength and Intelligence). `families[0]` === `family`. Read it via `familiesOf(mod)` in
    * pool.ts rather than directly — that helper is what makes single- and multi-family mods uniform. */
   readonly families?: readonly string[];
+  /**
+   * ExileDesk (E-11i): tags this mod adds to the item once it sits there (the client's adds_tags, e.g. a fire
+   * damage prefix adds `no_cold_spell_mods`), and tags that stop this mod from rolling when the item has them
+   * (a zero spawn weight met before the class tag). Filled by src/services/htc/spell-tags.ts. Read via
+   * `occupiedFamiliesOf` / `excluded` in pool.ts, never directly.
+   */
+  readonly addsTags?: readonly string[];
+  readonly blockedByTags?: readonly string[];
   /** Desecration boss pools are selected by tag (`DES_BOSS_TAG`, probability.ts) — solver data. */
   readonly tags: readonly string[];
   /**

@@ -108,18 +108,25 @@ export function familiesOf(mod: Mod): readonly string[] { // E-11a 同じ系統�
   return mod.families && mod.families.length > 0 ? mod.families : mod.family ? [mod.family] : [];
 }
 
-/** The groups a mod occupies once it sits on the item — the same as `familiesOf` (one rule, no crafted exception). */
-export function occupiedFamiliesOf(mod: Mod): readonly string[] { // E-11a・E-17
-  return familiesOf(mod);
+/** Key under which a tag the item carries sits in the occupied set, apart from family names. */
+const TAG_KEY = '#tag:';
+
+/**
+ * The keys a mod occupies once it sits on the item: its families (one rule, no crafted exception) plus the
+ * tags it adds to the item (E-11i — a fire damage prefix on a wand adds `no_cold_spell_mods`).
+ */
+export function occupiedFamiliesOf(mod: Mod): readonly string[] { // E-11a・E-17・E-11i
+  const fams = familiesOf(mod);
+  return mod.addsTags?.length ? [...fams, ...mod.addsTags.map((t) => TAG_KEY + t)] : fams;
 }
 
 /**
- * Does `mod` collide with a set of already-occupied families? True if ANY of its groups is taken.
- * This is the single place exclusion is decided — call it rather than testing `.family` directly,
- * or multi-family mods silently lose the groups beyond the first.
+ * Does `mod` collide with a set of already-occupied keys? True if ANY of its groups is taken, or the item
+ * carries a tag that zeroes its spawn weight (E-11i). This is the single place exclusion is decided — call
+ * it rather than testing `.family` directly, or multi-family mods silently lose the groups beyond the first.
  */
 export function excluded(mod: Mod, occupied: ReadonlySet<string>): boolean {
-  return familiesOf(mod).some((f) => occupied.has(f));
+  return familiesOf(mod).some((f) => occupied.has(f)) || (mod.blockedByTags ?? []).some((t) => occupied.has(TAG_KEY + t));
 }
 
 /** Families currently present on the item (used for family-exclusion). A mod with no family has no

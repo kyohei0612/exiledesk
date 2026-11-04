@@ -1,0 +1,146 @@
+{
+ "generated": "2026-11-04",
+ "source": "data-cache/mods.en.json (client Mods: adds_tags + spawn_weights) by scripts/build-spell-tags-from-client.mjs",
+ "types": {
+  "ChaosDamageWeaponPrefix": {
+   "adds": [
+    "no_cold_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_chaos_spell_mods"
+   ]
+  },
+  "ColdDamageWeaponPrefix": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_cold_spell_mods"
+   ]
+  },
+  "FireDamageWeaponPrefix": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_lightning_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_fire_spell_mods"
+   ]
+  },
+  "FreezeDamageIncrease": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods"
+   ],
+   "blocked": [
+    "no_cold_spell_mods"
+   ]
+  },
+  "GlobalIncreaseChaosSpellSkillGemLevelWeapon": {
+   "adds": [
+    "no_cold_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_chaos_spell_mods"
+   ]
+  },
+  "GlobalIncreaseColdSpellSkillGemLevelWeapon": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_cold_spell_mods"
+   ]
+  },
+  "GlobalIncreaseFireSpellSkillGemLevelWeapon": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_lightning_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_fire_spell_mods"
+   ]
+  },
+  "GlobalIncreaseLightningSpellSkillGemLevelWeapon": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_fire_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_lightning_spell_mods"
+   ]
+  },
+  "GlobalIncreasePhysicalSpellSkillGemLevelWeapon": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods"
+   ],
+   "blocked": [
+    "no_physical_spell_mods"
+   ]
+  },
+  "IgniteChanceIncrease": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_lightning_spell_mods"
+   ],
+   "blocked": [
+    "no_fire_spell_mods"
+   ]
+  },
+  "LightningDamageWeaponPrefix": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_fire_spell_mods",
+    "no_physical_spell_mods"
+   ],
+   "blocked": [
+    "no_lightning_spell_mods"
+   ]
+  },
+  "PhysicalSpellDamageWeaponPrefix": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_fire_spell_mods",
+    "no_lightning_spell_mods"
+   ],
+   "blocked": [
+    "no_physical_spell_mods"
+   ]
+  },
+  "ShockChanceIncrease": {
+   "adds": [
+    "no_chaos_spell_mods",
+    "no_cold_spell_mods",
+    "no_fire_spell_mods"
+   ],
+   "blocked": [
+    "no_lightning_spell_mods"
+   ]
+  }
+ }
+}
