@@ -25,8 +25,11 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
     const key = new Request(`${url.origin}/daily.json`, { method: "GET" });
     const hit = cache ? await cache.match(key) : undefined;
     if (hit) return hit;
-    const res = json(await dailyJson(db, now, await prices()), 200, { "cache-control": `public, max-age=${DAILY_TTL}` });
-    if (cache) ctx.waitUntil(cache.put(key, res.clone()));
+    const body = (await dailyJson(db, now, await prices())) as { week: Array<{ today: boolean; t: unknown }> };
+    // 今日のお題がまだ無い時 (16:00 の台本の前) は覚えない。出た後の形だけ 60 秒覚える
+    const ready = body.week.some((d) => d.today && d.t);
+    const res = json(body, 200, { "cache-control": ready ? `public, max-age=${DAILY_TTL}` : "no-store" });
+    if (cache && ready) ctx.waitUntil(cache.put(key, res.clone()));
     return res;
   }
   if (req.method === "GET" && p === "/daily/box.json") return json(await dailyBoxStatus(db, (url.searchParams.get("ids") ?? "").split(",")), 200, { "cache-control": "no-store" });
@@ -59,7 +62,13 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
       return json(await dailyBox(db, body, ip, now));
     case "/daily/topic":
       if (!keyOk()) return json({ error: "key が違う" }, 403);
-      return json(await rollPost(db, body, await prices()));
+      {
+        const out = await rollPost(db, body, await prices());
+        // お題・締めを書いたら、覚えていた GET /daily.json を捨てる (16:00 直後に前の形が 60 秒残らないように)
+        const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
+        if (cache) ctx.waitUntil(cache.delete(new Request(`${url.origin}/daily.json`, { method: "GET" })).then(() => undefined));
+        return json(out);
+      }
   }
   return json({ error: "無い道" }, 404);
 }
