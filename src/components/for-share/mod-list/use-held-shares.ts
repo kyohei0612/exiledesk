@@ -21,10 +21,10 @@ export function blockedTitle(r: { blockedBy?: "family" | "tag" }): string {
     : tr("同じ系統の MOD が付いているので、今は付かない", "A mod from the same group is already on the item, so this cannot roll now");
 }
 
-/** 持っていない時の段の出やすさ。今付かない段 (束ねた行の中、t.blockedBy) は 0% (M-43a) */
+/** 持っていない時の段の出やすさ。今付かない段 (束ねた行の中、t.blockedBy) は 0%、付く段は付く段だけの重み (liveWeight) で割る (M-43a) */
 export function tierFreeShare(r: ListRow, t: ListTier): string {
   if (t.blockedBy) return "0%";
-  return t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "";
+  return t.weight && r.liveWeight ? fmtPct((r.share * t.weight) / r.liveWeight) : "";
 }
 
 export function useHeldShares(held: () => HeldAt | null, data: () => PatchData | null) {
