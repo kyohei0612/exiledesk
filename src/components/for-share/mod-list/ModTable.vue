@@ -59,6 +59,8 @@ const props = withDefaults(defineProps<{
   groups?: readonly ModGroup[];
   /** 選んでいる行に印を付ける (次の手で狙うの窓) */
   rowOn?: (r: ListRow) => boolean;
+  /** 選んでいる段 (狙い・付ける)。T4 以下なら段の表を最初から全部開く (U-34) */
+  tierOn?: (r: ListRow, t: ListTier) => boolean;
   /** 段の行をスマホ・狭い列でも 1 行のまま (差し込みが小さいボタン 1 つの時。文だけ折る) */
   tierOneLine?: boolean;
   /** 留まる目次の帯を上端から空ける px (既定 0。シミュの完成形の設定は 12 = ページの留まる物の top-3 と同じ、2026-11-03 ブラック 36)。空きは帯の色の影で埋める (下の行が透けた、11-03 オーナー) */
@@ -90,6 +92,23 @@ const flashKey = ref<string | null>(null);
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
 const jumped = ref<{ key: string; modId: string; rank: string | null } | null>(null);
 const isJumpTier = (key: string, modId: string, rank: string): boolean => !!jumped.value && jumped.value.key === key && jumped.value.modId === modId && jumped.value.rank === rank;
+
+/** 段の表は MOD ごとに T1〜T3 だけ、T4 以下は「もっと見る」で開く (U-34、オーナー 11-05「T４以下は　長くなって邪魔でしょ」)。選んでいる段・飛んで来た段が T4 以下なら最初から全部 */
+const TIER_MORE = flag("tierMore");
+const SHOWN_TIERS = 3;
+const moreOpen = ref<string | null>(null);
+watch(expanded, () => { moreOpen.value = null; });
+function tierView(key: string, r: ListRow): { shown: ListTier[]; rest: number; forced: boolean } {
+  const all = r.tiers;
+  if (!TIER_MORE) return { shown: all, rest: 0, forced: false };
+  const deep = all.filter((t) => t.tier > SHOWN_TIERS);
+  const forced = deep.some((t) => props.tierOn?.(r, t) || isJumpTier(key, t.modId ?? r.id, t.rank));
+  return { shown: forced || moreOpen.value === key ? all : all.filter((t) => t.tier <= SHOWN_TIERS), rest: deep.length, forced };
+}
+/** もっと見る / たたむ。押したボタンは画面の同じ所に残す (U-24) */
+function toggleMore(key: string, e: Event): void {
+  keepPlace(e.currentTarget as Element, () => { moreOpen.value = moreOpen.value === key ? null : key; });
+}
 
 /** 選び終える手 (closeAfter) を押したら、画面の側の処理の後で段の表を閉じる。押した行は画面の同じ所に残す。小窓 (付け方) は body にあるので document で受ける */
 function onPicked(e: MouseEvent): void {
@@ -296,7 +315,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <slot name="row-open" :row="r" />
               <table class="mt-1 w-full text-[11px]">
                 <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', (props.tierDim ? props.tierDim(r, t) : !!t.blockedBy) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
+                  <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', (props.tierDim ? props.tierDim(r, t) : !!t.blockedBy) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
                     <td class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
@@ -311,6 +330,9 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                   </tr>
                 </tbody>
               </table>
+              <div v-if="tierView(`${sec.sid}:${r.id}`, r).rest && !tierView(`${sec.sid}:${r.id}`, r).forced" class="flex justify-center py-0.5" data-tier-more>
+                <Disclosure :open="moreOpen === `${sec.sid}:${r.id}`" :rest="tierView(`${sec.sid}:${r.id}`, r).rest" class="min-h-7 rounded-md px-3 hover:bg-white/5 max-md:min-h-10 max-md:w-full max-md:justify-center" @click.stop="toggleMore(`${sec.sid}:${r.id}`, $event)" />
+              </div>
             </template>
           </div>
         </div>

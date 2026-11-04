@@ -138,7 +138,7 @@ function decide(): void {
         <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ groupLabelOf(g, s.item.value) }}</button>
       </nav>
     </template>
-    <ModTable v-if="TABLE" ref="table" overlay :data="s.data.value" :item="s.item.value" :groups="GROUPS" :share="shareRaw" :tier-share="tierShareRaw" :row-dim="rowDim" :tier-dim="tierDim" :row-on="(r) => !!pickedOf(r)" tier-one-line>
+    <ModTable v-if="TABLE" ref="table" overlay :data="s.data.value" :item="s.item.value" :groups="GROUPS" :share="shareRaw" :tier-share="tierShareRaw" :row-dim="rowDim" :tier-dim="tierDim" :row-on="(r) => !!pickedOf(r)" :tier-on="isPickedTier" tier-one-line>
       <template #row-lead="{ row: r }">
         <label class="flex w-8 shrink-0 cursor-pointer items-center justify-center self-stretch">
           <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 accent-amber-500" :aria-label="r.text" @change="toggle(r, $event)" />
