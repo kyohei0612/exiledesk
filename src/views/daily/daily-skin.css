@@ -41,6 +41,10 @@
 .daily-veil-name { font-family: var(--skin-font-name); font-size: 20px; line-height: 1.2; color: var(--skin-title); text-align: center; word-break: keep-all; }
 .daily-meta { margin-top: 5px; font-size: 14px; color: var(--skin-dim); }
 .daily-start { min-height: 46px; width: 100%; font-size: 16px; }
+/* 続けるの横の諦める (D-37f)。続けるが主、諦めるは控えめに右 */
+.daily-start-row { display: flex; gap: 8px; }
+.daily-start-row .daily-start { flex: 1; min-width: 0; }
+.daily-start-giveup { flex: none; min-height: 46px; }
 .daily-sub { margin-top: 7px; font-size: 13px; line-height: 1.5; color: var(--skin-dim); }
 .daily-root[data-daily-page] .daily-veil { flex-direction: column; gap: 12px; margin-bottom: 12px; text-align: center; }
 .daily-root[data-daily-page] .daily-veil-frame { width: 150px; height: 150px; }

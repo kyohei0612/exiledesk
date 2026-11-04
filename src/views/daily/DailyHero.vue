@@ -10,6 +10,7 @@ import { usePhone } from "../../utils/use-phone";
 import { openDailyPage } from "../../web/page";
 import { canStartAt, getTry, leftMs, myNick, SOLVE_RATE, SLOT_NAMES, type DailyTopic } from "./daily-api";
 import DailyAimCard from "./DailyAimCard.vue";
+import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
 
@@ -23,7 +24,10 @@ const left = computed(() => (t.value ? leftMs(t.value, props.now) : 0));
 const closed = computed(() => !!props.topic.aims);
 const clock = (ms: number): string => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const asking = ref(false);
-const go = (): void => openDailyPage({ view: "start", q: props.topic.id });
+/** 続けられる挑戦がある (時間が残り、諦めていない) */
+const going = computed(() => !!t.value && left.value > 0 && !t.value.ended);
+const giving = ref(false);
+const go =(): void => openDailyPage({ view: "start", q: props.topic.id });
 const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
 /** 押せる物: 始める (今日・14:50 まで) / 続ける (残りがある) / 木を見る (自分の挑戦がある) / 無し */
 const action = computed(() => {
@@ -51,7 +55,11 @@ const action = computed(() => {
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>
       </template>
       <template v-else>
-        <button v-if="action" type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ action }}</button>
+        <div v-if="action" class="daily-start-row">
+          <button type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ action }}</button>
+          <!-- 続けられる間は横に諦める (D-37f、帯と同じ窓) -->
+          <button v-if="going" type="button" class="g-btn daily-start-giveup" data-daily-hero-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
+        </div>
         <p v-if="!t && closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else-if="!t && today && !action" data-daily-closed class="daily-sub">{{ tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") }}</p>
         <p v-else-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、1 時間が動き出す。ページを閉じても止まらない。挑戦は 1 日 1 回。", "Pressing reveals the target mods and starts 1 hour. Closing the page doesn't stop it. One try per day.") }}</p>
@@ -61,5 +69,6 @@ const action = computed(() => {
     </div>
     <DailyRank :topic="topic" />
     <DailyNick v-if="asking" @done="asking = false; go()" @close="asking = false" />
+    <DailyGiveUpAsk v-if="going" :id="topic.id" :open="giving" @close="giving = false" @done="giving = false" />
   </section>
 </template>

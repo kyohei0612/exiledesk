@@ -10,8 +10,9 @@ import { freshItem } from "../../services/craft-stage/engine";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import ModTable from "../../components/for-share/mod-list/ModTable.vue";
 import { openDailyPage } from "../../web/page";
-import { giveUpTry, type DailyAim } from "./daily-api";
+import type { DailyAim } from "./daily-api";
 import { useTree } from "../simulator/tree/use-tree";
+import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 
 const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean }>();
 /** 狙いの字は木・フラクチャー選びと同じ (段の幅は「以上」の幅) */
@@ -19,13 +20,8 @@ const t = useTree();
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
 const listOpen = ref(false);
 const asking = ref(false);
-const failed = ref(false);
 /** 何も付いていない品 (MOD 一覧の中身、D-37d) */
 const blank = computed(() => { const d = s.data.value; try { return d ? freshItem(d, props.base, props.ilvl, "rare") : null; } catch { return null; } });
-async function giveUp(): Promise<void> {
-  failed.value = false;
-  if (await giveUpTry(props.id)) { asking.value = false; openDailyPage({ view: "list" }); } else failed.value = true;
-}
 </script>
 
 <template>
@@ -43,15 +39,6 @@ async function giveUp(): Promise<void> {
     <ModalShell :open="listOpen" :title="tr('このベースに付く MOD (何も付いていない状態)', 'Mods for this base (nothing attached)')" width="w-[1100px] max-w-[96vw]" @close="listOpen = false">
       <div data-daily-modlist-body class="p-2"><ModTable v-if="blank" overlay :data="s.data.value" :item="blank" /></div>
     </ModalShell>
-    <ModalShell :open="asking" :title="tr('挑戦を諦める', 'Give up the challenge')" width="w-[420px] max-w-[94vw]" @close="asking = false">
-      <div data-daily-giveup-ask class="flex flex-col gap-3 p-4 text-[14px]">
-        <p>{{ tr("提出なしで終える。今日の挑戦はもう始め直せない。前に出した提出の記録は残る。", "End without submitting. Today's challenge can't be restarted. Earlier submissions stay on record.") }}</p>
-        <p v-if="failed" class="text-[var(--exile-color-signal-down)]">{{ tr("終えられなかった (つながらない)。もう一度押す。", "Couldn't end it (connection). Try again.") }}</p>
-        <div class="flex justify-end gap-2">
-          <button type="button" class="g-btn" @click="asking = false">{{ tr("続ける", "Keep going") }}</button>
-          <button type="button" class="g-btn-red" data-daily-giveup-ok @click="giveUp">{{ tr("諦める", "Give up") }}</button>
-        </div>
-      </div>
-    </ModalShell>
+    <DailyGiveUpAsk :id="id" :open="asking" @close="asking = false" @done="asking = false; openDailyPage({ view: 'list' })" />
   </div>
 </template>
