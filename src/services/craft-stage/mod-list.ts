@@ -49,7 +49,11 @@ export const groupLabelOf = (g: ModGroup, item: StageItem | null | undefined): s
  * modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05)。tier = rank の数 (T2 → 2、その段の MOD の中で数える)。
  * essence = エッセンス・完全エッセンス (合金も) の行の段で、その段を付けるアイテムの名前 (英語はゲームの名前、日本語は items-ja。段の MOD レベルは ilvl。2026-10-24 オーナー)
  */
-export interface ListTier { rank: string; tier: number; name: string; ilvl: number; weight: number; text: string; modId?: string; essence?: { en: string; ja: string } }
+export interface ListTier {
+  rank: string; tier: number; name: string; ilvl: number; weight: number; text: string; modId?: string; essence?: { en: string; ja: string };
+  /** 束ねた行の段で、その段の MOD が今付かない訳 (行の blockedBy と同じ値。weight は生のまま、M-43a) */
+  blockedBy?: "family" | "tag";
+}
 
 /**
  * エッセンスの段の名前 (vendor の tiers[].name) → 付けるアイテムの名前。vendor の名前とゲームの名前がずれる物は直す:
@@ -211,7 +215,7 @@ function mergeFamilies(rows: ListRow[]): ListRow[] {
       template: short(g.map((r) => r.template)),
       text: short(g.map((r) => r.text)),
       tags: [...new Set(g.flatMap((r) => r.tags))],
-      tiers: g.flatMap((r) => r.tiers.map((t) => ({ ...t, modId: r.id }))),
+      tiers: g.flatMap((r) => r.tiers.map((t) => ({ ...t, modId: r.id, ...(r.blocked && r.blockedBy ? { blockedBy: r.blockedBy } : {}) }))),
       weight: g.reduce((a, r) => a + r.weight, 0),
       share: g.reduce((a, r) => a + r.share, 0),
       topLevel: Math.max(...g.map((r) => r.topLevel)),
