@@ -10,7 +10,7 @@
  * どの組み合わせでも説明できない行は unexplained (推し量らない)
  */
 import type { Mod } from "../../../vendor/poe2htc/engine/types";
-import { familyBlocked, familyKeysOf } from "../../mods/mod-rules";
+import { familyBlocked, occupiedKeysOf } from "../../mods/mod-rules";
 import { tierDisplayRanges } from "../../mods/stat-scale";
 
 export interface SolveLine {
@@ -166,7 +166,7 @@ export function solveLines(ctx: SolveCtx): Solution[] {
   const taken = new Set<string>();
   for (const m of ctx.fixed) {
     if (m.type === "prefix" || m.type === "suffix") count[m.type]++;
-    for (const k of familyKeysOf(m)) taken.add(k);
+    for (const k of occupiedKeysOf(m)) taken.add(k);
   }
   const found: Solution[] = [];
   const seen = new Map<string, { at: number; tb: number[]; tiers: Set<string> }>();
@@ -224,7 +224,8 @@ export function solveLines(ctx: SolveCtx): Solution[] {
       const side = c.mod.type;
       if ((side === "prefix" || side === "suffix") && count[side] >= ctx.limit[side]) continue;
       if (familyBlocked(c.mod, taken)) continue;
-      const keys = familyKeysOf(c.mod);
+      // 塞ぐ鍵 = 系統 + 足すタグ (E-11i)。タグは別の MOD も足すので、戻す時は自分が新しく塞いだ鍵だけ外す
+      const keys = occupiedKeysOf(c.mod);
       const level = ctx.levelOf(c.mod);
       for (let t = c.mod.tiers.length - 1; t >= 0; t--) {
         if (c.mod.tiers[t]!.ilvl > level) continue;
@@ -232,11 +233,12 @@ export function solveLines(ctx: SolveCtx): Solution[] {
         fixVals();
         if (!c.at.some(over)) {
           if (side === "prefix" || side === "suffix") count[side]++;
-          for (const k of keys) taken.add(k);
+          const added = keys.filter((k) => !taken.has(k));
+          for (const k of added) taken.add(k);
           picks.push({ mod: c.mod, tier: t, lines: c.at, cost: c.cost });
           dfs();
           picks.pop();
-          for (const k of keys) taken.delete(k);
+          for (const k of added) taken.delete(k);
           if (side === "prefix" || side === "suffix") count[side]--;
         }
         apply(c.mod, t, c.at, -1);
@@ -250,7 +252,7 @@ export function solveLines(ctx: SolveCtx): Solution[] {
     if (contrib[i]! > 0) return;
     const own = lines[i]!.own, side = own?.type;
     const occupy = !!own && (side === "prefix" || side === "suffix") && count[side] < ctx.limit[side] && !familyBlocked(own, taken);
-    const keys = occupy ? familyKeysOf(own!) : [];
+    const keys = occupy ? occupiedKeysOf(own!).filter((k) => !taken.has(k)) : [];
     if (occupy) { count[side as "prefix" | "suffix"]++; for (const k of keys) taken.add(k); }
     if (!occupy) overflow++;
     unexplained.push(i);

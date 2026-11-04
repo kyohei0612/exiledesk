@@ -38,7 +38,7 @@ export { fractureStart, placeMods, runeSocketed, requiredRunes } from "./sim-eng
 // シミュのツリーで打つ時の規格外 (ルーンの手はソケットを足して嵌める、クラフト MOD が上限ならアストリッドの創造性を先に嵌める。オーナー 10-26)
 export { socketRunes, unboundedBefore, applyUnbounded } from "./sim-engine/unbounded";
 // 完成形の狙いの組にもう 1 つ足せるか (枠・系統・アイテムレベル・冒涜 1 つまで・クラフト MOD の上限。足せなければ理由の文、10-24 シミュ部長 19 本目)
-export { goalBlock } from "./sim-engine/start-fracture";
+export { goalBlock, tagClash, TAG_CLASH } from "./sim-engine/start-fracture";
 // ベースを替えた時に狙い・始まりの MOD を新しいベースの同じ MOD・段へ読み替える (部位ごとに id と段の数が違う。オーナー 10-24)
 export type { CarriedAims } from "./sim-engine/carry-aims";
 export { carryAims } from "./sim-engine/carry-aims";

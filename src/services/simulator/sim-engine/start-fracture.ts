@@ -13,6 +13,7 @@ import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem, StageMod } from "../../craft-stage/types";
 import { tr } from "../../../i18n/lang";
+import { familyBlocked, occupiedKeysOf, sharesFamily } from "../../mods/mod-rules";
 
 /** 段の名前の T で言う MOD (T1 が一番上)。fractured = ✦ で付ける */
 export interface TierMod { modId: string; tier: number; fractured?: boolean }
@@ -136,11 +137,23 @@ export function placeMods(
   return { item, left };
 }
 
+/**
+ * 2 つの狙いが、付いている MOD の足すタグで互いに止め合うか (E-11i。系統の重なりは見ない = goalBlock の同じ系統の断りが先)。
+ * 判定はエンジンの口 (occupiedKeysOf / familyBlocked) だけ。片方だけ止まる組 (凍結の後の物理ダメージ増加) は先に付ければ完成形にできるので通す
+ */
+export function tagClash(data: PatchData, a: TierMod, b: TierMod): boolean {
+  const x = data.mods.get(a.modId), y = data.mods.get(b.modId);
+  if (!x || !y || sharesFamily(x, y)) return false;
+  return familyBlocked(y, new Set(occupiedKeysOf(x))) && familyBlocked(x, new Set(occupiedKeysOf(y)));
+}
+/** tagClash の断りの文 (同じ系統の断りとは分ける) */
+export const TAG_CLASH = (): string => tr("付いている MOD が止めるので一緒に付かない", "Blocked by another target mod; they can't be on the same item");
+
 /** goalBlock の狙いの組を付けた形の覚え (表の行ごとに同じ組で呼ばれるので、組ごとに 1 回だけ付ける) */
 const placedMemo = new Map<string, StageItem>();
 /**
  * 完成形の狙いの組 aims に、もう 1 つ add を足せるか (2026-10-24 シミュ部長 19 本目の頼み、オーナー OK: 付けられない組を選べなくする)。足せなければ理由の文、足せれば null。
- * 見る物: 冒涜の MOD は 1 つまで・クラフト MOD (エッセンス・完全エッセンス・合金で付く物) は craftedLimitOf まで (指名の手はこの 2 つを数えないので、ここで数える)。
+ * 見る物: 冒涜の MOD は 1 つまで・付いている MOD の足すタグで止め合う組 (tagClash、E-11i)・クラフト MOD (エッセンス・完全エッセンス・合金で付く物) は craftedLimitOf まで (指名の手はこの 2 つを数えないので、ここで数える)。
  * 枠 (プレ・サフィの数)・同じ系統・アイテムレベルは、狙いの組を placeMods と同じ指名の手で付けた形に add を 1 回付けてみて、核の断りの文をそのまま返す。
  * aims に add と同じ物があれば null (もう選んである)
  */
@@ -151,9 +164,10 @@ export function goalBlock(data: PatchData, base: string, itemLevel: number, aims
   const all = [...aims, add];
   if (src(add) === "desecrated" && all.filter((m) => src(m) === "desecrated").length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
   // 同じ系統 (同じ MOD の別の段も): 指名の手は段を置き換えて通るので、ここで断る。エッセンスの MOD と同じ系統の普通の MOD は一緒に付く (確認済みの決まり) ので通す
-  const fams = (m: TierMod): string[] => { const d = data.mods.get(m.modId); return d ? (d.families?.length ? [...d.families] : [d.family]) : []; };
   const ess = (m: TierMod): boolean => /essence/.test(src(m));
-  if (aims.some((a) => ess(a) === ess(add) && fams(a).some((f) => fams(add).includes(f)))) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
+  const same = (a: TierMod): boolean => { const x = data.mods.get(a.modId), y = data.mods.get(add.modId); return !!x && !!y && sharesFamily(x, y); };
+  if (aims.some((a) => ess(a) === ess(add) && same(a))) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
+  if (aims.some((a) => tagClash(data, a, add))) return TAG_CLASH();
   // 完成形は規格外 (placeMods): add がルーンの MOD ならソケットを 1 つ、クラフト MOD ならアストリッドの創造性の分を空けておいた形に付けてみる (オーナー 10-26)
   const room = { runes: data.mods.get(add.modId)?.rune ? 1 : 0, crafted: isCrafted(data, add) ? 1 : 0 };
   const key = `${base}|${itemLevel}|${room.runes}${room.crafted}|${aims.map((a) => `${a.modId}#${a.tier}${a.fractured ? "f" : ""}`).sort().join(",")}`;
