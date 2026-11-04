@@ -1,6 +1,7 @@
 {
   "0.1.665": [
-    "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\""
+    "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\"",
+    "Emulator and Simulator: bones can no longer add a Desecrated mod to a side that is over its mod limit (for example after a Jewel loses the mod that adds a slot)"
   ],
   "0.1.664": [
     "Emulator: currencies that remove a mod and then add one (Chaos Orb, bones and similar) now use the item's mod slots from before the craft, so removing a mod that adds slots no longer lowers the number of mods",

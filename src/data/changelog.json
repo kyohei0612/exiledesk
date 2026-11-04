@@ -8,6 +8,12 @@
     "area": "",
     "text": "エミュレーター・シミュレーター: MOD の段の表は T1〜T3 だけ出し、T4 以下は「もっと見る」で開くようにしました",
     "en": "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: MOD の数が上限を超えた側 (ジュエルで侮蔑が消えた後など) には、骨で冒涜の MOD を付けられないようにしました",
+    "en": "Emulator and Simulator: bones can no longer add a Desecrated mod to a side that is over its mod limit (for example after a Jewel loses the mod that adds a slot)"
    }
   ]
  },
