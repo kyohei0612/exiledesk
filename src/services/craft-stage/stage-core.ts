@@ -121,7 +121,11 @@ function extraAllowed(item: StageItem, side: StageSide): number {
 /** その側が上限を超えている (侮蔑を外した後の 3 つ目)。消してもそこへは付け直せない */
 export const overLimit = (item: StageItem, side: StageSide): boolean => item.rarity === "rare" && listOf(item, side).length > limitOf(item, side);
 export const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
-export const room = (item: StageItem, side: StageSide): boolean => listOf(item, side).length < limitOf(item, side);
+/**
+ * その側に空きがあるか。limitFrom = 枠の上限を見る品 (E-30a: 1 つの手で消してから付ける時は打つ前の品。消えた MOD (ルーンの効果 % の合金・侮蔑) で
+ * 上限が下がっても、その手は打つ前の上限で付け、超えた分は残る。カオス・骨・エッセンス・確率の表がみなここを通る)
+ */
+export const room = (item: StageItem, side: StageSide, limitFrom: StageItem = item): boolean => listOf(item, side).length < limitOf(limitFrom, side);
 export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
 /**
  * フラクチャーで選べない MOD: 未発現の枠と、冒涜で付いた MOD 全部 (発現した物。冒涜専用でも普通の MOD でも)。4 つの数には入る。

@@ -103,7 +103,7 @@ export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): 
   if (mark) {
     cur = without(cur, mark);
     removed.push(mark);
-  } else if (!room(cur, side)) {
+  } else if (!room(cur, side, ctx.before)) {
     const r = removeOne(cur, rng, [side]);
     // 側を重みで選んだ時は、選ばれた側が固定の MOD だけかは当たり所 (お告げで決めた側なら打つ前に分かる)
     if (!r) return (fixed ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));

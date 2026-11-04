@@ -21,6 +21,8 @@ export interface PoolOpts {
   except?: StageMod;
   /** アイテムレベルを見ない MOD (冒涜専用の MOD は保存された / 古びた / 変質した骨ならアイテムレベルに関わらず全部の段が出る。apply-desecrate.ts) */
   anyLevel?: (mod: Mod) => boolean;
+  /** 枠の上限を見る品 (E-30a。その手を打つ前の品、stage-core の room) */
+  limitFrom?: StageItem;
 }
 export function candidates(data: PatchData, item: StageItem, sides: readonly StageSide[], floor: number, o: PoolOpts = {}): Candidate[] {
   const taken = takenFamilies(data, item, o.except);
@@ -54,7 +56,7 @@ export function pickWeighted<T extends { w: number }>(xs: readonly T[], rng: () 
 
 /** MOD を 1 つ引いて付ける (sides は足してよい側。既定は枠のある側全部。付けられなければ null) */
 export function addOne(data: PatchData, item: StageItem, floor: number, rng: () => number, o: PoolOpts & { sides?: readonly StageSide[] } = {}): { item: StageItem; mod: StageMod; chance: number } | null { // E-11f 空きのある側の候補をまとめて重みで 1 つ
-  const sides = (o.sides ?? SIDES).filter((s) => room(item, s));
+  const sides = (o.sides ?? SIDES).filter((s) => room(item, s, o.limitFrom));
   const cs = candidates(data, item, sides, floor, o);
   const c = pickWeighted(cs, rng);
   if (!c) return null;
@@ -83,7 +85,7 @@ const matchesMod = (mod: Mod, key: string): boolean => mod.id === key || mod.id.
  * 付けられなければ { error: 理由 }
  */
 export function addForced(data: PatchData, item: StageItem, floor: number, rng: () => number, force: Force, o: PoolOpts & { sides?: readonly StageSide[] } = {}): Forced | { error: string } {
-  const sides = (o.sides ?? SIDES).filter((s) => room(item, s));
+  const sides = (o.sides ?? SIDES).filter((s) => room(item, s, o.limitFrom));
   if (!sides.length) return { error: tr("足す枠が無い", "No open affix slot") };
   const cands = candidates(data, item, sides, floor, o);
   const total = cands.reduce((a, c) => a + c.w, 0);

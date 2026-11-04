@@ -18,7 +18,6 @@ import { jewelEmotionsOf } from "../../htc/patch";
 import { FLUX } from "../apply-flux";
 import { convertByTable } from "../element-convert";
 import { applySanctify } from "../apply-vaal";
-import { limitOf, listOf } from "../stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action } from "./types";
 import { addUnrevealed, reveal } from "./parts-unrevealed";
@@ -70,6 +69,8 @@ export interface PartCtx {
   pickUsed?: number;
   /** 消える MOD の指名 (カオス) */
   removeForce?: string;
+  /** この手を打つ前の品 (枠の上限はこれで見る、E-30a) */
+  before?: StageItem;
 }
 /** 指名が通らなかった時 (理由つきで打てない、pickError。今の関数と同じ文) */
 const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
@@ -145,7 +146,7 @@ type Add = Extract<Action, { add: unknown }>["add"];
  */
 function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   const ok = (it: StageItem): StageApply => ({ applied: true, item: it, added: [], removed: [] });
-  if (a.emptyOk && !SIDES.some((s) => room(item, s))) return ok(item);
+  if (a.emptyOk && !SIDES.some((s) => room(item, s, ctx.before))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
   const sides = ctx.mods.side ? [ctx.mods.side] : SIDES; // E-11f・E-11g
   const { tag, pct } = catalystOf(item);
@@ -159,7 +160,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   for (let i = 0; i < n; i++) {
     const f = pick[i];
     if (f) {
-      const r = addForced(ctx.data, cur, a.floor, ctx.rng, f, { sides, boost });
+      const r = addForced(ctx.data, cur, a.floor, ctx.rng, f, { sides, boost, limitFrom: ctx.before });
       if ("error" in r) return pickFail(item, r.error);
       ctx.pickUsed = (ctx.pickUsed ?? 0) + 1;
       cur = r.item;
@@ -167,7 +168,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
       picked.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
       continue;
     }
-    const r = addOne(ctx.data, cur, a.floor, ctx.rng, { sides, boost });
+    const r = addOne(ctx.data, cur, a.floor, ctx.rng, { sides, boost, limitFrom: ctx.before });
     if (!r) break;
     cur = r.item;
     added.push(r.mod);
@@ -230,7 +231,7 @@ function addEssence(ctx: PartCtx, item: StageItem, a: AddEssence): StageApply {
     const mark: StageMod = { ...e.mod, side, abyssMark: true };
     return { applied: true, item: withMod(item, mark), added: [mark], removed: [] };
   }
-  if (!room(item, e.side)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
+  if (!room(item, e.side, ctx.before)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
   // 消えたのがぶつかる MOD でなかった時だけ (アストリッドで作った MOD が 2 つ以上ある時に当たり所で決まる)
   if (e.clash(item)) return (gone ? skipRandom : skip)(item, tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item"));
   return { applied: true, item: withMod(item, e.mod), added: [e.mod], removed: [] };
@@ -265,7 +266,7 @@ const CATALYST_ROLLS = [1, 2] as const;
 /** 液化した感情の作った MOD を付ける (消すのは前の部品)。2 つの版がある物は、空きのある側の版から等しく 1 つ */
 function addEmotion(ctx: PartCtx, item: StageItem): StageApply {
   const entries = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(ctx.runeKey ?? ""));
-  const fits = entries.filter((x) => listOf(item, x.side as StageSide).length < limitOf(item, x.side as StageSide));
+  const fits = entries.filter((x) => room(item, x.side as StageSide, ctx.before));
   if (!fits.length) return skipRandom(item, tr("付ける側に空きが無いので追加できない (もう一度)", "No room on the side this mod goes to, so nothing can be added (try again)"));
   const e = fits.length === 1 ? fits[0]! : fits[Math.floor(ctx.rng() * fits.length)]!;
   const mod = ctx.data.mods.get(e.modId);

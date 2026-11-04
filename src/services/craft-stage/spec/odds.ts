@@ -23,9 +23,9 @@ type Remove = Extract<Action, { remove: unknown }>["remove"];
 export interface AddOdds { cands: Candidate[]; n: number }
 
 /** その状態で 1 つ付ける時の候補 (parts.ts の add → stage-core の addOne と同じ: お告げの側 ∩ 空きのある側、触媒の高貴の重み) */
-export function addCands(data: PatchData, item: StageItem, a: Add, mods: Mods): Candidate[] {
-  const sides = (mods.side ? [mods.side] : SIDES).filter((s) => room(item, s));
-  if (a.emptyOk && !SIDES.some((s) => room(item, s))) return [];
+export function addCands(data: PatchData, item: StageItem, a: Add, mods: Mods, before: StageItem = item): Candidate[] {
+  const sides = (mods.side ? [mods.side] : SIDES).filter((s) => room(item, s, before)); // E-30a 枠の上限は打つ前の品
+  if (a.emptyOk && !SIDES.some((s) => room(item, s, before))) return [];
   const { tag, pct } = catalystOf(item);
   const boost = mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   return candidates(data, item, sides, a.floor, boost ? { boost } : {});
@@ -70,11 +70,11 @@ export function addOddsBySpec(data: PatchData, item: StageItem, key: string, ome
       states = next;
     } else return null;
   }
-  if (!branched) return { cands: states.length ? addCands(data, states[0]!, last.add, plan.mods) : [], n };
+  if (!branched) return { cands: states.length ? addCands(data, states[0]!, last.add, plan.mods, item) : [], n };
   // 枝ごとに割合で足し合わせる (消えた MOD と同じ系統も、消えた後なら付きうる)
   const acc = new Map<string, Candidate>();
   for (const it of states) {
-    const cs = addCands(data, it, last.add, plan.mods);
+    const cs = addCands(data, it, last.add, plan.mods, item);
     const total = cs.reduce((x, c) => x + c.w, 0);
     if (!(total > 0)) continue;
     const k = 1 / states.length / total;

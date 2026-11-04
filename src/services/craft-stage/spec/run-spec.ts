@@ -161,7 +161,7 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   const essence = spec.actions.some((a) => "addEssence" in a) ? prepareEssence(data, item, key, rng) : null;
   if (spec.actions.some((a) => "addEssence" in a) && !essence) return skip(item, tr("このエッセンスのティアが無い", "No tier for this Essence"));
   const ctx: PartCtx = {
-    data, rng, mods, reveal: plan.reveal, removedSoFar: [], essence,
+    data, rng, mods, reveal: plan.reveal, removedSoFar: [], essence, before: item,
     catalystTag, oneCatalyst: !!opts.oneCatalyst, runeKey: key,
     altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
     // カオスは指名の 1 つ目だけ見る (今の関数と同じ。余った指名は無視)
