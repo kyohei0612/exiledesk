@@ -234,10 +234,19 @@ watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.curre
  * 本体 (と空き) = 規格外でソケットを足して嵌める。足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
  */
 const runeAt = ref<number | null>(null);
-watch(held, () => { runeAt.value = null; });
+/** 置き換えられないソケット (バウンド) を押した訳。その押しだけ断り、持った物はそのまま (猿 release-668 ①: 断った後に別のソケットも押せなくなっていた) */
+const socketWhy = ref<string | null>(null);
+watch(held, () => { runeAt.value = null; socketWhy.value = null; });
 const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
-const runeNote = computed(() => (runeHold.value ? tr("ルーンのソケットを押すと置き換え · カードを押すとソケットを足して嵌める · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to add a socket for it · Right-click / Esc to drop") : undefined));
-function onSocket(n: number): void { if (!runeHold.value) return; runeAt.value = n; ok(); }
+const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${tr("ルーンのソケットを押すと置き換え · カードを押すとソケットを足して嵌める · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to add a socket for it · Right-click / Esc to drop")}` : undefined));
+function onSocket(n: number): void {
+  if (!runeHold.value) return;
+  runeAt.value = n;
+  const why = problem.value;
+  if (why) { socketWhy.value = tr(`${n} 番目: ${why}`, `Socket ${n}: ${why}`); runeAt.value = null; return; }
+  socketWhy.value = null;
+  ok();
+}
 const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
 const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
