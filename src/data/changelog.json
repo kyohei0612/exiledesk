@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.665",
+  "date": "2026-11-04",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: MOD の段の表は T1〜T3 だけ出し、T4 以下は「もっと見る」で開くようにしました",
+    "en": "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\""
+   }
+  ]
+ },
+ {
   "v": "0.1.664",
   "date": "2026-11-04",
   "items": [
@@ -1144,18 +1156,6 @@
     "area": "",
     "text": "ベース選び: 今日のユニークのタイルの光を、色の薄い絵にも絵に合った色で付けるように",
     "en": "Base selection: The glow on today's unique tiles now matches the art's color even for pale art"
-   }
-  ]
- },
- {
-  "v": "0.1.624",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 部位のタイルの絵が、その部位のユニークから毎日 1 つ替わるように (日本時間 9 時に替わり、その日は誰が開いても同じ絵)",
-    "en": "Base selection: Each item-type tile now shows a unique of that type that changes daily (at 9:00 JST; everyone sees the same art that day)"
    }
   ]
  }

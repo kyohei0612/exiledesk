@@ -1,4 +1,7 @@
 {
+  "0.1.665": [
+    "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\""
+  ],
   "0.1.664": [
     "Emulator: currencies that remove a mod and then add one (Chaos Orb, bones and similar) now use the item's mod slots from before the craft, so removing a mod that adds slots no longer lowers the number of mods",
     "Simulator: when the final item setup refuses a pair that can't roll together, it now names the mod that blocks it"
