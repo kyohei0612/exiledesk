@@ -1,4 +1,8 @@
 {
+  "0.1.663": [
+    "Emulator: mods that an existing mod blocks are now greyed out at 0% and no longer count toward the chances of the other mods (tiers inside grouped rows too)",
+    "Simulator: the final item setup and pasted items now also refuse mods that can't roll together because an existing mod blocks them"
+  ],
   "0.1.662": [
     "Emulator: on Wands and Staves, a spell level mod of one element could roll together with increased damage, Flammability and similar mods of another element. They no longer roll together, matching the game",
     "Simulator: each row of the tree now always shows its step number (Step n) on the left",
