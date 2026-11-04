@@ -11,6 +11,9 @@ import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, floorAims, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
 import { boxCheck } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
+import { runCost } from "../src/views/daily/daily-cost";
+import { marketStore } from "../src/state/market-store";
+import { priceOfKey } from "../src/state/for-share/craft-stage-shelf";
 export { loadPatchSync } from "./_htc-bridge-entry";
 
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
@@ -27,7 +30,7 @@ const startAt = (no: number): number => no * DAY + H16 - JST;
 const allDoneAt = (no: number): number => startAt(no + 1) - 9.5 * 60e3;
 
 type FetchItem = { slot: string; base: string; ilvl: number | null; quality: number | null; quality_kind: string | null; mods: string; fractured: string | null; desecrated: string | null; corrupted: number; who: string };
-type TopicRow = { id: string; day: string; slot: number; item_class: string | null; base: string; box_id: string | null; sample_id: string | null };
+type TopicRow = { id: string; day: string; slot: number; item_class: string | null; base: string; box_id: string | null; sample_id: string | null; seed?: number; prices?: string | null; ilvl?: number; aims?: string };
 type BoxRow = { id: string; created: number; note: string; item: string; status: string; nick: string | null };
 type TryRow = { nick_id: string; name: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; recipe: string | null; checked: number | null };
 type ResultRow = { day: string; nick_id: string; place: number | null; cost: number; rate: number; used_ms: number; solved_n: number; entered_n: number; slot: number; base: string };
@@ -102,14 +105,46 @@ export function samplesOf(data: PatchData, items: FetchItem[]): { samples: Daily
 
 // --- 締め (D-59 ①・D-50・D-100・D-101) ---
 
-/** 検算 (D-58)。費用の数え方 (runTree のどの値・種・値段) が決まるまでは見ない (null) */
+/** 検算 (D-58)。1 = 合った、-1 = 合わない (順位から外す)、null = 見ない */
 export type Verify = (t: TryRow) => number | null;
+/** 検算するのは順位の上位だけ (D-58) */
+const VERIFY_TOP = 10;
+
+/**
+ * お題の種と 16:00 の相場の写し (daily_topics.prices = /boot.json の market と同じ JSON) で、提出の木を daily-cost.ts の runCost で回し直す。
+ * 費用 (0.1 神) と完成率が提出と同じなら 1。木が読めない・ベースやフラクチャーが違う時も -1。
+ * 画面がお題の種・値段で回すのはシミュの D-41 ④ の後なので、それまで台本は --verify を付けない (デイリー部長 2、11-05)
+ */
+export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null }): Verify {
+  const snap = topic.prices ? (JSON.parse(topic.prices) as { items?: unknown[] }) : null;
+  if (!snap?.items?.length) return () => null;
+  marketStore.items.value = snap.items as typeof marketStore.items.value;
+  const item = freshItem(data, topic.base, topic.ilvl, "rare");
+  return (t) => {
+    if (!t.recipe || t.cost == null) return -1;
+    let r: { cost: number; rate: number } | null = null;
+    try {
+      r = runCost(data, topic, t.recipe, (k) => priceOfKey(k, item));
+    } catch {
+      r = null;
+    }
+    return r && Math.abs(r.cost - t.cost) < 0.05 && r.rate === Math.round(t.rate ?? -1) ? 1 : -1;
+  };
+}
 
 function closeDay(inp: RollInput, verify: Verify): Record<string, unknown> | null {
   if (inp.closed || inp.now < allDoneAt(noOf(inp.closing))) return null;
   const topic = inp.topics.find((t) => t.day === inp.closing);
   if (!topic) return null;
-  const checked = inp.tries.map((t) => ({ nickId: t.nick_id, checked: t.checked ?? (t.cost != null && (t.rate ?? 0) >= SOLVE_RATE ? verify(t) : null) }));
+  // 上位 VERIFY_TOP 人 (解決・安い順) だけ回し直す。外れた人が出たら次の人を繰り上げて見る
+  const order = inp.tries.map((t, i) => ({ t, i })).filter(({ t }) => t.cost != null && (t.rate ?? 0) >= SOLVE_RATE).sort((a, b) => a.t.cost! - b.t.cost! || (a.t.submitted_at ?? 0) - (b.t.submitted_at ?? 0));
+  const checked = inp.tries.map((t) => ({ nickId: t.nick_id, checked: t.checked }));
+  let passed = 0;
+  for (const { t, i } of order) {
+    if (passed >= VERIFY_TOP) break;
+    if (checked[i]!.checked == null) checked[i]!.checked = verify(t);
+    if ((checked[i]!.checked ?? 1) >= 0) passed++;
+  }
   const ok = (i: number) => (checked[i]!.checked ?? 0) >= 0;
   const solved = inp.tries.map((t, i) => ({ t, i })).filter(({ t, i }) => t.cost != null && (t.rate ?? 0) >= SOLVE_RATE && ok(i)).sort((a, b) => a.t.cost! - b.t.cost! || (a.t.submitted_at ?? 0) - (b.t.submitted_at ?? 0));
   const place = new Map(solved.map(({ t }, k) => [t.nick_id, k + 1]));
@@ -133,7 +168,7 @@ function closeDay(inp: RollInput, verify: Verify): Record<string, unknown> | nul
 
 export type RollOut = { body: Record<string, unknown>; log: string[] };
 
-export function roll(data: PatchData, inp: RollInput, engineVer: string, verify: Verify = () => null): RollOut {
+export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyOn = false): RollOut {
   const log: string[] = [];
   const body: Record<string, unknown> = {};
   const no = noOf(inp.target), monday = no - weekdayOf(no);
@@ -188,6 +223,8 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verify:
   }
 
   // ③ 前の日を締める (D-59 ①)
+  const ct = inp.topics.find((t) => t.day === inp.closing);
+  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null }) : () => null;
   const close = closeDay(inp, verify);
   if (close) {
     body.close = close;

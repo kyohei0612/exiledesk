@@ -9,6 +9,7 @@
  *   EXILEDESK_LIVE_KEY=<server/live の REFRESH_KEY> node scripts/daily-roll.mjs [--day YYYY-MM-DD] [--dry]
  *     --day = 組む日 (16:00 に始まる日)。省くと、16:00 より前なら今日、後なら今の日 (遅れて回した時)
  *     --dry = 組んだ物を出すだけで書かない
+ *     --verify = 締めで上位 10 人を検算する (D-58、daily-cost.ts の runCost。画面がお題の種・値段で回すシミュの D-41 ④ の後から付ける)
  *   EXILEDESK_LIVE_BASE で行き先を替える (手元の wrangler dev は http://localhost:8787。本番に書かない Y-71)
  */
 import { readFileSync } from "node:fs";
@@ -18,6 +19,8 @@ const BASE = process.env.EXILEDESK_LIVE_BASE ?? "https://exiledesk-live.exiledes
 const KEY = process.env.EXILEDESK_LIVE_KEY;
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry");
+// 検算 (D-58)。画面がお題の種・値段で回すようになる (シミュの D-41 ④) までは付けない
+const VERIFY = args.includes("--verify");
 const dayArg = args[args.indexOf("--day") + 1];
 if (!KEY) {
   console.error("EXILEDESK_LIVE_KEY が要る (server/live の REFRESH_KEY)");
@@ -39,7 +42,7 @@ const inp = await res.json();
 const M = await bundleEntry("scripts/_daily-roll-entry.ts");
 const data = M.loadPatchSync();
 const ver = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
-const { body, log } = M.roll(data, inp, ver);
+const { body, log } = M.roll(data, inp, ver, VERIFY);
 for (const l of log) console.log(l);
 if (DRY) {
   console.log(JSON.stringify(body, null, 1).slice(0, 4000));
