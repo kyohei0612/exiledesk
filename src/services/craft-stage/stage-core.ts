@@ -123,9 +123,10 @@ export const overLimit = (item: StageItem, side: StageSide): boolean => item.rar
 export const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
 /**
  * その側に空きがあるか。limitFrom = 枠の上限を見る品 (E-30a: 1 つの手で消してから付ける時は打つ前の品。消えた MOD (ルーンの効果 % の合金・侮蔑) で
- * 上限が下がっても、その手は打つ前の上限で付け、超えた分は残る。カオス・骨・エッセンス・確率の表がみなここを通る)
+ * 上限が下がっても、その手は打つ前の上限で付け、超えた分は残る。カオス・骨・エッセンス・確率の表がみなここを通る)。
+ * 上限は打つ前と今の大きい方: 同じ手の中でレアリティを上げた時 (変成・王者・アルケミー) は今の品の枠 (11-05 に打つ前だけで見て、変成が MOD 0 になっていた)
  */
-export const room = (item: StageItem, side: StageSide, limitFrom: StageItem = item): boolean => listOf(item, side).length < limitOf(limitFrom, side);
+export const room = (item: StageItem, side: StageSide, limitFrom: StageItem = item): boolean => listOf(item, side).length < Math.max(limitOf(item, side), limitOf(limitFrom, side));
 export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
 /**
  * フラクチャーで選べない MOD: 未発現の枠と、冒涜で付いた MOD 全部 (発現した物。冒涜専用でも普通の MOD でも)。4 つの数には入る。
