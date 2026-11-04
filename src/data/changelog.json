@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.661",
+  "date": "2026-11-04",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去もカオス・エッセンスと同じ決まりにしました。残したい MOD を同じ形で選び、結果も同じように分けます。消去だけの自動の枝と灰色をやめ、ハズレが消えた結果の箱も自動でつながず「未設定」から始まります",
+    "en": "Simulator: Annulment now follows the same rules as Chaos and Essences. You pick the mods to keep the same way, and results are split the same way. The Annulment-only automatic branches and greying are gone, and result boxes where a miss mod was removed start as \"not set\" instead of linking back automatically"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 品質 (値・種類)・ルーン・ソケットも箱の形として見るようにしました。全部同じ時だけ同じ形として ↩ でつなぎます",
+    "en": "Simulator: quality (value and type), runes and sockets now count toward a box's shape. Boxes are linked back (↩) only when all of it matches"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ形・同じ手の箱が 2 つできる時は、浅い方に手を置いて深い方を ↩ でつなぐようにしました",
+    "en": "Simulator: when two boxes have the same shape and the same move, the move stays on the shallower one and the deeper one links back (↩) to it"
+   }
+  ]
+ },
+ {
   "v": "0.1.660",
   "date": "2026-11-04",
   "items": [
@@ -1150,18 +1174,6 @@
     "area": "",
     "text": "シミュレーター: レシピの「URL をコピー」が短い URL (exiledesk.com/r/…) になりました",
     "en": "Simulator: \"Copy URL\" for recipes now gives a short URL (exiledesk.com/r/…)"
-   }
-  ]
- },
- {
-  "v": "0.1.620",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーのページの上まわりを作り直し。題の帯を外し、流れの段の帯は枠の中の一番上に、操作の帯は 1 行に (狭い画面では字を短く・絵だけに)。名前・保存・レシピは右の列の完成形の下へ、ミニマップは最初は閉じた形に。「白紙に戻す」の後もスタートの箱を横の真ん中の一番上に置きます",
-    "en": "Simulator: The top of the tree page was reworked. The title strip is gone, the step strip sits at the top inside the frame, and the toolbar fits on one line (shorter labels or icons only on narrow screens). Name, Save and Recipes moved under the finished-item panel in the right column, and the minimap starts closed. After \"Clear\", the start box is placed at the top center like when the tree opens"
    }
   ]
  }

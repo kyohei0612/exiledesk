@@ -1,4 +1,9 @@
 {
+  "0.1.661": [
+    "Simulator: Annulment now follows the same rules as Chaos and Essences. You pick the mods to keep the same way, and results are split the same way. The Annulment-only automatic branches and greying are gone, and result boxes where a miss mod was removed start as \"not set\" instead of linking back automatically",
+    "Simulator: quality (value and type), runes and sockets now count toward a box's shape. Boxes are linked back (↩) only when all of it matches",
+    "Simulator: when two boxes have the same shape and the same move, the move stays on the shallower one and the deeper one links back (↩) to it"
+  ],
   "0.1.660": [
     "Simulator: boxes on the miss path no longer link back automatically; they all start as \"not set\". When you choose a move for a box, matching miss boxes with the same shape are linked back (↩) to it",
     "Simulator: if the Final Check stops on new \"not set\" boxes, setting them all lets it continue without pressing it again",
