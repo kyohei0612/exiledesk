@@ -299,7 +299,7 @@ const checkBusy = computed((): { text: string; n?: number; of?: number } | null 
   const p = progress.value;
   return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Running"), n: p.n, of: p.of };
 });
-async function goIssue(id: string): Promise<void> { await sf.openFor(id); void v.reveal(id, true); }
+async function goIssue(id: string): Promise<void> { if (!doc.value.boxes[id]) return; await sf.openFor(id); void v.reveal(id, true); } // 箱の無い要確認 (S-89c ③) は寄らない
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
 // 札の幅は名前を切らない幅 (… で切れている分を足す) × 今の倍率で拡げる分 (全体表示で並んでも重ならない)
 const chipNatural = (id: string): number | undefined => {

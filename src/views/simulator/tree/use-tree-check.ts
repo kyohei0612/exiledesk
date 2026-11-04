@@ -32,7 +32,8 @@ export function orphanIssues(d: TreeDoc): CheckIssue[] {
       : o.why === "back" ? tr(`要確認: ${step} 段目に前の版で人が選んだ戻り先がある (今は自動の ↩ だけ。行き先を決め直す)`, `Check: step ${step} had a hand-picked return from an older version (returns are automatic now; decide again)`)
       : o.why === "split" ? tr(`要確認: ${step} 段目に前の版の分かれ目がある (今は作れない。手を決め直す)`, `Check: step ${step} had a split from an older version (no longer available; pick a craft again)`)
       : tr("要確認: 読めなかった所がある (元の値は保存に残っている)", "Check: part of the saved recipe could not be read (the raw value is kept)");
-    return { boxId: idOf.get(k) ?? "start", kind: "orphan" as const, text };
+    // 札の残る上の箱がスタートしか無い時は、スタート自身の決めでなければ箱に付けず一覧と帯の数だけ (S-89c ③。保存を開き直すとスタートに落ちた)
+    return { boxId: k === "s" && o.at !== "s" ? "" : idOf.get(k) ?? "", kind: "orphan" as const, text };
   });
 }
 

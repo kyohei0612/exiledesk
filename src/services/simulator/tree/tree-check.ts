@@ -21,6 +21,7 @@ import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand,
 import { boxOutcomeOf } from "./tree-outcome";
 import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
+import { depthRows } from "./tree-row-tops";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
@@ -47,11 +48,21 @@ export interface CheckProgress { phase: "walk" | "run"; n: number; of: number; /
 /** 手も戻りも完成も無い箱の文 (holds = 完成の狙いが全部そろっている) */
 const openText = (b: TreeBox, holds: boolean): string => (holds ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
 const noDoneText = (): string => tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
-/** 末端の箱 = 手・戻り・完成の無い箱 (スタートは除く)。印はこの当たりの箱へ、無ければほかの末端の箱へ (S-89b・S-77) */
-function noDoneTips(boxes: readonly TreeBox[]): TreeBox[] {
+/**
+ * 「完成の箱が無い」の印を付ける箱 (S-89b・S-77・S-89c): 末端の箱 (手・戻り・完成の無い箱、スタートは除く) の当たり → ほかの末端。
+ * 末端が無い木 (どの箱にも手か ↩ が付いた組み終わった木) は一番深い段の当たりの箱 (当たりが無ければ一番深い段の箱)。空 = スタートしか無い木
+ * (前は末端が無いとスタートに落ちた、11-03 オーナー「フルでツリー作った後スタートが未設定ですなんて馬鹿な話ないだろ」)
+ */
+function noDoneTips(doc: TreeDoc): TreeBox[] {
+  const boxes = Object.values(doc.boxes);
   const tip = (b: TreeBox): boolean => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split;
   const ends = boxes.filter((b) => tip(b) && b.out === "hit");
-  return ends.length ? ends : boxes.filter(tip);
+  if (ends.length) return ends;
+  const tips = boxes.filter(tip);
+  if (tips.length) return tips;
+  const rest = boxes.filter((b) => b.id !== "start" && b.out !== "pass"), hits = rest.filter((b) => b.out === "hit"), pool = hits.length ? hits : rest;
+  const depth = depthRows(doc), deepest = Math.max(-1, ...pool.map((b) => depth.get(b.id) ?? -1));
+  return pool.filter((b) => (depth.get(b.id) ?? -1) === deepest);
 }
 /**
  * 見本も人も使わず形だけで数える未設定 (S-70): 穴チェックを押していない間の「! 未設定」の帯と箱の赤枠。
@@ -64,7 +75,7 @@ export function unsetIssues(doc: TreeDoc): CheckIssue[] {
     if (!b.hand && !b.back && !b.done && !b.split && !isGrayBox(b)) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
     if (b.out === "hit" && !b.aim) out.push({ boxId: b.id, kind: "noAim", text: tr("付く MOD を選んでいない", "No mod picked for this hit") });
   }
-  if (!boxes.some((b) => b.done === "main")) { const tips = noDoneTips(boxes); for (const b of tips) out.push({ boxId: b.id, kind: "noDone", text: noDoneText() }); if (!tips.length) out.push({ boxId: "start", kind: "noDone", text: noDoneText() }); }
+  if (!boxes.some((b) => b.done === "main")) { const tips = noDoneTips(doc); for (const b of tips) out.push({ boxId: b.id, kind: "noDone", text: noDoneText() }); if (!tips.length) out.push({ boxId: "start", kind: "noDone", text: noDoneText() }); }
   return ranked(out);
 }
 /** ルート精査 (木の設定 tune で打つ。一気に回す、台本・テスト用) */
@@ -195,7 +206,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     const msg = noDoneText();
     // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
     // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
-    const tips = noDoneTips(boxes);
+    const tips = noDoneTips(doc);
     if (tips.length) for (const b of tips) add(b.id, "noDone", msg);
     else add("start", "noDone", msg);
   }
@@ -351,7 +362,11 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     if (!capped.size && !dead.size) onRun?.(run);
     // 完成 0 人で半分以上が打ち止め (手の上限) = 完成に着かない (10-22 13 通り組んだ #10: 100 人とも打ち止めの木で精査が何も言わなかった)。
     // 長いだけの木 (100 人回しでは完成 100%) は完成が 1 人でもいれば出さない
-    if (!run.finished && run.capped * 2 >= RUN_PEOPLE) add("start", "noDone", tr(`回すと ${RUN_PEOPLE} 人中 1 人も完成せず、${run.capped} 人が手の上限まで打っても着かない (輪から出られない・狙いが付きにくい道を確かめる)`, `None of ${RUN_PEOPLE} runs finished; ${run.capped} hit the craft limit (check for loops or hard-to-hit paths)`));
+    // 印はスタートでなく沼った場所 (S-72 の loopAt、スタートを除いて一番多い箱) に (S-89c)。沼った場所が分からない時だけスタート
+    if (!run.finished && run.capped * 2 >= RUN_PEOPLE) {
+      const [swamp, n] = Object.entries(run.loopAt).filter(([id]) => id !== "start" && doc.boxes[id]).sort((a, z) => z[1] - a[1])[0] ?? ["start", 0];
+      add(swamp, "noDone", tr(`回すと ${RUN_PEOPLE} 人中 1 人も完成せず、${run.capped} 人が手の上限まで打っても着かない。ここで ${n} 人が上限まで回った (輪から出られない・狙いが付きにくい道を確かめる)`, `None of ${RUN_PEOPLE} runs finished; ${run.capped} hit the craft limit. ${n} looped here until the limit (check for loops or hard-to-hit paths)`));
+    }
     for (const [id, n] of Object.entries(run.stuckAt)) {
       // 手も行き先も決めていない箱は 1) の「決めていない」だけ (何もしないスタートで「30 人中 27 人が止まる」が重なり、残りの人が何か分からなかった。10-24 初めての人の回 5)
       if (dead.has(id) || out.some((x) => x.boxId === id && x.kind === "open")) continue;
