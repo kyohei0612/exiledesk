@@ -1,4 +1,7 @@
 {
+  "0.1.666": [
+    "Emulator and Simulator: fixed Orb of Transmutation, Orb of Alchemy and Regal Orb not adding mods"
+  ],
   "0.1.665": [
     "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\"",
     "Emulator and Simulator: bones can no longer add a Desecrated mod to a side that is over its mod limit (for example after a Jewel loses the mod that adds a slot)"

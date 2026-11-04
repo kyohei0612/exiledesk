@@ -1055,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "exiledesk"
-version = "0.1.665"
+version = "0.1.666"
 dependencies = [
  "anyhow",
  "base64 0.22.1",

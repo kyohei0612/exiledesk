@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.666",
+  "date": "2026-11-04",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: 変成・錬金術・王者で MOD が付かなかった不具合を直しました",
+    "en": "Emulator and Simulator: fixed Orb of Transmutation, Orb of Alchemy and Regal Orb not adding mods"
+   }
+  ]
+ },
+ {
   "v": "0.1.665",
   "date": "2026-11-04",
   "items": [
@@ -1144,24 +1156,6 @@
     "area": "",
     "text": "スマホ: 画面の一番下のリンク (使い方・ベース一覧・お問い合わせなど) を押しやすい高さに",
     "en": "Phone: The links at the bottom of the page (Guide, Bases, Contact and so on) are now easier to tap"
-   }
-  ]
- },
- {
-  "v": "0.1.625",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 保存した木や共有された木を開いた時に、戻り先の「形の合う箱へ」「作り直し」が消えていたのを直しました",
-    "en": "Simulator: Fixed return targets such as \"a box of the same shape\" and \"Start over\" being dropped when opening a saved or shared tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: 今日のユニークのタイルの光を、色の薄い絵にも絵に合った色で付けるように",
-    "en": "Base selection: The glow on today's unique tiles now matches the art's color even for pale art"
    }
   ]
  }
