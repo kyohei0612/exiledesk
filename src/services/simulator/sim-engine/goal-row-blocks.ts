@@ -1,10 +1,9 @@
 /**
  * goal-row-blocks.ts — 完成形の MOD 選び (TreeGoalPage) で、開いた行の頭に出す押せない理由をまとめる (S-04)。
  * 理由ごとに段をまとめる。束ねた行 (火・冷気…のダメージ増加を 1 行に) は段の名前が MOD ごとに T1 から並ぶので、
- * 止まる MOD の名前 (数値は #、normalizeModTemplate) で言う (11-05 オーナー「おｋ頼んで」、前は「T1〜T8」で全部の段に読めた)。
+ * 止まる MOD の一番上の段の文 (エンジンが埋めた幅のまま、E-92。自分で # にしない) で言う (11-05 オーナー「おｋ頼んで」、前は「T1〜T8」で全部の段に読めた)。
  * 断りの中身は呼ぶ側の why (goalBlockLoose) のまま、ここは並べ方だけ
  */
-import { normalizeModTemplate } from "../../mods/normalize";
 import { tr } from "../../../i18n/lang";
 
 type RowTier = { modId?: string; tier: number; rank: string; text: string };
@@ -26,7 +25,8 @@ export function rowBlockLines(r: { id: string; tiers: RowTier[] }, why: (modId: 
   return [...by].map(([w, m]) => {
     if (mods.length === 1) return { why: w, ranks: span([...m.values()][0]!, r.tiers.length) };
     if (m.size === mods.length && [...m].every(([id, rs]) => rs.length === countOf(id))) return { why: w, ranks: "" };
-    const name = (id: string): string => normalizeModTemplate(r.tiers.find((x) => idOf(x) === id)?.text ?? id);
+    // 段は上から並ぶ (ModTable の行) ので、最初に出た段 = その MOD の一番上の段の文
+    const name = (id: string): string => r.tiers.find((x) => idOf(x) === id)?.text ?? id;
     return { why: w, ranks: [...m].map(([id, rs]) => { const k = span(rs, countOf(id)); return k ? `${name(id)} (${k})` : name(id); }).join(tr("・", ", ")) };
   });
 }
