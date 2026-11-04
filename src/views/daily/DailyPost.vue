@@ -1,6 +1,6 @@
 <!--
   DailyPost.vue — お題の投稿 (D-11〜D-15)。口は 2 か所: 上 = エミュのアイテム、下 = poe.ninja / トレード / ゲームのコピーを貼る欄 (読みは 1 つ)。
-  どちらも同じ確かめの画面へ。投稿はサーバーの口 (daily-api) の形で、今はこのブラウザに溜まる (D-90)
+  どちらも同じ確かめの画面へ。投稿は機械が確かめて、通れば箱へ、落ちれば訳を出す (D-20)。サーバーの口 (daily-api) の形で、今はこのブラウザに溜まる (D-90)
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -9,14 +9,14 @@ import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
-import { myNick, postBox } from "./daily-api";
+import { myNick, postBox, type DailyBoxItem } from "./daily-api";
 import DailyNick from "./DailyNick.vue";
 
 const item = ref<PostItem | null>(null);
 const why = ref<string | null>(null);
 const text = ref("");
 const note = ref("");
-const sent = ref(false);
+const sent = ref<DailyBoxItem | null>(null);
 const asking = ref(false);
 
 const emu = computed(() => { const i = s.item.value; return i && i.prefixes.length + i.suffixes.length ? i : null; });
@@ -31,18 +31,19 @@ function read(raw: string): void {
 const onPaste = (e: ClipboardEvent): void => { const v = e.clipboardData?.getData("text") ?? ""; if (v) { e.preventDefault(); text.value = v; read(v); } };
 function send(): void {
   const p = item.value;
-  if (!p || block.value) return;
+  const d = s.data.value;
+  if (!p || !d || block.value) return;
   if (!myNick()) { asking.value = true; return; }
-  postBox({ note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims });
-  sent.value = true;
+  sent.value = postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims });
 }
 </script>
 
 <template>
   <div data-daily-post class="daily-post">
     <template v-if="sent">
-      <h2 class="g-brush daily-hero-title">{{ tr("投稿した", "Posted") }}</h2>
-      <p class="mb-4 text-[15px]">{{ tr("精査を通ると、古い順に朝 7 時のお題になる。", "After review it becomes a daily challenge, oldest first, at 7:00 JST.") }}</p>
+      <h2 class="g-brush daily-hero-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
+      <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
+      <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "Posts in the box are used first for the 16:00 challenge. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <button type="button" class="g-btn" data-daily-post-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
     </template>
     <template v-else-if="item">

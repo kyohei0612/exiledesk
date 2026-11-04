@@ -1,6 +1,6 @@
 <!--
-  DailyHero.vue — お題の顔 (一覧の今日のお題・お題のページ)。伏せたままベースと MOD の数だけ出す (D-32b)。
-  スタートは挑戦のページへ。ニックネームが無ければ先に決める (D-51)。幅 1280 未満は今は挑戦できない (D-70、シミュの PC の木の境)
+  DailyHero.vue — お題の顔 (一覧の今日のお題・お題のページ)。今日のお題は伏せたままベースと MOD の数だけ、締めた日は MOD も全部出す (D-32b)。
+  スタートは今日のお題だけ、14:50 まで、1 日 1 回 (D-01・D-33)。ニックネームが無ければ先に決める (D-51)。幅 1280 未満は今は挑戦できない (D-70、シミュの PC の木の境)
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -8,7 +8,7 @@ import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import { openDailyPage } from "../../web/page";
-import { getTry, leftMs, myNick, SOLVE_RATE, type DailyTopic } from "./daily-api";
+import { canStartAt, getTry, leftMs, myNick, SOLVE_RATE, SLOT_NAMES, type DailyTopic } from "./daily-api";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
 
@@ -16,13 +16,19 @@ const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>()
 const phone = usePhone();
 const art = computed(() => baseArt(props.topic.base));
 const name = computed(() => tr(props.topic.baseJa, props.topic.base));
+const slot = computed(() => SLOT_NAMES[props.topic.slot] ?? null);
 const t = computed(() => getTry(props.topic.id));
-const left = computed(() => (t.value ? leftMs(t.value) : 0));
+const left = computed(() => (t.value ? leftMs(t.value, props.now) : 0));
+const closed = computed(() => !!props.topic.aims);
 const clock = (ms: number): string => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const asking = ref(false);
 const go = (): void => openDailyPage({ view: "start", q: props.topic.id });
 const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
-const label = computed(() => (!t.value ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : left.value > 0 ? tr(`続ける (残り ${clock(left.value)})`, `Continue (${clock(left.value)} left)`) : tr("木を見る", "View your tree")));
+/** 押せる物: 始める (今日・14:50 まで) / 続ける (残りがある) / 木を見る (自分の挑戦がある) / 無し */
+const action = computed(() => {
+  if (t.value) return left.value > 0 ? tr(`続ける (残り ${clock(left.value)})`, `Continue (${clock(left.value)} left)`) : tr("自分の木を見る", "View your tree");
+  return props.today && !closed.value && canStartAt(props.now) ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : null;
+});
 </script>
 
 <template>
@@ -30,17 +36,22 @@ const label = computed(() => (!t.value ? tr("1 時間の挑戦を始める", "St
     <h2 class="daily-title">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</h2>
     <div class="daily-hero-main">
       <div class="daily-veil">
-        <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t ? 'open' : ''" /></span>
+        <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t || closed ? 'open' : ''" /></span>
         <div class="min-w-0">
           <div class="daily-plate"><p class="daily-veil-name">{{ name }}</p></div>
-          <p class="daily-meta">{{ tr(`狙う MOD ${topic.modCount} つ、アイテムレベル ${topic.ilvl}`, `${topic.modCount} target mods, item level ${topic.ilvl}`) }}</p>
-          <p class="daily-meta">{{ tr(`${topic.tries} 人が挑戦`, `${topic.tries} tries`) }}</p>
+          <p class="daily-meta">{{ tr(`狙う MOD ${topic.modCount} つ、アイテムレベル ${topic.ilvl}`, `${topic.modCount} target mods, item level ${topic.ilvl}`) }}<template v-if="slot">{{ tr(`、${slot.ja}の日`, `, ${slot.en} day`) }}</template></p>
+          <p v-if="topic.fromBox" class="daily-meta">{{ tr("クラフトボックスの投稿から", "From the craft box") }}</p>
+          <ul v-if="topic.aims" data-daily-aims class="daily-meta">
+            <li v-for="a in topic.aims" :key="a.modId">{{ tr(a.ja, a.en) }} <small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small></li>
+          </ul>
         </div>
       </div>
       <template v-if="phone"><p data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面で", "Open on a wider screen to take the challenge") }}</p></template>
       <template v-else>
-        <button type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ label }}</button>
-        <p v-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、時間が動き出す。ページを閉じると止まる。", "Pressing reveals the target mods and the clock starts. Closing the page pauses it.") }}</p>
+        <button v-if="action" type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ action }}</button>
+        <p v-if="!t && closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
+        <p v-else-if="!t && today && !action" data-daily-closed class="daily-sub">{{ tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") }}</p>
+        <p v-else-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、1 時間が動き出す。ページを閉じても止まらない。挑戦は 1 日 1 回。", "Pressing reveals the target mods and starts 1 hour. Closing the page doesn't stop it. One try per day.") }}</p>
         <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`解決済み: ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Solved: ${t.best.cost} div (${t.best.rate}% finished)`) }}</p>
         <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`未解決: 完成率 ${t.last.rate}% (${SOLVE_RATE}% で解決)`, `Unsolved: ${t.last.rate}% finished (${SOLVE_RATE}% solves it)`) }}</p>
       </template>

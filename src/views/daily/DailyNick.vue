@@ -22,6 +22,7 @@ const WHY: Record<NickError, () => string> = {
   long: () => tr(`${NICK_MAX} 字まで`, `Up to ${NICK_MAX} characters`),
   url: () => tr("URL は使えない", "URLs aren't allowed"),
   reserved: () => tr("運営に見える名前は使えない", "This name looks official"),
+  bad: () => tr("使えない言葉が入っている", "This name has a banned word"),
   taken: () => tr("もう使われている名前。別の名前にするか、自分の名前なら引き継ぎコードで戻す", "That name is taken. Pick another, or restore it with your transfer code if it's yours"),
   wrong: () => tr("名前か引き継ぎコードが違う", "Name or transfer code doesn't match"),
 };
