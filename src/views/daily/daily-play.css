@@ -1,0 +1,17 @@
+/* 挑戦の木の画面 (D-37i、data-daily-tree = 木を開いた後)。木を広く: 上の段は高さを半分に、下の段は右の完成形のカードの真下へ (DailyPlay の Teleport) */
+.daily-root[data-daily-page] [data-daily-tree] .daily-band { min-height: 52px; padding-bottom: 4px; margin-bottom: 8px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-topic,
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-score { padding-bottom: 6px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-topic { gap: 8px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-topic img { width: 34px; height: 34px; padding: 3px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-what { font-size: 11px; line-height: 1.2; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-name { font-size: 15px; line-height: 1.2; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-time { display: flex; align-items: baseline; gap: 8px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-time b { font-size: 32px; text-shadow: 0 2px 0 var(--exile-color-black); }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-score { gap: 16px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-score b { font-size: 16px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-score small { font-size: 11px; }
+
+/* 右の列 (シミュの data-tree-side) の中: 完成形のカード → 下の段 → ミニマップと道具 */
+[data-daily-play] [data-tree-side] > [data-tree-goal-side] { order: -2; }
+[data-daily-play] [data-tree-side] > [data-daily-band2] { order: -1; flex: none; flex-wrap: wrap; justify-content: flex-end; margin: 0; padding: 6px 4px; background: none; border-bottom: 0; }

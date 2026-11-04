@@ -14,7 +14,8 @@ import type { DailyAim } from "./daily-api";
 import { useTree } from "../simulator/tree/use-tree";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 
-const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean }>();
+/** side = 木の右の列の中 (D-37i)。狙いの行は出さずボタンだけ */
+const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; side?: boolean }>();
 /** 狙いの字は木・フラクチャー選びと同じ (段の幅は「以上」の幅) */
 const t = useTree();
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
@@ -26,8 +27,8 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
 
 <template>
   <div class="daily-band2" data-daily-band2>
-    <span class="daily-band2-head">{{ tr("狙い", "Targets") }}</span>
-    <ul class="daily-aims" data-daily-play-aims>
+    <span v-if="!side" class="daily-band2-head">{{ tr("狙い", "Targets") }}</span>
+    <ul v-if="!side" class="daily-aims" data-daily-play-aims>
       <li v-for="a in aims" :key="a.modId" :class="a.modId === fractured ? 'frac' : ''">{{ aimText(a) }} <small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}{{ a.modId === fractured ? tr("・フラクチャー", " · fractured") : "" }}</small></li>
     </ul>
     <div class="daily-band2-btns">

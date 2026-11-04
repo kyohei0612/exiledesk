@@ -17,6 +17,7 @@ import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
+import "./daily-play.css";
 import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
 const props = defineProps<{ topic: DailyTopic }>();
@@ -110,7 +111,7 @@ const REFUSED: Record<StartError, () => string> = {
 </script>
 
 <template>
-  <div data-daily-play :data-daily-heat="heat || undefined">
+  <div data-daily-play :data-daily-heat="heat || undefined" :data-daily-tree="treeOn || undefined">
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
@@ -124,7 +125,9 @@ const REFUSED: Record<StartError, () => string> = {
       </div>
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
-    <DailyPlayBar v-if="tryOf" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" />
+    <!-- 木を開いた後は下の段を右の完成形のカードの下へ、狙いの行は出さない (D-37i)。シミュの右の列へ差し込むだけ -->
+    <Teleport v-if="tryOf && treeOn" defer to="[data-tree-side]"><DailyPlayBar side :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" /></Teleport>
+    <DailyPlayBar v-else-if="tryOf" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" />
     <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
     <div v-else class="daily-band2" data-daily-band2>
       <div class="daily-band2-btns ml-auto">
