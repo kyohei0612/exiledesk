@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.662",
+  "date": "2026-11-04",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: ワンド・スタッフで、別の属性のスペルレベルと属性ダメージ増加・可燃性などが一緒に付いていたのを、ゲームどおり付かないように直しました",
+    "en": "Emulator: on Wands and Staves, a spell level mod of one element could roll together with increased damage, Flammability and similar mods of another element. They no longer roll together, matching the game"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの各段の左に「n 段目」の番号をいつも出すようにしました",
+    "en": "Simulator: each row of the tree now always shows its step number (Step n) on the left"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 白紙の後などで大きく変わる 1 つ戻す・やり直しは、箱を上の段から順に出すようにしました",
+    "en": "Simulator: undo and redo that change the tree a lot (such as after clearing it) now reveal the boxes row by row from the top"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 組み終わった木ではスタートに未設定の印を付けないようにしました。完成の箱が無い時は一番深い段の箱に「未設定: 完成にする箱が無い」と出します",
+    "en": "Simulator: a finished tree no longer marks Start as not set. When there is no box to mark as complete, the deepest box shows \"Not set: no box to complete\""
+   }
+  ]
+ },
+ {
   "v": "0.1.661",
   "date": "2026-11-04",
   "items": [
@@ -1144,36 +1174,6 @@
     "area": "",
     "text": "エミュレーター: お告げを持ったカレンシーごとに覚えるように (持ち替えると前のお告げは外れ、持ち直すと戻ります)",
     "en": "Emulator: Omens are now remembered per held currency (switching currencies drops the previous omens, and holding it again brings them back)"
-   }
-  ]
- },
- {
-  "v": "0.1.621",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 別の道で同じ MOD が付いた当たりの箱を「まとめる」でまとめられるように (手を足した時は自動)。箱の MOD の値は木の中で揃え、貼った値か段の真ん中で出します",
-    "en": "Simulator: Hit boxes on different paths that landed the same mod can now be merged (automatically when you add a craft). Mod values in boxes are kept the same across the tree, using the pasted value or the middle of the tier"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 箱の中のアイテムの枠にベース名の題を付け、並びを整理 (戻りの × は文のすぐ隣、✎ と × は右下、! などの印は上辺の札の横)",
-    "en": "Simulator: The item frame inside each box now has the base name as its title, and the box layout was tidied (the return × sits right next to its text, ✎ and × are at the bottom right, and marks like ! sit beside the label on the top edge)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 横の ＋ は MOD を選んで決めた時だけ箱を足すように (押しただけ・閉じただけでは増えない)。戻りやまとめが付いた箱には ＋ を出しません",
-    "en": "Simulator: The side + now adds a box only when you pick a mod (just pressing it or closing the picker adds nothing). Boxes with a return or a merge no longer show +"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: レシピの「URL をコピー」が短い URL (exiledesk.com/r/…) になりました",
-    "en": "Simulator: \"Copy URL\" for recipes now gives a short URL (exiledesk.com/r/…)"
    }
   ]
  }

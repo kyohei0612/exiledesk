@@ -1,4 +1,10 @@
 {
+  "0.1.662": [
+    "Emulator: on Wands and Staves, a spell level mod of one element could roll together with increased damage, Flammability and similar mods of another element. They no longer roll together, matching the game",
+    "Simulator: each row of the tree now always shows its step number (Step n) on the left",
+    "Simulator: undo and redo that change the tree a lot (such as after clearing it) now reveal the boxes row by row from the top",
+    "Simulator: a finished tree no longer marks Start as not set. When there is no box to mark as complete, the deepest box shows \"Not set: no box to complete\""
+  ],
   "0.1.661": [
     "Simulator: Annulment now follows the same rules as Chaos and Essences. You pick the mods to keep the same way, and results are split the same way. The Annulment-only automatic branches and greying are gone, and result boxes where a miss mod was removed start as \"not set\" instead of linking back automatically",
     "Simulator: quality (value and type), runes and sockets now count toward a box's shape. Boxes are linked back (↩) only when all of it matches",
