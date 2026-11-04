@@ -49,15 +49,16 @@ const failText = (e: BoxError): string =>
 
 <template>
   <div data-daily-post class="daily-post">
+    <button v-if="!sent" type="button" class="g-btn sm daily-post-back" data-daily-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     <template v-if="sent">
-      <h2 class="g-brush daily-hero-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
+      <h2 class="g-brush daily-post-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
       <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
       <p v-else-if="sent.status === 'wait'" data-daily-post-wait class="mb-4 text-[15px]">{{ tr("16:00 に機械が確かめて、通れば箱のお題になる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "It's checked at 16:00 JST, and if it passes it becomes a challenge from the box. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "Posts in the box are used first for the 16:00 challenge. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <button type="button" class="g-btn" data-daily-post-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
     </template>
     <template v-else-if="item">
-      <h2 class="g-brush daily-hero-title">{{ tr("この形で投稿する", "Post this item") }}</h2>
+      <h2 class="g-brush daily-post-title">{{ tr("この形で投稿する", "Post this item") }}</h2>
       <div class="daily-veil">
         <img v-if="baseArt(item.base)" :src="baseArt(item.base)!" alt="" class="daily-veil-art open" />
         <div class="min-w-0">
@@ -80,7 +81,8 @@ const failText = (e: BoxError): string =>
       </div>
     </template>
     <template v-else>
-      <h2 class="g-brush daily-hero-title">{{ tr("作ってほしい装備を投稿する", "Post an item to be crafted") }}</h2>
+      <h2 class="g-brush daily-post-title">{{ tr("作ってほしい装備を投稿する", "Post an item to be crafted") }}</h2>
+      <p class="daily-post-lead">{{ tr("投稿した装備は 16:00 に機械が確かめて、通ればクラフトボックスに入り、次のお題に先に使われる。下のどちらかから選ぶ。", "Posted items are checked at 16:00 JST. If they pass they go into the craft box and are used first for the next challenge. Pick one of the two below.") }}</p>
       <div class="daily-post-from">
         <section data-daily-from-emu>
           <h3 class="name mb-2 text-[17px] text-[var(--exile-color-text-title)]">{{ tr("エミュレーターのアイテムから", "From the Emulator") }}</h3>
@@ -95,12 +97,11 @@ const failText = (e: BoxError): string =>
         </section>
         <section data-daily-from-paste>
           <h3 class="name mb-2 text-[17px] text-[var(--exile-color-text-title)]">{{ tr("poe.ninja・トレードのコピーから", "From poe.ninja or trade") }}</h3>
-          <textarea v-model="text" data-daily-paste rows="6" spellcheck="false" class="daily-input w-full" :placeholder="tr('アイテムのコピーをここに貼る', 'Paste the copied item here')" @paste="onPaste" />
+          <textarea v-model="text" data-daily-paste rows="6" spellcheck="false" class="daily-input w-full" :aria-label="tr('アイテムのコピー', 'Copied item text')" :placeholder="tr('アイテムのコピーをここに貼る', 'Paste the copied item here')" @paste="onPaste" />
           <p v-if="why" data-daily-paste-why class="mt-1 text-[14px] text-[var(--exile-color-signal-down)]">{{ why }}</p>
           <button type="button" class="g-btn mt-2" data-daily-paste-read :disabled="!text.trim()" @click="read(text)">{{ tr("読み込む", "Read item") }}</button>
         </section>
       </div>
-      <button type="button" class="g-btn mt-4" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     </template>
     <DailyNick v-if="asking" @done="asking = false; send()" @close="asking = false" />
   </div>

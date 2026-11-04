@@ -5,7 +5,8 @@
 import { goalBlock } from "../../services/simulator/sim-engine";
 import { parseItemText } from "../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextResult } from "../../services/simulator/paste/item-text-types";
-import { tierRankOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
+import { freshItem, tierRankOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
+import { modListFor, type ListRow } from "../../services/craft-stage/mod-list";
 import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
@@ -16,13 +17,21 @@ const tierOf = (m: ItemTextMod): number => Number(m.tier!.label.replace(/^T/, ""
 
 function take(data: PatchData, base: { en: string; ja: string }, ilvl: number, mods: readonly ItemTextMod[], bad: PostItem["bad"]): PostItem {
   const aims: DailyAim[] = [];
+  // 狙いの字はお題 (daily-gen の aimsOfSample) と同じ MOD 一覧の行の字にする (貼った文のままだと日本語の画面でも英語が出た、11-05)
+  let rows: ListRow[] = [];
+  try { rows = modListFor(data, freshItem(data, base.en, ilvl)); } catch { /* 字は貼った文のまま */ }
+  const textOf = (modId: string, tier: number): string | null => {
+    for (const r of rows) { const t = r.tiers.find((x) => (x.modId ?? r.id) === modId && x.tier === tier); if (t) return t.text; }
+    return null;
+  };
   for (const m of mods) {
     if (m.unrevealed) { bad.push({ line: m.text, why: tr("未発現の MOD はお題にできない", "Unrevealed mods can't be used") }); continue; }
     if (!m.modId || !m.tier) { bad.push({ line: m.text, why: tr("MOD が分からない", "Unknown mod") }); continue; }
     if (aims.some((a) => a.modId === m.modId)) continue;
     const why = goalBlock(data, base.en, ilvl, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId: m.modId, tier: tierOf(m) });
     if (why) { bad.push({ line: m.text, why }); continue; }
-    aims.push({ modId: m.modId, tier: tierOf(m), ja: m.text, en: m.text });
+    const text = textOf(m.modId, tierOf(m)) ?? m.text;
+    aims.push({ modId: m.modId, tier: tierOf(m), ja: text, en: text });
   }
   return { base: base.en, baseJa: base.ja, ilvl, aims, bad };
 }

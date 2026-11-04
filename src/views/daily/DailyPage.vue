@@ -16,6 +16,7 @@ import { pageZoom } from "../../utils/zoom";
 import { isPhoneWidth } from "../../utils/use-phone";
 import { daily, dayNoOf, getTry, myAwards, myBox, myNick, myTitlePick, refreshDaily, setTitlePick, SLOT_NAMES, todayId, topicOfId, untilRefresh, weekBoard, yesterdayTop, type DailyBoxItem, type DailyTopic } from "./daily-api";
 import { baseArt } from "../../components/art/base-art";
+import { useRankRecipe } from "./daily-open";
 import { skinById, skinOfDay, skinVars } from "./skin/skin";
 import DailyHero from "./DailyHero.vue";
 import DailyName from "./DailyName.vue";
@@ -50,6 +51,9 @@ const boxText = (b: DailyBoxItem): string =>
 const nick = computed(() => myNick());
 /** 卓の右 = 昨日の上位 3 人と札 (D-60d) */
 const top3 = computed(() => yesterdayTop());
+/** 昨日の上位がどの品の順位か (D-50b) */
+const yTopic = computed(() => (daily.remote ? topicOfId(jaTypeName, daily.remote.yesterday) : null));
+const rec = useRankRecipe();
 
 const left = computed(() => untilRefresh(now.value));
 const hm = (ms: number): string => { const m = Math.floor(ms / 60_000); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
@@ -93,7 +97,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
         <DailySkins @pick="(id) => (picked = id)" />
         <button type="button" class="g-btn m-4" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
       </template>
-      <p v-else-if="!daily.remote && daily.failed" data-daily-offline class="daily-note">{{ tr("サーバーにつながらない。少し待って開き直す。", "Couldn't reach the server. Try again in a moment.") }}</p>
+      <p v-else-if="!daily.remote && daily.failed" data-daily-offline class="daily-note">{{ tr("サーバーにつながらない。少し待ってからもう一度読む。", "Couldn't reach the server. Wait a moment and reload.") }} <button type="button" class="g-btn sm" data-daily-retry @click="refreshDaily()">{{ tr("もう一度読む", "Reload") }}</button></p>
       <p v-else-if="!daily.remote" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
       <p v-else-if="view === 'list' && !today" data-daily-none class="daily-note">{{ tr("今日のお題を組めなかった。次のお題は 16:00。", "Today's challenge couldn't be built. The next one opens at 16:00 JST.") }}</p>
       <div v-else-if="view === 'list'" ref="board" class="g-panel daily-board" :style="boardH ? { minHeight: `${boardH}px` } : {}">
@@ -105,12 +109,21 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
         </div>
         <section data-daily-week data-daily-yesterday>
           <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("昨日の上位", "Yesterday's top 3") }}</h3></div>
+          <!-- どの品の順位か (D-50b)。押すと昨日のお題のページ -->
+          <button v-if="yTopic" type="button" class="daily-ytopic" data-daily-ytopic @click="openDailyPage({ view: 'detail', q: yTopic.id })">
+            <span class="g-slot daily-ytopic-art"><img v-if="baseArt(yTopic.base)" :src="baseArt(yTopic.base)!" alt="" /></span>
+            <span class="min-w-0"><small>{{ tr(`昨日のお題 (${yTopic.day})`, `Yesterday's challenge (${yTopic.day})`) }}</small><b>{{ tr(yTopic.baseJa, yTopic.base) }}</b></span>
+          </button>
           <ol v-if="top3.length">
             <li v-for="(r, i) in top3" :key="r.name" class="daily-rank-row" :class="r.me ? 'me' : ''">
-              <span class="daily-place">{{ i + 1 }}</span><DailyName class="flex-1" :name="r.name" :stamp="stamp" /><b class="daily-points">{{ r.cost }} {{ tr("神", "div") }}</b>
+              <button type="button" class="daily-rank-in link" :disabled="!!rec.busy.value" :data-daily-rank-open="r.name" :title="tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`)" @click="yTopic && rec.open(yTopic.id, r.name, yTopic.day)">
+                <span class="daily-place">{{ i + 1 }}</span><DailyName class="flex-1" :name="r.name" :stamp="stamp" /><b class="daily-points">{{ rec.busy.value === r.name ? tr("開いている", "Opening") : `${r.cost} ${tr("神", "div")}` }}</b>
+              </button>
             </li>
           </ol>
-          <p v-else class="text-[14px] opacity-70">{{ tr("昨日は解決した人がいない", "No one solved yesterday's challenge") }}</p>
+          <p v-else class="text-[14px] opacity-70">{{ yTopic ? tr("昨日は解決した人がいない", "No one solved yesterday's challenge") : tr("昨日のお題は無い", "There was no challenge yesterday") }}</p>
+          <p v-if="rec.failed.value" data-daily-rank-fail class="mt-1 text-[13px] text-[var(--exile-color-signal-down)]">{{ tr(`${rec.failed.value} のレシピを開けなかった (木が残っていない)`, `Couldn't open ${rec.failed.value}'s recipe (no tree saved)`) }}</p>
+          <p v-else-if="top3.length" class="mt-1 text-[13px] opacity-70">{{ tr("名前を押すとその人のレシピをシミュレーターで開く", "Click a name to open that recipe in the Simulator") }}</p>
         </section>
         <div class="daily-bottom g-section">
           <section class="min-w-0">
@@ -128,13 +141,17 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
           <section class="daily-post-entry min-w-0">
             <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("お題を投稿", "Post a challenge") }}</h3></div>
             <button type="button" class="g-btn" data-daily-post-open @click="openDailyPage({ view: 'detail', q: 'post' })">{{ tr("作ってほしい装備を投稿", "Post an item to be crafted") }}</button>
+            <p v-if="box.length" class="daily-rank-what mt-2">{{ tr("自分の投稿", "Your posts") }}</p>
             <ul v-if="box.length" data-daily-box class="daily-box">
               <li v-for="b in box" :key="b.id" class="daily-row" :data-daily-box-status="b.status"><span>{{ tr(b.baseJa, b.base) }}</span><small>{{ boxText(b) }}</small></li>
             </ul>
           </section>
         </div>
       </div>
-      <div v-else-if="topic" class="g-panel daily-board one"><DailyHero :topic="topic" :today="topic.id === todayId()" :now="now" /></div>
+      <div v-else-if="topic" class="g-panel daily-board one">
+        <button type="button" class="g-btn sm daily-back" data-daily-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+        <DailyHero :topic="topic" :today="topic.id === todayId()" :now="now" />
+      </div>
       <p v-else class="daily-note">{{ tr("このお題はまだ無い。お題は毎日 16:00 に出る。", "This challenge isn't out yet. A new one opens every day at 16:00 JST.") }} <button type="button" class="g-btn sm" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></p>
     </template>
   </section>

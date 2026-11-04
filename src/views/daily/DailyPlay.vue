@@ -27,7 +27,8 @@ const art = computed(() => baseArt(props.topic.base));
 /** 時計は 1 秒ごとに読み直すだけ (残りはスタートの時刻から数える) */
 const now = ref(Date.now());
 const tick = setInterval(() => (now.value = Date.now()), 1000);
-const left = computed(() => (tryOf.value ? leftMs(tryOf.value, now.value) : TIME_LIMIT_MS));
+// 端末の時計がサーバーより遅いと 60:01 のように 1 時間を超えて見えるので、上は 1 時間で止める
+const left = computed(() => Math.min(TIME_LIMIT_MS, tryOf.value ? leftMs(tryOf.value, now.value) : TIME_LIMIT_MS));
 const over = computed(() => left.value <= 0);
 const clock = computed(() => { const s2 = Math.max(0, Math.ceil(left.value / 1000)); const m = Math.floor(s2 / 60); return `${String(m).padStart(2, "0")}:${String(s2 % 60).padStart(2, "0")}`; });
 /** 残りの割合 (導火線の長さ、D-60b) */
@@ -111,7 +112,7 @@ const REFUSED: Record<StartError, () => string> = {
         <img v-if="art" :src="art" alt="" />
         <div class="min-w-0"><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></div>
       </div>
-      <div class="daily-time" data-daily-time><b>{{ clock }}</b></div>
+      <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
       <div class="daily-band-score">
         <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("1 個の費用", "Cost per item") }}</small></div>
         <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr(`完成率 (${SOLVE_RATE}% で解決)`, `Finished (${SOLVE_RATE}% solves)`) }}</small></div>

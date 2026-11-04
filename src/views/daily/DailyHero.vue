@@ -46,7 +46,10 @@ const action = computed(() => {
           </ul>
         </div>
       </div>
-      <template v-if="phone"><p data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面で", "Open on a wider screen to take the challenge") }}</p></template>
+      <template v-if="phone">
+        <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
+        <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>
+      </template>
       <template v-else>
         <button v-if="action" type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ action }}</button>
         <p v-if="!t && closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>

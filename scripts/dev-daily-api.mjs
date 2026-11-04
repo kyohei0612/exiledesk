@@ -10,13 +10,15 @@ import { existsSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { bundleEntry } from "./_bundle-ts.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const PORT = 8797;
+// DAILY_DEV_PORT で別の口を横に立てられる (部長の確かめ用。画面は VITE_DAILY_API で向ける)
+const PORT = Number(process.env.DAILY_DEV_PORT ?? 8797);
 const BASE = `http://localhost:${PORT}`;
 const KEY = "dev-local";
 // 道が長いと wrangler の手元の D1 が internal error で落ちる (scratchpad の深い道で見た、11-04)。短い Temp 直下に置く
-const PERSIST = join(tmpdir(), "exiledesk-daily-dev");
+const PERSIST = join(tmpdir(), PORT === 8797 ? "exiledesk-daily-dev" : `exiledesk-daily-dev-${PORT}`);
 const CONFIG = join(ROOT, "server/live/wrangler.jsonc");
 
 /** wrangler の場所。worktree には server/live/node_modules が無いので本体の checkout のを使う */
@@ -75,9 +77,13 @@ for (let no = Math.min(monday, today - 1); no < today; no++) roll(no);
 // 昨日の順位の見本 (名前・費用・完成率・使った時間)。合言葉は見本なので使えない値
 const SAMPLE = [["ミラ", 4.2, 96, 41], ["Kazuto", 5.8, 92, 55], ["ゆずぽん", 6.1, 99, 23], ["Ruin", 9.4, 90, 58], ["しおり", 12.5, 94, 37]];
 const y = `d${dayName(today - 1)}`, yStart = (today - 1) * DAY + H16 - JST + 3600e3;
+// 見本の人の木 = 昨日のお題のスタートだけ (順位の行からレシピを開く D-50b を見るため)。人ごとにフラクチャーを替える
+const yt = (await (await fetch(`${BASE}/daily.json`)).json()).yesterdayTopic;
+const M = yt?.aims ? await bundleEntry("scripts/_dev-daily-entry.ts") : null;
+const recipeOf = (i) => (M ? M.startRecipe(yt.base, yt.ilvl, yt.aims, yt.aims[i % yt.aims.length].modId) : null);
 sql(SAMPLE.map(([name, cost, rate, mins], i) =>
   `INSERT OR IGNORE INTO daily_nicks (id, name, name_key, pass_hash, created) VALUES (${q(`ndev${i}`)}, ${q(name)}, ${q(String(name).toLowerCase())}, 'dev', ${now});` +
-  `INSERT OR IGNORE INTO daily_tries (topic_id, nick_id, started_at, submitted_at, cost, rate) VALUES (${q(y)}, ${q(`ndev${i}`)}, ${yStart + i * 600e3}, ${yStart + i * 600e3 + mins * 60e3}, ${cost}, ${rate});`).join(" "));
+  `INSERT OR IGNORE INTO daily_tries (topic_id, nick_id, started_at, submitted_at, cost, rate, recipe) VALUES (${q(y)}, ${q(`ndev${i}`)}, ${yStart + i * 600e3}, ${yStart + i * 600e3 + mins * 60e3}, ${cost}, ${rate}, ${M ? q(recipeOf(i)) : "NULL"});`).join(" "));
 console.log("[dev:daily-api] 昨日の順位の見本 5 人");
 roll(today);
 

@@ -145,6 +145,11 @@ export function rankOf(id: string): DailyRankRow[] {
   if (best && me) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true });
   return rows.sort((a, b) => a.cost - b.cost);
 }
+/** GET /daily/recipe.json。締めた日の順位の人の木 (exiledesk-recipe/1 の JSON、D-50b)。今日の分・無い時は null */
+export async function rankRecipe(id: string, name: string): Promise<string | null> {
+  const r = await call<{ recipe?: string | null }>(`/daily/recipe.json?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
+  return r?.recipe ?? null;
+}
 /** 卓の右 = 昨日の上位 3 人 (D-60d) */
 export const yesterdayTop = (): DailyRankRow[] => (daily.remote ? rankOf(daily.remote.yesterday).slice(0, 3) : []);
 

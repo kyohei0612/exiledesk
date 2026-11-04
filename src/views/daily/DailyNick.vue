@@ -61,8 +61,8 @@ const setMode = (m: "new" | "back"): void => { mode.value = m; fail.value = null
       </template>
       <template v-else>
         <p v-if="mode === 'new'">{{ tr("順位に載る名前を決める。ずっと同じ名前で遊べて、同じ名前の人は出ない。", "Choose the name shown on the rankings. It stays yours and no one else can take it.") }}</p>
-        <input v-model="name" data-daily-nick-name type="text" :maxlength="NICK_MAX + 4" spellcheck="false" autocomplete="off" class="daily-input" :placeholder="tr('ニックネーム', 'Nickname')" @input="fail = null" @keydown.enter.prevent="mode === 'new' ? decide() : back()" />
-        <input v-if="mode === 'back'" v-model="code" data-daily-nick-pass type="text" spellcheck="false" autocomplete="off" class="daily-input" :placeholder="tr('引き継ぎコード', 'Transfer code')" @input="fail = null" @keydown.enter.prevent="back" />
+        <input v-model="name" data-daily-nick-name type="text" :maxlength="NICK_MAX + 4" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('ニックネーム', 'Nickname')" :placeholder="tr('ニックネーム', 'Nickname')" @input="fail = null" @keydown.enter.prevent="mode === 'new' ? decide() : back()" />
+        <input v-if="mode === 'back'" v-model="code" data-daily-nick-pass type="text" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('引き継ぎコード', 'Transfer code')" :placeholder="tr('引き継ぎコード', 'Transfer code')" @input="fail = null" @keydown.enter.prevent="back" />
         <p v-if="why" data-daily-nick-why class="text-[13px] text-[var(--exile-color-signal-down)]">{{ why }}</p>
         <div class="flex items-center justify-between gap-2">
           <button type="button" class="text-[13px] underline opacity-70 hover:opacity-100" data-daily-nick-mode @click="setMode(mode === 'new' ? 'back' : 'new')">{{ mode === "new" ? tr("引き継ぎコードで名前を戻す", "Restore a name") : tr("新しい名前を決める", "Choose a new name") }}</button>

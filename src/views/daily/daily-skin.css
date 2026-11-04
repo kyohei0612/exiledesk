@@ -46,7 +46,27 @@
 .daily-root[data-daily-page] .daily-veil > .min-w-0 { width: 100%; }
 
 /* 順位: 自分の行は取引所の選んだ行の絵。線の枠を使わない (U-45) */
-.daily-rank-row { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 2px 8px; font-size: 14px; }
+.daily-rank-row { min-height: 32px; font-size: 14px; }
+.daily-rank-in { display: flex; width: 100%; min-height: 32px; align-items: center; gap: 8px; padding: 2px 8px; text-align: left; color: inherit; }
+/* 締めた日の行はレシピを開ける (D-50b): 押せる見た目と、キーボードの位置 */
+.daily-rank-in.link { cursor: pointer; }
+.daily-rank-in.link:hover { background: var(--skin-hover); color: var(--skin-title); }
+.daily-rank-in.link:focus-visible { outline: 2px solid var(--skin-title); outline-offset: -2px; }
+/* 昨日の上位の上の「昨日のお題」(どの品の順位か、D-50b)。押すとその日のお題のページ */
+.daily-ytopic { display: flex; width: 100%; align-items: center; gap: 10px; margin-bottom: 6px; padding: 4px 8px; text-align: left; color: inherit; }
+.daily-ytopic:hover { background: var(--skin-hover); }
+.daily-ytopic:focus-visible { outline: 2px solid var(--skin-title); outline-offset: -2px; }
+.daily-ytopic-art { width: 40px; height: 40px; flex: none; }
+.daily-ytopic-art img { width: 100%; height: 100%; object-fit: contain; }
+.daily-ytopic small { display: block; font-size: 12px; color: var(--skin-dim); }
+.daily-ytopic b { display: block; font-weight: 400; font-size: 15px; color: var(--skin-title); overflow-wrap: anywhere; }
+/* 締めた日のお題のページの「一覧へ戻る」 */
+.daily-back { grid-area: head; justify-self: start; align-self: start; margin-top: 12px; z-index: 1; }
+/* 表の上の 1 行 (何の表か) */
+.daily-rank-what { margin-bottom: 4px; font-size: 13px; color: var(--skin-dim); }
+/* 順位の列の見出し (何の数字か) */
+.daily-cols { display: flex; gap: 8px; padding: 0 8px 2px 36px; font-size: 12px; color: var(--skin-dim); }
+.daily-cols > span:not(.flex-1) { flex: none; text-align: right; }
 .daily-rank-row:nth-child(odd) { background: var(--skin-stripe); }
 .daily-rank-row.me { border: 0 solid transparent; border-width: 0 14px; padding-inline: 0; border-image: url("/ui-art/side-on.webp") 0 60 fill / 0 14px stretch; }
 .daily-place { width: 20px; flex: none; font-family: var(--skin-font-name); font-variant-numeric: tabular-nums; color: var(--skin-dim); text-align: right; }
@@ -87,6 +107,9 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 
 /* 投稿 */
 .daily-post { padding: 36px 40px 40px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)); }
+.daily-post-title { margin-bottom: 6px; font-size: 26px; line-height: 1.3; color: var(--skin-title); }
+.daily-post-lead { max-width: 60ch; margin-bottom: 24px; font-size: 14px; color: var(--skin-dim); }
+.daily-post-back { margin-bottom: 16px; }
 .daily-post-from { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; }
 
 /* 挑戦の帯。a = 石の帯の真ん中に金の銘板、b = 彫像の見出し 2 枚の間に時計 */
@@ -112,6 +135,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-root[data-daily-page] .daily-band-score { padding-right: 116px; padding-left: 80px; }
 .daily-root[data-daily-page] .daily-band-score::before { border-width: 0 112px 0 96px; border-image: url("/ui-art/head-r.webp") 0 210 0 180 fill / 0 112px 0 96px stretch; }
 .daily-root[data-daily-page] .daily-time { width: auto; height: auto; margin: 0; padding: 0; background: none; filter: none; place-items: center; }
+.daily-time small { display: block; font-size: 12px; color: var(--skin-dim); }
 .daily-root[data-daily-page] .daily-time b { font-size: 60px; color: var(--skin-title); text-shadow: 0 3px 0 var(--exile-color-black); }
 
 /* 導火線: 帯の下の端から端まで。先の端が燃える */
@@ -173,7 +197,8 @@ main:has([data-daily-play]) > .sticky { display: none; }
   .daily-root { padding: 8px; }
   /* スマホは 1 枚に入らないので縦に送る。品 → 順位 → 棚 → 点の順で何も畳まない (U-51) */
   .daily-board, .daily-root[data-daily-page] .daily-board, .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "clock" "hero" "rank" "foot" "week"; padding: 6px 6px 14px; }
-  .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-areas: "head" "hero" "rank"; }
+  .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-areas: "back" "head" "hero" "rank"; }
+  .daily-back { grid-area: back; margin-top: 4px; }
   .daily-root[data-daily-page] .daily-title { min-height: 92px; padding-bottom: 14px; font-size: 20px; }
   .daily-clock, .daily-root[data-daily-page] .daily-clock { grid-area: clock; padding: 0 4px; flex-wrap: wrap; font-size: 13px; }
   .daily-root[data-daily-page] .daily-clock p, .daily-root[data-daily-page] .daily-clock p:last-child { flex-direction: row; align-items: center; }
