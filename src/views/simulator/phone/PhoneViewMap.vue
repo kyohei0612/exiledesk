@@ -13,6 +13,7 @@ import { foldOuts, stripFolds, stripHidden, toggleStripFold } from "../../../ser
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import TreeBox from "../tree/TreeBox.vue";
 import TreeHandChip from "../tree/TreeHandChip.vue";
+import TreeLaneTags from "../tree/TreeLaneTags.vue";
 import { LINE } from "../tree/use-tree-edges";
 import { backLabelOf, runText } from "../tree/tree-fail";
 import { handIcon, OUT_LOOK } from "../tree/tree-names";
@@ -140,6 +141,12 @@ const names = computed(() => (m.k.value < NAME_K ? [] : inView.value.filter((b) 
 })));
 /** 色の札 (カードの裏には出さない。カードの高さは札と違うのではみ出す) */
 const rects = computed(() => boxes.value.filter((b) => !cardIds.value.has(b.id)));
+/** 段の番号の札 (S-147f): 段ごとに箱の真ん中の高さ。番号は「n 段目」と同じ深さ + 1 */
+const lanes = computed(() => {
+  const by = new Map<number, number>();
+  for (const b of boxes.value) { const n = (rows.value.get(b.id) ?? 0) + 1; by.set(n, Math.min(by.get(n) ?? Infinity, yOf(b) + EST_H / 2)); }
+  return [...by].map(([n, mid]) => ({ mid, text: `${n}` }));
+});
 const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? "242,210,122" : OUT_LOOK[b.out].c);
 </script>
 
@@ -167,6 +174,7 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
           <p v-if="runText(props.result, b.id)" data-map-run class="absolute text-center text-[13px] font-bold text-amber-100 [text-shadow:0_1px_3px_#000]" :style="{ left: `${b.x}px`, top: `${yOf(b) - 34}px`, width: `${BOX_W}px` }">{{ runText(props.result, b.id) }}</p>
         </template>
       </div>
+      <TreeLaneTags :lanes="lanes" :ty="m.ty.value" :k="m.k.value" />
       <p class="pointer-events-none absolute bottom-1 right-2 rounded bg-black/75 px-1 text-[11px] text-amber-100/60">{{ tr("ツリーを作るのは PC で", "Build trees on a PC") }}</p>
     </div>
   </div>

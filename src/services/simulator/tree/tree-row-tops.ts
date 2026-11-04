@@ -74,6 +74,14 @@ export function rowLayout(d: TreeDoc, heightOf: (id: string) => number): RowLayo
   }
   return { rows, top, bottom, branch };
 }
+/** 描く段の番号 (「n 段目」と同じ 深さ + 1。畳みで 1 つの段に違う深さが混ざる時は「小〜大」、S-147f) */
+export function laneTexts(d: TreeDoc, drawRows: ReadonlyMap<string, number>): string[] {
+  const depth = depthRows(d), lo: number[] = [], hi: number[] = [];
+  for (const [id, r] of drawRows) { const n = (depth.get(id) ?? r) + 1; lo[r] = Math.min(lo[r] ?? n, n); hi[r] = Math.max(hi[r] ?? n, n); }
+  return lo.map((a, r) => (a === hi[r] ? `${a}` : `${a}〜${hi[r]}`));
+}
+/** 段の番号の札 (S-147f): 段の上の枠と一番下の枠の真ん中 */
+export const laneMarks = (d: TreeDoc, L: RowLayout): Array<{ mid: number; text: string }> => laneTexts(d, L.rows).flatMap((text, r) => (text && L.top[r] != null ? [{ mid: (L.top[r]! + L.bottom[r]!) / 2, text }] : []));
 /** 統合の線の横の区間を通す高さ (段の一番下の枠と札の間の真ん中。どの段も同じ形なので、線を横切る縦の線の上下が揃う) */
 export const laneYs = (L: RowLayout): number[] => L.bottom.map((b, r) => (L.top[r + 1] != null ? b + LINE_Y / 2 : NaN)).filter((y) => Number.isFinite(y));
 /**

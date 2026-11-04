@@ -23,7 +23,7 @@ import { isPhoneWidth, usePhone, useViewOnlyWidth } from "../../../utils/use-pho
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
-import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
+import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue";
@@ -455,6 +455,7 @@ const phone = usePhone();
               </svg>
             </template>
           </VueFlow>
+          <TreeLaneTags v-if="!t.needBase.value" :lanes="laneMarks(doc, rowL)" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。戻り先を選ぶ・手の時だけ -->
