@@ -53,7 +53,7 @@ export class Shape {
       const wa = add.reduce((x, c) => x + c.w, 0);
       const acc: [number, number] = [0, 0];
       for (const c of add) {
-        const fs = new Set(c.fams);
+        const fs = new Set(c.occ);
         for (const d of rev) if (d.fams.some((f) => fs.has(f))) acc[d.ex ? 1 : 0] += (c.w / (wa || 1)) * d.w;
       }
       v = acc; this.rbc.set(k, v);

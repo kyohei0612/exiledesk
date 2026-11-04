@@ -12,8 +12,11 @@ export type State = number[];
 
 /** 重みの等級: 高貴・カオスの 普通 / 上級 / 完全 (a0〜a2)、骨の 保存 / 古代 (b0・b4) */
 export type Grade = "a0" | "a1" | "a2" | "b0" | "b4";
-/** 置き場の 1 つの MOD: 系統 (番号)、全部の重み、札の候補なら札ごとの当たり・段が低い重み、冒涜専用か */
-export interface MCand { fams: number[]; w: number; ex: boolean; refs: Array<{ k: number; m: number; hit: number; low: number }> }
+/**
+ * 置き場の 1 つの MOD: fams = 付くのを止める鍵 (番号。系統 + 止められるタグ、E-11i)、occ = 付いたら塞ぐ鍵 (系統 + 足すタグ)、
+ * 全部の重み、札の候補なら札ごとの当たり・段が低い重み、冒涜専用か
+ */
+export interface MCand { fams: number[]; occ: number[]; w: number; ex: boolean; refs: Array<{ k: number; m: number; hit: number; low: number }> }
 /** 札 (フラクチャー以外)。members の m 番目が付いたら fams[m] を塞ぐ。ess = 完璧なエッセンスの鍵 (エッセンスの札だけ) */
 export interface MSlot { id: string; side: 0 | 1; kind: QuizSlot["kind"]; members: Array<{ modId: string; fams: number[]; ess: string | null }>; group: number; cap: number }
 
@@ -52,7 +55,7 @@ export interface AutoModel {
    */
   routes?: Array<{ id: string; model: AutoModel }>;
   /** 形の版 (中身を変えたら上げる。ワーカーの持つ写しの見分け) */
-  version: 3;
+  version: 4;
 }
 
 /** 計算の入力。sim は ⑤ に渡す物と同じ (order は見ない、順番は solveOrder に渡す)。値段は runQuiz と同じ (キー → 高貴建て) */

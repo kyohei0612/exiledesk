@@ -6,7 +6,9 @@
  * (ルーンは差した状態) で引いて、札ごとの「当たり (狙いの段以上)」「段が低い」と外れの重みの素の表にする。
  * 近似 (中身は auto-actions.ts の頭): 外れの系統は置き場を減らさない・狙いと同じ系統の別の MOD は外れ (系統を塞がない)
  */
-import { ANCIENT_BONE_FLOOR, candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, familiesOf, limitOf, occupiedFamiliesOf, orbFloor, REVEAL_SPEC, sideOfMod, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
+import { ANCIENT_BONE_FLOOR, candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, limitOf, occupiedFamiliesOf, orbFloor, REVEAL_SPEC, sideOfMod, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
+import { familyBlocked } from "../../mods/mod-rules";
+import type { Mod } from "../../../vendor/poe2htc/engine/types";
 import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
@@ -101,10 +103,11 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   // 置き場の重み (エンジンの candidates をそのまま。骨は普通 + 冒涜専用、冒涜専用はアイテムレベルを見ない)
   const desPool = (side: StageSide) => { const k = side === "prefix" ? "prefixes" : "suffixes"; return [...new Set([...effectiveCls(item).pools.normal[k], ...item.cls.pools.desecrated[k]])]; };
   const pools: AutoModel["pools"] = {};
-  // 表の代表のアイテムの外れ: 狙い・固定の候補と系統が重ならない、互いにも重ならない MOD (重い順)
-  const taken = new Set<number>([...frac.picks.flatMap((p) => p.fams), ...slots.flatMap((s) => s.members.flatMap((mb) => mb.fams))]);
+  // 表の代表のアイテムの外れ (下で選ぶ)
   const junk: [string[], string[]] = [[], []];
-  const junkCands: [Array<{ id: string; fams: number[]; w: number }>, Array<{ id: string; fams: number[]; w: number }>] = [[], []];
+  const junkCands: [Array<{ id: string; mod: Mod; w: number }>, Array<{ id: string; mod: Mod; w: number }>] = [[], []];
+  // 候補の止める鍵 (MCand.fams) は、置き場を全部組んだ後に塞がれうる鍵ごとにエンジンの口 familyBlocked で引く (E-11a・E-11i。自前の判定を持たない)
+  const pend: Array<[MCand, Mod]> = [];
   // 段の下限はエンジンの入口 (orbFloor)。高貴とカオスは同じ置き場の表 (a0〜a2) を使うので、下限が食い違ったら対応外
   const STR: Record<"a0" | "a1" | "a2", OrbStrength> = { a0: "base", a1: "greater", a2: "perfect" };
   for (const g of ["a0", "a1", "a2"] as const) {
@@ -127,9 +130,10 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
             refs.push({ k, m: mi, hit, low: c.w - hit });
           });
         });
-        const fams = familiesOf(c.mod).map(fi);
-        if (g === "a0" && !refs.length && c.mod.source !== "desecrated" && !slots.some((s) => s.members.some((mb) => mb.modId === c.mod.id)) && fams.every((f) => !taken.has(f))) junkCands[sideN(side)].push({ id: c.mod.id, fams, w: c.w });
-        return { fams, w: c.w, ex: c.mod.source === "desecrated", refs };
+        if (g === "a0" && !refs.length && c.mod.source !== "desecrated" && !slots.some((s) => s.members.some((mb) => mb.modId === c.mod.id))) junkCands[sideN(side)].push({ id: c.mod.id, mod: c.mod, w: c.w });
+        const mc: MCand = { fams: [], occ: occ(c.mod.id), w: c.w, ex: c.mod.source === "desecrated", refs };
+        pend.push([mc, c.mod]);
+        return mc;
       });
     }) as [MCand[], MCand[]];
     pools[g] = sides;
@@ -137,12 +141,21 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   const prices: Record<string, number> = {};
   for (const k of [...PRICE_KEYS, ...slots.flatMap((s) => s.members.map((m) => m.ess).filter((e): e is string => !!e))]) prices[k] = input.price(k);
   const rare = { ...item, rarity: "rare" as const };
+  const keySets = [...famIdx].map(([k, i]) => [new Set([k]), i] as const);
+  for (const [mc, mod] of pend) mc.fams = keySets.flatMap(([ks, i]) => (familyBlocked(mod, ks) ? [i] : []));
+  // 外れの代表: 狙い・固定の候補・先に選んだ外れに止められず、それらを止めもしない MOD (重い順)
+  const placed: Mod[] = [...frac.picks, ...slots.flatMap((s) => s.members)].map((p) => d.mods.get(p.modId)).filter((m): m is Mod => !!m);
+  const takenKeys = new Set(placed.flatMap((m) => occupiedFamiliesOf(m)));
   for (const sd of [0, 1] as const) {
-    for (const c of junkCands[sd].sort((a, b) => b.w - a.w)) if (c.fams.every((f) => !taken.has(f))) { junk[sd].push(c.id); c.fams.forEach((f) => taken.add(f)); }
+    for (const c of junkCands[sd].sort((a, b) => b.w - a.w)) {
+      const own = new Set(occupiedFamiliesOf(c.mod));
+      if (familyBlocked(c.mod, takenKeys) || placed.some((m) => familyBlocked(m, own))) continue;
+      junk[sd].push(c.id); placed.push(c.mod); own.forEach((k) => takenKeys.add(k));
+    }
   }
   const model: AutoModel = {
     keys, R: x.startPrice, runeCost, runes: runeAll, cap: [limitOf(rare, "prefix"), limitOf(rare, "suffix")], slots, keyIds, frac, pools, prices,
-    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, starts: [], eng: {}, version: 3,
+    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, starts: [], eng: {}, version: 4,
   };
   const ectx = { data: d, base: x.base, itemLevel: x.itemLevel, ...(x.sockets ? { sockets: x.sockets } : {}), runes: runeAll, junk };
   if (st.kind !== "bought") return no("この始め方は自動の順番に未対応", "This start isn't supported yet");
