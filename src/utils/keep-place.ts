@@ -21,9 +21,10 @@ export function scrollBoxOf(el: Element): HTMLElement | null {
 /** el の画面の高さを before に戻す (枠ごとに一気に。見た目は動かない) */
 export function keepTopOf(el: Element, before: number): void {
   if (!el.isConnected) return;
-  // 位置の差は画面の座標 (拡大率込み)、スクロール量は CSS の px なので換算する (2026-10-10 点検: 拡大率の分だけ行き過ぎていた)
-  const d = toCss(el.getBoundingClientRect().top - before);
-  if (Math.abs(d) > 1) (scrollBoxOf(el) ?? window).scrollBy({ top: d, behavior: "instant" as ScrollBehavior });
+  // 位置の差とスクロール量の比はその場で測る (rectRate)。拡大率で割る換算は今の Chrome では動いた量の 15% ほどずれた (11-05 オーナー「拡大率のずれも頼んで」。前は 10-10 点検で toCss)
+  const box = scrollBoxOf(el);
+  const dRect = el.getBoundingClientRect().top - before;
+  if (Math.abs(dRect) > 1) (box ?? window).scrollBy({ top: dRect / rectRate(box, el, dRect), behavior: "instant" as ScrollBehavior });
 }
 
 /**
@@ -57,7 +58,7 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
   else if (pcBlock === "center") d = r.top + r.height / 2 - (view.top + view.bottom) / 2;
   else if (pcBlock === "end") d = r.bottom - view.bottom + 8;
   else d = r.top < top ? r.top - top : r.bottom > view.bottom ? r.bottom - view.bottom + 8 : 0; // nearest
-  if (behavior === "auto" || behavior === "instant") { if (Math.abs(d) > 1) (box ?? window).scrollBy({ top: toCss(d), behavior: "instant" as ScrollBehavior }); return; }
+  if (behavior === "auto" || behavior === "instant") { if (Math.abs(d) > 1) (box ?? window).scrollBy({ top: d / rectRate(box, el, d), behavior: "instant" as ScrollBehavior }); return; }
   void glideBy(box, d);
 }
 
@@ -83,12 +84,15 @@ function rectRate(box: HTMLElement | null, el: Element, dRect: number): number {
   const getY = (): number => (box ? box.scrollTop : window.scrollY);
   const setY = (y: number): void => { if (box) box.scrollTop = y; else window.scrollTo(0, y); };
   const y = getY(), t = el.getBoundingClientRect().top;
-  const probe = dRect > 0 ? 40 : -40;
-  setY(y + probe);
-  const moved = getY() - y, shifted = t - el.getBoundingClientRect().top;
-  setY(y);
-  // 動けなかった時 (端) は今まで通りの換算
-  return moved !== 0 && shifted !== 0 ? shifted / moved : pageZoom();
+  // 送る向きで動けなければ (端) 逆向きで測る
+  for (const probe of dRect > 0 ? [40, -40] : [-40, 40]) {
+    setY(y + probe);
+    const moved = getY() - y, shifted = t - el.getBoundingClientRect().top;
+    setY(y);
+    if (moved !== 0 && shifted !== 0) return shifted / moved;
+  }
+  // どちらにも動けなかった時は今まで通りの換算
+  return pageZoom();
 }
 /**
  * 節の頭を、上に留まる帯 (under、留まっていなければ null) のすぐ下へ 1 回で送る (U-32、スイッチ tocJump)。
