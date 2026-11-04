@@ -1,5 +1,5 @@
 <!--
-  DailyHero.vue — お題の顔 (一覧の今日のお題・お題のページ)。今日のお題は伏せたままベースと MOD の数だけ、締めた日は MOD も全部出す (D-32b)。
+  DailyHero.vue — お題の顔 (一覧の今日のお題・お題のページ)。今日のお題は伏せたままベースと MOD の数だけ、締めた日は MOD も全部出す (D-32b、完成形のカード D-37e)。
   スタートは今日のお題だけ、14:50 まで、1 日 1 回 (D-01・D-33)。ニックネームが無ければ先に決める (D-51)。幅 1280 未満は今は挑戦できない (D-70、シミュの PC の木の境)
 -->
 <script setup lang="ts">
@@ -9,6 +9,7 @@ import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import { openDailyPage } from "../../web/page";
 import { canStartAt, getTry, leftMs, myNick, SOLVE_RATE, SLOT_NAMES, type DailyTopic } from "./daily-api";
+import DailyAimCard from "./DailyAimCard.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
 
@@ -41,11 +42,10 @@ const action = computed(() => {
           <div class="daily-plate"><p class="daily-veil-name">{{ name }}</p></div>
           <p class="daily-meta">{{ tr(`狙う MOD ${topic.modCount} つ、アイテムレベル ${topic.ilvl}`, `${topic.modCount} target mods, item level ${topic.ilvl}`) }}<template v-if="slot">{{ tr(`、${slot.ja}の日`, `, ${slot.en} day`) }}</template></p>
           <p v-if="topic.fromBox" class="daily-meta">{{ tr("クラフトボックスの投稿から", "From the craft box") }}</p>
-          <ul v-if="topic.aims" data-daily-aims class="daily-meta">
-            <li v-for="a in topic.aims" :key="a.modId">{{ tr(a.ja, a.en) }} <small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small></li>
-          </ul>
         </div>
       </div>
+      <!-- 締めた日は狙いを完成形のカードで (D-37e)。今日のお題は伏せたまま (D-32b) -->
+      <DailyAimCard v-if="topic.aims" data-daily-aims :base="topic.base" :ilvl="topic.ilvl" :aims="topic.aims" />
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>

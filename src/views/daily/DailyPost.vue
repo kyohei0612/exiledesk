@@ -10,6 +10,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
+import DailyAimCard from "./DailyAimCard.vue";
 import DailyNick from "./DailyNick.vue";
 
 const item = ref<PostItem | null>(null);
@@ -66,8 +67,9 @@ const failText = (e: BoxError): string =>
           <p class="text-[14px] opacity-70">{{ tr(`アイテムレベル ${item.ilvl}`, `Item level ${item.ilvl}`) }}</p>
         </div>
       </div>
-      <ul data-daily-post-aims class="mb-3 text-[15px]">
-        <li v-for="a in item.aims" :key="a.modId" class="py-0.5 text-[var(--exile-color-text-link)]">{{ tr(a.ja, a.en) }}</li>
+      <!-- 狙いは完成形のカード (D-37e)。読めなかった行だけ文で下に -->
+      <DailyAimCard v-if="item.aims.length" data-daily-post-aims class="mb-3" :base="item.base" :ilvl="item.ilvl" :aims="item.aims" />
+      <ul v-if="item.bad.length" class="mb-3 text-[15px]">
         <li v-for="b in item.bad" :key="b.line" data-daily-post-bad class="py-0.5 text-[var(--exile-color-signal-down)]">{{ b.line }} ({{ b.why }})</li>
       </ul>
       <label class="mb-3 block text-[14px]">{{ tr("ひと言 (なくてもよい)", "A short note (optional)") }}
