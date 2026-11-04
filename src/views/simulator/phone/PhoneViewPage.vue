@@ -101,7 +101,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
     <PhoneViewEmpty v-if="noTree" />
     <template v-else>
       <!-- レシピとシェアだけ (保存・メモ・白紙は無し)。落ちる窓はシートの上に重なる -->
-      <div data-phone-recipe class="relative z-40 flex min-w-0 flex-wrap items-center justify-between gap-1 text-[13px]">
+      <div data-phone-recipe data-tree-own class="relative z-40 flex min-w-0 flex-wrap items-center justify-between gap-1 text-[13px]">
         <TreeRecipeBar class="!contents" view flat="flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-sim-body aria-expanded:text-amber-100" />
       </div>
       <!-- 穴チェックの帯の所に 10 人回す。穴があれば短い文だけ (S-94e) -->

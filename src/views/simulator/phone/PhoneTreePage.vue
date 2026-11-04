@@ -177,7 +177,7 @@ function goBox(id: string): void {
     <div v-show="!t.goalInline.value" data-phone-tree-body class="flex min-w-0 flex-col gap-3">
       <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
       <!-- レシピの帯の中身とメモ・白紙を 1 つの並びで折り返す (帯の枠を contents にして、レシピ ▾ の行に並べる。落ちる窓はこの行が基準) -->
-      <div data-phone-recipe class="relative flex min-w-0 flex-wrap items-center justify-center gap-1 text-[13px]">
+      <div data-phone-recipe data-tree-own class="relative flex min-w-0 flex-wrap items-center justify-center gap-1 text-[13px]">
         <TreeRecipeBar class="!contents" :flat="FLAT" @opened="q.reset()">
           <template #after>
         <button type="button" data-phone-memo-open :class="FLAT" :aria-pressed="memoEdit" @click="memoEdit = !memoEdit"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Note") }}</button>

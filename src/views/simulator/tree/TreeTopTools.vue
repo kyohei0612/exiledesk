@@ -35,7 +35,7 @@ const LBL = "hidden @min-[1300px]:inline";
       </button>
       <span class="mx-0.5 h-5 w-0.5 rounded bg-white/10 @max-[899px]:hidden" aria-hidden="true" />
       <!-- 1 回目で赤く「もう一度押すと白紙に戻す」(押せる幅は文に合わせて広がる) -->
-      <button type="button" data-tree-clear :class="[BTN, armed ? '!bg-rose-700 !text-white' : '']" :title="tr('白紙に戻す: 始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Clear: back to just the start box (undo restores it)')" :aria-label="tr('白紙に戻す', 'Clear')" @click="emit('clear')">
+      <button type="button" data-tree-clear data-tree-own :class="[BTN, armed ? '!bg-rose-700 !text-white' : '']" :title="tr('白紙に戻す: 始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Clear: back to just the start box (undo restores it)')" :aria-label="tr('白紙に戻す', 'Clear')" @click="emit('clear')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /></svg>
         <span v-if="armed">{{ tr("もう一度押すと白紙に戻す", "Click again to clear") }}</span><span v-else :class="LBL">{{ tr("白紙", "Clear") }}</span>
       </button>

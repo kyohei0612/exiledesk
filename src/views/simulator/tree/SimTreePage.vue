@@ -396,7 +396,7 @@ const phone = usePhone();
       <div class="@container relative flex min-w-0 flex-nowrap items-center gap-1.5 text-[13px]">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
-        <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
+        <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />
         <template v-else>
           <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesShown }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: jt.unset.value.length, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
           <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
@@ -485,7 +485,7 @@ const phone = usePhone();
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
             <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」) -->
-            <div data-tree-side-recipe class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
+            <div data-tree-side-recipe data-tree-own class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
               <TreeRecipeBar @opened="v.openView()" />
             </div>
             <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
