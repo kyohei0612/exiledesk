@@ -23,7 +23,7 @@ export type DailyAim = GenAim;
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; seed?: number; prices?: unknown; fractured?: string; tree?: string; best?: DailyRecord; last?: DailyRecord };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 諦めた (D-37b)。木は見るだけ、提出できない */ ended?: boolean; seed?: number; prices?: unknown; fractured?: string; tree?: string; best?: DailyRecord; last?: DailyRecord };
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean };
 export type DailyNick = { id: string; name: string; code: string };
 /** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
@@ -121,6 +121,16 @@ export async function startTry(id: string): Promise<DailyTry | StartError> {
 export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "tree">>): void {
   const t = daily.local.tries[id];
   if (t) { Object.assign(t, patch); save(); }
+}
+/** POST /daily/giveup (D-37b)。提出なしで終える。始め直しはできない (D-33)。終えられたら true */
+export async function giveUpTry(id: string): Promise<boolean> {
+  const a = auth(), t = daily.local.tries[id];
+  if (!a || !t) return false;
+  const r = await call<{ ended?: boolean; error?: string }>("/daily/giveup", { ...a, id });
+  if (!r?.ended) return false;
+  t.ended = true;
+  save();
+  return true;
 }
 /** 残り時間 (実際の時計、ページを閉じても進む) */
 export const leftMs = (t: DailyTry, now = Date.now()): number => t.startedAt + TIME_LIMIT_MS - now;

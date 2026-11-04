@@ -148,7 +148,19 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-heat="last"] .daily-fuse { height: 5px; }
 
 .daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--skin-panel); font-size: 15px; }
-.daily-frac { max-width: 760px; padding: 40px; }
+.daily-frac { padding: 28px 40px 40px; }
+/* フラクチャー選び (D-37c): 左に完成形のカード、右に選ぶ行。狭い幅は縦 */
+.daily-frac-body { display: grid; grid-template-columns: 400px minmax(0, 560px); gap: 32px; align-items: start; }
+.daily-frac-row:focus-visible { outline: 2px solid var(--skin-title); outline-offset: -2px; }
+/* 挑戦の帯の下の段 (D-37、B = 2 段): 狙いを並べたまま + MOD 一覧・諦める・一覧へ戻る */
+.daily-band2 { display: flex; align-items: center; gap: 12px; padding: 6px 16px 8px; margin: -4px 0 12px; background: var(--skin-panel); border-bottom: 1px solid var(--skin-line); }
+.daily-band2-head { flex: none; font-size: 12px; color: var(--skin-dim); }
+.daily-aims { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.daily-aims li { padding: 2px 8px; border: 1px solid var(--skin-line); font-size: 13px; color: var(--exile-color-text-link); background: var(--skin-bg); }
+.daily-aims li small { font-size: 11px; color: var(--skin-dim); }
+.daily-aims li.frac { border-color: var(--skin-title); }
+.daily-band2-btns { display: flex; flex: none; gap: 6px; }
+.daily-band-what { display: block; font-size: 12px; color: var(--skin-dim); }
 .daily-frac-title { margin: 0 0 18px; font-family: var(--skin-font-head); font-size: 28px; line-height: 1.2; font-weight: 400; color: var(--skin-title); }
 .daily-frac-row { display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 12px; text-align: left; font-size: 16px; color: var(--exile-color-text-link); }
 .daily-frac-row:hover { background: var(--skin-hover); }
@@ -194,6 +206,9 @@ main:has([data-daily-play]) > .sticky { display: none; }
 }
 
 @media (max-width: 1279px) {
+  .daily-frac { padding: 16px; }
+  .daily-frac-body { grid-template-columns: minmax(0, 1fr); }
+  .daily-band2 { flex-wrap: wrap; }
   .daily-root { padding: 8px; }
   /* スマホは 1 枚に入らないので縦に送る。品 → 順位 → 棚 → 点の順で何も畳まない (U-51) */
   .daily-board, .daily-root[data-daily-page] .daily-board, .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "clock" "hero" "rank" "foot" "week"; padding: 6px 6px 14px; }
@@ -218,7 +233,7 @@ main:has([data-daily-play]) > .sticky { display: none; }
   .daily-root[data-daily-page] .daily-band::before { background: url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
   .daily-root[data-daily-page] .daily-band-topic, .daily-root[data-daily-page] .daily-band-score { padding: 0; }
   .daily-root[data-daily-page] .daily-band-topic::before, .daily-root[data-daily-page] .daily-band-score::before { display: none; }
-  .daily-band-score { grid-column: 1 / -1; justify-content: space-between; gap: 10px; }
+  .daily-band-score { grid-column: 1 / -1; justify-content: flex-end; gap: 18px; }
   .daily-band-name { font-size: 15px; }
   .daily-band-topic img { width: 44px; height: 44px; padding: 5px; }
   .daily-time { width: 220px; height: 58px; margin: -2px -14px 0 0; padding-bottom: 8px; }

@@ -26,7 +26,7 @@ const go = (): void => openDailyPage({ view: "start", q: props.topic.id });
 const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
 /** 押せる物: 始める (今日・14:50 まで) / 続ける (残りがある) / 木を見る (自分の挑戦がある) / 無し */
 const action = computed(() => {
-  if (t.value) return left.value > 0 ? tr(`続ける (残り ${clock(left.value)})`, `Continue (${clock(left.value)} left)`) : tr("自分の木を見る", "View your tree");
+  if (t.value) return left.value > 0 && !t.value.ended ? tr(`続ける (残り ${clock(left.value)})`, `Continue (${clock(left.value)} left)`) : tr("自分の木を見る", "View your tree");
   return props.today && !closed.value && canStartAt(props.now) ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : null;
 });
 </script>

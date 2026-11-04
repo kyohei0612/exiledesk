@@ -4,22 +4,25 @@
   木はこのブラウザに覚え、開き直すと戻る。時間はスタートからの実際の時計で、ページを閉じても進む (D-32)。挑戦は 1 日 1 回で始め直せない (D-33)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
-import { openDailyPage, treeStep } from "../../web/page";
+import { treeStep } from "../../web/page";
 import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
-import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyAim, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
+import DailyPlayBar from "./DailyPlayBar.vue";
+import DailyFracPick from "./DailyFracPick.vue";
+import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const t = useTree();
-const tryOf = ref<DailyTry | null>(getTry(props.topic.id));
+/** サーバーの返りが来るまでは null (端末の写しを先に出すと古い時刻が見える) */
+const tryOf = ref<DailyTry | null>(null);
 const treeOn = ref(false);
 const sent = ref<{ rate: number; cost: number; solved: boolean } | null>(null);
 const art = computed(() => baseArt(props.topic.base));
@@ -29,7 +32,8 @@ const now = ref(Date.now());
 const tick = setInterval(() => (now.value = Date.now()), 1000);
 // 端末の時計がサーバーより遅いと 60:01 のように 1 時間を超えて見えるので、上は 1 時間で止める
 const left = computed(() => Math.min(TIME_LIMIT_MS, tryOf.value ? leftMs(tryOf.value, now.value) : TIME_LIMIT_MS));
-const over = computed(() => left.value <= 0);
+/** 時間切れか諦めた (D-37b)。木は見るだけ */
+const over = computed(() => left.value <= 0 || !!tryOf.value?.ended);
 const clock = computed(() => { const s2 = Math.max(0, Math.ceil(left.value / 1000)); const m = Math.floor(s2 / 60); return `${String(m).padStart(2, "0")}:${String(s2 % 60).padStart(2, "0")}`; });
 /** 残りの割合 (導火線の長さ、D-60b) */
 const fuse = computed(() => Math.max(0, Math.min(1, left.value / TIME_LIMIT_MS)));
@@ -39,18 +43,19 @@ const heat = computed(() => (left.value < 60_000 ? "last" : left.value < 600_000
 const refused = ref<StartError | null>(null);
 let starting = false;
 async function begin(): Promise<void> {
-  if (tryOf.value || starting || !s.data.value) return;
+  // 端末の写しがあってもサーバーに聞く (時刻・終わった印の正はサーバー。写しは別の名前・置き場の作り直しで古くなる)。始めていれば同じ挑戦が返る
+  if (starting || !s.data.value) return;
   starting = true;
   const r = await startTry(props.topic.id);
   starting = false;
-  if (typeof r === "string") refused.value = r; else tryOf.value = r;
+  if (typeof r === "string") { refused.value = r; return; }
+  tryOf.value = r;
+  if (r.fractured && !treeOn.value) openTree();
 }
 watch(() => s.data.value, () => void begin(), { immediate: true });
 
-/** 選ぶ前の字。t.aimShort はベースの木で読むのでここでベースを開く */
-const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
-const picking = computed(() => !!tryOf.value && !tryOf.value.fractured);
-watch(picking, (p) => { if (p) t.startTreeWith(props.topic.base, props.topic.ilvl); }, { immediate: true });
+/** フラクチャーを選ぶ画面 (D-37c、DailyFracPick)。諦めた後は選ばない */
+const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended);
 
 /** お題の木を開く。覚えた木があればそれを、無ければお題から白紙で */
 function openTree(): void {
@@ -67,7 +72,6 @@ function pick(modId: string): void {
   tryOf.value = getTry(props.topic.id);
   openTree();
 }
-onMounted(() => { if (tryOf.value?.fractured) openTree(); });
 
 // 前提は変えられない (D-34): 完成形・始まりの窓を開かせず、1 つ戻すで白紙へ抜けた時は戻す
 watch(() => t.goalPage.value, (p) => { if (treeOn.value && p) t.goalPage.value = 0; });
@@ -110,32 +114,27 @@ const REFUSED: Record<StartError, () => string> = {
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
-        <div class="min-w-0"><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></div>
+        <div class="min-w-0"><small class="daily-band-what">{{ tr("今日のお題に挑戦中", "Today's challenge") }}</small><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p></div>
       </div>
       <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
       <div class="daily-band-score">
         <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("1 個の費用", "Cost per item") }}</small></div>
         <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr(`完成率 (${SOLVE_RATE}% で解決)`, `Finished (${SOLVE_RATE}% solves)`) }}</small></div>
-        <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over" :title="over ? tr('時間切れ', 'Time is up') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("提出する", "Submit") }}</button>
+        <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over" :title="over ? tr('時間切れ', 'Time is up') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
       </div>
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
+    <DailyPlayBar v-if="tryOf" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" />
 
     <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
-    <p v-else-if="over" data-daily-over class="daily-note">{{ tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
-    <p v-else-if="sendFail" data-daily-send-fail class="daily-note">{{ tr("提出が届かなかった。もう一度「提出する」を押す。", "The submission didn't go through. Press Submit again.") }}</p>
+    <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
+    <p v-else-if="sendFail" data-daily-send-fail class="daily-note">{{ tr("提出が届かなかった。もう一度「これで提出」を押す。", "The submission didn't go through. Press Submit again.") }}</p>
     <p v-else-if="sent" data-daily-sent class="daily-note">
       {{ sent.solved ? tr(`提出した: ${sent.cost} 神 (完成率 ${sent.rate}%)。解決。時間内ならもっと安くできる。`, `Submitted: ${sent.cost} div (${sent.rate}% finished). Solved. You can still go cheaper in time.`) : tr(`提出した: 完成率 ${sent.rate}% で未解決。${SOLVE_RATE}% まで上げる。`, `Submitted: ${sent.rate}% finished, unsolved. Reach ${SOLVE_RATE}%.`) }}
       <span v-if="best">{{ tr(`今の記録 ${best.cost} 神`, `Best ${best.cost} div`) }}</span>
     </p>
 
-    <section v-if="picking" data-daily-frac class="daily-frac">
-      <h2 class="daily-frac-title">{{ tr("どの MOD をフラクチャーして始めるか", "Choose the mod to fracture") }}</h2>
-      <p class="mb-3 text-[14px] opacity-70">{{ tr("フラクチャー済みのレアから始める。ここまでの費用は数えない。", "You start from a fractured rare. This part costs nothing.") }}</p>
-      <ul>
-        <li v-for="a in tryOf!.aims" :key="a.modId"><button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @click="pick(a.modId)">{{ aimText(a) }}<small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small></button></li>
-      </ul>
-    </section>
+    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
   </div>
