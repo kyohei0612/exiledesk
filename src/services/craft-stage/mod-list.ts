@@ -80,6 +80,8 @@ export interface ListRow {
   tiers: ListTier[];
   /** 全段の重みの合計 */
   weight: number;
+  /** 今付く段だけの重みの和 (M-43a。付かない行は 0、束ねていない付く行は weight と同じ。束ねた行の段の % = share × 段の重み / これ) */
+  liveWeight: number;
   /** 一番上の段の MOD レベル */
   topLevel: number;
   /** 同じ種類・同じ側の重みの合計に対する割合 (0〜1)。重みが 0 の種類 (エッセンス) は 0 */
@@ -151,7 +153,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-1
     const blocked = !on && familyBlocked(m, taken);
     return {
       id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...new Set([...(m.displayTags ?? m.tags), ...m.tags.filter((t) => FACTION_TAGS.includes(t))])], tiers, weight,
-      topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked,
+      topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked, liveWeight: on || blocked ? 0 : weight,
       ...(blocked ? { blockedBy: familyKeysOf(m).some((f) => taken.has(f)) ? "family" as const : "tag" as const } : {}),
     };
   };
@@ -178,7 +180,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-1
       const k = side === "prefix" ? "prefixes" : "suffixes";
       const own = new Set(pool[k]);
       const rows = modsOf([...pools.normal[k], ...pool[k]]).map((m) => rowOf(m, side, "normal"));
-      out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, share: 0, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
+      out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, share: 0, liveWeight: 0, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
     }
   }
   // ジュエルの液化した感情の MOD (デリリウム、抽選の置き場には無い)。付けるのは感情だけなので重み 0 で出す (11-03 シミュの完成の MOD に選べるように)
@@ -188,7 +190,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-1
     if (!m || has.has(m.id)) continue;
     has.add(m.id);
     const r = rowOf(m, e.side as StageSide, "essence");
-    out.push({ ...r, weight: 0, share: 0, tiers: r.tiers.map((t) => ({ ...t, weight: 0 })) });
+    out.push({ ...r, weight: 0, liveWeight: 0, share: 0, tiers: r.tiers.map((t) => ({ ...t, weight: 0 })) });
   }
   return mergeFamilies(out);
 }
@@ -217,6 +219,7 @@ function mergeFamilies(rows: ListRow[]): ListRow[] {
       tags: [...new Set(g.flatMap((r) => r.tags))],
       tiers: g.flatMap((r) => r.tiers.map((t) => ({ ...t, modId: r.id, ...(r.blocked && r.blockedBy ? { blockedBy: r.blockedBy } : {}) }))),
       weight: g.reduce((a, r) => a + r.weight, 0),
+      liveWeight: g.reduce((a, r) => a + r.liveWeight, 0),
       share: g.reduce((a, r) => a + r.share, 0),
       topLevel: Math.max(...g.map((r) => r.topLevel)),
       on: g.some((r) => r.on),
