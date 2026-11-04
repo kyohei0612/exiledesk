@@ -41,6 +41,14 @@ function sql(command) {
   if (r.status !== 0) throw new Error(`d1 execute: ${(r.stdout + r.stderr).slice(-400)}`);
 }
 
+// `pnpm daily:reset` (= --reset): 立てたままの置き場から見本 (ndev*) 以外の名前と挑戦・結果・称号を消して終わる (D-37h)。
+// 画面は開発版だけ読み込み時に控えの名前が無いと知り、控えを捨てて同じ名前で作り直す = 読み直すだけで「1 時間の挑戦を始める」
+if (process.argv.includes("--reset")) {
+  sql(["daily_tries", "daily_results", "daily_awards"].map((t) => `DELETE FROM ${t} WHERE nick_id NOT LIKE 'ndev%';`).join(" ") + " DELETE FROM daily_nicks WHERE id NOT LIKE 'ndev%';");
+  console.log(`[daily:reset] 消した (${PERSIST})。デイリーのページを読み直す`);
+  process.exit(0);
+}
+
 // 日の番号 (16:00 JST 区切り、daily-api.ts の dayNoOf と同じ)
 const JST = 9 * 3600e3, H16 = 16 * 3600e3, DAY = 86400e3;
 const now = Date.now();

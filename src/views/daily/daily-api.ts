@@ -55,8 +55,22 @@ async function call<T>(path: string, body?: unknown): Promise<T | null> {
 }
 const auth = (): { nickId: string; code: string } | null => { const n = daily.local.nick; return n ? { nickId: n.id, code: n.code } : null; };
 
+/** 開発版だけ (D-37h): 手元の置き場が `pnpm daily:reset` で消されたら (控えの名前がサーバーに無い)、控えを捨てて同じ名前で作り直す。読み込みごとに 1 回 */
+let devChecked = false;
+async function devFollowReset(): Promise<void> {
+  const n = daily.local.nick;
+  if (devChecked || !n) return;
+  devChecked = true;
+  const r = await call<DailyNick | { error: string }>("/daily/nick", { name: n.name, code: n.code });
+  if (!r || !("error" in r) || r.error !== "wrong") return;
+  daily.local = { tries: {}, box: [] };
+  save();
+  await createNick(n.name);
+}
+
 /** 一覧を読み直す (ページを開いた時・16:00 を越えた時)。端のキャッシュで 60 秒は古いことがある (D-56)。自分の投稿の状態も読む */
 export async function refreshDaily(): Promise<void> {
+  if (import.meta.env.DEV) await devFollowReset();
   const r = await call<Remote>("/daily.json");
   daily.failed = !r;
   if (r) daily.remote = r;
@@ -210,14 +224,6 @@ async function nickPost(body: { name: string; code?: string }): Promise<DailyNic
   if ("error" in r) return r.error;
   daily.local.nick = r;
   save();
-  return r;
-}
-/** 開発版だけのリセット (D-37h): 端末の控えを全部消し、新しい名前で入り直す (挑戦は名前ごとなので始め直せる)。名前を作れなかった時は NickError */
-export async function devResetLocal(): Promise<DailyNick | NickError> {
-  try { localStorage.removeItem(KEY); } catch { /* 消せなくても控えは空にする */ }
-  daily.local = { tries: {}, box: [] };
-  const r = await createNick(`dev${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`);
-  await refreshDaily();
   return r;
 }
 /** POST /daily/nick (決める)。引き継ぎコードはここで 1 度だけ返る */

@@ -4,7 +4,7 @@
   見た目は皮 (skin/skin.ts) の変数を一番外の要素に渡すだけ。その日の皮は日付で回り、見比べで押すと開発の間だけ替わる (D-60)
 -->
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import "./daily-skin.css";
 import "./look.css";
 import { tr } from "../../i18n/lang";
@@ -23,8 +23,6 @@ import DailyName from "./DailyName.vue";
 import DailyPlay from "./DailyPlay.vue";
 import DailyPost from "./DailyPost.vue";
 import DailySkins from "./DailySkins.vue";
-/** 開発版だけのリセット (D-37h)。本番は null で塊に入らない */
-const DailyDevReset = import.meta.env.DEV ? defineAsyncComponent(() => import("./DailyDevReset.vue")) : null;
 
 const view = computed(() => dailyPage.value?.view ?? "list");
 const q = computed(() => dailyPage.value?.q ?? null);
@@ -149,7 +147,6 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
             </ul>
           </section>
         </div>
-        <component :is="DailyDevReset" v-if="DailyDevReset" />
       </div>
       <div v-else-if="topic" class="g-panel daily-board one">
         <button type="button" class="g-btn sm daily-back" data-daily-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
