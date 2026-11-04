@@ -16,7 +16,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import { flag } from "../../../web/release-flags";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
-import { blockedTitle } from "./use-held-shares";
+import { blockedTitle, tierFreeShare } from "./use-held-shares";
 import { TIER } from "../../../state/for-share/tier-word";
 import { isPhoneWidth } from "../../../utils/use-phone";
 /** ティアの列の幅: 「ティア」が 1 行で入る分 (段・英語の T は前のまま) */
@@ -70,7 +70,7 @@ const rows = computed(() => (props.data && props.item ? modListFor(props.data, p
 const cannowBase = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed) && r.group !== "desecrated" && r.group !== "otherworldly";
 const shareOf = (r: ListRow): number => (props.share ? props.share(r) : cannowBase(r) ? r.share : 0);
 const dimOf = (r: ListRow): boolean => (props.rowDim ? props.rowDim(r) : r.blocked || (r.group === "rune" && !r.socketed));
-const tierShareText = (r: ListRow, t: ListTier): string => (props.tierShare ? props.tierShare(r, t) : !cannowBase(r) ? "0%" : t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "");
+const tierShareText = (r: ListRow, t: ListTier): string => (props.tierShare ? props.tierShare(r, t) : !cannowBase(r) ? "0%" : tierFreeShare(r, t));
 const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
 const pct = (x: number): string => fmtPct(x);
 
@@ -296,7 +296,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <slot name="row-open" :row="r" />
               <table class="mt-1 w-full text-[11px]">
                 <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', props.tierDim?.(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle?.(r, t)">
+                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', (props.tierDim ? props.tierDim(r, t) : !!t.blockedBy) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
                     <td class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>

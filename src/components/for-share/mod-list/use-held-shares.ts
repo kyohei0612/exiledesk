@@ -15,10 +15,16 @@ type SectionLike = { columns: Array<{ items: ListRow[] }>; rune?: unknown; socke
 export interface HeldAt { data: PatchData; item: StageItem; key: string; omens: readonly string[]; name: string }
 
 /** 灰色の行の理由は止めた物に合わせる (M-43a): family = 同じ系統 (E-11a)、tag = 付いている MOD が足すタグ (E-11i) */
-export function blockedTitle(r: ListRow): string {
+export function blockedTitle(r: { blockedBy?: "family" | "tag" }): string {
   return r.blockedBy === "tag"
     ? tr("付いている MOD が止めるので、今は付かない", "A mod on the item prevents this from rolling now")
     : tr("同じ系統の MOD が付いているので、今は付かない", "A mod from the same group is already on the item, so this cannot roll now");
+}
+
+/** 持っていない時の段の出やすさ。今付かない段 (束ねた行の中、t.blockedBy) は 0% (M-43a) */
+export function tierFreeShare(r: ListRow, t: ListTier): string {
+  if (t.blockedBy) return "0%";
+  return t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "";
 }
 
 export function useHeldShares(held: () => HeldAt | null, data: () => PatchData | null) {
@@ -54,11 +60,11 @@ export function useHeldShares(held: () => HeldAt | null, data: () => PatchData |
   const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed) && !((r.group === "desecrated" || r.group === "otherworldly") && !(heldCands.value && "bone" in heldCands.value));
   /** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
   const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
-  const tierShareOf = (r: ListRow, t: ListTier): string => (!cannow(r) ? "0%" : heldCands.value ? fmtPct(heldTierShare(r, t)) : t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "");
+  const tierShareOf = (r: ListRow, t: ListTier): string => (!cannow(r) || t.blockedBy ? "0%" : heldCands.value ? fmtPct(heldTierShare(r, t)) : tierFreeShare(r, t));
   const rowDim = (r: ListRow): boolean => r.blocked || (!!heldCands.value && !heldShare(r)) || (r.group === "rune" && !r.socketed);
   const rowTitle = (r: ListRow): string | undefined => (r.blocked ? blockedTitle(r) : heldCands.value && !heldShare(r) ? tr(`持っている ${heldCands.value.name} では付かない`, `Cannot roll with the held ${heldCands.value.name}`) : undefined);
-  const tierDim = (r: ListRow, t: ListTier): boolean => !!heldCands.value && !heldTierShare(r, t);
-  const tierTitle = (r: ListRow, t: ListTier): string | undefined => (heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
+  const tierDim = (r: ListRow, t: ListTier): boolean => !!t.blockedBy || (!!heldCands.value && !heldTierShare(r, t));
+  const tierTitle = (r: ListRow, t: ListTier): string | undefined => (t.blockedBy ? blockedTitle(t) : heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
   function shareTitle(r: ListRow): string {
     const h = heldCands.value;
     if (h) return "bone" in h ? tr(`持っている ${h.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)`, `Chance to appear among the 3 options on the next reveal with the held ${h.name} (1-3 desecrated-only mods + the rest normal, same as the calculator)`) : tr(`持っている ${h.name} で次に付く確率`, `Chance to roll next with the held ${h.name}`);
