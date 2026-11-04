@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.667",
+  "date": "2026-11-05",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ルーンを嵌めた箱と嵌めていない箱を同じ枠と見て、外れの戻り先に選べてしまう不具合を直しました",
+    "en": "Simulator: fixed boxes with and without socketed runes being treated as the same frame, which let a miss route back to a box without the runes"
+   }
+  ]
+ },
+ {
   "v": "0.1.666",
   "date": "2026-11-04",
   "items": [
@@ -1144,18 +1156,6 @@
     "area": "",
     "text": "シミュレーター: 打つ手の窓で札を持ったまま Esc を押すと、1 回目は持った物を離すだけに (2 回目で窓を閉じる)。PC のベース選びは貼り付けの欄を横に並べ、画面に収まるように",
     "en": "Simulator: In the craft picker, pressing Esc while holding a currency now just puts it down (a second Esc closes the window). On PC, the paste box on base selection sits side by side so everything fits on screen"
-   }
-  ]
- },
- {
-  "v": "0.1.626",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: 画面の一番下のリンク (使い方・ベース一覧・お問い合わせなど) を押しやすい高さに",
-    "en": "Phone: The links at the bottom of the page (Guide, Bases, Contact and so on) are now easier to tap"
    }
   ]
  }

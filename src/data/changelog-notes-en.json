@@ -1,4 +1,7 @@
 {
+  "0.1.667": [
+    "Simulator: fixed boxes with and without socketed runes being treated as the same frame, which let a miss route back to a box without the runes"
+  ],
   "0.1.666": [
     "Emulator and Simulator: fixed Orb of Transmutation, Orb of Alchemy and Regal Orb not adding mods"
   ],
