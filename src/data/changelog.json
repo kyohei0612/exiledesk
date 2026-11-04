@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.664",
+  "date": "2026-11-04",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: カオス・骨など、MOD を消してから付ける手は打つ前の品の枠で見るようにしました。枠を増やす MOD が消えても、付いている MOD の数が減りません",
+    "en": "Emulator: currencies that remove a mod and then add one (Chaos Orb, bones and similar) now use the item's mod slots from before the craft, so removing a mod that adds slots no longer lowers the number of mods"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の設定で一緒に付かない組を断る時、止めている MOD の名前を出すようにしました",
+    "en": "Simulator: when the final item setup refuses a pair that can't roll together, it now names the mod that blocks it"
+   }
+  ]
+ },
+ {
   "v": "0.1.663",
   "date": "2026-11-04",
   "items": [
@@ -1138,30 +1156,6 @@
     "area": "",
     "text": "ベース選び: 部位のタイルの絵が、その部位のユニークから毎日 1 つ替わるように (日本時間 9 時に替わり、その日は誰が開いても同じ絵)",
     "en": "Base selection: Each item-type tile now shows a unique of that type that changes daily (at 9:00 JST; everyone sees the same art that day)"
-   }
-  ]
- },
- {
-  "v": "0.1.623",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーへ行く時に始め方を選ぶ窓。フラクチャーの印が無ければ、フラクチャーにする MOD を選んで「フラクチャー済みから」か「白から確定フラクチャー」、または白ベースから。印 (✦) があればその MOD で 2 つから選びます。✦ の印は 1 つだけです",
-    "en": "Simulator: A start window when going to the tree. With no fracture mark, pick the mod to fracture and choose \"From fractured\" or a guaranteed fracture from white, or start from a white base. With a mark (✦), choose between the two for that mod. Only one ✦ mark is allowed"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター (スマホ): ② 完成の MOD でカードの MOD を押すとフラクチャー (✦) にできるように (PC の右クリックの代わり、もう一度押すと外す)",
-    "en": "Simulator (phone): On ② Final mods, tap a mod on the card to make it fractured (✦), replacing the right-click on PC (tap again to unmark)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 「シミュレーターへ →」で、持っているアイテム (ベース・アイテムレベル・付いている MOD 全部) をそのままシミュの完成の狙いにして ② へ進めるように",
-    "en": "Emulator: \"To the simulator →\" takes the item you are working on (base, item level and all its mods) straight into the simulator as the finished-item targets on ②"
    }
   ]
  }
