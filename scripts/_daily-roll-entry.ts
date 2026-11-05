@@ -7,6 +7,7 @@ import type { PatchData } from "../src/services/craft-stage/engine";
 import { freshItem } from "../src/services/craft-stage/engine";
 import { modListFor } from "../src/services/craft-stage/mod-list";
 import { parseItemText } from "../src/services/simulator/paste/item-text";
+import { htcBaseInfo } from "../src/services/htc/patch";
 import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, floorAims, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
 import { boxCheck, fullMods } from "../src/views/daily/daily-check";
@@ -56,7 +57,10 @@ export function sampleModsOf(data: PatchData, it: FetchItem): Array<{ name: stri
   ];
   if (!lines.length) return null;
   const q = it.quality && it.quality_kind ? [`${plain(it.quality_kind)}: +${it.quality}% (augmented)`, "--------"] : [];
-  const text = ["Item Class: Unknown", "Rarity: Rare", "Daily Sample", it.base, "--------", ...q, `Item Level: ${it.ilvl ?? TOPIC_ILVL}`, "--------", ...lines, ...(it.corrupted ? ["--------", "Corrupted"] : [])].join("\n");
+  // 取った mods は明示だけ。印の無い文だと読みはベースの暗黙と同じ文の行 (サファイアの指輪の冷気耐性など) とその前を暗黙側に寄せるので、
+  // ベースの暗黙を (implicit) 付きで先に置き、印のある形として読ませる (11-05、取得の 3 件が MOD 0 で落ちていた)
+  const imp = (htcBaseInfo()[it.base]?.implicits ?? []).flatMap((im) => im.en.split("\n").map((l) => `${l} (implicit)`)); // 不在のアミュレットは 2 行で 1 つ
+  const text = ["Item Class: Unknown", "Rarity: Rare", "Daily Sample", it.base, "--------", ...q, `Item Level: ${it.ilvl ?? TOPIC_ILVL}`, "--------", ...(imp.length ? [...imp, "--------"] : []), ...lines,...(it.corrupted ? ["--------", "Corrupted"] : [])].join("\n");
   let r;
   try {
     r = parseItemText(data, text);
