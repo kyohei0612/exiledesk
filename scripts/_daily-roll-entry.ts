@@ -231,7 +231,7 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
     log.push(`締め ${inp.closing}: 挑戦 ${inp.tries.length}・解決 ${(close.results as Array<{ place: number | null }>).filter((r) => r.place).length}`);
   }
 
-  // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD の物だけ (前に通った物も見直す)
+  // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD 以上の物だけ (前に通った物も見直す)
   if (!inp.topics.some((t) => t.day === inp.target)) {
     const day = plan.find((p) => p.day === inp.target) ?? null;
     const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no) && fullMods(data, (JSON.parse(x.b.item) as { base: string }).base, x.aims));
