@@ -6,6 +6,9 @@
 import type { PatchData } from "../../services/craft-stage/engine";
 import { healRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import { runTree, withStartCost } from "../../services/simulator/tree/tree-run";
+import { aimOpts, sampleOf, targetsOf } from "../../services/simulator/tree/tree-sample";
+import { isAimMod } from "../../services/simulator/tree/tree-aim";
+import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { fillTopicDoc } from "./daily-aims";
 import type { GenAim } from "./daily-gen";
@@ -14,8 +17,22 @@ import type { GenAim } from "./daily-gen";
 export const RUN_N = 100;
 
 /**
+ * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーの解決は狙いを満たした品だけ。
+ * 箱の見本の品 (sampleOf) で見る。当たりの判定はシミュと同じ isAimMod (同じ系統・同じ文も当たり)
+ */
+export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
+  const opts = aimOpts(data);
+  return Object.values(doc.boxes).filter((b) => b.done === "main").filter((b) => {
+    let mods;
+    try { const it = sampleOf(data, doc, b.id, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return true; }
+    return !aims.every((a) => mods.some((m) => isAimMod(m, targetsOf(data, [a]), opts)));
+  }).map((b) => b.id);
+}
+
+/**
  * 提出の木 (exiledesk-recipe/1 の JSON) をお題の形で組み直して 100 人回す。price は相場のまま (高貴建て、priceOfKey の値) を渡し、ここで神に直す (use-tree-run.ts の runPrice と同じ)。
- * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。ベースが違う・フラクチャーが無い木は null
+ * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
+ * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
 export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
@@ -24,6 +41,7 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   if (doc.base !== topic.base || !frac || !topic.aims.some((a) => a.modId === frac)) return null;
   doc.itemLevel = topic.ilvl;
   fillTopicDoc(doc, topic.aims, frac, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
+  if (unmetDone(data, doc, topic.aims).length) return null;
   const div = price("divine") || 1, memo = new Map<string, number>();
   const p = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = price(k) / div; memo.set(k, v); } return v; };
   const r = withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: p, startCost: 0 }), 0);
