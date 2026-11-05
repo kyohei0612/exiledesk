@@ -6,7 +6,7 @@
  * その下の箱 = 道 (始まり → 親の手の並び) だけで決める (S-74。前の「回して着いた人」tree-arrived は 10-30 R5 で外し、11-02 にファイルも消した)。親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimDone, aimHits as hits, applyCurrency, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../simulator/sim-engine";
 import { pathKeyOf } from "./tree-recipe-v1";
 import { docPartOf, itemKeyOf, pathKeyOfBox, type PathLink } from "./tree-sample-key";
@@ -128,17 +128,13 @@ const VOID_RETRIES = 200;
  */
 export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false): StageApply {
   if (h.repeat) {
-    // カオススパム = まとめた設定 (10-25 オーナー・ブラック): 狙いの側に空きがあれば高貴を 1 回 → カオス (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり。
+    // カオススパム = その手 (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり (S-25a、エミュと同じ。前の「空きがあれば先に高貴を 1 回」は 11-05 オーナーで外した)。
     // 1 手ずつはエンジンの applyCurrency (applyHand)、当たりはエンジンの aimDone。ツリーの物は繰り返す順番だけ (スパムシミュは使わない、オーナー「あっちはカオスオーブ全部打つ仕組み」)
     const cap = h.repeat.max ?? SPAM_CAP;
     const open = targetsOf(data, aims).filter((t) => !aimDone(item, [t]));
     const done = (x: StageItem): boolean => open.some((t) => aimDone(x, [t]));
     let r: StageApply = { applied: false, item, added: [], removed: [] };
     let it = item;
-    if (aims.some((a, i) => !aimDone(item, [targetsOf(data, aims)[i]!]) && room(it, sideOfMod(data, a.modId)))) {
-      const e = playHand(data, it, { ...h, currency: "exalt", omens: [], catalyst: null, repeat: null }, rng, aims, use, miss);
-      if (e.applied) { it = e.item; r = { ...e, applied: true }; if (done(it)) return r; }
-    }
     for (let i = 0; i < cap; i++) {
       const c = playHand(data, it, { ...h, repeat: null }, rng, aims, use, miss);
       if (!c.applied) return it !== item ? { ...c, applied: true, item: it } : c;
