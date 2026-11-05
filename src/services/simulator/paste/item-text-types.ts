@@ -141,7 +141,7 @@ export interface ItemTextResult {
   /** そのほかの状態の行 (Mirrored・Fractured Item・Unidentified・Sanctified …、貼り付けのまま) */
   flags: string[];
   /** ソケットの数 (`Sockets:` の行が無ければ null) と差したルーンの文 (`(rune)` の注記の物) */
-  sockets: { count: number | null; runes: string[] };
+  sockets: { count: number | null; runes: string[]; /** runes の行から戻した差していた物の英語名 (S-08e、スイッチ pasteAll) */ names?: string[] };
   /** ベースの付与スキル (`Grants Skill:` / `スキルを付与:`) */
   grants: string[];
   /** 武器・防具の基本値などの属性の行 (読むだけ、貼り付けのまま) */

@@ -57,7 +57,7 @@ function importPaste(text: string): void {
   const r = parseItemText(data, text);
   if (!r.base) return;
   // 読み方 (ジン部長の parseItemText の readings。無ければ mods の 1 通り)。先頭 = 一番もっともらしい読み
-  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }], null, r.quality ? { value: r.quality.value, tag: r.quality.tag ?? null } : null);
+  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }], null, r.quality ? { value: r.quality.value, tag: r.quality.tag ?? null } : null, r.sockets.names ?? []);
   track("sim:paste");
 }
 
@@ -100,7 +100,7 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   t.needBase.value = false;
   // 新しく取り込んだ完成形は、フラクチャーの設定をまだ答えていない扱い (スイッチ fracFirst)
   t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; delete d.fracAsked; });
-  // エミュで嵌めていたルーンはソケットの順で使用ルーンへ (S-31g、スイッチ useRunes)。貼り付けは無し
+  // エミュで嵌めていたルーンはソケットの順で使用ルーンへ (S-31g、スイッチ useRunes)。貼り付けは文のルーンの行から戻した名前 (S-08e、スイッチ pasteAll)
   t.edit((d) => { if (runes.length && flag("useRunes")) d.goalRunes = runes.slice(0, GOAL_RUNE_MAX); else delete d.goalRunes; });
   const g = t.goalItem.value?.item;
   t.edit((d) => {
@@ -131,8 +131,9 @@ function aimsOfReading(rd: ItemTextReading): { aims: Aim[]; bad: Array<{ line: s
     if (!known.has(`${m.modId}|${tier}`)) { bad.push({ line: m.text, why: tr("完成の MOD の表に無い", "Not in the final-mod table") }); continue; }
     if (aims.some((a) => a.modId === m.modId)) continue;
     // スイッチ pasteLoose: 枠 (プレ・サフィの数) では削らず、完成形の表で足す時と同じ断り (S-08d、11-05 オーナー「シミュに入れたら減らされるんだよな」)
+    // スイッチ pasteAll: 付いている MOD はシミュで作れないので断らず全部 (S-08e、11-05 オーナー「ついてるMODそのまま付与しないと」)
     const have = aims.map((a) => ({ modId: a.modId, tier: a.tier }));
-    const why = flag("pasteLoose") ? goalBlockLoose(data, t.doc.value.base, lv, have, { modId: m.modId, tier }, false) : goalBlock(data, t.doc.value.base, lv, have, { modId: m.modId, tier });
+    const why = flag("pasteAll") ? null : flag("pasteLoose") ? goalBlockLoose(data, t.doc.value.base, lv, have, { modId: m.modId, tier }, false) : goalBlock(data, t.doc.value.base, lv, have, { modId: m.modId, tier });
     if (why) { bad.push({ line: m.text, why }); continue; }
     // 冒涜の MOD はフラクチャーできない (完成形の窓と同じ)。印は付けず狙いだけ
     // 貼った素の値も持つ (完成形のカードにそのまま出す、use-tree の goalItem)

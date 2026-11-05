@@ -25,6 +25,7 @@ import type { StageItem } from "../../craft-stage/types";
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
 import { solveLines, splitSums, type SolveLine, type Solution } from "./item-text-solve";
+import { readRuneSockets } from "./item-text-runes";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   noBase: { ja: "ベースが分からない (MOD の置き場が決まらない)", en: "Unknown base type (the mod pool cannot be chosen)" },
@@ -176,8 +177,8 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   }
   out.cls = htcBaseInfo()[out.base.en]?.cls ?? classOfBase(data, out.base.en)?.id ?? null;
   out.count.limit = sideLimits(data, out.base.en);
-
   const explicit = splitImplicits(data, out, body, grantAt);
+  readRuneSockets(data, out); // ルーンの行から差していた物の名前と、その込みの枠 (S-08e、セールの凱旋 = サフィ +1)
   readMods(data, out, explicit);
   for (const u of unrevealed) {
     out.mods.push({ text: u.line, modId: null, source: "desecrated", side: u.side, sideFrom: "paste", tier: null, values: [], shownValues: [], boosts: [], fractured: false, desecrated: true, crafted: false, unrevealed: true });
