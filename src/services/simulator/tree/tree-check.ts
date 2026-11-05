@@ -178,7 +178,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   // 1a) 固定された外れ MOD (フラクチャーで外れが固定された・始めから固定の外れ) で、その側の完成の狙いが枠に入りきらない = この枝は完成できない
   // (10-27 夜オーナー、カマサのティアラの「外れ MOD が固定された」の箱。スイッチ tidyUnder)。固定は消せないので、レアの枠 − 固定の外れ < その側の狙いの数なら届かない。枝の一番上の箱だけに出す
   {
-    const ts = targetsOf(data, aims), opts = aimOpts(data), stuckFix = new Set<string>();
+    // 完成の狙いの印の ✦ (フラクチャー済みからの始まり) は外れでない。aims には当たりの箱の札しか無く、印の ✦ を固定の外れと数えた (11-05 8 MOD ワンド)
+    const ts = targetsOf(data, [...aims, ...fractureMarks(doc)]), opts = aimOpts(data), stuckFix = new Set<string>();
     for (const b of boxes) {
       if (b.parent && stuckFix.has(b.parent)) { stuckFix.add(b.id); continue; }
       if (b.done) continue;
