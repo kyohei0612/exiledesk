@@ -6,6 +6,7 @@
  * その下の箱 = 道 (始まり → 親の手の並び) だけで決める (S-74。前の「回して着いた人」tree-arrived は 10-30 R5 で外し、11-02 にファイルも消した)。親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった結果の箱は作れない印 (note) を返す (指名で付けて作らない)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
+import { keepsMods } from "./tree-foresee";
 import { aimDone, aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, mulberry32, OMEN_FOR, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart } from "../../simulator/sim-engine";
 import { pathKeyOf } from "./tree-recipe-v1";
@@ -266,6 +267,8 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   // ヒネコラのハズレ (打たない、S-39) の箱の見本は親の見本のまま (手を使わない)
   if (!p.hand || b.seen) return base;
   const aims = aimsOf(doc);
+  // MOD を変えない手 (神・ヒネコラ、S-39) は親の見本に打つだけ (引き直さない。引き直すと中身の組が親とずれ、神の後のヒネコラが前のヒネコラの箱へ戻れなかった、11-06 オーナー「普通にループしない」)
+  if (!p.hand.repeat && keepsMods(data, base.item, p.hand.currency, p.hand.omens)) return sampleFrom(data, doc, b, p, base, seed, boxId, aims);
   // 当たりの箱の狙いを親の見本がもう持っている (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) 時は、
   // 持っていない親の見本を引き直す (付け直せず親の見本のまま「アーマーだけ」が出た、10-27 夜モンキー 2 回目 1。スイッチ hitNew)
   // 引き直しは一番下の箱の 1 回だけ (親をたどる中でも引き直すと、深い木で数が掛け算になりページが固まった)
@@ -309,6 +312,8 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand || b.seen) return base;
   const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
+  // MOD を変えない手 (神・ヒネコラ、S-39): 親の見本に 1 回打つだけ、作れなかった見本の印 (note) も親のまま = 中身の組が親と同じ (同じ手の戻り S-51 で前の箱へ戻れる)
+  if (!p.hand.repeat && keepsMods(data, base.item, p.hand.currency, p.hand.omens)) { const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims)); if (r.applied) return { item: r.item, note: base.note }; }
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)

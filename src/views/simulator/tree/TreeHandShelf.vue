@@ -41,7 +41,7 @@ import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
 import { flag } from "../../../web/release-flags";
-import { foreseeBlock } from "../../../services/simulator/tree/tree-foresee";
+import { foreseeBlock, keepsMods } from "../../../services/simulator/tree/tree-foresee";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -202,6 +202,10 @@ async function showOmens(): Promise<void> {
 watch(held, (k) => { if (k && phone.value) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
+/** MOD が付かない・消えない・入れ替わらない手 (神・ヒネコラなど、エンジンで決める tree-foresee の keepsMods): 狙いの ☑ はグレーアウト、狙い無しだけ (11-06 オーナー「狙い無しのみ表示でこのさいグレーアウトさせちゃっていいよ」) */
+const noMod = computed(() => { const d = s.data.value, it = shelfItem.value, h = held.value; return !!d && !!it && !!h && keepsMods(d, it, h, omens.value); });
+watch(noMod, (v) => { if (v) checked.value = []; }, { immediate: true });
+const noModTitle = (): string => tr("この手は MOD を付けない・消さない・入れ替えない (狙い無しだけ)", "This craft adds, removes and swaps no mods (no target only)");
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = computed(() => canFree.value || (isInfinite.value && aimChoices.value.length > 0));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
@@ -359,9 +363,10 @@ function ok(): void {
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
+        <span v-else-if="noMod" data-tree-hand-nomod class="opacity-80">{{ noModTitle() }}</span>
         <span v-else class="opacity-80">{{ tr("狙う MOD (☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (one hit box per ☑ mod; any one landing is a hit)") }}</span>
-        <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
-          <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
+        <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 items-center gap-2" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'" :title="noMod ? noModTitle() : undefined">
+          <input type="checkbox" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
         <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
@@ -419,10 +424,10 @@ function ok(): void {
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
           <p class="break-words text-[12px] text-sim-dim">{{ hand ? handLabel(hand) : handName(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("当たりにする MOD", "Mods that count as a hit") }}</h2>
-          <p class="mt-1 break-words text-[12px] text-sim-dim">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
+          <p class="mt-1 break-words text-[12px] text-sim-dim">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : noMod ? noModTitle() : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
           <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
-            <label v-for="a in pagedAims" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
-              <input type="checkbox" class="size-5 shrink-0" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
+            <label v-for="a in pagedAims" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'">
+              <input type="checkbox" class="size-5 shrink-0" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
             </label>
             <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
             <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">

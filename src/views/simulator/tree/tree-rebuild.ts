@@ -104,6 +104,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   const added = left ? yield* arrivedSteps(data, d) : [];
   yield* replay(added);
   if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  if (added.length) for (const id of Object.keys(d.boxes)) foldMisses(d, id); // ↩ で着く人の結果の箱もハズレへ (S-39)
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)

@@ -6,8 +6,32 @@
  * ハズレの人は手を使わず (費用も無し)、持つ前のアイテムのまま、ハズレ箱の手 (別のカレンシー) か ↩ へ (見本は tree-sample、回すのは tree-run)
  */
 import type { TreeDoc } from "./tree-model";
+import { applyCurrency, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { DEV_BUILD } from "../../../web/release-flags";
+
+/** MOD の並び (MOD・側・✦・未発現・冒涜とレアリティ。値は見ない) */
+const modsOf = (it: StageItem): string => `${it.rarity}|${[...it.prefixes, ...it.suffixes].map((m) => `${m.modId}.${m.fractured ? 1 : 0}${m.unrevealed ? 1 : 0}${m.desecrated ? 1 : 0}`).join(",")}`;
+const KEEPS = new Map<string, boolean>();
+/**
+ * MOD が付かない・消えない・入れ替わらない手か (神のオーブ・ヒネコラなど)。エンジンの applyCurrency で何度か打って MOD の並びが変わらないかで決める
+ * (木だけの決めにしない。11-05 オーナー「MODがつかない消えない変わらない奴に狙いMOD等の選択肢が入ることが間違い」)。手ごとに最初のアイテムで 1 回だけ決めて覚える
+ */
+export function keepsMods(data: PatchData, item: StageItem, currency: string, omens: readonly string[] = []): boolean {
+  const k = `${currency}|${[...omens].sort().join("+")}`, hit = KEEPS.get(k);
+  if (hit !== undefined) return hit;
+  const before = modsOf(item);
+  let applied = 0, same = true;
+  for (let i = 0; i < 6 && same; i++) {
+    const r = applyCurrency(data, item, currency, mulberry32(0x1e5 + i * 7919), omens);
+    if (!r.applied) continue;
+    applied++;
+    same = modsOf(r.item) === before;
+  }
+  if (!applied) return false; // 打てないアイテムでは決めない (覚えない)
+  KEEPS.set(k, same);
+  return same;
+}
 
 /** 開発版だけ (オーナーの OK の後に本番へ出す時はデザイン部に release-flags のスイッチを頼む。棚のヒネコラ・予見したアイテムの棚の絞り、紫の枠、ハズレのまとめがこれを見る) */
 export const FORESEE_ON = DEV_BUILD;
