@@ -40,10 +40,10 @@ export const chosenMod = (d: PatchData, m: StageMod): boolean => !m.unrevealed &
 export const boxTagsOf = (d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): Map<string, RowTag> => { const b = doc.boxes[boxId]; return treeRowTags(d, doc, b?.unwanted ?? [], it, b); };
 /** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
 const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length;
-export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {
+export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null, markId?: string): Map<string, RowTag> {
   // ルーンの手の「打った後」の箱は親の箱と同じ見方 (ルーンは接頭・接尾の MOD を変えない。外れの側に数えると、親で狙いのエッセンスの MOD が「外れ MOD」と出た、S-31e。スイッチ runeHand)
   const up = box?.id && box.out === "any" ? doc.boxes[doc.boxes[box.id]?.parent ?? ""] : null;
-  if (up && up.hand && isRuneHand(up.hand.currency)) return treeRowTags(d, doc, unwanted, it, { id: up.id, out: up.out, anyOf: up.anyOf, hand: up.hand });
+  if (up && up.hand && isRuneHand(up.hand.currency)) return treeRowTags(d, doc, unwanted, it, { id: up.id, out: up.out, anyOf: up.anyOf, hand: up.hand }, box.id);
   const out = new Map<string, RowTag>();
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
   // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない)
@@ -71,7 +71,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD)
   const ownAim = box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
   // 当たりの箱も見本の ☑ で付いた狙いだけを狙い (S-22・S-60)。前は完成形の狙い全部を数え、☑ していない投射物ダメージがフラクチャーの当たりの箱で狙いの名前になった (11-05 動画の木 b11)
-  const hitAm = box?.id && box.out === "hit" ? aimedOfCard(d, doc, box.id, it) : null;
+  // ルーンの手の後の箱は親の箱の見方を借りるが、☑ の印はその箱の見本で引く (markId。親の id では見本が違い引けず、狙い全部に戻った)
+  const hitAm = box?.id && box.out === "hit" ? aimedOfCard(d, doc, markId ?? box.id, it) : null;
   const hitHeld = hitAm ? (doc.memoAims ?? []).filter((g) => hitAm.has(g.modId)) : null;
   // 以降の箱でも見本に付いている置き石は狙い (S-33)
   const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, box.id!, it)?.has(a.modId)) : [];
