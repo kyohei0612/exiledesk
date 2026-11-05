@@ -43,7 +43,7 @@ const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.cur
 export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null, markId?: string): Map<string, RowTag> {
   // ルーンの手の「打った後」の箱は親の箱と同じ見方 (ルーンは接頭・接尾の MOD を変えない。外れの側に数えると、親で狙いのエッセンスの MOD が「外れ MOD」と出た、S-31e。スイッチ runeHand)
   const up = box?.id && box.out === "any" ? doc.boxes[doc.boxes[box.id]?.parent ?? ""] : null;
-  if (up && up.hand && isRuneHand(up.hand.currency)) return treeRowTags(d, doc, unwanted, it, { id: up.id, out: up.out, anyOf: up.anyOf, hand: up.hand }, box.id);
+  if (up && up.hand && isRuneHand(up.hand.currency)) return treeRowTags(d, doc, unwanted, it, { id: up.id, out: up.out, anyOf: up.anyOf, hand: up.hand }, box?.id);
   const out = new Map<string, RowTag>();
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
   // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない)
