@@ -184,7 +184,7 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
-  if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); memoSig = ""; memoData = data; }
+  if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); okMemo.clear(); memoSig = ""; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
 /** 覚えた見本 (木の中身の鍵が変わったら全部捨てる。treeLight は holdDocSig の間の早道だけ) */
@@ -205,9 +205,8 @@ export function holdDocSig<T>(doc: TreeDoc, fn: () => T, lazy = false): T {
 export const docHeld = (doc: TreeDoc): number => (heldDoc === doc ? holdNo : 0);
 /** 道の鍵で覚えた見本 (鍵 = 見本に効く物全部なので、木が変わっても残してよい。増えすぎたら捨てて作り直す = 結果は同じ) */
 const pathMemo = new Map<string, Sample>();
-/** 打っても作れなかった見本 (鍵 = 道・親の見本・☑ → 印)。起きない結果の箱を手のたびに打ち直していた (100 箱で 1 手 24 万回、S-71b) */
-const failMemo = new Map<string, string>();
-const PATH_MEMO_MAX = 20000;
+/** 打っても作れなかった見本 (鍵 = 道・親の見本・☑ → 印)。起きない結果の箱を手のたびに打ち直していた (100 箱で 1 手 24 万回、S-71b)。作れた見本も同じ鍵で (okMemo。↩ で着く人の形 arrivalsOf の打ち直しが組み直しの 8〜9 割だった、11-06) */
+const failMemo = new Map<string, string>(), okMemo = new Map<string, StageItem>(), PATH_MEMO_MAX = 20000;
 /** 全部消えてよい消去の道の箱に効く木全体の鍵の番号 (長い文字を見本ごとの鍵に入れるとその JSON だけで 3 秒を超えた。番号は使い回さない) */
 const sigNos = new Map<string, number>();
 let sigSeq = 0;
@@ -223,7 +222,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (!r) {
     // 見本を作る間は木が変わらないので鍵は 1 回だけ (描画の箱ごとの見本で木全体の JSON が 10 秒を超えた、☑ の手)
     r = holdDocSig(doc, () => sampleRaw(data, doc, boxId, seed), true);
-    if (pathMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); failMemo.clear(); sigNos.clear(); }
+    if (pathMemo.size >= PATH_MEMO_MAX || okMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); failMemo.clear(); okMemo.clear(); sigNos.clear(); }
     pathMemo.set(pk, r);
   }
   if (fast) memo.set(k, r);
@@ -317,7 +316,6 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
-  let loose: Sample | null = null;
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
   let held: ReadonlySet<string> | undefined;
   const aimedNow = (): ReadonlySet<string> | undefined => (held ??= aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed));
@@ -326,6 +324,8 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
+  const had = okMemo.get(fk), got = (item: StageItem): Sample => { okMemo.set(fk, item); return { item, note: null }; };
+  if (had) return { item: had, note: null };
   for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims));
     if (!r.applied) { last = r; break; }
@@ -334,7 +334,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims, aimedNow());
     // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
     if (p.hand.repeat && o.out !== "hit") break;
-    if (b.out === "pass") return { item: r.item, note: null };
+    if (b.out === "pass") return got(r.item);
     if (b.out !== "any" && o.out !== b.out && !b.mergedOuts?.includes(o.out)) continue;
     if (b.out === "any" && o.out === "lost") continue; // 打った後の箱の見本に狙いが消えた結果を入れない (中身が混ざった、S-71g)
     if (b.junkKey && o.junkKey !== b.junkKey) continue; // 外れの枝の鍵 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
@@ -342,9 +342,8 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;
-    return { item: r.item, note: null };
+    return got(r.item);
   }
-  if (loose) return loose;
   const remember = (note: string): Sample => { if (fk) failMemo.set(fk, note); return { item: base.item, note }; };
   if (last && !last.applied) return remember(`cant:${last.reason ?? ""}`);
   // boxShape: 狙いを手で付ける (forceKey) のはやめる。手で付けるのはエミュの「付ける」の親切 (マジックの埋まった側ならレアにして付ける) で、エンジンの手の結果ではない
