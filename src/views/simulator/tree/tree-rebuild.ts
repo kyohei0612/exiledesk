@@ -95,12 +95,12 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
     if (added.length) { yield* drain(); flushBacks(); }
   }
-  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
+  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d);
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
   const left = !stepped || [...picks.keys()].some((k) => !used.has(k));
   const added = left ? yield* arrivedSteps(data, d) : [];
   yield* replay(added);
-  if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
+  if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d); }
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
@@ -207,6 +207,22 @@ function mergeIntoDecided(data: PatchData, d: TreeDoc, decided: readonly string[
   }
 }
 const OPEN: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost"]);
+/**
+ * 組み直しの最後に、決めも ↩ も無い外れの道の箱を、同じ段・同じ中身で人の ↩ を持つ箱へまとめる (S-105、その箱の ↩ の先へ行く)。
+ * 組んだ時はハズレ整理で先にまとめてから人が ↩ を付けるが、まとめは保存しない (S-104)。組み直しは手を打つたびに同じ枠探しで ↩ が先に付き、
+ * まとめ先 (↩ の無い箱だけ、tree-merge-open) が無くなって「未設定」が残った (11-05 8 MOD ワンドの共有 URL、b31)
+ */
+function mergeIntoBacked(data: PatchData, d: TreeDoc): void {
+  const j = judgeMemo(data, d), depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+  const seq = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? 0), rank = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
+  for (const l of Object.values(d.boxes)) {
+    if (!junkPath(l) || l.hand || l.back || l.done || l.split || l.noAutoBack) continue;
+    const to = Object.values(d.boxes)
+      .filter((x) => x.id !== l.id && OPEN.has(x.out) && !x.hand && !x.done && !x.split && !!x.back && !x.autoBack && depth(x.id) === depth(l.id) && rank(x.junkKey) === rank(l.junkKey) && j.fitsBox(l.id, x.id))
+      .sort((x, y) => seq(x.id) - seq(y.id))[0];
+    if (to) { l.back = to.id; l.autoBack = true; l.merged = true; }
+  }
+}
 /**
  * 組み直した後も決めも ↩ も無い箱は、見本の中身が全部同じ 1 つの箱 (手か完成 / 失敗のある箱、浅い段から) の中身に入るならその箱へ自動の ↩ (S-107 ②)。
  * 前の木に無かった結果の箱 (今の決まりで増えた結果) に着く人は、前の版では回すと「同じ状態の箱へ」移って進んでいた (10-29 共有の木 ibMlQuAV の b22・b24)
