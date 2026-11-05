@@ -51,5 +51,5 @@ export const seenTo = (doc: TreeDoc, id: string): string => { const b = doc.boxe
 /** ハズレ箱で、予見で見た手と同じカレンシーを持った時の理由 (予見の結果は決まっているので、使っても見た結果と同じ。木では別の乱数になるので持たせない) */
 export function foreseeBlock(doc: TreeDoc, id: string, key: string): string | null {
   const b = doc.boxes[id], h = b?.seen && b.parent ? doc.boxes[b.parent]?.hand : null;
-  return h?.currency === key ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシーか ↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency or return to before Hinekora") : null;
+  return h?.currency === key ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシー・神のオーブ・↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency, a Divine Orb, or return to before Hinekora") : null;
 }
