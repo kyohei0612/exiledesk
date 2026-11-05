@@ -52,8 +52,7 @@ const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined): st
 /** 箱 boxId に着いた時の ☑ (prev = 着く前、item = 着いた時のアイテム、before = 打つ前のアイテム。打たずに着いた時は無し) */
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem, before?: StageItem | null): ReadonlySet<string> {
   const b = doc.boxes[boxId];
-  // 予見で見ただけ (打たない、S-39) の箱は手を使わないので印も前のまま
-  if (!b || b.seen) return prev;
+  if (!b) return prev;
   // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d)
   const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)

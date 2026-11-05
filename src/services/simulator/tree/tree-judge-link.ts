@@ -88,8 +88,7 @@ export function sameHandByContent(doc: TreeDoc, id: string, h: Hand, j: Judge): 
 export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
   let changed = false;
   for (const b of Object.values(doc.boxes)) {
-    // 予見の枠の使わない行 (S-39) のまとめは中身で見直さない (tree-foresee の regroupSeen)
-    if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
+    if (!b.autoBack || !b.back || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
     if (j.fitsBox(b.id, b.back)) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;

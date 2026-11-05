@@ -14,8 +14,7 @@ import { placedAims } from "./tree-veil";
 const skipPos = (k: string, v: unknown): unknown => (k === "x" || k === "y" || k === "note" ? undefined : v);
 /** 兄弟の札 (手の当たりの札 handAims・結果の分け方 own・見本の種 pathKeyOf がここを見る) */
 // 箱の番号は見本に効かない (種は道の札 pathKeyOf)。手を変えると番号が振り直されて覚えが全部外れていたので入れない (S-71b ⑬)
-// 予見で見ただけ (S-39) の箱は見本が親のまま = 札に入れる (無い箱は前と同じ鍵)
-export const tagOf = (x: TreeBox): unknown[] => [x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts, ...(x.seen ? ["seen"] : [])];
+export const tagOf = (x: TreeBox): unknown[] => [x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts];
 /** 箱の段の文字: self = 箱自身の札と兄弟、chain = 手・分かれ目まで入れて始まりまで続けた物、strip = ここまでの道に全部消えてよい消去がある */
 export interface PathLink { self: string; chain: string; strip: boolean }
 const NO_LINK: PathLink = { self: "", chain: "", strip: false };

@@ -263,8 +263,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
     }
     return base;
   }
-  // 予見で見ただけ (打たない、S-39) の箱の見本は親の見本のまま (手を使わない)
-  if (!p.hand || b.seen) return base;
+  if (!p.hand) return base;
   const aims = aimsOf(doc);
   // 当たりの箱の狙いを親の見本がもう持っている (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) 時は、
   // 持っていない親の見本を引き直す (付け直せず親の見本のまま「アーマーだけ」が出た、10-27 夜モンキー 2 回目 1。スイッチ hitNew)
@@ -307,7 +306,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 }
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
-  if (!p.hand || b.seen) return base;
+  if (!p.hand) return base;
   const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)

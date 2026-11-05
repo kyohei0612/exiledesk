@@ -16,7 +16,7 @@ const props = defineProps<{ boxId: string; current: Hand | null }>();
 const t = useTree();
 /** 予見の枠の箱では手は「持つ」(S-39、11-05 オーナー「ヒネコラ後は打つじゃなくて持つになる」) */
 const hold = computed(() => holdsAt(t.doc.value, props.boxId));
-const title = computed(() => (hold.value ? (props.current ? tr("持つ手を替える (予見の枠)", "Change the held craft (foresight)") : tr("次に持つ手 (予見の枠・まだ使わない)", "Next craft to hold (foresight, not used yet)")) : props.current ? tr("打つ手を替える", "Change the craft") : tr("次に打つ手", "Next craft")));
+const title = computed(() => (hold.value ? (props.current ? tr("持つ手を替える (予見)", "Change the held craft (foresight)") : tr("次に持つ手 (予見で結果が見える)", "Next craft to hold (result is foreseen)")) : props.current ? tr("打つ手を替える", "Change the craft") : tr("次に打つ手", "Next craft")));
 const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; aim: [] }>();
 </script>
 
