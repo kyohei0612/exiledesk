@@ -72,6 +72,8 @@ const negative = (m: Mod): boolean => m.tiers.length > 0 && m.tiers.every((t) =>
 function sourceCost(m: Mod, l: SolveLine): number | null {
   const src = String(m.source ?? "normal");
   const ess = /essence|alloy/.test(src), des = src === "desecrated";
+  // ルーンの池の MOD (S-08g) は一般の MOD で説明できない時だけ
+  if (m.rune) return l.tradeTier === 0 || l.note === "crafted" || l.note === "desecrated" ? null : 3;
   if (l.tradeTier === 0) return ess ? 0 : des ? 1 : null;
   if (l.note === "crafted") return ess ? 0 : null;
   if (l.note === "desecrated") return des ? 0 : ess ? null : 1;

@@ -26,7 +26,7 @@ import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
 import { solveLines, splitSums, tierOf, type SolveLine, type Solution } from "./item-text-solve";
 import { SANCTIFY_MAX, SANCTIFY_MIN } from "../../craft-stage/stage-tuning";
-import { readRuneSockets } from "./item-text-runes";
+import { addPoolRunes, readRuneSockets, runePoolMods } from "./item-text-runes";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   noBase: { ja: "ベースが分からない (MOD の置き場が決まらない)", en: "Unknown base type (the mod pool cannot be chosen)" },
@@ -181,6 +181,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   const explicit = splitImplicits(data, out, body, grantAt);
   readRuneSockets(data, out); // ルーンの行から差していた物の名前と、その込みの枠 (S-08e、セールの凱旋 = サフィ +1)
   readMods(data, out, explicit);
+  addPoolRunes(data, out); // ルーンの池の MOD を読んだら、そのルーンも差していた物に (S-08g)
   for (const u of unrevealed) {
     out.mods.push({ text: u.line, modId: null, source: "desecrated", side: u.side, sideFrom: "paste", tier: null, values: [], shownValues: [], boosts: [], fractured: false, desecrated: true, crafted: false, unrevealed: true });
   }
@@ -365,7 +366,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   for (const p of free) poolIds.add(p.mod.id);
   // エッセンス・合金・冒涜の MOD は置き場の池に無い物もある (クラスの表で付く、見本 n1 の火耐性 34% (crafted))。同じクラスの普通でない MOD も足す
   for (const m of data.mods.values()) if (modCls && m.id.startsWith(modCls + "/") && String(m.source ?? "normal") !== "normal") poolIds.add(m.id);
-  const pool = [...poolIds].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && !/\/Rune_/.test(m.id) && (m.type === "prefix" || m.type === "suffix"));
+  const pool = [...[...poolIds].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && !/\/Rune_/.test(m.id)), ...runePoolMods(data, out.base!.en)].filter((m) => m.type === "prefix" || m.type === "suffix");
   const linePct = (i: number, m: Mod): number => pctOf(boostsFor(m, free[i]!.b));
   const solveIn: SolveLine[] = free.map((p) => ({ stats: statsOf(p.mod), values: p.b.values, note: p.b.note, own: p.mod, ...(p.b.side ? { side: p.b.side } : {}), ...(p.b.tradeTier !== undefined ? { tradeTier: p.b.tradeTier } : {}) }));
   const sols = free.length ? solveLines({

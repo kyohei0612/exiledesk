@@ -6,9 +6,9 @@
  */
 import { classOfBase, itemBaseFor } from "../../htc/bridge";
 import { RUNES, runeCategoryOf, runeEffectFor } from "../../craft-stage/stage-runes";
-import { limitsWithRunes, runeIdByName } from "../../../vendor/poe2htc/engine/runes";
+import { limitsWithRunes, RUNE_BY_ID, runeIdByName } from "../../../vendor/poe2htc/engine/runes";
 import { DEFAULT_LIMITS } from "../../../vendor/poe2htc/engine/item";
-import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import { flag } from "../../../web/release-flags";
 import type { ItemTextImplicit, ItemTextResult } from "./item-text-types";
 
@@ -58,4 +58,25 @@ export function readRuneSockets(data: PatchData, out: ItemTextResult): void {
   if (!flag("pasteAll") || !out.base) return;
   out.sockets.names = runeNamesOf(data, out.base.en, out.implicits);
   out.count.limit = limitsOfRunes(data, out.base.en, out.sockets.names, out.count.limit);
+}
+
+/**
+ * ルーンの池の MOD (コルの狩りの手袋の投射物の速度など、そのルーンを差すと一般の置き場に入る物 = E-10a)。品にあればそのルーンを差している印なので、
+ * 読みの割り当ての候補に入れる (一般の MOD で説明できる時はそちらが先、item-text-solve の sourceCost)。スイッチ pasteAll (S-08g)
+ */
+export function runePoolMods(data: PatchData, base: string): Mod[] {
+  const cls = classOfBase(data, base);
+  if (!flag("pasteAll") || !cls?.pools.rune) return [];
+  return Object.values(cls.pools.rune).flatMap((p) => [...p.prefixes, ...p.suffixes]).flatMap((id) => { const m = data.mods.get(id); return m ? [m] : []; });
+}
+
+/** 読んだ MOD にルーンの池の物があれば、そのルーンを差していた物の名前に足す (S-08g、行から戻した名前に無い時だけ 1 個) */
+export function addPoolRunes(data: PatchData, out: ItemTextResult): void {
+  if (!flag("pasteAll")) return;
+  const names = out.sockets.names ?? [];
+  for (const m of out.mods) {
+    const name = RUNE_BY_ID.get(data.mods.get(m.modId ?? "")?.rune ?? "")?.name;
+    if (name && !names.includes(name)) names.push(name);
+  }
+  out.sockets.names = names;
 }
