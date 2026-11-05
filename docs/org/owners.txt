@@ -260,3 +260,6 @@ src/state/stage-session.ts           デザイン
 
 # 一時: WebApp.vue をデイリー部長 3 に (オーナー 11-05「a でおk」= 挑戦の広告の枠を外す D-61 と挑戦中の札 D-37g の 1 行だけ)。2 つ入ったらブラックがこの 2 行を消す
 src/web/WebApp.vue                   デイリー
+
+# 一時: release-flags.ts をシミュ部長 sim-paste に (S-08e のスイッチ pasteAll の 1 行だけ、ブラック 45 が 11-05 に)。入ったらブラックがこの 2 行を消す
+src/web/release-flags.ts             シミュ
