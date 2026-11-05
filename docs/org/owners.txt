@@ -260,3 +260,8 @@ src/state/stage-session.ts           デザイン
 
 # 一時: WebApp.vue をデイリー部長 3 に (オーナー 11-05「a でおk」= 挑戦の広告の枠を外す D-61 と挑戦中の札 D-37g の 1 行だけ)。2 つ入ったらブラックがこの 2 行を消す
 src/web/WebApp.vue                   デイリー
+# 一時: シミュ部長 sim-video-fix に Bonded (絆) の行の 4 つ (ブラック 45、11-05 オーナー「なおさせて」の 3 つの 1 つ)。入ったらブラックがこの 5 行を消す
+src/services/craft-stage/stage-runes.ts   シミュ
+src/services/craft-stage/engine.ts        シミュ
+src/components/for-share/item/StageItemCard.vue  シミュ
+**/rune-bonded.json                  シミュ
