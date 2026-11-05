@@ -9,7 +9,7 @@ import { modListFor } from "../src/services/craft-stage/mod-list";
 import { parseItemText } from "../src/services/simulator/paste/item-text";
 import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, floorAims, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
-import { boxCheck } from "../src/views/daily/daily-check";
+import { boxCheck, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
 import { runCost } from "../src/views/daily/daily-cost";
 import { marketStore } from "../src/state/market-store";
@@ -231,10 +231,10 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
     log.push(`締め ${inp.closing}: 挑戦 ${inp.tries.length}・解決 ${(close.results as Array<{ place: number | null }>).filter((r) => r.place).length}`);
   }
 
-  // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿
+  // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD の物だけ (前に通った物も見直す)
   if (!inp.topics.some((t) => t.day === inp.target)) {
     const day = plan.find((p) => p.day === inp.target) ?? null;
-    const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no));
+    const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no) && fullMods(data, (JSON.parse(x.b.item) as { base: string }).base, x.aims));
     const pick = box.find((x) => day && JSON.parse(x.b.item).base === day.base) ?? (box.length ? box[Math.abs(Math.imul(no, 2654435761)) % box.length]! : null);
     if (pick) {
       const it = JSON.parse(pick.b.item) as { base: string; ilvl: number };

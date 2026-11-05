@@ -10,6 +10,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
+import { fullMods } from "./daily-check";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyNick from "./DailyNick.vue";
 
@@ -21,7 +22,12 @@ const sent = ref<DailyBoxItem | null>(null);
 const asking = ref(false);
 
 const emu = computed(() => { const i = s.item.value; return i && i.prefixes.length + i.suffixes.length ? i : null; });
-const block = computed(() => (item.value ? postBlock(item.value) : null));
+/** 弾く訳 (D-14)。フル MOD でない品も送る前に止める (D-84、確かめの boxCheck と同じ fullMods) */
+const block = computed(() => {
+  const p = item.value, d = s.data.value;
+  if (!p) return null;
+  return postBlock(p) ?? (d && !fullMods(d, p.base, p.aims) ? tr("そのベースの MOD が全部埋まった品 (プレ・サフィとも上限まで) だけ投稿できる", "Only items with every mod slot of the base filled (prefixes and suffixes) can be posted") : null);
+});
 const useEmu = (): void => { const d = s.data.value; if (d && emu.value) { why.value = null; item.value = itemFromEmu(d, emu.value); } };
 function read(raw: string): void {
   const d = s.data.value;
@@ -53,7 +59,7 @@ const failText = (e: BoxError): string =>
     <button v-if="!sent" type="button" class="g-btn sm daily-post-back" data-daily-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     <template v-if="sent">
       <h2 class="g-brush daily-post-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
-      <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
+      <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "not-full" ? tr("そのベースの MOD が全部埋まった品 (プレ・サフィとも上限まで) だけ投稿できる。", "Only items with every mod slot of the base filled (prefixes and suffixes) can be posted.") : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
       <p v-else-if="sent.status === 'wait'" data-daily-post-wait class="mb-4 text-[15px]">{{ tr("16:00 に機械が確かめて、通れば箱のお題になる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "It's checked at 16:00 JST, and if it passes it becomes a challenge from the box. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "Posts in the box are used first for the 16:00 challenge. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <button type="button" class="g-btn" data-daily-post-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
