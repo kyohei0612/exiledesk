@@ -6,7 +6,7 @@
  */
 import { classOfBase, itemBaseFor } from "../../htc/bridge";
 import { RUNES, runeCategoryOf, runeEffectFor } from "../../craft-stage/stage-runes";
-import { limitsWithRunes, RUNE_BY_ID, runeIdByName } from "../../../vendor/poe2htc/engine/runes";
+import { limitsWithRunes, runeIdByName } from "../../../vendor/poe2htc/engine/runes";
 import { DEFAULT_LIMITS } from "../../../vendor/poe2htc/engine/item";
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import { flag } from "../../../web/release-flags";
@@ -75,7 +75,9 @@ export function addPoolRunes(data: PatchData, out: ItemTextResult): void {
   if (!flag("pasteAll")) return;
   const names = out.sockets.names ?? [];
   for (const m of out.mods) {
-    const name = RUNE_BY_ID.get(data.mods.get(m.modId ?? "")?.rune ?? "")?.name;
+    // 名前は使用ルーンの鍵 (stage-runes の英語名、「Kolr's Hunt」)。エンジンの名前は「’」なので id で引き直す (画面が今の言語の名前に直せるように)
+    const id = data.mods.get(m.modId ?? "")?.rune;
+    const name = id ? Object.keys(RUNES).find((en) => runeIdByName(en) === id) : undefined;
     if (name && !names.includes(name)) names.push(name);
   }
   out.sockets.names = names;
