@@ -12,6 +12,7 @@
 import type { Mod } from "../../../vendor/poe2htc/engine/types";
 import { familyBlocked, occupiedKeysOf } from "../../mods/mod-rules";
 import { tierDisplayRanges } from "../../mods/stat-scale";
+import { rawValue } from "../../htc/quality";
 
 export interface SolveLine {
   /** 能力値の id (MOD の tiers[].stats の並び。行の値と同じ数) */
@@ -54,6 +55,8 @@ export interface SolveCtx {
   levelOf: (m: Mod) => number;
   /** その行のその MOD に掛かる上乗せの % (品質・反対側の効果・ルーンの強さ) */
   pctOf: (line: number, m: Mod) => number;
+  /** その行に掛かりうる聖別の倍率の幅 (聖別の品の ✦ 以外の行は [0.78, 1.22]、無ければ [1, 1]。E-35) */
+  spreadOf?: (line: number) => readonly [number, number];
   /** MOD の能力値 (無ければ段の stats) */
   statsOf?: (m: Mod) => readonly string[];
 }
@@ -147,7 +150,7 @@ export function solveLines(ctx: SolveCtx): Solution[] {
   const sign = lines.map((_, i) => (cands[i]![0] && negative(cands[i]![0]!.mod) ? -1 : 1));
   const target = (i: number, k: number): number => sign[i]! * lines[i]!.values[k]!;
   // 上乗せのある行は表示が切り捨てなので、素の和は [表示, 表示 + 1) の帯
-  const boosted = lines.map((_, i) => cands[i]!.some((c) => ctx.pctOf(i, c.mod) > 0));
+  const boosted = lines.map((_, i) => cands[i]!.some((c) => ctx.pctOf(i, c.mod) > 0) || (ctx.spreadOf?.(i)[0] ?? 1) !== 1);
   const slack = (i: number): number => (boosted[i] ? 1 - 1e-9 : 0);
   const done = (i: number): boolean => lines[i]!.values.every((_, k) => {
     const v = target(i, k);
@@ -179,9 +182,11 @@ export function solveLines(ctx: SolveCtx): Solution[] {
     ms.forEach((s, j) => {
       const i = at[j]!, k = lines[i]!.stats.indexOf(s), r = ranges[j];
       if (k < 0 || !r) return;
-      const p = 1 + ctx.pctOf(i, mod) / 100;
-      lo[i]![k]! += dir * Number(r[0]) * p;
-      hi[i]![k]! += dir * Number(r[1]) * p;
+      const p = 1 + ctx.pctOf(i, mod) / 100, [s0, s1] = ctx.spreadOf?.(i) ?? [1, 1];
+      // 聖別は掛けてから丸める (整数は 0.5、小数は 0.005 の幅)
+      const h = s0 === 1 ? 0 : Number.isInteger(Number(r[0])) ? 0.5 : 0.005;
+      lo[i]![k]! += dir * (Math.min(Number(r[0]) * s0, Number(r[0]) * s1) - h) * p;
+      hi[i]![k]! += dir * (Math.max(Number(r[1]) * s0, Number(r[1]) * s1) + h) * p;
     });
     // 和の数え: 行ごとに MOD 1 つで 1 (値が 2 つの行「# から # の…」を 2 と数えない)
     for (const i of new Set(at)) contrib[i]! += dir;
@@ -264,4 +269,36 @@ export function solveLines(ctx: SolveCtx): Solution[] {
   dfs();
   const cmp = (a: Solution, b: Solution): number => { for (let k = 0; k < a.score.length; k++) if (a.score[k] !== b.score[k]) return a.score[k]! - b.score[k]!; return 0; };
   return found.sort(cmp).slice(0, KEEP);
+}
+
+/**
+ * 値が収まる段 (上から見て、帯が段の幅と重なる一番上)。pct > 0 なら表示は切り捨てなので素は [割り戻し(表示), 割り戻し(表示 + 1)) の帯。
+ * 聖別の品 (sp = 聖別の倍率の幅 [0.78, 1.22]、E-35) は素 = 表示を品質で割り戻して倍率で割った帯 (段の上限を超えた値も段に入る)。
+ * どこにも収まらなければ、その ilvl で出る一番上の段で fits = false (計算機の tierMatch / tierFallback と同じ選び方)
+ */
+export function tierOf(mod: Mod, shown: readonly number[], pct: number, level: number, sp: readonly [number, number] = [1, 1]): { index: number; fits: boolean } {
+  const up = pct > 0;
+  // 聖別は掛けてから丸めるので、品質で割り戻した値の ±0.5 (小数は ±0.005) を倍率で割る (apply-vaal.ts の scaled)
+  const h = (v: number): number => (sp[0] === 1 ? 0 : Number.isInteger(v) ? 0.5 : 0.005);
+  const ends = (v: number): number[] => {
+    const a = rawValue(v, pct) - h(v), b = (up ? rawValue(v + 1, pct) - 1e-9 : rawValue(v, pct)) + h(v);
+    return [a / sp[0], a / sp[1], b / sp[0], b / sp[1]];
+  };
+  const lo = shown.map((v) => Math.min(...ends(v)));
+  const hi = shown.map((v) => Math.max(...ends(v)));
+  for (let i = mod.tiers.length - 1; i >= 0; i--) {
+    const tier = mod.tiers[i]!;
+    if (tier.ilvl > level) continue;
+    const ranges = tierDisplayRanges(tier);
+    // 幅の無い段 (エッセンスの「+20% to Maximum Quality」のように値が文に入った物) は文の数字と比べる
+    if (ranges.length === 0) {
+      const nums = (mod.text ?? "").match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+      if (nums.length === shown.length && nums.every((n, k) => n === shown[k])) return { index: i, fits: true };
+      continue;
+    }
+    if (ranges.length !== lo.length) continue;
+    if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return { index: i, fits: true };
+  }
+  for (let i = mod.tiers.length - 1; i >= 0; i--) if ((mod.tiers[i]?.ilvl ?? 0) <= level) return { index: i, fits: false };
+  return { index: mod.tiers.length - 1, fits: false };
 }

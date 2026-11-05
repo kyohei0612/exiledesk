@@ -13,7 +13,7 @@ import { baseInText, baseOfLine, matchModLine, noteOfLine, stripMarkers, type Li
 import { targetsFor } from "../../htc/paste-targets";
 import { htcBaseInfo } from "../../htc/patch";
 import { classOfBase, sideLimits } from "../../htc/bridge";
-import { catalystTagFromLabel, rawValue } from "../../htc/quality";
+import { catalystTagFromLabel } from "../../htc/quality";
 import { matchKey } from "../../htc/bridge-index";
 import { tierDisplayRanges } from "../../mods/stat-scale";
 import { catalystBoosts, magnitudeTagOf } from "../../craft-stage/stage-core";
@@ -24,7 +24,8 @@ import { unboost } from "../../craft-stage/boosts";
 import type { StageItem } from "../../craft-stage/types";
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
-import { solveLines, splitSums, type SolveLine, type Solution } from "./item-text-solve";
+import { solveLines, splitSums, tierOf, type SolveLine, type Solution } from "./item-text-solve";
+import { SANCTIFY_MAX, SANCTIFY_MIN } from "../../craft-stage/stage-tuning";
 import { readRuneSockets } from "./item-text-runes";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
@@ -323,6 +324,8 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   }
 
   const level = out.itemLevel ?? 100;
+  // 聖別の品は ✦ 以外の MOD が 0.78〜1.22 倍 (E-35、段の上限を超える)。段は倍率の幅で引き、値は段の幅に収めて素とする (E-96)
+  const spread = (b: Body): [number, number] => (out.flags.includes("Sanctified") && b.note !== "fractured" ? [SANCTIFY_MIN / 100, SANCTIFY_MAX / 100] : [1, 1]);
   const stub = { base: out.base!.en } as StageItem;
   const sideEffect = (side: string): number => picked
     .filter((p) => p.mod.type !== side && p.mod.id.endsWith(side === "prefix" ? "PrefixEffect" : "SuffixEffect"))
@@ -347,7 +350,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const signed = (m: Mod, vs: readonly number[]): number[] => (m.tiers.length && m.tiers.every((t) => t.ranges.length > 0 && t.ranges.every(([, hi]) => hi <= 0)) ? vs.map((v) => (v > 0 ? -v : v)) : [...vs]);
   const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } =>
     // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
-    tierOf(m, signed(m, b.values), pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
+    tierOf(m, signed(m, b.values), pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level, spread(b));
   // 明示の行を池の MOD の組み合わせで説明する (ハイブリッド・同じ能力値の和、item-text-solve.ts)。値の数と能力値の数が合わない行・アルダーの行はそのまま
   type Entry = { b: Body; mod: Mod; fixed?: { index: number; fits: boolean }; solved?: { index: number; values: number[]; shown: number[]; summed: boolean; range?: Array<[number, number]>; guess?: boolean }; at: number };
   // 能力値 (段の stats)。エッセンスの MOD は stats を持たないので、同じクラスの同じ文の MOD から借りる
@@ -368,7 +371,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const sols = free.length ? solveLines({
     lines: solveIn,
     pool, fixed: rest.map((p) => p.mod), limit: out.count.limit,
-    levelOf: (m) => (/essence/.test(String(m.source)) ? Infinity : level), pctOf: linePct, statsOf,
+    levelOf: (m) => (/essence/.test(String(m.source)) ? Infinity : level), pctOf: linePct, statsOf, spreadOf: (i) => spread(free[i]!.b),
   }) : [];
   /** 割り当て 1 通り → 出す行の並び (2 行にまたがる MOD は「a / b」の 1 つ、和の行は MOD ごとに値を割る) と、MOD に数えなかった行 */
   const entriesOf = (sol: Solution): { list: Entry[]; skipped: ItemTextSkip[] } => {
@@ -417,6 +420,11 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     }
     if (readings.length > 1) out.readings = readings;
   }
+  /** 聖別の行の素の値は倍率が分からないので段の幅に収める */
+  function inTier(m: Mod, t: number, b: Body, vs: number[]): number[] {
+    const rs = spread(b)[0] !== 1 ? tierDisplayRanges(m.tiers[t]!) : [];
+    return vs.map((v, k) => (rs[k] ? Math.min(Math.max(v, Number(rs[k]![0])), Number(rs[k]![1])) : v));
+  }
   function emitOne(pk: Entry, into: ItemTextMod[]): void {
     const { b } = pk;
     const fixed = pk.fixed ?? (pk.solved ? { index: pk.solved.index, fits: true } : undefined);
@@ -454,7 +462,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     into.push({
       text: b.text, modId: mod.id, source: String(mod.source ?? "normal"), side, sideFrom: b.side ? "paste" : "engine",
       tier: { index, of: mod.tiers.length, label: `T${mod.tiers.length - index}`, name: String(mod.tiers[index]?.name ?? ""), fits },
-      values: pk.solved?.values ?? unboost(signed(mod, b.values), pctOf(boosts)), shownValues: pk.solved?.shown ?? [...b.values], boosts,
+      values: inTier(mod, index, b, pk.solved?.values ?? unboost(signed(mod, b.values), pctOf(boosts))), shownValues: pk.solved?.shown ?? [...b.values], boosts,
       ...(pk.solved?.summed ? { summed: true as const } : {}),
       ...(pk.solved?.range ? { valueRange: pk.solved.range } : {}),
       ...(pk.solved?.guess ? { guess: true as const } : {}),
@@ -465,30 +473,6 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       ...(b.tradeTier !== undefined ? { pasteTier: b.tradeTier } : {}),
     });
   }
-}
-
-/**
- * 値が収まる段 (上から見て、帯が段の幅と重なる一番上)。pct > 0 なら表示は切り捨てなので素は [割り戻し(表示), 割り戻し(表示 + 1)) の帯。
- * どこにも収まらなければ、その ilvl で出る一番上の段で fits = false (計算機の tierMatch / tierFallback と同じ選び方)
- */
-function tierOf(mod: Mod, shown: readonly number[], pct: number, level: number): { index: number; fits: boolean } {
-  const lo = pct > 0 ? shown.map((v) => rawValue(v, pct)) : shown;
-  const hi = pct > 0 ? shown.map((v) => rawValue(v + 1, pct) - 1e-9) : shown;
-  for (let i = mod.tiers.length - 1; i >= 0; i--) {
-    const tier = mod.tiers[i]!;
-    if (tier.ilvl > level) continue;
-    const ranges = tierDisplayRanges(tier);
-    // 幅の無い段 (エッセンスの「+20% to Maximum Quality」のように値が文に入った物) は文の数字と比べる
-    if (ranges.length === 0) {
-      const nums = (mod.text ?? "").match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
-      if (nums.length === shown.length && nums.every((n, k) => n === shown[k])) return { index: i, fits: true };
-      continue;
-    }
-    if (ranges.length !== lo.length) continue;
-    if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return { index: i, fits: true };
-  }
-  for (let i = mod.tiers.length - 1; i >= 0; i--) if ((mod.tiers[i]?.ilvl ?? 0) <= level) return { index: i, fits: false };
-  return { index: mod.tiers.length - 1, fits: false };
 }
 
 /** 1 行をそのクラスのコラプトの表 (エンジン部の mods/corruption.ts、poe2db) と照らす。無ければ unknown */
