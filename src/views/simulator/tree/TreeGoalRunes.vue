@@ -17,15 +17,20 @@ const t = useTree();
 const fresh = computed(() => (s.data.value ? freshItem(s.data.value, t.doc.value.base, t.doc.value.itemLevel, "rare") : null));
 /** ソケットの付く部位か (付かない部位では欄を出さない) */
 const cap = computed(() => (fresh.value ? socketCapOf(fresh.value.base, fresh.value.cls.category) : 0));
-/** 差せるルーン (始め方の窓 TreeStartPick と同じ選び方: 今のゲームに有るルーンのうち、このベースのレアに差せる物)。クラフトのルーンを先に */
+/**
+ * 差せるルーン・ソウルコア・アイドル (今のゲームに有る物のうち、このベースのレアに差せる物。差せるかはエンジンの applyCurrency)。クラフトのルーンを先に、ソウルコア・アイドルは後ろの節。
+ * 11-05 動画 G3pdLFAZxN0 の手袋の #17: 前はルーンだけで、シリウスのアイドルを入れられなかった (棚の手では差せる、S-31g)
+ */
 const choices = computed(() => {
   const d = s.data.value, it = fresh.value;
   if (!d || !it || !cap.value) return [];
-  return Object.entries(RUNES).filter(([en, r]) => r.kind === "rune" && r.available !== false && applyCurrency(d, { ...it, sockets: 1 }, `rune:${en}`, mulberry32(1)).applied)
-    .map(([en, rune]) => { const e = runeEffectFor(rune, it.cls.category); return { en, craft: CRAFT_RUNE_KEYS.includes(`rune:${en}`), name: nameOf({ en, ja: rune.ja }), effect: e ? tr(e.ja, e.en) : "" }; });
+  return Object.entries(RUNES).filter(([en, r]) => r.available !== false && applyCurrency(d, { ...it, sockets: 1 }, `rune:${en}`, mulberry32(1)).applied)
+    .map(([en, rune]) => { const e = runeEffectFor(rune, it.cls.category); return { en, kind: rune.kind, craft: CRAFT_RUNE_KEYS.includes(`rune:${en}`), name: nameOf({ en, ja: rune.ja }), effect: e ? tr(e.ja, e.en) : "" }; });
 });
 const craftChoices = computed(() => choices.value.filter((c) => c.craft));
-const otherChoices = computed(() => choices.value.filter((c) => !c.craft));
+const otherChoices = computed(() => choices.value.filter((c) => !c.craft && c.kind === "rune"));
+const coreChoices = computed(() => choices.value.filter((c) => !c.craft && c.kind === "soulcore"));
+const idolChoices = computed(() => choices.value.filter((c) => !c.craft && c.kind === "talisman"));
 const nameFor = (en: string): string => choices.value.find((c) => c.en === en)?.name ?? (RUNES[en] ? nameOf({ en, ja: RUNES[en]!.ja }) : en);
 const effectFor = (en: string): string => choices.value.find((c) => c.en === en)?.effect ?? "";
 const list = computed(() => t.doc.value.goalRunes ?? []);
@@ -44,6 +49,8 @@ const move = (i: number, by: -1 | 1): void => { const n = [...list.value], j = i
         <option value="">{{ tr("＋ ルーンを足す", "+ Add a rune") }}</option>
         <optgroup :label="tr('クラフトのルーン', 'Crafting runes')"><option v-for="r in craftChoices" :key="r.en" :value="r.en">{{ r.name }}{{ r.effect ? ` — ${r.effect}` : "" }}</option></optgroup>
         <optgroup :label="tr('その他のルーン', 'Other runes')"><option v-for="r in otherChoices" :key="r.en" :value="r.en">{{ r.name }}{{ r.effect ? ` — ${r.effect}` : "" }}</option></optgroup>
+        <optgroup v-if="coreChoices.length" :label="tr('ソウルコア', 'Soul Cores')"><option v-for="r in coreChoices" :key="r.en" :value="r.en">{{ r.name }}{{ r.effect ? ` — ${r.effect}` : "" }}</option></optgroup>
+        <optgroup v-if="idolChoices.length" :label="tr('アイドル', 'Idols')"><option v-for="r in idolChoices" :key="r.en" :value="r.en">{{ r.name }}{{ r.effect ? ` — ${r.effect}` : "" }}</option></optgroup>
       </select>
     </div>
     <!-- 完成の狙いに要るルーン (自動、外せない) -->

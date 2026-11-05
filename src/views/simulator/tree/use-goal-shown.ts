@@ -12,6 +12,7 @@ import { useTree } from "./use-tree";
 import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { midAims } from "../../../services/simulator/tree/tree-veil";
+import { catalystPart } from "../../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../../i18n/lang";
 
 /** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (+10 まではインフューザー) */
@@ -22,7 +23,8 @@ export function useGoalShown() {
   /** 足すブリーチのエッセンスの MOD (要らない時・付かないベースは null)。エンジンで完成形にブリーチのエッセンスを打って、付いた MOD を取る */
   const breach = computed((): StageMod | null => {
     const d = s.data.value, g = t.goalItem.value?.item, doc = t.doc.value;
-    if (!d || !g || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
+    // カタリスト以外の部位の品質は最初に上げてある前提 (S-31、11-05) なので、ブリーチを途中で付ける行は出さない
+    if (!d || !g || !catalystPart(g) || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
     // ブリーチのエッセンスを MOD 一覧で足してある時は、その行で足りる (同じ行を 2 つ出さない)
     if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => /LocalMaximumQuality/.test(a.modId))) return null;
     // 完成形に既にエッセンスの MOD があると「エッセンスの MOD は 1 つまで」で打てないので、エッセンスの MOD を除いた写しに打つ (途中で付けて消える物なので、完成形と同時には付かない)

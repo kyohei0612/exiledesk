@@ -5,7 +5,7 @@
  * その手より前には効かない。一度嵌まったルーンはアイテムに残るので、戻りの道でまた来ても嵌まったまま (同じルーンの手は打たずに通す、費用も数えない)。
  * ほかの「打たずに通す」回し方だけの扱い (10-25) もここ (tree-sample から分けた、500 行を超えた)
  */
-import { catalystOf, kindOf, mulberry32, parseRuneKey, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { catalystOf, inAny, kindOf, mulberry32, parseRuneKey, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { unboundedBefore } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { boxAims, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
@@ -36,8 +36,14 @@ export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
  * 完成形に品質の種類を決めてあれば、カタリストの種類 (エンジンの catalystOf = 別欄のベースは別欄の種類) も同じ時だけ数える
  * (10-29 オーナーの問い「中身の確率触媒はちゃんと機能してるか問題」で、前は % だけを見て違う種類のカタリストでも完成に数えていた)
  */
+/** 品質がカタリストの品質そのものの部位 (指輪・アミュレット・ジュエル)。木で品質を上げる手 (カタリスト、S-31b) があるのはここだけ */
+export const catalystPart = (it: StageItem | null | undefined): boolean => !!it && inAny(it.cls.category, ["ringAmulet", "jewel"]);
+/** カタリスト以外の品質の、完成形で選べる上限 (最初に上げてある前提、S-31・オーナー 11-05「50%まで上げれるように」) */
+export const PRESET_QUALITY_MAX = 50;
 export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => {
   if (!(doc.goalQualityOn && doc.goalQuality)) return true;
+  // カタリスト以外の品質は始める前に上げてある物として見ない (11-05 オーナー「最初に品質上げてる前提で通していいよ」、動画 G3pdLFAZxN0 の手袋)
+  if (!catalystPart(item)) return true;
   if ((item.quality ?? 0) < doc.goalQuality) return false;
   return !doc.goalQualityTag || catalystOf(item).tag === doc.goalQualityTag;
 };

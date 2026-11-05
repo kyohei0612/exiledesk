@@ -1,12 +1,13 @@
 /**
  * tree-goal-quality.ts — 完成形の品質の 2 択 (S-31c)。TreeGoalQuality (欄) と TreeGoalPage (「決めた」で止める) が同じ関数を見る
  */
-import { inAny, type StageItem } from "../../../services/craft-stage/engine";
+import type { StageItem } from "../../../services/craft-stage/engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { catalystPart } from "../../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../../i18n/lang";
 
 /** 品質がカタリストの品質そのものの部位 (指輪・アミュレット・ジュエル。品質の種類を選ぶのもこの部位だけ、StageQualityBar と同じ) */
-export const catalystGoal = (it: StageItem | null | undefined): boolean => !!it && inAny(it.cls.category, ["ringAmulet", "jewel"]);
+export const catalystGoal = catalystPart;
 /** 2 択で聞く部位か ( の時だけ) */
 export const askQuality = (it: StageItem | null | undefined): boolean => catalystGoal(it);
 /** 「決めた」で止める理由 (決まっていれば null): 狙う / 狙わないが未選択、狙うのにカタリストの種類が未選択 */
