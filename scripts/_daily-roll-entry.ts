@@ -30,7 +30,7 @@ const startAt = (no: number): number => no * DAY + H16 - JST;
 /** その日の挑戦が全部終わる時刻 = 次の日の 16:00 の 9 分 30 秒前 (14:50 のスタート + 1 時間 + 30 秒) */
 const allDoneAt = (no: number): number => startAt(no + 1) - 9.5 * 60e3;
 
-type FetchItem = { slot: string; base: string; ilvl: number | null; quality: number | null; quality_kind: string | null; mods: string; fractured: string | null; desecrated: string | null; corrupted: number; who: string };
+type FetchItem = { slot: string; base: string; ilvl: number | null; quality: number | null; quality_kind: string | null; mods: string; fractured: string | null; desecrated: string | null; corrupted: number; sanctified?: number | null; who: string };
 type TopicRow = { id: string; day: string; slot: number; item_class: string | null; base: string; box_id: string | null; sample_id: string | null; seed?: number; prices?: string | null; ilvl?: number; aims?: string };
 type BoxRow = { id: string; created: number; note: string; item: string; status: string; nick: string | null };
 type TryRow = { nick_id: string; name: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; recipe: string | null; checked: number | null };
@@ -60,7 +60,7 @@ export function sampleModsOf(data: PatchData, it: FetchItem): Array<{ name: stri
   // 取った mods は明示だけ。印の無い文だと読みはベースの暗黙と同じ文の行 (サファイアの指輪の冷気耐性など) とその前を暗黙側に寄せるので、
   // ベースの暗黙を (implicit) 付きで先に置き、印のある形として読ませる (11-05、取得の 3 件が MOD 0 で落ちていた)
   const imp = (htcBaseInfo()[it.base]?.implicits ?? []).flatMap((im) => im.en.split("\n").map((l) => `${l} (implicit)`)); // 不在のアミュレットは 2 行で 1 つ
-  const text = ["Item Class: Unknown", "Rarity: Rare", "Daily Sample", it.base, "--------", ...q, `Item Level: ${it.ilvl ?? TOPIC_ILVL}`, "--------", ...(imp.length ? [...imp, "--------"] : []), ...lines,...(it.corrupted ? ["--------", "Corrupted"] : [])].join("\n");
+  const text = ["Item Class: Unknown", "Rarity: Rare", "Daily Sample", it.base, "--------", ...q, `Item Level: ${it.ilvl ?? TOPIC_ILVL}`, "--------", ...(imp.length ? [...imp, "--------"] : []), ...lines, ...(it.corrupted ? ["--------", "Corrupted"] : []), ...(it.sanctified ? ["--------", "Sanctified"] : [])].join("\n"); // 聖別の印で読みが値を ×0.78〜1.22 の幅で段に当てる (S-08f・D-80d)
   let r;
   try {
     r = parseItemText(data, text);

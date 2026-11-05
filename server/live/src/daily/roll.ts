@@ -18,7 +18,7 @@ export async function rollJson(db: D1Database, now: number, dayParam: string | n
   const all = <T>(sql: string, ...b: unknown[]) => db.prepare(sql).bind(...b).all<T>().then((r) => r.results);
   const [job, items, samples, prevSamples, plan, topics, box, tries, results, awards] = await Promise.all([
     db.prepare("SELECT week, state, people, items, requests FROM ninja_job WHERE week = ?").bind(week).first(),
-    all("SELECT slot, sub, base, ilvl, quality, quality_kind, mods, fractured, desecrated, corrupted, who FROM daily_fetch_items WHERE week = ? ORDER BY id", week),
+    all("SELECT slot, sub, base, ilvl, quality, quality_kind, mods, fractured, desecrated, corrupted, sanctified, who FROM daily_fetch_items WHERE week = ? ORDER BY id", week),
     all("SELECT id, base, mods, n FROM daily_samples WHERE week = ?", week),
     all("SELECT id, base, mods, n FROM daily_samples WHERE week = ?", prevWeek),
     all("SELECT * FROM daily_plan WHERE week = ? ORDER BY day", week),

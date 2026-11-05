@@ -200,8 +200,8 @@ export async function finalize(env: Env, job: JobRow, state: "done" | "partial" 
     for (const it of items)
       stmts.push(
         db
-          .prepare("INSERT INTO daily_fetch_items (week, slot, sub, base, ilvl, quality, quality_kind, mods, fractured, desecrated, corrupted, who, asc, skill) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-          .bind(job.week, it.slot, JSON.stringify(it.sub), it.base, it.ilvl, it.quality, it.qualityKind, JSON.stringify(it.mods), it.fractured ? JSON.stringify(it.fractured) : null, it.desecrated ? JSON.stringify(it.desecrated) : null, it.corrupted ? 1 : 0, who, meta.asc, meta.skill),
+          .prepare("INSERT INTO daily_fetch_items (week, slot, sub, base, ilvl, quality, quality_kind, mods, fractured, desecrated, corrupted, sanctified, who, asc, skill) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+          .bind(job.week, it.slot, JSON.stringify(it.sub), it.base, it.ilvl, it.quality, it.qualityKind, JSON.stringify(it.mods), it.fractured ? JSON.stringify(it.fractured) : null, it.desecrated ? JSON.stringify(it.desecrated) : null, it.corrupted ? 1 : 0, it.sanctified ? 1 : 0, who, meta.asc, meta.skill),
       );
   }
   const nItems = stmts.length - 1;
@@ -230,6 +230,6 @@ export async function fetchItemsJson(env: Env, week: string | null): Promise<unk
     ? await db.prepare("SELECT week, state, requests, people, items, errors, started_at, finished_at FROM ninja_job WHERE week = ?").bind(week).first()
     : await db.prepare("SELECT week, state, requests, people, items, errors, started_at, finished_at FROM ninja_job ORDER BY week DESC LIMIT 1").first();
   if (!job) return { job: null, items: [] };
-  const { results } = await db.prepare("SELECT slot, sub, base, ilvl, quality, quality_kind, mods, fractured, desecrated, corrupted, who, asc, skill FROM daily_fetch_items WHERE week = ? ORDER BY id").bind((job as { week: string }).week).all();
+  const { results } = await db.prepare("SELECT slot, sub, base, ilvl, quality, quality_kind, mods, fractured, desecrated, corrupted, sanctified, who, asc, skill FROM daily_fetch_items WHERE week = ? ORDER BY id").bind((job as { week: string }).week).all();
   return { job, items: results };
 }
