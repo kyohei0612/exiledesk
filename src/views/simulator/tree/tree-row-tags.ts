@@ -70,9 +70,12 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   if (missBox && !am) for (const m of doc.start?.mods ?? []) { const g = (doc.memoAims ?? []).find((x) => x.modId === m.modId); if (g && !held.some((h) => h.modId === m.modId)) held.push({ modId: g.modId, tier: g.tier }); }
   // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD)
   const ownAim = box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
+  // 当たりの箱も見本の ☑ で付いた狙いだけを狙い (S-22・S-60)。前は完成形の狙い全部を数え、☑ していない投射物ダメージがフラクチャーの当たりの箱で狙いの名前になった (11-05 動画の木 b11)
+  const hitAm = box?.id && box.out === "hit" ? aimedOfCard(d, doc, box.id, it) : null;
+  const hitHeld = hitAm ? (doc.memoAims ?? []).filter((g) => hitAm.has(g.modId)) : null;
   // 以降の箱でも見本に付いている置き石は狙い (S-33)
   const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, box.id!, it)?.has(a.modId)) : [];
-  const aims = targetsOf(d, [...(missBox ? held : [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  const aims = targetsOf(d, [...(missBox ? held : hitHeld ?? [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalT = targetsOf(d, doc.memoAims ?? []);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま 

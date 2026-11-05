@@ -240,7 +240,8 @@ watch(held, () => { runeAt.value = null; socketWhy.value = null; });
 const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
 const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${tr("ルーンのソケットを押すと置き換え · カードを押すとソケットを足して嵌める · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to add a socket for it · Right-click / Esc to drop")}` : undefined));
 function onSocket(n: number): void {
-  if (!runeHold.value) return;
+  // ルーン以外を持っている時はアイテムを押したのと同じ (StageItemCard の onSocket の決まり。前は何もせず、ルーンの入ったソケットを押しても打てなかった、11-05 動画の木)
+  if (!runeHold.value) { ok(); return; }
   runeAt.value = n;
   const why = problem.value;
   if (why) { socketWhy.value = tr(`${n} 番目: ${why}`, `Socket ${n}: ${why}`); runeAt.value = null; return; }
