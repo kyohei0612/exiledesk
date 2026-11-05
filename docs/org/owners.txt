@@ -260,9 +260,3 @@ src/state/stage-session.ts           デザイン
 
 # 一時: WebApp.vue をデイリー部長 3 に (オーナー 11-05「a でおk」= 挑戦の広告の枠を外す D-61 と挑戦中の札 D-37g の 1 行だけ)。2 つ入ったらブラックがこの 2 行を消す
 src/web/WebApp.vue                   デイリー
-
-# 一時: ninja の取得の聖別の印 (D-80d) をデイリー部長 daily-sanctified に (3 ファイル計 6 行、ブラック 45 が 11-05 に)。入ったらブラックがこの 5 行を消す
-server/live/src/ninja/character.ts   デイリー
-server/live/src/ninja/job.ts         デイリー
-server/live/src/daily/roll.ts        デイリー
-server/live/migrations/0017_fetch_sanctified.sql デイリー
