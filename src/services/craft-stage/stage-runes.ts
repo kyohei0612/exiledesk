@@ -21,6 +21,7 @@
  */
 import { htcBaseInfo } from "../htc/patch";
 import runesRaw from "./stage-runes.json";
+import bondedRaw from "./rune-bonded.json";
 import basesPob from "./stage-bases-pob.json";
 import { handsOf, inAny, inGroup, soulCoreFits, soulCoreSize } from "../mods/item-classes";
 import type { StageApply, StageItem, StageAugment } from "./types";
@@ -135,6 +136,18 @@ export function socketCapOf(base: string, category: string): number {
 export function runeEffectFor(rune: RuneRow, category: string): RuneEffect | null {
   const hits = rune.effects.filter((e) => soulCoreFits(e.cat, category));
   return hits.sort((a, b) => soulCoreSize(a.cat) - soulCoreSize(b.cat))[0] ?? null;
+}
+/**
+ * 絆 (Bonded) の行: シャーマンの「マジの叡智」を取った人だけに効く効き目 (2026-11-05、動画 G3pdLFAZxN0 の手袋の #18)。
+ * 表は rune-bonded.json (scripts/build-rune-bonded-poe2db.mjs、poe2db の強化のページ)。部位は runeEffectFor と同じく一番狭い区分。
+ * 見せるだけ (アイテムの値・MOD の判定には入れない。効くかはキャラクター次第)
+ */
+const BONDED = (bondedRaw as unknown as { bonded: Record<string, Record<string, { ja: string; en: string }>> }).bonded;
+export function bondedFor(en: string, item: { base: string; cls: { category: string } }): { ja: string; en: string } | null {
+  const rows = BONDED[en], category = runeCategoryOf(item);
+  if (!rows) return null;
+  const cat = Object.keys(rows).filter((c) => soulCoreFits(c, category)).sort((a, b) => soulCoreSize(a) - soulCoreSize(b))[0];
+  return cat ? rows[cat]! : null;
 }
 
 /** 棚に並べるルーン (ルーンだけ、段 → ドロップレベル順)。tier を渡すとその段だけ。kind でソウルコア / アイドル (talisman) も */

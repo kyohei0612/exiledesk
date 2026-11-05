@@ -1,0 +1,2114 @@
+{
+ "generated": "2026-11-05",
+ "source": "poe2db.tw/jp/Augment・/us/Augment の bondedMod (絆。シャーマンのマジの叡智を取った人だけ効く)",
+ "bonded": {
+  "Desert Rune": {
+   "Martial Weapon": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Wand or Staff": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Glacial Rune": {
+   "Martial Weapon": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Wand or Staff": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Storm Rune": {
+   "Martial Weapon": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Wand or Staff": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Iron Rune": {
+   "Martial Weapon": {
+    "ja": "完全アーマー破壊の効果が20%増加する",
+    "en": "20% increased effect of Fully Broken Armour"
+   },
+   "Wand or Staff": {
+    "ja": "スペルによるクリティカルヒット時に与えた物理ダメージの12%と同量のアーマーをアーマー破壊する",
+    "en": "Break Armour on Critical Hit with Spells equal to 12% of Physical Damage dealt"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Body Rune": {
+   "Martial Weapon": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Wand or Staff": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Mind Rune": {
+   "Martial Weapon": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Wand or Staff": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Rebirth Rune": {
+   "Martial Weapon": {
+    "ja": "毎秒ライフの0.4%を自動回復する",
+    "en": "Regenerate 0.4% of maximum Life per second"
+   },
+   "Wand or Staff": {
+    "ja": "受けたダメージの8%をライフとして回収する",
+    "en": "8% of Damage taken Recouped as Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Inspiration Rune": {
+   "Martial Weapon": {
+    "ja": "スキルのマナコストの12%がライフコストに変換される",
+    "en": "12% of Skill Mana Costs Converted to Life Costs"
+   },
+   "Wand or Staff": {
+    "ja": "マナコスト効率が16%増加する",
+    "en": "16% increased Mana Cost Efficiency"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Stone Rune": {
+   "Martial Weapon": {
+    "ja": "移動不可状態の敵に対するダメージが40%増加する",
+    "en": "40% increased Damage against Immobilised Enemies"
+   },
+   "Wand or Staff": {
+    "ja": "移動不可蓄積が30%増加する",
+    "en": "30% increased Immobilisation buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Vision Rune": {
+   "Martial Weapon": {
+    "ja": "アタックのクリティカルヒット率 +1%",
+    "en": "Attacks have +1% to Critical Hit Chance"
+   },
+   "Wand or Staff": {
+    "ja": "クリティカルダメージボーナスが25%増加する",
+    "en": "25% increased Critical Damage Bonus"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Desert Rune": {
+   "Martial Weapon": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Wand or Staff": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Glacial Rune": {
+   "Martial Weapon": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Wand or Staff": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Storm Rune": {
+   "Martial Weapon": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Wand or Staff": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Iron Rune": {
+   "Martial Weapon": {
+    "ja": "完全アーマー破壊の効果が20%増加する",
+    "en": "20% increased effect of Fully Broken Armour"
+   },
+   "Wand or Staff": {
+    "ja": "スペルによるクリティカルヒット時に与えた物理ダメージの12%と同量のアーマーをアーマー破壊する",
+    "en": "Break Armour on Critical Hit with Spells equal to 12% of Physical Damage dealt"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Body Rune": {
+   "Martial Weapon": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Wand or Staff": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Mind Rune": {
+   "Martial Weapon": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Wand or Staff": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Rebirth Rune": {
+   "Martial Weapon": {
+    "ja": "毎秒ライフの0.4%を自動回復する",
+    "en": "Regenerate 0.4% of maximum Life per second"
+   },
+   "Wand or Staff": {
+    "ja": "受けたダメージの8%をライフとして回収する",
+    "en": "8% of Damage taken Recouped as Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Inspiration Rune": {
+   "Martial Weapon": {
+    "ja": "スキルのマナコストの12%がライフコストに変換される",
+    "en": "12% of Skill Mana Costs Converted to Life Costs"
+   },
+   "Wand or Staff": {
+    "ja": "マナコスト効率が16%増加する",
+    "en": "16% increased Mana Cost Efficiency"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Stone Rune": {
+   "Martial Weapon": {
+    "ja": "移動不可状態の敵に対するダメージが40%増加する",
+    "en": "40% increased Damage against Immobilised Enemies"
+   },
+   "Wand or Staff": {
+    "ja": "移動不可蓄積が30%増加する",
+    "en": "30% increased Immobilisation buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Vision Rune": {
+   "Martial Weapon": {
+    "ja": "アタックのクリティカルヒット率 +1%",
+    "en": "Attacks have +1% to Critical Hit Chance"
+   },
+   "Wand or Staff": {
+    "ja": "クリティカルダメージボーナスが25%増加する",
+    "en": "25% increased Critical Damage Bonus"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Desert Rune": {
+   "Martial Weapon": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Wand or Staff": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Glacial Rune": {
+   "Martial Weapon": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Wand or Staff": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Storm Rune": {
+   "Martial Weapon": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Wand or Staff": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Iron Rune": {
+   "Martial Weapon": {
+    "ja": "完全アーマー破壊の効果が20%増加する",
+    "en": "20% increased effect of Fully Broken Armour"
+   },
+   "Wand or Staff": {
+    "ja": "スペルによるクリティカルヒット時に与えた物理ダメージの12%と同量のアーマーをアーマー破壊する",
+    "en": "Break Armour on Critical Hit with Spells equal to 12% of Physical Damage dealt"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Body Rune": {
+   "Martial Weapon": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Wand or Staff": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Mind Rune": {
+   "Martial Weapon": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Wand or Staff": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Rebirth Rune": {
+   "Martial Weapon": {
+    "ja": "毎秒ライフの0.4%を自動回復する",
+    "en": "Regenerate 0.4% of maximum Life per second"
+   },
+   "Wand or Staff": {
+    "ja": "受けたダメージの8%をライフとして回収する",
+    "en": "8% of Damage taken Recouped as Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Inspiration Rune": {
+   "Martial Weapon": {
+    "ja": "スキルのマナコストの12%がライフコストに変換される",
+    "en": "12% of Skill Mana Costs Converted to Life Costs"
+   },
+   "Wand or Staff": {
+    "ja": "マナコスト効率が16%増加する",
+    "en": "16% increased Mana Cost Efficiency"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Stone Rune": {
+   "Martial Weapon": {
+    "ja": "移動不可状態の敵に対するダメージが40%増加する",
+    "en": "40% increased Damage against Immobilised Enemies"
+   },
+   "Wand or Staff": {
+    "ja": "移動不可蓄積が30%増加する",
+    "en": "30% increased Immobilisation buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Vision Rune": {
+   "Martial Weapon": {
+    "ja": "アタックのクリティカルヒット率 +1%",
+    "en": "Attacks have +1% to Critical Hit Chance"
+   },
+   "Wand or Staff": {
+    "ja": "クリティカルダメージボーナスが25%増加する",
+    "en": "25% increased Critical Damage Bonus"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Desert Rune": {
+   "Martial Weapon": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Wand or Staff": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Glacial Rune": {
+   "Martial Weapon": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Wand or Staff": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Storm Rune": {
+   "Martial Weapon": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Wand or Staff": {
+    "ja": "プレイヤーが付与した感電の強度が30%増加する",
+    "en": "30% increased Magnitude of Shock you inflict"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Iron Rune": {
+   "Martial Weapon": {
+    "ja": "完全アーマー破壊の効果が20%増加する",
+    "en": "20% increased effect of Fully Broken Armour"
+   },
+   "Wand or Staff": {
+    "ja": "スペルによるクリティカルヒット時に与えた物理ダメージの12%と同量のアーマーをアーマー破壊する",
+    "en": "Break Armour on Critical Hit with Spells equal to 12% of Physical Damage dealt"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Body Rune": {
+   "Martial Weapon": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Wand or Staff": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Mind Rune": {
+   "Martial Weapon": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Wand or Staff": {
+    "ja": "最大マナが5%増加する",
+    "en": "5% increased maximum Mana"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Rebirth Rune": {
+   "Martial Weapon": {
+    "ja": "毎秒ライフの0.4%を自動回復する",
+    "en": "Regenerate 0.4% of maximum Life per second"
+   },
+   "Wand or Staff": {
+    "ja": "受けたダメージの8%をライフとして回収する",
+    "en": "8% of Damage taken Recouped as Life"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Inspiration Rune": {
+   "Martial Weapon": {
+    "ja": "スキルのマナコストの12%がライフコストに変換される",
+    "en": "12% of Skill Mana Costs Converted to Life Costs"
+   },
+   "Wand or Staff": {
+    "ja": "マナコスト効率が16%増加する",
+    "en": "16% increased Mana Cost Efficiency"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Stone Rune": {
+   "Martial Weapon": {
+    "ja": "移動不可状態の敵に対するダメージが40%増加する",
+    "en": "40% increased Damage against Immobilised Enemies"
+   },
+   "Wand or Staff": {
+    "ja": "移動不可蓄積が30%増加する",
+    "en": "30% increased Immobilisation buildup"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Vision Rune": {
+   "Martial Weapon": {
+    "ja": "アタックのクリティカルヒット率 +1%",
+    "en": "Attacks have +1% to Critical Hit Chance"
+   },
+   "Wand or Staff": {
+    "ja": "クリティカルダメージボーナスが25%増加する",
+    "en": "25% increased Critical Damage Bonus"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Robust Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 6から10の火ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 6 to 10 Fire damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "アーマー +100",
+    "en": "+100 to Armour"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Robust Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 6から10の火ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 6 to 10 Fire damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "アーマー +100",
+    "en": "+100 to Armour"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Robust Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 6から10の火ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 6 to 10 Fire damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "アーマー +100",
+    "en": "+100 to Armour"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Robust Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 6から10の火ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 6 to 10 Fire damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "アーマー +100",
+    "en": "+100 to Armour"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Adept Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 1から16の雷ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 1 to 16 Lightning damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "回避力 +80",
+    "en": "+80 to Evasion Rating"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Adept Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 1から16の雷ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 1 to 16 Lightning damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "回避力 +80",
+    "en": "+80 to Evasion Rating"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Adept Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 1から16の雷ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 1 to 16 Lightning damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "回避力 +80",
+    "en": "+80 to Evasion Rating"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Adept Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 1から16の雷ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 1 to 16 Lightning damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "回避力 +80",
+    "en": "+80 to Evasion Rating"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Lesser Resolve Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 5から8の冷気ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 5 to 8 Cold damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "最大エナジーシールド +50",
+    "en": "+50 to maximum Energy Shield"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Resolve Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 5から8の冷気ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 5 to 8 Cold damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "最大エナジーシールド +50",
+    "en": "+50 to maximum Energy Shield"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Resolve Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 5から8の冷気ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 5 to 8 Cold damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "最大エナジーシールド +50",
+    "en": "+50 to maximum Energy Shield"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Perfect Resolve Rune": {
+   "Martial Weapon": {
+    "ja": "6から10の物理ダメージをアタックに追加する, 5から8の冷気ダメージをアタックに追加する",
+    "en": "Adds 6 to 10 Physical Damage to Attacks, Adds 5 to 8 Cold damage to Attacks"
+   },
+   "Wand or Staff": {
+    "ja": "最大エナジーシールド +50",
+    "en": "+50 to maximum Energy Shield"
+   },
+   "Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Greater Rune of Leadership": {
+   "Martial Weapon": {
+    "ja": "ミニオンのダメージが20%増加する",
+    "en": "Minions deal 20% increased Damage"
+   },
+   "Armour": {
+    "ja": "ミニオンの全ての元素耐性 +10%",
+    "en": "Minions have +10% to all Elemental Resistances"
+   }
+  },
+  "Greater Rune of Tithing": {
+   "Martial Weapon": {
+    "ja": "インヴォケーションされるスペルの消費エネルギーが25%の確率で半分になる",
+    "en": "Invocated Spells have 25% chance to consume half as much Energy"
+   },
+   "Armour": {
+    "ja": "棘ダメージが15%増加する",
+    "en": "15% increased Thorns damage"
+   }
+  },
+  "Greater Rune of Alacrity": {
+   "Martial Weapon": {
+    "ja": "へラルドスキルのリザーブ効率が15%増加する",
+    "en": "15% increased Reservation Efficiency of Herald Skills"
+   },
+   "Armour": {
+    "ja": "元素系状態異常閾値が15%増加する",
+    "en": "15% increased Elemental Ailment Threshold"
+   }
+  },
+  "Greater Rune of Nobility": {
+   "Martial Weapon": {
+    "ja": "曝露の効果が20%増加する",
+    "en": "20% increased Exposure Effect"
+   },
+   "Armour": {
+    "ja": "受ける感電の持続時間が10%減少する",
+    "en": "10% reduced Shock duration on you"
+   }
+  },
+  "Hedgewitch Assandra's Rune of Wisdom": {
+   "Wand or Staff": {
+    "ja": "アルコン待機時間の解消が30%速くなる",
+    "en": "Archon recovery period expires 30% faster"
+   }
+  },
+  "Saqawal's Rune of the Sky": {
+   "Martial Weapon": {
+    "ja": "チャージを1個獲得する時に8%の確率でランダムなチャージ1個を獲得する",
+    "en": "8% chance to gain an additional random Charge when you gain a Charge"
+   },
+   "Wand or Staff": {
+    "ja": "エレメンタルインフュージョンを拾った時に12%の確率で同じ属性のエレメンタルインフュージョンを追加で1個獲得する",
+    "en": "12% chance when collecting an Elemental Infusion to gain an / additional Elemental Infusion of the same type"
+   }
+  },
+  "Fenumus' Rune of Agony": {
+   "Martial Weapon": {
+    "ja": "ダメージの8%を追加物理ダメージとして獲得する",
+    "en": "Gain 8% of Damage as Extra Physical Damage"
+   },
+   "Wand or Staff": {
+    "ja": "ダメージの8%を追加物理ダメージとして獲得する",
+    "en": "Gain 8% of Damage as Extra Physical Damage"
+   }
+  },
+  "Farrul's Rune of Grace": {
+   "Boots": {
+    "ja": "受け流したヒットのダメージから防ぐ量が+3%される",
+    "en": "Prevent +3% of Damage from Deflected Hits"
+   }
+  },
+  "Farrul's Rune of the Chase": {
+   "Boots": {
+    "ja": "クールダウン解消レートが10%増加する",
+    "en": "10% increased Cooldown Recovery Rate"
+   }
+  },
+  "Craiceann's Rune of Warding": {
+   "Body Armour": {
+    "ja": "呪いの強度が8%増加する",
+    "en": "8% increased Curse Magnitudes"
+   }
+  },
+  "Saqawal's Rune of Memory": {
+   "Helmet": {
+    "ja": "全ての元素耐性 +10%",
+    "en": "+10% to all Elemental Resistances"
+   }
+  },
+  "Saqawal's Rune of Erosion": {
+   "Helmet": {
+    "ja": "プレイヤーが付与した非ダメージ性状態異常の強度が15%増加する",
+    "en": "15% increased Magnitude of Non-Damaging Ailments you inflict"
+   }
+  },
+  "Farrul's Rune of the Hunt": {
+   "Martial Weapon": {
+    "ja": "全てのアタックスキルのレベル +1",
+    "en": "+1 to Level of all Attack Skills"
+   }
+  },
+  "Craiceann's Rune of Recovery": {
+   "Body Armour": {
+    "ja": "最大エナジーシールドの50%と同量の追加状態異常閾値を獲得する, 最大エナジーシールドの50%と同量の追加スタン閾値を獲得する",
+    "en": "Gain additional Ailment Threshold equal to 50% of maximum Energy Shield, Gain additional Stun Threshold equal to 50% of maximum Energy Shield"
+   }
+  },
+  "Courtesan Mannan's Rune of Cruelty": {
+   "Gloves": {
+    "ja": "敵に付与したダメージ性状態異常の持続時間が15%増加する",
+    "en": "15% increased Duration of Damaging Ailments on Enemies"
+   }
+  },
+  "Thane Grannell's Rune of Mastery": {
+   "Gloves": {
+    "ja": "敵に対する元素系状態異常の持続時間が15%増加する",
+    "en": "15% increased Duration of Elemental Ailments on Enemies"
+   }
+  },
+  "Fenumus' Rune of Spinning": {
+   "Gloves": {
+    "ja": "低マナ時のマナコスト効率が20%増加する",
+    "en": "20% increased Mana Cost Efficiency while on Low Mana"
+   }
+  },
+  "Countess Seske's Rune of Archery": {
+   "Bow": {
+    "ja": "投射物スピードが20%増加する",
+    "en": "20% increased Projectile Speed"
+   }
+  },
+  "Thane Girt's Rune of Wildness": {
+   "Wand or Staff": {
+    "ja": "憤怒のそれぞれのスタックはスペルダメージ1%増加も付与する",
+    "en": "Every Rage also grants 1% increased Spell Damage"
+   }
+  },
+  "Fenumus' Rune of Draining": {
+   "Gloves": {
+    "ja": "混沌耐性 +7%",
+    "en": "+7% to Chaos Resistance"
+   }
+  },
+  "Thane Myrk's Rune of Summer": {
+   "Martial Weapon": {
+    "ja": "火耐性の最大値 +2%",
+    "en": "+2% to Maximum Fire Resistance"
+   }
+  },
+  "Lady Hestra's Rune of Winter": {
+   "Martial Weapon": {
+    "ja": "冷気耐性の最大値 +2%",
+    "en": "+2% to Maximum Cold Resistance"
+   }
+  },
+  "Thane Leld's Rune of Spring": {
+   "Martial Weapon": {
+    "ja": "雷耐性の最大値 +2%",
+    "en": "+2% to Maximum Lightning Resistance"
+   }
+  },
+  "The Greatwolf's Rune of Claws": {
+   "Gloves": {
+    "ja": "亀裂スキルの上限 +2",
+    "en": "Fissure Skills have +2 to Limit"
+   }
+  },
+  "The Greatwolf's Rune of Willpower": {
+   "Body Armour": {
+    "ja": "最大ライフの8%をエナジーシールドに変換する",
+    "en": "8% of Maximum Life Converted to Energy Shield"
+   }
+  },
+  "Idol of Sirrius": {
+   "Gloves": {
+    "ja": "プレイヤーに対する減速のデバフのポテンシャルが20%減少する",
+    "en": "20% reduced Slowing Potency of Debuffs on You"
+   },
+   "Sceptre": {
+    "ja": "移動スピードが4%増加する",
+    "en": "4% increased Movement Speed"
+   }
+  },
+  "Idol of Thruldana": {
+   "Martial Weapon": {
+    "ja": "物理ダメージの13%を追加混沌ダメージとして獲得する",
+    "en": "Gain 13% of Physical Damage as extra Chaos Damage"
+   },
+   "Sceptre": {
+    "ja": "衰弱の強度が15%増加する",
+    "en": "15% increased Withered Magnitude"
+   }
+  },
+  "Idol of Grold": {
+   "Boots": {
+    "ja": "グローリーの生成量が30%増加する",
+    "en": "30% increased Glory generation"
+   },
+   "Sceptre": {
+    "ja": "コンパニオンスキルのリザーブ効率が15%増加する",
+    "en": "15% increased Reservation Efficiency of Companion Skills"
+   }
+  },
+  "Idol of Eeshta": {
+   "Helmet": {
+    "ja": "メタスキルはリザーブ効率が15%増加する",
+    "en": "Meta Skills have 15% increased Reservation Efficiency"
+   },
+   "Sceptre": {
+    "ja": "コンパニオンがプレイヤーの存在下にいる時にライフ自動回復レートが8%増加する",
+    "en": "8% increased Life Recovery Rate while your Companion is in your Presence"
+   }
+  },
+  "Idol of Egrin": {
+   "Helmet": {
+    "ja": "呪いの効果範囲が20%増加する",
+    "en": "20% increased Area of Effect of Curses"
+   },
+   "Sceptre": {
+    "ja": "呪い領域が噴出するまでの遅延が20%減少する",
+    "en": "Curse zones erupt after 20% reduced delay"
+   }
+  },
+  "Idol of Maxarius": {
+   "Body Armour": {
+    "ja": "スキルの上限 +1",
+    "en": "Storm Skills have +1 to Limit"
+   },
+   "Sceptre": {
+    "ja": "フラスコによるライフおよびマナの回復量が20%増加する",
+    "en": "20% increased Life and Mana Recovery from Flasks"
+   }
+  },
+  "Idol of Ralakesh": {
+   "Helmet": {
+    "ja": "ミニオンは8%速く復活する",
+    "en": "Minions Revive 8% faster"
+   },
+   "Sceptre": {
+    "ja": "コンパニオンの最大ライフが25%増加する",
+    "en": "Companions have 25% increased maximum Life"
+   }
+  },
+  "Idol of Greust": {
+   "Shield": {
+    "ja": "敵に付与した元素系状態異常1種類ごとにダメージが12%増加する",
+    "en": "12% increased Damage for each type of Elemental Ailment on Enemy"
+   },
+   "Buckler": {
+    "ja": "敵に付与した元素系状態異常1種類ごとにダメージが12%増加する",
+    "en": "12% increased Damage for each type of Elemental Ailment on Enemy"
+   },
+   "Sceptre": {
+    "ja": "ミニオンの1体が復活した時に最大ライフの3%を回復する",
+    "en": "Recover 3% of maximum Life when one of your Minions is Revived"
+   }
+  },
+  "Idol of Yeena": {
+   "Boots": {
+    "ja": "プラントは初めてプレイヤーの存在下に入った時に25%の確率で即座に生い茂る",
+    "en": "Plants have a 25% chance to immediately Overgrow when they enter your Presence for the first time"
+   },
+   "Sceptre": {
+    "ja": "プラントスキルのスキル効果持続時間が30%増加する",
+    "en": "30% increased Skill Effect Duration with Plant Skills"
+   }
+  },
+  "Idol of Eramir": {
+   "Body Armour": {
+    "ja": "15%の確率でプレイヤーが使用したチャームはチャージを消費しない",
+    "en": "15% chance for Charms you use to not consume Charges"
+   },
+   "Sceptre": {
+    "ja": "エンデュランスチャージ、フレンジーチャージおよびパワーチャージの持続時間が25%増加する",
+    "en": "25% increased Endurance, Frenzy and Power Charge Duration"
+   }
+  },
+  "Idol of Oak": {
+   "Boots": {
+    "ja": "エンデュランスチャージの最大数 +1",
+    "en": "+1 to Maximum Endurance Charges"
+   },
+   "Sceptre": {
+    "ja": "直近プレイヤーがエンデュランスチャージを消費していればアーマーが40%増加する",
+    "en": "40% increased Armour if you've consumed an Endurance Charge Recently"
+   }
+  },
+  "Idol of Alira": {
+   "Helmet": {
+    "ja": "パワーチャージの最大数 +1",
+    "en": "+1 to Maximum Power Charges"
+   },
+   "Sceptre": {
+    "ja": "直近パワーチャージを1個消費していれば最大エナジーシールドが40%増加する",
+    "en": "40% increased maximum Energy Shield if you've consumed a Power Charge Recently"
+   }
+  },
+  "Idol of Kraityn": {
+   "Gloves": {
+    "ja": "フレンジーチャージの最大数 +1",
+    "en": "+1 to Maximum Frenzy Charges"
+   },
+   "Sceptre": {
+    "ja": "直近プレイヤーがフレンジーチャージを消費していれば回避力が40%増加する",
+    "en": "40% increased Evasion Rating if you've consumed a Frenzy Charge Recently"
+   }
+  },
+  "Idol of Silk": {
+   "Shield": {
+    "ja": "ブロック率の最大値 +3%",
+    "en": "+3% to maximum Block chance"
+   },
+   "Buckler": {
+    "ja": "パリィの範囲が30%増加する",
+    "en": "30% increased Parry Range"
+   },
+   "Sceptre": {
+    "ja": "コンパニオンの効果範囲が30%増加する",
+    "en": "Companions have 30% increased Area of Effect"
+   }
+  },
+  "Idol of the Sycophant": {
+   "Martial Weapon Wand or Staff": {
+    "ja": "混沌耐性 -20%, ダメージの20%を追加混沌ダメージとして獲得する",
+    "en": "-20% to Chaos Resistance, Gain 20% of Damage as Extra Chaos Damage"
+   },
+   "Sceptre": {
+    "ja": "プレイヤーの存在下にいる味方はダメージの20%を追加混沌ダメージとして獲得する, 存在下のコンパニオンの混沌耐性 -20%",
+    "en": "Allies in your Presence Gain 20% of Damage as Extra Chaos Damage, Companions in your Presence have -20% to Chaos Resistance"
+   }
+  },
+  "Idol of the Martyr": {
+   "Martial Weapon Wand or Staff": {
+    "ja": "インヴォケーションされるスキルのエネルギーの最大値が25%増加する, メタスキルはリザーブ効率が25%減少する",
+    "en": "Invocated skills have 25% increased Maximum Energy, Meta Skills have 25% reduced Reservation Efficiency"
+   },
+   "Sceptre": {
+    "ja": "プレイヤーの存在下にいる味方は毎秒プレイヤーの最大ライフの3%を自動回復する, ライフ自動回復レートが25%減少する",
+    "en": "Allies in your Presence Regenerate 3% of your Maximum Life per second, 25% reduced Life Regeneration rate"
+   }
+  },
+  "Idol of the Pharisee": {
+   "Martial Weapon Wand or Staff": {
+    "ja": "マナコスト効率が30%減少する, 低マナ状態の間スキルスピードが12%増加する",
+    "en": "30% reduced Mana Cost Efficiency, 12% increased Skill Speed while on Low Mana"
+   },
+   "Sceptre": {
+    "ja": "ミニオンスキルのリザーブ効率が25%減少する, 一時的ミニオンスキルは召喚できるミニオンの上限 +2",
+    "en": "25% reduced Reservation Efficiency of Minion Skills, Temporary Minion Skills have +2 to Limit of Minions summoned"
+   }
+  },
+  "Panther Idol": {
+   "Body Armour": {
+    "ja": "混沌耐性 +8%",
+    "en": "+8% to Chaos Resistance"
+   },
+   "Sceptre": {
+    "ja": "ミニオンは20%の追加物理ダメージ軽減率を持つ",
+    "en": "Minions have 20% additional Physical Damage Reduction"
+   }
+  },
+  "Hawk Idol": {
+   "Body Armour": {
+    "ja": "冷気耐性 +12%",
+    "en": "+12% to Cold Resistance"
+   },
+   "Sceptre": {
+    "ja": "プレイヤーのコンパニオンが存在下にいる間アタックスピードが8%増加する",
+    "en": "8% increased Attack Speed while your Companion is in your Presence"
+   }
+  },
+  "Stoat Idol": {
+   "Body Armour": {
+    "ja": "雷耐性 +12%",
+    "en": "+12% to Lightning Resistance"
+   },
+   "Sceptre": {
+    "ja": "コンパニオンがプレイヤーの存在下にいる時にダメージが25%増加する",
+    "en": "25% increased Damage while your Companion is in your Presence"
+   }
+  },
+  "Snake Idol": {
+   "Gloves": {
+    "ja": "プレイヤーが生成したレムナントは効果が15%増加する",
+    "en": "Remnants you create have 15% increased effect"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間スキルスピードが10%増加する",
+    "en": "10% increased Skill Speed while Shapeshifted"
+   }
+  },
+  "Primate Idol": {
+   "Helmet": {
+    "ja": "レムナントは30%遠くからでも拾える",
+    "en": "Remnants can be collected from 30% further away"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間ダメージが40%増加する",
+    "en": "40% increased Damage while Shapeshifted"
+   }
+  },
+  "Owl Idol": {
+   "Focus": {
+    "ja": "プレイヤーに対するアルコンバフの効果が20%増加する",
+    "en": "20% increased effect of Archon Buffs on you"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間スキルスピードが10%増加する",
+    "en": "10% increased Skill Speed while Shapeshifted"
+   }
+  },
+  "Cat Idol": {
+   "Gloves": {
+    "ja": "チャームの獲得チャージが30%増加する",
+    "en": "30% increased Charm Charges gained"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間クリティカルヒット率が25%増加する",
+    "en": "25% increased Critical Hit Chance while Shapeshifted"
+   }
+  },
+  "Wolf Idol": {
+   "Gloves": {
+    "ja": "プレイヤーに対する出血の強度が25%減少する",
+    "en": "25% reduced Magnitude of Bleeding on You"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間クリティカルヒット率が25%増加する",
+    "en": "25% increased Critical Hit Chance while Shapeshifted"
+   }
+  },
+  "Stag Idol": {
+   "Helmet": {
+    "ja": "投射物は分岐する時に25%の確率で追加の投射物を放つ",
+    "en": "Projectiles have 25% chance for an additional Projectile when Forking"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間アタックダメージが40%増加する",
+    "en": "40% increased Attack Damage while Shapeshifted"
+   }
+  },
+  "Boar Idol": {
+   "Gloves": {
+    "ja": "ウォークライクールダウン解消レートが25%増加する",
+    "en": "25% increased Warcry Cooldown Recovery Rate"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間ライフ自動回復レートが25%増加する",
+    "en": "25% increased Life Regeneration rate while Shapeshifted"
+   }
+  },
+  "Bear Idol": {
+   "Helmet": {
+    "ja": "コンパニオンスキルのリザーブ効率が12%増加する",
+    "en": "12% increased Reservation Efficiency of Companion Skills"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト状態の間アタックダメージが40%増加する",
+    "en": "40% increased Attack Damage while Shapeshifted"
+   }
+  },
+  "Ox Idol": {
+   "Shield or Buckler": {
+    "ja": "プレイヤーをヒットする敵のダメージが15%の確率で不幸になる",
+    "en": "15% chance for Damage of Enemies Hitting you to be Unlucky"
+   },
+   "Sceptre": {
+    "ja": "シェープシフト中アーマーの+20%が元素ダメージにも適用される",
+    "en": "+20% of Armour also applies to Elemental Damage while Shapeshifted"
+   }
+  },
+  "Rabbit Idol": {
+   "Body Armour": {
+    "ja": "倒した敵からドロップするゴールドの数量が10%増加する",
+    "en": "10% increased Quantity of Gold Dropped by Slain Enemies"
+   },
+   "Sceptre": {
+    "ja": "ミニオンはコマンドスキルのクールダウンリカバリーレートが30%増加する",
+    "en": "Minions have 30% increased Cooldown Recovery Rate for Command Skills"
+   }
+  },
+  "Fox Idol": {
+   "Body Armour": {
+    "ja": "全てのスキルの品質 +5%",
+    "en": "+5% to Quality of all Skills"
+   },
+   "Sceptre": {
+    "ja": "ミニオンの効果範囲が30%増加する",
+    "en": "Minions have 30% increased Area of Effect"
+   }
+  },
+  "Emergent Vigour": {
+   "Helmet": {
+    "ja": "スピリット +20",
+    "en": "+20 to Spirit"
+   },
+   "Body Armour": {
+    "ja": "筋力 +20",
+    "en": "+20 to Strength"
+   },
+   "Boots": {
+    "ja": "プレイヤーが生成した神聖領域の効果が20%増加する",
+    "en": "20% increased Effect of Consecrated Ground you create"
+   }
+  },
+  "Emergent Possibility": {
+   "Body Armour": {
+    "ja": "混沌耐性 +13%",
+    "en": "+13% to Chaos Resistance"
+   },
+   "Gloves": {
+    "ja": "元素ダメージが20%増加する",
+    "en": "20% increased Elemental Damage"
+   },
+   "Boots": {
+    "ja": "ルーンワードコスト効率が15%増加する",
+    "en": "15% increased Runic Ward Cost Efficiency"
+   }
+  },
+  "Emergent Protection": {
+   "Helmet": {
+    "ja": "エンデュランスチャージの持続時間が40%増加する",
+    "en": "40% increased Endurance Charge Duration"
+   },
+   "Gloves": {
+    "ja": "毎秒ライフの0.5%を自動回復する",
+    "en": "Regenerate 0.5% of maximum Life per second"
+   },
+   "Boots": {
+    "ja": "獲得ガードが20%増加する",
+    "en": "20% increased Guard gained"
+   }
+  },
+  "Emergent Instinct": {
+   "Helmet": {
+    "ja": "移動不可蓄積が30%増加する",
+    "en": "30% increased Immobilisation buildup"
+   },
+   "Gloves": {
+    "ja": "ライフ自動回復レートが20%増加する",
+    "en": "20% increased Life Regeneration rate"
+   },
+   "Body Armour": {
+    "ja": "棘ダメージが30%増加する",
+    "en": "30% increased Thorns damage"
+   }
+  },
+  "Carved Cunning": {
+   "Helmet": {
+    "ja": "グローバル命中力が30%増加する",
+    "en": "30% increased Accuracy Rating"
+   },
+   "Body Armour": {
+    "ja": "受け流し力が8%増加する",
+    "en": "8% increased Deflection Rating"
+   },
+   "Boots": {
+    "ja": "プレイヤーのバフは10%遅く消える",
+    "en": "Buffs on you expire 10% slower"
+   }
+  },
+  "Carved Majesty": {
+   "Body Armour": {
+    "ja": "スピリットが5%増加する",
+    "en": "5% increased Spirit"
+   },
+   "Gloves": {
+    "ja": "コンパニオンのダメージが30%増加する",
+    "en": "Companions deal 30% increased Damage"
+   },
+   "Boots": {
+    "ja": "ミニオンの最大ライフが12%増加する",
+    "en": "Minions have 12% increased maximum Life"
+   }
+  },
+  "Carved Mischief": {
+   "Helmet": {
+    "ja": "プレイヤーのバフは10%遅く消える",
+    "en": "Buffs on you expire 10% slower"
+   },
+   "Gloves": {
+    "ja": "ブロック率が20%増加する",
+    "en": "20% increased Block chance"
+   },
+   "Body Armour": {
+    "ja": "スタン閾値が25%増加する",
+    "en": "25% increased Stun Threshold"
+   }
+  },
+  "Carved Tenacity": {
+   "Helmet": {
+    "ja": "盲目の効果が20%増加する",
+    "en": "20% increased Blind Effect"
+   },
+   "Gloves": {
+    "ja": "クリティカルヒット率が15%増加する",
+    "en": "15% increased Critical Hit Chance"
+   },
+   "Boots": {
+    "ja": "スプリント中に移動スピードが8%増加する",
+    "en": "8% increased Movement Speed while Sprinting"
+   }
+  },
+  "Lesser Ward Rune": {
+   "Armour": {
+    "ja": "グローバルアーマー、回避力およびエナジーシールドが15%増加する",
+    "en": "15% increased Global Armour, Evasion and Energy Shield"
+   }
+  },
+  "Ward Rune": {
+   "Armour": {
+    "ja": "グローバルアーマー、回避力およびエナジーシールドが15%増加する",
+    "en": "15% increased Global Armour, Evasion and Energy Shield"
+   }
+  },
+  "Greater Ward Rune": {
+   "Armour": {
+    "ja": "グローバルアーマー、回避力およびエナジーシールドが15%増加する",
+    "en": "15% increased Global Armour, Evasion and Energy Shield"
+   }
+  },
+  "Perfect Ward Rune": {
+   "Armour": {
+    "ja": "グローバルアーマー、回避力およびエナジーシールドが15%増加する",
+    "en": "15% increased Global Armour, Evasion and Energy Shield"
+   }
+  },
+  "Lesser Charging Rune": {
+   "Armour": {
+    "ja": "毎秒10のルーンワードを自動回復する",
+    "en": "Regenerate 10 Runic Ward per second"
+   }
+  },
+  "Charging Rune": {
+   "Armour": {
+    "ja": "毎秒15のルーンワードを自動回復する",
+    "en": "Regenerate 15 Runic Ward per second"
+   }
+  },
+  "Greater Charging Rune": {
+   "Armour": {
+    "ja": "毎秒20のルーンワードを自動回復する",
+    "en": "Regenerate 20 Runic Ward per second"
+   }
+  },
+  "Perfect Charging Rune": {
+   "Armour": {
+    "ja": "毎秒25のルーンワードを自動回復する",
+    "en": "Regenerate 25 Runic Ward per second"
+   }
+  },
+  "Warding Rune of Reinforcement": {
+   "Armour": {
+    "ja": "最大ライフの2%を追加最大ルーンワードとして獲得する",
+    "en": "Gain 2% of maximum Life as Extra maximum Runic Ward"
+   }
+  },
+  "Warding Rune of Protection": {
+   "Armour": {
+    "ja": "獲得ガードが8%増加する",
+    "en": "8% increased Guard gained"
+   }
+  },
+  "Warding Rune of Disintegration": {
+   "Martial Weapon": {
+    "ja": "アーマー破壊するアーマー量が10%増加する",
+    "en": "Break 10% increased Armour"
+   }
+  },
+  "Warding Rune of Desperation": {
+   "Wand or Staff": {
+    "ja": "元素ダメージが12%増加する",
+    "en": "12% increased Elemental Damage"
+   }
+  },
+  "Warding Rune of Symbiosis": {
+   "Boots": {
+    "ja": "毎秒エナジーシールドの1%を自動回復する",
+    "en": "Regenerate 1% of maximum Energy Shield per second"
+   }
+  },
+  "Warding Rune of Courage": {
+   "Helmet": {
+    "ja": "低ライフ時にアーマーおよび回避力が20%増加する",
+    "en": "20% increased Armour and Evasion Rating when on Low Life"
+   }
+  },
+  "Warding Rune of Stability": {
+   "Shield or Buckler": {
+    "ja": "シェープシフト状態の間スタン蓄積が15%増加する",
+    "en": "15% increased Stun buildup while Shapeshifted"
+   }
+  },
+  "Warding Rune of Glancing": {
+   "Body Armour": {
+    "ja": "受け流したヒットのダメージから防ぐ量が+1%される",
+    "en": "Prevent +1% of Damage from Deflected Hits"
+   }
+  },
+  "Warding Rune of Heart": {
+   "Body Armour": {
+    "ja": "直近ヒットで失ったルーンワードの2%ごとにルーンワード自動回復レートが1%上昇する",
+    "en": "1% more Runic Ward Regeneration rate per 2% of maximum Runic Ward lost from Hits Recently, up to 100% more"
+   }
+  },
+  "Warding Rune of Nourishment": {
+   "Armour": {
+    "ja": "フラスコによるライフ回復量が15%増加する",
+    "en": "15% increased Life Recovery from Flasks"
+   }
+  },
+  "Warding Rune of Annihilation": {
+   "Martial Weapon": {
+    "ja": "ルーンワードコスト効率が10%減少する",
+    "en": "10% reduced Runic Ward Cost Efficiency"
+   }
+  },
+  "Warding Rune of Armature": {
+   "Martial Weapon": {
+    "ja": "ルーンワードが最大値未満の間アタックスピードが5%増加する",
+    "en": "5% increased Attack Speed while missing Runic Ward"
+   }
+  },
+  "Warding Rune of Obsession": {
+   "Wand": {
+    "ja": "最大ルーンワードが12%増加する",
+    "en": "12% increased maximum Runic Ward"
+   }
+  },
+  "Warding Rune of Equinox": {
+   "Caster Weapon": {
+    "ja": "直近クリティカルヒットを与えていればルーンワード自動回復レートが20%増加する",
+    "en": "20% increased Runic Ward Regeneration Rate if you've dealt a Critical Hit Recently"
+   }
+  },
+  "Warding Rune of Salvaging": {
+   "Sceptre": {
+    "ja": "ミニオンの1体が復活した時に最大ライフの3%を回復する",
+    "en": "Recover 3% of maximum Life when one of your Minions is Revived"
+   }
+  },
+  "Warding Rune of Bodyguards": {
+   "Sceptre": {
+    "ja": "直近ルーンワードがダメージを受けていれば / プレイヤーにヒットを与えるダメージは不幸になる",
+    "en": "Damage of Enemies Hitting you is Unlucky if / your Runic Ward has been damaged Recently"
+   }
+  },
+  "Warding Rune of Hollowing": {
+   "Caster Weapon": {
+    "ja": "ルーンワードがフルの間全ての元素耐性の最大値 +1%",
+    "en": "+1% to all Maximum Elemental Resistances while on full Runic Ward"
+   }
+  },
+  "Passion of Aldur": {
+   "Martial Or Caster Weapon": {
+    "ja": "火ダメージが25%増加する",
+    "en": "25% increased Fire Damage"
+   }
+  },
+  "Breath of Aldur": {
+   "Martial Or Caster Weapon": {
+    "ja": "冷気ダメージが25%増加する",
+    "en": "25% increased Cold Damage"
+   }
+  },
+  "Ire of Aldur": {
+   "Martial Or Caster Weapon": {
+    "ja": "雷ダメージが25%増加する",
+    "en": "25% increased Lightning Damage"
+   }
+  },
+  "Betrayal of Aldur": {
+   "Martial Or Caster Weapon": {
+    "ja": "混沌ダメージが25%増加する",
+    "en": "25% increased Chaos Damage"
+   }
+  },
+  "Ancient Rune of Splinters": {
+   "Bow": {
+    "ja": "投射物スピードが30%増加する",
+    "en": "30% increased Projectile Speed"
+   }
+  },
+  "Ancient Rune of Dueling": {
+   "Buckler": {
+    "ja": "ブロック率が15%増加する",
+    "en": "15% increased Block chance"
+   }
+  },
+  "Ancient Rune of the Titan": {
+   "Two Hand Mace": {
+    "ja": "アタックの効果範囲が15%増加する",
+    "en": "15% increased Area of Effect for Attacks"
+   }
+  },
+  "Ancient Rune of Shattering": {
+   "One Hand Mace": {
+    "ja": "アーマー破壊するアーマー量が50%増加する",
+    "en": "Break 50% increased Armour"
+   }
+  },
+  "Ancient Rune of Prowess": {
+   "Spear": {
+    "ja": "エンデュランスチャージ、フレンジーチャージおよびパワーチャージの持続時間が30%増加する",
+    "en": "30% increased Endurance, Frenzy and Power Charge Duration"
+   }
+  },
+  "Ancient Rune of Control": {
+   "Quarterstaff": {
+    "ja": "移動不可状態の敵に対するダメージが30%増加する",
+    "en": "30% increased Damage against Immobilised Enemies"
+   }
+  },
+  "Ancient Rune of Discovery": {
+   "Staff": {
+    "ja": "エレメンタルインフュージョンの最大数 +1",
+    "en": "+1 to maximum number of Elemental Infusions"
+   }
+  },
+  "Ancient Rune of Decay": {
+   "Wand": {
+    "ja": "プレイヤーが持っていたボラティリティが爆発した時に15%の確率で同量のボラティリティを再獲得する",
+    "en": "15% chance that when Volatility on you explodes, you regain an equivalent amount of Volatility"
+   }
+  },
+  "Ancient Rune of Witchcraft": {
+   "Focus": {
+    "ja": "呪いのアクティベーションが15%速くなる",
+    "en": "15% faster Curse Activation"
+   }
+  },
+  "Ancient Rune of the Horde": {
+   "Sceptre": {
+    "ja": "ミニオンの移動スピードが10%増加する",
+    "en": "Minions have 10% increased Movement Speed"
+   }
+  },
+  "Ancient Rune of Animosity": {
+   "Talisman": {
+    "ja": "スタン蓄積が40%増加する",
+    "en": "40% increased Stun Buildup"
+   }
+  },
+  "Ancient Rune of Detonation": {
+   "Crossbow": {
+    "ja": "クロスボウのリロードスピードが40%増加する",
+    "en": "40% increased Crossbow Reload Speed"
+   }
+  },
+  "Ancient Rune of Retaliation": {
+   "Shield": {
+    "ja": "ブロック率の最大値 +3%",
+    "en": "+3% to maximum Block chance"
+   }
+  },
+  "Rune of Vitality": {
+   "Martial Or Caster Weapon": {
+    "ja": "ライフリーチ量が15%増加する",
+    "en": "15% increased amount of Life Leeched"
+   },
+   "Shield or Buckler": {
+    "ja": "最大ライフが5%増加する",
+    "en": "5% increased maximum Life"
+   }
+  },
+  "Rune of the Hunt": {
+   "Boots": {
+    "ja": "スタン復帰が50%増加する",
+    "en": "50% increased Stun Recovery"
+   },
+   "Sceptre": {
+    "ja": "コンパニオンがプレイヤーの存在下にいる間マナ回復レートが8%増加する",
+    "en": "8% increased Mana Recovery rate while your Companion is in your Presence"
+   }
+  },
+  "Rune of Acrobatics": {
+   "Martial Or Caster Weapon": {
+    "ja": "チャームは毎秒0.25のチャージを獲得する",
+    "en": "Charms gain 0.25 charges per Second"
+   },
+   "Boots": {
+    "ja": "直近ドッジロールをしていなければアーマーが30%増加する",
+    "en": "30% increased Armour if you haven't Dodge Rolled Recently"
+   }
+  },
+  "Rune of Culmination": {
+   "Gloves": {
+    "ja": "アタックスピードが5%増加する",
+    "en": "5% increased Attack Speed"
+   },
+   "One Hand Mace or Quarterstaff": {
+    "ja": "出血持続時間が20%増加する",
+    "en": "20% increased Bleeding Duration"
+   }
+  },
+  "Rune of Renown": {
+   "Gloves": {
+    "ja": "バナースキルはオーラ強度が20%増加する",
+    "en": "Banner Skills have 20% increased Aura Magnitudes"
+   },
+   "Caster Weapon": {
+    "ja": "アルコンの持続時間が30%増加する",
+    "en": "30% increased Archon Buff duration"
+   }
+  },
+  "Rune of Accumulation": {
+   "Gloves": {
+    "ja": "最大ライフ +30, 最大マナ +30",
+    "en": "+30 to maximum Life, +30 to maximum Mana"
+   },
+   "Crossbow Bow or Spear": {
+    "ja": "凍結蓄積が30%増加する",
+    "en": "30% increased Freeze Buildup"
+   }
+  },
+  "Rune of Foundations": {
+   "Body Armour": {
+    "ja": "最大ライフ +20, 最大マナ +20",
+    "en": "+20 to maximum Life, +20 to maximum Mana"
+   }
+  },
+  "Rune of the Prism": {
+   "Body Armour": {
+    "ja": "ダメージの20%をライフより先にマナで受ける",
+    "en": "20% of Damage is taken from Mana before Life"
+   }
+  },
+  "Rune of the Blossom": {
+   "Body Armour": {
+    "ja": "スキルのスピリットリザーブ効率が5%増加する",
+    "en": "5% increased Spirit Reservation Efficiency of Skills"
+   }
+  },
+  "Rune of Consistency": {
+   "Helmet": {
+    "ja": "プレイヤーに対するヒットはクリティカルダメージボーナスが25%減少する",
+    "en": "Hits against you have 25% reduced Critical Damage Bonus"
+   },
+   "Caster Weapon": {
+    "ja": "コンパニオンがプレイヤーの存在下にいる間マナ回復レートが8%増加する",
+    "en": "8% increased Mana Recovery rate while your Companion is in your Presence"
+   }
+  },
+  "Rune of Reach": {
+   "Helmet": {
+    "ja": "レムナントを拾った時に最大マナの3%を回復する",
+    "en": "Recover 3% of Maximum Mana when you collect a Remnant"
+   },
+   "Wand or Staff": {
+    "ja": "曝露の効果が20%増加する",
+    "en": "20% increased Exposure Effect"
+   }
+  },
+  "Rune of Vital Flame": {
+   "Maces or Talisman": {
+    "ja": "発火の強度が30%増加する",
+    "en": "30% increased Ignite Magnitude"
+   }
+  },
+  "Rune of Confrontation": {
+   "Quarterstaff or Spear": {
+    "ja": "rage effect +% [10]",
+    "en": "rage effect +% [10]"
+   }
+  },
+  "Uhtred's Sidereus": {
+   "Boots": {
+    "ja": "クールダウン解消レートが10%増加する",
+    "en": "10% increased Cooldown Recovery Rate"
+   }
+  },
+  "Kolr's Hunt": {
+   "Gloves": {
+    "ja": "投射物ダメージが20%増加する",
+    "en": "20% increased Projectile Damage"
+   }
+  },
+  "Vorana's Carnage": {
+   "Helmet": {
+    "ja": "近接ヒット時に憤怒を2獲得する",
+    "en": "Gain 2 Rage on Melee Hit"
+   }
+  },
+  "Thrud's Might": {
+   "Martial Or Caster Weapon": {
+    "ja": "全ての元素耐性 +5%",
+    "en": "+5% to all Elemental Resistances"
+   }
+  },
+  "Medved's Tending": {
+   "Body Armour": {
+    "ja": "最大ライフが3%増加する, 最大マナが3%増加する",
+    "en": "3% increased maximum Life, 3% increased maximum Mana"
+   }
+  },
+  "Katla's Gloom": {
+   "Gloves": {
+    "ja": "プレイヤーに対する非ダメージ性状態異常の効果が25%減少する",
+    "en": "25% reduced Effect of Non-Damaging Ailments on you"
+   }
+  },
+  "Legacy of Bramblejack": {
+   "Body Armour": {
+    "ja": "包囲されている間毎秒ライフの3%を自動回復する",
+    "en": "Regenerate 3% of maximum Life per second while Surrounded"
+   }
+  },
+  "Legacy of Blackbraid": {
+   "Body Armour": {
+    "ja": "全ての元素耐性 +15%",
+    "en": "+15% to all Elemental Resistances"
+   }
+  },
+  "Legacy of Edyrn's Tusks": {
+   "Body Armour": {
+    "ja": "棘ダメージが35%増加する",
+    "en": "35% increased Thorns damage"
+   }
+  },
+  "Legacy of Kingsguard": {
+   "Body Armour": {
+    "ja": "最大ライフ +30",
+    "en": "+30 to maximum Life"
+   }
+  },
+  "Legacy of Bristleboar": {
+   "Body Armour": {
+    "ja": "憤怒の最大数 +3",
+    "en": "+3 to Maximum Rage"
+   }
+  },
+  "Legacy of Foxshade": {
+   "Body Armour": {
+    "ja": "回避力が20%増加する",
+    "en": "20% increased Evasion Rating"
+   }
+  },
+  "Legacy of Ashrend": {
+   "Body Armour": {
+    "ja": "火耐性 +35%",
+    "en": "+35% to Fire Resistance"
+   }
+  },
+  "Legacy of Briskwrap": {
+   "Body Armour": {
+    "ja": "フラスコマナ回復レートが35%増加する",
+    "en": "35% increased Flask Mana Recovery rate"
+   }
+  },
+  "Legacy of The Unleashed": {
+   "Body Armour": {
+    "ja": "シェープシフト状態の間アーマーが20%増加する",
+    "en": "20% increased Armour while Shapeshifted"
+   }
+  },
+  "Legacy of Horns of Bynden": {
+   "Helmet": {
+    "ja": "憤怒の最大数 +3",
+    "en": "+3 to Maximum Rage"
+   }
+  },
+  "Legacy of Wings of Caelyn": {
+   "Helmet": {
+    "ja": "憤怒5スタックごとに移動スピードの増加1%も付与する",
+    "en": "Every five Rage also grants you 1% increased Movement Speed"
+   }
+  },
+  "Legacy of Ezomyte Peak": {
+   "Helmet": {
+    "ja": "プレイヤーに対する減速のデバフのポテンシャルが50%減少する",
+    "en": "50% reduced Slowing Potency of Debuffs on You"
+   }
+  },
+  "Legacy of Deidbell": {
+   "Helmet": {
+    "ja": "ウォークライスキルの効果範囲が20%増加する",
+    "en": "Warcry Skills have 20% increased Area of Effect"
+   }
+  },
+  "Legacy of Elevore": {
+   "Helmet": {
+    "ja": "チャームは毎秒0.5のチャージを獲得する",
+    "en": "Charms gain 0.5 charges per Second"
+   }
+  },
+  "Legacy of Starkonja's Head": {
+   "Helmet": {
+    "ja": "ヒットによるダメージの5%をプレイヤーの前にダメージを受けられるコンパニオンのライフから受ける",
+    "en": "5% of Damage from Hits is taken from your Damageable Companion's Life before you"
+   }
+  },
+  "Legacy of Crown of Thorns": {
+   "Helmet": {
+    "ja": "17から26の物理棘ダメージ",
+    "en": "17 to 26 Physical Thorns damage"
+   }
+  },
+  "Legacy of Greymake": {
+   "Helmet": {
+    "ja": "1レベルごとに最大ライフ +1",
+    "en": "+1 Maximum Life per Level"
+   }
+  },
+  "Legacy of Erian's Cobble": {
+   "Helmet": {
+    "ja": "アーマー +20, 回避力 +20, 最大エナジーシールド +20",
+    "en": "+20 to Armour, +20 to Evasion Rating, +20 to maximum Energy Shield"
+   }
+  },
+  "Legacy of The Smiling Knight": {
+   "Helmet": {
+    "ja": "クリティカルヒット率が20%増加する",
+    "en": "20% increased Critical Hit Chance"
+   }
+  },
+  "Legacy of The Vile Knight": {
+   "Helmet": {
+    "ja": "存在下の効果範囲が20%増加する",
+    "en": "20% increased Presence Area of Effect"
+   }
+  },
+  "Legacy of Northpaw": {
+   "Gloves": {
+    "ja": "クリティカルダメージボーナスが15%増加する",
+    "en": "15% increased Critical Damage Bonus"
+   }
+  },
+  "Legacy of Candlemaker": {
+   "Gloves": {
+    "ja": "敵に対する発火の持続時間が20%増加する",
+    "en": "20% increased Ignite Duration on Enemies"
+   }
+  },
+  "Legacy of Deathblow": {
+   "Gloves": {
+    "ja": "倒した敵1体ごとに30のライフを獲得する",
+    "en": "Gain 30 Life per enemy killed"
+   }
+  },
+  "Legacy of Legionstride": {
+   "Boots": {
+    "ja": "投射物のヒットから受けるダメージが10%減少する",
+    "en": "10% reduced Damage taken from Projectile Hits"
+   }
+  },
+  "Legacy of Trampletoe": {
+   "Boots": {
+    "ja": "グローバル物理ダメージが15%増加する",
+    "en": "15% increased Global Physical Damage"
+   }
+  },
+  "Legacy of Briarpatch": {
+   "Boots": {
+    "ja": "棘クリティカルダメージボーナスが15%増加する",
+    "en": "15% increased Thorns Critical Damage Bonus"
+   }
+  },
+  "Legacy of Bushwhack": {
+   "Boots": {
+    "ja": "器用さ +20",
+    "en": "+20 to Dexterity"
+   }
+  },
+  "Legacy of Wanderlust": {
+   "Boots": {
+    "ja": "移動スピードが5%増加する",
+    "en": "5% increased Movement Speed"
+   }
+  },
+  "Legacy of The Knight-errant": {
+   "Boots": {
+    "ja": "元素系状態異常閾値が25%増加する",
+    "en": "25% increased Elemental Ailment Threshold"
+   }
+  },
+  "Legacy of Obern's Bastion": {
+   "Boots": {
+    "ja": "受ける冷却の持続時間が40%減少する, 受ける凍結の持続時間が40%減少する",
+    "en": "40% reduced Chill Duration on you, 40% reduced Freeze Duration on you"
+   }
+  },
+  "Legacy of Dionadair": {
+   "Shield": {
+    "ja": "スタン閾値が15%増加する",
+    "en": "15% increased Stun Threshold"
+   }
+  },
+  "Legacy of Wulfsbane": {
+   "Shield": {
+    "ja": "筋力 +25",
+    "en": "+25 to Strength"
+   }
+  },
+  "Legacy of Chernobog's Pillar": {
+   "Shield": {
+    "ja": "混沌耐性 +30%",
+    "en": "+30% to Chaos Resistance"
+   }
+  },
+  "Legacy of Alkem Eira": {
+   "Shield": {
+    "ja": "ブロックしたダメージの20%はマナとして回収される",
+    "en": "20% of damage Blocked is Recouped as Mana"
+   }
+  },
+  "Legacy of Oaksworn": {
+   "Shield": {
+    "ja": "毎秒50のライフを自動回復する",
+    "en": "50 Life Regeneration per second"
+   }
+  },
+  "Legacy of Dunkelhalt": {
+   "Buckler": {
+    "ja": "パリィダメージが50%増加する",
+    "en": "50% increased Parry Damage"
+   }
+  },
+  "Legacy of Rondel de Ezo": {
+   "Buckler": {
+    "ja": "投射物に対するブロック率が100%増加する",
+    "en": "100% increased Block chance against Projectiles"
+   }
+  },
+  "Legacy of Brynhand's Mark": {
+   "One Hand Mace": {
+    "ja": "14から20の物理ダメージを追加する",
+    "en": "Adds 14 to 20 Physical Damage"
+   }
+  },
+  "Legacy of Trenchtimbre": {
+   "One Hand Mace": {
+    "ja": "全てのミニオンスキルのレベル +1",
+    "en": "+1 to Level of all Minion Skills"
+   }
+  },
+  "Legacy of Mjölner": {
+   "One Hand Mace": {
+    "ja": "全ての雷スキルのレベル +1",
+    "en": "+1 to Level of all Lightning Skills"
+   }
+  },
+  "Legacy of Twisted Empyrean": {
+   "Two Hand Mace": {
+    "ja": "ダメージの15%をライフより先にマナで受ける",
+    "en": "15% of Damage is taken from Mana before Life"
+   }
+  },
+  "Legacy of Hoghunt": {
+   "Two Hand Mace": {
+    "ja": "重傷状態の敵に対するアタックダメージが25%増加する",
+    "en": "25% increased Attack Damage against Maimed Enemies"
+   }
+  },
+  "Legacy of Hrimnor's Hymn": {
+   "Two Hand Mace": {
+    "ja": "プレイヤー自らが使用するスラムスキルは15%の確率で余震を追加で1回引き起こす",
+    "en": "15% chance for Slam Skills you use yourself to cause an additional Aftershock"
+   }
+  },
+  "Legacy of Brain Rattler": {
+   "Two Hand Mace": {
+    "ja": "ダメージは10%の雷耐性を貫通する",
+    "en": "Damage Penetrates 10% Lightning Resistance"
+   }
+  },
+  "Legacy of Lifesprig": {
+   "Wand": {
+    "ja": "プレイヤーがスペルをキャストした時に最大ライフの1%をライフリーチする",
+    "en": "Leeches 1% of maximum Life when you Cast a Spell"
+   }
+  },
+  "Legacy of Duality": {
+   "Quarterstaff": {
+    "ja": "スキル使用時に使用したコンボごとに0.2秒間決着を獲得する",
+    "en": "Gain Finality for 0.2 seconds per Combo expended when using Skills"
+   }
+  },
+  "Legacy of Tyranny's Grip": {
+   "Spear": {
+    "ja": "ヒット時に敵をノックバックする",
+    "en": "Knocks Enemies Back on Hit"
+   }
+  },
+  "Legacy of The Sentry": {
+   "Quarterstaff": {
+    "ja": "火耐性の最大値 +2%",
+    "en": "+2% to Maximum Fire Resistance"
+   }
+  },
+  "Legacy of Adonia's Ego": {
+   "Wand": {
+    "ja": "最大マナ +65",
+    "en": "+65 to maximum Mana"
+   }
+  },
+  "Legacy of Cursecarver": {
+   "Wand": {
+    "ja": "マナ自動回復レートが35%増加する",
+    "en": "35% increased Mana Regeneration Rate"
+   }
+  },
+  "Legacy of Dusk Vigil": {
+   "Staff": {
+    "ja": "トリガーで発動したスペルのスペルダメージが20%増加する",
+    "en": "Triggered Spells deal 20% increased Spell Damage"
+   }
+  },
+  "Legacy of The Blood Thorn": {
+   "Quarterstaff": {
+    "ja": "プレイヤーが付与した出血の強度が10%増加する",
+    "en": "10% increased Magnitude of Bleeding you inflict"
+   }
+  },
+  "Legacy of Quill Rain": {
+   "Bow": {
+    "ja": "矢のスピードが70%増加する",
+    "en": "70% increased Arrow Speed"
+   }
+  },
+  "Legacy of Ironbound": {
+   "Bow": {
+    "ja": "装備中の防具アイテムのアイテムアーマー合計100ごとにブロック率が3%増加する",
+    "en": "3% increased Block chance per 100 total Item Armour on Equipped Armour Items"
+   }
+  },
+  "Legacy of Amor Mandragora": {
+   "Talisman": {
+    "ja": "プレイヤーの存在下にいる敵は阻害状態になる",
+    "en": "Enemies in your Presence are Hindered"
+   }
+  },
+  "Legacy of Spiteful Floret": {
+   "Talisman": {
+    "ja": "アタックは20%の確率で出血を付与する",
+    "en": "Attacks have 20% chance to cause Bleeding"
+   }
+  },
+  "Legacy of Svalinn": {
+   "Shield": {
+    "ja": "最大ルーンワード +50",
+    "en": "+50 to maximum Runic Ward"
+   }
+  },
+  "Legacy of Keeper of the Arc": {
+   "Helmet": {
+    "ja": "マナ自動回復レートが25%増加する",
+    "en": "25% increased Mana Regeneration Rate"
+   }
+  },
+  "Legacy of Olrovasara": {
+   "One Hand Mace": {
+    "ja": "アタックスピードが15%増加する",
+    "en": "15% increased Attack Speed"
+   }
+  },
+  "Legacy of A Worthy Foe": {
+   "Shield": {
+    "ja": "冷気耐性 +45%",
+    "en": "+45% to Cold Resistance"
+   }
+  },
+  "Legacy of Serle's Grit": {
+   "One Hand Mace": {
+    "ja": "アタックを強化するスキルは20%の確率でそのアタックをカウントしない",
+    "en": "Skills which Empower an Attack have 20% chance to not count that Attack"
+   }
+  },
+  "Legacy of Runeseeker's Call": {
+   "Wand": {
+    "ja": "最大マナ +100",
+    "en": "+100 to maximum Mana"
+   }
+  },
+  "Legacy of Facebreaker": {
+   "Gloves": {
+    "ja": "筋力15ごとにダメージが1%増加する",
+    "en": "1% increased Damage per 15 Strength"
+   }
+  }
+ }
+}

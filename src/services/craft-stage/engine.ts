@@ -78,7 +78,7 @@ export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probabi
 
 // 名簿
 export { OMEN_FOR } from "./omens";
-export { RUNES, runeOf, isRune, runeEffectFor } from "./stage-runes";
+export { RUNES, runeOf, isRune, runeEffectFor, bondedFor } from "./stage-runes";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";
 // データの表をそのまま (棚の並び・名前。中身は元の JSON、10-25 データの窓口揃え。目録 docs/org/emulator/data-catalog.md)

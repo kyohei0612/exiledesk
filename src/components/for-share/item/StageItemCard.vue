@@ -9,7 +9,7 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
-import { type StageItem, type StageMod, isGem, allMods, unfracturable, classLabel, tagLabel, cardTierName, craftedKindOf } from "../../../services/craft-stage/engine";
+import { type StageItem, type StageMod, bondedFor, isGem, allMods, unfracturable, classLabel, tagLabel, cardTierName, craftedKindOf } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import STAT_ORDER from "../../../data/stat-order.json";
 import { fmtChance, isRareChance } from "../../../utils/format-pct";
@@ -283,6 +283,10 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       </div>
       <!-- ルーンの効き目 (MOD とは別の行。ゲームと同じくプロパティの下) -->
       <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-stage-rune" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? tr(`${nameOf(a)} を外す`, `Remove ${nameOf(a)}`) : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ BASE_VALUES_ON ? augmentLineOf(item, a).text : modText(scaledAugment(item, a)) }}<span v-if="BASE_VALUES_ON && augmentLineOf(item, a).shown" data-boosted-value class="ml-1 text-[10px] text-stage-boost" :title="tr('ソケットの効果で盛った効果', 'Boosted by socket effect')">({{ augmentLineOf(item, a).shown }})</span></p>
+      <!-- 絆 (Bonded): シャーマンの「マジの叡智」を取った人だけに効く行。ゲームのツールチップと同じくルーンの効き目の後に薄く (見せるだけ、11-05) -->
+      <template v-for="(a, i) in item.augments ?? []" :key="'b' + i + a.key">
+        <p v-if="bondedFor(a.en, item)" data-stage-bonded class="stage-row-in text-stage-rune opacity-50" :title="tr('絆: シャーマンの「マジの叡智」を取った時だけ効く', 'Bonded: only active with the Shaman\'s Wisdom of the Maji')">{{ tr("絆", "Bonded") }}: {{ tr(bondedFor(a.en, item)!.ja, bondedFor(a.en, item)!.en) }}</p>
+      </template>
       <!-- スキルジェムのサポート枠 (宝飾職人のオーブ) -->
       <div v-if="item.gemSockets" class="flex items-center justify-center gap-1.5 py-0.5 text-[12px] text-white/50">
         {{ tr("サポート枠", "Support Gem Sockets") }}
