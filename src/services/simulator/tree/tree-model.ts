@@ -278,7 +278,7 @@ export const MATCH_BACK = "match";
 const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
   // フラクチャー: 印の狙いが ✦ になった (当たり、札 = その狙い) だけ。必ず印の狙いを固定し、外れは費用で数える
-  // (10-24 オーナー「2 回外れて 1 回当たり」、tree-run の FRACTURE_MISS。10-25 に一度乱数 + 外れの箱にしたが、オーナーが 10-24 の決めに戻した)
+  // (10-24 オーナー「2 回外れて 1 回当たり」の費用の足し方 = 前の FRACTURE_MISS は 11-05 に外した)
   fracture: ["hit"],
   remove: ["junkGone", "lost"],
   swap: ["hit", "lost", "junk"],

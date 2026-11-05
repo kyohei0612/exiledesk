@@ -10,14 +10,13 @@
  */
 import { allMods, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
-import { prepFor } from "./tree-unbounded";
 import { TIER } from "../../../state/for-share/tier-word";
 import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
-import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
 import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
@@ -25,7 +24,7 @@ import { depthRows } from "./tree-row-tops";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
-import { playableTwin, routeOf, twinAimed } from "./tree-judge-link";
+import { routeOf } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
 
 type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan";
@@ -172,7 +171,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
     // 品質を上げた後かは見本の品質 (中身、S-31b。品質だけ上げる手の後の通り抜け・「n % まで」の打った後の箱も)
     const afterCat = J.afterQuality(b.id);
-    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr(`${nameOfKey(CATALYSING, null)}なのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)`, `${nameOfKey(CATALYSING, null)} without a catalyst craft (pick a catalyst in the craft)`));
+    if (b.hand?.omens.includes(CATALYSING) && !afterCat) add(b.id, "noCatalyst", tr(`${nameOfKey(CATALYSING, null)}なのにカタリストを打つ手が無い (前にカタリストの手を置く)`, `${nameOfKey(CATALYSING, null)} without a catalyst craft (place a catalyst craft before it)`));
   }
 
   // 1a) 固定された外れ MOD (フラクチャーで外れが固定された・始めから固定の外れ) で、その側の完成の狙いが枠に入りきらない = この枝は完成できない
@@ -268,9 +267,6 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         const b = doc.boxes[id];
         if (!b || seen.has(id + (viaBack ? "<" : ""))) return;
         seen.add(id + (viaBack ? "<" : ""));
-        // 完成の狙いが全部そろった人はここで完成 (回す時と同じ、tree-sample の goalsHeld)
-        // 完成は押した箱だけ (S-05・S-54)
-        if (!J && goalsHeld(data, doc, item)) return;
         // × (要らない) の印の MOD が残ったまま完成 (印はこの箱と上の箱で付けた物、段は問わない)
         if (b.done === "main") { const n = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).length; heldAtDone.set(id, Math.min(heldAtDone.get(id) ?? n, n)); }
         if (b.done === "main") for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
@@ -298,15 +294,13 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
-        else if (!first.applied && !J && heldHitOf(data, doc, b, item)) { const hb = heldHitOf(data, doc, b, item)!; walk(hb, item, viaBack, J ? nextAimed(data, doc, aimed, hb, item) : aimed); return; }
-        else if (!first.applied && J && playableTwin(data, doc, J, id, item, aimed)) { const tw = playableTwin(data, doc, J, id, item, aimed)!; walk(tw, item, viaBack, twinAimed(doc, J, tw, item, aimed)); return; }
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない。
         // フラクチャーも見ない: 必ず選んだ狙いを固定し、外れは費用で数える、10-24 オーナー)
         /** 起こりうる結果が全部見えている時の一覧 (無い結果の箱は下で打ち直さない) */
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
-          const all = stepOutcomes(data, prepFor(data, item, b.hand.currency), b.hand.currency, engineOmens(b.hand)) ?? []; // 規格外の形で (tree-unbounded)
+          const all = stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
           // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る)
           const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);
           const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, J ? aimed : null));

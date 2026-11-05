@@ -5,12 +5,11 @@
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
-import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
-import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
-import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
+import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -66,10 +65,10 @@ export function autoCatOf(data: PatchData, doc: TreeDoc, item: StageItem): strin
   return null;
 }
 /**
- * 棚に渡すアイテム = 前にカタリストの手を足す時はそれで品質を最大まで入れた後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
+ * 棚に渡すアイテム = 前にカタリストの手を足す時はそれを 1 回打った後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
  * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない
  */
-export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? fillCatalyst(data, item, autoCat, mulberry32(1)) : null);
+export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? applyCurrency(data, item, autoCat, mulberry32(1)) : null);
 /**
  * 狙い無し (結果は「打った後」の 1 つ) にできる手 = 付く MOD を選べない手 (足す・カオス。10-25 オーナー「全カレンシーで」。前は足す手だけ)。
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
@@ -124,7 +123,7 @@ export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency))
 /** エッセンスで付きうる MOD (エンジンの結果で新しく付いた MOD、段はエッセンス自身の段)。無限のエッセンスは筋力・器用さ・知性のうち付きうる物 (棚で ☑ させる、10-27 オーナー) */
 export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] {
   const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-  const got = (stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
+  const got = (stepOutcomes(data, item, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
   const out: Aim[] = [];
   // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
   for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
@@ -193,7 +192,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // 確率の表が無い時 (null): エンジンの起こりうる結果のどれでも MOD が増えないなら当たりは無し (10-26 モンキー 7 の 4: 不在のアミュレットに変成 = MOD 0 のマジック、
   // 前は狙い全部を当たりにして、何も付かない当たりの箱と「外れ 100%」ができた)。結果は打った後の箱 1 つ
   const had = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-  const outs = stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
+  const outs = stepOutcomes(data, item, h.currency, engineOmens(h))?.filter((o) => !o.void);
   if (outs?.length && outs.every((o) => [...o.item.prefixes, ...o.item.suffixes].every((m) => had.has(m.modId)))) return [];
   // エッセンスの MOD (クラフト MOD) は付く MOD を選べない手では付かないので出さない (この箱で打てない手を持った時に、確率の表が無くて狙いが全部並び、合金の MOD まで ☑ に出た。10-27 夜)
   return open.filter((a) => !craftedKindOf(data, a));
@@ -372,7 +371,7 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
     if (!h) continue;
     yield;
     // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
-    const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, prepFor(data, s.item, h.currency), h);
+    const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, s.item, h);
     const arrived = arrivalsOf(data, d, j, b.id);
     if (!arrived.length && !main) continue;
     const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));

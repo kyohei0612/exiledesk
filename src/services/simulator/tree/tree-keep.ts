@@ -8,7 +8,6 @@ import { omensFor, type PatchData, type StageItem } from "../../craft-stage/engi
 import { stepOutcomes } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { engineOmens } from "./tree-hands";
-import { prepFor } from "./tree-unbounded";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { joinKeys } from "./tree-whittle";
 
@@ -32,7 +31,7 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
   if (!m) GONE.set(data, (m = new Map()));
   const key = [currency, ...omens, item.rarity, ...[...item.prefixes, ...item.suffixes].map((x) => `${x.modId}.${x.tierIndex}${x.fractured ? "f" : ""}${x.unrevealed ? "u" : ""}`)].join("|");
   if (m.has(key)) return m.get(key)!;
-  const outs = stepOutcomes(data, prepFor(data, item, currency), currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void);
+  const outs = stepOutcomes(data, item, currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void);
   const out = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((x) => x.modId))) : null;
   if (m.size > 20000) m.clear();
   m.set(key, out);

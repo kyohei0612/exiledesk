@@ -10,7 +10,6 @@ import { boxOutcomeOf } from "../../../services/simulator/tree/tree-outcome";
 import { outBoxOf } from "../../../services/simulator/tree/tree-shape";
 import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-junk-side";
 import { isWhittleHand } from "../../../services/simulator/tree/tree-whittle";
-import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
@@ -36,7 +35,7 @@ export function oddsOfHand(doc: TreeDoc, id: string, part = ""): Map<string, num
   const out = new Map<string, number>();
   let shot = 0;
   for (const man of peopleOf(data, doc, id)) {
-    const odds = outcomeOdds(data, prepFor(data, man.raw, b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
+    const odds = outcomeOdds(data, man.raw, b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
     if (!odds) continue;
     shot += man.w;
     for (const o of odds) {
@@ -87,7 +86,7 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
   if (key && sideMemo.has(key)) return sideMemo.get(key)!;
   let shot = 0;
   for (const man of men) {
-    const item0 = prepFor(data, man.raw, b.hand.currency), aimed = man.aimed;
+    const item0 = man.raw, aimed = man.aimed;
     // 削減の手も見本のまま (結果の箱は % を出さない、treeOddsOf)
     const forms = [{ p: 1, item: item0 }];
     for (const f of forms) {

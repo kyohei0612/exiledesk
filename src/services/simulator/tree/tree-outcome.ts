@@ -2,13 +2,12 @@
  * tree-outcome.ts — 箱の手の結果の分け方 (回す tree-run・見本 tree-sample・精査 tree-check・台本で同じ物を呼ぶ。2026-10-27 tree-sample.ts から分けた)。
  * ☑ の無い MOD は外れ MOD (メモ feedback-unchecked-is-junk)、消去の残したい MOD (Hand.keep) もここ。打った前後の比べはエンジンの入口 (outcomeOf の aimDiff)
  */
-import { mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
+import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
 import { boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
-import { prepFor } from "./tree-unbounded";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 
 /**
@@ -67,7 +66,7 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   if (!key || effectOf(key) === "fracture") return withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
   const oc = withGot(data, nextKeyed(data, doc, b, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, am), before, after, got);
   // 数え上げられない手は当たりの人も形で分ける (S-21。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
-  return oc.out === "hit" && b.hand && mainSideOf(data, prepFor(data, before, b.hand.currency), b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
+  return oc.out === "hit" && b.hand && mainSideOf(data, before, b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
 }
 /** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33)。残したければ人が ☑ */
 function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
@@ -156,7 +155,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
  * 起こりうる結果の箱 (10-25 オーナー「結局 例えばプレフィックスに付いたらどか考えられるでしょ」、前は手の種類ごとの決め打ち OUTS_OF と「1 通りなら 1 つ」だけ):
  * 手を置く時に、この箱の見本 (tree-sample、道で決める。S-74) を SINGLE_SEEDS 個まで取り (同じ箱でも外れが左右どちらかなどで違う)、
  * それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどり、結果の分け方 (outcomeOf) を全部集める (当たりは付く札ごと)。お告げ込み。
- * 狙いの付かない当たり (エッセンスで外れを置き換える等) は「打った後」(any)。箱に着かなかった見本は数えない。pre = 前に品質を最大まで入れるカタリスト。
+ * 狙いの付かない当たり (エッセンスで外れを置き換える等) は「打った後」(any)。箱に着かなかった見本は数えない。pre = 前に打つカタリスト (エンジンで 1 回)。
  * 繰り返し・狙い無し・品質だけの手・未発現が付く手 (冒涜の骨、発現で選ぶ候補で分かれる) と、エンジンが枝に分けられない手は null (今までどおり手の種類の箱)。
  * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」になる時も null
  * (10-22 白紙から 13 通り組んだ #1: 木にまだ無い狙いを足す手で当たりの箱が作れず、横の＋も出なかった。外れだけなら当たりの箱を作って MOD を選ばせる)
@@ -198,13 +197,13 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     if (seen.has(mark)) continue;
     seen.add(mark);
     if (aims.some((a) => !aimHeldOn(data, smp.item, a, { sameText: true }))) unheld = true;
-    const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
+    const item = pre ? applyCurrency(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const forms = [item];
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
     const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aimedAims(aims, keptAimedOf(doc, h, aimedAt(smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
     for (const it of all) {
       // roll = 数え上げられない手 (S-21) はエンジンの入口を打って集めた結果で見る
-      const prepped = prepFor(data, it, h.currency), outs = (stepOutcomes(data, prepped, h.currency, engineOmens(h)) ?? (roll ? rolledOutcomes(data, prepped, h.currency, engineOmens(h)) : null))?.filter((o) => !o.void);
+      const outs = (stepOutcomes(data, it, h.currency, engineOmens(h)) ?? (roll ? rolledOutcomes(data, it, h.currency, engineOmens(h)) : null))?.filter((o) => !o.void);
       // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64)。全部打てなければ下の list が空で null
       if (!outs?.length) continue;
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける)

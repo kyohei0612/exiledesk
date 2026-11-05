@@ -38,7 +38,6 @@ import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
-import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
@@ -97,7 +96,7 @@ export function installSimMonkey(): () => void {
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = sample(id)?.item;
       if (!d || !it) return [];
-      return shelfKeysOf(d, it).map((k) => { const reason = useReason(d, prepFor(d, it, k), k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
+      return shelfKeysOf(d, it).map((k) => { const reason = useReason(d, it, k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
     },
     omens(id: string, key: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = shelfItemFor(id, key);

@@ -8,7 +8,6 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
-import { prepFor } from "../../services/simulator/tree/tree-unbounded";
 import { treeOmenBlock } from "../../services/simulator/tree/tree-omen";
 import { tr } from "../../i18n/lang";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
@@ -61,7 +60,7 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
-    return block(k) ?? (d && it ? useReason(d, prepFor(d, it, k), k, om) : tr("準備中", "Loading")); // 規格外の形で聞く (ルーンはソケットを足す・アストリッド、tree-unbounded)
+    return block(k) ?? (d && it ? useReason(d, it, k, om) : tr("準備中", "Loading"));
   }
   provideShelf({
     data: s.data, item, omens, held,
