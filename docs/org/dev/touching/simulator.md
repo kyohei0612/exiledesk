@@ -4,4 +4,3 @@
 
 | 誰 | ファイル |
 |---|---|
-| sim-670-fix (11-05) | src/views/simulator/tree/TreeGoalCard.vue |

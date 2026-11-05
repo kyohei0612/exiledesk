@@ -36,7 +36,7 @@ const atLeast = computed(() => t.goals.value.some((a) => a.tier > 1));
 const folded = ref(((): boolean => { try { return localStorage.getItem(FOLD_KEY) === "1"; } catch { return false; } })());
 function toggleFold(): void { folded.value = !folded.value; try { localStorage.setItem(FOLD_KEY, folded.value ? "1" : "0"); } catch { /* 手元に残らないだけ */ } }
 
-/** ボタンの高さ: ベース = 名前の帯のすぐ下の種類の行、MOD = MOD の上の区切り線 (最後の .st-sep) の次の最初の行 (右の段の列は空いている)。MOD がまだ無ければ区切り線 */
+/** ボタンの高さ: ベース = 名前の帯のすぐ下の種類の行、MOD = MOD の上の区切り線 (最後の .st-sep) */
 const wrap = ref<HTMLElement | null>(null);
 const baseTop = ref<number | null>(null);
 const modTop = ref<number | null>(null);
@@ -54,10 +54,18 @@ function place(): void {
   baseTop.value = mid(card?.querySelector(".st-head")?.nextElementSibling?.firstElementChild);
   const seps = card?.querySelectorAll(".st-sep");
   const sep = seps?.length ? seps[seps.length - 1]! : null;
-  modTop.value = mid(sep?.nextElementSibling?.querySelector("p") ?? sep);
+  // 1 行目の MOD の右に重ねると長い文の終わりを隠した (11-05 猿 monkey-670 ①)。札は区切り線の右に置き、区切り線の上下を札の高さだけ空ける
+  // (行の右を空けると文が v-fit-text で縮んで読めない)。区切り線は縮めたカードの中なので px は ZOOM で割り戻す
+  if (spaced && spaced !== sep) spaced.style.marginTop = spaced.style.marginBottom = "";
+  spaced = sep as HTMLElement | null;
+  const bh = modBtn.value?.offsetHeight ?? 0;
+  if (spaced && bh) spaced.style.marginTop = spaced.style.marginBottom = `${Math.ceil(((bh + 4) / ZOOM - 8) / 2)}px`;
+  modTop.value = mid(sep);
 }
+const modBtn = ref<HTMLElement | null>(null);
+let spaced: HTMLElement | null = null;
 onMounted(place);
-watch([() => t.goalItem.value, folded], () => void nextTick(place));
+watch([() => t.goalItem.value, folded, modBtn], () => void nextTick(place));
 // カードの大きさが変わったら (字の読み込み・見えるようになった時) 測り直す
 const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => place());
 watch(wrap, (el, old) => { if (old) ro?.unobserve(old); if (el) ro?.observe(el); }, { immediate: true });
@@ -76,9 +84,9 @@ onBeforeUnmount(() => ro?.disconnect());
     </button>
     <div v-if="!folded" ref="wrap" class="relative mt-1 max-h-[calc(100vh-14rem)] overflow-y-auto overflow-x-hidden">
       <div :style="{ zoom: ZOOM }"><StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
-      <!-- ベースは名前の帯のすぐ下の種類の行の右、MOD は最初の MOD の行の右の空いた列 (10-25 オーナー「ベースのとこにベースボタン、その下に MOD ボタン」)。文字に重ならない小さな札 -->
+      <!-- ベースは名前の帯のすぐ下の種類の行の右、MOD は MOD の上の区切り線の右 (上下を札の高さだけ空ける、11-05) (10-25 オーナー「ベースのとこにベースボタン、その下に MOD ボタン」)。文字に重ならない小さな札 -->
       <button v-if="baseTop != null" type="button" data-tree-goal-open="base" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${baseTop ?? 0}px` }" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level') + ` (${rarity})`" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
-      <button v-if="modTop != null" type="button" data-tree-goal-open="mods" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${modTop}px` }" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
+      <button v-if="modTop != null" ref="modBtn" type="button" data-tree-goal-open="mods" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${modTop}px` }" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
       <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」) -->
       <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
       <!-- カードの枠に乗らない狙い (TreeGoalPage と同じ。どれかが付けば当たり) -->
