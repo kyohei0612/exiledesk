@@ -88,7 +88,8 @@ export function sameHandByContent(doc: TreeDoc, id: string, h: Hand, j: Judge): 
 export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
   let changed = false;
   for (const b of Object.values(doc.boxes)) {
-    if (!b.autoBack || !b.back || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
+    // ヒネコラのハズレのまとめ (S-39、tree-foresee の foldMisses) は中身で見直さない
+    if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
     if (j.fitsBox(b.id, b.back)) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;

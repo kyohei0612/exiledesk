@@ -26,7 +26,7 @@ import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, b
 import { pctText, useTreeOdds } from "./tree-odds";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
-import { foreseenAt, holdsAt } from "../../../services/simulator/tree/tree-foresee";
+import { foreseenAt, holdsAt, noHitHeld } from "../../../services/simulator/tree/tree-foresee";
 
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -85,6 +85,8 @@ const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.da
 /** ヒネコラで持っている所は枠を紫に (S-39、開発版だけ。11-05 オーナー「枠を紫にしようかヒネコラで持ってる挙動」): hold = ヒネコラの結果の箱 (手は「持つ」)、seenOut = そこに持った手の結果の箱 */
 const hold = computed(() => holdsAt(t.doc.value, props.box.id));
 const seenOut = computed(() => foreseenAt(t.doc.value, props.box.id));
+/** 持った手に当たりが無い (狙い無し = 全部ハズレ、S-39。11-05 ブラック「画面で『狙いを ☑ して』と分かるように」) */
+const allMiss = computed(() => noHitHeld(t.doc.value, props.box.id));
 const cardTags = computed(() => {
   const d = s.data.value, it = cardItem.value;
   if (!d || !it) return null;
@@ -100,7 +102,8 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 /** 結果ごとの名前・色・印 (tree-names.ts の OUT_LOOK、まとめた札と同じ) */
 const kind = computed(() => OUT_LOOK[props.box.out]);
 /** 枠の上の線に乗る題 (tree-names の headOf) */
-const head = computed(() => headOf(props.box, t.aimShort));
+/** ヒネコラのハズレ (当たり以外をまとめた箱、S-39) は「ハズレ (打たない)」 */
+const head = computed(() => (props.box.seen ? tr("ハズレ (打たない)", "Miss (not used)") : headOf(props.box, t.aimShort)));
 /** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
@@ -198,7 +201,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <span v-if="box.fresh" data-tree-fresh class="shrink-0 rounded-md border border-sky-400/60 bg-sim-panel px-1.5 text-[11px] font-bold leading-[18px] text-sky-300" :title="tr('今の決まりで組み直した時に、前の保存には無かった結果の箱。行き先を確かめて決める', 'A result box that was not in the saved recipe and appeared when rebuilt with the current rules. Check where it goes')">{{ tr("組み直しで増えた", "New after rebuild") }}</span>
     <!-- まとめた箱がある = 線が何本か入る (案 A、S-66) -->
     <span v-if="hold || seenOut" data-tree-foresee-frame class="shrink-0 rounded-md border border-violet-300/60 bg-[#15110c] px-1.5 text-[11px] font-bold leading-[18px] text-violet-200" :title="hold ? tr('ヒネコラで予見したアイテム: 次の手の結果が使う前に見える', 'Foreseen with Hinekora: the next craft’s result is visible before use') : tr('予見で見えた結果 (ヒネコラで持った手の結果)', 'A foreseen result (of the craft held after Hinekora)')">{{ hold ? tr("予見", "Foresight") : tr("予見の結果", "Foreseen") }}</span>
-    <span v-if="joinedIn" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
+    <span v-if="joinedIn && !box.seen" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
     <template v-if="box.out !== 'start'">
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>
@@ -250,6 +253,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <div class="mt-1 flex flex-wrap items-center gap-1 text-[12px]">
       <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
+      <span v-if="box.seen" data-tree-box-seen class="w-full text-violet-200/80">{{ tr(`当たり以外 ${joinedIn + 1} 通り · 手は使わずアイテムはこのまま`, `${joinedIn + 1} non-hit result(s) · craft not used, item unchanged`) }}</span>
+      <span v-if="allMiss" data-tree-foresee-nohit class="w-full text-amber-200" :title="tr('ヒネコラの後は狙いの結果だけ使い、ほかはハズレ (打たない)。手の札を押して狙いの MOD に ☑ する', 'After Hinekora only the targeted result is used; everything else is a miss. Click the craft and tick the target mods')">{{ tr("狙いを ☑ して (今は全部ハズレ)", "Tick a target (all results are misses now)") }}</span>
       <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->

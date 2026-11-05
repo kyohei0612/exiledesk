@@ -2,6 +2,7 @@
  * tree-same-frame.ts — 外れの道の同じ枠探し (S-190b、11-03)。外れの道の箱には自動の ↩ を付けず、人が手を決めた時だけ 1 回、
  * 今の未設定の中から同じ形の箱を探してつなぐ。ハズレ整理の後に手を決めてできた枝は、グレーにせずその場で新しい未設定にする
  */
+import { foldMisses } from "./tree-foresee";
 import type { PatchData } from "../../craft-stage/engine";
 import { judgeMemo } from "./tree-judge";
 import { straightUp } from "./tree-judge-link";
@@ -15,6 +16,7 @@ import type { Hand, TreeDoc } from "./tree-model";
 export function afterHandSet(data: PatchData | null, d: TreeDoc, id: string, to: string, h: Hand, had: ReadonlySet<string> | null, pre: string | null): void {
   if (had && d.tidyRan) for (const b of Object.values(d.boxes)) if (!had.has(b.id) && !b.hand && !b.done && !b.split) b.tidied = true;
   if (data && !pre) linkSameFrame(data, d, id, to, h);
+  foldMisses(d, id); // ヒネコラで持った手は当たり以外を 1 つのハズレ箱へ (S-39)
 }
 
 /**

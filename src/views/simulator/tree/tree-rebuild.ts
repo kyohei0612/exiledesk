@@ -13,6 +13,7 @@ import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tr
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -95,6 +96,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
     if (added.length) { yield* drain(); flushBacks(); }
   }
+  // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
+  for (const id of Object.keys(d.boxes)) foldMisses(d, id);
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d);
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
   const left = !stepped || [...picks.keys()].some((k) => !used.has(k));
