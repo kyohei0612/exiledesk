@@ -13,6 +13,7 @@ import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tr
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { setSeen } from "../../../services/simulator/tree/tree-foresee";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -62,6 +63,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     if (p) {
       used.add(at);
       if (p.back) backs.push([id, p.back, at]);
+      // 予見で見ただけ (S-39) は手より先に付ける (この箱の手の見本は親の見本のまま)
+      if (p.seen) setSeen(d, id, true);
       // エッセンスの MOD の ☑ は木の狙いの段にそろえる (保存した ☑ が一般の段だと当たりの箱が落ちた、alignEssenceAims)
       // 前の版の骨の手 (veil 無し) は ☑ があれば発現させる・無ければ未発現のまま (S-59、tree-veil の oldVeil)
       // 狙い無し・ルーン・未発現のままの手は保存の当たりの札を渡さない (当たりの箱を出さない、S-23・S-31e)

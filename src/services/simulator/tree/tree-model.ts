@@ -119,6 +119,7 @@ export interface TreeBox {
   /** 要確認 (tree-migrate の読み替えで読めなかった所: out = 結果の種類・aim = 狙い・hand = 打つ手・link = 矢印の先)。checkRaw = 読めなかった元の値 (捨てない) */
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
   /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107) */ handBack?: Hand; fresh?: true;
+  /** 予見で見ただけ (打たない、S-39・tree-foresee.ts): 予見したアイテムに親の手を打った結果の箱で、人はその手を使わず打つ前のアイテムのままこの箱の手へ */ seen?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];

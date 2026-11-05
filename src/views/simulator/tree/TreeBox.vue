@@ -26,6 +26,7 @@ import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, b
 import { pctText, useTreeOdds } from "./tree-odds";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
+import { canSee, FORESEE_ON, setSeen } from "../../../services/simulator/tree/tree-foresee";
 
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -81,6 +82,15 @@ const sample = computed(() => sampled.value?.item ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
+/** 予見したアイテムに打った手の結果の箱か (「打たない」を出す、S-39・開発版だけ)。カードは打たない時は打つ前のアイテム (見本が親のまま) */
+const seeable = computed(() => {
+  const d = s.data.value, p = props.box.parent;
+  if (!FORESEE_ON || !d || !p) return false;
+  return canSee(t.doc.value, props.box.id, shapeSampleWithNote(d, t.doc.value, p)?.item);
+});
+const seenTitle = computed(() => (props.box.seen
+  ? tr("この結果を予見で見て、親の手は打たない (使わない・費用 0)。この箱のアイテムは打つ前のまま。押すと外す", "Foreseen this result and did not use the craft (no cost). The item stays as before. Click to undo")
+  : tr("予見でこの結果が見えたら親の手を打たない (使わない)。打たない人は打つ前のアイテムのまま、＋で神のオーブや別の手を足す", "If the foresight shows this result, don't use the craft. The item stays as before; add a Divine Orb or another craft with +")));
 const cardTags = computed(() => {
   const d = s.data.value, it = cardItem.value;
   if (!d || !it) return null;
@@ -245,6 +255,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <div class="mt-1 flex flex-wrap items-center gap-1 text-[12px]">
       <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
+      <span v-if="box.seen && box.hand" data-tree-box-seen class="w-full text-violet-200" :title="seenTitle">{{ tr("予見で見ただけ (打たない)", "Foreseen only (not used)") }}</span>
       <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words text-amber-100/90" :title="handLabel(box.hand)">→ {{ handLabel(box.hand) }}</span>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
@@ -256,11 +267,13 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <!-- 当たりの箱は「↩ 戻る」を出さない (次の手は＋、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」) -->
         <!-- 戻り先がまだ無い箱: 押すと戻り先を選ぶ (再度挑戦・n 段目へ戻る・始めに戻るなどは選ぶ帯で)。短い「↩ 戻る」・縮めた時の「↩」だけはやめた (10-27 オーナー「本番でまだ『戻る』になっている」、決まった言い方は選んだ後の札の「↩ n 段目へ戻る」) -->
-        <button v-if="!box.done && box.out !== 'hit'" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
+        <!-- 予見したアイテムの結果を見て、この手を打たない (S-39、開発版だけ)。打たない箱は＋で神のオーブ・別の手を足す -->
+        <button v-if="seeable" type="button" data-tree-box-seen class="nodrag h-6 shrink-0 whitespace-nowrap rounded border px-1.5" :class="box.seen ? 'border-violet-300/70 bg-violet-500/20 text-violet-100 hover:border-violet-200' : 'border-violet-400/40 text-violet-200 hover:border-violet-300'" :title="seenTitle" @click.stop="t.edit((d) => setSeen(d, box.id, !box.seen))">{{ box.seen ? tr("予見で見ただけ (打たない) ✕", "Foreseen only (not used) ✕") : tr("打たない", "Don't use") }}</button>
+        <button v-if="!box.done && box.out !== 'hit' && !box.seen" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
-        <button v-if="box.out === 'hit' || box.out === 'branch' || box.out === 'any'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <button v-if="(box.out === 'hit' || box.out === 'branch' || box.out === 'any') && !box.seen" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー) -->
-        <button v-if="box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
+        <button v-if="box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch' && !box.seen" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
       <!-- 右下: ✎ (メモ) と この当たりを消す ✕ (前は枠の中の 1 行目、10-26 夜オーナー「今のバツの所にメモマークあれば」) -->

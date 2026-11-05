@@ -233,17 +233,22 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const before = item;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
-    const r = playHand(data, item, b.hand, rng, own, use);
+    // 使った物は結果の箱を見てから数える (予見で見ただけの箱 = 手を使わない、S-39)
+    const spent: Array<[string, number]> = [];
+    const r = playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } });
     }
+    const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, j ? aimed : null);
+    const next = oc ? outBoxOf(doc, b, oc, r.item) : null;
+    // 予見したアイテムの結果を見て打たない人: アイテム・☑・費用は打つ前のまま、その箱の手へ (S-39)
+    if (next && doc.boxes[next]?.seen && !b.hand.repeat) { at = next; continue; }
+    for (const [k, n] of spent) use(k, n);
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } });
     }
-    if (sb.next) { item = r.item; arrive(sb.next, item, before); at = sb.next; continue; }
-    const oc = boxOutcomeOf(data, doc, b, before, r.item, aims, j ? aimed : null);
-    const next = outBoxOf(doc, b, oc, r.item);
+    if (sb.next || !oc) { item = r.item; arrive(sb.next!, item, before); at = sb.next!; continue; } // oc は sb.next の無い時だけある
     if (!next) {
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える
       odd.add(at);

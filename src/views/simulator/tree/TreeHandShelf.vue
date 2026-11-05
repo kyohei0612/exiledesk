@@ -41,6 +41,7 @@ import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
 import { flag } from "../../../web/release-flags";
+import { foreseeBlock } from "../../../services/simulator/tree/tree-foresee";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -133,7 +134,8 @@ const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value
 const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
 const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
 // 完成形の使用ルーンは棚のルーンの節の先頭に (S-31g、スイッチ useRunes、11-05 オーナー「おｋ先頭で」)
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k), () => (flag("useRunes") ? (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`) : []));
+// 予見で見ただけ (S-39) の箱では、見た手と同じカレンシーは打たない
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k) ?? foreseeBlock(t.doc.value, props.boxId, k),() => (flag("useRunes") ? (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`) : []));
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
   simOp("hold", k);
