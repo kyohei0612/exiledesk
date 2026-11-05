@@ -170,6 +170,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "tierMore",
   // 0.1.668 シミュのルーンをカードのソケットに置く・使用ルーン・エミュから枠で削らず取り込む (S-31f・S-20・S-31g・S-08d、オーナー 11-05 夜「おｋ　リリースでこれはフルチェック込みで」、猿 release-668 の後のブラック 44 の「出して」)。閉じたままは daily・simTutorial
   "runeSocket", "pasteLoose", "useRunes",
+  // 0.1.669 貼り付けの取り込みで付いている MOD を全部・ルーンは使用ルーンへ・聖別・ルーンの池の MOD (S-08e・S-08f・S-08g、オーナー 11-05「不具合系は出して」「不具合はモンキー不要ね」、ブラック 45 の頼み)。閉じたままは daily・simTutorial
+  "pasteAll",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

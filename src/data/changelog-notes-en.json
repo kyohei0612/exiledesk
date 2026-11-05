@@ -1,4 +1,8 @@
 {
+  "0.1.669": [
+    "Simulator: fixed pasted item text dropping mods from slots added by runes, such as a 4th suffix. Sanctified items and mods granted by runes are now read too, and socketed runes go into Runes in use",
+    "Tutorial: fixed being unable to move past step 2 of \"5-mod jewels\""
+  ],
   "0.1.668": [
     "Simulator: like the Emulator, holding a rune and clicking a socket on the card now places it in that socket (an occupied socket is replaced; clicking the card adds a socket for it). The shelf shows only crafting runes, and the rest open with \"Show more\"",
     "Simulator: added \"Runes in use\" to the goal settings. Pick up to 6 in the order you use them, and the goal card shows them socketed. They also come first on the hand shelf",
