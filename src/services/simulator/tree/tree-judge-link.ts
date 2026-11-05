@@ -7,7 +7,6 @@ import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/en
 import { nextAimed, sampleAimed, type Judge } from "./tree-judge";
 import { aimsOf, playHand, sampleFrom, sampleOf } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
-import { junkPath } from "./tree-junk-tidy";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -51,8 +50,7 @@ export function linkByContent(doc: TreeDoc, ids: readonly string[], j: Judge): v
   for (const id of ids) {
     const c = doc.boxes[id];
     if (!c || c.noAutoBack || c.hand || c.done || c.split || c.out === "branch" || c.out === "start") continue;
-    // 外れの道は自動でつながない (人が手を決める・同じ枠探しでだけつながる、S-190b)
-    if (junkPath(c)) continue;
+    // 外れの道も同じ枠なら自動でつなぐ (11-06 オーナー「同じ枠があったらその枠に打つカレンシーって決まってる」。前は人が手を決めた時の同じ枠探しだけ = S-190b)
     // 人が付けた戻り・setHand の既定の戻り (外れが消えた → 外れの前の箱、自動の印つき) は pruneByContent が見直す
     if (c.back && c.back !== MATCH_BACK) continue;
     if (offByParent(doc, id, j)) continue;

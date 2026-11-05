@@ -238,7 +238,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
   for (const b of Object.values(d.boxes)) {
-    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || junkPath(b) || offByParent(d, b.id, j)) continue;
+    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue; // 外れの道も (11-06、tree-judge-link の linkByContent と同じ)
     // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
     const same = autoTarget(d, b.id, j);
     if (same) { b.back = same; b.autoBack = true; continue; }

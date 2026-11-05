@@ -3,13 +3,13 @@
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
-import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
+import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -191,11 +191,11 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   if (reach) return reach;
   // 確率の表が無い時 (null): エンジンの起こりうる結果のどれでも MOD が増えないなら当たりは無し (10-26 モンキー 7 の 4: 不在のアミュレットに変成 = MOD 0 のマジック、
   // 前は狙い全部を当たりにして、何も付かない当たりの箱と「外れ 100%」ができた)。結果は打った後の箱 1 つ
-  const had = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-  const outs = stepOutcomes(data, item, h.currency, engineOmens(h))?.filter((o) => !o.void);
-  if (outs?.length && outs.every((o) => [...o.item.prefixes, ...o.item.suffixes].every((m) => had.has(m.modId)))) return [];
-  // エッセンスの MOD (クラフト MOD) は付く MOD を選べない手では付かないので出さない (この箱で打てない手を持った時に、確率の表が無くて狙いが全部並び、合金の MOD まで ☑ に出た。10-27 夜)
-  return open.filter((a) => !craftedKindOf(data, a));
+  // 候補はエンジンで打った結果 (数え上げ、無ければ決まった種で打って集めた物) のどれかで付く狙いだけ。結果が無い・MOD が増えない手 (神・ヒネコラ) は無し
+  // (11-06 オーナー「ヒネコラとか神とかってMODつかないでしょ…狙いMODが表示されてること自体がエンジン見てない」。前は付いていない狙いを全部並べ、窓でグレーにしていた)
+  const outs = items.flatMap((it) => (stepOutcomes(data, it, h.currency, engineOmens(h)) ?? rolledOutcomes(data, it, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void));
+  // エッセンスの MOD (クラフト MOD) は付く MOD を選べない手では付かないので出さない (10-27 夜)
+  return open.filter((a) => !craftedKindOf(data, a) && outs.some((o) => aimHeldOn(data, o.item, a, { sameText: true })));
 }
 /**
  * 次に打つ手の窓の「当たりの箱にする MOD」の候補 = 付く MOD を選べない手 (FREE_EFFECTS) で付きうる完成の狙い (狙い無しでも繰り返しでもない形で hitAimsOf に聞く)。
@@ -296,24 +296,18 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>): void {
   const j = judgeMemo(data, d);
   const loose = Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id);
-  if (!linksHeld) {
-    linkByContent(d, loose, j);
-    mergeOpenSame(d, loose, undefined, j);
-  }
+  // 同じ枠なら手を決めたその場で自動の ↩ とまとめ (組む間も止めない、11-06 オーナー「同じ枠があったらその枠に打つカレンシーって決まってる」。前は整理を押すまで待った = S-193)
+  linkByContent(d, loose, j);
+  mergeOpenSame(d, loose, undefined, j);
   for (const b of Object.values(d.boxes)) {
     if (had.has(b.id) || b.out !== "hit" || b.hand || b.noAutoBack) continue;
     const to = sameHitsByContent(d, b.id, j)[0];
     if (to) joinSameHit(d, to, [b.id], true);
   }
-  if (!linksHeld) pruneByContent(d, j);
+  pruneByContent(d, j);
 }
-/** 組む間はつなぎを回さず、ハズレ整理で 1 周する (S-190) */
-let linksHeld = false;
-export function holdLinks<T>(fn: () => T): T {
-  if (!tidyOn() || linksHeld) return fn();
-  linksHeld = true;
-  try { return fn(); } finally { linksHeld = false; }
-}
+/** 前は組む間のつなぎをここで止めていた (S-190)。11-06 からつなぎは手を決めたその場で回すので、呼ぶ側の形だけ残す */
+export const holdLinks = <T>(fn: () => T): T => fn();
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
 export function tidyJunk(d: TreeDoc): void {
   const data = craftStage.data.value;
