@@ -8,6 +8,7 @@ import { modListFor, type ListRow } from "../../services/craft-stage/mod-list";
 import { baseStatsOf } from "../../services/craft-stage/stage-bases";
 import { clientClassOf, ENGINE_CATEGORIES, handsOf, inGroup, kindOf } from "../../services/mods/item-classes";
 import { goalBlock } from "../../services/simulator/sim-engine";
+import { lang } from "../../i18n/lang";
 import { DAILY_TYPES } from "./daily-types";
 
 export type GenAim = { modId: string; tier: number; ja: string; en: string };
@@ -19,6 +20,24 @@ export type GenTopic = { day: string; sampleId: string; base: string; ilvl: numb
 
 /** 型のファイルにアイテムレベルは無いので、お題はこのレベル */
 export const TOPIC_ILVL = 82;
+
+/**
+ * 狙いの字 (ja・en) を MOD 一覧の段の字から引く口。一覧の字は画面の言語で決まるので、言語を一時的に替えて 2 回引く
+ * (前は今の言語の字を ja・en の両方に入れていて、en に日本語が入っていた、11-05)。行が引けなければ null
+ */
+export function aimTextsOf(data: PatchData, base: string, ilvl: number): (modId: string, tier: number) => { ja: string; en: string } | null {
+  const rowsIn = (l: "ja" | "en"): ListRow[] => {
+    const was = lang.value;
+    lang.value = l;
+    try { return modListFor(data, freshItem(data, base, ilvl)); } catch { return []; } finally { lang.value = was; }
+  };
+  const ja = rowsIn("ja"), en = rowsIn("en");
+  const textOf = (rows: ListRow[], modId: string, tier: number): string | null => {
+    for (const r of rows) { const t = r.tiers.find((x) => (x.modId ?? r.id) === modId && x.tier === tier); if (t) return t.text; }
+    return null;
+  };
+  return (modId, tier) => { const j = textOf(ja, modId, tier), e = textOf(en, modId, tier); return j && e ? { ja: j, en: e } : null; };
+}
 
 /** 曜日の部位 (D-05、0 = 月)。部位は item-classes のまとまりで見て、名前を手で並べない */
 export const SLOTS: readonly { ja: string; en: string; has: (category: string) => boolean }[] = [
@@ -51,7 +70,7 @@ export const tierFloor = (tier: number): number => (tier <= 1 ? 1 : 2);
 export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL): GenAim[] | null {
   let rows: ListRow[];
   try { rows = modListFor(data, freshItem(data, s.base, ilvl)).filter((r) => r.group === "normal"); } catch { return null; }
-  const aims: GenAim[] = [];
+  const aims: GenAim[] = [], texts = aimTextsOf(data, s.base, ilvl);
   for (const m of s.mods) {
     const r = rows.find((x) => nameOf(x) === m.name);
     if (!r) return null;
@@ -60,7 +79,7 @@ export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL)
     if (!t) return null;
     const modId = t.modId ?? r.id;
     if (goalBlock(data, s.base, ilvl, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId, tier: t.tier })) return null;
-    aims.push({ modId, tier: t.tier, ja: t.text, en: t.text });
+    aims.push({ modId, tier: t.tier, ...(texts(modId, t.tier) ?? { ja: t.text, en: t.text }) });
   }
   return aims.length ? aims : null;
 }
