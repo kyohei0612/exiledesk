@@ -18,6 +18,7 @@ import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
+import { seenTo } from "./tree-foresee";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -241,8 +242,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     }
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, j ? aimed : null);
     const next = oc ? outBoxOf(doc, b, oc, r.item) : null;
-    // 予見したアイテムの結果を見て打たない人: アイテム・☑・費用は打つ前のまま、その箱の手へ (S-39)
-    if (next && doc.boxes[next]?.seen && !b.hand.repeat) { at = next; continue; }
+    // 予見の枠で結果を見て使わない人: アイテム・☑・費用は持つ前のまま、使わない行のまとめ先 (枠のつづき) の手へ (S-39)
+    if (next && doc.boxes[next]?.seen && !b.hand.repeat) { const to = seenTo(doc, next); if (to !== next) visit(next, true); at = to; continue; }
     for (const [k, n] of spent) use(k, n);
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {

@@ -26,7 +26,8 @@ import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, b
 import { pctText, useTreeOdds } from "./tree-odds";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
-import { canSee, FORESEE_ON, setSeen } from "../../../services/simulator/tree/tree-foresee";
+import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
+import TreeForeseeRows from "./TreeForeseeRows.vue";
 
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -82,15 +83,8 @@ const sample = computed(() => sampled.value?.item ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
-/** 予見したアイテムに打った手の結果の箱か (「打たない」を出す、S-39・開発版だけ)。カードは打たない時は打つ前のアイテム (見本が親のまま) */
-const seeable = computed(() => {
-  const d = s.data.value, p = props.box.parent;
-  if (!FORESEE_ON || !d || !p) return false;
-  return canSee(t.doc.value, props.box.id, shapeSampleWithNote(d, t.doc.value, p)?.item);
-});
-const seenTitle = computed(() => (props.box.seen
-  ? tr("この結果を予見で見て、親の手は打たない (使わない・費用 0)。この箱のアイテムは打つ前のまま。押すと外す", "Foreseen this result and did not use the craft (no cost). The item stays as before. Click to undo")
-  : tr("予見でこの結果が見えたら親の手を打たない (使わない)。打たない人は打つ前のアイテムのまま、＋で神のオーブや別の手を足す", "If the foresight shows this result, don't use the craft. The item stays as before; add a Divine Orb or another craft with +")));
+/** 予見の枠 (S-39、開発版だけ): ヒネコラの後の箱の手は「打つ」でなく「持つ」、中に結果の行と使う / 使わない、＋は「進む」(11-05 オーナー「ヒネコラ後は打つじゃなくて持つになる」「＋じゃなくて進む」) */
+const hold = computed(() => holdsAt(t.doc.value, props.box.id));
 const cardTags = computed(() => {
   const d = s.data.value, it = cardItem.value;
   if (!d || !it) return null;
@@ -106,7 +100,8 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 /** 結果ごとの名前・色・印 (tree-names.ts の OUT_LOOK、まとめた札と同じ) */
 const kind = computed(() => OUT_LOOK[props.box.out]);
 /** 枠の上の線に乗る題 (tree-names の headOf) */
-const head = computed(() => headOf(props.box, t.aimShort));
+/** 使わない行のまとめ先 (枠のつづき) は「使わなかった時」 */
+const head = computed(() => (props.box.seen ? tr("使わなかった時", "If not used") : headOf(props.box, t.aimShort)));
 /** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
@@ -121,7 +116,7 @@ const legendTitle = computed(() => [
 ].filter(Boolean).join("\n"));
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
 /** 失敗 (ここで終わり) の答え  */
-const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : props.box.done ? "242,210,122" : kind.value.c));
+const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : props.box.done ? "242,210,122" : hold.value ? "190,160,255" : kind.value.c));
 const neon = computed(() => {
   const strong = props.glow || props.selected || !!props.box.done;
   return { borderColor: `rgba(${rgb.value},${strong ? 0.95 : 0.55})`, boxShadow: `0 0 0 1px rgba(${rgb.value},${strong ? 0.5 : 0.18}), 0 0 ${strong ? 22 : 12}px rgba(${rgb.value},${strong ? 0.45 : 0.16})` };
@@ -203,7 +198,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 開いた時の組み直しで増えた箱 (前の形の木に無かった札、S-107・⑦19 案 A。保存しない) -->
     <span v-if="box.fresh" data-tree-fresh class="shrink-0 rounded-md border border-sky-400/60 bg-sim-panel px-1.5 text-[11px] font-bold leading-[18px] text-sky-300" :title="tr('今の決まりで組み直した時に、前の保存には無かった結果の箱。行き先を確かめて決める', 'A result box that was not in the saved recipe and appeared when rebuilt with the current rules. Check where it goes')">{{ tr("組み直しで増えた", "New after rebuild") }}</span>
     <!-- まとめた箱がある = 線が何本か入る (案 A、S-66) -->
-    <span v-if="joinedIn" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
+    <span v-if="hold" data-tree-foresee-frame class="shrink-0 rounded-md border border-violet-300/60 bg-[#15110c] px-1.5 text-[11px] font-bold leading-[18px] text-violet-200" :title="tr('予見の枠: アイテムを使わずに持ち、次の結果を見てから使うか決める', 'Foresight frame: hold a craft without using it, see the result, then decide')">{{ tr("予見の枠", "Foresight") }}</span>
+    <span v-if="joinedIn && !box.seen" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
     <template v-if="box.out !== 'start'">
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>
@@ -251,12 +247,13 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <!-- 次どうするか (10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 切らずに折り返す (10-26 オーナー「枠いっぱいに表示していいのにこれ縮小してるから？拡大も欲しいんだけどそこ」「↩ 再度挑戦 · 3 …」が切れていた) -->
+    <TreeForeseeRows v-if="hold && box.hand && box.outs.length" :box="box" :quiet="quiet" />
     <div ref="fillEl" class="flex-1" />
     <div class="mt-1 flex flex-wrap items-center gap-1 text-[12px]">
       <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
-      <span v-if="box.seen && box.hand" data-tree-box-seen class="w-full text-violet-200" :title="seenTitle">{{ tr("予見で見ただけ (打たない)", "Foreseen only (not used)") }}</span>
-      <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words text-amber-100/90" :title="handLabel(box.hand)">→ {{ handLabel(box.hand) }}</span>
+      <span v-if="box.seen" data-tree-box-seen class="w-full text-violet-200/80">{{ tr(`使わない ${joinedIn + 1} 行 · アイテムはこのまま`, `${joinedIn + 1} skipped row(s) · item unchanged`) }}</span>
+      <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
         <!-- × (戻りを外す) は文のすぐ右隣 (10-26 夜オーナー「バツはその行動のすぐ隣が良いな」。前は札が伸びて × は右端だった) -->
@@ -267,8 +264,6 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <!-- 当たりの箱は「↩ 戻る」を出さない (次の手は＋、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」) -->
         <!-- 戻り先がまだ無い箱: 押すと戻り先を選ぶ (再度挑戦・n 段目へ戻る・始めに戻るなどは選ぶ帯で)。短い「↩ 戻る」・縮めた時の「↩」だけはやめた (10-27 オーナー「本番でまだ『戻る』になっている」、決まった言い方は選んだ後の札の「↩ n 段目へ戻る」) -->
-        <!-- 予見したアイテムの結果を見て、この手を打たない (S-39、開発版だけ)。打たない箱は＋で神のオーブ・別の手を足す -->
-        <button v-if="seeable" type="button" data-tree-box-seen class="nodrag h-6 shrink-0 whitespace-nowrap rounded border px-1.5" :class="box.seen ? 'border-violet-300/70 bg-violet-500/20 text-violet-100 hover:border-violet-200' : 'border-violet-400/40 text-violet-200 hover:border-violet-300'" :title="seenTitle" @click.stop="t.edit((d) => setSeen(d, box.id, !box.seen))">{{ box.seen ? tr("予見で見ただけ (打たない) ✕", "Foreseen only (not used) ✕") : tr("打たない", "Don't use") }}</button>
         <button v-if="!box.done && box.out !== 'hit' && !box.seen" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="(box.out === 'hit' || box.out === 'branch' || box.out === 'any') && !box.seen" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
@@ -294,7 +289,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     </div>
     <!-- 下の＋ = 次に打つ手。手を付けた時に札が出る位置 (線を伸ばした先、S-147c) に置く。枠から離すので引いた木でも箱に隠れない (11-02 オーナー「その位置にプラス置いてあげたら？」) -->
     <span v-if="plusOn" data-tree-next-stem class="pointer-events-none absolute left-1/2 top-full w-0.5 -translate-x-1/2 bg-amber-400/40" :style="{ height: `${plusY}px` }" />
-    <button v-if="plusOn" type="button" data-tree-next :style="{ scale: String(plusK), top: `calc(100% + ${plusY}px)` }" class="nodrag absolute left-1/2 flex size-7 -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
-      :title="tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)" @click.stop><Icon name="plus" class="size-4" /></button>
+    <!-- 予見の枠では ＋ でなく「進む」(次に持つ手を選ぶ、11-05 オーナー「UI的には進むがイイかもね＋じゃなくて」) -->
+    <button v-if="plusOn" type="button" data-tree-next :data-tree-foresee-next="hold ? '' : undefined" :style="{ scale: String(plusK), top: `calc(100% + ${plusY}px)` }" class="nodrag absolute left-1/2 flex h-7 -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 bg-[#1d1812]" :class="hold ? 'whitespace-nowrap border-violet-300/80 px-3 text-[12px] font-bold text-violet-100 hover:bg-violet-500/30' : 'w-7 border-amber-400/70 text-amber-200 hover:bg-amber-500/30'"
+      :title="hold ? tr('予見の枠で次に持つ手を選ぶ (まだ使わない)', 'Choose the next craft to hold in the foresight frame (not used yet)') : tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)" @click.stop><template v-if="hold">{{ tr("進む", "Next") }}</template><Icon v-else name="plus" class="size-4" /></button>
   </div>
 </template>
