@@ -53,9 +53,9 @@
 ### B. 導線 (入口 2 つ・投稿の口 3 つ)
 
 ```
-[タブ「デイリー」] ─→ 一覧 ?page=daily ─→ お題 ?page=daily&q=<id> ─→ スタート ─→ 挑戦 ?page=daily-play&q=<id>
+[タブ「デイリー」] ─→ 一覧 ?page=daily ─→ お題 ?page=daily&q=<id> ─→ スタート ─→ 挑戦 ?page=daily-start&q=<id>
                          │
-                         └ お題を投稿 ─→ 投稿 ?page=daily-post ─┬ ① エミュのアイテムを使う
+                         └ お題を投稿 ─→ 投稿 ?page=daily&q=post ─┬ ① エミュのアイテムを使う
 [エミュ「デイリーに投稿」] ─────────────────→ (確かめへ直行)      ├ ② poe.ninja のコピーを貼る
                                                                └ ③ トレードのコピーを貼る
                                                ↓
