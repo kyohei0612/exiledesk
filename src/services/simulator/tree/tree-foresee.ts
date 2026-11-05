@@ -3,13 +3,13 @@
  * 「予見で選んだ当たり以外は等しくゴミなんだよね…狙いの動き以外はすべてハズレＭＯＤ扱いだから結果まとめれると思うんだよね」)。
  * 予見はエンジンの印 (apply-extra の hinekora = StageItem.foreseen、アイテムを変えると消える)。手と結果の分け方はエンジンのまま。
  * ヒネコラの結果の箱に持った手の結果は、当たり (☑ の MOD が付いた箱) は使う、ほか (外れ・狙いが消えた・打った後) は 1 つの「ハズレ (打たない)」箱へまとめる。
- * ハズレの人は手を使わず (費用も無し)、持つ前のアイテムのまま、ハズレ箱の手 (神・別のカレンシー) か ↩ へ (見本は tree-sample、回すのは tree-run)
+ * ハズレの人は手を使わず (費用も無し)、持つ前のアイテムのまま、ハズレ箱の手 (別のカレンシー) か ↩ へ (見本は tree-sample、回すのは tree-run)
  */
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 import { DEV_BUILD } from "../../../web/release-flags";
 
-/** 開発版だけ (オーナーの OK の後に本番へ出す時はデザイン部に release-flags のスイッチを頼む。棚のヒネコラ・神、紫の枠、ハズレのまとめがこれを見る) */
+/** 開発版だけ (オーナーの OK の後に本番へ出す時はデザイン部に release-flags のスイッチを頼む。棚のヒネコラ・予見したアイテムの棚の絞り、紫の枠、ハズレのまとめがこれを見る) */
 export const FORESEE_ON = DEV_BUILD;
 
 /** ヒネコラの結果の箱 (予見したアイテム。ここの手は「持つ」) */
@@ -51,5 +51,5 @@ export const seenTo = (doc: TreeDoc, id: string): string => { const b = doc.boxe
 /** ハズレ箱で、予見で見た手と同じカレンシーを持った時の理由 (予見の結果は決まっているので、使っても見た結果と同じ。木では別の乱数になるので持たせない) */
 export function foreseeBlock(doc: TreeDoc, id: string, key: string): string | null {
   const b = doc.boxes[id], h = b?.seen && b.parent ? doc.boxes[b.parent]?.hand : null;
-  return h?.currency === key ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシー・神のオーブ・↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency, a Divine Orb, or return to before Hinekora") : null;
+  return h?.currency === key ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシーか ↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency or return to before Hinekora") : null;
 }

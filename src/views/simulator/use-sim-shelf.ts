@@ -31,13 +31,10 @@ const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_cha
 const SPECIAL_RUNE_KEYS = new Set(RUNE_GROUPS.find((g) => g.kind === "special")?.keys ?? []);
 /** スイッチ runeSocket ではクラフト以外のルーンも消さず、エミュの棚と同じく畳んだ節に出す (S-20・S-31f、11-05 オーナー「いつでもルーンは展開して使えるように」) */
 const otherRune = (key: string): boolean => !flag("runeSocket") && key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key);
-/**
- * ヒネコラの髪束 (予見) は木の棚に出す。神のオーブは予見したアイテムの時だけ (予見を見て打たない人が値を振り直して予見を消す手、S-39・開発版だけ = FORESEE_ON。
- * 11-05 オーナー「ヒネコラ追加してヒネコラ予見時のUIだね」)。ほかの所の神のオーブは今までどおり出さない (S-20)
- */
-const foreseeShown = (key: string, it: StageItem | null | undefined): boolean => FORESEE_ON && (key === "hinekora" || (key === "divine" && !!it?.foreseen));
-/** it = 棚に渡したアイテム (無ければ予見の例外は神のオーブに効かない) */
-export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || otherRune(key));
+/** ヒネコラの髪束 (予見) は木の棚に出す (S-39・開発版だけ = FORESEE_ON。11-05 オーナー「ヒネコラ追加してヒネコラ予見時のUIだね」)。神のオーブは予見の後も出さない (S-20、11-05 オーナー「多分神いらないって設計に伴ってると思うわ」) */
+const foreseeShown = (key: string): boolean => FORESEE_ON && key === "hinekora";
+/** it = 棚に渡したアイテム (今は見ない。呼ぶ所の形を残す) */
+export const treeHidden = (key: string, _it?: StageItem | null): boolean => !foreseeShown(key) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || otherRune(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {
@@ -75,7 +72,9 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
     usable: (k) => usableWith(k, omens.value),
     usableBare: (k) => usableWith(k, []),
     toggleOmen,
-    hidden: (k) => treeHidden(k, item.value),
+    // 予見したアイテム (ヒネコラの後、S-39) の棚は今打てるカレンシーだけ (エンジンの useReason が通す物。お告げは持った手の欄で決まるので除く。
+    // 11-05 オーナー「その枠の状態でさせるカレンシー ただしエミュで動く奴限定で」)
+    hidden: (k) => treeHidden(k, item.value) || (FORESEE_ON && !!item.value?.foreseen && !k.startsWith("Omen") && usableWith(k, []) !== null),
     // 木の箱は何人もの集まりなので、側を決めるお告げの「今は意味なし」では灰色にしない (sim-tree.md S-20b)
     omenBlock: (h, om, o) => treeOmenBlock(s.data.value, item.value, h, om, o),
     runeFirst,
