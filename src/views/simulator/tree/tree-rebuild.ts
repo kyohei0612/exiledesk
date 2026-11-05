@@ -14,6 +14,7 @@ import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simu
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
+import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -218,12 +219,13 @@ const OPEN: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost"]);
  */
 function mergeIntoBacked(data: PatchData, d: TreeDoc): void {
   const j = judgeMemo(data, d), depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
-  const seq = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? 0), rank = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
+  const rank = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
   for (const l of Object.values(d.boxes)) {
     if (!junkPath(l) || l.hand || l.back || l.done || l.split || l.noAutoBack) continue;
+    // まとめ先は木の並びで前の箱 (打ち直しの順で番号が振り直されても同じ、tree-merge-open の placedBefore)
     const to = Object.values(d.boxes)
       .filter((x) => x.id !== l.id && OPEN.has(x.out) && !x.hand && !x.done && !x.split && !!x.back && !x.autoBack && depth(x.id) === depth(l.id) && rank(x.junkKey) === rank(l.junkKey) && j.fitsBox(l.id, x.id))
-      .sort((x, y) => seq(x.id) - seq(y.id))[0];
+      .sort((x, y) => (placedBefore(d, x.id, y.id) ? -1 : placedBefore(d, y.id, x.id) ? 1 : 0))[0];
     if (to) { l.back = to.id; l.autoBack = true; l.merged = true; }
   }
 }
