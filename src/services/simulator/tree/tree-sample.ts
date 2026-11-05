@@ -128,7 +128,7 @@ const VOID_RETRIES = 200;
  */
 export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false): StageApply {
   if (h.repeat) {
-    // カオススパム = その手 (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり (S-25a、エミュと同じ。前の「空きがあれば先に高貴を 1 回」は 11-05 オーナーで外した)。
+    // カオススパム = その手 (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり (エミュのエンジンと同じ。前の木だけの「空きがあれば先に高貴を 1 回」は 11-05 オーナー「なんでそもそもこれエミュと違うエンジンなの」で外した)。
     // 1 手ずつはエンジンの applyCurrency (applyHand)、当たりはエンジンの aimDone。ツリーの物は繰り返す順番だけ (スパムシミュは使わない、オーナー「あっちはカオスオーブ全部打つ仕組み」)
     const cap = h.repeat.max ?? SPAM_CAP;
     const open = targetsOf(data, aims).filter((t) => !aimDone(item, [t]));
