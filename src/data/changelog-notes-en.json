@@ -1,4 +1,9 @@
 {
+  "0.1.670": [
+    "Simulator: fixed hit boxes and boxes after a rune step naming unchecked mods as the aim, and fixed box titles breaking on \"Adds (a) to (b)\" mods. Clicking a socket that holds a rune now applies the currency you are holding",
+    "Simulator: \"Runes in use\" in the goal settings now includes Soul Cores and Idols, and the goal card shows Bonded lines faintly after the rune effects",
+    "Simulator: Quality other than from Catalysts can now be set up to 50%, assuming it was raised first, and quality currencies no longer appear on the hand shelf"
+  ],
   "0.1.669": [
     "Simulator: fixed pasted item text dropping mods from slots added by runes, such as a 4th suffix. Sanctified items and mods granted by runes are now read too, and socketed runes go into Runes in use",
     "Tutorial: fixed being unable to move past step 2 of \"5-mod jewels\""

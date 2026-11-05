@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.670",
+  "date": "2026-11-05",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 当たりの箱とルーンの手の後の箱で、☑ していない MOD が狙いの名前に出る不具合と、箱の題の「(a)から(b)の」が崩れる不具合を直しました。ルーンの入ったソケットを押しても、持っているカレンシーを打てます",
+    "en": "Simulator: fixed hit boxes and boxes after a rune step naming unchecked mods as the aim, and fixed box titles breaking on \"Adds (a) to (b)\" mods. Clicking a socket that holds a rune now applies the currency you are holding"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の「使用ルーン」でソウルコア・アイドルも選べるようにし、カードのルーンの効き目の後に絆の行を薄く出すようにしました",
+    "en": "Simulator: \"Runes in use\" in the goal settings now includes Soul Cores and Idols, and the goal card shows Bonded lines faintly after the rune effects"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 品質はカタリスト以外は最初に上げてある前提で 50% まで設定でき、品質のカレンシーは手の棚に出さないようにしました",
+    "en": "Simulator: Quality other than from Catalysts can now be set up to 50%, assuming it was raised first, and quality currencies no longer appear on the hand shelf"
+   }
+  ]
+ },
+ {
   "v": "0.1.669",
   "date": "2026-11-05",
   "items": [
@@ -1156,18 +1180,6 @@
     "area": "",
     "text": "シミュレーター: 打つ手の窓で ☑ を付けていない狙いまで当たりの箱になっていたのを直しました (☑ を付けた MOD だけが当たりの箱になります。v0.1.629 の変更を戻しました)",
     "en": "Simulator: Fixed unchecked target mods also becoming hit boxes in the craft picker (only ☑ mods get hit boxes again; reverts the v0.1.629 change)"
-   }
-  ]
- },
- {
-  "v": "0.1.629",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 打つ手の窓で狙う MOD を 1 つでも ☑ にすると、☑ の無い付きうる狙いにも当たりの箱を作るように (付いた狙いが行き先の無い当たりで止まらない)。同じ形の当たりの自動まとめに、上の段の箱も入れます",
-    "en": "Simulator: In the craft picker, checking even one target mod now also makes hit boxes for the other targets that can roll (so a landed target no longer stops at a hit with nowhere to go). Automatic merging of same-shape hits now includes boxes on earlier steps"
    }
   ]
  }
