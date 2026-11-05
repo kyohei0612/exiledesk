@@ -7,7 +7,7 @@ import { parseItemText } from "../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextResult } from "../../services/simulator/paste/item-text-types";
 import { freshItem, tierRankOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
 import { modListFor, type ListRow } from "../../services/craft-stage/mod-list";
-import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../services/simulator/tree/tree-model";
+import { migrateStart, startRarity, type Aim, type StartFrom, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
 
@@ -61,8 +61,8 @@ export function postBlock(p: PostItem): string | null {
   return null;
 }
 
-/** お題の木を作る: ✦ を 1 つ付けたフラクチャー済みスタート、値段は数えない (D-03)。木の中身は edit に渡す */
-export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string): void {
+/** お題の木を作る: ✦ を 1 つ付け、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
+export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured"): void {
   const list: Aim[] = aims.map((a) => ({ modId: a.modId, tier: a.tier, ...(a.modId === fractured ? { fractured: true as const } : {}) }));
   d.memoAims = list;
   delete d.ilvlFit; // アイテムレベルはお題のまま (適正へ下げない)
@@ -70,7 +70,7 @@ export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: s
   d.baseChosen = true;
   d.goal = { rarity: "rare" };
   migrateStart(d);
-  d.start!.from = "fractured";
+  d.start!.from = from;
   d.start!.price = 0;
   d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
   d.start!.rarity = startRarity(d);

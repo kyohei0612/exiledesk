@@ -1,5 +1,5 @@
 <!--
-  DailyPlay.vue — 挑戦のページ (D-30〜D-36)。お題を開いて 1 時間。順番: フラクチャーを選ぶ → シミュの木 → 100 人回す → 提出。
+  DailyPlay.vue — 挑戦のページ (D-30〜D-36)。お題を開いて 1 時間。順番: 始め方とフラクチャー予定の MOD を選ぶ (D-37j) → シミュの木 → 100 人回す → 提出。
   木は SimTreePage をそのまま中に置き、上の帯だけここの物 (D-31)。外す部品は daily-skin.css が隠す (D-90。シミュ部長の切り出しまでの形、D-41)。
   木はこのブラウザに覚え、開き直すと戻る。時間はスタートからの実際の時計で、ページを閉じても進む (D-32)。挑戦は 1 日 1 回で始め直せない (D-33)
 -->
@@ -13,7 +13,7 @@ import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
-import type { TreeDoc } from "../../services/simulator/tree/tree-model";
+import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
@@ -55,7 +55,7 @@ async function begin(): Promise<void> {
 }
 watch(() => s.data.value, () => void begin(), { immediate: true });
 
-/** フラクチャーを選ぶ画面 (D-37c、DailyFracPick)。諦めた後は選ばない */
+/** 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j、DailyFracPick)。諦めた後は選ばない */
 const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended);
 
 /** お題の木を開く。覚えた木があればそれを、無ければお題から白紙で */
@@ -65,11 +65,11 @@ function openTree(): void {
   treeStep.value = "tree";
   const saved = x.tree ? (JSON.parse(x.tree) as TreeDoc) : null;
   if (saved) t.open(saved);
-  else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!)); }
+  else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from)); }
   treeOn.value = true;
 }
-function pick(modId: string): void {
-  updateTry(props.topic.id, { fractured: modId });
+function pick(modId: string, from: StartFrom): void {
+  updateTry(props.topic.id, { fractured: modId, from });
   tryOf.value = getTry(props.topic.id);
   openTree();
 }

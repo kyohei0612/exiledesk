@@ -6,6 +6,7 @@
  */
 import { reactive, toRaw } from "vue";
 import type { PatchData } from "../../services/craft-stage/engine";
+import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import { WEB_API_BASE } from "../../web/config";
 import { floorAims, SLOTS, type GenAim } from "./daily-gen";
 import { boxCheck } from "./daily-check";
@@ -22,8 +23,8 @@ export type DailyAim = GenAim;
 /** 一覧に出す形。aims は締めた日だけ入る (D-32b) */
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
-/** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 諦めた (D-37b)。木は見るだけ、提出できない */ ended?: boolean; seed?: number; prices?: unknown; fractured?: string; tree?: string; best?: DailyRecord; last?: DailyRecord };
+/** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 諦めた (D-37b)。木は見るだけ、提出できない */ ended?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; best?: DailyRecord; last?: DailyRecord };
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean };
 export type DailyNick = { id: string; name: string; code: string };
 /** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
@@ -128,11 +129,11 @@ export async function startTry(id: string): Promise<DailyTry | StartError> {
   if (r.error !== undefined) return r.error === "closed" ? "closed" : "notToday";
   // 木を引き継ぐのは同じ挑戦 (始めた時刻が同じ) の時だけ
   const had = daily.local.tries[id], same = had?.startedAt === (r as DailyTry).startedAt;
-  daily.local.tries[id] = { ...(r as DailyTry), ...(same && had?.fractured ? { fractured: had.fractured } : {}), ...(same && had?.tree ? { tree: had.tree } : {}) };
+  daily.local.tries[id] = { ...(r as DailyTry), ...(same && had?.fractured ? { fractured: had.fractured } : {}), ...(same && had?.from ? { from: had.from } : {}), ...(same && had?.tree ? { tree: had.tree } : {}) };
   save();
   return daily.local.tries[id]!;
 }
-export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "tree">>): void {
+export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "from" | "tree">>): void {
   const t = daily.local.tries[id];
   if (t) { Object.assign(t, patch); save(); }
 }

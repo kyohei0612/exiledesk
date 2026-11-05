@@ -15,7 +15,7 @@ export const RUN_N = 100;
 
 /**
  * 提出の木 (exiledesk-recipe/1 の JSON) をお題の形で組み直して 100 人回す。price は相場のまま (高貴建て、priceOfKey の値) を渡し、ここで神に直す (use-tree-run.ts の runPrice と同じ)。
- * 狙い・段の下限・スタート (フラクチャー済み・値段 0) はお題から入れ直す (提出の木の書き換えを効かせない)。ベースが違う・フラクチャーが無い木は null
+ * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。ベースが違う・フラクチャーが無い木は null
  */
 export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
@@ -23,7 +23,7 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   const frac = doc.memoAims?.find((a) => a.fractured)?.modId;
   if (doc.base !== topic.base || !frac || !topic.aims.some((a) => a.modId === frac)) return null;
   doc.itemLevel = topic.ilvl;
-  fillTopicDoc(doc, topic.aims, frac);
+  fillTopicDoc(doc, topic.aims, frac, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
   const div = price("divine") || 1, memo = new Map<string, number>();
   const p = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = price(k) / div; memo.set(k, v); } return v; };
   const r = withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: p, startCost: 0 }), 0);
