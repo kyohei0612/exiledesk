@@ -90,9 +90,10 @@ export const ADV_COURSES: TopicCourse[] = [
       want: { mod: "Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed" } },
       { ...ALWAYS(H("desecrate", ["3 つ目のサフィックスを冒涜で", "A 3rd suffix by Desecration"], [
         ["サフィックスが 3 つまで入るようになった", "Suffixes can now hold 3"],
-        ["右側のネクロマンシーのお告げを掛けた骨で、3 つ目のサフィックスを足す (ジュエルの骨は頭蓋骨)", "A bone with Omen of Dextral Necromancy adds the 3rd suffix (jewels use Craniums)"],
+        ["骨で 3 つ目のサフィックスを足す (ジュエルの骨は頭蓋骨)。プレフィックスは満杯なので、お告げ無しでもサフィックスに付く", "A bone adds the 3rd suffix (jewels use Craniums). Prefixes are full, so it lands on a suffix without an omen"],
         ["発現でクリティカルヒット率を選ぶ", "Reveal and pick Critical Hit Chance"],
-      ], [CONTEMPT])), omens: ["OmenofDextralNecromancy"], startMods: JEWEL_HIT, cont: true, chain: [S("reveal", ["発現", "Reveal"])],
+        // 右側のネクロマンシーのお告げは掛けない: プレ満杯で「今は意味なし」になり、骨を持った時に外れて手が終わらなかった (11-04 の人が 2 手目で止まった。T-06)
+      ], [CONTEMPT])), startMods: JEWEL_HIT, cont: true, chain: [S("reveal", ["発現", "Reveal"])],
       target: "Jewels_int/JewelCriticalChance", wantReveal: { mod: "Jewels_int/JewelCriticalChance", from: 1, label: ["クリティカルヒット率", "Critical Hit Chance"] } },
       { ...ALWAYS(H("annul", ["「+1 個」を消しても残る", "Remove the “+1”: the mod stays"], [
         ["プレフィックスは「何でも良い MOD」と「サフィックスモッド +1 個」の 2 つ。左側の消去のお告げで、プレフィックスから 1 つ消す", "Prefixes: a don't-care mod and “+1 Suffix Modifier allowed”. Omen of Sinistral Annulment removes one prefix"],

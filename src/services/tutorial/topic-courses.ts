@@ -247,7 +247,9 @@ export const TOPIC_COURSES: TopicCourse[] = [
       { ...ALWAYS(H("desecrate", ["お告げで付く側を決める", "Pick the side with an omen"], [
         ["左側のネクロマンシーのお告げを掛けると、未発現の MOD がプレフィックスに付く (右側ならサフィックス)", "With Omen of Sinistral Necromancy, the Unrevealed mod goes to a prefix (Dextral: suffix)"],
         ["その側が埋まっている時は、その側の MOD がランダムに 1 つ消えて入れ替わる", "If that side is full, a random mod on that side is replaced"],
-      ], ["alchemy"])), omens: ["OmenofSinistralNecromancy"], chain: [S("reveal", ["発現", "Reveal"])] },
+        // 始めはプレ 2・サフィ 2 で決める: アルケミーでサフィ 3 つになると左側のお告げが「今は意味なし」で外れ、手が終わらなかった (11-05、T-06)
+      ], "rare")), startMods: [{ mod: "Rings/IncreasedLife", tier: "T6" }, { mod: "Rings/IncreasedAccuracy", tier: "T7" }, { mod: "Rings/FireResistance", tier: "T5" }, { mod: "Rings/Strength", tier: "T4" }],
+      omens: ["OmenofSinistralNecromancy"], chain: [S("reveal", ["発現", "Reveal"])] },
       { ...ALWAYS(H("desecrate", ["発現の候補を引き直す", "Reroll the reveal options"], [
         ["発現の前にアビスの反響のお告げを掛けると、候補 3 つを 1 回だけ引き直せる", "Apply Omen of Abyssal Echoes before revealing to reroll the 3 options once"],
         ["骨を使ったら、反響のお告げのボタンを押して掛ける", "After using the Bone, press the Omen of Abyssal Echoes button to apply it"],
