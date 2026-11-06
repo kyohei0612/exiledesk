@@ -9,7 +9,7 @@ import { useArmed } from "../../../utils/use-armed";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { subtree } from "../../../services/simulator/tree/tree-model";
 import Icon from "../../../components/ui/Icon.vue";
-import { mergedInto } from "../../../services/simulator/tree/tree-merge-open";
+import { mergedAway, mergedInto } from "../../../services/simulator/tree/tree-merge-open";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
@@ -102,7 +102,13 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 const kind = computed(() => OUT_LOOK[props.box.out]);
 /** 枠の上の線に乗る題 (tree-names の headOf) */
 /** ヒネコラのハズレ (当たり以外をまとめた箱、S-39) は「ハズレ (打たない)」 */
-const head = computed(() => (props.box.seen ? tr("ハズレ (打たない)", "Miss (not used)") : headOf(props.box, t.aimShort)));
+// 同じ枠をまとめた箱は、まとめた箱の題も「 / 」で並べる (訳が違う時だけ。11-06 オーナー「同じ枠あるなら統合しちゃっていい」の札は両方の訳が分かる形で、S-66)
+const head = computed(() => {
+  if (props.box.seen) return tr("ハズレ (打たない)", "Miss (not used)");
+  const d = t.doc.value, own = headOf(props.box, t.aimShort);
+  const others = Object.values(d.boxes).filter((b) => b.back === props.box.id && mergedAway(d, b)).map((b) => headOf(b, t.aimShort));
+  return [...new Set([own, ...others])].join(" / ");
+});
 /** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */

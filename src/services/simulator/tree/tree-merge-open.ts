@@ -37,12 +37,17 @@ const setKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) =
 export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf | undefined, j?: Judge | null): void {
   if (!body && !j) return;
   const outs = j ? OPEN_JUDGE : OPEN_OUTS;
+  // 自動の ↩ だけの箱 (人の決めでも、まとめた箱でもない) も、↩ 先が同じならまとめる (11-06 オーナー「ただ同じ枠あるなら統合しちゃっていいと思う」。
+  // 前は整理が先に自動の ↩ を付けるので、消去の後の同じ枠の箱が親ごとに ↩ を持ったまま並んだ)
+  const autoOnly = (b: TreeBox): boolean => !!b.back && !!b.autoBack && !b.merged;
   const open = (id: string): boolean => {
     const b = doc.boxes[id];
-    return !!b && outs.has(b.out) && !b.hand && !b.back && !b.done && !b.split && !b.noAutoBack;
+    return !!b && outs.has(b.out) && !b.hand && (!b.back || autoOnly(b)) && !b.done && !b.split && !b.noAutoBack;
   };
   const order = byPlace(doc);
-  for (const id of [...ids].sort(order)) {
+  // 呼ぶ側は ↩ の無い箱だけを渡すので、自動の ↩ だけの箱もここで足して見る
+  const auto = Object.values(doc.boxes).filter((b) => autoOnly(b) && open(b.id)).map((b) => b.id);
+  for (const id of [...new Set([...ids, ...auto])].sort(order)) {
     if (!open(id)) continue;
     const mine = j ? "" : body!(id);
     // 体の分からない箱・見本ごとに外れの種類が違う箱 (mixed) はまとめない
@@ -53,7 +58,7 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
     const same = Object.values(doc.boxes)
       // 削減の手で外れの順位で分けた箱 (S-65b) は、順位の鍵が同じ箱へだけ (中身の比べは MOD レベルを見ないので、分けた兄弟がまたまとまる)
       // ヒネコラのハズレ箱 (seen、S-39) はまとめ先にしない (持つ前のアイテムのままの人の箱で、付け直すたびに出来るので、まとめる相手が付け直しの順で変わった)
-      .filter((t) => t.id !== id && !below.has(t.id) && outs.has(t.out) && !t.back && !t.done && !t.split && !t.seen && depthOf(doc, t.id) === dep && rankPart(t.junkKey) === rankPart(doc.boxes[id]?.junkKey))
+      .filter((t) => t.id !== id && !below.has(t.id) && outs.has(t.out) && (t.back ?? null) === (doc.boxes[id]?.back ?? null) && (!t.back || autoOnly(t)) && !t.done && !t.split && !t.seen && depthOf(doc, t.id) === dep && rankPart(t.junkKey) === rankPart(doc.boxes[id]?.junkKey))
       .filter((t) => (j ? j.fitsBox(id, t.id) : body!(t.id) === mine && sameBody(body, id, t.id) && setKey(doc, t.id) === key));
     // まとめ先は手のある箱、無ければ木の並びで一番前の箱 (前は先に作った箱で、組んだ順と開いた時の打ち直しの順が違うと
     // 開き直すたびに合流先が別の親の下へ飛んだ。消去の外れが消えた / 狙いが消えたの合流、11-06 オーナー「消去の枠の合体も色々挙動おかしい」)
