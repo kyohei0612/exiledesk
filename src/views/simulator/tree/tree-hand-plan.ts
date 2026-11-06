@@ -311,7 +311,8 @@ function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>):
 /** 前は組む間のつなぎをここで止めていた (S-190)。11-06 からつなぎは手を決めたその場で回すので、呼ぶ側の形だけ残す */
 export const holdLinks = <T>(fn: () => T): T => fn();
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
-export function tidyJunk(d: TreeDoc): void {
+/** auto = 木を変えるたびに回す整理 (S-201 ①)。完成の後の案内 (S-198 の doneNow) は完成を押した時だけなので、ここでは立てない */
+export function tidyJunk(d: TreeDoc, auto = false): void {
   const data = craftStage.data.value;
   if (!data) return;
   const depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
@@ -327,7 +328,7 @@ export function tidyJunk(d: TreeDoc): void {
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
   dropUnplayable(data, d);
-  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main") b.doneNow = true; }
+  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main" && !auto) b.doneNow = true; }
   d.tidyRan = true;
 }
 /** 見本に ↩ 先の手を打てない人がいる自動の ↩ は外して未設定にする (止まる所を ↩ 元の箱へ、S-193) */

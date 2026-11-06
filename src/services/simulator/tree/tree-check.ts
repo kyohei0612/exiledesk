@@ -23,14 +23,15 @@ import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
+import { frameIssues } from "./tree-frame-check";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
 
-type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan";
+type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMiss" | "frameDone";
 /** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
 /** 合格を止めない知らせ: 戻り先と外れの体だけ違う (S-73)・完成にしていない完成の箱 (S-77、印は付けるが止めない) */
-export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished"];
+export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished", "frameMiss", "frameDone"];
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -134,6 +135,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   const out: CheckIssue[] = [];
   for (const id of dead) out.push({ boxId: id, kind: "cantUse", text: tr("この手で付く狙いが無い (当たりの狙いはこのカレンシーでは付かない。当たるまで繰り返すと終わらないので、精査はここで止まる扱い)", "No target this craft can add (this currency can't add the hit's target; repeating would never end, so the check treats this box as a stop)") });
   const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
+  // 木のチェック (S-201 ②): 打たずに配置の木を辿り、行き先の無い結果・代表で打てない手・完成の条件に届かない完成の箱
+  for (const x of frameIssues(data, doc0)) add(x.boxId, x.kind, x.text);
   const boxes = Object.values(doc.boxes);
   const aims = aimsOf(doc);
   /** 判定 (戻り先の比べ・辿りの行き先はこれだけ、S-50b・S-73) */
