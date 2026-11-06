@@ -1,4 +1,9 @@
 {
+  "0.1.674": [
+    "Simulator: Divine Orb steps in the tree now split into two branches, reaching the target value or not",
+    "Simulator: fixed tree results, including misses after Annulment, merging boxes with the same slots, rebuilding everything below a step when you change it, and repeating Catalysts up to the quality cap",
+    "Simulator: opening and building trees is faster"
+  ],
   "0.1.673": [
     "Emulator: with the Omen of Whittling, an Unrevealed Desecrated mod now also glows orange when it can be removed"
   ],

@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.674",
+  "date": "2026-11-06",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木で神のオーブの手を、狙いの数値に届いた / 届かないの 2 つに分けて組めるようにしました",
+    "en": "Simulator: Divine Orb steps in the tree now split into two branches, reaching the target value or not"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去の後の外れの扱い・同じ枠の箱のまとめ・手を選び直した時に先を全部作り直す・カタリストを品質の上限まで繰り返す など、木の結果の不具合を直しました",
+    "en": "Simulator: fixed tree results, including misses after Annulment, merging boxes with the same slots, rebuilding everything below a step when you change it, and repeating Catalysts up to the quality cap"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木を開く・組むのを速くしました",
+    "en": "Simulator: opening and building trees is faster"
+   }
+  ]
+ },
+ {
   "v": "0.1.673",
   "date": "2026-11-06",
   "items": [
@@ -1182,17 +1206,5 @@
    }
   ],
   "pop": true
- },
- {
-  "v": "0.1.633",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: ベースを選ぶ画面の部位のタイルを列の幅いっぱいに大きくし、間を詰めました。縦長の絵は枠の真ん中に置き、上下に同じだけはみ出すように",
-    "en": "Phone: The item class tiles on the base picker now fill the column width with tighter spacing, and tall icons are centered in the frame, overflowing evenly above and below"
-   }
-  ]
  }
 ]
