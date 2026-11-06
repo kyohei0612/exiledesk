@@ -135,7 +135,7 @@ onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
 onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
-const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value);
+const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value, (id) => v.flow.findNode(id)?.dimensions.height ?? 0);
 const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), moving: () => drag.value?.id ?? null, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []), chips: () => edges.value.filter((e) => e.hand).map((e) => ({ x: e.jx, y: e.jy, w: chipRoom.value.get(e.id) ?? 340 })) });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
