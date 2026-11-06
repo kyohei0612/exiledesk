@@ -11359,6 +11359,585 @@
      "stats": []
     }
    ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Desecrated_RemnantPickupRadius",
+   "group": "Desecrated_RemnantPickupRadius",
+   "field": "Desecrated_RemnantPickupRadius",
+   "source": "desecrated",
+   "type": "suffix",
+   "categories": [],
+   "family": "RemnantPickupRadius",
+   "tags": [
+    "amanamu_mod"
+   ],
+   "text": "Remnants can be collected from #% further away",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "displayTags": [
+    "amanamu_mod"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Desecrated_LifeLeech",
+   "group": "Desecrated_LifeLeech",
+   "field": "Desecrated_LifeLeech",
+   "source": "desecrated",
+   "type": "suffix",
+   "categories": [],
+   "family": "LifeLeech",
+   "tags": [
+    "amanamu_mod",
+    "resource",
+    "life"
+   ],
+   "text": "#% increased amount of Life Leeched",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       12,
+       20
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "displayTags": [
+    "resource",
+    "life"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Desecrated_Strength",
+   "group": "Desecrated_Strength",
+   "field": "Desecrated_Strength",
+   "source": "desecrated",
+   "type": "suffix",
+   "categories": [],
+   "family": "Strength",
+   "families": [
+    "Strength",
+    "Intelligence"
+   ],
+   "tags": [
+    "amanamu_mod",
+    "attribute"
+   ],
+   "text": "+# to Strength and Intelligence",
+   "tiers": [
+    {
+     "name": "of Amanamu",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "displayTags": [
+    "attribute"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Desecrated_Dexterity",
+   "group": "Desecrated_Dexterity",
+   "field": "Desecrated_Dexterity",
+   "source": "desecrated",
+   "type": "suffix",
+   "categories": [],
+   "family": "Dexterity",
+   "families": [
+    "Dexterity",
+    "Intelligence"
+   ],
+   "tags": [
+    "kurgal_mod",
+    "attribute"
+   ],
+   "text": "+# to Dexterity and Intelligence",
+   "tiers": [
+    {
+     "name": "of Kurgal",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "displayTags": [
+    "attribute"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_IncreasedLife",
+   "group": "Rune_IncreasedLife",
+   "field": "Rune_IncreasedLife",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "prefix",
+   "categories": [
+    "base_maximum_life",
+    "base_maximum_mana"
+   ],
+   "family": "IncreasedLife",
+   "tags": [
+    "resource",
+    "life",
+    "mana"
+   ],
+   "text": "+# to maximum Life\n+# to maximum Mana",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       19,
+       189
+      ],
+      [
+       19,
+       189
+      ]
+     ],
+     "stats": [
+      "base_maximum_life",
+      "base_maximum_mana"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_ReducedAilmentDuration",
+   "group": "Rune_ReducedAilmentDuration",
+   "field": "Rune_ReducedAilmentDuration",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "suffix",
+   "categories": [
+    "base_all_ailment_duration_on_self_+%"
+   ],
+   "family": "ReducedAilmentDuration",
+   "tags": [
+    "bleed",
+    "poison",
+    "physical",
+    "elemental",
+    "fire",
+    "cold",
+    "lightning",
+    "chaos",
+    "ailment"
+   ],
+   "text": "#% reduced Duration of Ailments on You",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       -50,
+       -5
+      ]
+     ],
+     "stats": [
+      "base_all_ailment_duration_on_self_+%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Desecrated_StrengthDexterity",
+   "group": "Desecrated_StrengthDexterity",
+   "field": "Desecrated_StrengthDexterity",
+   "source": "desecrated",
+   "type": "suffix",
+   "categories": [],
+   "family": "Strength",
+   "families": [
+    "Strength",
+    "Dexterity"
+   ],
+   "tags": [
+    "ulaman_mod",
+    "attribute"
+   ],
+   "text": "+# to Strength and Dexterity",
+   "tiers": [
+    {
+     "name": "of Ulaman",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       9,
+       15
+      ]
+     ],
+     "stats": []
+    }
+   ],
+   "displayTags": [
+    "attribute"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_MaximumLifeIncreasePercent",
+   "group": "Rune_MaximumLifeIncreasePercent",
+   "field": "Rune_MaximumLifeIncreasePercent",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "prefix",
+   "categories": [
+    "maximum_life_+%"
+   ],
+   "family": "MaximumLifeIncreasePercent",
+   "tags": [
+    "resource",
+    "life"
+   ],
+   "text": "#% increased maximum Life",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       1,
+       20
+      ]
+     ],
+     "stats": [
+      "maximum_life_+%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_MaximumManaIncreasePercent",
+   "group": "Rune_MaximumManaIncreasePercent",
+   "field": "Rune_MaximumManaIncreasePercent",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "prefix",
+   "categories": [
+    "maximum_mana_+%"
+   ],
+   "family": "MaximumManaIncreasePercent",
+   "tags": [
+    "resource",
+    "mana"
+   ],
+   "text": "#% increased maximum Mana",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       1,
+       20
+      ]
+     ],
+     "stats": [
+      "maximum_mana_+%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_MaximumSpiritIncreasePercent",
+   "group": "Rune_MaximumSpiritIncreasePercent",
+   "field": "Rune_MaximumSpiritIncreasePercent",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "prefix",
+   "categories": [
+    "spirit_+%"
+   ],
+   "family": "MaximumSpiritIncreasePercent",
+   "tags": [],
+   "text": "#% increased Spirit",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       1,
+       20
+      ]
+     ],
+     "stats": [
+      "spirit_+%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_ReducedCriticalStrikeDamageTaken",
+   "group": "Rune_ReducedCriticalStrikeDamageTaken",
+   "field": "Rune_ReducedCriticalStrikeDamageTaken",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "suffix",
+   "categories": [
+    "base_self_critical_strike_multiplier_-%"
+   ],
+   "family": "ReducedCriticalStrikeDamageTaken",
+   "tags": [
+    "damage",
+    "critical"
+   ],
+   "text": "Hits against you have #% reduced Critical Damage Bonus",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       10,
+       99
+      ]
+     ],
+     "stats": [
+      "base_self_critical_strike_multiplier_-%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_FireAndChaosDamageResistance",
+   "group": "Rune_FireAndChaosDamageResistance",
+   "field": "Rune_FireAndChaosDamageResistance",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "suffix",
+   "categories": [
+    "fire_and_chaos_damage_resistance_%"
+   ],
+   "family": "FireAndChaosDamageResistance",
+   "tags": [
+    "chaos_resistance",
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+#% to Fire and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       31
+      ]
+     ],
+     "stats": [
+      "fire_and_chaos_damage_resistance_%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_ColdAndChaosDamageResistance",
+   "group": "Rune_ColdAndChaosDamageResistance",
+   "field": "Rune_ColdAndChaosDamageResistance",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "suffix",
+   "categories": [
+    "cold_and_chaos_damage_resistance_%"
+   ],
+   "family": "ColdAndChaosDamageResistance",
+   "tags": [
+    "chaos_resistance",
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+#% to Cold and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       31
+      ]
+     ],
+     "stats": [
+      "cold_and_chaos_damage_resistance_%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_LightningAndChaosDamageResistance",
+   "group": "Rune_LightningAndChaosDamageResistance",
+   "field": "Rune_LightningAndChaosDamageResistance",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "suffix",
+   "categories": [
+    "lightning_and_chaos_damage_resistance_%"
+   ],
+   "family": "LightningAndChaosDamageResistance",
+   "tags": [
+    "chaos_resistance",
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+#% to Lightning and Chaos Resistances",
+   "tiers": [
+    {
+     "name": "of the Soul",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       3,
+       31
+      ]
+     ],
+     "stats": [
+      "lightning_and_chaos_damage_resistance_%"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_rating_base_spirit_from_equipment",
+   "group": "Rune_BaseLocalDefencesAndLife",
+   "field": "Rune_BaseLocalDefencesAndLife",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "prefix",
+   "categories": [
+    "local_evasion_rating_+%",
+    "base_spirit_from_equipment"
+   ],
+   "family": "BaseLocalDefencesAndLife",
+   "tags": [
+    "defences",
+    "evasion"
+   ],
+   "text": "#% increased Evasion Rating\n+# to Spirit",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       1,
+       24
+      ]
+     ],
+     "stats": [
+      "local_evasion_rating_+%",
+      "base_spirit_from_equipment"
+     ]
+    }
+   ],
+   "displayTags": [
+    "defences",
+    "evasion"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_rating_base_maximum_mana",
+   "group": "Rune_BaseLocalDefencesAndLife",
+   "field": "Rune_BaseLocalDefencesAndLife",
+   "source": "normal",
+   "rune": "medveds-tending",
+   "type": "prefix",
+   "categories": [
+    "local_evasion_rating_+%",
+    "base_spirit_from_equipment"
+   ],
+   "family": "BaseLocalDefencesAndLife",
+   "tags": [
+    "defences",
+    "evasion"
+   ],
+   "text": "#% increased Evasion Rating\n+# to maximum Mana",
+   "tiers": [
+    {
+     "name": "Medved's",
+     "ilvl": 65,
+     "weight": 500,
+     "ranges": [
+      [
+       6,
+       52
+      ],
+      [
+       7,
+       57
+      ]
+     ],
+     "stats": [
+      "local_evasion_rating_+%",
+      "base_maximum_mana"
+     ]
+    }
+   ],
+   "displayTags": [
+    "defences",
+    "resource",
+    "mana",
+    "evasion"
+   ]
   }
  ],
  "pools": {
@@ -12189,6 +12768,41 @@
      ]
     },
     "remove": []
+   },
+   "desecrated": {
+    "add": {
+     "prefixes": [],
+     "suffixes": [
+      "Body_Armours_ring_str_dex_int/Desecrated_RemnantPickupRadius",
+      "Body_Armours_ring_str_dex_int/Desecrated_LifeLeech",
+      "Body_Armours_ring_str_dex_int/Desecrated_Strength",
+      "Body_Armours_ring_str_dex_int/Desecrated_Dexterity",
+      "Body_Armours_ring_str_dex_int/Desecrated_StrengthDexterity"
+     ]
+    },
+    "remove": []
+   },
+   "rune:medveds-tending": {
+    "add": {
+     "prefixes": [
+      "Body_Armours_ring_str_dex_int/Rune_soul_IncreasedLife"
+     ],
+     "suffixes": [
+      "Body_Armours_ring_str_dex_int/Rune_soul_ReducedAilmentDuration"
+     ]
+    },
+    "remove": [
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_physical_damage_reduction_rating_base_maximum_mana",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_energy_shield_base_maximum_mana",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_evasion_base_maximum_mana",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_energy_shield_base_maximum_mana",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_and_energy_shield_base_maximum_mana",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_physical_damage_reduction_rating_base_spirit_from_equipment",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_energy_shield_base_spirit_from_equipment",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_armour_and_evasion_base_spirit_from_equipment",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_energy_shield_base_spirit_from_equipment",
+     "Body_Armours_ring_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_and_energy_shield_base_spirit_from_equipment"
+    ]
    }
   }
  },

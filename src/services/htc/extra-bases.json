@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-15",
+ "generated": "2026-11-06",
  "familyTexts": {
   "Amulets": {
    "IncreasedAccuracy": [
@@ -67526,9 +67526,11 @@
       "Body_Armours_ring_str_dex_int/FireDamage",
       "Body_Armours_ring_str_dex_int/LightningDamage",
       "Body_Armours_ring_str_dex_int/PhysicalDamage",
+      "Body_Armours_ring_str_dex_int/ArcaneSurgeEffect",
       "Body_Armours_ring_str_dex_int/Thorns",
       "Body_Armours_ring_str_dex_int/IncreasedChaosDamage",
       "Body_Armours_ring_str_dex_int/ColdDamagePercentage",
+      "Body_Armours_ring_str_dex_int/CurseEffectiveness",
       "Body_Armours_ring_str_dex_int/FireDamagePercentage",
       "Body_Armours_ring_str_dex_int/IncreasedAccuracy",
       "Body_Armours_ring_str_dex_int/IncreasedLife",
@@ -67537,7 +67539,11 @@
       "Body_Armours_ring_str_dex_int/ItemFoundRarityIncreasePrefix",
       "Body_Armours_ring_str_dex_int/LightningDamagePercentage",
       "Body_Armours_ring_str_dex_int/BaseLocalDefences",
-      "Body_Armours_ring_str_dex_int/DefencesPercent"
+      "Body_Armours_ring_str_dex_int/DefencesPercent",
+      "Body_Armours_ring_str_dex_int/MinionDamage",
+      "Body_Armours_ring_str_dex_int/MinionLife",
+      "Body_Armours_ring_str_dex_int/SpellManaCostEfficiency",
+      "Body_Armours_ring_str_dex_int/SpellDamage"
      ],
      "suffixes": [
       "Body_Armours_ring_str_dex_int/AllAttributes",
@@ -67550,6 +67556,7 @@
       "Body_Armours_ring_str_dex_int/EnergyShieldRegeneration",
       "Body_Armours_ring_str_dex_int/EvasionAppliesToDeflection",
       "Body_Armours_ring_str_dex_int/FireResistance",
+      "Body_Armours_ring_str_dex_int/IncreaseSocketedGemLevel",
       "Body_Armours_ring_str_dex_int/Intelligence",
       "Body_Armours_ring_str_dex_int/ItemFoundRarityIncrease",
       "Body_Armours_ring_str_dex_int/LifeGainedFromEnemyDeath",
@@ -67560,8 +67567,16 @@
       "Body_Armours_ring_str_dex_int/ManaGainedFromEnemyDeath",
       "Body_Armours_ring_str_dex_int/ManaLeech",
       "Body_Armours_ring_str_dex_int/ManaRegeneration",
+      "Body_Armours_ring_str_dex_int/MinionAttackSpeedAndCastSpeed",
+      "Body_Armours_ring_str_dex_int/MinionCriticalStrikeChance",
+      "Body_Armours_ring_str_dex_int/MinionCriticalStrikeMultiplier",
+      "Body_Armours_ring_str_dex_int/MinionElementalResistances",
       "Body_Armours_ring_str_dex_int/ReducedAilmentDuration",
       "Body_Armours_ring_str_dex_int/LocalAttributeRequirements",
+      "Body_Armours_ring_str_dex_int/RemnantPickupRadius",
+      "Body_Armours_ring_str_dex_int/SpellAreaOfEffect",
+      "Body_Armours_ring_str_dex_int/SpellCriticalStrikeChanceIncrease",
+      "Body_Armours_ring_str_dex_int/CriticalStrikeMultiplier",
       "Body_Armours_ring_str_dex_int/Strength",
       "Body_Armours_ring_str_dex_int/StunThreshold"
      ]
@@ -240627,6 +240642,80 @@
    "weightSource": "poe2htc"
   },
   {
+   "id": "Body_Armours_ring_str_dex_int/ArcaneSurgeEffect",
+   "source": "normal",
+   "type": "prefix",
+   "family": "ArcaneSurgeEffect",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "resource",
+    "mana",
+    "caster"
+   ],
+   "text": "(12-18)% increased [BuffEffect|effect] of [ArcaneSurge|Arcane Surge] on you",
+   "tiers": [
+    {
+     "name": "Eager",
+     "ilvl": 24,
+     "weight": 1,
+     "ranges": [
+      [
+       12,
+       18
+      ]
+     ],
+     "stats": [
+      "arcane_surge_effect_on_self_+%"
+     ]
+    },
+    {
+     "name": "Enthusiastic",
+     "ilvl": 47,
+     "weight": 1,
+     "ranges": [
+      [
+       19,
+       25
+      ]
+     ],
+     "stats": [
+      "arcane_surge_effect_on_self_+%"
+     ]
+    },
+    {
+     "name": "Spirited",
+     "ilvl": 61,
+     "weight": 1,
+     "ranges": [
+      [
+       26,
+       32
+      ]
+     ],
+     "stats": [
+      "arcane_surge_effect_on_self_+%"
+     ]
+    },
+    {
+     "name": "Passionate",
+     "ilvl": 79,
+     "weight": 1,
+     "ranges": [
+      [
+       33,
+       39
+      ]
+     ],
+     "stats": [
+      "arcane_surge_effect_on_self_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
    "id": "Body_Armours_ring_str_dex_int/Thorns",
    "source": "normal",
    "type": "prefix",
@@ -240981,6 +241070,79 @@
     }
    ],
    "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/CurseEffectiveness",
+   "source": "normal",
+   "type": "prefix",
+   "family": "CurseEffectiveness",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster",
+    "curse"
+   ],
+   "text": "(2-3)% increased [Curse] [BuffMagnitude|Magnitudes]",
+   "tiers": [
+    {
+     "name": "Hexing",
+     "ilvl": 31,
+     "weight": 1,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": [
+      "curse_effect_+%"
+     ]
+    },
+    {
+     "name": "Condemning",
+     "ilvl": 47,
+     "weight": 1,
+     "ranges": [
+      [
+       4,
+       6
+      ]
+     ],
+     "stats": [
+      "curse_effect_+%"
+     ]
+    },
+    {
+     "name": "Maledicting",
+     "ilvl": 61,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "curse_effect_+%"
+     ]
+    },
+    {
+     "name": "Dooming",
+     "ilvl": 77,
+     "weight": 1,
+     "ranges": [
+      [
+       10,
+       12
+      ]
+     ],
+     "stats": [
+      "curse_effect_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
   },
   {
    "id": "Body_Armours_ring_str_dex_int/FireDamagePercentage",
@@ -242954,6 +243116,470 @@
    "weightSource": "poe2htc"
   },
   {
+   "id": "Body_Armours_ring_str_dex_int/MinionDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "MinionDamage",
+   "tags": [
+    "genesis_tree_minion"
+   ],
+   "displayTags": [
+    "minion_damage",
+    "damage",
+    "minion"
+   ],
+   "text": "[Minion|Minions] deal (7-9)% increased Damage",
+   "tiers": [
+    {
+     "name": "Hustler's",
+     "ilvl": 13,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Conniver's",
+     "ilvl": 26,
+     "weight": 1,
+     "ranges": [
+      [
+       10,
+       12
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Schemer's",
+     "ilvl": 33,
+     "weight": 1,
+     "ranges": [
+      [
+       13,
+       15
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Plotter's",
+     "ilvl": 46,
+     "weight": 1,
+     "ranges": [
+      [
+       16,
+       18
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Conspirator's",
+     "ilvl": 54,
+     "weight": 1,
+     "ranges": [
+      [
+       19,
+       21
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Exploiter's",
+     "ilvl": 65,
+     "weight": 2500,
+     "ranges": [
+      [
+       22,
+       24
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Manipulator's",
+     "ilvl": 70,
+     "weight": 1,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    },
+    {
+     "name": "Puppeteer's",
+     "ilvl": 82,
+     "weight": 1,
+     "ranges": [
+      [
+       28,
+       31
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/MinionLife",
+   "source": "normal",
+   "type": "prefix",
+   "family": "MinionLife",
+   "tags": [
+    "genesis_tree_minion"
+   ],
+   "displayTags": [
+    "resource",
+    "life",
+    "minion"
+   ],
+   "text": "[Minion|Minions] have (7-10)% increased maximum Life",
+   "tiers": [
+    {
+     "name": "Bearing",
+     "ilvl": 18,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       10
+      ]
+     ],
+     "stats": [
+      "minion_maximum_life_+%"
+     ]
+    },
+    {
+     "name": "Bracing",
+     "ilvl": 29,
+     "weight": 1,
+     "ranges": [
+      [
+       11,
+       14
+      ]
+     ],
+     "stats": [
+      "minion_maximum_life_+%"
+     ]
+    },
+    {
+     "name": "Toughening",
+     "ilvl": 41,
+     "weight": 1,
+     "ranges": [
+      [
+       15,
+       18
+      ]
+     ],
+     "stats": [
+      "minion_maximum_life_+%"
+     ]
+    },
+    {
+     "name": "Reinforcing",
+     "ilvl": 52,
+     "weight": 1,
+     "ranges": [
+      [
+       19,
+       22
+      ]
+     ],
+     "stats": [
+      "minion_maximum_life_+%"
+     ]
+    },
+    {
+     "name": "Bolstering",
+     "ilvl": 67,
+     "weight": 1,
+     "ranges": [
+      [
+       23,
+       26
+      ]
+     ],
+     "stats": [
+      "minion_maximum_life_+%"
+     ]
+    },
+    {
+     "name": "Fortifying",
+     "ilvl": 75,
+     "weight": 1,
+     "ranges": [
+      [
+       27,
+       30
+      ]
+     ],
+     "stats": [
+      "minion_maximum_life_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/SpellManaCostEfficiency",
+   "source": "normal",
+   "type": "prefix",
+   "family": "SpellManaCostEfficiency",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "resource",
+    "mana",
+    "caster"
+   ],
+   "text": "(7-9)% increased Mana Cost [Efficiency] of [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "Thoughtful",
+     "ilvl": 12,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "base_spell_mana_cost_efficiency_+%"
+     ]
+    },
+    {
+     "name": "Considerate",
+     "ilvl": 29,
+     "weight": 1,
+     "ranges": [
+      [
+       10,
+       12
+      ]
+     ],
+     "stats": [
+      "base_spell_mana_cost_efficiency_+%"
+     ]
+    },
+    {
+     "name": "Prudent",
+     "ilvl": 42,
+     "weight": 1,
+     "ranges": [
+      [
+       13,
+       15
+      ]
+     ],
+     "stats": [
+      "base_spell_mana_cost_efficiency_+%"
+     ]
+    },
+    {
+     "name": "Astute",
+     "ilvl": 53,
+     "weight": 1,
+     "ranges": [
+      [
+       16,
+       18
+      ]
+     ],
+     "stats": [
+      "base_spell_mana_cost_efficiency_+%"
+     ]
+    },
+    {
+     "name": "Sagacious",
+     "ilvl": 64,
+     "weight": 1,
+     "ranges": [
+      [
+       19,
+       22
+      ]
+     ],
+     "stats": [
+      "base_spell_mana_cost_efficiency_+%"
+     ]
+    },
+    {
+     "name": "Calculating",
+     "ilvl": 77,
+     "weight": 1,
+     "ranges": [
+      [
+       23,
+       26
+      ]
+     ],
+     "stats": [
+      "base_spell_mana_cost_efficiency_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/SpellDamage",
+   "source": "normal",
+   "type": "prefix",
+   "family": "SpellDamage",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster_damage",
+    "damage",
+    "caster"
+   ],
+   "text": "(6-9)% increased [Spell] Damage",
+   "tiers": [
+    {
+     "name": "Apprentice's",
+     "ilvl": 9,
+     "weight": 1,
+     "ranges": [
+      [
+       6,
+       9
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Adept's",
+     "ilvl": 20,
+     "weight": 1,
+     "ranges": [
+      [
+       10,
+       13
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Scholar's",
+     "ilvl": 31,
+     "weight": 1,
+     "ranges": [
+      [
+       14,
+       17
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Professor's",
+     "ilvl": 46,
+     "weight": 1000,
+     "ranges": [
+      [
+       18,
+       21
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Occultist's",
+     "ilvl": 55,
+     "weight": 1,
+     "ranges": [
+      [
+       22,
+       25
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Incanter's",
+     "ilvl": 63,
+     "weight": 1,
+     "ranges": [
+      [
+       26,
+       29
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Glyphic",
+     "ilvl": 71,
+     "weight": 1,
+     "ranges": [
+      [
+       30,
+       34
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    },
+    {
+     "name": "Runic",
+     "ilvl": 82,
+     "weight": 1,
+     "ranges": [
+      [
+       35,
+       39
+      ]
+     ],
+     "stats": [
+      "spell_damage_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
    "id": "Body_Armours_ring_str_dex_int/AllAttributes",
    "source": "normal",
    "type": "suffix",
@@ -243968,6 +244594,37 @@
    "weightSource": "poe2htc"
   },
   {
+   "id": "Body_Armours_ring_str_dex_int/IncreaseSocketedGemLevel",
+   "source": "normal",
+   "type": "suffix",
+   "family": "IncreaseSocketedGemLevel",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster",
+    "gem"
+   ],
+   "text": "+1 to Level of all [Spell|Spell] Skills",
+   "tiers": [
+    {
+     "name": "of Jordan",
+     "ilvl": 45,
+     "weight": 1000,
+     "ranges": [
+      [
+       1,
+       1
+      ]
+     ],
+     "stats": [
+      "spell_skill_gem_level_+"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc"
+  },
+  {
    "id": "Body_Armours_ring_str_dex_int/Intelligence",
    "source": "normal",
    "type": "suffix",
@@ -244836,7 +245493,8 @@
    "type": "suffix",
    "family": "ManaRegeneration",
    "tags": [
-    "ring"
+    "ring",
+    "genesis_tree_caster"
    ],
    "displayTags": [
     "resource",
@@ -244930,6 +245588,397 @@
     }
    ],
    "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/MinionAttackSpeedAndCastSpeed",
+   "source": "normal",
+   "type": "suffix",
+   "family": "MinionAttackSpeedAndCastSpeed",
+   "tags": [
+    "genesis_tree_minion"
+   ],
+   "displayTags": [
+    "caster_speed",
+    "minion_speed",
+    "attack",
+    "caster",
+    "speed",
+    "minion"
+   ],
+   "text": "[Minion|Minions] have (3-4)% increased [Attack] and Cast Speed",
+   "tiers": [
+    {
+     "name": "of Guidance",
+     "ilvl": 31,
+     "weight": 1,
+     "ranges": [
+      [
+       3,
+       4
+      ]
+     ],
+     "stats": [
+      "minion_attack_and_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Direction",
+     "ilvl": 53,
+     "weight": 1,
+     "ranges": [
+      [
+       5,
+       6
+      ]
+     ],
+     "stats": [
+      "minion_attack_and_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Management",
+     "ilvl": 69,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       8
+      ]
+     ],
+     "stats": [
+      "minion_attack_and_cast_speed_+%"
+     ]
+    },
+    {
+     "name": "of Control",
+     "ilvl": 80,
+     "weight": 1,
+     "ranges": [
+      [
+       9,
+       10
+      ]
+     ],
+     "stats": [
+      "minion_attack_and_cast_speed_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/MinionCriticalStrikeChance",
+   "source": "normal",
+   "type": "suffix",
+   "family": "MinionCriticalStrikeChance",
+   "tags": [
+    "genesis_tree_minion"
+   ],
+   "displayTags": [
+    "minion",
+    "critical"
+   ],
+   "text": "[Minion|Minions] have (5-12)% increased [Critical|Critical Hit Chance]",
+   "tiers": [
+    {
+     "name": "of Pricking",
+     "ilvl": 18,
+     "weight": 1,
+     "ranges": [
+      [
+       5,
+       12
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Stinging",
+     "ilvl": 32,
+     "weight": 1,
+     "ranges": [
+      [
+       13,
+       20
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Gouging",
+     "ilvl": 45,
+     "weight": 1,
+     "ranges": [
+      [
+       21,
+       28
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Puncturing",
+     "ilvl": 58,
+     "weight": 1,
+     "ranges": [
+      [
+       29,
+       36
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Lacinating",
+     "ilvl": 70,
+     "weight": 1,
+     "ranges": [
+      [
+       37,
+       44
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Piercing",
+     "ilvl": 81,
+     "weight": 1,
+     "ranges": [
+      [
+       45,
+       52
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_chance_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/MinionCriticalStrikeMultiplier",
+   "source": "normal",
+   "type": "suffix",
+   "family": "MinionCriticalStrikeMultiplier",
+   "tags": [
+    "genesis_tree_minion"
+   ],
+   "displayTags": [
+    "minion_damage",
+    "damage",
+    "minion",
+    "critical"
+   ],
+   "text": "[Minion|Minions] have (6-10)% increased [CriticalDamageBonus|Critical Damage Bonus]",
+   "tiers": [
+    {
+     "name": "of Quashing",
+     "ilvl": 17,
+     "weight": 1,
+     "ranges": [
+      [
+       6,
+       10
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Purging",
+     "ilvl": 30,
+     "weight": 1,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Elimination",
+     "ilvl": 44,
+     "weight": 1,
+     "ranges": [
+      [
+       16,
+       20
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Devastation",
+     "ilvl": 57,
+     "weight": 1,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Eradication",
+     "ilvl": 69,
+     "weight": 1,
+     "ranges": [
+      [
+       26,
+       30
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Extinction",
+     "ilvl": 80,
+     "weight": 1,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [
+      "minion_critical_strike_multiplier_+"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/MinionElementalResistances",
+   "source": "normal",
+   "type": "suffix",
+   "family": "MinionElementalResistances",
+   "tags": [
+    "genesis_tree_minion"
+   ],
+   "displayTags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "fire_resistance",
+    "lightning_resistance",
+    "minion_resistance",
+    "elemental",
+    "fire",
+    "cold",
+    "lightning",
+    "resistance",
+    "minion"
+   ],
+   "text": "[Minion|Minions] have +(7-9)% to all Elemental [Resistances]",
+   "tiers": [
+    {
+     "name": "of Numbness",
+     "ilvl": 22,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "minion_elemental_resistance_%"
+     ]
+    },
+    {
+     "name": "of Dullness",
+     "ilvl": 38,
+     "weight": 1,
+     "ranges": [
+      [
+       10,
+       12
+      ]
+     ],
+     "stats": [
+      "minion_elemental_resistance_%"
+     ]
+    },
+    {
+     "name": "of Desensitisation",
+     "ilvl": 49,
+     "weight": 1,
+     "ranges": [
+      [
+       14,
+       16
+      ]
+     ],
+     "stats": [
+      "minion_elemental_resistance_%"
+     ]
+    },
+    {
+     "name": "of Conditioning",
+     "ilvl": 57,
+     "weight": 1,
+     "ranges": [
+      [
+       17,
+       19
+      ]
+     ],
+     "stats": [
+      "minion_elemental_resistance_%"
+     ]
+    },
+    {
+     "name": "of Acclimatisation",
+     "ilvl": 66,
+     "weight": 1,
+     "ranges": [
+      [
+       20,
+       22
+      ]
+     ],
+     "stats": [
+      "minion_elemental_resistance_%"
+     ]
+    },
+    {
+     "name": "of Adaptation",
+     "ilvl": 73,
+     "weight": 1,
+     "ranges": [
+      [
+       23,
+       25
+      ]
+     ],
+     "stats": [
+      "minion_elemental_resistance_%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
   },
   {
    "id": "Body_Armours_ring_str_dex_int/ReducedAilmentDuration",
@@ -245246,6 +246295,352 @@
     }
    ],
    "weightSource": "poe2htc"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/RemnantPickupRadius",
+   "source": "normal",
+   "type": "suffix",
+   "family": "RemnantPickupRadius",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [],
+   "text": "[Remnant|Remnants] can be collected from (12-19)% further away",
+   "tiers": [
+    {
+     "name": "of Receiving",
+     "ilvl": 26,
+     "weight": 1,
+     "ranges": [
+      [
+       12,
+       19
+      ]
+     ],
+     "stats": [
+      "remnant_pickup_range_+%"
+     ]
+    },
+    {
+     "name": "of Collecting",
+     "ilvl": 38,
+     "weight": 1,
+     "ranges": [
+      [
+       20,
+       27
+      ]
+     ],
+     "stats": [
+      "remnant_pickup_range_+%"
+     ]
+    },
+    {
+     "name": "of Amassing",
+     "ilvl": 51,
+     "weight": 1,
+     "ranges": [
+      [
+       28,
+       35
+      ]
+     ],
+     "stats": [
+      "remnant_pickup_range_+%"
+     ]
+    },
+    {
+     "name": "of Absorbing",
+     "ilvl": 64,
+     "weight": 1,
+     "ranges": [
+      [
+       36,
+       43
+      ]
+     ],
+     "stats": [
+      "remnant_pickup_range_+%"
+     ]
+    },
+    {
+     "name": "of Engulfing",
+     "ilvl": 76,
+     "weight": 1,
+     "ranges": [
+      [
+       44,
+       51
+      ]
+     ],
+     "stats": [
+      "remnant_pickup_range_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/SpellAreaOfEffect",
+   "source": "normal",
+   "type": "suffix",
+   "family": "SpellAreaOfEffect",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster"
+   ],
+   "text": "[Spell|Spell] Skills have (6-8)% increased Area of Effect",
+   "tiers": [
+    {
+     "name": "of Analysis",
+     "ilvl": 23,
+     "weight": 1,
+     "ranges": [
+      [
+       6,
+       8
+      ]
+     ],
+     "stats": [
+      "spell_area_of_effect_+%"
+     ]
+    },
+    {
+     "name": "of Experimentation",
+     "ilvl": 48,
+     "weight": 1,
+     "ranges": [
+      [
+       9,
+       11
+      ]
+     ],
+     "stats": [
+      "spell_area_of_effect_+%"
+     ]
+    },
+    {
+     "name": "of Understanding",
+     "ilvl": 69,
+     "weight": 1,
+     "ranges": [
+      [
+       12,
+       14
+      ]
+     ],
+     "stats": [
+      "spell_area_of_effect_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/SpellCriticalStrikeChanceIncrease",
+   "source": "normal",
+   "type": "suffix",
+   "family": "SpellCriticalStrikeChanceIncrease",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster_critical",
+    "caster",
+    "critical"
+   ],
+   "text": "(7-9)% increased [Critical|Critical Hit Chance] for [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "of Menace",
+     "ilvl": 18,
+     "weight": 1,
+     "ranges": [
+      [
+       7,
+       9
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Havoc",
+     "ilvl": 32,
+     "weight": 1,
+     "ranges": [
+      [
+       10,
+       12
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Disaster",
+     "ilvl": 45,
+     "weight": 1,
+     "ranges": [
+      [
+       13,
+       15
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Calamity",
+     "ilvl": 58,
+     "weight": 1,
+     "ranges": [
+      [
+       16,
+       18
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Ruin",
+     "ilvl": 70,
+     "weight": 1,
+     "ranges": [
+      [
+       19,
+       21
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    },
+    {
+     "name": "of Unmaking",
+     "ilvl": 81,
+     "weight": 1,
+     "ranges": [
+      [
+       22,
+       25
+      ]
+     ],
+     "stats": [
+      "spell_critical_strike_chance_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/CriticalStrikeMultiplier",
+   "source": "normal",
+   "type": "suffix",
+   "family": "CriticalStrikeMultiplier",
+   "tags": [
+    "genesis_tree_caster"
+   ],
+   "displayTags": [
+    "caster_critical",
+    "caster",
+    "critical"
+   ],
+   "text": "(8-10)% increased [CriticalDamageBonus|Critical Spell Damage Bonus]",
+   "tiers": [
+    {
+     "name": "of Ire",
+     "ilvl": 17,
+     "weight": 1,
+     "ranges": [
+      [
+       8,
+       10
+      ]
+     ],
+     "stats": [
+      "base_spell_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Anger",
+     "ilvl": 30,
+     "weight": 1000,
+     "ranges": [
+      [
+       11,
+       13
+      ]
+     ],
+     "stats": [
+      "base_spell_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Rage",
+     "ilvl": 44,
+     "weight": 500,
+     "ranges": [
+      [
+       14,
+       17
+      ]
+     ],
+     "stats": [
+      "base_spell_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Fury",
+     "ilvl": 57,
+     "weight": 1,
+     "ranges": [
+      [
+       18,
+       21
+      ]
+     ],
+     "stats": [
+      "base_spell_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Ferocity",
+     "ilvl": 69,
+     "weight": 1,
+     "ranges": [
+      [
+       22,
+       25
+      ]
+     ],
+     "stats": [
+      "base_spell_critical_strike_multiplier_+"
+     ]
+    },
+    {
+     "name": "of Destruction",
+     "ilvl": 80,
+     "weight": 1,
+     "ranges": [
+      [
+       26,
+       29
+      ]
+     ],
+     "stats": [
+      "base_spell_critical_strike_multiplier_+"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder"
   },
   {
    "id": "Body_Armours_ring_str_dex_int/Strength",
