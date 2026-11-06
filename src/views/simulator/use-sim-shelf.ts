@@ -23,7 +23,8 @@ import { FORESEE_ON } from "../../services/simulator/tree/tree-foresee";
  * 出さない (同じ状態の箱への自動の矢印で、カオス 1 回ずつ + 外れ → 親の箱で組める)。作りは残す、要望が来たらここを true に。前に保存した当たるまでの手は開いた時に札が出る
  */
 export const TREE_SPAM_ORB = false;
-export const TREE_HIDDEN = new Set(["OmenofSanctification", "divine", "OmenoftheBlessed"]);
+/** 神のオーブは 11-06 から木の棚に出す (狙いの MOD の数値の目標を決める手、S-202) */
+export const TREE_HIDDEN = new Set(["OmenofSanctification", "OmenoftheBlessed"]);
 /** フラックス (耐性の変換) は木の枝の決まりが無いのでツリーの棚に出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す) */
 const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"]);
 /** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */

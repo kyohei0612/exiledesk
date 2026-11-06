@@ -26,6 +26,7 @@ import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
 import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
+import { DIVINE_LT, divineBranches, divineMet, isDivineAim, playForeReset } from "./tree-divine";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 
 /** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
@@ -158,6 +159,8 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     }
     return { ...r, item: it };
   }
+  // 予見リセットの神 (S-202 ⑤): 神を 1 回打って予見を消し、目標に届くまで打ち続ける 1 手 (1 回ずつはエンジンの applyHand)
+  if (isDivineAim(h) && h.foreReset) return { added: [], removed: [], ...playForeReset(item, h, (it) => applyHand(data, it, h.currency, rng, { omens: h.omens }), use) };
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま
   const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
   const r = applyHand(data, item, h.currency, rng, { omens: h.omens, reveal: !keepVeil });
@@ -348,6 +351,12 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // MOD を変えない手 (神・ヒネコラ、S-39): 親の見本に 1 回打つだけ、作れなかった見本の印 (note) も親のまま = 中身の組が親と同じ (同じ手の戻り S-51 で前の箱へ戻れる)
   // 打てなければ下の打ち直しは乱数の続き (2 つ目) から
   let from = 0;
+  // 目標の数値を決めた神 (S-202): 以上の箱は目標の値、未満の箱は目標の MOD を下限にした品 (配置の代表と同じ、tree-divine)
+  if (isDivineAim(h)) {
+    const brs = divineBranches(data, base.item, h, (it) => { const r = applyHand(data, it, h.currency, mulberry32(rs), { omens: h.omens }); return r.applied ? r.item : null; });
+    const br = brs.find((x) => divineMet(x.item, h.targets ?? []) === (b.junkKey !== DIVINE_LT));
+    if (br) return { item: handOut(br.item), note: base.note };
+  }
   if (!h.repeat && keepsMods(data, base.item, h.currency, h.omens)) { const r = roll(0); if (r.applied) return { item: handOut(r.item), note: base.note }; from = 1; }
   let last: Roll | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)

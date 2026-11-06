@@ -22,12 +22,12 @@ import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../s
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
-import TreeKeepList from "./TreeKeepList.vue";
+import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE } from "../../../services/simulator/tree/tree-divine";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { boxTagsOf, chosenMod } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
-import { aimKey, fractureMarks, sameHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
@@ -205,9 +205,16 @@ watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked
 /** MOD が付かない・消えない・入れ替わらない手 (神・ヒネコラなど、エンジンで決める tree-foresee の keepsMods): 狙いの ☑ はグレーアウト、狙い無しだけ (11-06 オーナー「狙い無しのみ表示でこのさいグレーアウトさせちゃっていいよ」) */
 const noMod = computed(() => { const d = s.data.value, it = shelfItem.value, h = held.value; return !!d && !!it && !!h && keepsMods(d, it, h, omens.value); });
 watch(noMod, (v) => { if (v) checked.value = []; }, { immediate: true });
+/** 神のオーブの手 (S-202): ☑ の狙いの MOD の数値の目標を全部決めてから置く (TreeDivinePick)。予見リセットはヒネコラの後の神だけ */
+const divOn = computed(() => held.value === DIVINE);
+const divTargets = ref<DivineTarget[]>(props.current?.targets ? props.current.targets.map((x) => ({ ...x })) : []);
+const divReset = ref(!!props.current?.foreReset);
+watch(held, (h) => { divTargets.value = h === props.current?.currency && props.current?.targets ? props.current.targets.map((x) => ({ ...x })) : []; divReset.value = h === props.current?.currency && !!props.current?.foreReset; });
+/** 決める値の数 (☑ の狙いの MOD で神が振り直す物の値の数) */
+const divNeed = computed(() => (item.value ? [...item.value.prefixes, ...item.value.suffixes].filter((m) => !m.fractured && !m.unrevealed && m.ranges.length && t.goals.value.some((a) => a.modId === m.modId)).reduce((n, m) => n + m.values.length, 0) : 0));
 const noModTitle = (): string => tr("この手は MOD を付けない・消さない・入れ替えない (狙い無しだけ)", "This craft adds, removes and swaps no mods (no target only)");
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
-const showAims = computed(() => canFree.value || (isInfinite.value && aimChoices.value.length > 0));
+const showAims = computed(() => !divOn.value && (canFree.value || (isInfinite.value && aimChoices.value.length > 0)));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length && !(boneVeil.value && veilOn.value)); // 発現させると狙い無しは同時にオンにしない (10-28 オーナー)
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
@@ -253,7 +260,7 @@ function onSocket(n: number): void {
   socketWhy.value = null;
   ok();
 }
-const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
+const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}), ...(divOn.value && divTargets.value.length ? { targets: divTargets.value.map((x) => ({ ...x })), ...(divReset.value && item.value?.foreseen ? { foreReset: true as const } : {}) } : {}) }) : null));
 const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
@@ -300,7 +307,7 @@ const goneNow = computed((): number => {
   return sameHand(props.current, h) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
-const problem = computed((): string | null => (hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
+const problem = computed((): string | null => (divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD の数値を全部決めて (↑↓ か「この値」)", "Set every target mod value first (↑↓ or Keep)") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
 const gone = later(handKey, goneNow);
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
@@ -361,6 +368,7 @@ function ok(): void {
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
       <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
+      <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" />
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
         <span v-else-if="noMod" data-tree-hand-nomod class="opacity-80">{{ noModTitle() }}</span>

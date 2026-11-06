@@ -7,7 +7,7 @@
  *   addUnrevealed → 側は unrevealedPlan の重み、満杯の側は固定以外から等しく 1 つ消す。
  * 乱数を使わない部品 (レアリティ・エッセンスの MOD・コラプト) は打つ処理の部品 (runPart) そのまま。
  * 発現 (候補から選ぶ = 確率ではなく選択)・数値だけ変わる手・品質・ルーンなどは null (revealOffers・applyCurrency を使う)。
- * 付く MOD の数値は段の真ん中 (行き先の区別に数値は使わない)。
+ * 付く MOD の数値は段の下限 (S-202 ②。行き先の区別に数値は使わない)。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, makeStageMod, overLimit, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
@@ -36,6 +36,8 @@ type Add = Extract<Action, { add: unknown }>["add"];
 type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
 
 const MID = (): number => 0.5;
+/** 付く MOD の数値 = 段の下限 (S-202 ②、11-06 オーナー「他が全部下限値でおｋ」。数値を決めるのは神の目標) */
+const LOW = (): number => 0;
 /** 1 つの部品で分かれる枝の上限 (大いなる高貴の 2 つ足すで 2〜3 万。錬金などの 3 つ以上足す手は掛け算で増えて固まるので、超えたら「多すぎ」) */
 export const STEP_OUTCOMES_MAX = 50_000;
 /** 枝が上限を超えた (中だけで使い、外へは投げない) */
@@ -105,7 +107,7 @@ function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (
       // 付けられなければここで止まる (打つ処理の addOne が null で break)
       if (!(total > 0)) { done.push(s); continue; }
       for (const c of cs) for (const t of c.tiers) {
-        const sm = makeStageMod(c.mod, c.side, t.index, MID);
+        const sm = makeStageMod(c.mod, c.side, t.index, LOW);
         next.push({ p: (s.p * t.w) / total, item: withMod(s.item, sm), added: [...s.added, sm], removed: [] });
       }
       capped(next);
@@ -156,7 +158,7 @@ function emotionStep(ctx: PartCtx, item: StageItem, key: string): Step {
   return fits.flatMap((e) => {
     const mod = ctx.data.mods.get(e.modId);
     if (!mod) return [];
-    const added: StageMod = { ...makeStageMod(mod, e.side as StageSide, 0, MID), crafted: true };
+    const added: StageMod = { ...makeStageMod(mod, e.side as StageSide, 0, LOW), crafted: true };
     return [{ p: 1 / fits.length, item: withMod(item, added), added: [added], removed: [] }];
   });
 }

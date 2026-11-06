@@ -22,13 +22,14 @@ import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
 import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
+import { DIVINE, DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -36,7 +37,8 @@ export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: s
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
   /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil) */ veil?: "keep" | "pick";
   /** エッセンスの「ブロックに使う」☑ (S-33b) */ block?: boolean;
-  /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number }
+  /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number;
+  /** 神の手の目標の数値と予見リセット (S-202、tree-model の Hand.targets・foreReset) */ targets?: readonly DivineTarget[]; foreReset?: boolean }
 
 /**
  * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
@@ -112,6 +114,7 @@ export function handOf(p: HandPick): Hand {
     ...(p.keep ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && isBone(p.held) ? { veil: p.veil } : {}),
     ...(p.block && effectOf(p.held) === "essence" ? { block: true as const } : {}),
+    ...(p.targets?.length && p.held === DIVINE ? { targets: p.targets.map((x) => ({ ...x })), ...(p.foreReset ? { foreReset: true as const } : {}) } : {}),
   };
 }
 export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency));
@@ -285,6 +288,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (data) fillMissOuts(data, d, at);
+  // 目標の数値を決めた神の未満の箱は「もう一度神」= 同じ神の手の箱へ ↩ (S-202 ④、仮。オーナーの確かめで変わるかも)
+  if (isDivineAim(h)) for (const o of d.boxes[at]?.outs ?? []) if (d.boxes[o]?.junkKey === DIVINE_LT) setBack(d, o, at);
   joinSameShape(d, id);
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
   foldMisses(d, id);

@@ -6,7 +6,7 @@
  * 乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
  * 段階 2: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
  */
-import { applyCurrency, limitOf, mulberry32, occupiedFamiliesOf, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { mulberry32, occupiedFamiliesOf, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf } from "./tree-outcome";
@@ -20,6 +20,7 @@ import { isRevealHand, veilPick } from "./tree-veil";
 import { isWhittleHand, WHITTLE } from "./tree-whittle";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
+import { divineBranches, isDivineAim } from "./tree-divine";
 import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1, type RecipeExample } from "./tree-recipe-v1";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 
@@ -49,6 +50,8 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox): Br[] | "tooMany" 
   const h = b.hand!, key = h.currency;
   let rs: Br[];
   if (isRevealHand(key)) rs = [{ p: 1, item }];
+  // 目標の数値を決めた神 (S-202): 目標の以上 / 未満の 2 枝 (予見リセットは以上の 1 枝)
+  else if (isDivineAim(h)) rs = divineBranches(data, item, h, (it) => { const r = applyHand(data, it, key, mulberry32(1), { omens: h.omens }); return r.applied ? r.item : null; });
   else if (isCatalyst(key)) { const r = playHand(data, item, h, mulberry32(1)); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
   else {
     // 削りのお告げは段の順位を見ない = 消せる MOD のどれもが消えうる (外れは一律、削りは当たり / ハズレの 2 枝を必ず。S-200 決め (a))
@@ -94,19 +97,6 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
     (to.get(o) ?? to.set(o, []).get(o)!).push(r);
   }
   return noHit ? { to, lost, noHit } : { to, lost };
-}
-/**
- * 数値の一番低い形・高い形のうち、枠の上限が代表と違う物 (配置は数値を見ないが、ルーンの効果 % の切り捨てで枠が変わる: ルーンシーカーの呼び声の遺産 75% +
- * ソウルコアのオーグメントの効果 24% / 25% で、セールの凱旋が +1 / +2 サフィ = 満杯かどうかが変わり骨の結果が変わる。stage-core の runeEffectPct)。
- * 数値は神のオーブ (固定は変わらない) を決まった乱数で当てて作る
- */
-function rollEnds(data: PatchData, item: StageItem): StageItem[] {
-  const lim = (it: StageItem): string => `${limitOf(it, "prefix")}|${limitOf(it, "suffix")}`, base = lim(item), out: StageItem[] = [];
-  for (const v of [0, 0.999999]) {
-    const r = applyCurrency(data, item, "divine", () => v);
-    if (r.applied && lim(r.item) !== base && !out.some((x) => lim(x) === lim(r.item))) out.push({ ...r.item, foreseen: item.foreseen });
-  }
-  return out;
 }
 /** MOD の系統 (E-11a) の覚え */
 const FAM = new WeakMap<PatchData, Map<string, readonly string[]>>();
@@ -231,7 +221,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       // 枠が同じでも外れの印 (g) が違えば当てる (印は枠の比べに入れない、tree-judge の blockMarkOf)
       const markOf = (fr: Frame): string => `${fr.key}|${blockMarkOf(data, doc, fr.item, fr.aimed)}`;
       if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); extra.push({ at, f: fr, from: o }); } } }
-      if (c.hand) for (const it of rollEnds(data, best.item)) extra.push({ at: o, f: { ...best, item: it }, from: o });
+      // 数値の両端の形 (前の rollEnds) は当てない: 木の数値は既定で段の下限、数値を決めるのは神の目標 (S-202 ②、11-06 オーナー)
       return best;
     };
     const walk = (q: string[]): void => { while (q.length) {

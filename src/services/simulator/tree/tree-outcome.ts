@@ -23,6 +23,7 @@ import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goneOf, gotOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 import { itemKeyOf } from "./tree-sample-key";
 import { mainSideOf, rolledOutcomes } from "./tree-uncountable";
+import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
 /** 途中の狙いのうち、この人が印を持ち、この手で「狙いが消えた」に数える物。確定で消える時 (候補 1 つ、S-27b) は消えてよい扱いで数えない (S-33b) */
@@ -56,6 +57,8 @@ function sided(oc: Outcome, before: StageItem, after: StageItem, h?: Hand | null
  */
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
   const key = b.hand?.currency;
+  // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
+  if (isDivineAim(b.hand)) return divineOutcome(after, b.hand!);
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = noStones(doc, b.hand, keptAimedOf(doc, b.hand, aimed)), nx = nextKept(doc, b.hand, am, aimed);
   const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, withMid(aims0, midOf(data, doc, b.hand, before, am)), am)) : aims0;
@@ -176,7 +179,9 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = [], arrived?: readonly { item: StageItem; aimed: ReadonlySet<string> }[], roll = false): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
-  // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに 
+  // 目標の数値を決めた神 (S-202): 目標の以上 / 未満 (届く割合が 0 か 1 の側は無し)
+  if (isDivineAim(h)) { const it = sampleOf(data, doc, boxId, 1).item; return divineOuts(data, it, h); }
+  // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに
   // 狙い無しは「打った後」1 つ (手の種類の箱) の間は付いた側ごとの「打った後」(S-65)
   const freeSide = !!h.free && !veilKeep(h);
   if (h.repeat || (h.free && !veilKeep(h) && !freeSide) || isCatalyst(h.currency)) return null;

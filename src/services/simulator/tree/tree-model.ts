@@ -64,7 +64,13 @@ export interface Hand {
   veil?: "keep" | "pick";
   /** エッセンスの「ブロックに使う」☑ (S-33b): 付いた MOD を発現で選んだ MOD と同じく箱の中身に持つ。無い = 外れ */
   block?: true;
+  /** 神のオーブの手の目標の数値 (S-202、☑ の狙いの MOD の値ごと)。結果は目標の以上 / 未満の 2 枝 (tree-divine) */
+  targets?: DivineTarget[];
+  /** ヒネコラの後の神の「予見リセット」☑ (S-202 ⑤): 神 1 回で予見を消し、目標に届くまで打ち続ける 1 手 */
+  foreReset?: true;
 }
+/** 神の目標 1 つ = MOD の vi 番目の値を value 以上に */
+export interface DivineTarget { modId: string; vi: number; value: number }
 export interface TreeBox {
   id: string;
   x: number;
