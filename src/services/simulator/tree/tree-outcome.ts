@@ -171,8 +171,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
  * それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどり、結果の分け方 (outcomeOf) を全部集める (当たりは付く札ごと)。お告げ込み。
  * 狙いの付かない当たり (エッセンスで外れを置き換える等) は「打った後」(any)。箱に着かなかった見本は数えない。pre = 前に打つカタリスト (エンジンで 1 回)。
  * 繰り返し・狙い無し・品質だけの手・未発現が付く手 (冒涜の骨、発現で選ぶ候補で分かれる) と、エンジンが枝に分けられない手は null (今までどおり手の種類の箱)。
- * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」になる時も null
- * (10-22 白紙から 13 通り組んだ #1: 木にまだ無い狙いを足す手で当たりの箱が作れず、横の＋も出なかった。外れだけなら当たりの箱を作って MOD を選ばせる)
+ * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」の時も外れだけ (11-06 から。前は null で当たりの箱を作って MOD を選ばせた)
  */
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = [], arrived?: readonly { item: StageItem; aimed: ReadonlySet<string> }[], roll = false): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
@@ -197,7 +196,6 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   /** 未発現が付く手で、狙いを消さない結果の側の鍵 (S-65) */
   const veiledSides = new Set<string>();
   /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
-  let unheld = false;
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
   // 箱の形 (道で付いている狙いの組 = heldSets) に合う人だけ (戻ってくる形の違う人の混ざりで結果の箱を増やさない、10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」)。合う人がいなければ全員
   // arrived = 見本の代わりに見る ↩ で着く人の形 (S-21、tree-hand-plan の addArrivedOuts)
@@ -210,7 +208,6 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const seed = i + 1, mark = roll ? itemKeyOf(smp.item) : smp.item; // 打って集める時は同じ中身の見本を 2 回打たない (S-21)
     if (seen.has(mark)) continue;
     seen.add(mark);
-    if (aims.some((a) => !aimHeldOn(data, smp.item, a, { sameText: true }))) unheld = true;
     const item = pre ? applyCurrency(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const forms = [item];
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
@@ -270,9 +267,9 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // ✦ の木のフラクチャーも結果は全部箱にする (S-43 の「✦ の当たりだけ箱、外れは費用に足す」は 11-05 撤回。回す時は素のフラクチャーで ✦ の無い MOD も固定されうるのに、
   // 箱が無く行き先無しになっていた = 枝の外れ探しの rowFracStar b9、11-06。S-200 ①)
   const list = [...found.values()];
-  // 足す・入れ替える手が外れだけの時は、まだ付いていない狙いがある時だけ手の種類の箱へ (当たりの箱を作って MOD を選ばせる)。
-  // 狙いが全部付いていれば外れ (と消えた) だけ (10-25 シミュ 28 の洗い出し: 満杯で削減のお告げのカオスに、起こりえない当たりの箱が出た)
-  if (!list.length || ((k === "add" || k === "swap") && unheld && list.every((e) => e.out === "junk"))) return null;
+  // 足す・入れ替える手が外れだけの時も外れ (と消えた) だけ = 箱の下はエンジンの結果と同じ (S-21、11-06 オーナー「直すのはいいけど」。前はまだ付いていない狙いがあると
+  // 手の種類の箱へ逃がし、MOD を選ぶ当たりの箱を作ったが、エンジンではどの狙いも付かないので誰も来ない箱だった = 乱数の確かめの高貴のずれ)
+  if (!list.length) return null;
   return list;
 }
 /** 結果が 1 通りの手 (possibleOutsOf が 1 つだけの時。台本 scripts/_tree-patterns-ui が使う) */

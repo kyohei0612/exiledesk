@@ -284,6 +284,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
+  if (data) fillMissOuts(data, d, at);
   joinSameShape(d, id);
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
   foldMisses(d, id);
@@ -309,6 +310,19 @@ function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>):
     if (to) joinSameHit(d, to, [b.id], true);
   }
   pruneByContent(d, j);
+}
+/**
+ * 手を決めた箱の下 = エンジンの結果 (S-21・S-200 ①): 配置 (代表の品にその手を当てた stepOutcomes) で、起こりうるのに箱の無い結果があれば箱を足す。全部の手で同じ。
+ * 当たりは足さない (☑ だけ = S-22)。見本 8 つの分け方 (possibleOutsOf) と配置で分け方が違う手 (削減の「狙いが消えた」、S-200 ⑤) で、選び直すと箱が無くなった (11-06 乱数の確かめのカオスのずれ)
+ */
+function fillMissOuts(data: PatchData, d: TreeDoc, at: string): void {
+  const seen = new Set<string>();
+  for (const m of frameOfDoc(data, d).miss) {
+    const k = `${m.oc.out}|${m.oc.junkKey ?? ""}`;
+    if (m.box !== at || m.from || m.oc.out === "hit" || seen.has(k)) continue;
+    seen.add(k);
+    addOut(d, at, m.oc.out, m.oc.junkKey);
+  }
 }
 /** 前は組む間のつなぎをここで止めていた (S-190)。11-06 からつなぎは手を決めたその場で回すので、呼ぶ側の形だけ残す */
 export const holdLinks = <T>(fn: () => T): T => fn();
