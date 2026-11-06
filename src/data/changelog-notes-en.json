@@ -1,4 +1,7 @@
 {
+  "0.1.676": [
+    "Simulator: in the tree, the step labels above and below a folded Annulment card now sit midway between the boxes, so the lines are even"
+  ],
   "0.1.675": [
     "Simulator: fixed the missing line from a folded Annulment card to its stop point in the tree, and the stop point now sits right below the card"
   ],
