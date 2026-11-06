@@ -43,6 +43,8 @@ export async function rebuildInSteps(data: PatchData, src: TreeDoc, paint: (d: T
 /** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで */
 function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
+  // 保存の例のアイテム (v2、S-200 ⑦) は開いた木に持たせ、配置の代表に使う (tree-frame)。打ち方の比べ (toRecipeV1) には入れない
+  if (src.examples) d.examples = JSON.parse(JSON.stringify(src.examples)) as NonNullable<TreeDoc["examples"]>;
   migrateStart(d);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)

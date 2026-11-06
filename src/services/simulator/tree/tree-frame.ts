@@ -20,6 +20,7 @@ import { isRevealHand, veilPick } from "./tree-veil";
 import { isWhittleHand, WHITTLE } from "./tree-whittle";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
+import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1, type RecipeExample } from "./tree-recipe-v1";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 import { DEV_BUILD } from "../../../web/release-flags";
 
@@ -115,7 +116,8 @@ export const frameKeyOf = (k: string): string => k.replace(/~q(\d+)\.(\d*)\./, (
 
 /** 木の形 (位置・メモを除く) が同じ間は配置を 1 回だけ出す (judgeMemo は組み替え・回しのたびに作り直す) */
 const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; ft: FrameTree }>>();
-const sigOf = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" ? undefined : v));
+// 例のアイテム (examples) は開いた時に 1 回入れて変えないので鍵に入れない (丸ごと JSON にすると 1 手ごとに重い)
+const sigOf = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" || k === "examples" ? undefined : v));
 export function frameOfDoc(data: PatchData, doc: TreeDoc): FrameTree {
   let m = FRAMES.get(data);
   if (!m) FRAMES.set(data, (m = new WeakMap()));
@@ -143,11 +145,44 @@ export function frameSample(data: PatchData, doc: TreeDoc, id: string): { item: 
   } finally { framing = false; }
 }
 
+/** 木の箱ごとの例のアイテム (道の札 → 代表の品)。決まりで出せなかった箱 (枝の多すぎる手の下・分かれ目の下・行く枝の無い箱) は入れない */
+export function examplesOf(data: PatchData, doc: TreeDoc): Record<string, RecipeExample> {
+  const frames = frameOfDoc(data, doc).frames, out: Record<string, RecipeExample> = {};
+  for (const [id, k] of pathKeysOf(doc)) { const f = frames.get(id); if (f && !f.note) out[k] = slimExample(f.item); }
+  return out;
+}
+/**
+ * 保存する形 (S-104・S-200 ⑦): 打ち方 (v1) + 例のアイテム (v2)。開発版だけ (FRAME_JUDGE、本番は v1 のまま = 前の作りの本番が v2 を読めないため)。
+ * 保存の形 (箱の無い、URL から来た物) は持っている例をそのまま。データがまだ無い時は v1
+ */
+export function recipeOf(data: PatchData | null | undefined, d: TreeDoc): TreeDoc {
+  const rec = toRecipeV1(d);
+  if (!FRAME_JUDGE) return rec;
+  const ex = isRecipeV1(d) ? d.examples : data && d.boxes.start ? examplesOf(data, d) : undefined;
+  return ex && Object.keys(ex).length ? { ...rec, schema: RECIPE_V2, examples: JSON.parse(JSON.stringify(ex)) as Record<string, RecipeExample> } : rec;
+}
+
+/** 例のアイテムから組んだ品の覚え (組み直しの 1 手ごとに配置を出し直すので、毎回作ると重い。品は同じ物を使い回す = 品の鍵の覚えも効く) */
+const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem }>();
+
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
     const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
-    frames.set("start", { item: st.item, aimed: sa, key: frameKeyOf(contentOf(data, doc, st.item, sa)), p: 1, note: st.note });
+    // 保存の例のアイテム (v2、S-200 ⑦)。同じ配置の枝があればその代わりに代表にする。例の無い箱・古いレシピは種 1 つのまま (決め (c))
+    const keys = doc.examples ? pathKeysOf(doc) : null;
+    const exOf = (id: string): StageItem | null => {
+      const e = keys ? doc.examples![keys.get(id) ?? ""] : undefined;
+      if (!e) return null;
+      const had = EXAMPLES.get(e);
+      if (had?.start === st.item.base) return had.item;
+      const item = fullExample(st.item, e);
+      EXAMPLES.set(e, { start: st.item.base, item });
+      return item;
+    };
+    const sf: Frame = { item: st.item, aimed: sa, key: frameKeyOf(contentOf(data, doc, st.item, sa)), p: 1, note: st.note }, se = exOf("start");
+    const sea = se ? startAimed(data, doc, se) : null;
+    frames.set("start", se && sea && frameKeyOf(contentOf(data, doc, se, sea)) === sf.key ? { ...sf, item: se, aimed: sea } : sf);
     /**
      * 代表のほかに手を当てる形 (S-21 を配置で、打ち直さない): at の箱の手を f に当てた枝の、行き先の無い結果を from 付きの miss にする (開く・整理で箱を足す)。
      * ↩ で着く人 (from = ↩ 元の箱) と、1 つの箱に形の違う枝が入る時のほかの形 (狙い無しの結果を 1 箱にした any など。from = その箱、重い順に LOOK まで)
@@ -159,9 +194,9 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const pick = (r: Br): Frame => { const am = nextAimed(data, doc, from.aimed, o, r.item, from.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
       const heavy = [...brs].sort((x, y) => y.p - x.p).slice(0, LOOK);
       const all = heavy.map(pick);
-      let best = all[0]!;
-      if (c.hand && heavy.length > 1) {
-        let bestLost = lostP(splitOf(data, doc, c, best, aims, part));
+      const ex = exOf(o), fe = ex ? pick({ item: ex, p: sum }) : null, saved = !!fe && all.some((fr) => fr.key === fe.key);
+      let best = saved ? fe! : all[0]!;      if (c.hand && heavy.length > 1) {
+        let bestLost = saved ? 0 : lostP(splitOf(data, doc, c, best, aims, part));
         for (const fr of all.slice(1)) {
           if (bestLost === 0) break;
           const l = lostP(splitOf(data, doc, c, fr, aims, part));
