@@ -6,6 +6,7 @@
  * その下の箱 = 道 (始まり → 親の手の並び) だけで決める (S-74。前の「回して着いた人」tree-arrived は 10-30 R5 で外し、11-02 にファイルも消した)。親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった結果の箱は作れない印 (note) を返す (指名で付けて作らない)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
+import { frameSample } from "./tree-frame";
 import { keepsMods } from "./tree-foresee";
 import { aimDone, freshItem, mulberry32, stageTuning, tierIndexOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart } from "../../simulator/sim-engine";
@@ -186,6 +187,9 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
   if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); okMemo.clear(); STARTS.clear(); clearRolls(); memoSig = ""; memoData = data; }
+  // 開発版は配置の代表の品 (打ち直さない、S-200 段階 3・4)。決まりで出せない箱だけ前の見本
+  const fs = frameSample(data, doc, boxId);
+  if (fs) return fs;
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
 /** 覚えた見本 (木の中身の鍵が変わったら全部捨てる。treeLight は holdDocSig の間の早道だけ) */

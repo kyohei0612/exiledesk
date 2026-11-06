@@ -112,6 +112,23 @@ export function frameOfDoc(data: PatchData, doc: TreeDoc): FrameTree {
   return ft;
 }
 
+/** 配置を出している最中 (中で見本を引いても配置へ戻らない) */
+let framing = false;
+/**
+ * 箱の見本の代わりの代表の品 (S-200 段階 3・4、開発版だけ)。見本を引く所 (結果の箱の分け・箱のカード・☑) は全部これを通る = 打ち直さない。
+ * この箱へ行く枝が無い箱は作れない見本 (none)。決まりで出せない箱 (枝の多すぎる手の下・分かれ目の下) は null = 前の見本のまま
+ */
+export function frameSample(data: PatchData, doc: TreeDoc, id: string): { item: StageItem; note: string | null } | null {
+  if (!FRAME_JUDGE || framing) return null;
+  framing = true;
+  try {
+    const f = frameOfDoc(data, doc).frames.get(id);
+    if (!f) return null;
+    if (!f.note) return { item: f.item, note: null };
+    return f.note === "nobranch" ? { item: f.item, note: "none" } : null;
+  } finally { framing = false; }
+}
+
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
     const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
