@@ -338,16 +338,18 @@ export function tidyJunk(d: TreeDoc, auto = false): void {
 }
 /** 見本に ↩ 先の手を打てない人がいる自動の ↩ は外して未設定にする (止まる所を ↩ 元の箱へ、S-193) */
 function dropUnplayable(data: PatchData, d: TreeDoc): void {
-  for (const b of Object.values(d.boxes)) {
+  // 見るのは木を変えずに 1 回 (見本ごとに配置の鍵の JSON を作り直していた、S-28g の 8 MOD で 0.37 秒)、外すのはその後
+  const drop = holdDocSig(d, () => Object.values(d.boxes).filter((b) => {
     const to = b.back && b.autoBack ? d.boxes[b.back]?.hand : null;
-    if (!to) continue;
+    if (!to) return false;
     for (let seed = 1; seed <= 8; seed++) {
       const s = sampleOf(data, d, b.id, seed);
       if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;
-      setBack(d, b.id, null); b.noAutoBack = true;
-      break;
+      return true;
     }
-  }
+    return false;
+  }), true);
+  for (const b of drop) { setBack(d, b.id, null); b.noAutoBack = true; }
 }
 /** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */
 export const drawnBelow = (d: TreeDoc, id: string): string[] => subtree(d, id).slice(1).filter((x) => { const b = d.boxes[x]; return !!b && b.out !== "pass" && !mergedAway(d, b); });

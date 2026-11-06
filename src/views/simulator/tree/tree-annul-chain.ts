@@ -29,10 +29,10 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
   for (let depth = 0; depth < DEPTH_MAX && front.length; depth++) {
     const kids = front.flatMap((id) => d.boxes[id]!.outs).filter((id) => open(d.boxes[id]));
     if (!kids.length) break;
-    const j = judgeMemo(data, d);
+    // 配置は段の頭で 1 回 (つなぎ・まとめは子の代表を変えないので、後の決めにもそのまま使う)
+    const frames = frameOfDoc(data, d).frames, j = judgeMemo(data, d);
     linkByContent(d, kids, j);
     mergeOpenSame(d, kids, undefined, j);
-    const frames = frameOfDoc(data, d).frames;
     const go = kids.flatMap((id) => {
       const b = d.boxes[id], f = frames.get(id), h = b?.parent ? d.boxes[b.parent]?.hand : null;
       if (!open(b) || !f || f.note || !isAnnulHand(h)) return [];
@@ -40,8 +40,7 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
     });
     if (!go.length) break;
     // 結果の箱の一覧は木を変える前に全部出す (段の中で配置を出し直さない)
-    const jj = judgeMemo(data, d);
-    const plans = holdDocSig(d, () => go.map(({ id, h }) => ({ id, h, only: possibleOutsOf(data, d, id, h), holds: jj.holdsAim(id) })), true);
+    const plans = holdDocSig(d, () => go.map(({ id, h }) => ({ id, h, only: possibleOutsOf(data, d, id, h), holds: j.holdsAim(id) })), true);
     for (const p of plans) {
       setHand(d, p.id, { ...p.h, omens: [...p.h.omens], ...(p.h.keep ? { keep: p.h.keep.map((a) => ({ ...a })) } : {}) }, "remove", [], p.only, undefined, p.holds);
       d.boxes[p.id]!.autoAnnul = true;

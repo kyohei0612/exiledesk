@@ -13,7 +13,7 @@ import { boxOutcomeOf } from "./tree-outcome";
 import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
-import { aimsOf, putCapped, startItemOf } from "./tree-sample";
+import { aimsOf, docHeld, putCapped, startItemOf } from "./tree-sample";
 import { contentOf, nextAimed, startAimed } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
@@ -108,16 +108,19 @@ const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.los
 export const frameKeyOf = (k: string): string => k.replace(/~q(\d+)\.(\d*)\./, (_, q: string, c: string) => `~q${Number(q) > 0 || Number(c || 0) > 0 ? 1 : 0}.`);
 
 /** 木の形 (位置・メモを除く) が同じ間は配置を 1 回だけ出す (judgeMemo は組み替え・回しのたびに作り直す) */
-const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; ft: FrameTree }>>();
+const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; held: number; ft: FrameTree }>>();
 // 例のアイテム (examples) は開いた時に 1 回入れて変えないので鍵に入れない (丸ごと JSON にすると 1 手ごとに重い)
 const sigOf = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" || k === "examples" ? undefined : v));
 export function frameOfDoc(data: PatchData, doc: TreeDoc): FrameTree {
   let m = FRAMES.get(data);
   if (!m) FRAMES.set(data, (m = new WeakMap()));
-  const sig = sigOf(doc), had = m.get(doc);
-  if (had?.sig === sig) return had.ft;
+  // holdDocSig の同じ回の中は木が変わらないので、鍵の JSON を作り直さない (結果の一覧を箱ごとに出す間に毎回木を丸ごと JSON にしていた、S-28g の 8 MOD)
+  const held = docHeld(doc), had = m.get(doc);
+  if (had && held && had.held === held) return had.ft;
+  const sig = sigOf(doc);
+  if (had?.sig === sig) { had.held = held; return had.ft; }
   const ft = frameTree(data, doc);
-  m.set(doc, { sig, ft });
+  m.set(doc, { sig, held, ft });
   return ft;
 }
 
