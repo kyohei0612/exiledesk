@@ -52,7 +52,8 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
     // (10-28 夜オーナー「まだ決めてない＋が出てるのに勝手に線につながれた」)。違う段の同じ形は戻りの自動のつなぎ (S-50) に任せる
     const same = Object.values(doc.boxes)
       // 削減の手で外れの順位で分けた箱 (S-65b) は、順位の鍵が同じ箱へだけ (中身の比べは MOD レベルを見ないので、分けた兄弟がまたまとまる)
-      .filter((t) => t.id !== id && !below.has(t.id) && outs.has(t.out) && !t.back && !t.done && !t.split && depthOf(doc, t.id) === dep && rankPart(t.junkKey) === rankPart(doc.boxes[id]?.junkKey))
+      // ヒネコラのハズレ箱 (seen、S-39) はまとめ先にしない (持つ前のアイテムのままの人の箱で、付け直すたびに出来るので、まとめる相手が付け直しの順で変わった)
+      .filter((t) => t.id !== id && !below.has(t.id) && outs.has(t.out) && !t.back && !t.done && !t.split && !t.seen && depthOf(doc, t.id) === dep && rankPart(t.junkKey) === rankPart(doc.boxes[id]?.junkKey))
       .filter((t) => (j ? j.fitsBox(id, t.id) : body!(t.id) === mine && sameBody(body, id, t.id) && setKey(doc, t.id) === key));
     // まとめ先は手のある箱、無ければ木の並びで一番前の箱 (前は先に作った箱で、組んだ順と開いた時の打ち直しの順が違うと
     // 開き直すたびに合流先が別の親の下へ飛んだ。消去の外れが消えた / 狙いが消えたの合流、11-06 オーナー「消去の枠の合体も色々挙動おかしい」)
