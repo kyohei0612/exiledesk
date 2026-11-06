@@ -47,7 +47,8 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
     return json(await rollJson(db, now, day), 200, { "cache-control": "no-store" });
   }
   if (req.method !== "POST") return json({ error: "無い道" }, 404);
-  if (Number(req.headers.get("content-length") ?? 0) > 64 * 1024) return json({ error: "large" }, 413);
+  // 誰でも書ける口は 64KB まで。鍵つきの /daily/topic は週の型 (300 件ほどで 100KB) を一度に書くので 1MB まで (11-06)
+  if (Number(req.headers.get("content-length") ?? 0) > (p === "/daily/topic" ? 1024 : 64) * 1024) return json({ error: "large" }, 413);
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;
