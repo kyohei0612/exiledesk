@@ -23,7 +23,6 @@ import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity,
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
-import { pctText, useTreeOdds } from "./tree-odds";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
 import { foreseenAt, holdsAt, noHitHeld } from "../../../services/simulator/tree/tree-foresee";
@@ -108,14 +107,8 @@ const head = computed(() => (props.box.seen ? tr("ハズレ (打たない)", "Mi
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
 const headTitle = computed(() => (props.box.out === "hit" && props.box.aim ? boxAims(props.box).map(t.aimShort).join(" / ") : head.value));
-/** この結果の箱に着く割合 (無ければ出さない、tree-odds.ts) */
-const treeOdds = useTreeOdds();
-const odds = computed(() => treeOdds.value.get(props.box.id) ?? null);
-/** 札に乗せた時の説明 (割合は箱の中に出さずここへ、10-26 夜オーナー「ここ 1% と次の手って日本語いらない」) */
-const legendTitle = computed(() => [
-  props.box.out === "hit" && props.box.aim ? tr(`${headTitle.value} (押すと付く MOD を選び直す)`, `${headTitle.value} (click to change the mod)`) : headTitle.value,
-  odds.value != null ? tr(`この手でこの結果になる割合 ${pctText(odds.value)} (1 手分)`, `Chance from the craft: ${pctText(odds.value)} (one use)`) : "",
-].filter(Boolean).join("\n"));
+/** 札に乗せた時の説明。割合 % は木の画面に一切出さない (S-76 撤回、11-06 オーナー「なにこのいらん注記指示したっけ」。本当の割合は 100 人回し) */
+const legendTitle = computed(() => (props.box.out === "hit" && props.box.aim ? tr(`${headTitle.value} (押すと付く MOD を選び直す)`, `${headTitle.value} (click to change the mod)`) : headTitle.value));
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
 /** 失敗 (ここで終わり) の答え  */
 const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : props.box.done ? "242,210,122" : hold.value || seenOut.value ? "190,160,255" : kind.value.c));
@@ -192,7 +185,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon, ...(swamp ? { outline: `${3 * swamp}px solid #38bdf8` } : {}) }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
-    <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
+    <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。割合 % は出さない (S-76 撤回) -->
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
     <button v-if="unset" type="button" data-tree-unset data-tree-issue class="nodrag absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)] hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">!</button>
     <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">

@@ -44,7 +44,6 @@ import { modText } from "../../../i18n/lang";
 import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, holdLinks, needAimOf, planPick, preFillOf, shelfKeysOf, tidyJunk, type PickOpt } from "./tree-hand-plan";
 import { isGrayBox, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
 import { useTree } from "./use-tree";
-import { useTreeOdds } from "./tree-odds";
 import { boxTagsOf, chosenMod, treeRowTags } from "./tree-row-tags";
 import { fixedValues } from "./tree-fixed-values";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
@@ -230,8 +229,6 @@ export function installSimMonkey(): () => void {
     prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
     /** 全部の箱の見本 seeds 個 (item・note) と ☑ ( のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
-    /** 木全部の結果の箱の割合 (箱の札と同じ useTreeOdds) */
-    odds() { return Object.fromEntries(useTreeOdds().value); },
     /** 上限に届いた人の最後の道とアイテム (沼った訳を見る台本用、S-72) */
     tails(n = RUN_N, seed = 1, k = 3) {
       const d = s.data.value;
