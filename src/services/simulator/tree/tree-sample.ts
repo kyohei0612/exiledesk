@@ -216,10 +216,18 @@ export const docHeld = (doc: TreeDoc): number => (heldDoc === doc ? holdNo : 0);
 const pathMemo = new Map<string, Sample>();
 /** 打っても作れなかった見本 (鍵 = 道・親の見本・☑ → 印)。起きない結果の箱を手のたびに打ち直していた (100 箱で 1 手 24 万回、S-71b)。作れた見本も同じ鍵で (okMemo。↩ で着く人の形 arrivalsOf の打ち直しが組み直しの 8〜9 割だった、11-06) */
 const failMemo = new Map<string, string>(), okMemo = new Map<string, StageItem>(), PATH_MEMO_MAX = 20000;
+/**
+ * 覚えに入れる。上限を超えたら一番古い物を 1 つ捨てる (前は上限で全部消したので、狙いを何度か付け直すと覚えが丸ごと消え、次の 1 手が冷えた開き並みに重くなった。11-07 S-71b ⑯)。
+ * どの覚えも同じ鍵なら同じ物なので、捨てても作り直すだけで結果は変わらない
+ */
+export function putCapped<K, V>(m: Map<K, V>, k: K, v: V, max = PATH_MEMO_MAX): void {
+  if (!m.has(k) && m.size >= max) { const old = m.keys().next(); if (!old.done) m.delete(old.value); }
+  m.set(k, v);
+}
 /** 全部消えてよい消去の道の箱に効く木全体の鍵の番号 (長い文字を見本ごとの鍵に入れるとその JSON だけで 3 秒を超えた。番号は使い回さない) */
 const sigNos = new Map<string, number>();
 let sigSeq = 0;
-const sigNo = (sig: string): number => { let n = sigNos.get(sig); if (!n) sigNos.set(sig, (n = ++sigSeq)); return n; };
+const sigNo = (sig: string): number => { let n = sigNos.get(sig); if (!n) putCapped(sigNos, sig, (n = ++sigSeq), 512); return n; };
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
   const held = heldDoc === doc, fast = held && !heldLazy;
@@ -231,8 +239,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (!r) {
     // 見本を作る間は木が変わらないので鍵は 1 回だけ (描画の箱ごとの見本で木全体の JSON が 10 秒を超えた、☑ の手)
     r = holdDocSig(doc, () => sampleRaw(data, doc, boxId, seed), true);
-    if (pathMemo.size >= PATH_MEMO_MAX || okMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); failMemo.clear(); okMemo.clear(); sigNos.clear(); }
-    pathMemo.set(pk, r);
+    putCapped(pathMemo, pk, r);
   }
   if (fast) memo.set(k, r);
   return r;
@@ -334,7 +341,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
-  const had = okMemo.get(fk), got = (item: StageItem): Sample => { okMemo.set(fk, item); return { item, note: null }; };
+  const had = okMemo.get(fk), got = (item: StageItem): Sample => { putCapped(okMemo, fk, item); return { item, note: null }; };
   if (had) return { item: had, note: null };
   for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims));
@@ -354,7 +361,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;
     return got(r.item);
   }
-  const remember = (note: string): Sample => { if (fk) failMemo.set(fk, note); return { item: base.item, note }; };
+  const remember = (note: string): Sample => { if (fk) putCapped(failMemo, fk, note); return { item: base.item, note }; };
   if (last && !last.applied) return remember(`cant:${last.reason ?? ""}`);
   // boxShape: 狙いを手で付ける (forceKey) のはやめる。手で付けるのはエミュの「付ける」の親切 (マジックの埋まった側ならレアにして付ける) で、エンジンの手の結果ではない
   // (増強の当たりの箱の見本がレアになった、10-28 夜オーナー「これはエンジンを参照した動きになってないのと同義では」)。作れない印を返し、親の見本を引き直す (S-74)

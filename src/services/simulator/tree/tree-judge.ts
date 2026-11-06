@@ -13,7 +13,7 @@ import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { aimOpts, boxKeyOf, holdDocSig, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, boxKeyOf, holdDocSig, putCapped, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
@@ -225,7 +225,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
         if (!out?.has(k)) last = seed;
         (out ??= new Set()).add(k);
       }
-      if (key) { const m = contentsOf(data); if (m.size >= CONTENTS_MAX) m.clear(); m.set(key, out); }
+      if (key) putCapped(contentsOf(data), key, out, CONTENTS_MAX);
     }, true);
     memo.set(id, out);
     return out;
