@@ -1,30 +1,76 @@
 /**
- * tree-frame.ts — 箱の配置 (枠) を、見本を打たずにエンジンの決まり (数え上げ stepOutcomes = parts の説明文どおりの動き) から出す (S-71b ㉑、11-06 オーナー
+ * tree-frame.ts — 箱の配置 (枠) を、見本を打たずにエンジンの決まり (数え上げ stepOutcomes = parts の説明文どおりの動き) から出す (S-200・E-99、11-06 オーナー
  * 「カオスの挙動で起こりうる結果をただ枝にするだけやん　なんでまいてまいて初めましてなん」「まず1000回のやつ廃止ね絶対」)。
- * 始まりの品から、箱ごとに代表の品を 1 つ持つ。手のある箱は代表の品に手を 1 回数え上げ、出た枝を回す時と同じ boxOutcomeOf → outBoxOf で結果の箱へ分け、
- * 箱ごとに一番重い枝を代表にする。乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
- * 段階 1: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
+ * 始まりの品から、箱ごとに代表の品を 1 つ持つ。手のある箱は代表の品に手を 1 回数え上げ、出た枝を回す時と同じ boxOutcomeOf → outBoxOf で結果の箱へ分ける。
+ * 代表は、その箱へ行く枝のうち、その箱の手を打った時に行き先の無い結果が一番少ない物 (1 手先読み。同じなら重い方) = 箱の配置に合う枝 (S-200 ③)。
+ * 乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
+ * 段階 2: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
  */
-import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
+import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf } from "./tree-outcome";
 import { outBoxOf } from "./tree-shape";
-import { engineOmens } from "./tree-hands";
+import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
 import { aimsOf, startItemOf } from "./tree-sample";
 import { contentOf, nextAimed, startAimed } from "./tree-judge";
 import { itemKeyOf } from "./tree-sample-key";
+import { isRevealHand, veilPick } from "./tree-veil";
+import { isWhittleHand, WHITTLE } from "./tree-whittle";
 import { withTreeTune } from "./tree-tune";
-import type { TreeDoc } from "./tree-model";
+import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 
-/** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、none = 数え上げで表せない手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
+/** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
 /** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計) */
 export interface FrameMiss { box: string; out: string; p: number }
 export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[] }
 
 type Outcome = ReturnType<typeof boxOutcomeOf>;
+type Br = { item: StageItem; p: number };
+interface Split { to: Map<string, Br[]>; lost: Map<string, number> }
 const missKey = (oc: Outcome): string => `${oc.out}${oc.hits.length ? `:${oc.hits.map((a) => a.modId).join("+")}` : ""}${oc.junkKey ? ` [${oc.junkKey}]` : ""}`;
+/** 先読みで比べる枝の数の上限 (重い順) */
+const LOOK = 8;
+
+/**
+ * 手の起こりうる行き先 (打たない)。数え上げで表せない手 (ルーン・品質・無限のエッセンスなど結果が 1 つに決まる物) は決まった種で 1 回当てるだけ、
+ * カタリストはエンジンの 1 個 = 1 回 (oneCatalyst、手順の再生と同じ)。発現で選ぶ手は未発現を出うる MOD ごとに分ける (revealOutcomes)
+ */
+function outsOf(data: PatchData, item: StageItem, b: TreeBox): Br[] | "tooMany" {
+  const h = b.hand!, key = h.currency;
+  let rs: Br[];
+  if (isRevealHand(key)) rs = [{ p: 1, item }];
+  else if (isCatalyst(key)) { const r = applyCurrency(data, item, key, mulberry32(1), [], { oneCatalyst: true }); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
+  else {
+    // 削りのお告げは段の順位を見ない = 消せる MOD のどれもが消えうる (外れは一律、削りは当たり / ハズレの 2 枝を必ず。S-200 決め (a))
+    const om = isWhittleHand(h) ? engineOmens(h).filter((o) => o !== WHITTLE) : engineOmens(h);
+    const s = stepOutcomesOrTooMany(data, item, key, om, { merge: (r) => itemKeyOf(r.item) });
+    if (s === "tooMany") return s;
+    if (s) rs = s.filter((r) => !r.void);
+    else { const r = applyHand(data, item, key, mulberry32(1), { omens: h.omens }); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
+  }
+  if (veilPick(h)) rs = rs.flatMap((r) => (unrevealedOf(r.item) ? revealOutcomes(data, r.item).map((x) => ({ p: r.p * x.p, item: x.item })) : [r]));
+  const tot = rs.reduce((n, r) => n + r.p, 0) || 1;
+  return rs.map((r) => ({ item: r.item, p: r.p / tot }));
+}
+
+/** 代表の品 f に箱 b の手を当てた枝を、行き先の箱ごとに分ける。当たるまでの手 (repeat) は当たりの枝だけ (当たるまで打ち続ける挙動) */
+function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
+  const rs = outsOf(data, f.item, b);
+  if (rs === "tooMany") return rs;
+  let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
+  if (b.hand!.repeat) { const hit = ocs.filter((x) => x.oc.out === "hit"); if (hit.length) { const t = hit.reduce((n, x) => n + x.r.p, 0); ocs = hit.map((x) => ({ ...x, r: { ...x.r, p: x.r.p / t } })); } }
+  const to = new Map<string, Br[]>(), lost = new Map<string, number>();
+  for (const { r, oc } of ocs) {
+    const o = outBoxOf(doc, b, oc, r.item);
+    if (!o) { const k = missKey(oc); lost.set(k, (lost.get(k) ?? 0) + r.p); continue; }
+    (to.get(o) ?? to.set(o, []).get(o)!).push(r);
+  }
+  return { to, lost };
+}
+const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.lost.values()].reduce((n, p) => n + p, 0));
 
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
@@ -40,25 +86,26 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       // 手の無い箱の下 (分かれ目の行・ヒネコラのハズレ) は親の代表のまま
       const same = (o: string, note: string | null): void => { frames.set(o, { ...f, note }); };
       if (!b.hand) { for (const o of kids) same(o, b.split ? "split" : null); continue; }
-      let rs = stepOutcomesOrTooMany(data, f.item, b.hand.currency, engineOmens(b.hand), { merge: (r) => itemKeyOf(r.item) });
-      if (rs === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
-      // 数え上げで表せない手 (ルーン・品質・発現・無限のエッセンスなど、結果が 1 つに決まる物) は決まった種で 1 回だけ当てる (打ち直さない)
-      if (rs === null) { const h = applyHand(data, f.item, b.hand.currency, mulberry32(1), { omens: b.hand.omens }); rs = h.applied ? [{ p: 1, item: h.item, added: h.added, removed: h.removed }] : []; }
-      const live = rs.filter((r) => !r.void), tot = live.reduce((n, r) => n + r.p, 0) || 1;
-      const best = new Map<string, { item: StageItem; p: number; sum: number }>(), lost = new Map<string, number>();
-      for (const r of live) {
-        const oc = boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed), to = outBoxOf(doc, b, oc, r.item), p = r.p / tot;
-        if (!to) { const k = missKey(oc); lost.set(k, (lost.get(k) ?? 0) + p); continue; }
-        const e = best.get(to);
-        if (!e) best.set(to, { item: r.item, p, sum: p });
-        else { e.sum += p; if (p > e.p) { e.item = r.item; e.p = p; } }
-      }
-      for (const [out, p] of lost) miss.push({ box: id, out, p });
+      const s = splitOf(data, doc, b, f, aims);
+      if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
+      for (const [out, p] of s.lost) miss.push({ box: id, out, p });
       for (const o of kids) {
-        const e = best.get(o);
-        if (doc.boxes[o]!.seen || !e) { same(o, doc.boxes[o]!.seen ? null : "nobranch"); continue; }
-        const am = nextAimed(data, doc, f.aimed, o, e.item, f.item);
-        frames.set(o, { item: e.item, aimed: am, key: contentOf(data, doc, e.item, am), p: e.sum, note: null });
+        const c = doc.boxes[o]!, brs = s.to.get(o);
+        if (c.seen || !brs?.length) { same(o, c.seen ? null : "nobranch"); continue; }
+        const sum = brs.reduce((n, r) => n + r.p, 0);
+        const pick = (r: Br): Frame => { const am = nextAimed(data, doc, f.aimed, o, r.item, f.item); return { item: r.item, aimed: am, key: contentOf(data, doc, r.item, am), p: sum, note: null }; };
+        const heavy = [...brs].sort((x, y) => y.p - x.p).slice(0, LOOK);
+        // 箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方)
+        let best = pick(heavy[0]!);
+        if (c.hand && heavy.length > 1) {
+          let bestLost = lostP(splitOf(data, doc, c, best, aims));
+          for (const r of heavy.slice(1)) {
+            if (bestLost === 0) break;
+            const fr = pick(r), l = lostP(splitOf(data, doc, c, fr, aims));
+            if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
+          }
+        }
+        frames.set(o, best);
       }
     }
     return { frames, miss };
