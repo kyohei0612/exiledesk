@@ -96,8 +96,8 @@ const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.los
  */
 export const FRAME_JUDGE: boolean = DEV_BUILD && !(typeof location !== "undefined" && (new URLSearchParams(location.search).get("off") ?? "").split(",").includes("frameJudge"));
 
-/** 配置の鍵 = 中身の鍵から品質の % を抜いた物 (品質の % は配置に入れない、カタリストの +1% / +2% は同じ箱。S-200 ②、11-06 ブラック 49 の決め A)。カタリストの種類は残す */
-export const frameKeyOf = (k: string): string => k.replace(/~q\d+\.\d*\./, "~q.");
+/** 配置の鍵 = 中身の鍵の品質を有り / 無しだけにした物 (% の違いは同じ箱 = カタリストの +1% / +2% は同じ箱。S-200 ②、11-06 オーナー「品質はありなしていいやろ今までと同じ」)。カタリストの種類は残す */
+export const frameKeyOf = (k: string): string => k.replace(/~q(\d+)\.(\d*)\./, (_, q: string, c: string) => `~q${Number(q) > 0 || Number(c || 0) > 0 ? 1 : 0}.`);
 
 /** 木の形 (位置・メモを除く) が同じ間は配置を 1 回だけ出す (judgeMemo は組み替え・回しのたびに作り直す) */
 const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; ft: FrameTree }>>();
