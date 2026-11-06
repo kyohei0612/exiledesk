@@ -145,8 +145,9 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     return { ...r, item: it };
   }
   // カタリストの手は品質の上限まで繰り返す 1 手 (11-06 オーナー「A」、S-31b)。1 個ずつはエンジンの applyCurrency (applyHand)、上限はエンジンの決まり (catalystFull)。
-  // もう上限の時は下の 1 回 (前と同じ)
-  if (isCatalyst(h.currency) && !catalystFull(item, h.currency)) {
+  // もう上限の時は 0 回 = 打たずに通る (S-60b の「品質が足りている時のカタリストの手は打たずに通る」。1 回打つとエンジンが「品質が上限」で断り、上限まで入れた次のカタリストの箱で全員が止まった)
+  if (isCatalyst(h.currency)) {
+    if (catalystFull(item, h.currency)) return { applied: true, item, added: [], removed: [] };
     let r: StageApply = { applied: false, item, added: [], removed: [] };
     let it = item;
     for (let i = 0; i < CATALYST_CAP && !catalystFull(it, h.currency); i++) {
