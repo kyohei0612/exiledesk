@@ -40,8 +40,10 @@ export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | und
 /**
  * 打つ前の印のうち途中の狙い (S-33c)。残したい MOD の ☑ を外した手・全部消えてよい消去の後も外れに落とさず、付いている間ずっと狙い (消えたら印も外れる)。
  * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」
+ * 消去の手 (h) の後は残さない = ☑ していない MOD は残したい MOD の有る無しに関わらず全部外れ、エッセンスも (11-06 オーナー「残したいMODで選んでない奴は全部ハズレだろ」)
  */
-const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined): string[] => (prev ? midAims(doc).map((a) => a.modId).filter((id) => prev.has(id)) : []);
+const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined, h?: Hand | null): string[] => (prev && !isRemoveHand(h) ? midAims(doc).map((a) => a.modId).filter((id) => prev.has(id)) : []);
+const isRemoveHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove";
 /** 箱 boxId に着いた時の ☑ (prev = 着く前、item = 着いた時のアイテム、before = 打つ前のアイテム。打たずに着いた時は無し) */
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem, before?: StageItem | null): ReadonlySet<string> {
   const b = doc.boxes[boxId];
@@ -50,7 +52,7 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d)
   const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
-  const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev)] : prev);
+  const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev, b.parent ? doc.boxes[b.parent]?.hand : null)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
   // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b)
   const em = before ? midMark(doc, b.parent ? doc.boxes[b.parent]?.hand : null) : null;
@@ -63,7 +65,7 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
 /** 全部消えてよい消去の後 (☑ の無い消去は全部外れ MOD、S-28。✦ の印の狙いは残る) */
 export const strippedOf = (doc: TreeDoc): ReadonlySet<string> => new Set(fractureMarks(doc).map((a) => a.modId));
 /** 消去の手 h の後の ☑ (keep = 残したい MOD の modId、全部消えてよいは無し)。打つ前の印のうち候補の外と途中の狙いも残す (S-27e・S-33c) */
-export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined, keep: readonly string[] = []): ReadonlySet<string> => new Set([...strippedOf(doc), ...keep, ...outsideAimed(data, doc, h, prev, before), ...midKept(doc, prev)]);
+export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined, keep: readonly string[] = []): ReadonlySet<string> => new Set([...strippedOf(doc), ...keep, ...outsideAimed(data, doc, h, prev, before), ...midKept(doc, prev, h)]);
 /**
  * アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える。
  * 狙いに当たる MOD は文が同じなら別の modId でも当たる (エンジンの sameText) ので、体 (bodyOf) から外すのは実物の MOD の modId (前は完成形の modId で外し、同じ文の別 modId が狙いと外れの両方に数わった)

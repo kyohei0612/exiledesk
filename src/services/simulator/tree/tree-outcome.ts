@@ -77,7 +77,8 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
  * 途中の狙いは消えてよいので狙いが消えたにはしない (aims には足さない) が、消えた枝と残った枝は x: で別の箱 (前は同じ「外れが消えた」に入り、中身の違う人が 1 箱に混ざった = FmNY7Wwv b18・b23)
  */
 function nextKept(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined, aimed: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
-  if (!am || !aimed || !keptAimsOf(doc, h)) return am;
+  // 消去は ☑ していない MOD を全部外れに数える (途中の狙い = エッセンスも。nextAimed の midKept と同じ、11-06 オーナー「残したいMODで選んでない奴は全部ハズレだろ」)
+  if (!am || !aimed || !keptAimsOf(doc, h) || (h && effectOf(h.currency) === "remove")) return am;
   const mid = midAims(doc).map((a) => a.modId).filter((id) => aimed.has(id) && !am.has(id));
   return mid.length ? new Set([...am, ...mid]) : am;
 }

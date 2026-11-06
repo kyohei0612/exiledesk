@@ -1,7 +1,7 @@
 /**
  * tree-annul-chain.ts — 消去の続き (S-28g、11-06 オーナー「単純に同じ枠のものが見つかるまで枝作り続けるべきよな最後の1MODになるまで」)。
  * 消去の手の結果の箱は、同じ枠 (配置、S-200 ②) の手のある箱があれば自動の ↩ で止め (S-190b のまま)、無ければ同じ消去 (同じお告げ・同じ残したい MOD) を自動で足し、
- * 消せる MOD が残り 1 になるまで続ける。外れが消えた・狙いが消えたの両方とも続ける。自動で足した手は印 autoAnnul を持ち、保存しない (開く時に同じ決まりで作り直す)。
+ * アイテムの MOD が 1 つ (✦ も数える) になるまで続ける。外れが消えた・狙いが消えたの両方とも続ける。自動で足した手は印 autoAnnul を持ち、保存しない (開く時に同じ決まりで作り直す)。
  * 打たない: 代表の品に手を数え上げるだけ (possibleOutsOf)。段ごとにまとめて置き、つなぎも段ごとに 1 回 (1 手ずつ組み替えると 8 MOD で 9 秒、annul6c)
  */
 import { stepOutcomes } from "../../../services/simulator/sim-engine";
@@ -21,7 +21,7 @@ const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back
 
 /**
  * roots の消去の手の結果の空いた箱を続ける (roots を渡さなければ木の消去の手の全部)。返すのは自動で手を足した箱の数。
- * 止まり = 同じ枠の手のある箱へ自動の ↩・同じ段の同じ枠はまとめ (S-66)・消去の結果が 1 つ以下 (消せる MOD が残り 1、側のお告げならその側)・決まりで配置の出せない箱
+ * 止まり = 同じ枠の手のある箱へ自動の ↩・同じ段の同じ枠はまとめ (S-66)・アイテムの MOD が 1 つ・消せる MOD が無い (側のお告げならその側)・決まりで配置の出せない箱
  */
 export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string[]): number {
   let front = (roots ?? Object.values(d.boxes).filter((b) => isAnnulHand(b.hand)).map((b) => b.id)).filter((id) => isAnnulHand(d.boxes[id]?.hand));
@@ -36,7 +36,10 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
     const go = kids.flatMap((id) => {
       const b = d.boxes[id], f = frames.get(id), h = b?.parent ? d.boxes[b.parent]?.hand : null;
       if (!open(b) || !f || f.note || !isAnnulHand(h)) return [];
-      return (stepOutcomes(data, f.item, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).length > 1 ? [{ id, h }] : [];
+      // MOD が 1 つ (✦ も数える) になるまで続ける = 最後はプレ 1 つかサフィ 1 つ (11-06 オーナー「0になるまでじゃなくて１MODになるまでな サフィプレ1つずつになるだろ最終」。
+      // 前は消去の結果が 1 つの所で止め、全部消えてよい消去が [エッセンス / ✦] で止まった)。消せる MOD が無い (結果 0) 時も止める
+      const mods = f.item.prefixes.length + f.item.suffixes.length;
+      return mods > 1 && (stepOutcomes(data, f.item, h.currency, engineOmens(h)) ?? []).some((o) => !o.void) ? [{ id, h }] : [];
     });
     if (!go.length) break;
     // 結果の箱の一覧は木を変える前に全部出す (段の中で配置を出し直さない)
