@@ -29,9 +29,12 @@ export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): Readon
   const on = goalsOn(data, doc, it);
   return new Set([...startGoalAims(doc), ...fractureMarks(doc)].map((a) => a.modId).filter((id) => on.has(id)));
 }
-/** 打つ前の印のうち、この手で消えない MOD の物 (S-27e、候補の外は自動で残したい MOD。お告げの有無では分けない) */
+/**
+ * 打つ前の印のうち、この手で消えない MOD の物 (S-27e、候補の外は自動で残したい MOD。お告げの有無では分けない)。
+ * 全部消えてよい消去 (残したい MOD が空) は残さない = ✦ 以外は触らない側も全部外れ (11-07 オーナー「狙いMODのみ消去で全て消去をえらんでもアイテムカードでは外れMODって表示になってない」)
+ */
 export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined): string[] {
-  if (!h || !prev || !before) return [];
+  if (!h || !prev || !before || (isRemoveHand(h) && h.keep && !h.keep.length)) return [];
   const gone = goneOf(data, before, h.currency, h.omens);
   if (!gone) return [];
   const mods = [...before.prefixes, ...before.suffixes].filter((m) => gone.has(m.modId)), o = aimOpts(data);
