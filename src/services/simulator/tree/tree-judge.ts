@@ -18,6 +18,7 @@ import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } fr
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
 import { midAims, midMark, placedAims } from "./tree-veil";
+import { FRAME_JUDGE, frameOfDoc, type Frame } from "./tree-frame";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
 const SAMPLES = 4;
@@ -194,8 +195,13 @@ const contentsOf = (data: PatchData): Map<string, Set<string> | null> => { let m
 
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const memo = new Map<string, ReadonlySet<string> | null>(), looseMemo = new Map<string, ReadonlySet<string> | null>();
+  // 配置で比べる (S-200 段階 2、開発版だけ FRAME_JUDGE、?off=frameJudge で前のまま): 箱の中身 = 代表の品 1 個の枠、見本は代表の品だけ (打ち直さない)。出せない箱 (note) は作れない見本と同じ
+  const fr = FRAME_JUDGE ? frameOfDoc(data, doc) : null;
+  const frameAt = (id: string): Frame | null => { const f = fr?.frames.get(id); return f && !f.note ? f : null; };
+  /** 見本 seed の ☑ (配置なら代表の品の ☑) */
+  const aimedAt = (id: string, seed: number): ReadonlySet<string> => (fr ? frameAt(id)?.aimed ?? new Set() : sampleAimed(data, doc, id, seed));
   /** 箱の作れる見本 (seed と item) */
-  const samples = (id: string): Array<{ seed: number; item: StageItem }> => (doc.boxes[id] ? [1, 2, 3, 4].slice(0, SAMPLES).flatMap((seed) => { const s = sampleOf(data, doc, id, seed); return s.note === "none" || s.note?.startsWith("cant:") ? [] : [{ seed, item: s.item }]; }) : []);
+  const samples = (id: string): Array<{ seed: number; item: StageItem }> => (fr ? (() => { const f = frameAt(id); return f ? [{ seed: 1, item: f.item }] : []; })() : doc.boxes[id] ? [1, 2, 3, 4].slice(0, SAMPLES).flatMap((seed) => { const s = sampleOf(data, doc, id, seed); return s.note === "none" || s.note?.startsWith("cant:") ? [] : [{ seed, item: s.item }]; }) : []);
   /** 箱の中身 (ふだんの比べ = 冒涜の発現済みの数を落とす。光のお告げの手のある箱と比べる時は full) */
   const contents = (id: string): ReadonlySet<string> | null => {
     if (looseMemo.has(id)) return looseMemo.get(id)!;
@@ -217,6 +223,12 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
    */
   const fullUntil = (id: string, stop?: (k: string) => boolean): ReadonlySet<string> | null | typeof REJECTED => {
     if (memo.has(id)) return memo.get(id)!;
+    if (fr) {
+      const f = frameAt(id), out = f ? new Set([f.key]) : null;
+      if (f && stop?.(f.key)) return REJECTED;
+      memo.set(id, out);
+      return out;
+    }
     let out: Set<string> | null = null, cut = false;
     // この間は木が変わらないので鍵は 1 回だけ (S-71b)
     if (doc.boxes[id]) holdDocSig(doc, () => {
@@ -273,10 +285,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       const k = contentOf(data, doc, item, aimed);
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
-    aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
+    aimedOf: (id) => samples(id).map((s) => aimedAt(id, s.seed)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)。途中の狙いは数える (S-33b)
-    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
-    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = sampleAimed(data, doc, id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
+    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = aimedAt(id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
+    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = aimedAt(id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };
 }

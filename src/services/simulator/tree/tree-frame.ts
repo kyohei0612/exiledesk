@@ -13,13 +13,14 @@ import { boxOutcomeOf } from "./tree-outcome";
 import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
-import { aimsOf, startItemOf } from "./tree-sample";
+import { aimsOf, putCapped, startItemOf } from "./tree-sample";
 import { contentOf, nextAimed, startAimed } from "./tree-judge";
-import { itemKeyOf } from "./tree-sample-key";
+import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
 import { isWhittleHand, WHITTLE } from "./tree-whittle";
 import { withTreeTune } from "./tree-tune";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
+import { DEV_BUILD } from "../../../web/release-flags";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
@@ -56,8 +57,25 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox): Br[] | "tooMany" 
   return rs.map((r) => ({ item: r.item, p: r.p / tot }));
 }
 
+/**
+ * 分けた枝の覚え (データごと)。答えは木の前提 (狙い・置き石)・代表の品・☑・手・箱と子の札だけで決まるので、開く・組み替えで木が 1 手ずつ変わる間も
+ * 変わらない所は引き直さない (覚えないと 1 手ごとに全部の箱を数え直し、小さな木の開きが前の作りより遅くなった)
+ */
+const SPLITS = new WeakMap<PatchData, Map<string, Split | "tooMany">>();
+const SPLITS_MAX = 20000;
+const splitKeyOf = (doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, part: string): string =>
+  JSON.stringify([part, b.out, b.aim, b.junkKey, b.hand, b.outs.map((o) => { const c = doc.boxes[o]; return c ? [o, c.out, c.aim, c.junkKey, c.mergedOuts, c.seen] : null; }), [...f.aimed].sort(), itemKeyOf(f.item)]);
+function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[], part: string): Split | "tooMany" {
+  let m = SPLITS.get(data);
+  if (!m) SPLITS.set(data, (m = new Map()));
+  const k = splitKeyOf(doc, b, f, part), had = m.get(k);
+  if (had) return had;
+  const s = splitRaw(data, doc, b, f, aims);
+  putCapped(m, k, s, SPLITS_MAX);
+  return s;
+}
 /** 代表の品 f に箱 b の手を当てた枝を、行き先の箱ごとに分ける。当たるまでの手 (repeat) は当たりの枝だけ (当たるまで打ち続ける挙動) */
-function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
+function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
   const rs = outsOf(data, f.item, b);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
@@ -72,9 +90,28 @@ function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem
 }
 const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.lost.values()].reduce((n, p) => n + p, 0));
 
+/**
+ * 箱の比べ (judgeMemo) を配置でする (S-200 段階 2)。開発版だけ (オーナーの OK の後に本番へ)、開発版で前のままを見る時は URL に ?off=frameJudge
+ * (release-flags と同じ書き方。release-flags はデザイン部の持ち物なので、本番に出す時にスイッチの名前を頼む)
+ */
+export const FRAME_JUDGE: boolean = DEV_BUILD && !(typeof location !== "undefined" && (new URLSearchParams(location.search).get("off") ?? "").split(",").includes("frameJudge"));
+
+/** 木の形 (位置・メモを除く) が同じ間は配置を 1 回だけ出す (judgeMemo は組み替え・回しのたびに作り直す) */
+const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; ft: FrameTree }>>();
+const sigOf = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" ? undefined : v));
+export function frameOfDoc(data: PatchData, doc: TreeDoc): FrameTree {
+  let m = FRAMES.get(data);
+  if (!m) FRAMES.set(data, (m = new WeakMap()));
+  const sig = sigOf(doc), had = m.get(doc);
+  if (had?.sig === sig) return had.ft;
+  const ft = frameTree(data, doc);
+  m.set(doc, { sig, ft });
+  return ft;
+}
+
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
-    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc);
+    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
     frames.set("start", { item: st.item, aimed: sa, key: contentOf(data, doc, st.item, sa), p: 1, note: st.note });
     const q = ["start"];
@@ -86,7 +123,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       // 手の無い箱の下 (分かれ目の行・ヒネコラのハズレ) は親の代表のまま
       const same = (o: string, note: string | null): void => { frames.set(o, { ...f, note }); };
       if (!b.hand) { for (const o of kids) same(o, b.split ? "split" : null); continue; }
-      const s = splitOf(data, doc, b, f, aims);
+      const s = splitOf(data, doc, b, f, aims, part);
       if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
       for (const [out, p] of s.lost) miss.push({ box: id, out, p });
       for (const o of kids) {
@@ -98,10 +135,10 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
         // 箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方)
         let best = pick(heavy[0]!);
         if (c.hand && heavy.length > 1) {
-          let bestLost = lostP(splitOf(data, doc, c, best, aims));
+          let bestLost = lostP(splitOf(data, doc, c, best, aims, part));
           for (const r of heavy.slice(1)) {
             if (bestLost === 0) break;
-            const fr = pick(r), l = lostP(splitOf(data, doc, c, fr, aims));
+            const fr = pick(r), l = lostP(splitOf(data, doc, c, fr, aims, part));
             if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
           }
         }
