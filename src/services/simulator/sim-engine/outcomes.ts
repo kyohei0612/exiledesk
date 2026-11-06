@@ -89,7 +89,7 @@ function removeStep(ctx: PartCtx, item: StageItem, a: Remove): Step {
 
 /** parts.ts の add と同じ候補 (stage-core の addOne: お告げの側 ∩ 空きのある側、触媒の高貴の重み)。n 個付ける手は 1 つずつ枝分かれ */
 function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (b: Branch) => string): Step {
-  if (a.emptyOk && !SIDES.some((s) => room(item, s))) return ok(item);
+  if (a.emptyOk && !SIDES.some((s) => room(item, s, ctx.before))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
   const omenSides = ctx.mods.side ? [ctx.mods.side] : SIDES;
   const { tag, pct } = catalystOf(item);
@@ -100,7 +100,7 @@ function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (
   for (let i = 0; i < n; i++) {
     const next: Branch[] = [];
     for (const s of states) {
-      const cs = candidates(ctx.data, s.item, omenSides.filter((x) => room(s.item, x)), a.floor, boost ? { boost } : {});
+      const cs = candidates(ctx.data, s.item, omenSides.filter((x) => room(s.item, x, ctx.before)), a.floor, boost ? { boost } : {});
       const total = cs.reduce((x, c) => x + c.w, 0);
       // 付けられなければここで止まる (打つ処理の addOne が null で break)
       if (!(total > 0)) { done.push(s); continue; }
@@ -137,7 +137,7 @@ function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
     if (!(w > 0)) continue;
     const p = w / total;
     if (mark) { out.push({ p, item: withMod(without(item, mark), hiddenOf(s)), added: [hiddenOf(s)], removed: [mark] }); continue; }
-    if (room(item, s)) { out.push({ p, item: withMod(item, hiddenOf(s)), added: [hiddenOf(s)], removed: [] }); continue; }
+    if (room(item, s, ctx.before)) { out.push({ p, item: withMod(item, hiddenOf(s)), added: [hiddenOf(s)], removed: [] }); continue; }
     const rem = allMods(item).filter((m) => !m.fractured && m.side === s);
     // 側をお告げで決めた時は打つ前に分かる (打てない)、重みで選んだ時は当たり所 (不成立)
     if (!rem.length) { if (fixed) return "skip"; out.push({ p, void: true }); continue; }
@@ -151,7 +151,7 @@ function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
  * 空きのある版が無ければ当たり所で不成立 (打つ処理の skipRandom)。2026-11-03 シミュ部長 68 (前は行き先で表せない手で null = 木の結果が 1 箱だった)
  */
 function emotionStep(ctx: PartCtx, item: StageItem, key: string): Step {
-  const fits = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key) && room(item, e.side as StageSide));
+  const fits = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key) && room(item, e.side as StageSide, ctx.before));
   if (!fits.length) return [{ p: 1, void: true }];
   return fits.flatMap((e) => {
     const mod = ctx.data.mods.get(e.modId);
@@ -236,7 +236,8 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
       const last = i === plan.actions.length - 1;
       const next: State[] = [];
       for (const s of states) {
-        const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered };
+        // 消してから付ける時の枠は打つ前の品の上限 (E-30a、エンジンの parts.ts の ctx.before と同じ)
+        const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered, before: item };
         const r: Step = "remove" in a ? removeStep(ctx, s.item, a.remove)
           : "add" in a ? addStep(ctx, s.item, a.add, last, o.merge ? (b) => o.merge!({ ...b, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed] }) : undefined)
           : "fracture" in a ? fractureStep(data, s.item)
