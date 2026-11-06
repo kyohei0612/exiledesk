@@ -228,7 +228,8 @@ function addEssence(ctx: PartCtx, item: StageItem, a: AddEssence): StageApply {
     if (omen && !gone && !room(item, omen)) return skip(item, tr("お告げの側に外せる MOD も空きも無い", "No removable mod or open slot on the Omen's side"));
     const side: StageSide | undefined = gone ? gone.side : omen ?? SIDES.find((x) => room(item, x));
     if (!side) return skip(item, tr("外せる MOD も空きも無い", "No removable mod or open slot"));
-    const mark: StageMod = { ...e.mod, side, abyssMark: true };
+    // 消した元の MOD の段のレベルを覚える (E-65。未発現の冒涜は 1 = 下限は実質なし、オーナー 11-06)
+    const mark: StageMod = { ...e.mod, side, abyssMark: true, ...(gone ? { markFrom: gone.modLevel } : {}) };
     return { applied: true, item: withMod(item, mark), added: [mark], removed: [] };
   }
   if (!room(item, e.side, ctx.before)) return skip(item, tr("足す側に空きが無い", "No open slot on that side"));
