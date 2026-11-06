@@ -73,7 +73,7 @@
 | G-34 | 本体での `git reset --hard`・ブランチの切り替え (`switch` / `checkout`) を止める (作業場 ExileDesk-preview への `git -C` は通す) | 同上 | R-01・R-08 |
 | G-35 | エンジン・エミュ・シミュ・共通の部品のコードの commit は、同じ commit に `docs/spec/` か、commit の文に設計図の番号 (S-50b など) が要る | 同上 (`git commit` の時) | G-20 |
 | G-36 | 返事を終える時、このセッションが残したスクリーンショット・確認の Chrome・自分で立てたサーバー (1441〜1445・1460・1461・937x / 938x・9222)・止め残りの子プロセス (親の死んだ bash / node / python でこのセッションの置き場か worktree の入る物、G-26) を知らせて 1 回止める | `exiledesk-habits.js` (Stop) | R-14・CLAUDE.md「いつも」 |
-| G-37 | セッションが 2,000 件前後になったら、引き継ぎを書いて交代するよう差し込む | 同上 (UserPromptSubmit) | メモ feedback-request-rules の 4 |
+| G-37 | セッションが 2,000 件を超えたら控えを立てる (オーナーが話した番のうちに。ほかの番では許可のカードになる)、2,500 件前後で引き継ぎを書いて交代するよう差し込む (オーナー 11-06「2500上限で2000超えたら立ち上げる」) | 同上 (UserPromptSubmit) | メモ feedback-request-rules の 4 |
 | G-38 | 本番の出し (`deploy:web`・`bump-version.mjs`) は、オーナーの「出して」の後にブラックが置く印 `~/.claude/exiledesk-release-ok` が無ければ止める (`deploy:web-dev` は除く) | `exiledesk-guard.js` (PreToolUse) | G-08・R-02・R-03 |
 | G-39 | `src/web/release-flags.ts` の `RELEASED` の書き足し・消しは、同じ印が無ければ止める | 同上 (Edit / Write) | G-08・R-02 |
 | G-40 | commit するファイルに `check-engine-entry` の控えからの増え (エミュ⇄シミュの直の import・画面の中のエンジンの中身など) があれば止める (ほかの部の書きかけの増えでは止めない) | 同上 (`git commit` の時) | U の共有の決まり・E-10・オーナー 10-31「フックしといて決まりやぶってる」 |
