@@ -14,7 +14,7 @@ export type { MagicAddOdds, AddGrade } from "./sim-engine/magic-odds";
 export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./sim-engine/magic-odds";
 // スパムの道 (増強・カオス・高貴) で始めのアイテムから狙いに着くまでの平均の使った物と着いた割合 (核の route-race の routeRun と同じ打ち方。シミュのツリーのベースの値段・解析君)
 export type { SpamCounts, SpamTarget } from "./sim-engine/spam-counts";
-export { spamCounts } from "./sim-engine/spam-counts";
+export { spamCounts, spamCountsSteps } from "./sim-engine/spam-counts";
 // 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)。枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない
 export type { StepOutcome } from "./sim-engine/outcomes";
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./sim-engine/outcomes";

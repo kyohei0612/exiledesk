@@ -31,14 +31,19 @@ export interface SpamCounts {
 const mods = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes];
 const hit = (m: StageMod, t: SpamTarget): boolean => !m.unrevealed && m.modId === t.modId && m.tierIndex >= t.minTierIndex;
 
-export function spamCounts(
+export function spamCounts(...a: Parameters<typeof spamCountsSteps>): SpamCounts {
+  const g = spamCountsSteps(...a);
+  for (;;) { const r = g.next(); if (r.done) return r.value; }
+}
+/** spamCounts を区切って回す (30 人ごとに 1 回返す = 画面の糸を止めない、ツリーの始まりの値段 use-tree-cost)。答えは spamCounts と同じ */
+export function* spamCountsSteps(
   data: PatchData, item: StageItem, route: RouteKind, grade: Grade, targets: readonly SpamTarget[],
   opts: {
     runs?: number; maxSteps?: number; seed?: number;
     /** 「どれか」: このうちどれか 1 つが付けば当たり (2026-10-20 J9、シミュ ③ の候補 2 つ以上)。targets (全部要る) と一緒にも使える */
     anyOf?: readonly SpamTarget[];
   } = {},
-): SpamCounts {
+): Generator<void, SpamCounts> {
   const runs = opts.runs ?? 300, maxSteps = opts.maxSteps ?? 3000;
   const g = GRADE_KEY[grade];
   const sideOf = (t: SpamTarget): "prefix" | "suffix" => sideOfMod(data, t.modId);
@@ -64,6 +69,7 @@ export function spamCounts(
   const uses: Record<string, number> = {};
   const steps: number[] = [];
   for (let r = 0; r < runs; r++) {
+    if (r && r % 30 === 0) yield;
     const rng = mulberry32(routeSeed(opts.seed, r, route, grade));
     let it = start, n = 0;
     const use = (key: string, omens: string[] = []): boolean => {
