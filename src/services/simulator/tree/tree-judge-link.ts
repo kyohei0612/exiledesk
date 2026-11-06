@@ -32,14 +32,24 @@ export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
 }
 
 /**
+ * id の自動の ↩ を t へ付けると打っても変わらない手の輪になるか (S-50): 結果が 1 通りの手だけで上へ続く箱 (straightUp) か、
+ * 親の手の結果が全部親と同じ枠 (神のオーブなど、値しか変えない手) で t が親と同じ手の箱。前は神の結果が全部 ↩ 神の箱になり、人が神を打ち続けて抜けなかった (11-07、100 人中 94 人が打ち止め)
+ */
+export function idleLoop(doc: TreeDoc, id: string, t: string, j: Judge): boolean {
+  if (straightUp(doc, id, t)) return true;
+  const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
+  return !!p?.hand && sameHand(doc.boxes[t]?.hand, p.hand) && p.outs.every((o) => j.fitsBox(o, p.id));
+}
+
+/**
  * 自動の ↩ の行き先 (S-50e):中身が同じ手のある箱のうち、親 → 親と同じ手の箱 → 浅い段・先に作った箱の順。
- * 自分と下、結果が 1 通りの手だけで上へ続く箱 (打っても変わらない輪) は入れない
+ * 自分と下、打っても変わらない手の輪になる箱 (idleLoop) は入れない
  */
 export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
   const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null, ph = p ? doc.boxes[p]?.hand : null;
   const rank = (t: string): number => (t === p ? 0 : ph && sameHand(doc.boxes[t]?.hand, ph) ? 1 : 2);
   const cmp = shallow(doc);
-  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
+  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
 }
 
 /**
@@ -88,7 +98,8 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
   for (const b of Object.values(doc.boxes)) {
     // ヒネコラのハズレのまとめ (S-39、tree-foresee の foldMisses) は中身で見直さない
     if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
-    if (j.fitsBox(b.id, b.back)) continue;
+    // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない
+    if (j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }

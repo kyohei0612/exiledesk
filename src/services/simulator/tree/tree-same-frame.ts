@@ -5,7 +5,7 @@
 import { foldMisses } from "./tree-foresee";
 import type { PatchData } from "../../craft-stage/engine";
 import { judgeMemo } from "./tree-judge";
-import { straightUp } from "./tree-judge-link";
+import { idleLoop, straightUp } from "./tree-judge-link";
 import { isGrayBox, junkPath } from "./tree-junk-tidy";
 import type { Hand, TreeDoc } from "./tree-model";
 
@@ -27,7 +27,7 @@ export function linkSameFrame(data: PatchData, d: TreeDoc, id: string, to: strin
   const j = judgeMemo(data, d), out: string[] = [];
   for (const y of Object.values(d.boxes)) {
     if (y.id === id || y.id === to || !junkPath(y) || y.hand || y.back || y.done || y.split || y.noAutoBack || isGrayBox(y)) continue;
-    if (straightUp(d, y.id, to) || !j.fitsBox(y.id, id)) continue;
+    if (straightUp(d, y.id, to) || !j.fitsBox(y.id, id) || idleLoop(d, y.id, to, j)) continue;
     y.back = to; y.autoBack = true; y.handBack = { ...h }; delete y.merged;
     out.push(y.id);
   }
