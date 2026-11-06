@@ -6,7 +6,7 @@
  * 乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
  * 段階 2: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
  */
-import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { applyCurrency, limitOf, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf } from "./tree-outcome";
@@ -25,13 +25,13 @@ import { DEV_BUILD } from "../../../web/release-flags";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
-/** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計) */
-export interface FrameMiss { box: string; out: string; p: number }
+/** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計)。from = ↩ で着く人の箱 (その箱の代表の品に手を当てた枝)、oc = 結果の分け */
+export interface FrameMiss { box: string; out: string; p: number; from?: string; oc: Outcome }
 export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[] }
 
 type Outcome = ReturnType<typeof boxOutcomeOf>;
 type Br = { item: StageItem; p: number };
-interface Split { to: Map<string, Br[]>; lost: Map<string, number> }
+interface Split { to: Map<string, Br[]>; lost: Map<string, { p: number; oc: Outcome }> }
 const missKey = (oc: Outcome): string => `${oc.out}${oc.hits.length ? `:${oc.hits.map((a) => a.modId).join("+")}` : ""}${oc.junkKey ? ` [${oc.junkKey}]` : ""}`;
 /** 先読みで比べる枝の数の上限 (重い順) */
 const LOOK = 8;
@@ -81,15 +81,28 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   if (b.hand!.repeat) { const hit = ocs.filter((x) => x.oc.out === "hit"); if (hit.length) { const t = hit.reduce((n, x) => n + x.r.p, 0); ocs = hit.map((x) => ({ ...x, r: { ...x.r, p: x.r.p / t } })); } }
-  const to = new Map<string, Br[]>(), lost = new Map<string, number>();
+  const to = new Map<string, Br[]>(), lost: Split["lost"] = new Map();
   for (const { r, oc } of ocs) {
     const o = outBoxOf(doc, b, oc, r.item);
-    if (!o) { const k = missKey(oc); lost.set(k, (lost.get(k) ?? 0) + r.p); continue; }
+    if (!o) { const k = missKey(oc); lost.set(k, { p: (lost.get(k)?.p ?? 0) + r.p, oc }); continue; }
     (to.get(o) ?? to.set(o, []).get(o)!).push(r);
   }
   return { to, lost };
 }
-const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.lost.values()].reduce((n, p) => n + p, 0));
+/**
+ * 数値の一番低い形・高い形のうち、枠の上限が代表と違う物 (配置は数値を見ないが、ルーンの効果 % の切り捨てで枠が変わる: ルーンシーカーの呼び声の遺産 75% +
+ * ソウルコアのオーグメントの効果 24% / 25% で、セールの凱旋が +1 / +2 サフィ = 満杯かどうかが変わり骨の結果が変わる。stage-core の runeEffectPct)。
+ * 数値は神のオーブ (固定は変わらない) を決まった乱数で当てて作る
+ */
+function rollEnds(data: PatchData, item: StageItem): StageItem[] {
+  const lim = (it: StageItem): string => `${limitOf(it, "prefix")}|${limitOf(it, "suffix")}`, base = lim(item), out: StageItem[] = [];
+  for (const v of [0, 0.999999]) {
+    const r = applyCurrency(data, item, "divine", () => v);
+    if (r.applied && lim(r.item) !== base && !out.some((x) => lim(x) === lim(r.item))) out.push({ ...r.item, foreseen: item.foreseen });
+  }
+  return out;
+}
+const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.lost.values()].reduce((n, x) => n + x.p, 0));
 
 /**
  * 箱の比べ (judgeMemo) を配置でする (S-200 段階 2)。開発版だけ (オーナーの OK の後に本番へ)、開発版で前のままを見る時は URL に ?off=frameJudge
@@ -135,8 +148,32 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
     const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
     frames.set("start", { item: st.item, aimed: sa, key: frameKeyOf(contentOf(data, doc, st.item, sa)), p: 1, note: st.note });
-    const q = ["start"];
-    while (q.length) {
+    /**
+     * 代表のほかに手を当てる形 (S-21 を配置で、打ち直さない): at の箱の手を f に当てた枝の、行き先の無い結果を from 付きの miss にする (開く・整理で箱を足す)。
+     * ↩ で着く人 (from = ↩ 元の箱) と、1 つの箱に形の違う枝が入る時のほかの形 (狙い無しの結果を 1 箱にした any など。from = その箱、重い順に LOOK まで)
+     */
+    const extra: Array<{ at: string; f: Frame; from: string }> = [];
+    /** 枝 brs (元の箱の代表 from に手を当てた物) から、箱 o の代表を選ぶ。箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方) */
+    const bestOf = (o: string, brs: Br[], from: Frame): Frame => {
+      const c = doc.boxes[o]!, sum = brs.reduce((n, r) => n + r.p, 0);
+      const pick = (r: Br): Frame => { const am = nextAimed(data, doc, from.aimed, o, r.item, from.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
+      const heavy = [...brs].sort((x, y) => y.p - x.p).slice(0, LOOK);
+      const all = heavy.map(pick);
+      let best = all[0]!;
+      if (c.hand && heavy.length > 1) {
+        let bestLost = lostP(splitOf(data, doc, c, best, aims, part));
+        for (const fr of all.slice(1)) {
+          if (bestLost === 0) break;
+          const l = lostP(splitOf(data, doc, c, fr, aims, part));
+          if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
+        }
+        const keys = new Set([best.key]);
+        for (const fr of all) if (!keys.has(fr.key)) { keys.add(fr.key); extra.push({ at: o, f: fr, from: o }); }
+      }
+      if (c.hand) for (const it of rollEnds(data, best.item)) extra.push({ at: o, f: { ...best, item: it }, from: o });
+      return best;
+    };
+    const walk = (q: string[]): void => { while (q.length) {
       const id = q.shift()!, b = doc.boxes[id], f = frames.get(id);
       if (!b || !f) continue;
       const kids = b.outs.filter((o) => doc.boxes[o]);
@@ -146,27 +183,36 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       if (!b.hand) { for (const o of kids) same(o, b.split ? "split" : null); continue; }
       const s = splitOf(data, doc, b, f, aims, part);
       if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
-      for (const [out, p] of s.lost) miss.push({ box: id, out, p });
+      for (const [out, x] of s.lost) miss.push({ box: id, out, p: x.p, oc: x.oc });
       // ヒネコラの結果の箱 (予見の箱、S-39) は MOD の変わらない同じ予見済みの品。当たり / ハズレは持った手の結果の分けなので、枝の無い箱もヒネコラの枝を持つ
       const held = [...s.to.values()].flat();
       for (const o of kids) {
         const c = doc.boxes[o]!, brs = s.to.get(o) ?? (holdsAt(doc, o) && held.length ? held : undefined);
         if (c.seen || !brs?.length) { same(o, c.seen ? null : "nobranch"); continue; }
-        const sum = brs.reduce((n, r) => n + r.p, 0);
-        const pick = (r: Br): Frame => { const am = nextAimed(data, doc, f.aimed, o, r.item, f.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
-        const heavy = [...brs].sort((x, y) => y.p - x.p).slice(0, LOOK);
-        // 箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方)
-        let best = pick(heavy[0]!);
-        if (c.hand && heavy.length > 1) {
-          let bestLost = lostP(splitOf(data, doc, c, best, aims, part));
-          for (const r of heavy.slice(1)) {
-            if (bestLost === 0) break;
-            const fr = pick(r), l = lostP(splitOf(data, doc, c, fr, aims, part));
-            if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
-          }
-        }
-        frames.set(o, best);
+        frames.set(o, bestOf(o, brs, f));
       }
+    } };
+    walk(["start"]);
+    for (const a of Object.values(doc.boxes)) { const fa = frames.get(a.id); if (a.back && a.back !== a.id && fa && !fa.note) extra.push({ at: a.back, f: fa, from: a.id }); }
+    // 代表では枝の無い箱はほかの形の枝を代表にし、その下を出し直す (その下にまた ↩・ほかの形があるので、変わらなくなるまで。上限 3 回)
+    const done = new Set<string>();
+    for (let pass = 0; pass < 3 && extra.length; pass++) {
+      const again: string[] = [];
+      for (const { at, f: fa, from } of extra.splice(0)) {
+        const x = doc.boxes[at], k = `${at}|${from}|${fa.key}`;
+        if (!x?.hand || done.has(k)) continue;
+        done.add(k);
+        const s = splitOf(data, doc, x, fa, aims, part);
+        if (s === "tooMany") continue;
+        for (const [out, y] of s.lost) miss.push({ box: at, out, p: y.p, from, oc: y.oc });
+        for (const o of x.outs) {
+          const brs = s.to.get(o);
+          if (!brs?.length || frames.get(o)?.note !== "nobranch") continue;
+          frames.set(o, bestOf(o, brs, fa));
+          again.push(o);
+        }
+      }
+      if (again.length) walk(again);
     }
     return { frames, miss };
   });

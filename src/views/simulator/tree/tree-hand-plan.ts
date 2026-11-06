@@ -20,6 +20,7 @@ import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simula
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { FRAME_JUDGE, frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { arrivalsOf, depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
@@ -362,6 +363,17 @@ export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
 }
 /** addArrivedOuts を箱ごとに区切る (開く時に間で画面を返す、S-196) */
 export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, string[]> {
+  // 配置で組む時は打ち直さない: ↩ 元の箱の代表の品に ↩ 先の手を数え上げ、行き先の無い結果 (tree-frame の from 付きの miss) だけ箱を足す。当たりは足さない (S-22)。S-200、開発版だけ
+  if (FRAME_JUDGE) {
+    const made: string[] = [], seen = new Set<string>();
+    for (const m of frameOfDoc(data, d).miss) {
+      const k = `${m.box}|${m.oc.out}|${m.oc.junkKey ?? ""}`;
+      if (!m.from || m.oc.out === "hit" || seen.has(k) || !d.boxes[m.box]) continue;
+      seen.add(k);
+      made.push(addOut(d, m.box, m.oc.out, m.oc.junkKey));
+    }
+    return made;
+  }
   const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
   for (const b of Object.values(d.boxes)) {
     const h = b.hand;
