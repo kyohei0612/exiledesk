@@ -1,4 +1,8 @@
 {
+  "0.1.671": [
+    "Emulator and Simulator: fixed Essences and the Omen of Catalysing Exaltation not working on Grasping Mail. As its implicit says, it can now roll all Ring mods too",
+    "Emulator and Simulator: Essence of the Abyss always removed the Unrevealed Desecrated mod; it now removes a random removable mod, like other Essences"
+  ],
   "0.1.670": [
     "Simulator: fixed hit boxes and boxes after a rune step naming unchecked mods as the aim, and fixed box titles breaking on \"Adds (a) to (b)\" mods. Clicking a socket that holds a rune now applies the currency you are holding",
     "Simulator: \"Runes in use\" in the goal settings now includes Soul Cores and Idols, and the goal card shows Bonded lines faintly after the rune effects",
