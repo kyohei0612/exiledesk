@@ -18,7 +18,7 @@ import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } fr
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
 import { midAims, midMark, placedAims } from "./tree-veil";
-import { FRAME_JUDGE, frameOfDoc, type Frame } from "./tree-frame";
+import { FRAME_JUDGE, frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
 const SAMPLES = 4;
@@ -197,6 +197,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const memo = new Map<string, ReadonlySet<string> | null>(), looseMemo = new Map<string, ReadonlySet<string> | null>();
   // 配置で比べる (S-200 段階 2、開発版だけ FRAME_JUDGE、?off=frameJudge で前のまま): 箱の中身 = 代表の品 1 個の枠、見本は代表の品だけ (打ち直さない)。出せない箱 (note) は作れない見本と同じ
   const fr = FRAME_JUDGE ? frameOfDoc(data, doc) : null;
+  /** 人の中身の鍵 (配置で比べる間は品質の % を抜く) */
+  const own = (k: string): string => (fr ? frameKeyOf(k) : k);
   const frameAt = (id: string): Frame | null => { const f = fr?.frames.get(id); return f && !f.note ? f : null; };
   /** 見本 seed の ☑ (配置なら代表の品の ☑) */
   const aimedAt = (id: string, seed: number): ReadonlySet<string> => (fr ? frameAt(id)?.aimed ?? new Set() : sampleAimed(data, doc, id, seed));
@@ -275,14 +277,14 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, contentOf(data, doc, item, aimed)))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
-      const k = contentOf(data, doc, item, aimed);
+      const k = own(contentOf(data, doc, item, aimed));
       return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
-      const k = contentOf(data, doc, item, aimed);
+      const k = own(contentOf(data, doc, item, aimed));
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
     aimedOf: (id) => samples(id).map((s) => aimedAt(id, s.seed)),

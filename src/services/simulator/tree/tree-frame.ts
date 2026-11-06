@@ -96,6 +96,9 @@ const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.los
  */
 export const FRAME_JUDGE: boolean = DEV_BUILD && !(typeof location !== "undefined" && (new URLSearchParams(location.search).get("off") ?? "").split(",").includes("frameJudge"));
 
+/** 配置の鍵 = 中身の鍵から品質の % を抜いた物 (品質の % は配置に入れない、カタリストの +1% / +2% は同じ箱。S-200 ②、11-06 ブラック 49 の決め A)。カタリストの種類は残す */
+export const frameKeyOf = (k: string): string => k.replace(/~q\d+\.\d*\./, "~q.");
+
 /** 木の形 (位置・メモを除く) が同じ間は配置を 1 回だけ出す (judgeMemo は組み替え・回しのたびに作り直す) */
 const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; ft: FrameTree }>>();
 const sigOf = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" ? undefined : v));
@@ -113,7 +116,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
     const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
-    frames.set("start", { item: st.item, aimed: sa, key: contentOf(data, doc, st.item, sa), p: 1, note: st.note });
+    frames.set("start", { item: st.item, aimed: sa, key: frameKeyOf(contentOf(data, doc, st.item, sa)), p: 1, note: st.note });
     const q = ["start"];
     while (q.length) {
       const id = q.shift()!, b = doc.boxes[id], f = frames.get(id);
@@ -130,7 +133,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
         const c = doc.boxes[o]!, brs = s.to.get(o);
         if (c.seen || !brs?.length) { same(o, c.seen ? null : "nobranch"); continue; }
         const sum = brs.reduce((n, r) => n + r.p, 0);
-        const pick = (r: Br): Frame => { const am = nextAimed(data, doc, f.aimed, o, r.item, f.item); return { item: r.item, aimed: am, key: contentOf(data, doc, r.item, am), p: sum, note: null }; };
+        const pick = (r: Br): Frame => { const am = nextAimed(data, doc, f.aimed, o, r.item, f.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
         const heavy = [...brs].sort((x, y) => y.p - x.p).slice(0, LOOK);
         // 箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方)
         let best = pick(heavy[0]!);
