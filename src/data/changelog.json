@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.673",
+  "date": "2026-11-06",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 削減のお告げを持った時、未発現の冒涜 MOD も消える候補ならオレンジで光るようにしました",
+    "en": "Emulator: with the Omen of Whittling, an Unrevealed Desecrated mod now also glows orange when it can be removed"
+   }
+  ]
+ },
+ {
   "v": "0.1.672",
   "date": "2026-11-06",
   "items": [
@@ -1180,18 +1192,6 @@
     "area": "",
     "text": "スマホ: ベースを選ぶ画面の部位のタイルを列の幅いっぱいに大きくし、間を詰めました。縦長の絵は枠の真ん中に置き、上下に同じだけはみ出すように",
     "en": "Phone: The item class tiles on the base picker now fill the column width with tighter spacing, and tall icons are centered in the frame, overflowing evenly above and below"
-   }
-  ]
- },
- {
-  "v": "0.1.632",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: v0.1.631 の直しで、エッセンスで付けた狙いが消去で消えた人が「外れが消えた」に数えられ、テスト走行で止まっていたのを直しました",
-    "en": "Simulator: Fixed a v0.1.631 issue where a target added by an Essence and then removed by an Orb of Annulment was counted as \"miss removed\", getting runs stuck in test runs"
    }
   ]
  }
