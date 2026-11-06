@@ -365,7 +365,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
             <!-- 札で名前を替えた行 (外れ MOD など) も、消える候補ならオレンジ (10-27 シミュの手の窓で消去を持った時に外れの行だけ色が付かなかった) -->
             <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
-            <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-stage-unrevealed [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
+            <!-- 未発現も消える候補ならオレンジ (削減のお告げは未発現を MOD レベル 1 で数える E-33。11-06 オーナー「なら冒涜未発現もオレンジになるはず」) -->
+            <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider" :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : 'text-stage-unrevealed [text-shadow:0_0_6px_rgba(140,220,80,0.75)]'" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
             <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-stage-boost">({{ r.shown }})</span></span>
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-stage-doomed' : r.boosted ? 'text-stage-boost' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="whitespace-nowrap align-middle text-[10px] opacity-80" :class="modsOnly ? 'st-mo-tag ml-1' : 'ml-1.5'">{{ look(r.m).tag }}</span>
