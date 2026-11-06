@@ -21,7 +21,7 @@ export const EST_H = 230;
 /** まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) */
 const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
 const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back);
-/** 描く子 (まとめた箱はまとめ先へ線が行くので数えない。畳んだ消去の直線は札から最後の箱へ、S-28b) */
+/** 描く子 (まとめた箱はまとめ先へ線が行くので数えない。畳んだ消去の続きは札から止まった箱へ、S-28g) */
 export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => foldOuts(d, b).filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
 /** 横の枝分かれを描くか (線の行き先が 2 つ以上、まとめ先への線を含む) */
 export const branches = (d: TreeDoc, b: TreeBox): boolean => new Set(b.outs.map((o) => (away(d, d.boxes[o]) ? d.boxes[o]!.back! : o))).size > 1;
@@ -35,7 +35,7 @@ export function depthRows(d: TreeDoc): Map<string, number> {
   down("start", 0);
   return rows;
 }
-/** 描く段 (畳んだ消去の直線の隠した箱は段を取らず、最後の箱は札の次の段、S-28b)。畳んだ物が無ければ depthRows と同じ */
+/** 描く段 (畳んだ消去の続きの隠した箱は段を取らず、止まった箱は札の次の段、S-28g)。畳んだ物が無ければ depthRows と同じ */
 function drawRows(d: TreeDoc): Map<string, number> {
   const folds = stripFolds(d);
   if (!folds.size) return depthRows(d);

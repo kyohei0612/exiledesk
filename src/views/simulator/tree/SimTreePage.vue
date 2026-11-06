@@ -98,7 +98,7 @@ const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
 /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
-// 全部消えてよい消去の直線の間を畳む (S-28b、スイッチ stripFold、use-strip-fold.ts): 隠した箱は描かず、間の最初の箱は札 (TreeStripFold)
+// 消去の続きを畳む (S-28g ③、use-strip-fold.ts): 隠した箱は描かず、根の最初の自動の消去の箱は札 (TreeStripFold)、止まった箱は札の下
 const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => x.boxId) ?? [], () => tr100.result.value?.stuckAt ?? null);
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));

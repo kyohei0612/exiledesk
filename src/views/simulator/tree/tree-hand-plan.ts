@@ -28,6 +28,7 @@ import { revealAimsOf } from "./tree-reveal-aims";
 import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
+import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -287,6 +288,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
   foldMisses(d, id);
   if (data) relinkByContent(data, d, had);
+  if (data && isAnnulHand(h)) extendAnnul(data, d, [at]); // 消去は同じ枠か残り 1 MOD まで続ける (S-28g)
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
   return at;
 }
@@ -325,6 +327,9 @@ export function tidyJunk(d: TreeDoc, auto = false): void {
     pruneByContent(d, j);
   };
   link();
+  // 消去の続き (S-28g): 後から同じ枠ができた自動の消去は ↩ に畳み、空いた消去の結果は続ける
+  const trimmed = trimAnnul(data, d);
+  if (extendAnnul(data, d) || trimmed) link();
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
   dropUnplayable(data, d);

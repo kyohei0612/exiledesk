@@ -9,6 +9,7 @@ import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDo
 import { autoTarget, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
+import { extendAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
@@ -65,6 +66,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     if (!idOf.has(at)) idOf.set(at, id);
     if (p) {
       used.add(at);
+      // 消去の続きで自動の手が先に付いた箱 (S-28g) は、人の決めを置く前に外す (外さないと完成 / 失敗・↩ が置けなかった)
+      if (d.boxes[id]?.autoAnnul && (p.hand || p.done || p.back || p.noAutoBack)) clearHand(d, id);
       if (p.back) backs.push([id, p.back, at]);
       // エッセンスの MOD の ☑ は木の狙いの段にそろえる (保存した ☑ が一般の段だと当たりの箱が落ちた、alignEssenceAims)
       // 前の版の骨の手 (veil 無し) は ☑ があれば発現させる・無ければ未発現のまま (S-59、tree-veil の oldVeil)
@@ -108,6 +111,9 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   yield* replay(added);
   if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d); }
   if (added.length) for (const id of Object.keys(d.boxes)) foldMisses(d, id); // ↩ で着く人の結果の箱もハズレへ (S-39)
+  // 消去の続き (S-28g): つなぎのそろった木で、同じ枠ができた自動の消去を畳み、空いた消去の結果を続ける (手を決める時と同じ)
+  const trimmed = trimAnnul(data, d);
+  if (extendAnnul(data, d) || trimmed) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)

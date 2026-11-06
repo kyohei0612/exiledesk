@@ -9,7 +9,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { depthRows, EST_H } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { foldOuts, stripFolds, stripHidden, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
+import { foldOuts, stripFolds, stripHidden, toggleStripFold, stopToHead } from "../../../services/simulator/tree/tree-strip-fold";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import TreeBox from "../tree/TreeBox.vue";
 import TreeHandChip from "../tree/TreeHandChip.vue";
@@ -47,7 +47,7 @@ const CHIP_ROOM = 320, CHIP_MAX = 16;
 const wrap = ref<HTMLElement | null>(null);
 const folds = computed(() => stripFolds(doc.value));
 const hidden = computed(() => stripHidden(doc.value, folds.value));
-const lastToHead = computed(() => new Map([...folds.value.values()].map((f) => [f.last, f.head])));
+const lastToHead = computed(() => stopToHead(folds.value));
 const rows = computed(() => depthRows(doc.value));
 /** 全体図の中の箱の上の辺 */
 const yOf = (b: Box): number => b.y + (rows.value.get(b.id) ?? 0) * ROW_EXTRA;

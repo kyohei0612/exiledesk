@@ -120,6 +120,7 @@ export interface TreeBox {
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
   /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107) */ handBack?: Hand; fresh?: true;
   /** ヒネコラで持った手のハズレ (打たない、S-39・tree-foresee の foldMisses。保存しない = 手を決めるたびに付け直す): 人はその手を使わず持つ前のアイテムのままこの箱の手・↩ へ */ seen?: true;
+  /** 消去の続きで自動で足した消去の手 (S-28g、tree-annul-chain。保存しない = 開く時に同じ決まりで作り直す。人が手を置き替えると外れる) */ autoAnnul?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -373,7 +374,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
-  delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh;
+  delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh; delete b.autoAnnul;
   // 同じ手を選び直した時は、今の箱と先はそのままで、箱の無い狙いの当たりだけ足す (後から完成の狙いに足した MOD など。10-26 オーナー「全ての結果を表示して」、外れへ自動で入れない)
   // 狙い無し (free) も、付きうる狙いの当たりの箱を打った後の横に足す (打った後は狙いが付かなかった人だけ、tree-shape の outBoxOf。10-26 オーナー「当たってたら次の回に消去でそれ決める」)
   if (same) { if ((want.includes("hit") && GROUPED.includes(kind)) || kind === "free") addHits(d, b, aims, order); return; }
@@ -417,6 +418,7 @@ export function clearHand(d: TreeDoc, id: string): void {
   for (const o of b.outs) drop(d, subtree(d, o));
   b.outs = [];
   b.hand = null;
+  delete b.autoAnnul;
 }
 
 /** 当たりの箱を横に足す (after の右、無ければ当たりの並びの最後) */

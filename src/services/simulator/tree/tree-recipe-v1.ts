@@ -85,7 +85,8 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
   for (const [id, at] of keys) {
     const b = d.boxes[id]!, p: RecipePick = { at };
     const viaPre = b.out === "pass" && !!b.parent && preChildOf(d, d.boxes[b.parent]!) === b;
-    const h = b.hand ?? b.handBack ?? null;
+    // 消去の続きの自動の手 (S-28g、autoAnnul) は保存しない = 開く時に同じ決まりで作り直す
+    const h = b.autoAnnul ? null : b.hand ?? b.handBack ?? null;
     // 消去の続きの手も人の決め (11-04 S-190b。前は組み直しで自動で付くので保存しなかった = S-109 の 10)
     if (h && !viaPre) {
       const pass = b.hand ? preChildOf(d, b) : null;
