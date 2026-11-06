@@ -187,7 +187,7 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
   if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); okMemo.clear(); STARTS.clear(); clearRolls(); memoSig = ""; memoData = data; }
-  // 開発版は配置の代表の品 (打ち直さない、S-200 段階 3・4)。決まりで出せない箱だけ前の見本
+  // 配置の代表の品 (打ち直さない、S-200 段階 3・4)。決まりで出せない箱だけ前の見本
   const fs = frameSample(data, doc, boxId);
   if (fs) return fs;
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
@@ -256,8 +256,6 @@ function failKeyOf(doc: TreeDoc, boxId: string, seed: number, base: StageItem, a
   const held = heldDoc === doc, part = held ? (heldPart ??= docPartOf(doc)) : docPartOf(doc);
   return `${pathKeyOfBox(doc, boxId, seed, altDeep, part, () => 0, held ? heldLinks : undefined)}|${itemKeyOf(base)}|${aimed ? [...aimed].sort().join() : ""}`;
 }
-/** 箱の中身の覚えの鍵 (見本の番号を除いた道の鍵、tree-judge) */
-export const boxKeyOf = (doc: TreeDoc, boxId: string): string => keyOf(doc, boxId, 0);
 /** 木の前提 + 種 → 始まりの見本 (元) */
 const STARTS = new Map<string, Sample>();
 function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {

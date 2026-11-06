@@ -11,20 +11,18 @@ import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share
 import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
-import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
-import { FRAME_JUDGE, frameOfDoc } from "../../../services/simulator/tree/tree-frame";
-import { arrivalsOf, depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
+import { depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
@@ -363,43 +361,13 @@ export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
 }
 /** addArrivedOuts を箱ごとに区切る (開く時に間で画面を返す、S-196) */
 export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, string[]> {
-  // 配置で組む時は打ち直さない: ↩ 元の箱の代表の品に ↩ 先の手を数え上げ、行き先の無い結果 (tree-frame の from 付きの miss) だけ箱を足す。当たりは足さない (S-22)。S-200、開発版だけ
-  if (FRAME_JUDGE) {
-    const made: string[] = [], seen = new Set<string>();
-    for (const m of frameOfDoc(data, d).miss) {
-      const k = `${m.box}|${m.oc.out}|${m.oc.junkKey ?? ""}`;
-      if (!m.from || m.oc.out === "hit" || seen.has(k) || !d.boxes[m.box]) continue;
-      seen.add(k);
-      made.push(addOut(d, m.box, m.oc.out, m.oc.junkKey));
-    }
-    return made;
-  }
-  const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
-  for (const b of Object.values(d.boxes)) {
-    const h = b.hand;
-    if (!h) continue;
-    yield;
-    // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
-    const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, s.item, h);
-    const arrived = arrivalsOf(data, d, j, b.id);
-    if (!arrived.length && !main) continue;
-    const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
-    const fresh = (e: { out: OutKind; junkKey?: string }): boolean => e.out !== "hit" && !b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? main ?? e.junkKey) === e.junkKey; });
-    if (main) for (const e of possibleOutsOf(data, d, b.id, h, null, own, undefined, true) ?? []) {
-      // 当たりの人も形で分ける。一番多い形は今の当たりの箱 (S-21)
-      if (e.out === "hit") {
-        const aim = e.aim;
-        if (aim && e.junkKey !== main && !b.outs.some((o) => { const c = d.boxes[o]!; return c.out === "hit" && c.junkKey === e.junkKey && boxAims(c).some((x) => x.modId === aim.modId); })) { const id = addOut(d, b.id, "hit", e.junkKey); d.boxes[id]!.aim = aim; made.push(id); }
-      } else if (fresh(e)) made.push(addOut(d, b.id, e.out, e.junkKey));
-    }
-    if (!arrived.length) continue;
-    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived, !!main) ?? []) {
-      if (!fresh(e)) continue;
-      const id = addOut(d, b.id, e.out, e.junkKey), c = d.boxes[id]!;
-      const forms = arrived.flatMap((a) => (isWhittleHand(h) ? rankVariants(data, a.item, aimedAims(aims, a.aimed), b.junkKey).map((v) => v.item) : [a.item]));
-      c.via = forms.map((item) => sampleFrom(data, d, c, b, { item, note: null }, 1, id, aims)).filter((r) => !r.note).map((r) => r.item).slice(0, 4);
-      made.push(id);
-    }
+  // 配置で組む: ↩ 元の箱の代表の品に ↩ 先の手を数え上げ、行き先の無い結果 (tree-frame の from 付きの miss) だけ箱を足す。打ち直さない、当たりは足さない (S-22・S-200)
+  const made: string[] = [], seen = new Set<string>();
+  for (const m of frameOfDoc(data, d).miss) {
+    const k = `${m.box}|${m.oc.out}|${m.oc.junkKey ?? ""}`;
+    if (!m.from || m.oc.out === "hit" || seen.has(k) || !d.boxes[m.box]) continue;
+    seen.add(k);
+    made.push(addOut(d, m.box, m.oc.out, m.oc.junkKey));
   }
   return made;
 }

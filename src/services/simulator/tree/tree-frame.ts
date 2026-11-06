@@ -22,7 +22,6 @@ import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
 import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1, type RecipeExample } from "./tree-recipe-v1";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
-import { DEV_BUILD } from "../../../web/release-flags";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
@@ -105,12 +104,6 @@ function rollEnds(data: PatchData, item: StageItem): StageItem[] {
 }
 const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.lost.values()].reduce((n, x) => n + x.p, 0));
 
-/**
- * 箱の比べ (judgeMemo) を配置でする (S-200 段階 2)。開発版だけ (オーナーの OK の後に本番へ)、開発版で前のままを見る時は URL に ?off=frameJudge
- * (release-flags と同じ書き方。release-flags はデザイン部の持ち物なので、本番に出す時にスイッチの名前を頼む)
- */
-export const FRAME_JUDGE: boolean = DEV_BUILD && !(typeof location !== "undefined" && (new URLSearchParams(location.search).get("off") ?? "").split(",").includes("frameJudge"));
-
 /** 配置の鍵 = 中身の鍵の品質を有り / 無しだけにした物 (% の違いは同じ箱 = カタリストの +1% / +2% は同じ箱。S-200 ②、11-06 オーナー「品質はありなしていいやろ今までと同じ」)。カタリストの種類は残す */
 export const frameKeyOf = (k: string): string => k.replace(/~q(\d+)\.(\d*)\./, (_, q: string, c: string) => `~q${Number(q) > 0 || Number(c || 0) > 0 ? 1 : 0}.`);
 
@@ -131,11 +124,11 @@ export function frameOfDoc(data: PatchData, doc: TreeDoc): FrameTree {
 /** 配置を出している最中 (中で見本を引いても配置へ戻らない) */
 let framing = false;
 /**
- * 箱の見本の代わりの代表の品 (S-200 段階 3・4、開発版だけ)。見本を引く所 (結果の箱の分け・箱のカード・☑) は全部これを通る = 打ち直さない。
+ * 箱の見本の代わりの代表の品 (S-200 段階 3・4)。見本を引く所 (結果の箱の分け・箱のカード・☑) は全部これを通る = 打ち直さない。
  * この箱へ行く枝が無い箱は作れない見本 (none)。決まりで出せない箱 (枝の多すぎる手の下・分かれ目の下) は null = 前の見本のまま
  */
 export function frameSample(data: PatchData, doc: TreeDoc, id: string): { item: StageItem; note: string | null } | null {
-  if (!FRAME_JUDGE || framing) return null;
+  if (framing) return null;
   framing = true;
   try {
     const f = frameOfDoc(data, doc).frames.get(id);
@@ -152,12 +145,11 @@ export function examplesOf(data: PatchData, doc: TreeDoc): Record<string, Recipe
   return out;
 }
 /**
- * 保存する形 (S-104・S-200 ⑦): 打ち方 (v1) + 例のアイテム (v2)。開発版だけ (FRAME_JUDGE、本番は v1 のまま = 前の作りの本番が v2 を読めないため)。
+ * 保存する形 (S-104・S-200 ⑦): 打ち方 (v1) + 例のアイテム (v2)。
  * 保存の形 (箱の無い、URL から来た物) は持っている例をそのまま。データがまだ無い時は v1
  */
 export function recipeOf(data: PatchData | null | undefined, d: TreeDoc): TreeDoc {
   const rec = toRecipeV1(d);
-  if (!FRAME_JUDGE) return rec;
   const ex = isRecipeV1(d) ? d.examples : data && d.boxes.start ? examplesOf(data, d) : undefined;
   return ex && Object.keys(ex).length ? { ...rec, schema: RECIPE_V2, examples: JSON.parse(JSON.stringify(ex)) as Record<string, RecipeExample> } : rec;
 }

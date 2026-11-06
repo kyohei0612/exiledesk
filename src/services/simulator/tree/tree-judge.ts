@@ -13,20 +13,12 @@ import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { aimOpts, boxKeyOf, holdDocSig, putCapped, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
 import { midAims, midMark, placedAims } from "./tree-veil";
-import { FRAME_JUDGE, frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
-
-/** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
-const SAMPLES = 4;
-/**
- * 結果が何通りかある箱 (見本 4 つで中身が 2 通り以上) は、続けて MORE 個新しい中身が出なくなるまで見本を足す (MAX まで。S-74 B)。
- * 4 つだと「狙いが消えた」(どの耐性が消えたか 3 通り) の 2 通りしか拾わず、残りの通りの人が止まった (10-29 bone3 の止まり 26)
- */
-const MORE = 8, MAX = 32;
+import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 
 /** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
 const contentAims = (doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(doc)];
@@ -186,24 +178,20 @@ export interface Judge {
   afterQuality(id: string): boolean;
 }
 
-/** 道の鍵 → 箱の中身 (データごと。増えすぎたら捨てて作り直す = 結果は同じ) */
-const CONTENTS = new WeakMap<PatchData, Map<string, Set<string> | null>>();
-const CONTENTS_MAX = 20000;
 /** 中身を作る途中で止めた印 (judgeMemo の fullUntil) */
 const REJECTED = Symbol("rejected");
-const contentsOf = (data: PatchData): Map<string, Set<string> | null> => { let m = CONTENTS.get(data); if (!m) CONTENTS.set(data, (m = new Map())); return m; };
 
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const memo = new Map<string, ReadonlySet<string> | null>(), looseMemo = new Map<string, ReadonlySet<string> | null>();
-  // 配置で比べる (S-200 段階 2、開発版だけ FRAME_JUDGE、?off=frameJudge で前のまま): 箱の中身 = 代表の品 1 個の枠、見本は代表の品だけ (打ち直さない)。出せない箱 (note) は作れない見本と同じ
-  const fr = FRAME_JUDGE ? frameOfDoc(data, doc) : null;
-  /** 人の中身の鍵 (配置で比べる間は品質の % を抜く) */
-  const own = (k: string): string => (fr ? frameKeyOf(k) : k);
-  const frameAt = (id: string): Frame | null => { const f = fr?.frames.get(id); return f && !f.note ? f : null; };
-  /** 見本 seed の ☑ (配置なら代表の品の ☑) */
-  const aimedAt = (id: string, seed: number): ReadonlySet<string> => (fr ? frameAt(id)?.aimed ?? new Set() : sampleAimed(data, doc, id, seed));
-  /** 箱の作れる見本 (seed と item) */
-  const samples = (id: string): Array<{ seed: number; item: StageItem }> => (fr ? (() => { const f = frameAt(id); return f ? [{ seed: 1, item: f.item }] : []; })() : doc.boxes[id] ? [1, 2, 3, 4].slice(0, SAMPLES).flatMap((seed) => { const s = sampleOf(data, doc, id, seed); return s.note === "none" || s.note?.startsWith("cant:") ? [] : [{ seed, item: s.item }]; }) : []);
+  // 配置で比べる (S-200 段階 2): 箱の中身 = 代表の品 1 個の枠、見本は代表の品だけ (打ち直さない)。出せない箱 (note) は作れない見本と同じ
+  const fr = frameOfDoc(data, doc);
+  /** 人の中身の鍵 (品質の % を抜く) */
+  const own = frameKeyOf;
+  const frameAt = (id: string): Frame | null => { const f = fr.frames.get(id); return f && !f.note ? f : null; };
+  /** 代表の品の ☑ */
+  const aimedAt = (id: string): ReadonlySet<string> => frameAt(id)?.aimed ?? new Set();
+  /** 箱の作れる見本 (代表の品 1 つ) */
+  const samples = (id: string): Array<{ seed: number; item: StageItem }> => { const f = frameAt(id); return f ? [{ seed: 1, item: f.item }] : []; };
   /** 箱の中身 (ふだんの比べ = 冒涜の発現済みの数を落とす。光のお告げの手のある箱と比べる時は full) */
   const contents = (id: string): ReadonlySet<string> | null => {
     if (looseMemo.has(id)) return looseMemo.get(id)!;
@@ -219,36 +207,11 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     const f = full(id);
     return f ? new Set([...f].map((k) => keyAt(k, d, c))) : null;
   };
-  /**
-   * 箱の中身。stop を渡すと、見本の中身を作る途中で stop が真の中身が出たらそこで止めて REJECTED を返す (覚えない)。
-   * 見本は同じ順に作るので、止まった中身は最後まで作った時の中身にも入っている = 比べの答えは同じ (S-71b ⑲)
-   */
+  /** 箱の中身 (代表の品の枠 1 つ)。stop を渡すと、その中身で stop が真なら REJECTED を返す (覚えない、S-71b ⑲) */
   const fullUntil = (id: string, stop?: (k: string) => boolean): ReadonlySet<string> | null | typeof REJECTED => {
     if (memo.has(id)) return memo.get(id)!;
-    if (fr) {
-      const f = frameAt(id), out = f ? new Set([f.key]) : null;
-      if (f && stop?.(f.key)) return REJECTED;
-      memo.set(id, out);
-      return out;
-    }
-    let out: Set<string> | null = null, cut = false;
-    // この間は木が変わらないので鍵は 1 回だけ (S-71b)
-    if (doc.boxes[id]) holdDocSig(doc, () => {
-      // 箱の中身は見本と同じ道の鍵で覚え続ける (判定を作り直すたびに全部の箱の見本を引いていた)
-      const key = boxKeyOf(doc, id), kept = key ? contentsOf(data).get(key) : undefined;
-      if (kept !== undefined) { out = kept; return; }
-      for (let seed = 1, last = 0; seed <= MAX; seed++) {
-        if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;
-        const s = sampleOf(data, doc, id, seed);
-        if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-        const k = contentOf(data, doc, s.item, sampleAimed(data, doc, id, seed));
-        if (stop?.(k)) { cut = true; return; }
-        if (!out?.has(k)) last = seed;
-        (out ??= new Set()).add(k);
-      }
-      if (key) putCapped(contentsOf(data), key, out, CONTENTS_MAX);
-    }, true);
-    if (cut) return REJECTED;
+    const f = frameAt(id), out = f ? new Set([f.key]) : null;
+    if (f && stop?.(f.key)) return REJECTED;
     memo.set(id, out);
     return out;
   };
@@ -287,10 +250,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       const k = own(contentOf(data, doc, item, aimed));
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
-    aimedOf: (id) => samples(id).map((s) => aimedAt(id, s.seed)),
+    aimedOf: (id) => samples(id).map(() => aimedAt(id)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)。途中の狙いは数える (S-33b)
-    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = aimedAt(id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
-    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = aimedAt(id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
+    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = aimedAt(id); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
+    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every(() => { const am = aimedAt(id); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };
 }

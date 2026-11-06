@@ -15,7 +15,6 @@ import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
-import { FRAME_JUDGE } from "../../../services/simulator/tree/tree-frame";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -172,8 +171,8 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;[gxuf]:[^\];]*/g, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
-  // 配置で組むと、道で当てた狙いが消えた形は「狙いが消えた」(前の打ち直しの見本では「外れ」の札で保存された物がある。鍵の中身 = 消えた MOD が同じ)。S-200、開発版だけ
-  const lostJunk = (t: string): string | null => (!FRAME_JUDGE ? null : /^\/lost\[/.test(t) ? t.replace(/^\/lost/, "/junk") : /^\/junk\[/.test(t) ? t.replace(/^\/junk/, "/lost") : null);
+  // 配置で組むと、道で当てた狙いが消えた形は「狙いが消えた」(前の打ち直しの見本では「外れ」の札で保存された物がある。鍵の中身 = 消えた MOD が同じ)。S-200
+  const lostJunk = (t: string): string | null => (/^\/lost\[/.test(t) ? t.replace(/^\/lost/, "/junk") : /^\/junk\[/.test(t) ? t.replace(/^\/junk/, "/lost") : null);
   const sw = swap(tail), lj = lostJunk(tail);
   const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : [])];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
