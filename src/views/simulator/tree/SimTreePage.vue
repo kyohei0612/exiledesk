@@ -409,7 +409,8 @@ const phone = usePhone();
       <!-- PC の形 (1280 以上、U-53) だけ。1100px 未満で右の列を木の下へ回す分かれ道は消した -->
       <div ref="row" class="flex min-h-0 gap-2 h-[var(--row-h)]" :class="full ? 'flex-1' : ''" :style="full ? {} : { '--row-h': `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
-        <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
+        <!-- overflow-clip: hidden だと枠の外の箱にフォーカス・寄せが来た時にブラウザが枠ごとスクロールし、枠が上へずれて下が描かれなかった (11-06、未設定の「次へ」の後) -->
+        <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
