@@ -19,7 +19,7 @@ import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf } from "./tree-outcome";
 import { isWhittleHand, rankVariants } from "./tree-whittle";
-import { aimedOfSample, sampleAimed } from "./tree-judge";
+import { sampleAimed } from "./tree-judge";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
@@ -278,9 +278,9 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
     try {
       const goals = doc.memoAims ?? [];
       for (let k = 0; k < FRAC_TRIES; k++) {
-        const alt = k ? sampleIn(data, doc, p.id, seed + 7919 * k) : base;
+        const alt = k ? sampleIn(data, doc, p.id, seed + 7919 * k) : base, altSeed = seed + 7919 * k;
         const ok = (m: StageMod): boolean => !m.fractured && !m.desecrated && !m.unrevealed && (b.aim ? m.modId === b.aim.modId : junkKeyOf(data, m) === b.junkKey && !goals.some((g) => g.modId === m.modId));
-        if ([...alt.item.prefixes, ...alt.item.suffixes].some(ok)) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
+        if ([...alt.item.prefixes, ...alt.item.suffixes].some(ok)) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims, altSeed);
       }
     } finally { altDeep = false; }
   }
@@ -289,7 +289,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
     try {
       for (let k = 1; k < HIT_TRIES; k++) {
         const alt = sampleIn(data, doc, p.id, seed + 7919 * k);
-        if (!aimHeldOn(data, alt.item, b.aim, { sameText: true })) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
+        if (!aimHeldOn(data, alt.item, b.aim, { sameText: true })) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims, seed + 7919 * k);
       }
     } finally { altDeep = false; }
   }
@@ -301,14 +301,14 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   if (!r0.note || altDeep) return r0;
   altDeep = true;
   try {
-    for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; }
+    for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims, seed + 7919 * k); if (!r.note) return r; }
     // 削減の順位の箱は、箱を作る時と同じく親の見本の外れをその順位の段へ差し替えて打つ (差し替えないと順位の箱の見本が作れない、S-65b)
     if (isWhittleHand(p.hand)) for (const v of rankVariants(data, base.item, aims, p.junkKey)) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
   } finally { altDeep = false; }
   return r0;
 }
-/** 親の見本 base に親の手を打って、この箱の見本を作る */
-export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
+/** 親の見本 base に親の手を打って、この箱の見本を作る。baseSeed = base が親の何番目の見本か (親を別の種で引き直した時は seed + 7919k) */
+export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[], baseSeed = seed): Sample {
   if (!p.hand || b.seen) return base;
   const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   // MOD を変えない手 (神・ヒネコラ、S-39): 親の見本に 1 回打つだけ、作れなかった見本の印 (note) も親のまま = 中身の組が親と同じ (同じ手の戻り S-51 で前の箱へ戻れる)
@@ -317,8 +317,9 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
+  // 親の見本の ☑ は、その見本の種で決める (前は見本の物そのもので引き、引けないと元の種の ☑ で数えたので、引き直した親の見本では先に誰かが ☑ を作ったかで結果が変わった。11-07 b18、S-74)
   let held: ReadonlySet<string> | undefined;
-  const aimedNow = (): ReadonlySet<string> | undefined => (held ??= aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed));
+  const aimedNow = (): ReadonlySet<string> | undefined => (held ??= sampleAimed(data, doc, p.id, baseSeed));
   // 数え上げられない手の側の鍵の無い箱は一番多い形だけ (ほかの形は整理で足す箱へ行く、S-21・S-74)
   const main = !b.junkKey && (b.out === "any" || b.out === "junk" || b.out === "hit") ? mainSideOf(data, base.item, p.hand) : undefined;
   const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
