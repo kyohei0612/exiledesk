@@ -1,4 +1,8 @@
 {
+  "0.1.672": [
+    "Emulator and Simulator: when using a bone on a Mark of the Abyssal Lord from Essence of the Abyss, the minimum mod level is now based on the level of the removed mod instead of the item level (mods at or below 40% of that level cannot appear)",
+    "Blog: updated the Essence of the Abyss article to the current rules"
+  ],
   "0.1.671": [
     "Emulator and Simulator: fixed Essences and the Omen of Catalysing Exaltation not working on Grasping Mail. As its implicit says, it can now roll all Ring mods too",
     "Emulator and Simulator: Essence of the Abyss always removed the Unrevealed Desecrated mod; it now removes a random removable mod, like other Essences"
