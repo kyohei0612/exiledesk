@@ -6,7 +6,7 @@ import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
-import { boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 
@@ -63,7 +63,11 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
   // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
-  if (!key || effectOf(key) === "fracture") return withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
+  if (!key || effectOf(key) === "fracture") {
+    const fo = withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
+    // ☑ に無い狙いが固定された結果は外れ (当たりの箱は ☑ の札だけ = 手を置く時の onlyOf と同じ、S-22。前は当たりのまま行き先が無かった = 枝の外れ探しの rowFracStar b9、11-06)
+    return key && fo.out === "hit" && own.length && !fo.hits.some((a) => own.some((x) => x.modId === a.modId)) ? { ...fo, out: "junk", hits: [] } : fo;
+  }
   const oc = withGot(data, nextKeyed(data, doc, b, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, am), before, after, got);
   // 数え上げられない手は当たりの人も形で分ける (S-21。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
   return oc.out === "hit" && b.hand && mainSideOf(data, before, b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
@@ -253,11 +257,9 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // もう持っている狙いがもう一度付く道は数えない (S-24。起きない当たりの箱が出た)
   const unheldAim = (a: Aim): boolean => smps.some((s) => !aimHeldOn(data, s.item, a, { sameText: true }));
   if (veiled) return [...extra.filter(unheldAim).map((a) => ({ out: "hit" as OutKind, aim: a })), ...vs("junk"), ...(veiledLost ? veiledLostOuts() : [])];
-  // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない 
-  // ✦ の無い MOD (完成の狙いでも) が固定される結果も起こらない (回す時は必ず ✦ を固定する、tree-sample の fractureTarget)
-  const marks = new Set(fractureMarks(doc).map((a) => a.modId));
-  const sure = k === "fracture" && h.pick !== "random" && marks.size > 0 && [...found.values()].some((e) => e.out === "hit" && !!e.aim && marks.has(e.aim.modId));
-  const list = [...found.values()].filter((e) => !sure || (e.out === "hit" && !!e.aim && marks.has(e.aim.modId)));
+  // ✦ の木のフラクチャーも結果は全部箱にする (S-43 の「✦ の当たりだけ箱、外れは費用に足す」は 11-05 撤回。回す時は素のフラクチャーで ✦ の無い MOD も固定されうるのに、
+  // 箱が無く行き先無しになっていた = 枝の外れ探しの rowFracStar b9、11-06。S-200 ①)
+  const list = [...found.values()];
   // 足す・入れ替える手が外れだけの時は、まだ付いていない狙いがある時だけ手の種類の箱へ (当たりの箱を作って MOD を選ばせる)。
   // 狙いが全部付いていれば外れ (と消えた) だけ (10-25 シミュ 28 の洗い出し: 満杯で削減のお告げのカオスに、起こりえない当たりの箱が出た)
   if (!list.length || ((k === "add" || k === "swap") && unheld && list.every((e) => e.out === "junk"))) return null;
