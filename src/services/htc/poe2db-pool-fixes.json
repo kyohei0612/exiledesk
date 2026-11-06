@@ -10472,6 +10472,893 @@
      "codes": []
     }
    ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_IncreasedLife",
+   "group": "Essence_IncreasedLife",
+   "field": "Essence_IncreasedLife",
+   "source": "essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "IncreasedLife",
+   "tags": [],
+   "text": "+# to maximum Life",
+   "tiers": [
+    {
+     "name": "Lesser Essence of the Body",
+     "ilvl": 16,
+     "weight": 0,
+     "ranges": [
+      [
+       30,
+       39
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "IncreasedLife3"
+     ]
+    },
+    {
+     "name": "Essence of the Body",
+     "ilvl": 46,
+     "weight": 0,
+     "ranges": [
+      [
+       85,
+       99
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "IncreasedLife7"
+     ]
+    },
+    {
+     "name": "Greater Essence of the Body",
+     "ilvl": 54,
+     "weight": 0,
+     "ranges": [
+      [
+       100,
+       119
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "IncreasedLife8"
+     ]
+    }
+   ],
+   "displayTags": [
+    "resource",
+    "life"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_DefencesPercent",
+   "group": "Essence_DefencesPercent",
+   "field": "Essence_DefencesPercent",
+   "source": "essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "DefencesPercent",
+   "tags": [],
+   "text": "#% increased Armour, Evasion and Energy Shield",
+   "tiers": [
+    {
+     "name": "Lesser Essence of Enhancement",
+     "ilvl": 16,
+     "weight": 0,
+     "ranges": [
+      [
+       27,
+       42
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "LocalIncreasedArmourAndEnergyShield2",
+      "LocalIncreasedArmourAndEvasion2",
+      "LocalIncreasedArmourAndEvasionAndEnergyShield2",
+      "LocalIncreasedEnergyShieldPercent2",
+      "LocalIncreasedEvasionAndEnergyShield2",
+      "LocalIncreasedEvasionRatingPercent2",
+      "LocalIncreasedPhysicalDamageReductionRatingPercent2"
+     ]
+    },
+    {
+     "name": "Essence of Enhancement",
+     "ilvl": 46,
+     "weight": 0,
+     "ranges": [
+      [
+       56,
+       67
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "LocalIncreasedArmourAndEnergyShield4",
+      "LocalIncreasedArmourAndEvasion4",
+      "LocalIncreasedArmourAndEvasionAndEnergyShield4",
+      "LocalIncreasedEnergyShieldPercent4",
+      "LocalIncreasedEvasionAndEnergyShield4",
+      "LocalIncreasedEvasionRatingPercent4",
+      "LocalIncreasedPhysicalDamageReductionRatingPercent4"
+     ]
+    },
+    {
+     "name": "Greater Essence of Enhancement",
+     "ilvl": 54,
+     "weight": 0,
+     "ranges": [
+      [
+       68,
+       79
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "LocalIncreasedArmourAndEnergyShield5",
+      "LocalIncreasedArmourAndEvasion5",
+      "LocalIncreasedArmourAndEvasionAndEnergyShield5",
+      "LocalIncreasedEnergyShieldPercent5",
+      "LocalIncreasedEvasionAndEnergyShield5_",
+      "LocalIncreasedEvasionRatingPercent5",
+      "LocalIncreasedPhysicalDamageReductionRatingPercent5"
+     ]
+    }
+   ],
+   "displayTags": [
+    "defences",
+    "armour",
+    "evasion",
+    "energy_shield"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_MaximumLifeIncreasePercent",
+   "group": "PerfectEssence_MaximumLifeIncreasePercent",
+   "field": "PerfectEssence_MaximumLifeIncreasePercent",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "MaximumLifeIncreasePercent",
+   "tags": [],
+   "text": "#% increased maximum Life",
+   "tiers": [
+    {
+     "name": "Perfect Essence of the Body",
+     "ilvl": 72,
+     "weight": 0,
+     "ranges": [
+      [
+       8,
+       10
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "EssenceIncreasedLifePercent1"
+     ]
+    }
+   ],
+   "displayTags": [
+    "resource",
+    "life"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_PhysicalDamageTakenAsChaos",
+   "group": "PerfectEssence_PhysicalDamageTakenAsChaos",
+   "field": "PerfectEssence_PhysicalDamageTakenAsChaos",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "PhysicalDamageTakenAsChaos",
+   "tags": [],
+   "text": "#% of Physical Damage from Hits taken as Chaos Damage",
+   "tiers": [
+    {
+     "name": "Perfect Essence of Ruin",
+     "ilvl": 72,
+     "weight": 0,
+     "ranges": [
+      [
+       10,
+       15
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "EssencePhysicalDamageTakenAsChaos1"
+     ]
+    }
+   ],
+   "displayTags": [
+    "physical",
+    "chaos"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_Thorns",
+   "group": "PerfectEssence_Thorns",
+   "field": "PerfectEssence_Thorns",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "Thorns",
+   "tags": [],
+   "text": "# to # Physical Thorns damage",
+   "tiers": [
+    {
+     "name": "Perfect Essence of Hysteria",
+     "ilvl": 63,
+     "weight": 0,
+     "ranges": [
+      [
+       64,
+       97
+      ],
+      [
+       98,
+       145
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "AttackerTakesDamage6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "physical_damage",
+    "damage",
+    "physical"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_EssenceGrantedPassive",
+   "group": "PerfectEssence_EssenceGrantedPassive",
+   "field": "PerfectEssence_EssenceGrantedPassive",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "EssenceGrantedPassive",
+   "tags": [],
+   "text": "Allocates a random Notable Passive Skill",
+   "tiers": [
+    {
+     "name": "Perfect Essence of Delirium",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_LocalRunicWardPercent",
+   "group": "PerfectEssence_LocalRunicWardPercent",
+   "field": "PerfectEssence_LocalRunicWardPercent",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "LocalRunicWardPercent",
+   "tags": [],
+   "alloy": true,
+   "text": "#% increased Runic Ward",
+   "tiers": [
+    {
+     "name": "Sovereign Alloy",
+     "ilvl": 25,
+     "weight": 0,
+     "ranges": [
+      [
+       24,
+       30
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "AlloyLocalWardIncreasePercent1"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_ChaosResistance",
+   "group": "Essence_ChaosResistance",
+   "field": "Essence_ChaosResistance",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "ChaosResistance",
+   "tags": [
+    "chaos_resistance",
+    "chaos",
+    "resistance"
+   ],
+   "text": "+#% to Chaos Resistance",
+   "tiers": [
+    {
+     "name": "Lesser Essence of Ruin",
+     "ilvl": 16,
+     "weight": 0,
+     "ranges": [
+      [
+       4,
+       7
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "ChaosResist1"
+     ]
+    },
+    {
+     "name": "Essence of Ruin",
+     "ilvl": 30,
+     "weight": 0,
+     "ranges": [
+      [
+       8,
+       11
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "ChaosResist2"
+     ]
+    },
+    {
+     "name": "Greater Essence of Ruin",
+     "ilvl": 56,
+     "weight": 0,
+     "ranges": [
+      [
+       16,
+       19
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "ChaosResist4"
+     ]
+    }
+   ],
+   "displayTags": [
+    "chaos_resistance",
+    "chaos",
+    "resistance"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_Strength",
+   "group": "Essence_Strength",
+   "field": "Essence_Strength",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "Strength",
+   "tags": [],
+   "text": "+# to Strength, Dexterity or Intelligence",
+   "tiers": [
+    {
+     "name": "Lesser Essence of the Infinite",
+     "ilvl": 11,
+     "weight": 0,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Strength2"
+     ]
+    },
+    {
+     "name": "Essence of the Infinite",
+     "ilvl": 33,
+     "weight": 0,
+     "ranges": [
+      [
+       17,
+       20
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Strength4"
+     ]
+    },
+    {
+     "name": "Greater Essence of the Infinite",
+     "ilvl": 55,
+     "weight": 0,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Strength6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "attribute"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_Dexterity",
+   "group": "Essence_Dexterity",
+   "field": "Essence_Dexterity",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "Dexterity",
+   "tags": [],
+   "text": "+# to Strength, Dexterity or Intelligence",
+   "tiers": [
+    {
+     "name": "Lesser Essence of the Infinite",
+     "ilvl": 11,
+     "weight": 0,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Dexterity2"
+     ]
+    },
+    {
+     "name": "Essence of the Infinite",
+     "ilvl": 33,
+     "weight": 0,
+     "ranges": [
+      [
+       17,
+       20
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Dexterity4"
+     ]
+    },
+    {
+     "name": "Greater Essence of the Infinite",
+     "ilvl": 55,
+     "weight": 0,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Dexterity6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "attribute"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_Intelligence",
+   "group": "Essence_Intelligence",
+   "field": "Essence_Intelligence",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "Intelligence",
+   "tags": [],
+   "text": "+# to Strength, Dexterity or Intelligence",
+   "tiers": [
+    {
+     "name": "Lesser Essence of the Infinite",
+     "ilvl": 11,
+     "weight": 0,
+     "ranges": [
+      [
+       9,
+       12
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Intelligence2"
+     ]
+    },
+    {
+     "name": "Essence of the Infinite",
+     "ilvl": 33,
+     "weight": 0,
+     "ranges": [
+      [
+       17,
+       20
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Intelligence4"
+     ]
+    },
+    {
+     "name": "Greater Essence of the Infinite",
+     "ilvl": 55,
+     "weight": 0,
+     "ranges": [
+      [
+       25,
+       27
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "Intelligence6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "attribute"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_FireResistance",
+   "group": "Essence_FireResistance",
+   "field": "Essence_FireResistance",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "FireResistance",
+   "tags": [
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "resistance"
+   ],
+   "text": "+#% to Fire Resistance",
+   "tiers": [
+    {
+     "name": "Lesser Essence of Insulation",
+     "ilvl": 12,
+     "weight": 0,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "FireResist2"
+     ]
+    },
+    {
+     "name": "Essence of Insulation",
+     "ilvl": 36,
+     "weight": 0,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "FireResist4"
+     ]
+    },
+    {
+     "name": "Greater Essence of Insulation",
+     "ilvl": 60,
+     "weight": 0,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "FireResist6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "elemental_resistance",
+    "fire_resistance",
+    "elemental",
+    "fire",
+    "resistance"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_ColdResistance",
+   "group": "Essence_ColdResistance",
+   "field": "Essence_ColdResistance",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "ColdResistance",
+   "tags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "resistance"
+   ],
+   "text": "+#% to Cold Resistance",
+   "tiers": [
+    {
+     "name": "Lesser Essence of Thawing",
+     "ilvl": 14,
+     "weight": 0,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "ColdResist2"
+     ]
+    },
+    {
+     "name": "Essence of Thawing",
+     "ilvl": 38,
+     "weight": 0,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "ColdResist4"
+     ]
+    },
+    {
+     "name": "Greater Essence of Thawing",
+     "ilvl": 60,
+     "weight": 0,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "ColdResist6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "cold_resistance",
+    "elemental_resistance",
+    "elemental",
+    "cold",
+    "resistance"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/Essence_LightningResistance",
+   "group": "Essence_LightningResistance",
+   "field": "Essence_LightningResistance",
+   "source": "essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "LightningResistance",
+   "tags": [
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "resistance"
+   ],
+   "text": "+#% to Lightning Resistance",
+   "tiers": [
+    {
+     "name": "Lesser Essence of Grounding",
+     "ilvl": 13,
+     "weight": 0,
+     "ranges": [
+      [
+       11,
+       15
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "LightningResist2"
+     ]
+    },
+    {
+     "name": "Essence of Grounding",
+     "ilvl": 37,
+     "weight": 0,
+     "ranges": [
+      [
+       21,
+       25
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "LightningResist4"
+     ]
+    },
+    {
+     "name": "Greater Essence of Grounding",
+     "ilvl": 60,
+     "weight": 0,
+     "ranges": [
+      [
+       31,
+       35
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "LightningResist6"
+     ]
+    }
+   ],
+   "displayTags": [
+    "elemental_resistance",
+    "lightning_resistance",
+    "elemental",
+    "lightning",
+    "resistance"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_ReducedCriticalStrikeDamageTaken",
+   "group": "PerfectEssence_ReducedCriticalStrikeDamageTaken",
+   "field": "PerfectEssence_ReducedCriticalStrikeDamageTaken",
+   "source": "perfect_essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "ReducedCriticalStrikeDamageTaken",
+   "tags": [],
+   "text": "Hits against you have #% reduced Critical Damage Bonus",
+   "tiers": [
+    {
+     "name": "Perfect Essence of Seeking",
+     "ilvl": 72,
+     "weight": 0,
+     "ranges": [
+      [
+       40,
+       50
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "EssenceReducedCriticalDamageAgainstYou1"
+     ]
+    }
+   ],
+   "displayTags": [
+    "damage",
+    "critical"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_PresenceRadius",
+   "group": "PerfectEssence_PresenceRadius",
+   "field": "PerfectEssence_PresenceRadius",
+   "source": "perfect_essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "PresenceRadius",
+   "tags": [],
+   "alloy": true,
+   "text": "#% increased Presence Area of Effect",
+   "tiers": [
+    {
+     "name": "Expansive Alloy",
+     "ilvl": 25,
+     "weight": 0,
+     "ranges": [
+      [
+       35,
+       50
+      ]
+     ],
+     "stats": [],
+     "codes": [
+      "AlloyPresenceAreaOfEffect1"
+     ]
+    }
+   ],
+   "displayTags": [
+    "aura"
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_SlowPotency",
+   "group": "PerfectEssence_SlowPotency",
+   "field": "PerfectEssence_SlowPotency",
+   "source": "perfect_essence",
+   "type": "suffix",
+   "categories": [],
+   "family": "SlowPotency",
+   "tags": [],
+   "alloy": true,
+   "text": "#% reduced Slowing Potency of Debuffs on You",
+   "tiers": [
+    {
+     "name": "Cyclonic Alloy",
+     "ilvl": 45,
+     "weight": 0,
+     "ranges": [
+      [
+       15,
+       30
+      ]
+     ],
+     "stats": []
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_str_dex_int/PerfectEssence_EssenceAbyss",
+   "group": "PerfectEssence_EssenceAbyss",
+   "field": "PerfectEssence_EssenceAbyss",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "EssenceAbyss",
+   "tags": [],
+   "text": "Mark of the Abyssal Lord",
+   "tiers": [
+    {
+     "name": "Perfect Essence of the Abyss",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ]
+  },
+  {
+   "id": "Body_Armours_ring_str_dex_int/PerfectEssence_EssenceAbyss",
+   "group": "PerfectEssence_EssenceAbyss",
+   "field": "PerfectEssence_EssenceAbyss",
+   "source": "perfect_essence",
+   "type": "prefix",
+   "categories": [],
+   "family": "EssenceAbyss",
+   "tags": [],
+   "text": "Mark of the Abyssal Lord",
+   "tiers": [
+    {
+     "name": "Perfect Essence of the Abyss",
+     "ilvl": 1,
+     "weight": 0,
+     "ranges": [],
+     "stats": []
+    }
+   ]
   }
  ],
  "pools": {
@@ -11234,7 +12121,8 @@
       "Body_Armours_str_dex_int/PerfectEssence_PhysicalDamageTakenAsChaos",
       "Body_Armours_str_dex_int/PerfectEssence_Thorns",
       "Body_Armours_str_dex_int/PerfectEssence_EssenceGrantedPassive",
-      "Body_Armours_str_dex_int/PerfectEssence_LocalRunicWardPercent"
+      "Body_Armours_str_dex_int/PerfectEssence_LocalRunicWardPercent",
+      "Body_Armours_str_dex_int/PerfectEssence_EssenceAbyss"
      ],
      "suffixes": [
       "Body_Armours_str_dex_int/Essence_ChaosResistance",
@@ -11272,6 +12160,35 @@
      "Body_Armours_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_energy_shield_base_spirit_from_equipment",
      "Body_Armours_str_dex_int/Rune_soul_BaseLocalDefencesAndLife__local_evasion_and_energy_shield_base_spirit_from_equipment"
     ]
+   }
+  },
+  "Body_Armours_ring_str_dex_int": {
+   "essence": {
+    "add": {
+     "prefixes": [
+      "Body_Armours_ring_str_dex_int/Essence_IncreasedLife",
+      "Body_Armours_ring_str_dex_int/Essence_DefencesPercent",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_MaximumLifeIncreasePercent",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_PhysicalDamageTakenAsChaos",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_Thorns",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_EssenceGrantedPassive",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_LocalRunicWardPercent",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_EssenceAbyss"
+     ],
+     "suffixes": [
+      "Body_Armours_ring_str_dex_int/Essence_ChaosResistance",
+      "Body_Armours_ring_str_dex_int/Essence_Strength",
+      "Body_Armours_ring_str_dex_int/Essence_Dexterity",
+      "Body_Armours_ring_str_dex_int/Essence_Intelligence",
+      "Body_Armours_ring_str_dex_int/Essence_FireResistance",
+      "Body_Armours_ring_str_dex_int/Essence_ColdResistance",
+      "Body_Armours_ring_str_dex_int/Essence_LightningResistance",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_ReducedCriticalStrikeDamageTaken",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_PresenceRadius",
+      "Body_Armours_ring_str_dex_int/PerfectEssence_SlowPotency"
+     ]
+    },
+    "remove": []
    }
   }
  },
@@ -13075,6 +13992,154 @@
   "essence:perfect:Talismans/PerfectEssence_LightningDamageCanIgnite": {
    "en": "The Runefather's Alloy",
    "ja": "ルーンファーザーの合金"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_IncreasedLife": {
+   "en": "Lesser Essence of the Body",
+   "ja": "肉体のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_IncreasedLife": {
+   "en": "Essence of the Body",
+   "ja": "肉体のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_IncreasedLife": {
+   "en": "Greater Essence of the Body",
+   "ja": "肉体のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_DefencesPercent": {
+   "en": "Lesser Essence of Enhancement",
+   "ja": "強化のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_DefencesPercent": {
+   "en": "Essence of Enhancement",
+   "ja": "強化のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_DefencesPercent": {
+   "en": "Greater Essence of Enhancement",
+   "ja": "強化のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_ChaosResistance": {
+   "en": "Lesser Essence of Ruin",
+   "ja": "破滅のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_ChaosResistance": {
+   "en": "Essence of Ruin",
+   "ja": "破滅のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_ChaosResistance": {
+   "en": "Greater Essence of Ruin",
+   "ja": "破滅のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_Strength": {
+   "en": "Lesser Essence of the Infinite",
+   "ja": "無限のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_Strength": {
+   "en": "Essence of the Infinite",
+   "ja": "無限のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_Strength": {
+   "en": "Greater Essence of the Infinite",
+   "ja": "無限のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_Dexterity": {
+   "en": "Lesser Essence of the Infinite",
+   "ja": "無限のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_Dexterity": {
+   "en": "Essence of the Infinite",
+   "ja": "無限のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_Dexterity": {
+   "en": "Greater Essence of the Infinite",
+   "ja": "無限のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_Intelligence": {
+   "en": "Lesser Essence of the Infinite",
+   "ja": "無限のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_Intelligence": {
+   "en": "Essence of the Infinite",
+   "ja": "無限のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_Intelligence": {
+   "en": "Greater Essence of the Infinite",
+   "ja": "無限のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_FireResistance": {
+   "en": "Lesser Essence of Insulation",
+   "ja": "断熱のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_FireResistance": {
+   "en": "Essence of Insulation",
+   "ja": "断熱のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_FireResistance": {
+   "en": "Greater Essence of Insulation",
+   "ja": "断熱のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_ColdResistance": {
+   "en": "Lesser Essence of Thawing",
+   "ja": "解凍のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_ColdResistance": {
+   "en": "Essence of Thawing",
+   "ja": "解凍のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_ColdResistance": {
+   "en": "Greater Essence of Thawing",
+   "ja": "解凍のグレーターエッセンス"
+  },
+  "essence:lesser:Body_Armours_ring_str_dex_int/Essence_LightningResistance": {
+   "en": "Lesser Essence of Grounding",
+   "ja": "接地のレッサーエッセンス"
+  },
+  "essence:normal:Body_Armours_ring_str_dex_int/Essence_LightningResistance": {
+   "en": "Essence of Grounding",
+   "ja": "接地のエッセンス"
+  },
+  "essence:greater:Body_Armours_ring_str_dex_int/Essence_LightningResistance": {
+   "en": "Greater Essence of Grounding",
+   "ja": "接地のグレーターエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_MaximumLifeIncreasePercent": {
+   "en": "Perfect Essence of the Body",
+   "ja": "肉体のパーフェクトエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_PhysicalDamageTakenAsChaos": {
+   "en": "Perfect Essence of Ruin",
+   "ja": "破滅のパーフェクトエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_Thorns": {
+   "en": "Essence of Hysteria",
+   "ja": "ヒステリーのエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_EssenceGrantedPassive": {
+   "en": "Essence of Delirium",
+   "ja": "錯乱のエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": {
+   "en": "Perfect Essence of Seeking",
+   "ja": "探求のパーフェクトエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_PresenceRadius": {
+   "en": "Expansive Alloy",
+   "ja": "拡張の合金"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_SlowPotency": {
+   "en": "Cyclonic Alloy",
+   "ja": "旋風の合金"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_LocalRunicWardPercent": {
+   "en": "Sovereign Alloy",
+   "ja": "王権の合金"
+  },
+  "essence:perfect:Body_Armours_str_dex_int/PerfectEssence_EssenceAbyss": {
+   "en": "Essence of the Abyss",
+   "ja": "アビスのエッセンス"
+  },
+  "essence:perfect:Body_Armours_ring_str_dex_int/PerfectEssence_EssenceAbyss": {
+   "en": "Essence of the Abyss",
+   "ja": "アビスのエッセンス"
   }
  }
 }
