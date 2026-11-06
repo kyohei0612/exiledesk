@@ -6,7 +6,6 @@
 import { TIER } from "../../state/for-share/tier-word";
 import { itemLevelKey } from "../../services/emulator/emu-engine";
 import { inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft-stage/engine";
-import { useFlash } from "../../utils/use-flash";
 import { useViewOnlyWidth } from "../../utils/use-phone";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
@@ -55,15 +54,12 @@ function setIlvl(lv: number): void {
   if (lv !== curIlvl.value) s.use(itemLevelKey(lv));
 }
 const jewelBase = computed(() => !!s.item.value && inGroup(s.item.value.cls.category, "jewel"));
-/** JSON をコピー (POE2Tube に渡す / CLI の --prices に使う) */
-const copyNote = useFlash();
-const copied = copyNote.msg;
+/** JSON をコピー (POE2Tube に渡す / CLI の --prices に使う)。「コピーしました」を 2.5 秒出す知らせは 11-07 に消した (オーナー「こういうのいらん」) */
 async function copy(label: string, v: unknown): Promise<void> {
   try {
     await navigator.clipboard.writeText(JSON.stringify(v, null, 2));
-    copyNote.flash(tr(`${label}をコピーしました`, `Copied ${label}`));
-  } catch {
-    copyNote.flash(tr("コピーできませんでした", "Copy failed"));
+  } catch (e) {
+    console.warn(`${label}: copy failed`, e);
   }
 }
 /** 手で打つ画面の今のアイテムの MOD 群 (未発現は除く。固定・冒涜も同じ条件で、種類は問わない) */
@@ -120,7 +116,6 @@ function armReset(): void {
     <button v-if="TO_SIM_ON && EMU_TO_SIM && s.item.value" type="button" data-sim-from-stage :class="btn" :title="tr(`このアイテム (ベース・アイテムレベル・付いている MOD 全部) をシミュレーターへ。MOD はその${TIER}以上の完成の狙いに入る`, 'Send this item (base, item level and all its mods) to the simulator. Its mods become final targets at that tier or better')" @click="void openSimWithItem(s.item.value)">{{ tr("シミュレーターへ →", "To the simulator →") }}</button>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
-      <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)', 'Steps so far as plan JSON (same seed, so craft-stage-run.mjs gives the same result)')" @click="copy(tr('手順 JSON', 'plan JSON'), s.plan())">{{ tr("手順 JSON", "Plan JSON") }}</button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('POE2Tube に渡す結果 JSON (今の相場の値段で)', 'Result JSON for POE2Tube (at current market prices)')" @click="copy(tr('結果 JSON', 'result JSON'), s.result(pkg.version))">{{ tr("結果 JSON", "Result JSON") }}</button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :title="tr('craft-stage-run.mjs の --prices に渡す相場 (高貴建て)', 'Market prices for craft-stage-run.mjs --prices (in Exalted)')" @click="copy(tr('相場 JSON', 'price JSON'), s.prices())">{{ tr("相場 JSON", "Price JSON") }}</button>
