@@ -352,10 +352,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   if (!b) return;
   // カタリストの手で「何 % まで」を決めた物は見える「打った後」の箱 1 つ (S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け)
   const outsOf: OutKind[] = kind === "quality" && (hand.quality ?? 0) > 0 ? ["any"] : OUTS_OF[kind];
-  const now = b.outs.map((o) => d.boxes[o]!.out);
-  // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
-  const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && outsOf.includes(k));
-  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !kept && !hold();
+  // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)
+  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !hold();
   // 印の無い木の乱数のフラクチャー (hand.pick) は当たり + 外れ (どの MOD が固定されるかは乱数。起こりうる結果が取れない時の既定、要望 8a159e29)
   const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? outsOf.filter((k) => k !== "lost") : outsOf;
   if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
@@ -367,17 +365,12 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   if (noLost || (only && !want.includes("lost") && outsOf.includes("lost") && !hold())) b.noLost = true; else delete b.noLost;
   // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)
   const keysOf = (k: OutKind): string[] => (only ?? []).flatMap((o) => (o.out === k && o.junkKey ? [o.junkKey] : []));
-  const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();
-  // 鍵の組が今の箱と違えば作り直す (前の版の 1 箱の外れに同じ手を選び直すと側ごとに分かれる)
-  const sameKeys = !only || keySig(only) === keySig(b.outs.map((o) => d.boxes[o]!));
-  const same = b.hand && sameHand(b.hand, hand) && sameKeys && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
   delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh; delete b.autoAnnul;
-  // 同じ手を選び直した時は、今の箱と先はそのままで、箱の無い狙いの当たりだけ足す (後から完成の狙いに足した MOD など。10-26 オーナー「全ての結果を表示して」、外れへ自動で入れない)
-  // 狙い無し (free) も、付きうる狙いの当たりの箱を打った後の横に足す (打った後は狙いが付かなかった人だけ、tree-shape の outBoxOf。10-26 オーナー「当たってたら次の回に消去でそれ決める」)
-  if (same) { if ((want.includes("hit") && GROUPED.includes(kind)) || kind === "free") addHits(d, b, aims, order); return; }
+  // 手をやり直したら (同じ手を選び直した時も) 下は全部消して、今の品と今の手で結果を作り直す。下の手は残さない (S-57b、11-06 オーナー「そもそも手をやり直したら全リセットって話でしょ」。
+  // 前は同じ手なら今の箱と先をそのまま残し、上の手で枠が変わった後の古い結果が残った)
   for (const o of b.outs) drop(d, subtree(d, o));
   // 当たりの箱は MOD ごと (10-26 オーナー「デフォではまとめないほうね」。まとめるのは人が「動きをまとめる」で選んだ箱だけ、joinSide)。
   // 前に「動きをまとめる」の箱 (anyOf) を通った道では、どれが付いているかが人ごとに違う (見本 1 人の付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
