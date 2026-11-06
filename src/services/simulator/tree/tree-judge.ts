@@ -229,13 +229,14 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     contents,
     capShort,
     fitsBox(from, to) {
-      if (from === to || !doc.boxes[from] || !doc.boxes[to] || capShort(from, to)) return false;
+      // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
+      // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
+      if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
       // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
-      const b = setFor(to, to);
+      const b = contents(to);
       if (!b) return false;
-      const d = needsDesecrated(doc, to), c = needsCrafted(doc, to);
-      if (fullUntil(from, (k) => !b.has(d || c ? keyAt(k, d, c) : looseKey(k))) === REJECTED) return false;
-      const a = setFor(to, from);
+      if (fullUntil(from, (k) => !b.has(looseKey(k))) === REJECTED) return false;
+      const a = contents(from);
       return !!a && a.size === b.size && [...a].every((k) => b.has(k));
     },
     fitsItem(item, aimed, to) {

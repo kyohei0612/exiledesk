@@ -42,12 +42,12 @@ export function idleLoop(doc: TreeDoc, id: string, t: string, j: Judge): boolean
 }
 
 /**
- * 自動の ↩ の行き先 (S-50e):中身が同じ手のある箱のうち、親 → 親と同じ手の箱 → 浅い段・先に作った箱の順。
+ * 自動の ↩ の行き先 (S-50e):中身が同じ手のある箱のうち、親 → 浅い段・先に作った箱の順 (親の手と同じ手かは見ない、11-06 オーナー「前カレンシ〜も見てたからな」)。
  * 自分と下、打っても変わらない手の輪になる箱 (idleLoop) は入れない
  */
 export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
-  const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null, ph = p ? doc.boxes[p]?.hand : null;
-  const rank = (t: string): number => (t === p ? 0 : ph && sameHand(doc.boxes[t]?.hand, ph) ? 1 : 2);
+  const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null;
+  const rank = (t: string): number => (t === p ? 0 : 1);
   const cmp = shallow(doc);
   return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
 }
