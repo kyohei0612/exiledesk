@@ -1,20 +1,17 @@
 <!--
-  StagePhoneBar.vue — スマホの下の帯 (持っている物を使う・離す・戻す・持っている物の説明・打った結果)。CraftStage.vue から分けた (2026-10-16、500 行の決まり)。
-  出すかどうか (スマホ・手で打つ時・持っている / 発現の候補がある) は親が決める
+  StagePhoneBar.vue — スマホの下の帯 (持っている物を使う・離す・戻す・持っている物の説明)。CraftStage.vue から分けた (2026-10-16、500 行の決まり)。
+  出すかどうか (スマホ・手で打つ時・持っている / 発現の候補がある) は親が決める。
+  打った後に「＋ MOD / － MOD」を 5 秒出す知らせは 11-07 に消した (オーナー「こういうのいらん」。打った結果は MOD 一覧の光と取り消し線 = M-42)
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { stageAdds, stageHelp } from "../../state/for-share/craft-stage-help";
 import { tr } from "../../i18n/lang";
-import { stageModText } from "../../components/for-share/item/base-values";
 import { flag } from "../../web/release-flags";
 
 const emit = defineEmits<{ scrollToReveal: [] }>();
 
-/** 帯から打った直後の結果 (次の操作か 5 秒まで帯に出す。カードと直前の変化は画面の上で見えないため。2026-10-08 レビュー A1) */
-const barMsg = ref<{ text: string; tone: string } | null>(null);
-let barTimer: ReturnType<typeof setTimeout> | undefined;
 /**
  * 持っている物の短い説明 (帯に箇条書き。PC の説明カードと同じ元 = craft-stage-help の stageHelp / stageAdds)。
  * 2026-10-08 オーナー「説明文は小さくてもいいからタップした際付けた方がいい、箇条書きでいい。増強とかアイテムレベルの加減あるでしょ」
@@ -33,32 +30,11 @@ const heldWhy = computed(() => (s.held.value ? s.usable(s.held.value) : null));
 function useFromBar(): void {
   if (heldWhy.value) return;
   s.use();
-  const last = s.last.value;
-  const parts: string[] = [];
-  if (last) {
-    if (!last.out.applied) parts.push(tr(`打てない: ${last.out.reason ?? ""}`, `Can't use: ${last.out.reason ?? ""}`));
-    for (const m of last.added) parts.push(`${tr("＋", "+")} ${stageModText(m)}`);
-    for (const m of last.removed) parts.push(`${tr("－", "-")} ${stageModText(m)}`);
-    if (last.out.note) parts.push(String(last.out.note));
-    if (!parts.length) parts.push(tr("MOD は変わらない", "No mod change"));
-  }
-  barMsg.value = { text: parts.join("  "), tone: last && !last.out.applied ? "text-rose-300" : last?.removed.length && !last.added.length ? "text-rose-300" : "text-emerald-300" };
-  clearTimeout(barTimer);
-  // 2 行まで出して、次の操作 (持つ / 離す) か 5 秒で消す (1 行 1.8 秒だとカオスの ＋/－ が読めなかった。2026-10-08 レビュー)
-  barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 }
 /** 説明は既定で閉じて「説明 ▾」で開く (スイッチ phoneHelp、U-29・U-51、オーナー 10-28「スマホはすべて任意のが情報量少なくていい」「aで合ってる」。シミュの TreeHandShelf と同じ形)。開いたら全文 */
 const HELP_FOLD = flag("phoneHelp");
 const helpOpen = ref(false);
-watch(() => s.held.value, () => { barMsg.value = null; helpOpen.value = false; });
-// 発現 (3 つから選ぶ) で付いた物も帯に出す (帯から打った時しか出ていなかった)
-watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
-  const last = s.last.value;
-  if (n <= (o ?? 0) || !last || !String(last.out.currency).startsWith("reveal")) return;
-  barMsg.value = { text: last.added.map((m) => `${tr("＋", "+")} ${stageModText(m)}`).join("  ") || tr("発現した", "Revealed"), tone: "text-emerald-300" };
-  clearTimeout(barTimer);
-  barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
-});
+watch(() => s.held.value, () => { helpOpen.value = false; });
 </script>
 
 <template>
@@ -69,13 +45,11 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
       <button type="button" class="min-h-11 rounded-lg bg-rose-500/30 px-3 py-2 font-bold text-rose-50 ring-1 ring-rose-400/70" @click="emit('scrollToReveal')">{{ tr("選ぶ ↑", "Choose ↑") }}</button>
     </div>
     <template v-else>
-      <!-- 打った直後は結果 (次の操作か 5 秒まで)。その後は持っている物と掛けたお告げ -->
-      <p v-if="barMsg" class="mb-1 text-[12px] font-bold leading-snug" :class="barMsg.tone">{{ barMsg.text }}</p>
-      <!-- 結果を出している間も、次が打てない理由は出す (「使う」が灰色の訳が見えなかった。2026-10-08 使い倒しテスト) -->
+      <!-- 次が打てない理由は出す (「使う」が灰色の訳が見えなかった。2026-10-08 使い倒しテスト) -->
       <p v-if="heldWhy" class="mb-1 text-[12px] text-rose-300">{{ heldWhy }}</p>
       <!-- 持っている物の説明 (箇条書き、全部の行を折り返して出す。画面の 4 割を超える時だけ中で送る) -->
-      <button v-else-if="heldHelp.length && !barMsg && HELP_FOLD && !helpOpen" type="button" data-held-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="false" @click="helpOpen = true">{{ tr("説明 ▾", "Details ▾") }}</button>
-      <div v-else-if="heldHelp.length && !barMsg" data-held-help class="mb-1 max-h-[40vh] overflow-y-auto">
+      <button v-else-if="heldHelp.length && HELP_FOLD && !helpOpen" type="button" data-held-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="false" @click="helpOpen = true">{{ tr("説明 ▾", "Details ▾") }}</button>
+      <div v-else-if="heldHelp.length" data-held-help class="mb-1 max-h-[40vh] overflow-y-auto">
         <button v-if="HELP_FOLD" type="button" data-held-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="true" @click="helpOpen = false">{{ tr("説明を閉じる ▴", "Hide details ▴") }}</button>
         <ul class="list-disc pl-4 text-[11px] leading-snug text-white/70">
           <li v-for="(l, i) in heldHelp" :key="i" class="pr-1">{{ l }}</li>
