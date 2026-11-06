@@ -103,7 +103,7 @@ export type Action =
    * sideWhenFull: 付ける側 (エッセンスの MOD の側) が埋まっている時はその側から消す (2026-10-14 オーナーがゲームで確認)。
    * overLimitVoids: 上限を超えている側の MOD に当たったら手ごと不成立 (カオス、2026-10-14 オーナーがゲームで確認)。
    * optional: 消せる物が無ければ消さずに通す (深淵のエッセンスは空きに印を付ける)
-   * unrevealedFirst: 未発現の冒涜 MOD があればそれを消す (深淵のエッセンスは未発現に入れ替わる。2026-10-16 オーナーがゲームで確認)
+   * unrevealedFirst: 未発現の冒涜 MOD があればそれを消す (今はどの手も使っていない。深淵のエッセンスは 2026-11-06 に等しく選ぶ形に、E-52)
    */
   | { remove: { n: number | "all"; pick: "equal" | "desecrated"; ifAny?: boolean; sideWhenFull?: boolean; overLimitVoids?: boolean; optional?: boolean; unrevealedFirst?: boolean } }
   /** コラプトにする (腐食のお告げ) */

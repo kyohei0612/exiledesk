@@ -60,7 +60,8 @@ const main = async () => {
   /**
    * ベースの暗黙 MOD が足すタグ (Mods の adds_tags)。グラスピングメイルの「Can roll Ring Modifiers」(ItemCanAlsoRollRingMods)
    * は ring を足す = 指輪の MOD も引ける (2026-10-16 要望 a286ced8、poe2db「Can roll Ring Modifiers」)。
-   * genesis_tree_* は創生の樹の印 (通貨では付かない、special の置き場の話) なので足さない
+   * 一緒に足す genesis_tree_caster / minion も残す (スペル・ミニオンの MOD もクラフトで付く。poe2db・CoE、2026-11-06 オーナー
+   * 「グラスピングの暗黙の効果に準じて指輪のMOD足した方が良いな普通に」。10-16〜11-06 は足していなかった)
    */
   const implicitTags = await readImplicitTags(MODS);
   const ownTags = (r) => [...(r.Tags || []).map((i) => tagIds[i]).filter(Boolean), ...(implicitTags.get(r.Name) || [])];
@@ -160,7 +161,8 @@ const main = async () => {
     } else {
       // 上流の流儀で id を付ける: 行の呼び方 + クラス由来でないタグ (`str_dex_int_armour` -> `str_dex_int`)
       const extra = signatureTags(tags)
-        .filter((t) => !(CLASS_TAGS[cid] || []).includes(t))
+        // genesis_tree_* (グラスピングメイルの暗黙が足す) は行の名前に入れない (Body_Armours_ring_str_dex_int のまま)
+        .filter((t) => !(CLASS_TAGS[cid] || []).includes(t) && !t.startsWith("genesis_tree"))
         .map((t) => t.replace(/_armour$/, ""));
       const key = [ROW_NAME[cid] || cid.replace(/\s+/g, "_"), ...extra].join("_");
       if (!newClasses.has(key)) newClasses.set(key, { cls: cid, names: [], tags });

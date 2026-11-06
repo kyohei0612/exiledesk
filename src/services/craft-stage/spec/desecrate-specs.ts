@@ -11,10 +11,13 @@ import { GNAWED_MAX_ILVL } from "../stage-core";
 import type { Action, CurrencySpec, Limit, ModPool, OmenSpec, Source, Target } from "./types";
 
 /**
- * アビサルロードの紋章から打つ骨の段の下限 = アイテムレベル × 0.4 の切り捨て (用語集 MarkofAbyssalLord は「a higher tier」だけ。
- * Craft of Exile の poe2_desecrate と同じ式、2026-10-16 オーナー「進めて」で CoE に。前は 33 固定 (poe2fun の 1 件、仮))
+ * アビサルロードの紋章から打つ骨の段の下限 (E-11d の N、段のレベル N 以上が出る)。
+ * 消された元の MOD の段のレベル L (markFrom) × 0.4 の四捨五入「以下」は出ない = N はその値 + 1 (2026-11-06 オーナー「消された元の MOD のレベルだね参照」「四捨五入だそうです」)。
+ * 消した MOD が無い紋章 (空きに付いた・L を持つ前の保存) は下限なし (オーナー「アイテムレベルではなくエッセンスで消したMODのMODレベルが正解」。
+ * 前のアイテムレベル × 0.4 の切り捨て = 2026-10-16 CoE poe2_desecrate は撤回 E-65b)
  */
-export const markFloorOf = (itemLevel: number): number => Math.floor(itemLevel * 0.4); // E-65・E-11d (N はアイテムレベル × 0.4)
+export const markFloorOf = (mark: { markFrom?: number }): number => // E-65
+  mark.markFrom != null ? Math.round(mark.markFrom * 0.4) + 1 : 0;
 
 /** 骨の部位ごとの説明文と対象 (種類 = 噛み切られた / 保存された / 古代の は同じ文) */
 const BONE_PARTS = {

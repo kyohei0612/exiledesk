@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.672",
+  "date": "2026-11-06",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: 深淵のエッセンスで付いたアビサルロードの紋章から骨を打つ時、出る MOD の下限をアイテムレベルではなく、消した MOD のレベルから決めるようにしました (そのレベルの 40% 以下の MOD は出ません)",
+    "en": "Emulator and Simulator: when using a bone on a Mark of the Abyssal Lord from Essence of the Abyss, the minimum mod level is now based on the level of the removed mod instead of the item level (mods at or below 40% of that level cannot appear)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ブログ: 深淵のエッセンスの記事を今の決まりに直しました",
+    "en": "Blog: updated the Essence of the Abyss article to the current rules"
+   }
+  ]
+ },
+ {
+  "v": "0.1.671",
+  "date": "2026-11-06",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: グラスピングメイルにエッセンスが 1 つも打てなかった不具合と、触媒の高貴のお告げが打てなかった不具合を直しました。暗黙の「指輪の MOD も付く」どおり、指輪の MOD も全部付くようにしました",
+    "en": "Emulator and Simulator: fixed Essences and the Omen of Catalysing Exaltation not working on Grasping Mail. As its implicit says, it can now roll all Ring mods too"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: 深淵のエッセンスは未発現の冒涜 MOD を必ず消していたのを、普通のエッセンスと同じく消せる MOD からランダムに 1 つ消すように直しました",
+    "en": "Emulator and Simulator: Essence of the Abyss always removed the Unrevealed Desecrated mod; it now removes a random removable mod, like other Essences"
+   }
+  ]
+ },
+ {
   "v": "0.1.670",
   "date": "2026-11-05",
   "items": [
@@ -1156,30 +1192,6 @@
     "area": "",
     "text": "シミュレーター: v0.1.631 の直しで、エッセンスで付けた狙いが消去で消えた人が「外れが消えた」に数えられ、テスト走行で止まっていたのを直しました",
     "en": "Simulator: Fixed a v0.1.631 issue where a target added by an Essence and then removed by an Orb of Annulment was counted as \"miss removed\", getting runs stuck in test runs"
-   }
-  ]
- },
- {
-  "v": "0.1.631",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ☑ を付けていない MOD は外れ MOD として扱うように (テスト走行・100 人で、☑ 以外の狙いが付いても止まらず外れの箱へ進みます)",
-    "en": "Simulator: Unchecked mods now count as misses (in test runs and 100-run simulations, landing a target without a ☑ goes to the miss box instead of getting stuck)"
-   }
-  ]
- },
- {
-  "v": "0.1.630",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 打つ手の窓で ☑ を付けていない狙いまで当たりの箱になっていたのを直しました (☑ を付けた MOD だけが当たりの箱になります。v0.1.629 の変更を戻しました)",
-    "en": "Simulator: Fixed unchecked target mods also becoming hit boxes in the craft picker (only ☑ mods get hit boxes again; reverts the v0.1.629 change)"
    }
   ]
  }

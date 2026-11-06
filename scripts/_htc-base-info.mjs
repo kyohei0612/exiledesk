@@ -19,7 +19,9 @@ export async function readImplicitTags(MODS) {
   for (const r of BI) {
     if (!r.Name) continue;
     for (const i of r.Implicit_Mods || []) {
-      const add = ((MODS[(MI[i] || {}).Id] || {}).adds_tags || []).filter((t) => !t.startsWith("genesis_tree"));
+      // genesis_tree_* も捨てない: 足すのはグラスピングメイルの ItemCanAlsoRollRingMods だけで、スペル・ミニオンの MOD も
+      // クラフトで付く (poe2db・CoE、2026-11-06 オーナー「グラスピングの暗黙の効果に準じて指輪のMOD足した方が良いな普通に」)
+      const add = (MODS[(MI[i] || {}).Id] || {}).adds_tags || [];
       if (!add.length) continue;
       const set = out.get(r.Name) ?? new Set();
       for (const t of add) set.add(t);
