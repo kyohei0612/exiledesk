@@ -19,6 +19,7 @@ import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
 import { isWhittleHand, WHITTLE } from "./tree-whittle";
 import { withTreeTune } from "./tree-tune";
+import { holdsAt } from "./tree-foresee";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 import { DEV_BUILD } from "../../../web/release-flags";
 
@@ -146,8 +147,10 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const s = splitOf(data, doc, b, f, aims, part);
       if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
       for (const [out, p] of s.lost) miss.push({ box: id, out, p });
+      // ヒネコラの結果の箱 (予見の箱、S-39) は MOD の変わらない同じ予見済みの品。当たり / ハズレは持った手の結果の分けなので、枝の無い箱もヒネコラの枝を持つ
+      const held = [...s.to.values()].flat();
       for (const o of kids) {
-        const c = doc.boxes[o]!, brs = s.to.get(o);
+        const c = doc.boxes[o]!, brs = s.to.get(o) ?? (holdsAt(doc, o) && held.length ? held : undefined);
         if (c.seen || !brs?.length) { same(o, c.seen ? null : "nobranch"); continue; }
         const sum = brs.reduce((n, r) => n + r.p, 0);
         const pick = (r: Br): Frame => { const am = nextAimed(data, doc, f.aimed, o, r.item, f.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
