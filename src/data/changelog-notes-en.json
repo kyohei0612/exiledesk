@@ -1,4 +1,7 @@
 {
+  "0.1.677": [
+    "Emulator: removed the notice of added/removed mods that appeared in the bottom bar after each craft on phones (results stay visible in the mod list)"
+  ],
   "0.1.676": [
     "Simulator: in the tree, the step labels above and below a folded Annulment card now sit midway between the boxes, so the lines are even"
   ],

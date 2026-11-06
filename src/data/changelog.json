@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.677",
+  "date": "2026-11-07",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: スマホで打った後に下の帯へ出ていた MOD の増減の知らせを消しました (結果は MOD 一覧で見られます)",
+    "en": "Emulator: removed the notice of added/removed mods that appeared in the bottom bar after each craft on phones (results stay visible in the mod list)"
+   }
+  ]
+ },
+ {
   "v": "0.1.676",
   "date": "2026-11-07",
   "items": [
@@ -1053,30 +1065,6 @@
     "area": "",
     "text": "英語表示で「reduced」「less」の MOD の数字がマイナスで出ていたのを直しました",
     "en": "Fixed mods with \"reduced\" or \"less\" showing a negative number in English (e.g. \"-24% reduced\")"
-   }
-  ]
- },
- {
-  "v": "0.1.636",
-  "date": "2026-10-27",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: フラクチャーの印 (✦) を決めていない木 (白ベースから・冒涜の後など) でも、フラクチャーのオーブを打てるように。どの MOD が固定されたかで枝分かれします",
-    "en": "Simulator: You can now use a Fracturing Orb in trees with no fracture mark (✦), such as ones from a white base or after Desecration. The tree branches by which mod got fractured"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 整列で、結果の箱をいつも親のすぐ下の行に置くように。片側だけ深い木の横の箱が離れすぎていたのも詰めました (段の目印は、同じ数の当たりの箱が 1 行に揃う時だけ出ます)",
-    "en": "Simulator: \"Tidy\" now always places result boxes on the row right below their parent, and no longer spreads boxes far apart next to a deep branch on one side (tier markers only appear when hits with the same count line up on one row)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 固定された外れ MOD で枠が足りず、その側の完成の狙いが入りきらない箱を精査で知らせるように",
-    "en": "Simulator: The check now flags boxes where a fractured miss mod leaves too few slots on that side for the final targets"
    }
   ]
  }
