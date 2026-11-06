@@ -8,7 +8,7 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, kindOf, maxQualityOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystOf, kindOf, maxQualityOf, occupiedFamiliesOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
@@ -17,7 +17,7 @@ import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tre
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
-import { midAims, midMark, placedAims } from "./tree-veil";
+import { essenceModOf, midAims, midMark, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 
 /** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
@@ -75,6 +75,42 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const body = bodyOf(data, doc, it, mods, placed);
   return `${[...keys].sort().join(",")}${frameOf(it)}#${junkOne(body)}`;
 }
+/** 木の族 = 完成形の狙いと、木の手で付けるエッセンスの MOD の系統 (E-11a)。外れの印 (S-200 ② の (g)) で見る */
+const FAMS = new WeakMap<PatchData, Map<string, ReadonlySet<string>>>();
+export function treeFamilies(data: PatchData, doc: TreeDoc): ReadonlySet<string> {
+  const ids = [...new Set([...(doc.memoAims ?? []).map((a) => a.modId), ...Object.values(doc.boxes).flatMap((b) => essenceModOf(b.hand?.currency) ?? [])])].sort();
+  let m = FAMS.get(data);
+  if (!m) FAMS.set(data, (m = new Map()));
+  const k = ids.join(","), had = m.get(k);
+  if (had) return had;
+  const out = new Set(ids.flatMap((id) => { const md = data.mods.get(id); return md ? occupiedFamiliesOf(md) : []; }));
+  if (m.size > 200) m.clear();
+  m.set(k, out);
+  return out;
+}
+/**
+ * 外れの印 (S-200 ② の (g)、11-06 オーナー「3おけ」): 外れ MOD (狙いに数えない MOD) のうち、木の族を塞ぐ物の族。同じ系統の MOD は 1 品に 1 つ (E-11a) なので、
+ * 塞いでいれば狙い・エッセンスが付かない。枠の比べ (contentOf) には入れない (外れは一律 S-60 のまま。入れると完成形より低い段の狙いの MOD を外れに持つだけで
+ * 人と箱が合わなくなり、見張りの木 23 本中 17 本で止まりが増えた)。代表と印の違う枝を探して手を当て、打てない・当たらない所を木のチェックに出すのに使う (tree-frame)
+ */
+export function blockMarkOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
+  const fams = treeFamilies(data, doc);
+  if (!fams.size) return "";
+  const famsOf = (m: StageMod): string[] => { const md = data.mods.get(m.modId); return md ? occupiedFamiliesOf(md).filter((f) => fams.has(f)) : []; };
+  const near = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed && famsOf(m).length);
+  if (!near.length) return "";
+  let memo = MARKS.get(it);
+  if (!memo) MARKS.set(it, (memo = new Map()));
+  const mk = [...fams].sort().join(",") + "|" + [...aimed].sort().join(","), had = memo.get(mk);
+  if (had !== undefined) return had;
+  const goals = contentAims(doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), out = new Set<string>();
+  for (const m of near) if (!goals.some((a) => isAimMod(m, targetsOf(data, [a]), opts))) for (const f of famsOf(m)) out.add(f);
+  const r = [...out].sort().join("+");
+  memo.set(mk, r);
+  return r;
+}
+/** 外れの印の覚え (品ごと) */
+const MARKS = new WeakMap<StageItem, Map<string, string>>();
 /**
  * 枠に入れる品質 (値・カタリストの種類)・はまったルーン・ソケットの数。全部同じ時だけ同じ枠、1 つでも違えば別 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」「少しでも違えば別」)。
  * 嵌めたルーン (augments) は名前の組だけで順は見ない (11-05 オーナー「おｋ直して 順は見ないで」。前はルーンの MOD だけを見て、ルーン 0 と 2 の箱が同じ枠になっていた、要望 fd1bed1a)

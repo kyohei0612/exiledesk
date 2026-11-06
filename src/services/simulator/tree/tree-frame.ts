@@ -6,7 +6,7 @@
  * 乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
  * 段階 2: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
  */
-import { applyCurrency, limitOf, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { applyCurrency, limitOf, mulberry32, occupiedFamiliesOf, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf } from "./tree-outcome";
@@ -14,7 +14,7 @@ import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
 import { aimsOf, docHeld, putCapped, startItemOf } from "./tree-sample";
-import { contentOf, nextAimed, startAimed } from "./tree-judge";
+import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
 import { isWhittleHand, WHITTLE } from "./tree-whittle";
@@ -27,14 +27,19 @@ import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
 /** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計)。from = ↩ で着く人の箱 (その箱の代表の品に手を当てた枝)、oc = 結果の分け */
 export interface FrameMiss { box: string; out: string; p: number; from?: string; oc: Outcome }
-export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[] }
+/** 代表のほか (↩ で着く人・印の違う枝) の形で、その箱の手が打てない (cant) か、当たるまでの手が当たらない (noHit)。from = その形の元の箱 */
+export interface FrameCant { box: string; from: string; why: "cant" | "noHit" }
+export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[]; cant: FrameCant[] }
 
 type Outcome = ReturnType<typeof boxOutcomeOf>;
 type Br = { item: StageItem; p: number };
-interface Split { to: Map<string, Br[]>; lost: Map<string, { p: number; oc: Outcome }> }
+/** noHit = 当たるまでの手で当たりの枝が 1 つも無い (打ち続けても当たらない) */
+interface Split { to: Map<string, Br[]>; lost: Map<string, { p: number; oc: Outcome }>; noHit?: boolean }
 const missKey = (oc: Outcome): string => `${oc.out}${oc.hits.length ? `:${oc.hits.map((a) => a.modId).join("+")}` : ""}${oc.junkKey ? ` [${oc.junkKey}]` : ""}`;
 /** 先読みで比べる枝の数の上限 (重い順) */
 const LOOK = 8;
+/** 重い順の LOOK の外から足す、外れの印 (g) の違う枝の数の上限 (1 箱ごと。多いと 8 MOD ワンドの開きが 0.5 → 1.1 秒) */
+const MARKED = 2;
 
 /**
  * 手の起こりうる行き先 (打たない)。数え上げで表せない手 (ルーン・品質・無限のエッセンスなど結果が 1 つに決まる物) は決まった種で 1 回当てるだけ、
@@ -80,14 +85,15 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   const rs = outsOf(data, f.item, b);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
-  if (b.hand!.repeat) { const hit = ocs.filter((x) => x.oc.out === "hit"); if (hit.length) { const t = hit.reduce((n, x) => n + x.r.p, 0); ocs = hit.map((x) => ({ ...x, r: { ...x.r, p: x.r.p / t } })); } }
+  let noHit = false;
+  if (b.hand!.repeat) { const hit = ocs.filter((x) => x.oc.out === "hit"); if (hit.length) { const t = hit.reduce((n, x) => n + x.r.p, 0); ocs = hit.map((x) => ({ ...x, r: { ...x.r, p: x.r.p / t } })); } else noHit = ocs.length > 0; }
   const to = new Map<string, Br[]>(), lost: Split["lost"] = new Map();
   for (const { r, oc } of ocs) {
     const o = outBoxOf(doc, b, oc, r.item);
     if (!o) { const k = missKey(oc); lost.set(k, { p: (lost.get(k)?.p ?? 0) + r.p, oc }); continue; }
     (to.get(o) ?? to.set(o, []).get(o)!).push(r);
   }
-  return { to, lost };
+  return noHit ? { to, lost, noHit } : { to, lost };
 }
 /**
  * 数値の一番低い形・高い形のうち、枠の上限が代表と違う物 (配置は数値を見ないが、ルーンの効果 % の切り捨てで枠が変わる: ルーンシーカーの呼び声の遺産 75% +
@@ -101,6 +107,15 @@ function rollEnds(data: PatchData, item: StageItem): StageItem[] {
     if (r.applied && lim(r.item) !== base && !out.some((x) => lim(x) === lim(r.item))) out.push({ ...r.item, foreseen: item.foreseen });
   }
   return out;
+}
+/** MOD の系統 (E-11a) の覚え */
+const FAM = new WeakMap<PatchData, Map<string, readonly string[]>>();
+function famOf(data: PatchData, modId: string): readonly string[] {
+  let m = FAM.get(data);
+  if (!m) FAM.set(data, (m = new Map()));
+  let f = m.get(modId);
+  if (!f) { const md = data.mods.get(modId); f = md ? occupiedFamiliesOf(md) : []; m.set(modId, f); }
+  return f;
 }
 const lostP = (s: Split | "tooMany"): number => (s === "tooMany" ? 0 : [...s.lost.values()].reduce((n, x) => n + x.p, 0));
 
@@ -183,23 +198,39 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
      * ↩ で着く人 (from = ↩ 元の箱) と、1 つの箱に形の違う枝が入る時のほかの形 (狙い無しの結果を 1 箱にした any など。from = その箱、重い順に LOOK まで)
      */
     const extra: Array<{ at: string; f: Frame; from: string }> = [];
+    const cant: FrameCant[] = [], fams = treeFamilies(data, doc);
+    /** 木の族を塞ぎうる MOD の組 (狙いも入る粗い分け。印の違う枝を探すだけ) */
+    const famSig = (it: StageItem): string => (fams.size ? [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed && famOf(data, m.modId).some((x) => fams.has(x))).map((m) => m.modId).sort().join(",") : "");
     /** 枝 brs (元の箱の代表 from に手を当てた物) から、箱 o の代表を選ぶ。箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方) */
     const bestOf = (o: string, brs: Br[], from: Frame): Frame => {
       const c = doc.boxes[o]!, sum = brs.reduce((n, r) => n + r.p, 0);
       const pick = (r: Br): Frame => { const am = nextAimed(data, doc, from.aimed, o, r.item, from.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
-      const heavy = [...brs].sort((x, y) => y.p - x.p).slice(0, LOOK);
+      const sorted = [...brs].sort((x, y) => y.p - x.p), heavy = sorted.slice(0, LOOK);
       const all = heavy.map(pick);
+      // 重い順の LOOK に入らない枝も、木の族を塞ぐ MOD の組が違えば 1 つずつ当てる (外れの印 (g) の違う枝、代表には選ばない)
+      const seenSig = new Set(heavy.map((r) => famSig(r.item))), marks = new Set(all.map((fr) => blockMarkOf(data, doc, fr.item, fr.aimed))), marked: Frame[] = [];
+      for (const r of sorted.slice(LOOK)) {
+        const s = famSig(r.item);
+        if (seenSig.has(s) || marked.length >= MARKED) continue;
+        seenSig.add(s);
+        const fr = pick(r), mk = blockMarkOf(data, doc, fr.item, fr.aimed);
+        if (!marks.has(mk)) { marks.add(mk); marked.push(fr); }
+      }
       const ex = exOf(o), fe = ex ? pick({ item: ex, p: sum }) : null, saved = !!fe && all.some((fr) => fr.key === fe.key);
-      let best = saved ? fe! : all[0]!;      if (c.hand && heavy.length > 1) {
+      let best = saved ? fe! : all[0]!;
+      if (c.hand && heavy.length > 1) {
         let bestLost = saved ? 0 : lostP(splitOf(data, doc, c, best, aims, part));
         for (const fr of all.slice(1)) {
           if (bestLost === 0) break;
           const l = lostP(splitOf(data, doc, c, fr, aims, part));
           if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
         }
-        const keys = new Set([best.key]);
-        for (const fr of all) if (!keys.has(fr.key)) { keys.add(fr.key); extra.push({ at: o, f: fr, from: o }); }
       }
+      // 代表と枠の違う形: 手の箱はその手を当て、手の無い ↩ の箱は ↩ 先の手を当てる (S-21 を配置で。↩ の箱は前は代表 1 つだけ = FmNY7Wwv b23)
+      const at = c.hand ? o : c.back && doc.boxes[c.back] ? c.back : null;
+      // 枠が同じでも外れの印 (g) が違えば当てる (印は枠の比べに入れない、tree-judge の blockMarkOf)
+      const markOf = (fr: Frame): string => `${fr.key}|${blockMarkOf(data, doc, fr.item, fr.aimed)}`;
+      if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); extra.push({ at, f: fr, from: o }); } } }
       if (c.hand) for (const it of rollEnds(data, best.item)) extra.push({ at: o, f: { ...best, item: it }, from: o });
       return best;
     };
@@ -214,6 +245,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const s = splitOf(data, doc, b, f, aims, part);
       if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
       for (const [out, x] of s.lost) miss.push({ box: id, out, p: x.p, oc: x.oc });
+      if (s.noHit) cant.push({ box: id, from: id, why: "noHit" });
       // ヒネコラの結果の箱 (予見の箱、S-39) は MOD の変わらない同じ予見済みの品。当たり / ハズレは持った手の結果の分けなので、枝の無い箱もヒネコラの枝を持つ
       const held = [...s.to.values()].flat();
       for (const o of kids) {
@@ -229,11 +261,14 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
     for (let pass = 0; pass < 3 && extra.length; pass++) {
       const again: string[] = [];
       for (const { at, f: fa, from } of extra.splice(0)) {
-        const x = doc.boxes[at], k = `${at}|${from}|${fa.key}`;
+        const x = doc.boxes[at], k = `${at}|${from}|${fa.key}|${blockMarkOf(data, doc, fa.item, fa.aimed)}`;
         if (!x?.hand || done.has(k)) continue;
         done.add(k);
         const s = splitOf(data, doc, x, fa, aims, part);
         if (s === "tooMany") continue;
+        // 代表のほかの形でこの手が打てない・当たるまでが当たらない (外れの印 (g) の違う枝など。回すとここで止まる)
+        if (!s.to.size && !s.lost.size) cant.push({ box: at, from, why: "cant" });
+        else if (s.noHit) cant.push({ box: at, from, why: "noHit" });
         for (const [out, y] of s.lost) miss.push({ box: at, out, p: y.p, from, oc: y.oc });
         for (const o of x.outs) {
           const brs = s.to.get(o);
@@ -244,6 +279,6 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       }
       if (again.length) walk(again);
     }
-    return { frames, miss };
+    return { frames, miss, cant };
   });
 }

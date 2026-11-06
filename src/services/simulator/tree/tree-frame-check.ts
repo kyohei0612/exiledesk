@@ -26,6 +26,13 @@ export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
       ? tr(`↩ で着く人がこの手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `Runs arriving by ↩ can end up "${en}" here with no box to go to (they stop here)`)
       : tr(`この手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `This craft can end up "${en}" with no box to go to (runs stop here)`) });
   }
+  // 代表のほかの形 (↩ で着く人・外れが狙いの系統を塞いでいる枝 = S-200 ② の (g)) で手が打てない・当たるまでが当たらない
+  for (const c of fr.cant) {
+    if (!doc.boxes[c.box]) continue;
+    add({ boxId: c.box, kind: "cantUse", text: c.why === "noHit"
+      ? tr("この形では当たるまで打っても当たらない (外れが狙いの系統を塞いでいる・狙いが ☑ 無しで付いているなど。回すとここで止まる)", "Repeating this craft never hits in this shape (a miss blocks the target's family, or the target is on without ☑; runs stop here)")
+      : tr("この箱へ来る形の一部で手が打てない (外れが狙い・エッセンスの系統を塞いでいるなど。回すとここで止まる)", "Some shapes reaching this box can't use the craft (a miss blocks the target's or essence's family; runs stop here)") });
+  }
   for (const b of Object.values(doc.boxes)) {
     const f = fr.frames.get(b.id);
     if (!f || f.note) continue;
