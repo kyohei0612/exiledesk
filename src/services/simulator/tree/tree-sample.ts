@@ -7,13 +7,14 @@
  * 引けなかった結果の箱は作れない印 (note) を返す (指名で付けて作らない)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { keepsMods } from "./tree-foresee";
-import { aimDone, aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, mulberry32, OMEN_FOR, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimDone, freshItem, mulberry32, stageTuning, tierIndexOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart } from "../../simulator/sim-engine";
+import { aimDiff, applyHand, canUse, startWith } from "./tree-hand-core";
+export { aimDiff } from "./tree-hand-core";
 import { pathKeyOf } from "./tree-recipe-v1";
-import { docPartOf, itemKeyOf, pathKeyOfBox, type PathLink } from "./tree-sample-key";
-import { aimHeldOn, junkOf } from "./tree-aim";
-import { ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone } from "./tree-hands";
-import { tr } from "../../../i18n/lang";
+import { docPartOf, itemKeyOf, pathKeyOfBox, premiseOf, type PathLink } from "./tree-sample-key";
+import { aimHeldOn } from "./tree-aim";
+import { ECHO, effectOf, isBone } from "./tree-hands";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
@@ -23,7 +24,7 @@ import { sampleAimed } from "./tree-judge";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
-import { treeOmenBlock } from "./tree-omen";
+import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 
 /** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
@@ -53,8 +54,6 @@ export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readon
  * (10-24 不在のアミュ B: 右側の結晶化 + 無限のエッセンスで冒涜の外れを消す。% 能力値を狙いに数えると、次の冒涜で置き換わった時に「狙いが消えた」になった)
  */
 export function aimsOf(doc: TreeDoc): Aim[] {
-  const pin = PINS.get(doc);
-  if (pin) return pin.aims;
   const out: Aim[] = [];
   // 完成形の設定 (memoAims) にフラクチャーの印でない狙いがある木だけ (印だけの古い見本 = 金の指輪はエッセンスの札も狙いのまま)
   const goals = doc.memoAims ?? [];
@@ -183,17 +182,10 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
   return canUse(data, item, h.currency, h.omens);
 }
 
-/**
- * 組み直しの間だけ留める最後の木の狙い (S-105・S-71b ⑮)。木の狙い (aimsOf)・置き石・途中の狙いは見本の鍵に入るので、組む途中で当たりの箱が増えるたびに
- * 全部の箱の見本を作り直していた (8 MOD ワンドの開きで見本作り 4247 回中 2893 回)。保存の手から先に最後の狙いを出して組む間はそれを使う
- */
-const PINS = new WeakMap<TreeDoc, { aims: Aim[]; placed: Aim[]; mid: Aim[] }>();
-export const pinnedAims = (doc: TreeDoc): { aims: Aim[]; placed: Aim[]; mid: Aim[] } | undefined => PINS.get(doc);
-export function pinAims(doc: TreeDoc, pin: { aims: Aim[]; placed: Aim[]; mid: Aim[] } | null): void { if (pin) PINS.set(doc, pin); else PINS.delete(doc); }
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
-  if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); okMemo.clear(); memoSig = ""; memoData = data; }
+  if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); okMemo.clear(); STARTS.clear(); clearRolls(); memoSig = ""; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
 /** 覚えた見本 (木の中身の鍵が変わったら全部捨てる。treeLight は holdDocSig の間の早道だけ) */
@@ -262,10 +254,13 @@ function failKeyOf(doc: TreeDoc, boxId: string, seed: number, base: StageItem, a
 }
 /** 箱の中身の覚えの鍵 (見本の番号を除いた道の鍵、tree-judge) */
 export const boxKeyOf = (doc: TreeDoc, boxId: string): string => keyOf(doc, boxId, 0);
+/** 木の前提 + 種 → 始まりの見本 (元) */
+const STARTS = new Map<string, Sample>();
 function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
-  if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
+  // 始まりの見本は木の前提と種だけで決まるので元を覚えて写しを返す (狙いが変わっても下の箱の打った並びを使える、S-71b ⑱)
+  if (b.out === "start") { const k = `${premiseOf(doc)}|${seed}`; let s0 = STARTS.get(k); if (!s0) putCapped(STARTS, k, (s0 = startItemOf(data, doc, mulberry32(seed))), 512); return { item: handOut(s0.item), note: s0.note }; }
   // 見本は道 (始まり → 親の手の並び、種は見本の番号と道の札) だけで決め、ほかの枝に手を足しても変わらない (S-74。前の「回して着いた人」tree-arrived は R5 で外した)
   const p = doc.boxes[b.parent!]!;
   const base = sampleIn(data, doc, p.id, seed);
@@ -326,10 +321,17 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 /** 親の見本 base に親の手を打って、この箱の見本を作る。baseSeed = base が親の何番目の見本か (親を別の種で引き直した時は seed + 7919k) */
 export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[], baseSeed = seed): Sample {
   if (!p.hand || b.seen) return base;
-  const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
+  const h = p.hand, ha = handAims(doc, p.id, aims);
+  const rs = seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((x, c) => (x * 31 + c.charCodeAt(0)) | 0, 7); // 種は見本の番号と道の札 (S-74 A。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
+  // 打った結果の並びは親の見本・手・種・打つ時のエンジンの設定で決まる (繰り返しの手は当たりの札も) ので覚えて、狙いが変わった時は分け直すだけ (S-71b ⑱、tree-rolls)。
+  // 設定は木の tune でなく今の設定 (↩ で着く人の見本は sampleOf を通らずに打つ)
+  const rk = `${JSON.stringify(h)}|${rs}|${JSON.stringify(stageTuning())}${h.repeat ? `|${JSON.stringify(ha)}` : ""}`;
+  const roll = (i: number): Roll => rollAt(base.item, rk, i, () => mulberry32(rs), (rng) => playHand(data, base.item, h, rng, ha));
   // MOD を変えない手 (神・ヒネコラ、S-39): 親の見本に 1 回打つだけ、作れなかった見本の印 (note) も親のまま = 中身の組が親と同じ (同じ手の戻り S-51 で前の箱へ戻れる)
-  if (!p.hand.repeat && keepsMods(data, base.item, p.hand.currency, p.hand.omens)) { const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims)); if (r.applied) return { item: r.item, note: base.note }; }
-  let last: StageApply | null = null;
+  // 打てなければ下の打ち直しは乱数の続き (2 つ目) から
+  let from = 0;
+  if (!h.repeat && keepsMods(data, base.item, h.currency, h.omens)) { const r = roll(0); if (r.applied) return { item: handOut(r.item), note: base.note }; from = 1; }
+  let last: Roll | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
@@ -341,10 +343,10 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
-  const had = okMemo.get(fk), got = (item: StageItem): Sample => { putCapped(okMemo, fk, item); return { item, note: null }; };
+  const had = okMemo.get(fk), got = (item: StageItem): Sample => { const c = handOut(item); putCapped(okMemo, fk, c); return { item: c, note: null }; };
   if (had) return { item: had, note: null };
   for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
-    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims));
+    const r = roll(from + i);
     if (!r.applied) { last = r; break; }
     last = r;
     // 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)
@@ -367,151 +369,4 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // (増強の当たりの箱の見本がレアになった、10-28 夜オーナー「これはエンジンを参照した動きになってないのと同義では」)。作れない印を返し、親の見本を引き直す (S-74)
   if (b.out === "hit" && b.aim) return remember("cant:unreachable");
   return remember("none");
-}
-
-// ここから下は木の打ち方の組み合わせ (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の関数を呼ぶだけ)
-
-/** 段の名前の T で言う狙い (T1 が一番上) */
-interface TierAim { modId: string; tier: number }
-interface AimDiffOpts { sameText?: boolean }
-
-const targetOf = (data: PatchData, a: TierAim): AimTarget => ({ modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) });
-const modsOf = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
-const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
-  const t = targetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
-  return mods.some((m) => hits(m, t, opts));
-};
-
-interface AimDiff<A extends TierAim = TierAim> {
-  /** 前に無く後に付いている狙い (並びは aims のまま) */
-  hits: A[];
-  /** 前に付いていて後に無い狙い */
-  lost: A[];
-  /** 外れ (固定でも狙いでもない MOD) の数が減った */
-  junkGone: boolean;
-  /** 新しく ✦ (フラクチャー) になった MOD (無ければ null) と、それが当たる狙い */
-  fractured: StageMod | null;
-  fracturedHits: A[];
-}
-
-/** 1 手の前 (before) と後 (after) で狙いがどう変わったか */
-export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, after: StageItem, aims: readonly A[], o: AimDiffOpts = {}): AimDiff<A> {
-  const bm = modsOf(before), am = modsOf(after);
-  const had = aims.filter((a) => heldOn(data, bm, a, o));
-  const has = aims.filter((a) => heldOn(data, am, a, o));
-  const ts = aims.map((a) => targetOf(data, a)), opts = o.sameText ? { data, sameText: true } : undefined;
-  const junk = (it: StageItem): number => { const j = junkOf(it, ts, opts); return j.prefix.length + j.suffix.length; };
-  const was = new Set(bm.filter((m) => m.fractured).map((m) => m.modId));
-  const fractured = am.find((m) => m.fractured && !was.has(m.modId)) ?? null;
-  return {
-    hits: has.filter((a) => !had.includes(a)),
-    lost: had.filter((a) => !has.includes(a)),
-    junkGone: junk(after) < junk(before),
-    fractured,
-    fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], a, o)) : [],
-  };
-}
-
-/**
- * 手に付けたお告げを、その手に掛かる物 (now) と続けて打つ発現に掛かる物 (reveal = アビスの反響) に分ける。
- * 骨 (冒涜) の手に付けた反響は骨には掛からず (渡すとエンジンが弾く)、その後の発現で使う。発現の手そのものなら now
- */
-function handOmens(key: string, omens: readonly string[]): { now: string[]; reveal: string[] } {
-  if (kindOf(key) === "reveal") return { now: [...omens], reveal: [] };
-  const rv = OMEN_FOR.reveal ?? [];
-  return { now: omens.filter((o) => !rv.includes(o)), reveal: omens.filter((o) => rv.includes(o)) };
-}
-
-/**
- * その手 (key + お告げ) がこのアイテムに打てない理由。打てるなら null。
- * - お告げ: 1 枚ずつ omenBlock。消せる物が無い側のお告げ・効かないお告げ (オーナー 10-22「進行不能」)
- * - 手そのもの: エンジンの useReason (クラフト台の棚の灰色と同じ判定。乱数で決まる物は打てる扱い、10-25 置き換え)
- */
-function canUse(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): string | null {
-  const now = handOmens(key, omens).now;
-  // 後から打つ発現の手: 未発現の MOD があれば打てる
-  if (isRevealHand(key)) return unrevealedOf(item) ? null : tr("未発現の MOD が無い", "No unrevealed mod");
-  for (const o of now) { const why = treeOmenBlock(data, item, key, now, o); if (why) return why; } // 「今は意味なし」では止めない (S-20b)
-  return useReason(data, item, key, now);
-}
-
-interface HandSpec {
-  /** 手に付けたお告げ (反響は handOmens で発現の側へ) */
-  omens?: readonly string[];
-  /** 未発現が付いた時、そのまま発現まで打つ */
-  reveal?: boolean;
-}
-interface HandResult extends StageApply {
-  /** 手そのもので使ったお告げ (発現の前。発現の物は omensUsed) */
-  handOmensUsed: string[];
-  /** 反響を発現に使った */
-  echoUsed: boolean;
-}
-
-/**
- * 発現 (魂の井戸) を打つ。候補は選ばない = 1 つ目 (候補を選ぶのは画面の箱で組む、11-05 オーナー「UIでその動きを再現できるように」)。
- * echo = アビスの反響を掛けた手は引き直した 3 つの 1 つ目 (エンジンの reveal:1:reroll)。発現できなければ r のまま
- */
-function revealFirst(data: PatchData, r: StageApply, rng: () => number, echo: boolean): StageApply {
-  const x = echo ? applyCurrency(data, r.item, "reveal:1:reroll", rng, [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, "reveal:1", rng);
-  return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
-}
-
-/** 手を 1 回打つ (エンジンの applyCurrency を 1 回、骨の後は発現まで) */
-function applyHand(data: PatchData, item: StageItem, key: string, rng: () => number, spec: HandSpec = {}): HandResult {
-  const { now, reveal } = handOmens(key, spec.omens ?? []);
-  // 後から打つ発現の手。反響はこの手のお告げ
-  if (isRevealHand(key)) {
-    if (!unrevealedOf(item)) return { applied: false, item, added: [], removed: [], reason: tr("未発現の MOD が無い", "No unrevealed mod"), handOmensUsed: [], echoUsed: false };
-    const echo = now.includes(ABYSSAL_ECHO_OMEN);
-    return { ...revealFirst(data, { applied: true, item, added: [], removed: [] }, rng, echo), handOmensUsed: [], echoUsed: echo };
-  }
-  const r = applyCurrency(data, item, key, rng, now);
-  const base = { handOmensUsed: r.omensUsed ?? [] };
-  if (!r.applied || !unrevealedOf(r.item) || !spec.reveal) return { ...r, ...base, echoUsed: false };
-  const echo = reveal.includes(ABYSSAL_ECHO_OMEN);
-  return { ...revealFirst(data, r, rng, echo), ...base, echoUsed: echo };
-}
-
-export interface StartMod { modId: string; tier: number; fractured?: boolean }
-interface StartWith {
-  /** 始まりのレアリティ。マジック・ノーマルはノーマルから付ける (付けるとマジック)。フラクチャーがあればレア (force がレアにする) */
-  rarity: StageItem["rarity"];
-  mods: readonly StartMod[];
-  /** 先に差すルーン (英語名)。指名の MOD のルーンの分もソケットを開ける */
-  runes?: readonly string[];
-  /** ソケットだけ開けておく MOD (ルーンの MOD の分。印のスタートで後から付く ✦ の候補・＋の MOD) */
-  socketFor?: readonly StartMod[];
-}
-
-/** フラクチャー (✦) は 1 つのアイテムに 1 つまで (ゲームのフラクチャーのオーブは 1 つだけ固定する) */
-const START_FRACTURE_MAX = 1;
-
-/** 始めのアイテム。note = 打てなかった理由 (無ければ null、その時の item は打てた所まで) */
-function startWith(data: PatchData, base: string, itemLevel: number, s: StartWith, rng: () => number): { item: StageItem; note: string | null } {
-  const magic = (s.rarity === "magic" || s.rarity === "normal") && !s.mods.some((m) => m.fractured);
-  let item = freshItem(data, base, itemLevel, magic ? "normal" : "rare");
-  // ソケットはエミュの手で打つ新品と同じく規格外の数から (エミュの fullSockets、2026-10-04 オーナー「ソケットも初めからデフォでマックス」)。
-  // 前は 0 で、ツリーの棚に特別なルーン・その他のルーンが出なかった (10-23 オーナー「打つ中身はエミュと同じ」)
-  const full = baseSocketsOf(item.base, item.cls.category);
-  if (full > (item.sockets ?? 0)) item = { ...item, sockets: full };
-  if (s.mods.filter((m) => m.fractured).length > START_FRACTURE_MAX) return { item, note: tr("フラクチャーは 1 つまで", "Only one mod can be fractured") };
-  // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
-  const runes = s.runes ?? [];
-  const byMod = new Set([...s.mods, ...(s.socketFor ?? [])].flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
-  const need = runes.length + [...byMod].filter((id) => !runes.some((en) => runeIdByName(en) === id)).length;
-  if (need) item = { ...item, sockets: Math.max(item.sockets ?? 0, need) };
-  for (const en of runes) {
-    const r = applyCurrency(data, item, `rune:${en}`, rng);
-    if (!r.applied) return { item: r.item, note: r.reason ?? null };
-    item = r.item;
-  }
-  for (const m of s.mods) {
-    // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける
-    const src = data.mods.get(m.modId)?.source;
-    const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"), rng);
-    if (!r.applied) return { item: r.item, note: r.reason ?? null };
-    item = r.item;
-  }
-  return { item, note: null };
 }

@@ -188,6 +188,8 @@ export interface Judge {
 /** 道の鍵 → 箱の中身 (データごと。増えすぎたら捨てて作り直す = 結果は同じ) */
 const CONTENTS = new WeakMap<PatchData, Map<string, Set<string> | null>>();
 const CONTENTS_MAX = 20000;
+/** 中身を作る途中で止めた印 (judgeMemo の fullUntil) */
+const REJECTED = Symbol("rejected");
 const contentsOf = (data: PatchData): Map<string, Set<string> | null> => { let m = CONTENTS.get(data); if (!m) CONTENTS.set(data, (m = new Map())); return m; };
 
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
@@ -209,9 +211,13 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     const f = full(id);
     return f ? new Set([...f].map((k) => keyAt(k, d, c))) : null;
   };
-  const full = (id: string): ReadonlySet<string> | null => {
+  /**
+   * 箱の中身。stop を渡すと、見本の中身を作る途中で stop が真の中身が出たらそこで止めて REJECTED を返す (覚えない)。
+   * 見本は同じ順に作るので、止まった中身は最後まで作った時の中身にも入っている = 比べの答えは同じ (S-71b ⑲)
+   */
+  const fullUntil = (id: string, stop?: (k: string) => boolean): ReadonlySet<string> | null | typeof REJECTED => {
     if (memo.has(id)) return memo.get(id)!;
-    let out: Set<string> | null = null;
+    let out: Set<string> | null = null, cut = false;
     // この間は木が変わらないので鍵は 1 回だけ (S-71b)
     if (doc.boxes[id]) holdDocSig(doc, () => {
       // 箱の中身は見本と同じ道の鍵で覚え続ける (判定を作り直すたびに全部の箱の見本を引いていた)
@@ -222,14 +228,17 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
         const s = sampleOf(data, doc, id, seed);
         if (s.note === "none" || s.note?.startsWith("cant:")) continue;
         const k = contentOf(data, doc, s.item, sampleAimed(data, doc, id, seed));
+        if (stop?.(k)) { cut = true; return; }
         if (!out?.has(k)) last = seed;
         (out ??= new Set()).add(k);
       }
       if (key) putCapped(contentsOf(data), key, out, CONTENTS_MAX);
     }, true);
+    if (cut) return REJECTED;
     memo.set(id, out);
     return out;
   };
+  const full = (id: string): ReadonlySet<string> | null => fullUntil(id) as ReadonlySet<string> | null;
   const depth = (id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   let order: string[] | null = null;
@@ -244,8 +253,13 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     capShort,
     fitsBox(from, to) {
       if (from === to || !doc.boxes[from] || !doc.boxes[to] || capShort(from, to)) return false;
-      const a = setFor(to, from), b = setFor(to, to);
-      return !!a && !!b && a.size === b.size && [...a].every((k) => b.has(k));
+      // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
+      const b = setFor(to, to);
+      if (!b) return false;
+      const d = needsDesecrated(doc, to), c = needsCrafted(doc, to);
+      if (fullUntil(from, (k) => !b.has(d || c ? keyAt(k, d, c) : looseKey(k))) === REJECTED) return false;
+      const a = setFor(to, from);
+      return !!a && a.size === b.size && [...a].every((k) => b.has(k));
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
