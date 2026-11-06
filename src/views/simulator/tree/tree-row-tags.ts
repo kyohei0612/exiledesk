@@ -74,8 +74,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // ルーンの手の後の箱は親の箱の見方を借りるが、☑ の印はその箱の見本で引く (markId。親の id では見本が違い引けず、狙い全部に戻った)
   const hitAm = box?.id && box.out === "hit" ? aimedOfCard(d, doc, markId ?? box.id, it) : null;
   const hitHeld = hitAm ? (doc.memoAims ?? []).filter((g) => hitAm.has(g.modId)) : null;
-  // 以降の箱でも見本に付いている置き石は狙い (S-33)
-  const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, box.id!, it)?.has(a.modId)) : [];
+  // 以降の箱でも見本に付いている置き石は狙い (S-33)。ルーンの手の後の箱も ☑ はその箱の見本で引く (markId。親の id で引くと遺産のルーンの後のソケット効果が「外れ MOD」と出た、11-06 ワンド b12)
+  const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, markId ?? box.id!, it)?.has(a.modId)) : [];
   const aims = targetsOf(d, [...(missBox ? held : hitHeld ?? [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalT = targetsOf(d, doc.memoAims ?? []);
   for (const m of [...it.prefixes, ...it.suffixes]) {
