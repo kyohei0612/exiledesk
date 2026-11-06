@@ -4,6 +4,7 @@
  */
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
+import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -284,6 +285,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   joinSameShape(d, id);
+  // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
+  foldMisses(d, id);
   if (data) relinkByContent(data, d, had);
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
   return at;
