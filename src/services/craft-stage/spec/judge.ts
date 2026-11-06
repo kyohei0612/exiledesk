@@ -86,8 +86,10 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       const now = l.max === "catalyst" ? (item.qualityTag === tag ? catalystOf(item).pct : 0) : item.quality;
       return now >= max ? tr(`品質が上限 (${max}%)`, `Quality is maxed (${max}%)`) : null;
     }
-    case "hasCatalystQuality":
-      return item.qualityTag && item.quality > 0 ? null : tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality");
+    case "hasCatalystQuality": { // グラスピングメイルはベースの品質とは別の欄 (catalystOf、E-71)
+      const c = catalystOf(item);
+      return c.tag && c.pct > 0 ? null : tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality");
+    }
     case "socketsBelowCap": {
       const max = socketCapOf(item.base, item.cls.category);
       const n = item.sockets ?? 0;
