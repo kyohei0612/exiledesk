@@ -8,7 +8,6 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
-import { treeOmenBlock } from "../../services/simulator/tree/tree-omen";
 import { tr } from "../../i18n/lang";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
 import { flag } from "../../web/release-flags";
@@ -78,8 +77,6 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
     // 予見したアイテム (ヒネコラの後、S-39) の棚は今打てるカレンシーだけ (エンジンの useReason が通す物。お告げは持った手の欄で決まるので除く。
     // 11-05 オーナー「その枠の状態でさせるカレンシー ただしエミュで動く奴限定で」)
     hidden: (k) => treeHidden(k, item.value) || (FORESEE_ON && !!item.value?.foreseen && !k.startsWith("Omen") && usableWith(k, []) !== null),
-    // 木の箱は何人もの集まりなので、側を決めるお告げの「今は意味なし」では灰色にしない (sim-tree.md S-20b)
-    omenBlock: (h, om, o) => treeOmenBlock(s.data.value, item.value, h, om, o),
     runeFirst,
   });
   return { held, omens, toggleOmen, release, onHold, onShelfDown };

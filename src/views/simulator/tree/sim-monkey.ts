@@ -24,9 +24,8 @@
  *   __simMonkey.shapeOf(id)                            箱の形 { held: [狙いの組…], body: 体の鍵 (外れの側・種類・数、✦ の側、レアリティ。見本が作れない箱は null、見本ごとに外れの種類が違う箱は "mixed:<id>") } (箱が無ければ null)
  *   __simMonkey.sameShape(from, to)                    from の人が to へ行けるか (狙いの組が全部 to にある + 体が同じ。始まりへは冒涜を持たなければ true、"match"・"restart" は true)
  */
-import { baseCatalog, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
+import { baseCatalog, omenBlock, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
-import { treeOmenBlock } from "../../../services/simulator/tree/tree-omen";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { checkTreeAsync, NOTICE_KINDS } from "../../../services/simulator/tree/tree-check";
@@ -103,7 +102,7 @@ export function installSimMonkey(): () => void {
     omens(id: string, key: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = shelfItemFor(id, key);
       if (!d || !it) return [];
-      return omensAllowedFor(key).filter((o) => !treeHidden(o)).map((o) => { const reason = treeOmenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
+      return omensAllowedFor(key).filter((o) => !treeHidden(o)).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
     },
     /** 次に打つ手の窓の「当たりの箱にする MOD」の候補 (画面と同じ hitChoicesOf。付く MOD を選べない手でなければ []) */
     hitChoices(id: string, key: string, omens: string[] = [], echo = true): Array<{ modId: string; tier: number; label: string }> {

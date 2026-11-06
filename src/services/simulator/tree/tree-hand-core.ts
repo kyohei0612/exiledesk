@@ -2,12 +2,11 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, OMEN_FOR, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, OMEN_FOR, omenBlock, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { ECHO as ABYSSAL_ECHO_OMEN } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { isRevealHand } from "./tree-veil";
-import { treeOmenBlock } from "./tree-omen";
 
 /** 段の名前の T で言う狙い (T1 が一番上) */
 interface TierAim { modId: string; tier: number }
@@ -69,7 +68,7 @@ export function canUse(data: PatchData, item: StageItem, key: string, omens: rea
   const now = handOmens(key, omens).now;
   // 後から打つ発現の手: 未発現の MOD があれば打てる
   if (isRevealHand(key)) return unrevealedOf(item) ? null : tr("未発現の MOD が無い", "No unrevealed mod");
-  for (const o of now) { const why = treeOmenBlock(data, item, key, now, o); if (why) return why; } // 「今は意味なし」では止めない (S-20b)
+  for (const o of now) { const why = omenBlock(data, item, key, now, o); if (why) return why; } // エミュと同じ判定 (「今は意味なし」も止める。S-20b は 11-06 撤回)
   return useReason(data, item, key, now);
 }
 
