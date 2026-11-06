@@ -13,7 +13,7 @@ import { boxOutcomeOf } from "./tree-outcome";
 import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
-import { aimsOf, docHeld, putCapped, startItemOf } from "./tree-sample";
+import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample";
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
@@ -43,13 +43,13 @@ const MARKED = 2;
 
 /**
  * 手の起こりうる行き先 (打たない)。数え上げで表せない手 (ルーン・品質・無限のエッセンスなど結果が 1 つに決まる物) は決まった種で 1 回当てるだけ、
- * カタリストはエンジンの 1 個 = 1 回 (oneCatalyst、手順の再生と同じ)。発現で選ぶ手は未発現を出うる MOD ごとに分ける (revealOutcomes)
+ * カタリストは回す時と同じ playHand (品質の上限まで繰り返す 1 手、11-06 オーナー「A」)。発現で選ぶ手は未発現を出うる MOD ごとに分ける (revealOutcomes)
  */
 function outsOf(data: PatchData, item: StageItem, b: TreeBox): Br[] | "tooMany" {
   const h = b.hand!, key = h.currency;
   let rs: Br[];
   if (isRevealHand(key)) rs = [{ p: 1, item }];
-  else if (isCatalyst(key)) { const r = applyCurrency(data, item, key, mulberry32(1), [], { oneCatalyst: true }); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
+  else if (isCatalyst(key)) { const r = playHand(data, item, h, mulberry32(1)); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
   else {
     // 削りのお告げは段の順位を見ない = 消せる MOD のどれもが消えうる (外れは一律、削りは当たり / ハズレの 2 枝を必ず。S-200 決め (a))
     const om = isWhittleHand(h) ? engineOmens(h).filter((o) => o !== WHITTLE) : engineOmens(h);

@@ -9,13 +9,13 @@
 import { frameSample } from "./tree-frame";
 import { keepsMods } from "./tree-foresee";
 import { aimDone, freshItem, mulberry32, stageTuning, tierIndexOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { fractureStart } from "../../simulator/sim-engine";
+import { catalystFull, fractureStart } from "../../simulator/sim-engine";
 import { aimDiff, applyHand, canUse, startWith } from "./tree-hand-core";
 export { aimDiff } from "./tree-hand-core";
 import { pathKeyOf } from "./tree-recipe-v1";
 import { docPartOf, itemKeyOf, pathKeyOfBox, premiseOf, type PathLink } from "./tree-sample-key";
 import { aimHeldOn } from "./tree-aim";
-import { ECHO, effectOf, isBone } from "./tree-hands";
+import { ECHO, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
@@ -119,6 +119,8 @@ export const SINGLE_SEEDS = 8;
 
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
 export const SPAM_CAP = 5000;
+/** カタリストを上限まで繰り返す時の見張り (品質の上限より十分大きい) */
+const CATALYST_CAP = 200;
 
 /**
  * 箱の手を 1 回打つ (エンジンの applyCurrency を 1 回。木の側で打ち直し・先入れ・選びはしない、11-05 オーナー「ツリーに勝手に足しやがって2度とすんなまじで」)。
@@ -139,6 +141,19 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
       if (!c.applied) return it !== item ? { ...c, applied: true, item: it } : c;
       r = c; it = c.item;
       if (done(it)) break;
+    }
+    return { ...r, item: it };
+  }
+  // カタリストの手は品質の上限まで繰り返す 1 手 (11-06 オーナー「A」、S-31b)。1 個ずつはエンジンの applyCurrency (applyHand)、上限はエンジンの決まり (catalystFull)。
+  // もう上限の時は下の 1 回 (前と同じ)
+  if (isCatalyst(h.currency) && !catalystFull(item, h.currency)) {
+    let r: StageApply = { applied: false, item, added: [], removed: [] };
+    let it = item;
+    for (let i = 0; i < CATALYST_CAP && !catalystFull(it, h.currency); i++) {
+      const c = applyHand(data, it, h.currency, rng, { omens: h.omens, reveal: false });
+      if (!c.applied) return it !== item ? { ...c, applied: true, item: it } : c;
+      if (use) { use(h.currency); for (const o of c.handOmensUsed) use(o); }
+      r = c; it = c.item;
     }
     return { ...r, item: it };
   }
