@@ -29,7 +29,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** 箱の真ん中 */
   const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
   /** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
-  // 畳んだ消去の直線 (S-28b、スイッチ stripFold): 札 (間の最初の箱) の線は最後の箱へ、隠した箱からは引かない
+  // 畳んだ消去の続き (S-28g ③): 根の線は札へ、札の線は止まった箱へ、隠した箱からは引かない
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
   const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {

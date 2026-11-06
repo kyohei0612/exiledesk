@@ -7,7 +7,7 @@ import { runeEnForId } from "./pattern";
 import { blankWith, FRACTURE_POOL, fractureOdds } from "./sim-odds";
 import { greaterRouteCost, type GreaterRoute } from "./sim-greater";
 import { sideOfMod, type PatchData, type RouteGrade, type StageItem } from "../craft-stage/engine";
-import { spamCounts, type SpamCounts } from "../simulator/sim-engine";
+import { spamCounts, spamCountsSteps, type SpamCounts } from "../simulator/sim-engine";
 import { addGradeFor, anyOfAddOdds } from "../simulator/sim-engine";
 import { keepCompare } from "./keep-compare";
 import type { SimTargetIn } from "./quiz-build";
@@ -23,11 +23,39 @@ interface KeepPlan { host: string; together: number; chaos: number; chaosKey: st
  *   - 候補が 2 つ以上 (どれか 1 つ): 同じ spamCounts の anyOf (前の式 magicLoopCounts は 10-22 にやめた。解析君 math/notes/2026-10-22-magic-anyof.md でエンジン 25 通りと 2.5% 以内)
  */
 const loopCache = new Map<string, SpamCounts>();
+/** withLoopsSoon の間: 覚えに無いループは打たずに一覧へ足して LOOP_MISS で抜ける */
+let wanted: Array<{ key: string; run: () => Generator<void, SpamCounts> }> | null = null;
+const LOOP_MISS = Symbol("loop-miss");
 function augmentLoop(d: Parameters<typeof spamCounts>[0], white: Parameters<typeof spamCounts>[1], grade: RouteGrade, cands: ReadonlyArray<{ modId: string; minTierIndex: number }>): SpamCounts {
   const key = `${white.base}|${white.itemLevel}|${(white.augments ?? []).join(",")}|${grade}|${cands.map((c) => `${c.modId}:${c.minTierIndex}`).join(",")}`;
   let r = loopCache.get(key);
-  if (!r) { r = cands.length === 1 ? spamCounts(d, white, "augment", grade, cands, { seed: 20261020 }) : spamCounts(d, white, "augment", grade, [], { seed: 20261020, anyOf: cands }); loopCache.set(key, r); }
+  if (!r) {
+    const run = (): Generator<void, SpamCounts> => (cands.length === 1 ? spamCountsSteps(d, white, "augment", grade, cands, { seed: 20261020 }) : spamCountsSteps(d, white, "augment", grade, [], { seed: 20261020, anyOf: cands }));
+    if (wanted) { wanted.push({ key, run }); throw LOOP_MISS; }
+    const g = run();
+    for (;;) { const x = g.next(); if (x.done) { r = x.value; break; } }
+    loopCache.set(key, r);
+  }
   return r;
+}
+/**
+ * fn (中で startCalc を呼ぶ) を、ループの打ち (300 人、1 回 0.5 秒ほど) を区切って先に済ませてから呼ぶ。区切りごとに pause で画面を返す
+ * (ツリーを開いた直後の始まりの値段で画面が 0.6 秒止まった、11-06 sim-light4)。答えは fn をそのまま呼んだ時と同じ
+ */
+export async function withLoopsSoon<T>(fn: () => T, pause: () => Promise<void>): Promise<T> {
+  for (;;) {
+    wanted = [];
+    let miss = false, got: T | undefined;
+    try { got = fn(); } catch (e) { if (e !== LOOP_MISS) { wanted = null; throw e; } miss = true; }
+    const w = wanted;
+    wanted = null;
+    if (!miss) return got as T;
+    for (const { key, run } of w) {
+      if (loopCache.has(key)) continue;
+      const g = run();
+      for (;;) { const x = g.next(); if (x.done) { loopCache.set(key, x.value); break; } await pause(); }
+    }
+  }
 }
 
 /** フラクチャーの候補 (どれか 1 つが固定されれば良い) */

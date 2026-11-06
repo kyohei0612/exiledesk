@@ -3,7 +3,7 @@
   既定はオフ (品質は見ない)。☑「品質も狙う」でオンにすると、エミュのクラフト台と同じ品質の帯 (StageQualityBar: 品質・上限・種類) で値を決める。
   ベースの最大品質 (アクセサリーは 20%) を超える品質は、途中でブリーチのエッセンス (essence:breach、品質の最大値 +20%) を付けて品質を上げる。
   品質はその後でブリーチの MOD が消えても残る (エンジンの applyCurrency で確かめた) ので、完成の狙いには足さない (狙いの枠を使わない)。
-  オンの時だけ回す時に品質を見る (tree-unbounded の goalsHeld・tree-run の完成の箱。足りない人は止まり)
+  オンの時だけ回す時に品質を見る (tree-run の完成の箱。足りない人は止まり)
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";

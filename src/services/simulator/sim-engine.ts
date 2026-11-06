@@ -14,10 +14,12 @@ export type { MagicAddOdds, AddGrade } from "./sim-engine/magic-odds";
 export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./sim-engine/magic-odds";
 // スパムの道 (増強・カオス・高貴) で始めのアイテムから狙いに着くまでの平均の使った物と着いた割合 (核の route-race の routeRun と同じ打ち方。シミュのツリーのベースの値段・解析君)
 export type { SpamCounts, SpamTarget } from "./sim-engine/spam-counts";
-export { spamCounts } from "./sim-engine/spam-counts";
+export { spamCounts, spamCountsSteps } from "./sim-engine/spam-counts";
 // 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)。枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない
 export type { StepOutcome } from "./sim-engine/outcomes";
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./sim-engine/outcomes";
+// 発現の行き先 = 出うる MOD ごとに 1 つ (人が選ぶ手、乱数で候補を引かない。E-99・S-200)
+export { revealOutcomes } from "./sim-engine/reveal-outcomes";
 // 1 手の結果の種類 (当たり・外れ・狙いが消えた・外れが消えた・打った後) ごとの割合と、前後の 2 つのアイテムの分け方 (ツリーの結果の箱の割合、10-25 シミュ部長 29 本目)
 export type { OutcomeKind, OutcomeOdd, TierAimLike } from "./sim-engine/outcome-odds";
 export { outcomeOdds, outcomeKindOf } from "./sim-engine/outcome-odds";
@@ -37,7 +39,6 @@ export type { RequiredRune } from "./sim-engine/start-fracture";
 export { fractureStart, placeMods, runeSocketed, requiredRunes } from "./sim-engine/start-fracture";
 export { GOAL_RUNE_MAX, socketGoalRunes } from "./sim-engine/goal-runes";
 // シミュのツリーで打つ時の規格外 (ルーンの手はソケットを足して嵌める、クラフト MOD が上限ならアストリッドの創造性を先に嵌める。オーナー 10-26)
-export { socketRunes, unboundedBefore, applyUnbounded } from "./sim-engine/unbounded";
 // 完成形の狙いの組にもう 1 つ足せるか (枠・系統・アイテムレベル・冒涜 1 つまで・クラフト MOD の上限。足せなければ理由の文、10-24 シミュ部長 19 本目)
 export { goalBlock, tagClash, TAG_CLASH } from "./sim-engine/start-fracture";
 export { rowBlockLines } from "./sim-engine/goal-row-blocks";

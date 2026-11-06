@@ -6,6 +6,7 @@
  */
 import { boxAims, kindOfHand, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { CATALYSING, effectOf } from "./tree-hands";
+import type { StageItem } from "../../craft-stage/types";
 
 export const RECIPE_V1 = "exiledesk-recipe/1";
 /** 箱 1 つの人の決め。at = 道の札、hand = 打つ手 (☑ は aims、触媒の前のカタリストは pre)、ほかは箱の印 */
@@ -14,7 +15,25 @@ export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: strin
 /** 要確認の一覧 (S-107、⑦20 案 A): 組み直した木に札が無い決め (gone)・前の版の人の ↩ (back)・分かれ目 (split)・読めなかった箱 (check)。保存し直しても持ち越す */
 export interface RecipeOrphan { at: string; why: "gone" | "back" | "split" | "check"; raw: unknown }
 
-export const isRecipeV1 = (d: { schema?: unknown } | null | undefined): boolean => d?.schema === RECIPE_V1;
+/**
+ * 保存の形 v2 = v1 + 例のアイテム (S-200 ⑦・決め (c)): 箱ごとの代表の品 (箱のカード) を道の札で持つ。開く時は同じ配置の枝なら保存の例を代表にする (tree-frame)。
+ * v1 は例が無いだけの同じ形 (1 段で読む、S-108)。例の無い古いレシピはその時だけ種 1 つで出し、次の保存から入れる。% は持たない (決め (d))
+ */
+export const RECIPE_V2 = "exiledesk-recipe/2";
+/** 例のアイテム = 代表の品からベースの欄 (始まりの品と同じ物) を抜いた物 */
+export type RecipeExample = Omit<StageItem, "cls" | "base" | "baseJa" | "itemLevel">;
+export const slimExample = (it: StageItem): RecipeExample => { const { cls: _c, base: _b, baseJa: _j, itemLevel: _l, ...rest } = it; return clone(rest); };
+/** 例のアイテム → 品 (ベースの欄は始まりの品から)。欄の順は始まりの品にそろえる (品の鍵 itemKeyOf は JSON なので、順が違うと同じ品が別の鍵になる) */
+const BASE_KEYS = new Set(["cls", "base", "baseJa", "itemLevel"]);
+export function fullExample(start: StageItem, ex: RecipeExample): StageItem {
+  const out: Record<string, unknown> = {}, e = ex as Record<string, unknown>, s = start as unknown as Record<string, unknown>;
+  for (const k of Object.keys(s)) if (BASE_KEYS.has(k)) out[k] = s[k]; else if (k in e) out[k] = clone(e[k]);
+  for (const k of Object.keys(e)) if (!(k in out)) out[k] = clone(e[k]);
+  return out as unknown as StageItem;
+}
+
+/** 保存の形 (v1・v2) か */
+export const isRecipeV1 = (d: { schema?: unknown } | null | undefined): boolean => d?.schema === RECIPE_V1 || d?.schema === RECIPE_V2;
 
 /** 結果の箱の札 (親の中で): 結果の種類 + 当たりの MOD + 側の鍵 */
 const outKey = (b: TreeBox): string => `${b.out}${b.aim ? `:${b.aim.modId}#${b.aim.tier}` : ""}${b.junkKey ? `[${b.junkKey}]` : ""}`;
@@ -54,11 +73,11 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
   return b.hand && kind(b.hand) === "quality" && !b.hand.quality && c?.out === "pass" && c.hand?.omens.includes(CATALYSING) ? c : null;
 }
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
-const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld"]);
+const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld", "examples"]);
 
-/** 木 (どの版でも) → 保存の形 v1。v1 ならそのまま (欄を揃えるだけ) */
+/** 木 (どの版でも) → 保存の形 v1 (打ち方だけ。例のアイテムは外す、入れるのは tree-frame の recipeOf)。保存の形ならそのまま (欄を揃えるだけ) */
 export function toRecipeV1(d: TreeDoc): TreeDoc {
-  if (isRecipeV1(d)) return { ...clone(d), boxes: {}, picks: d.picks ?? [], ...(d.orphans?.length ? { orphans: d.orphans } : {}) };
+  if (isRecipeV1(d)) { const { examples: _e, ...r } = clone(d); return { ...r, schema: RECIPE_V1, boxes: {}, picks: d.picks ?? [], ...(d.orphans?.length ? { orphans: d.orphans } : {}) }; }
   const out: Record<string, unknown> = { schema: RECIPE_V1 };
   for (const [k, v] of Object.entries(d)) if (!NOT_KEPT.has(k) && v !== undefined) out[k] = clone(v);
   const picks: RecipePick[] = [], orphans: RecipeOrphan[] = clone(d.orphans ?? []);
@@ -66,7 +85,8 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
   for (const [id, at] of keys) {
     const b = d.boxes[id]!, p: RecipePick = { at };
     const viaPre = b.out === "pass" && !!b.parent && preChildOf(d, d.boxes[b.parent]!) === b;
-    const h = b.hand ?? b.handBack ?? null;
+    // 消去の続きの自動の手 (S-28g、autoAnnul) は保存しない = 開く時に同じ決まりで作り直す
+    const h = b.autoAnnul ? null : b.hand ?? b.handBack ?? null;
     // 消去の続きの手も人の決め (11-04 S-190b。前は組み直しで自動で付くので保存しなかった = S-109 の 10)
     if (h && !viaPre) {
       const pass = b.hand ? preChildOf(d, b) : null;
@@ -97,5 +117,8 @@ export function healRecipeV1(raw: Record<string, unknown>): TreeDoc {
   const ok = (p: unknown): p is RecipePick => !!p && typeof p === "object" && typeof (p as RecipePick).at === "string";
   const list = Array.isArray(d.picks) ? d.picks : [];
   const bad = list.filter((p) => !ok(p)).map((p): RecipeOrphan => ({ at: "?", why: "check", raw: p }));
+  // 例のアイテムは札 → 品の形の物だけ (読めない物は捨てる。次に開いた時に種 1 つで出し直す = 決め (c))
+  const ex = d.examples && typeof d.examples === "object" && !Array.isArray(d.examples) ? Object.fromEntries(Object.entries(d.examples).filter(([, v]) => !!v && typeof v === "object" && Array.isArray(v.prefixes) && Array.isArray(v.suffixes))) : {};
+  if (Object.keys(ex).length) d.examples = ex; else delete d.examples;
   return { ...d, base: typeof d.base === "string" ? d.base : "", itemLevel: typeof d.itemLevel === "number" ? d.itemLevel : 82, boxes: {}, seq: 0, picks: list.filter(ok), ...(bad.length || d.orphans?.length ? { orphans: [...(d.orphans ?? []), ...bad] } : {}) };
 }

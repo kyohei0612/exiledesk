@@ -14,7 +14,8 @@ import { placedAims } from "./tree-veil";
 const skipPos = (k: string, v: unknown): unknown => (k === "x" || k === "y" || k === "note" ? undefined : v);
 /** 兄弟の札 (手の当たりの札 handAims・結果の分け方 own・見本の種 pathKeyOf がここを見る) */
 // 箱の番号は見本に効かない (種は道の札 pathKeyOf)。手を変えると番号が振り直されて覚えが全部外れていたので入れない (S-71b ⑬)
-export const tagOf = (x: TreeBox): unknown[] => [x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts];
+// ヒネコラのハズレ (S-39) の箱は見本が親のまま = 札に入れる (無い箱は前と同じ鍵)
+export const tagOf = (x: TreeBox): unknown[] => [x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts, ...(x.seen ? ["seen"] : [])];
 /** 箱の段の文字: self = 箱自身の札と兄弟、chain = 手・分かれ目まで入れて始まりまで続けた物、strip = ここまでの道に全部消えてよい消去がある */
 export interface PathLink { self: string; chain: string; strip: boolean }
 const NO_LINK: PathLink = { self: "", chain: "", strip: false };
@@ -37,8 +38,13 @@ export function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number, alt: boo
 }
 /** アイテムの比べの文字 (部位の表 cls はベースで決まるので入れない) */
 export const itemKeyOf = (it: StageItem): string => JSON.stringify(it, (k, v: unknown) => (k === "cls" ? undefined : v));
+/** 木の前提 (箱・狙いより外。始まりの見本はこれと種だけで決まる) */
+export function premiseOf(doc: TreeDoc): string {
+  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
+  return JSON.stringify(rest, skipPos);
+}
 /** 箱によらない部分 (木の前提・木の狙いの札・置き石)。箱の数の分だけ掛かるので、木の変わらない間は 1 回だけ作る (tree-sample の keyOf) */
 export function docPartOf(doc: TreeDoc): string {
-  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, ...rest } = doc;
+  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
   return JSON.stringify([rest, aimsOf(doc), placedAims(doc)], skipPos);
 }

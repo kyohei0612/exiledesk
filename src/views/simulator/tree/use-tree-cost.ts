@@ -7,6 +7,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
+import { withLoopsSoon } from "../../../services/simulator/start-cost";
 import { fractureMarks, newTree, startOf, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 
 export function makeBaseCost(doc: Ref<TreeDoc>, treePrice: (key: string) => number) {
@@ -27,21 +28,23 @@ export function makeBaseCost(doc: Ref<TreeDoc>, treePrice: (key: string) => numb
   const COST_WAIT_MS = 5000;
   watch(() => !!s.data.value, (ok) => { if (ok) setTimeout(allowCost, COST_WAIT_MS); }, { immediate: true });
   const costMemo = new Map<string, ReturnType<typeof treeBaseCost>>();
-  const baseCost = computed(() => {
+  /** 裏で計算中の鍵 (区切って打つ間は画面を返す。済んだら costTick で出し直す) */
+  const costRunning = ref<string | null>(null), costTick = ref(0);
+  const pause = (): Promise<void> => new Promise((ok) => { const t = setTimeout(ok, 50); requestAnimationFrame(() => setTimeout(() => { clearTimeout(t); ok(); }, 0)); }); // 隠れたタブでも止まらない
+  /** 値段の鍵 (相場 = 神の値段と骨・オーブの値段も入れる。ここで読むので相場が変われば計算し直す) */
+  const costMk = computed(() => (s.data.value && costReady.value ? `${costKey.value}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}` : null));
+  // 計算は 1 回 0.5 秒ほど (③ のマジックのループを 300 人打つ)。区切って裏で回す (開いた直後に画面が止まった、11-06 sim-light4)。式と答えは前のまま
+  watch(costMk, (mk) => {
     const d = s.data.value;
-    if (!d) return null;
-    if (!costReady.value) return null;
-    const key = costKey.value;
-    const { b, l, s: st, m } = JSON.parse(key) as { b: string; l: number; s: ReturnType<typeof startOf>; m: Aim[] };
-    // 相場 (神の値段と骨・オーブの値段) も鍵に。ここで読むので相場が変われば計算し直す
-    const mk = `${key}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}`;
-    const hit = costMemo.get(mk);
-    if (hit) return hit;
-    const r = treeBaseCost(d, { ...newTree(b, l), start: st, memoAims: m }, st.prices ?? {}, treePrice, (k) => nameOfKey(k, freshItem(d, b, l, "rare"))); // 名前はそのベースで引く (骨の名前が部位で変わる。前はクラフト台のアイテムで引いていた)
-    costMemo.set(mk, r);
-    return r;
-  });
-  /** 始まりの値段をまだ計算していない (題の横の札) */
-  const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
+    if (!mk || !d || costMemo.has(mk) || costRunning.value === mk) return;
+    costRunning.value = mk;
+    const { b, l, s: st, m } = JSON.parse(costKey.value) as { b: string; l: number; s: ReturnType<typeof startOf>; m: Aim[] };
+    void withLoopsSoon(() => treeBaseCost(d, { ...newTree(b, l), start: st, memoAims: m }, st.prices ?? {}, treePrice, (k) => nameOfKey(k, freshItem(d, b, l, "rare"))), pause) // 名前はそのベースで引く (骨の名前が部位で変わる。前はクラフト台のアイテムで引いていた)
+      .then((r) => { costMemo.set(mk, r); }, () => {})
+      .finally(() => { if (costRunning.value === mk) costRunning.value = null; costTick.value++; });
+  }, { immediate: true });
+  const baseCost = computed(() => { void costTick.value; const mk = costMk.value; return mk ? costMemo.get(mk) ?? null : null; });
+  /** 始まりの値段をまだ計算していない・計算中 (題の横の札) */
+  const baseCostBusy = computed(() => !!s.data.value && (!costReady.value || !!costRunning.value));
   return { baseCost, baseCostBusy, allowCost };
 }

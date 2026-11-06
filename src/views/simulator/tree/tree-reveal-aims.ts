@@ -6,7 +6,6 @@
  */
 import { mulberry32, revealOffers, tierRankOf, unrevealedOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { stepOutcomes } from "../../../services/simulator/sim-engine";
-import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { ECHO, engineOmens } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { isRevealHand } from "../../../services/simulator/tree/tree-veil";
@@ -18,7 +17,7 @@ const DRAWS = 80;
 /** 未発現の付いた形 = 後から打つ発現はそのまま、骨はエンジンで打った結果 (起こりうる行き先の未発現の物)。この箱の見本 3 つから */
 function veiledOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand): StageItem[] {
   const items = [item, ...[2, 3].map((seed) => sampleOf(data, doc, boxId, seed).item)];
-  return items.flatMap((it) => (isRevealHand(h.currency) ? [it] : (stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).map((o) => o.item))).filter((it) => unrevealedOf(it));
+  return items.flatMap((it) => (isRevealHand(h.currency) ? [it] : (stepOutcomes(data, it, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).map((o) => o.item))).filter((it) => unrevealedOf(it));
 }
 
 export function revealAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand): Aim[] {

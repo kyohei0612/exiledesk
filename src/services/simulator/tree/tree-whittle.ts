@@ -11,7 +11,7 @@ import { candidates, makeStageMod, type PatchData, type StageItem, type StageMod
 import { without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
 
-const WHITTLE = "OmenofWhittling";
+export const WHITTLE = "OmenofWhittling";
 /** 削減のお告げを含む手か ( が閉じていれば false = 今のまま見本の MOD レベルで決まる) */
 export const isWhittleHand = (h: { omens: readonly string[] } | null | undefined): boolean => !!h && engineOmens(h).includes(WHITTLE);
 

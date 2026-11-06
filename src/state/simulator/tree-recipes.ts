@@ -8,6 +8,8 @@ import { computed, ref } from "vue";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
+import { recipeOf } from "../../services/simulator/tree/tree-frame";
+import { craftStage } from "../craft-stage";
 import { clone, newId, parseList } from "./recipe-store-util";
 
 const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
@@ -72,8 +74,8 @@ export const touchedAtTree = (r: TreeRecipe): number => r.updatedAt;
 /** 中身が同じか (保存していない変更があるか)。箱の位置も木の一部として比べる */
 /** 打ち方だけを比べる (組み直した木と保存した形の打ち方が同じなら同じ、S-104) */
 export const sameTree = (a: TreeDoc, b: TreeDoc): boolean => JSON.stringify(toRecipeV1(a)) === JSON.stringify(toRecipeV1(b));
-/** 保存する形 (打ち方だけの v1、S-104) */
-const stored = (t: TreeDoc): TreeDoc => toRecipeV1(t);
+/** 保存する形 (打ち方の v1 + 開発版は例のアイテムの v2、S-104・S-200 ⑦)。比べ (sameTree) は打ち方だけ */
+const stored = (t: TreeDoc): TreeDoc => recipeOf(craftStage.data.value, t);
 
 export function saveTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   const now = Date.now();

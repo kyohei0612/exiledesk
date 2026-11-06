@@ -8,11 +8,10 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
-import { prepFor } from "../../services/simulator/tree/tree-unbounded";
-import { treeOmenBlock } from "../../services/simulator/tree/tree-omen";
 import { tr } from "../../i18n/lang";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
 import { flag } from "../../web/release-flags";
+import { FORESEE_ON } from "../../services/simulator/tree/tree-foresee";
 
 /**
  * ツリーの棚だけで出さない物 (10-24 オーナー「要望があれば戻す」温度感。消さずに出さないだけ、戻す時はここ 1 か所):
@@ -24,14 +23,21 @@ import { flag } from "../../web/release-flags";
  * 出さない (同じ状態の箱への自動の矢印で、カオス 1 回ずつ + 外れ → 親の箱で組める)。作りは残す、要望が来たらここを true に。前に保存した当たるまでの手は開いた時に札が出る
  */
 export const TREE_SPAM_ORB = false;
-export const TREE_HIDDEN = new Set(["OmenofSanctification", "divine", "OmenoftheBlessed"]);
+/** 神のオーブは 11-06 から木の棚に出す (狙いの MOD の数値の目標を決める手、S-202) */
+export const TREE_HIDDEN = new Set(["OmenofSanctification", "OmenoftheBlessed"]);
 /** フラックス (耐性の変換) は木の枝の決まりが無いのでツリーの棚に出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す) */
 const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"]);
 /** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */
 const SPECIAL_RUNE_KEYS = new Set(RUNE_GROUPS.find((g) => g.kind === "special")?.keys ?? []);
 /** スイッチ runeSocket ではクラフト以外のルーンも消さず、エミュの棚と同じく畳んだ節に出す (S-20・S-31f、11-05 オーナー「いつでもルーンは展開して使えるように」) */
 const otherRune = (key: string): boolean => !flag("runeSocket") && key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key);
-export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || otherRune(key);
+/**
+ * ヒネコラの髪束 (予見) は木の棚に出す。神のオーブは予見したアイテムの時だけ (予見を消す手、S-39・開発版だけ = FORESEE_ON。
+ * 11-05 オーナー「神うって同じようにヒネコラしてどうループするのかって挙動みたら」)。ほかの所の神のオーブは今までどおり出さない (S-20)
+ */
+const foreseeShown = (key: string, it: StageItem | null | undefined): boolean => FORESEE_ON && (key === "hinekora" || (key === "divine" && !!it?.foreseen));
+/** it = 棚に渡したアイテム (無ければ予見の例外は神のオーブに効かない) */
+export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || otherRune(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {
@@ -61,7 +67,7 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
-    return block(k) ?? (d && it ? useReason(d, prepFor(d, it, k), k, om) : tr("準備中", "Loading")); // 規格外の形で聞く (ルーンはソケットを足す・アストリッド、tree-unbounded)
+    return block(k) ?? (d && it ? useReason(d, it, k, om) : tr("準備中", "Loading"));
   }
   provideShelf({
     data: s.data, item, omens, held,
@@ -69,9 +75,9 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
     usable: (k) => usableWith(k, omens.value),
     usableBare: (k) => usableWith(k, []),
     toggleOmen,
-    hidden: treeHidden,
-    // 木の箱は何人もの集まりなので、側を決めるお告げの「今は意味なし」では灰色にしない (sim-tree.md S-20b)
-    omenBlock: (h, om, o) => treeOmenBlock(s.data.value, item.value, h, om, o),
+    // 予見したアイテム (ヒネコラの後、S-39) の棚は今打てるカレンシーだけ (エンジンの useReason が通す物。お告げは持った手の欄で決まるので除く。
+    // 11-05 オーナー「その枠の状態でさせるカレンシー ただしエミュで動く奴限定で」)
+    hidden: (k) => treeHidden(k, item.value) || (FORESEE_ON && !!item.value?.foreseen && !k.startsWith("Omen") && usableWith(k, []) !== null),
     runeFirst,
   });
   return { held, omens, toggleOmen, release, onHold, onShelfDown };

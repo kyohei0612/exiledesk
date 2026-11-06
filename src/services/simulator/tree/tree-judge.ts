@@ -8,24 +8,17 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, kindOf, maxQualityOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystOf, kindOf, maxQualityOf, occupiedFamiliesOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { aimOpts, boxKeyOf, holdDocSig, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
-import { midAims, midMark, placedAims } from "./tree-veil";
-
-/** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
-const SAMPLES = 4;
-/**
- * 結果が何通りかある箱 (見本 4 つで中身が 2 通り以上) は、続けて MORE 個新しい中身が出なくなるまで見本を足す (MAX まで。S-74 B)。
- * 4 つだと「狙いが消えた」(どの耐性が消えたか 3 通り) の 2 通りしか拾わず、残りの通りの人が止まった (10-29 bone3 の止まり 26)
- */
-const MORE = 8, MAX = 32;
+import { essenceModOf, midAims, midMark, placedAims } from "./tree-veil";
+import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 
 /** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
 const contentAims = (doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(doc)];
@@ -47,16 +40,19 @@ export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | und
 /**
  * 打つ前の印のうち途中の狙い (S-33c)。残したい MOD の ☑ を外した手・全部消えてよい消去の後も外れに落とさず、付いている間ずっと狙い (消えたら印も外れる)。
  * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」
+ * 消去の手 (h) の後は残さない = ☑ していない MOD は残したい MOD の有る無しに関わらず全部外れ、エッセンスも (11-06 オーナー「残したいMODで選んでない奴は全部ハズレだろ」)
  */
-const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined): string[] => (prev ? midAims(doc).map((a) => a.modId).filter((id) => prev.has(id)) : []);
+const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined, h?: Hand | null): string[] => (prev && !isRemoveHand(h) ? midAims(doc).map((a) => a.modId).filter((id) => prev.has(id)) : []);
+const isRemoveHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove";
 /** 箱 boxId に着いた時の ☑ (prev = 着く前、item = 着いた時のアイテム、before = 打つ前のアイテム。打たずに着いた時は無し) */
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem, before?: StageItem | null): ReadonlySet<string> {
   const b = doc.boxes[boxId];
-  if (!b) return prev;
+  // ヒネコラのハズレ (打たない、S-39) の箱は手を使わないので印も前のまま
+  if (!b || b.seen) return prev;
   // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d)
   const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
-  const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev)] : prev);
+  const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev, b.parent ? doc.boxes[b.parent]?.hand : null)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
   // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b)
   const em = before ? midMark(doc, b.parent ? doc.boxes[b.parent]?.hand : null) : null;
@@ -69,7 +65,7 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
 /** 全部消えてよい消去の後 (☑ の無い消去は全部外れ MOD、S-28。✦ の印の狙いは残る) */
 export const strippedOf = (doc: TreeDoc): ReadonlySet<string> => new Set(fractureMarks(doc).map((a) => a.modId));
 /** 消去の手 h の後の ☑ (keep = 残したい MOD の modId、全部消えてよいは無し)。打つ前の印のうち候補の外と途中の狙いも残す (S-27e・S-33c) */
-export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined, keep: readonly string[] = []): ReadonlySet<string> => new Set([...strippedOf(doc), ...keep, ...outsideAimed(data, doc, h, prev, before), ...midKept(doc, prev)]);
+export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined, keep: readonly string[] = []): ReadonlySet<string> => new Set([...strippedOf(doc), ...keep, ...outsideAimed(data, doc, h, prev, before), ...midKept(doc, prev, h)]);
 /**
  * アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える。
  * 狙いに当たる MOD は文が同じなら別の modId でも当たる (エンジンの sameText) ので、体 (bodyOf) から外すのは実物の MOD の modId (前は完成形の modId で外し、同じ文の別 modId が狙いと外れの両方に数わった)
@@ -81,11 +77,48 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const body = bodyOf(data, doc, it, mods, placed);
   return `${[...keys].sort().join(",")}${frameOf(it)}#${junkOne(body)}`;
 }
+/** 木の族 = 完成形の狙いと、木の手で付けるエッセンスの MOD の系統 (E-11a)。外れの印 (S-200 ② の (g)) で見る */
+const FAMS = new WeakMap<PatchData, Map<string, ReadonlySet<string>>>();
+export function treeFamilies(data: PatchData, doc: TreeDoc): ReadonlySet<string> {
+  const ids = [...new Set([...(doc.memoAims ?? []).map((a) => a.modId), ...Object.values(doc.boxes).flatMap((b) => essenceModOf(b.hand?.currency) ?? [])])].sort();
+  let m = FAMS.get(data);
+  if (!m) FAMS.set(data, (m = new Map()));
+  const k = ids.join(","), had = m.get(k);
+  if (had) return had;
+  const out = new Set(ids.flatMap((id) => { const md = data.mods.get(id); return md ? occupiedFamiliesOf(md) : []; }));
+  if (m.size > 200) m.clear();
+  m.set(k, out);
+  return out;
+}
+/**
+ * 外れの印 (S-200 ② の (g)、11-06 オーナー「3おけ」): 外れ MOD (狙いに数えない MOD) のうち、木の族を塞ぐ物の族。同じ系統の MOD は 1 品に 1 つ (E-11a) なので、
+ * 塞いでいれば狙い・エッセンスが付かない。枠の比べ (contentOf) には入れない (外れは一律 S-60 のまま。入れると完成形より低い段の狙いの MOD を外れに持つだけで
+ * 人と箱が合わなくなり、見張りの木 23 本中 17 本で止まりが増えた)。代表と印の違う枝を探して手を当て、打てない・当たらない所を木のチェックに出すのに使う (tree-frame)
+ */
+export function blockMarkOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
+  const fams = treeFamilies(data, doc);
+  if (!fams.size) return "";
+  const famsOf = (m: StageMod): string[] => { const md = data.mods.get(m.modId); return md ? occupiedFamiliesOf(md).filter((f) => fams.has(f)) : []; };
+  const near = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed && famsOf(m).length);
+  if (!near.length) return "";
+  let memo = MARKS.get(it);
+  if (!memo) MARKS.set(it, (memo = new Map()));
+  const mk = [...fams].sort().join(",") + "|" + [...aimed].sort().join(","), had = memo.get(mk);
+  if (had !== undefined) return had;
+  const goals = contentAims(doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), out = new Set<string>();
+  for (const m of near) if (!goals.some((a) => isAimMod(m, targetsOf(data, [a]), opts))) for (const f of famsOf(m)) out.add(f);
+  const r = [...out].sort().join("+");
+  memo.set(mk, r);
+  return r;
+}
+/** 外れの印の覚え (品ごと) */
+const MARKS = new WeakMap<StageItem, Map<string, string>>();
 /**
  * 枠に入れる品質 (値・カタリストの種類)・はまったルーン・ソケットの数。全部同じ時だけ同じ枠、1 つでも違えば別 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」「少しでも違えば別」)。
  * 嵌めたルーン (augments) は名前の組だけで順は見ない (11-05 オーナー「おｋ直して 順は見ないで」。前はルーンの MOD だけを見て、ルーン 0 と 2 の箱が同じ枠になっていた、要望 fd1bed1a)
+ * 品質が 0% (値・カタリストの品質とも 0) の時は種類を見ない (11-06: 触媒の高貴が品質を使い切っても種類は残るが、0% の種類は打つ時に効かない)
  */
-const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${it.qualityTag ?? ""}~r${[...it.prefixes, ...it.suffixes].flatMap((m) => (m.rune ? [m.rune] : [])).sort().join("+")}.${(it.augments ?? []).map((a) => a.en).sort().join("+")}.${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~s${it.sockets ?? 0}`;
+const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${(it.quality ?? 0) + (it.catalystQuality ?? 0) > 0 ? it.qualityTag ?? "" : ""}~r${[...it.prefixes, ...it.suffixes].flatMap((m) => (m.rune ? [m.rune] : [])).sort().join("+")}.${(it.augments ?? []).map((a) => a.en).sort().join("+")}.${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~s${it.sockets ?? 0}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
 /**
  * 外れは種類を見ない (S-60、10-29 深夜オーナー「そもそもハズレMODはどんな形であれハズレMODだからな」): 側ごとの 普通.エッセンス.冒涜の発現済み.未発現 を
  * 外れ.未発現 の 2 つに (「未発現のみ別枠として全然おｋ」)。冒涜の発現済みの数は最後の `#d<プレ>.<サフィ>` に残し、光のお告げの手のある箱と比べる時だけ見る (looseKey で落とす)
@@ -184,15 +217,20 @@ export interface Judge {
   afterQuality(id: string): boolean;
 }
 
-/** 道の鍵 → 箱の中身 (データごと。増えすぎたら捨てて作り直す = 結果は同じ) */
-const CONTENTS = new WeakMap<PatchData, Map<string, Set<string> | null>>();
-const CONTENTS_MAX = 20000;
-const contentsOf = (data: PatchData): Map<string, Set<string> | null> => { let m = CONTENTS.get(data); if (!m) CONTENTS.set(data, (m = new Map())); return m; };
+/** 中身を作る途中で止めた印 (judgeMemo の fullUntil) */
+const REJECTED = Symbol("rejected");
 
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const memo = new Map<string, ReadonlySet<string> | null>(), looseMemo = new Map<string, ReadonlySet<string> | null>();
-  /** 箱の作れる見本 (seed と item) */
-  const samples = (id: string): Array<{ seed: number; item: StageItem }> => (doc.boxes[id] ? [1, 2, 3, 4].slice(0, SAMPLES).flatMap((seed) => { const s = sampleOf(data, doc, id, seed); return s.note === "none" || s.note?.startsWith("cant:") ? [] : [{ seed, item: s.item }]; }) : []);
+  // 配置で比べる (S-200 段階 2): 箱の中身 = 代表の品 1 個の枠、見本は代表の品だけ (打ち直さない)。出せない箱 (note) は作れない見本と同じ
+  const fr = frameOfDoc(data, doc);
+  /** 人の中身の鍵 (品質の % を抜く) */
+  const own = frameKeyOf;
+  const frameAt = (id: string): Frame | null => { const f = fr.frames.get(id); return f && !f.note ? f : null; };
+  /** 代表の品の ☑ */
+  const aimedAt = (id: string): ReadonlySet<string> => frameAt(id)?.aimed ?? new Set();
+  /** 箱の作れる見本 (代表の品 1 つ) */
+  const samples = (id: string): Array<{ seed: number; item: StageItem }> => { const f = frameAt(id); return f ? [{ seed: 1, item: f.item }] : []; };
   /** 箱の中身 (ふだんの比べ = 冒涜の発現済みの数を落とす。光のお告げの手のある箱と比べる時は full) */
   const contents = (id: string): ReadonlySet<string> | null => {
     if (looseMemo.has(id)) return looseMemo.get(id)!;
@@ -208,27 +246,15 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     const f = full(id);
     return f ? new Set([...f].map((k) => keyAt(k, d, c))) : null;
   };
-  const full = (id: string): ReadonlySet<string> | null => {
+  /** 箱の中身 (代表の品の枠 1 つ)。stop を渡すと、その中身で stop が真なら REJECTED を返す (覚えない、S-71b ⑲) */
+  const fullUntil = (id: string, stop?: (k: string) => boolean): ReadonlySet<string> | null | typeof REJECTED => {
     if (memo.has(id)) return memo.get(id)!;
-    let out: Set<string> | null = null;
-    // この間は木が変わらないので鍵は 1 回だけ (S-71b)
-    if (doc.boxes[id]) holdDocSig(doc, () => {
-      // 箱の中身は見本と同じ道の鍵で覚え続ける (判定を作り直すたびに全部の箱の見本を引いていた)
-      const key = boxKeyOf(doc, id), kept = key ? contentsOf(data).get(key) : undefined;
-      if (kept !== undefined) { out = kept; return; }
-      for (let seed = 1, last = 0; seed <= MAX; seed++) {
-        if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;
-        const s = sampleOf(data, doc, id, seed);
-        if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-        const k = contentOf(data, doc, s.item, sampleAimed(data, doc, id, seed));
-        if (!out?.has(k)) last = seed;
-        (out ??= new Set()).add(k);
-      }
-      if (key) { const m = contentsOf(data); if (m.size >= CONTENTS_MAX) m.clear(); m.set(key, out); }
-    }, true);
+    const f = frameAt(id), out = f ? new Set([f.key]) : null;
+    if (f && stop?.(f.key)) return REJECTED;
     memo.set(id, out);
     return out;
   };
+  const full = (id: string): ReadonlySet<string> | null => fullUntil(id) as ReadonlySet<string> | null;
   const depth = (id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   let order: string[] | null = null;
@@ -242,26 +268,32 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     contents,
     capShort,
     fitsBox(from, to) {
-      if (from === to || !doc.boxes[from] || !doc.boxes[to] || capShort(from, to)) return false;
-      const a = setFor(to, from), b = setFor(to, to);
-      return !!a && !!b && a.size === b.size && [...a].every((k) => b.has(k));
+      // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
+      // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
+      if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
+      // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
+      const b = contents(to);
+      if (!b) return false;
+      if (fullUntil(from, (k) => !b.has(looseKey(k))) === REJECTED) return false;
+      const a = contents(from);
+      return !!a && a.size === b.size && [...a].every((k) => b.has(k));
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, contentOf(data, doc, item, aimed)))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
-      const k = contentOf(data, doc, item, aimed);
+      const k = own(contentOf(data, doc, item, aimed));
       return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
-      const k = contentOf(data, doc, item, aimed);
+      const k = own(contentOf(data, doc, item, aimed));
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
-    aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
+    aimedOf: (id) => samples(id).map(() => aimedAt(id)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)。途中の狙いは数える (S-33b)
-    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
-    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = sampleAimed(data, doc, id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
+    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = aimedAt(id); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
+    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every(() => { const am = aimedAt(id); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };
 }

@@ -4,11 +4,10 @@
  * 比べは全部 Judge に任せる (形の鍵・道の狙いの組・体の比べは持たない)。手ごとの除外 (フラクチャー・カタリストの結果・カオスの外れを親へ) もしない (大本 2)
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { nextAimed, sampleAimed, type Judge } from "./tree-judge";
-import { aimsOf, playHand, sampleFrom, sampleOf } from "./tree-sample";
+import { type Judge } from "./tree-judge";
+import { playHand } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
-import { midAims } from "./tree-veil";
-import { junkPath } from "./tree-junk-tidy";
+import { DIVINE_LT, isDivineAim } from "./tree-divine";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -34,14 +33,26 @@ export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
 }
 
 /**
- * 自動の ↩ の行き先 (S-50e):中身が同じ手のある箱のうち、親 → 親と同じ手の箱 → 浅い段・先に作った箱の順。
- * 自分と下、結果が 1 通りの手だけで上へ続く箱 (打っても変わらない輪) は入れない
+ * id の自動の ↩ を t へ付けると打っても変わらない手の輪になるか (S-50): 結果が 1 通りの手だけで上へ続く箱 (straightUp) か、
+ * 親の手の結果が全部親と同じ枠 (神のオーブなど、値しか変えない手) で t が親と同じ手の箱。前は神の結果が全部 ↩ 神の箱になり、人が神を打ち続けて抜けなかった (11-07、100 人中 94 人が打ち止め)
+ */
+export function idleLoop(doc: TreeDoc, id: string, t: string, j: Judge): boolean {
+  if (straightUp(doc, id, t)) return true;
+  const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
+  // 目標の数値を決めた神の未満の箱 (S-202 ④) は以上の枝で抜けるので輪にしない (以上の箱は今までどおり神の箱へ戻さない)
+  if (isDivineAim(p?.hand) && doc.boxes[id]?.junkKey === DIVINE_LT) return false;
+  return !!p?.hand && sameHand(doc.boxes[t]?.hand, p.hand) && p.outs.every((o) => j.fitsBox(o, p.id));
+}
+
+/**
+ * 自動の ↩ の行き先 (S-50e):中身が同じ手のある箱のうち、親 → 浅い段・先に作った箱の順 (親の手と同じ手かは見ない、11-06 オーナー「前カレンシ〜も見てたからな」)。
+ * 自分と下、打っても変わらない手の輪になる箱 (idleLoop) は入れない
  */
 export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
-  const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null, ph = p ? doc.boxes[p]?.hand : null;
-  const rank = (t: string): number => (t === p ? 0 : ph && sameHand(doc.boxes[t]?.hand, ph) ? 1 : 2);
+  const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null;
+  const rank = (t: string): number => (t === p ? 0 : 1);
   const cmp = shallow(doc);
-  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
+  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
 }
 
 /**
@@ -52,8 +63,7 @@ export function linkByContent(doc: TreeDoc, ids: readonly string[], j: Judge): v
   for (const id of ids) {
     const c = doc.boxes[id];
     if (!c || c.noAutoBack || c.hand || c.done || c.split || c.out === "branch" || c.out === "start") continue;
-    // 外れの道は自動でつながない (人が手を決める・同じ枠探しでだけつながる、S-190b)
-    if (junkPath(c)) continue;
+    // 外れの道も同じ枠なら自動でつなぐ (11-06 オーナー「同じ枠があったらその枠に打つカレンシーって決まってる」。前は人が手を決めた時の同じ枠探しだけ = S-190b)
     // 人が付けた戻り・setHand の既定の戻り (外れが消えた → 外れの前の箱、自動の印つき) は pruneByContent が見直す
     if (c.back && c.back !== MATCH_BACK) continue;
     if (offByParent(doc, id, j)) continue;
@@ -89,8 +99,10 @@ export function sameHandByContent(doc: TreeDoc, id: string, h: Hand, j: Judge): 
 export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
   let changed = false;
   for (const b of Object.values(doc.boxes)) {
-    if (!b.autoBack || !b.back || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
-    if (j.fitsBox(b.id, b.back)) continue;
+    // ヒネコラのハズレのまとめ (S-39、tree-foresee の foldMisses) は中身で見直さない
+    if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
+    // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない
+    if (j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }
@@ -105,49 +117,8 @@ export function joinableByContent(doc: TreeDoc, id: string, j: Judge): string[] 
   return p.outs.filter((o) => { const c = doc.boxes[o]; return o !== id && plain(c) && !c!.hand && !c!.split && !c!.done && j.fitsBox(id, o); });
 }
 
-/**
- * ↩ で箱 id に着く人の形 (S-21 の「着いた人」): 箱 id か上の箱へ ↩ する箱の見本を、↩ 先から id まで道の手で打ち直す。外れは種類を見ない (S-60) ので、見本と別の外れの人が入る。
- * 乱数は見本と同じ種で、回さない
- */
-export function arrivalsOf(data: PatchData, doc: TreeDoc, j: Judge, id: string): Array<{ item: StageItem; aimed: ReadonlySet<string> }> {
-  const path: string[] = [], aims = aimsOf(doc), out: Array<{ item: StageItem; aimed: ReadonlySet<string> }> = [];
-  for (let b = doc.boxes[id]; b; b = doc.boxes[b.parent ?? ""]) path.unshift(b.id);
-  for (const y of Object.values(doc.boxes)) {
-    const at = y.back ? path.indexOf(y.back) : -1;
-    if (at < 0) continue;
-    for (const seed of [1, 2, 3, 4]) {
-      const s = sampleOf(data, doc, y.id, seed);
-      if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-      let cur = { item: s.item, note: null as string | null }, aimed = sampleAimed(data, doc, y.id, seed), ok = j.fitsItem(s.item, aimed, y.back!);
-      for (let k = at; ok && k < path.length - 1; k++) {
-        const b = doc.boxes[path[k + 1]!]!, r = sampleFrom(data, doc, b, doc.boxes[path[k]!]!, cur, seed, b.id, aims);
-        ok = !r.note;
-        if (ok) { aimed = nextAimed(data, doc, aimed, b.id, r.item, cur.item); cur = { item: r.item, note: null }; }
-      }
-      if (ok) out.push({ item: cur.item, aimed });
-    }
-  }
-  return out;
-}
-
 /** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */
 export const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
-
-/**
- * 着いた箱の手が打てない人の行き先 (S-64): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
- * 外れは種類を見ないので、✦ + ブリーチの人が ✦ + 外れの「ブリーチを打つ箱」に着いて打てず止まった (金の指輪の木の b1、次の手の b2 は中身が同じ)
- */
-/** 手の打てない人が途中の狙いの箱へ移る時の印: 実際に持っている途中の狙いを印に足す (外れのままだと次の箱で中身が違うと元の箱へ戻され輪になる、S-64) */
-export function twinAimed(doc: TreeDoc, j: Judge, to: string, item: StageItem, aimed: ReadonlySet<string>): ReadonlySet<string> {
-  if (j.fitsItem(item, aimed, to)) return aimed;
-  return new Set([...aimed, ...midAims(doc).filter((a) => [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId)]);
-}
-export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
-  const can = (id: string): boolean => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); };
-  // 全部消えてよい消去で途中の狙いが外れに落ちた人 (✦ + ブリーチ) も打てる箱へ。実際に持っている MOD が＝の人だけで、ランダムの外れの人は移らない。印は外れのまま (S-64)
-  const held = midAims(doc).filter((a) => !aimed.has(a.modId) && [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId);
-  return j.boxesOf(item, aimed, (id) => id !== at).find(can) ?? (held.length ? j.boxesOf(item, new Set([...aimed, ...held]), (id) => id !== at).find(can) : undefined) ?? null;
-}
 
 /**
  * 回す時の行き先 (S-64、人と箱): 着いた箱 at の中身がこの人のアイテムと同じならそのまま、違えば中身の同じ箱 (手のある箱・完成 / 失敗の箱、

@@ -24,9 +24,8 @@
  *   __simMonkey.shapeOf(id)                            箱の形 { held: [狙いの組…], body: 体の鍵 (外れの側・種類・数、✦ の側、レアリティ。見本が作れない箱は null、見本ごとに外れの種類が違う箱は "mixed:<id>") } (箱が無ければ null)
  *   __simMonkey.sameShape(from, to)                    from の人が to へ行けるか (狙いの組が全部 to にある + 体が同じ。始まりへは冒涜を持たなければ true、"match"・"restart" は true)
  */
-import { baseCatalog, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
+import { baseCatalog, omenBlock, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
-import { treeOmenBlock } from "../../../services/simulator/tree/tree-omen";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { checkTreeAsync, NOTICE_KINDS } from "../../../services/simulator/tree/tree-check";
@@ -38,17 +37,18 @@ import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
-import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
-import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, holdLinks, needAimOf, planPick, preFillOf, shelfKeysOf, tidyJunk, type PickOpt } from "./tree-hand-plan";
+import { afterQualityOf, alignEssenceAims, applyPick, autoCatOf, hitChoicesOf, holdLinks, kindOf, needAimOf, onlyOf, planPick, preFillOf, shelfKeysOf, tidyJunk, type PickOpt } from "./tree-hand-plan";
 import { isGrayBox, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
 import { useTree } from "./use-tree";
-import { useTreeOdds } from "./tree-odds";
 import { boxTagsOf, chosenMod, treeRowTags } from "./tree-row-tags";
 import { fixedValues } from "./tree-fixed-values";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
+import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
+import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
+import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 
 type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
@@ -97,12 +97,12 @@ export function installSimMonkey(): () => void {
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = sample(id)?.item;
       if (!d || !it) return [];
-      return shelfKeysOf(d, it).map((k) => { const reason = useReason(d, prepFor(d, it, k), k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
+      return shelfKeysOf(d, it).map((k) => { const reason = useReason(d, it, k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
     },
     omens(id: string, key: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = shelfItemFor(id, key);
       if (!d || !it) return [];
-      return omensAllowedFor(key).filter((o) => !treeHidden(o)).map((o) => { const reason = treeOmenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
+      return omensAllowedFor(key).filter((o) => !treeHidden(o)).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
     },
     /** 次に打つ手の窓の「当たりの箱にする MOD」の候補 (画面と同じ hitChoicesOf。付く MOD を選べない手でなければ []) */
     hitChoices(id: string, key: string, omens: string[] = [], echo = true): Array<{ modId: string; tier: number; label: string }> {
@@ -231,8 +231,6 @@ export function installSimMonkey(): () => void {
     prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
     /** 全部の箱の見本 seeds 個 (item・note) と ☑ ( のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
-    /** 木全部の結果の箱の割合 (箱の札と同じ useTreeOdds) */
-    odds() { return Object.fromEntries(useTreeOdds().value); },
     /** 上限に届いた人の最後の道とアイテム (沼った訳を見る台本用、S-72) */
     tails(n = RUN_N, seed = 1, k = 3) {
       const d = s.data.value;
@@ -253,6 +251,36 @@ export function installSimMonkey(): () => void {
     },
     /** 箱の手を消す (手の窓の「この手を消す」と同じ。下の箱も消える) */
     clear(id: string) { t.edit((x) => clearHand(x, id)); return !t.doc.value.boxes[id]?.hand; },
+    /** 箱の id → 道の札 (S-106。台本が新旧で箱を同じ札で指す) */
+    pathKeys(): Record<string, string> { return Object.fromEntries(pathKeysOf(t.doc.value)); },
+    /** 保存の形の前提だけ (箱はスタートだけ) を開く = 完成形の設定まで済んだ白紙。画面で同じ道を組み直す台本の始まり */
+    openPremise(rec: TreeDoc) { t.open({ ...rec, picks: [], orphans: [] } as TreeDoc); return { ok: Object.keys(t.doc.value.boxes).length === 1 }; },
+    /** 保存の形を開く (レシピの一覧・共有 URL から開くのと同じ open) */
+    openRecipe(rec: TreeDoc) { t.open(rec); return { ok: true }; },
+    /**
+     * 保存の決め 1 つ (RecipePick) を箱 id に置く。手は手の窓の決定と同じ t.edit + applyPick (組み直しの 1 手と同じ読み方: 前の版の骨・エッセンスの ☑・狙い無しの手)、
+     * 完成 / 失敗・メモ・× の MOD・自動 ↩ を外す印も同じ edit で (画面で箱を押して付けるのと同じ値)
+     */
+    place(id: string, p: RecipePick) {
+      const d = s.data.value;
+      if (!d || !t.doc.value.boxes[id]) return { ok: false, problem: "箱が無い・データが無い" };
+      let at = id;
+      t.edit((x) => {
+        if (p.hand) {
+          const h = oldVeil(p.hand, p.aims ?? []), free = (!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h);
+          const aims = free ? [] : alignEssenceAims(d, x, p.aims ?? []), pre = p.pre ?? null;
+          at = holdLinks(() => applyPick(x, id, h, kindOf(h), aims, pre, onlyOf(d, x, id, h, pre, aims)));
+        }
+        const b = x.boxes[id];
+        if (!b) return;
+        if ((p.done || p.noAutoBack) && b.autoBack) { b.back = null; delete b.autoBack; delete b.merged; delete b.handBack; }
+        if (p.done && !b.hand && !b.back) b.done = p.done;
+        if (p.note) b.note = p.note;
+        if (p.unwanted) b.unwanted = [...p.unwanted];
+        if (p.noAutoBack) b.noAutoBack = true;
+      });
+      return { ok: true, at };
+    },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };

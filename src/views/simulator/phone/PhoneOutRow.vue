@@ -175,7 +175,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
 </script>
 
 <template>
-  <!-- 結果の行 = 題 (と割合) とアイテムの中身だけ (10-26 夜オーナー「枠の中には出さない、ここはあくまでアイテムの中身だけ」「『次へ』で基本進行」)。
+  <!-- 結果の行 = 題とアイテムの中身だけ (割合 % は出さない、S-76 撤回) (10-26 夜オーナー「枠の中には出さない、ここはあくまでアイテムの中身だけ」「『次へ』で基本進行」)。
        今の答えはカードの下の小さな 1 行、変えたい時は「答えを変える ▾」で下から選びの窓 -->
   <div v-if="box" data-phone-out :data-box-id="boxId" class="relative w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
     <button v-if="parent" type="button" data-phone-out-remove class="absolute right-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md" :class="rm.is(boxId) ? 'bg-rose-700 px-2 text-[12px] font-bold text-white' : 'text-[18px] text-[#d8ccb4]/70'" :aria-label="tr('この結果を作った手を消す', 'Remove the craft that made this result')" @click="removeHand">{{ rm.is(boxId) ? tr(`下の ${rmCount} 箱ごと消す`, `Remove ${boxesEn(rmCount)}`) : "×" }}</button>

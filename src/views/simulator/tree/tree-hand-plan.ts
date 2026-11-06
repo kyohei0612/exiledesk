@@ -3,32 +3,33 @@
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
-import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
-import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
+import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
-import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
-import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
-import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
+import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
+import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
-import { arrivalsOf, depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
+import { depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
+import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
+import { DIVINE, DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -36,7 +37,8 @@ export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: s
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
   /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil) */ veil?: "keep" | "pick";
   /** エッセンスの「ブロックに使う」☑ (S-33b) */ block?: boolean;
-  /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number }
+  /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number;
+  /** 神の手の目標の数値と予見リセット (S-202、tree-model の Hand.targets・foreReset) */ targets?: readonly DivineTarget[]; foreReset?: boolean }
 
 /**
  * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
@@ -66,10 +68,10 @@ export function autoCatOf(data: PatchData, doc: TreeDoc, item: StageItem): strin
   return null;
 }
 /**
- * 棚に渡すアイテム = 前にカタリストの手を足す時はそれで品質を最大まで入れた後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
+ * 棚に渡すアイテム = 前にカタリストの手を足す時はそれを 1 回打った後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
  * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない
  */
-export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? fillCatalyst(data, item, autoCat, mulberry32(1)) : null);
+export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? applyCurrency(data, item, autoCat, mulberry32(1)) : null);
 /**
  * 狙い無し (結果は「打った後」の 1 つ) にできる手 = 付く MOD を選べない手 (足す・カオス。10-25 オーナー「全カレンシーで」。前は足す手だけ)。
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
@@ -107,11 +109,13 @@ export function handOf(p: HandPick): Hand {
     catalyst: null, quality: isCatalyst(p.held) && p.qualityTo ? Math.round(p.qualityTo) : 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)
-    ...(p.free && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || effectOf(p.held) === "fracture") ? { free: true } : {}),
+    // 目標の無い神 (神で数値の変わる狙いの MOD が無い) は狙い無し = 打った後の 1 箱 (S-202 ⑥・S-39 ⑤b)
+    ...((p.free || (p.held === DIVINE && !p.targets?.length)) && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || effectOf(p.held) === "fracture") ? { free: true } : {}),
     // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も (S-27d。消せる MOD が無い手には呼ぶ側が渡さない)
     ...(p.keep ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && isBone(p.held) ? { veil: p.veil } : {}),
     ...(p.block && effectOf(p.held) === "essence" ? { block: true as const } : {}),
+    ...(p.targets?.length && p.held === DIVINE ? { targets: p.targets.map((x) => ({ ...x })), ...(p.foreReset ? { foreReset: true as const } : {}) } : {}),
   };
 }
 export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency));
@@ -124,7 +128,7 @@ export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency))
 /** エッセンスで付きうる MOD (エンジンの結果で新しく付いた MOD、段はエッセンス自身の段)。無限のエッセンスは筋力・器用さ・知性のうち付きうる物 (棚で ☑ させる、10-27 オーナー) */
 export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] {
   const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-  const got = (stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
+  const got = (stepOutcomes(data, item, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
   const out: Aim[] = [];
   // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
   for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
@@ -141,7 +145,8 @@ export function alignEssenceAims(data: PatchData, doc: TreeDoc, aims: readonly A
 }
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も)
-  if (veilKeep(h) || fracFree(doc, h)) return [];
+  // 神のオーブは MOD を付けない = 当たりは無し (目標があれば以上 / 未満の 2 枝 S-202、無ければ打った後の 1 箱 S-39 ⑤b)
+  if (veilKeep(h) || fracFree(doc, h) || h.currency === DIVINE) return [];
   // 窓の ☑ は完成の狙いだけ (高貴の窓と同じ。置き石は TreeVeilCheck の「ほかの MOD を選ぶ」、10-28 オーナー)
   if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h).filter((a) => (doc.memoAims ?? []).some((g) => g.modId === a.modId));
   const kind = kindOf(h);
@@ -192,11 +197,11 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   if (reach) return reach;
   // 確率の表が無い時 (null): エンジンの起こりうる結果のどれでも MOD が増えないなら当たりは無し (10-26 モンキー 7 の 4: 不在のアミュレットに変成 = MOD 0 のマジック、
   // 前は狙い全部を当たりにして、何も付かない当たりの箱と「外れ 100%」ができた)。結果は打った後の箱 1 つ
-  const had = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-  const outs = stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
-  if (outs?.length && outs.every((o) => [...o.item.prefixes, ...o.item.suffixes].every((m) => had.has(m.modId)))) return [];
-  // エッセンスの MOD (クラフト MOD) は付く MOD を選べない手では付かないので出さない (この箱で打てない手を持った時に、確率の表が無くて狙いが全部並び、合金の MOD まで ☑ に出た。10-27 夜)
-  return open.filter((a) => !craftedKindOf(data, a));
+  // 候補はエンジンで打った結果 (数え上げ、無ければ決まった種で打って集めた物) のどれかで付く狙いだけ。結果が無い・MOD が増えない手 (神・ヒネコラ) は無し
+  // (11-06 オーナー「ヒネコラとか神とかってMODつかないでしょ…狙いMODが表示されてること自体がエンジン見てない」。前は付いていない狙いを全部並べ、窓でグレーにしていた)
+  const outs = items.flatMap((it) => (stepOutcomes(data, it, h.currency, engineOmens(h)) ?? rolledOutcomes(data, it, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void));
+  // エッセンスの MOD (クラフト MOD) は付く MOD を選べない手では付かないので出さない (10-27 夜)
+  return open.filter((a) => !craftedKindOf(data, a) && outs.some((o) => aimHeldOn(data, o.item, a, { sameText: true })));
 }
 /**
  * 次に打つ手の窓の「当たりの箱にする MOD」の候補 = 付く MOD を選べない手 (FREE_EFFECTS) で付きうる完成の狙い (狙い無しでも繰り返しでもない形で hitAimsOf に聞く)。
@@ -284,12 +289,28 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
+  if (data) fillMissOuts(data, d, at);
   joinSameShape(d, id);
+  // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
+  foldMisses(d, id);
   if (data) relinkByContent(data, d, had);
+  if (data && isAnnulHand(h)) extendAnnul(data, d, [at]); // 消去は同じ枠か残り 1 MOD まで続ける (S-28g)
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
+  pinDivineMisses(d);
   return at;
 }
 
+/**
+ * 神の目標の未満の箱 (S-202 ④) の自動 ↩ は神の箱へ揃える (人が手で決めた ↩ はそのまま)。同じ枠探しだと隣の以上の箱や後の神の箱を拾い、
+ * 届かなかった人が届いた側へ流れた (11-06 乱数の確かめ)
+ */
+function pinDivineMisses(d: TreeDoc): void {
+  for (const c of Object.values(d.boxes)) {
+    const p = c.parent ? d.boxes[c.parent] : undefined;
+    if (c.junkKey !== DIVINE_LT || c.hand || c.done || c.split || !p || !isDivineAim(p.hand) || c.noAutoBack || (c.back && !c.autoBack) || c.back === p.id) continue;
+    setBack(d, c.id, p.id); c.autoBack = true;
+  }
+}
 /**
  * 組み替えのつなぎ (S-50・S-50b・S-66): 新しい箱と手も戻りも完成も無い箱を、中身の同じ手のある箱へ自動の ↩ (linkByContent)、
  * まだ手の無い同じ中身の箱をまとめ (mergeOpenSame)、新しい当たりの箱は中身の同じ当たりの箱へ統合し、最後に自動の ↩ を全部「箱どうし」で見直す
@@ -297,26 +318,34 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>): void {
   const j = judgeMemo(data, d);
   const loose = Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id);
-  if (!linksHeld) {
-    linkByContent(d, loose, j);
-    mergeOpenSame(d, loose, undefined, j);
-  }
+  // 同じ枠なら手を決めたその場で自動の ↩ とまとめ (組む間も止めない、11-06 オーナー「同じ枠があったらその枠に打つカレンシーって決まってる」。前は整理を押すまで待った = S-193)
+  linkByContent(d, loose, j);
+  mergeOpenSame(d, loose, undefined, j);
   for (const b of Object.values(d.boxes)) {
     if (had.has(b.id) || b.out !== "hit" || b.hand || b.noAutoBack) continue;
     const to = sameHitsByContent(d, b.id, j)[0];
     if (to) joinSameHit(d, to, [b.id], true);
   }
-  if (!linksHeld) pruneByContent(d, j);
+  pruneByContent(d, j);
 }
-/** 組む間はつなぎを回さず、ハズレ整理で 1 周する (S-190) */
-let linksHeld = false;
-export function holdLinks<T>(fn: () => T): T {
-  if (!tidyOn() || linksHeld) return fn();
-  linksHeld = true;
-  try { return fn(); } finally { linksHeld = false; }
+/**
+ * 手を決めた箱の下 = エンジンの結果 (S-21・S-200 ①): 配置 (代表の品にその手を当てた stepOutcomes) で、起こりうるのに箱の無い結果があれば箱を足す。全部の手で同じ。
+ * 当たりは足さない (☑ だけ = S-22)。見本 8 つの分け方 (possibleOutsOf) と配置で分け方が違う手 (削減の「狙いが消えた」、S-200 ⑤) で、選び直すと箱が無くなった (11-06 乱数の確かめのカオスのずれ)
+ */
+function fillMissOuts(data: PatchData, d: TreeDoc, at: string): void {
+  const seen = new Set<string>();
+  for (const m of frameOfDoc(data, d).miss) {
+    const k = `${m.oc.out}|${m.oc.junkKey ?? ""}`;
+    if (m.box !== at || m.from || m.oc.out === "hit" || seen.has(k)) continue;
+    seen.add(k);
+    addOut(d, at, m.oc.out, m.oc.junkKey);
+  }
 }
+/** 前は組む間のつなぎをここで止めていた (S-190)。11-06 からつなぎは手を決めたその場で回すので、呼ぶ側の形だけ残す */
+export const holdLinks = <T>(fn: () => T): T => fn();
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
-export function tidyJunk(d: TreeDoc): void {
+/** auto = 木を変えるたびに回す整理 (S-201 ①)。完成の後の案内 (S-198 の doneNow) は完成を押した時だけなので、ここでは立てない */
+export function tidyJunk(d: TreeDoc, auto = false): void {
   const data = craftStage.data.value;
   if (!data) return;
   const depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
@@ -329,24 +358,30 @@ export function tidyJunk(d: TreeDoc): void {
     pruneByContent(d, j);
   };
   link();
+  // 消去の続き (S-28g): 後から同じ枠ができた自動の消去は ↩ に畳み、空いた消去の結果は続ける
+  const trimmed = trimAnnul(data, d);
+  if (extendAnnul(data, d) || trimmed) link();
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
   dropUnplayable(data, d);
-  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main") b.doneNow = true; }
+  pinDivineMisses(d);
+  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main" && !auto) b.doneNow = true; }
   d.tidyRan = true;
 }
 /** 見本に ↩ 先の手を打てない人がいる自動の ↩ は外して未設定にする (止まる所を ↩ 元の箱へ、S-193) */
 function dropUnplayable(data: PatchData, d: TreeDoc): void {
-  for (const b of Object.values(d.boxes)) {
+  // 見るのは木を変えずに 1 回 (見本ごとに配置の鍵の JSON を作り直していた、S-28g の 8 MOD で 0.37 秒)、外すのはその後
+  const drop = holdDocSig(d, () => Object.values(d.boxes).filter((b) => {
     const to = b.back && b.autoBack ? d.boxes[b.back]?.hand : null;
-    if (!to) continue;
+    if (!to) return false;
     for (let seed = 1; seed <= 8; seed++) {
       const s = sampleOf(data, d, b.id, seed);
       if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;
-      setBack(d, b.id, null); b.noAutoBack = true;
-      break;
+      return true;
     }
-  }
+    return false;
+  }), true);
+  for (const b of drop) { setBack(d, b.id, null); b.noAutoBack = true; }
 }
 /** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */
 export const drawnBelow = (d: TreeDoc, id: string): string[] => subtree(d, id).slice(1).filter((x) => { const b = d.boxes[x]; return !!b && b.out !== "pass" && !mergedAway(d, b); });
@@ -366,32 +401,13 @@ export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
 }
 /** addArrivedOuts を箱ごとに区切る (開く時に間で画面を返す、S-196) */
 export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, string[]> {
-  const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
-  for (const b of Object.values(d.boxes)) {
-    const h = b.hand;
-    if (!h) continue;
-    yield;
-    // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
-    const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, prepFor(data, s.item, h.currency), h);
-    const arrived = arrivalsOf(data, d, j, b.id);
-    if (!arrived.length && !main) continue;
-    const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
-    const fresh = (e: { out: OutKind; junkKey?: string }): boolean => e.out !== "hit" && !b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? main ?? e.junkKey) === e.junkKey; });
-    if (main) for (const e of possibleOutsOf(data, d, b.id, h, null, own, undefined, true) ?? []) {
-      // 当たりの人も形で分ける。一番多い形は今の当たりの箱 (S-21)
-      if (e.out === "hit") {
-        const aim = e.aim;
-        if (aim && e.junkKey !== main && !b.outs.some((o) => { const c = d.boxes[o]!; return c.out === "hit" && c.junkKey === e.junkKey && boxAims(c).some((x) => x.modId === aim.modId); })) { const id = addOut(d, b.id, "hit", e.junkKey); d.boxes[id]!.aim = aim; made.push(id); }
-      } else if (fresh(e)) made.push(addOut(d, b.id, e.out, e.junkKey));
-    }
-    if (!arrived.length) continue;
-    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived, !!main) ?? []) {
-      if (!fresh(e)) continue;
-      const id = addOut(d, b.id, e.out, e.junkKey), c = d.boxes[id]!;
-      const forms = arrived.flatMap((a) => (isWhittleHand(h) ? rankVariants(data, a.item, aimedAims(aims, a.aimed), b.junkKey).map((v) => v.item) : [a.item]));
-      c.via = forms.map((item) => sampleFrom(data, d, c, b, { item, note: null }, 1, id, aims)).filter((r) => !r.note).map((r) => r.item).slice(0, 4);
-      made.push(id);
-    }
+  // 配置で組む: ↩ 元の箱の代表の品に ↩ 先の手を数え上げ、行き先の無い結果 (tree-frame の from 付きの miss) だけ箱を足す。打ち直さない、当たりは足さない (S-22・S-200)
+  const made: string[] = [], seen = new Set<string>();
+  for (const m of frameOfDoc(data, d).miss) {
+    const k = `${m.box}|${m.oc.out}|${m.oc.junkKey ?? ""}`;
+    if (!m.from || m.oc.out === "hit" || seen.has(k) || !d.boxes[m.box]) continue;
+    seen.add(k);
+    made.push(addOut(d, m.box, m.oc.out, m.oc.junkKey));
   }
   return made;
 }
@@ -400,7 +416,7 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
   const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => runeOf(k)) : []; // クラフトのルーン・特別なルーン (ほかは treeHidden で外す)
-  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(data, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k));
+  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(data, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k, it));
 }
 /** 棚で持った物の残り (お告げ以外)。hitAims = 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */
 export type PickOpt = Omit<HandPick, "held" | "omens"> & { hitAims?: string[] };

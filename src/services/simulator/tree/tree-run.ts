@@ -7,19 +7,18 @@
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
-import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
-import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
-import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
-import { stepOutcomes } from "../sim-engine";
+import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
-import { playableTwin, routeOf, twinAimed } from "./tree-judge-link";
+import { routeOf } from "./tree-judge-link";
+import { seenTo } from "./tree-foresee";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -108,18 +107,6 @@ export type End = "done" | "capped" | "stuck" | "failed";
 interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
-/** フラクチャーの外れの回数 (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) と、外れうる固定の候補の数 */
-export const FRACTURE_MISS = 2;
-const FRACTURE_PICK = 2;
-/**
- * ✦ の木の確定フラクチャーで外れた分の回数 (S-43): 固定されうる MOD n のうち ✦ が k なら n ÷ k − 1 回 (✦ 1 つ・3 MOD = 2 回、2 つ = 0.5 回、3 つ = 0 回)。
- * ✦ が付いていない時は FRACTURE_MISS (10-24 オーナー「2 回外れて 1 回当たり」)
- */
-function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
-  const outs = (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void), marks = new Set(fractureMarks(doc).map((a) => a.modId));
-  const k = outs.filter((o) => [...o.item.prefixes, ...o.item.suffixes].some((m) => m.fractured && marks.has(m.modId))).length;
-  return k ? outs.length / k - 1 : FRACTURE_MISS;
-}
 
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
@@ -160,8 +147,6 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const b = doc.boxes[at];
     if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
     visit(at);
-    // 完成の狙いが全部そろった人は、どの箱でもその場で完成 (回し方だけ、tree-sample の goalsHeld) の下では完成は押した箱だけ (S-05・S-54)
-    if (!j && goalsHeld(data, doc, item)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
     // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
@@ -247,37 +232,24 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       }
     }
     const before = item;
-    // フラクチャーは必ず印の狙いを固定し (playHand の fractureTarget)、固定できる MOD が 2 つ以上なら「2 回外れて 1 回当たり」として、ここまでに使った物と
-    // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない。10-25 オーナーが戻した)。作り直しの回数にも 2
-    const miss = effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
-    const r = playHand(data, item, b.hand, rng, own, use);
+    // 使った物は結果の箱を見てから数える (ヒネコラのハズレの箱 = 手を使わない、S-39)
+    const spent: Array<[string, number]> = [];
+    const r = playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
     if (!r.applied) {
-      // 中身の同じ箱のうち手が打てる箱へ (S-64)
-      const twin = j ? playableTwin(data, doc, j, at, item, aimed) : null;
-      if (twin) { visit(at, true); aimed = twinAimed(doc, j!, twin, item, aimed); at = twin; continue; }
-      // 打てないが、この手の当たりの狙いがもう付いている = 打たずにその当たりの箱へ (tree-sample の heldHitOf)
-      // 打てない手の当たりの箱へ飛ぶ特別扱いはしない (中身の同じ箱へは着いた時に routeOf が移す、大本 2)
-      const held = j ? null : heldHitOf(data, doc, b, item);
-      if (held && ++hops <= 1000) { arrive(held, item); at = held; continue; }
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } });
     }
+    const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, j ? aimed : null);
+    const next = oc ? outBoxOf(doc, b, oc, r.item) : null;
+    // 予見で当たり以外が見えた人: 手を使わず、アイテム・☑・費用は持つ前のまま、まとめたハズレ箱の手へ (S-39)
+    if (next && doc.boxes[next]?.seen && !b.hand.repeat) { const to = seenTo(doc, next); if (to !== next) visit(next, true); at = to; continue; }
+    for (const [k, n] of spent) use(k, n);
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } });
     }
-    if (miss) {
-      const mx = fractureMiss(data, doc, item);
-      for (const [k, n] of miss) use(k, mx * n);
-      use(b.hand.currency, mx);
-      cost += mx * o.startCost;
-      forget();
-      restarts += mx;
-    }
-    if (sb.next) { item = r.item; arrive(sb.next, item, before); at = sb.next; continue; }
-    const oc = boxOutcomeOf(data, doc, b, before, r.item, aims, j ? aimed : null);
-    const next = outBoxOf(doc, b, oc, r.item);
+    if (sb.next || !oc) { item = r.item; arrive(sb.next!, item, before); at = sb.next!; continue; } // oc は sb.next の無い時だけある
     if (!next) {
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える
       odd.add(at);
@@ -410,7 +382,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
 
 /**
  * ベースの値段を替えた時に回し直さず数字だけ足し直す (10-25 オーナー「ベースの値段設定したら普通に回しなおさなくてもそのまま追加したらいいのでは」)。
- * 1 人の費用 = 手の費用 + ベースの値段 × (1 + 作り直しの回数)。作り直しにはフラクチャーの「2 回外れ」(FRACTURE_MISS) も入っている。
+ * 1 人の費用 = 手の費用 + ベースの値段 × (1 + 作り直しの回数)。
  * 1 個・平均・中央・安い / 高い 10% を出し直す。箱ごとの来た時の費用は、着く前の作り直しを数えていないので、ベースの値段 1 個分だけずらす。
  * 打ち止め (神の上限) の判定は回した時の値段のまま
  */

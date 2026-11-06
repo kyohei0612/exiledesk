@@ -5,39 +5,31 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import type { Hand } from "../../../services/simulator/tree/tree-model";
 import { handIcon as iconOf, handLabel, handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
-/** 「スパム」の呼び名を出さない (10-27 昼オーナー) */
-import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { autoRuneKeys, prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { useTree } from "./use-tree";
+import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
 /** choice = スマホの道で選んだ枝の MOD (札の中に出す、S-94h) */
 const props = defineProps<{ hand: Hand | null; split?: number; id: string; x: number; y: number; inv: number; off: boolean; room: number; choice?: string }>();
 defineEmits<{ open: [] }>();
-/** 触媒の時に先に打つカタリスト (札の頭に「カタリスト →」で出す。10-22 オーナー「カタリストを打つルートが無いとあかん」) */
-const cat = computed(() => (props.hand?.catalyst && props.hand.omens.includes(CATALYSING) ? props.hand.catalyst : null));
 /** アイコンの列 (カレンシー → お告げ) */
 const icons = computed(() => (props.hand ? [props.hand.currency, ...props.hand.omens] : []).filter((k) => !!iconOf(k)));
 /** 札の幅の上限: 隣の札と重ならない幅 (倍率で拡げる分を戻す)。はみ出す名前は折り返して全文 (10-26 オーナー「切れる所も直させて」、前は … で切って全文は乗せた時) */
 /**
- * ルーンが嵌まる手 (10-26 オーナー「2個目のクラフトモッド使う時や特殊ルーンをツリーで選んだ時に自動で付ける」): ルーンの手と、
- * 着いた人 (箱の見本) のクラフト MOD が上限で打つ前にアストリッドの創造性を嵌める手 (tree-unbounded)。札に小さく「ルーン」
+ * ルーンの手 (札に小さく「ルーン」)。木の側で自動に嵌めるルーンは無い (11-05 オーナー「ツリーに勝手に足しやがって2度とすんなまじで」)
  */
-const t = useTree();
 const runeOn = computed((): string | null => {
-  const h = props.hand, d = s.data.value;
-  if (!h || !d) return null;
-  if (h.currency.startsWith("rune:")) return handName(h.currency);
-  const it = sampleOf(d, t.doc.value, props.id, 1).item;
-  const keys = autoRuneKeys(it, prepFor(d, it, h.currency));
-  return keys.length ? keys.map((k) => handName(k)).join(tr("・", ", ")) : null;
+  const h = props.hand;
+  if (!h) return null;
+  return h.currency.startsWith("rune:") ? handName(h.currency) : null;
 });
+/** 予見の枠の手 (ヒネコラの後) は「打つ」でなく「持つ」(S-39、11-05 オーナー「ヒネコラ後は打つじゃなくて持つになる」) */
+const t = useTree();
+const hold = computed(() => !!props.hand && holdsAt(t.doc.value, props.id));
 const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
 </script>
 
@@ -49,7 +41,7 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
   </button>
   <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-2xl border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW }" :title="handLabel(hand)" @click="$emit('open')">
-    <span v-if="cat" data-tree-hand-catalyst class="flex min-w-0 shrink items-center gap-0.5 text-sky-200"><img v-if="iconOf(cat)" :src="iconOf(cat)" alt="" class="size-6 object-contain" />{{ handName(cat) }}<span aria-hidden="true" class="opacity-70">→</span></span>
+    <span v-if="hold" data-tree-hand-hold class="shrink-0 rounded-sm bg-violet-400/25 px-1 text-[10px] text-violet-100" :title="tr('予見の枠: まだ使わずに持って結果を見る', 'Foresight: held, not used yet')">{{ tr("持つ", "Hold") }}</span>
     <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->
     <span data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ [hand.currency, ...hand.omens].map((k) => handName(k)).join(" + ") }}</span>

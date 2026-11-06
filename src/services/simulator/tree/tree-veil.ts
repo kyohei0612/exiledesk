@@ -9,6 +9,7 @@ import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } f
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { effectOf, isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
+import { docHeld } from "./tree-sample";
 
 /** 後から打つ発現の手のキー (エンジンの発現は reveal:N。どれを選ぶかは tree-sample の revealBy が ☑ で決める) */
 export const REVEAL_KEY = "reveal";
@@ -29,8 +30,23 @@ export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined):
 export const veilPick = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && (isRevealHand(h.currency) || (isBone(h.currency) && veilOf(h) === "pick"));
 /** エッセンスの「ブロックに使う」☑ のある手 (S-33b) */
 export const blockHand = (h: Pick<Hand, "currency" | "block"> | null | undefined): boolean => !!h?.block && effectOf(h.currency) === "essence";
+/**
+ * 木が変わらない間 (holdDocSig の 1 回の中) は 1 回だけ作る。どちらも箱を全部なめるので、回し・見本作りの 1 手ごとに呼ぶと 1 手の重さが箱の数に比例した
+ * (11-06 sim-speed: ワンド 34 箱の 100 人回しの 4 割強)。外では毎回作る (木を書き換える途中で呼ばれる)
+ */
+const PLACED = new WeakMap<TreeDoc, [number, Aim[]]>(), MID = new WeakMap<TreeDoc, [number, Aim[]]>();
+const onceHeld = (m: WeakMap<TreeDoc, [number, Aim[]]>, doc: TreeDoc, make: () => Aim[]): Aim[] => {
+  const n = docHeld(doc);
+  if (!n) return make();
+  const had = m.get(doc);
+  if (had && had[0] === n) return had[1];
+  const v = make();
+  m.set(doc, [n, v]);
+  return v;
+};
 /** 木の発現で選ぶ手・ブロックに使うエッセンスの当たりの札のうち、完成形に無い物 = 置き石 (S-33・S-33b) */
-export function placedAims(doc: TreeDoc): Aim[] {
+export const placedAims = (doc: TreeDoc): Aim[] => onceHeld(PLACED, doc, () => placedRaw(doc));
+function placedRaw(doc: TreeDoc): Aim[] {
   const goals = doc.memoAims ?? [];
   const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || blockHand(doc.boxes[b.parent]?.hand)) && !goals.some((g) => g.modId === b.aim!.modId) ? [b.aim] : []));
   return [...plain, ...midAims(doc).filter((a) => !plain.some((x) => x.modId === a.modId))];
@@ -39,13 +55,14 @@ export function placedAims(doc: TreeDoc): Aim[] {
 export const stoneAims = (doc: TreeDoc): Aim[] => { const mid = new Set(midAims(doc).map((a) => a.modId)); return placedAims(doc).filter((a) => !mid.has(a.modId)); };
 /** 手で付ける MOD が 1 つに決まるエッセンスの MOD (無限のエッセンスは決まらないので無し) */
 const ESSENCE_MOD = new Map<string, string | null>();
-const essenceModOf = (key: string | undefined): string | null => { const had = ESSENCE_MOD.get(key ?? ""); if (had !== undefined) return had; const r = essenceModRaw(key); ESSENCE_MOD.set(key ?? "", r); return r; };
+export const essenceModOf = (key: string | undefined): string | null => { const had = ESSENCE_MOD.get(key ?? ""); if (had !== undefined) return had; const r = essenceModRaw(key); ESSENCE_MOD.set(key ?? "", r); return r; };
 const essenceModRaw = (key: string | undefined): string | null => { const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(key ?? ""); return m && !isInfiniteEssence(key!) ? m[1]! : null; };
 /**
  * 途中の狙い (S-33b): 木の手で打つエッセンスの MOD のうち完成形に無い物。付けた時・付け直した時に印が付き、道の上では狙いと同じ (S-27e・S-60)。
  * 完成の数えには入らない。11-01 オーナー「またループで付けた際は当然必要MODとしてつけてるから狙いMODとしてのあつかいでいいんじゃないか他の狙いMODもそういう立ち位置でしょ」
  */
-export function midAims(doc: TreeDoc): Aim[] {
+export const midAims = (doc: TreeDoc): Aim[] => onceHeld(MID, doc, () => midRaw(doc));
+function midRaw(doc: TreeDoc): Aim[] {
   const goals = doc.memoAims ?? [], out = new Map<string, Aim>();
   for (const b of Object.values(doc.boxes)) { const k = essenceModOf(b.hand?.currency); if (k && !goals.some((g) => g.modId === k)) out.set(k, { modId: k, tier: 99 }); }
   return [...out.values()];

@@ -9,7 +9,7 @@
  */
 
 import type { TreeTune } from "./tree-tune";
-import type { RecipeOrphan, RecipePick } from "./tree-recipe-v1";
+import type { RecipeExample, RecipeOrphan, RecipePick } from "./tree-recipe-v1";
 import type { StageItem } from "../../craft-stage/engine";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
@@ -64,7 +64,13 @@ export interface Hand {
   veil?: "keep" | "pick";
   /** エッセンスの「ブロックに使う」☑ (S-33b): 付いた MOD を発現で選んだ MOD と同じく箱の中身に持つ。無い = 外れ */
   block?: true;
+  /** 神のオーブの手の目標の数値 (S-202、☑ の狙いの MOD の値ごと)。結果は目標の以上 / 未満の 2 枝 (tree-divine) */
+  targets?: DivineTarget[];
+  /** ヒネコラの後の神の「予見リセット」☑ (S-202 ⑤): 神 1 回で予見を消す。目標は道の手前の神で決めた値 (tree-divine の divineStart)、枝はふつうの神と同じ 2 つ */
+  foreReset?: true;
 }
+/** 神の目標 1 つ = MOD の vi 番目の値を value 以上に */
+export interface DivineTarget { modId: string; vi: number; value: number }
 export interface TreeBox {
   id: string;
   x: number;
@@ -119,6 +125,8 @@ export interface TreeBox {
   /** 要確認 (tree-migrate の読み替えで読めなかった所: out = 結果の種類・aim = 狙い・hand = 打つ手・link = 矢印の先)。checkRaw = 読めなかった元の値 (捨てない) */
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
   /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107) */ handBack?: Hand; fresh?: true;
+  /** ヒネコラで持った手のハズレ (打たない、S-39・tree-foresee の foldMisses。保存しない = 手を決めるたびに付け直す): 人はその手を使わず持つ前のアイテムのままこの箱の手・↩ へ */ seen?: true;
+  /** 消去の続きで自動で足した消去の手 (S-28g、tree-annul-chain。保存しない = 開く時に同じ決まりで作り直す。人が手を置き替えると外れる) */ autoAnnul?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -156,6 +164,7 @@ export interface TreeDoc {
   /** 木の形の番号 (exiledesk-tree/N、上げたら tree-migrate の MIGRATIONS に読み替えを足す) */
   schema: `exiledesk-tree/${number}` | `exiledesk-recipe/${number}`;
   /** 保存の形 v1 (exiledesk-recipe/1) の打ち方と要確認の一覧 (tree-recipe-v1.ts、S-104〜S-108)。組み直した木も要確認は持ち越す */ picks?: RecipePick[]; orphans?: RecipeOrphan[];
+  /** v2 (exiledesk-recipe/2) の例のアイテム (道の札 → 代表の品、S-200 ⑦)。開いた木は保存の時の物を持ち、配置の代表に使う (tree-frame) */ examples?: Record<string, RecipeExample>;
   base: string;
   itemLevel: number;
   /** 完成形のレアリティ (0 完成形の設定の箱。無ければレア。スタートの箱の start.rarity とは別、10-22 オーナー) */
@@ -278,7 +287,7 @@ export const MATCH_BACK = "match";
 const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
   // フラクチャー: 印の狙いが ✦ になった (当たり、札 = その狙い) だけ。必ず印の狙いを固定し、外れは費用で数える
-  // (10-24 オーナー「2 回外れて 1 回当たり」、tree-run の FRACTURE_MISS。10-25 に一度乱数 + 外れの箱にしたが、オーナーが 10-24 の決めに戻した)
+  // (10-24 オーナー「2 回外れて 1 回当たり」の費用の足し方 = 前の FRACTURE_MISS は 11-05 に外した)
   fracture: ["hit"],
   remove: ["junkGone", "lost"],
   swap: ["hit", "lost", "junk"],
@@ -341,7 +350,9 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 /** groupOf = 狙いの側 (渡すと同じ側の狙いは 1 つの当たりの箱、anyOf)。既定は渡さない = 狙いごと (10-26 オーナー「デフォではまとめないほうね」) */
 /** 同じ手か (カレンシーとお告げ。違えば結果が同じでも下を消す、S-57) */
-export const sameHand = (a: Hand, b: Hand): boolean => a.currency === b.currency && a.omens.join() === b.omens.join();
+/** 神の目標 (S-202) も比べる = 目標の違う神は別の手 (同じ手の戻り S-51 で別の目標の神の箱へ戻らない) */
+const targetsKey = (h: Hand): string => (h.targets ?? []).map((t) => `${t.modId}:${t.vi}:${t.value}`).sort().join();
+export const sameHand = (a: Hand, b: Hand): boolean => a.currency === b.currency && a.omens.join() === b.omens.join() && targetsKey(a) === targetsKey(b);
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string, holds?: boolean): void {
   // holds = この箱の見本に消せる ☑ の狙いがあるか (tree-hand-plan の holdsAimOf)。渡すと道の数え (mayHoldAim) の代わり (大本 1)
   const hold = (): boolean => holds ?? mayHoldAim(d, id);
@@ -349,10 +360,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   if (!b) return;
   // カタリストの手で「何 % まで」を決めた物は見える「打った後」の箱 1 つ (S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け)
   const outsOf: OutKind[] = kind === "quality" && (hand.quality ?? 0) > 0 ? ["any"] : OUTS_OF[kind];
-  const now = b.outs.map((o) => d.boxes[o]!.out);
-  // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
-  const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && outsOf.includes(k));
-  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !kept && !hold();
+  // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)
+  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !hold();
   // 印の無い木の乱数のフラクチャー (hand.pick) は当たり + 外れ (どの MOD が固定されるかは乱数。起こりうる結果が取れない時の既定、要望 8a159e29)
   const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? outsOf.filter((k) => k !== "lost") : outsOf;
   if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
@@ -364,17 +373,12 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   if (noLost || (only && !want.includes("lost") && outsOf.includes("lost") && !hold())) b.noLost = true; else delete b.noLost;
   // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)
   const keysOf = (k: OutKind): string[] => (only ?? []).flatMap((o) => (o.out === k && o.junkKey ? [o.junkKey] : []));
-  const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();
-  // 鍵の組が今の箱と違えば作り直す (前の版の 1 箱の外れに同じ手を選び直すと側ごとに分かれる)
-  const sameKeys = !only || keySig(only) === keySig(b.outs.map((o) => d.boxes[o]!));
-  const same = b.hand && sameHand(b.hand, hand) && sameKeys && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
-  delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh;
-  // 同じ手を選び直した時は、今の箱と先はそのままで、箱の無い狙いの当たりだけ足す (後から完成の狙いに足した MOD など。10-26 オーナー「全ての結果を表示して」、外れへ自動で入れない)
-  // 狙い無し (free) も、付きうる狙いの当たりの箱を打った後の横に足す (打った後は狙いが付かなかった人だけ、tree-shape の outBoxOf。10-26 オーナー「当たってたら次の回に消去でそれ決める」)
-  if (same) { if ((want.includes("hit") && GROUPED.includes(kind)) || kind === "free") addHits(d, b, aims, order); return; }
+  delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh; delete b.autoAnnul;
+  // 手をやり直したら (同じ手を選び直した時も) 下は全部消して、今の品と今の手で結果を作り直す。下の手は残さない (S-57b、11-06 オーナー「そもそも手をやり直したら全リセットって話でしょ」。
+  // 前は同じ手なら今の箱と先をそのまま残し、上の手で枠が変わった後の古い結果が残った)
   for (const o of b.outs) drop(d, subtree(d, o));
   // 当たりの箱は MOD ごと (10-26 オーナー「デフォではまとめないほうね」。まとめるのは人が「動きをまとめる」で選んだ箱だけ、joinSide)。
   // 前に「動きをまとめる」の箱 (anyOf) を通った道では、どれが付いているかが人ごとに違う (見本 1 人の付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
@@ -415,6 +419,7 @@ export function clearHand(d: TreeDoc, id: string): void {
   for (const o of b.outs) drop(d, subtree(d, o));
   b.outs = [];
   b.hand = null;
+  delete b.autoAnnul;
 }
 
 /** 当たりの箱を横に足す (after の右、無ければ当たりの並びの最後) */

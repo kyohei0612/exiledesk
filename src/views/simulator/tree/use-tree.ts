@@ -14,7 +14,7 @@ import { goalRunesOf, placeWithSlots } from "./tree-slot-mods";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
-import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
+import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy"; import { tidyJunk } from "./tree-hand-plan";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
@@ -194,6 +194,8 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   const before = JSON.stringify(doc.value);
   const d = JSON.parse(before) as TreeDoc;
   fn(d);
+  // 整理は木を変えるたびにその場で (S-201 ①、ハズレ整理のボタンは無い)。同じ組み替えの中なので 1 つ戻すで一緒に戻る
+  if (tidyOn() && d.boxes.start) tidyJunk(d, true);
   const after = JSON.stringify(d);
   if (after === before) return;
   undoStack.push(before);
@@ -373,7 +375,7 @@ const startPrice = (): number => startOf(doc.value).price ?? startChoice.value?.
 /** 使う始め方 (start.from で決めた方、決めていなければ一番安い物。10-24 夜オーナー「フラクチャー済みから / フラクチャー前から」)。cost は値段が無ければ null */
 const startChoice = computed((): { k: string; label: string; cost: number | null } | null => {
   const c = baseCost.value, st = startOf(doc.value), f = st.from;
-  // フラクチャー前からは白のベースから木の中でフラクチャーする (外れ込みの ×3 は回す時の tree-run の FRACTURE_MISS)。始めの値段は白のベース代だけ
+  // フラクチャー前からは白のベースから木の中でフラクチャーする (前の外れ込みの ×3 = FRACTURE_MISS は 11-05 に外した)。始めの値段は白のベース代だけ
   if (f === "four" && fractureMarks(doc.value).length) return { k: "white", label: tr("白のベース", "White base"), cost: st.prices?.white ?? null };
   if (!c) return null;
   if (!f) return c.best;

@@ -6,13 +6,16 @@
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
+import { extendAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
+import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -40,6 +43,8 @@ export async function rebuildInSteps(data: PatchData, src: TreeDoc, paint: (d: T
 /** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで */
 function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
+  // 保存の例のアイテム (v2、S-200 ⑦) は開いた木に持たせ、配置の代表に使う (tree-frame)。打ち方の比べ (toRecipeV1) には入れない
+  if (src.examples) d.examples = JSON.parse(JSON.stringify(src.examples)) as NonNullable<TreeDoc["examples"]>;
   migrateStart(d);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
@@ -61,6 +66,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     if (!idOf.has(at)) idOf.set(at, id);
     if (p) {
       used.add(at);
+      // 消去の続きで自動の手が先に付いた箱 (S-28g) は、人の決めを置く前に外す (外さないと完成 / 失敗・↩ が置けなかった)
+      if (d.boxes[id]?.autoAnnul && (p.hand || p.done || p.back || p.noAutoBack)) clearHand(d, id);
       if (p.back) backs.push([id, p.back, at]);
       // エッセンスの MOD の ☑ は木の狙いの段にそろえる (保存した ☑ が一般の段だと当たりの箱が落ちた、alignEssenceAims)
       // 前の版の骨の手 (veil 無し) は ☑ があれば発現させる・無ければ未発現のまま (S-59、tree-veil の oldVeil)
@@ -95,12 +102,18 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
     if (added.length) { yield* drain(); flushBacks(); }
   }
-  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
+  // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
+  for (const id of Object.keys(d.boxes)) foldMisses(d, id);
+  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d);
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
   const left = !stepped || [...picks.keys()].some((k) => !used.has(k));
   const added = left ? yield* arrivedSteps(data, d) : [];
   yield* replay(added);
-  if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
+  if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  if (added.length) for (const id of Object.keys(d.boxes)) foldMisses(d, id); // ↩ で着く人の結果の箱もハズレへ (S-39)
+  // 消去の続き (S-28g): つなぎのそろった木で、同じ枠ができた自動の消去を畳み、空いた消去の結果を続ける (手を決める時と同じ)
+  const trimmed = trimAnnul(data, d);
+  if (extendAnnul(data, d) || trimmed) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
@@ -164,8 +177,10 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;[gxuf]:[^\];]*/g, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
-  const sw = swap(tail);
-  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
+  // 配置で組むと、道で当てた狙いが消えた形は「狙いが消えた」(前の打ち直しの見本では「外れ」の札で保存された物がある。鍵の中身 = 消えた MOD が同じ)。S-200
+  const lostJunk = (t: string): string | null => (/^\/lost\[/.test(t) ? t.replace(/^\/lost/, "/junk") : /^\/junk\[/.test(t) ? t.replace(/^\/junk/, "/lost") : null);
+  const sw = swap(tail), lj = lostJunk(tail);
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : [])];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
   if (hit) return hit;
   // 消去の結果の中身の鍵 (`c:<プレ>|<サフィ>~<中身の印>`) は、枠の比べが変わると印だけ変わる (11-04 に品質を枠へ入れた、S-60b)。側の数の同じ札の決めとして読む
@@ -208,6 +223,23 @@ function mergeIntoDecided(data: PatchData, d: TreeDoc, decided: readonly string[
 }
 const OPEN: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost"]);
 /**
+ * 組み直しの最後に、決めも ↩ も無い外れの道の箱を、同じ段・同じ中身で人の ↩ を持つ箱へまとめる (S-105、その箱の ↩ の先へ行く)。
+ * 組んだ時はハズレ整理で先にまとめてから人が ↩ を付けるが、まとめは保存しない (S-104)。組み直しは手を打つたびに同じ枠探しで ↩ が先に付き、
+ * まとめ先 (↩ の無い箱だけ、tree-merge-open) が無くなって「未設定」が残った (11-05 8 MOD ワンドの共有 URL、b31)
+ */
+function mergeIntoBacked(data: PatchData, d: TreeDoc): void {
+  const j = judgeMemo(data, d), depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+  const rank = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
+  for (const l of Object.values(d.boxes)) {
+    if (!junkPath(l) || l.hand || l.back || l.done || l.split || l.noAutoBack) continue;
+    // まとめ先は木の並びで前の箱 (打ち直しの順で番号が振り直されても同じ、tree-merge-open の placedBefore)
+    const to = Object.values(d.boxes)
+      .filter((x) => x.id !== l.id && OPEN.has(x.out) && !x.hand && !x.done && !x.split && !!x.back && !x.autoBack && depth(x.id) === depth(l.id) && rank(x.junkKey) === rank(l.junkKey) && j.fitsBox(l.id, x.id))
+      .sort((x, y) => (placedBefore(d, x.id, y.id) ? -1 : placedBefore(d, y.id, x.id) ? 1 : 0))[0];
+    if (to) { l.back = to.id; l.autoBack = true; l.merged = true; }
+  }
+}
+/**
  * 組み直した後も決めも ↩ も無い箱は、見本の中身が全部同じ 1 つの箱 (手か完成 / 失敗のある箱、浅い段から) の中身に入るならその箱へ自動の ↩ (S-107 ②)。
  * 前の木に無かった結果の箱 (今の決まりで増えた結果) に着く人は、前の版では回すと「同じ状態の箱へ」移って進んでいた (10-29 共有の木 ibMlQuAV の b22・b24)
  */
@@ -216,7 +248,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
   for (const b of Object.values(d.boxes)) {
-    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || junkPath(b) || offByParent(d, b.id, j)) continue;
+    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue; // 外れの道も (11-06、tree-judge-link の linkByContent と同じ)
     // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
     const same = autoTarget(d, b.id, j);
     if (same) { b.back = same; b.autoBack = true; continue; }
@@ -224,7 +256,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
     // ルーンの後の箱が ↩ ルーンの箱になり、同じルーンは通り抜けるので回り続けた、10-29 pass-armor、S-31e)
-    const loop = (t: string): boolean => straightUp(d, b.id, t);
+    const loop = (t: string): boolean => idleLoop(d, b.id, t, j);
     const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k) && !needsDesecrated(d, t) && !needsCrafted(d, t)) ?? null));
     const to = tos.size === 1 ? [...tos][0] : null;
     if (to) { b.back = to; b.autoBack = true; }
