@@ -5,13 +5,14 @@
  * 札の無くなった決めは要確認 (orphans、⑦20)。前の形の木から開いた時だけ、前に無かった札の箱に「組み直しで増えた」(fresh、⑦19、保存しない)
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Aim, type Hand, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { aimsOf, pinAims } from "../../../services/simulator/tree/tree-sample";
 import { autoTarget, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
 import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
-import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
+import { midAims, oldVeil, placedAims, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
@@ -39,10 +40,33 @@ export async function rebuildInSteps(data: PatchData, src: TreeDoc, paint: (d: T
     last = performance.now();
   }
 }
-/** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで */
-function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
+/**
+ * 保存の手から出した最後の木の狙い (木の狙い・置き石・途中の狙い、S-71b ⑮)。手の箱とその当たりの箱だけの写しの木に、今と同じ aimsOf・placedAims・midAims を当てる。
+ * 当たりの箱の札は組み直しの applyPick に渡す物と同じ
+ */
+function pinOf(data: PatchData, d: TreeDoc, rec: TreeDoc): { aims: Aim[]; placed: Aim[]; mid: Aim[] } {
+  const boxes: Record<string, TreeBox> = {};
+  (rec.picks ?? []).forEach((p, i) => {
+    if (!p.hand) return;
+    const h = oldVeil(p.hand, p.aims ?? []), aims = noHitHand(h) ? [] : alignEssenceAims(data, d, p.aims ?? []);
+    const hits = aims.map((a, k): TreeBox => ({ id: `h${i}_${k}`, parent: `p${i}`, out: "hit", aim: a, hand: null, outs: [], back: null, done: null } as unknown as TreeBox));
+    boxes[`p${i}`] = { id: `p${i}`, parent: null, out: "junk", aim: null, hand: h, outs: hits.map((x) => x.id), back: null, done: null } as unknown as TreeBox;
+    for (const x of hits) boxes[x.id] = x;
+  });
+  const f: TreeDoc = { ...d, boxes };
+  return { aims: aimsOf(f), placed: placedAims(f), mid: midAims(f) };
+}
+/** 留めた狙いと組んだ木の狙いが同じ集合か (並びの順は見ない) */
+const sameAims = (a: { aims: Aim[]; placed: Aim[]; mid: Aim[] }, d: TreeDoc): boolean => {
+  const k = (x: readonly Aim[]): string => x.map((v) => `${v.modId}|${v.tier}`).sort().join();
+  return k(a.aims) === k(aimsOf(d)) && k(a.placed) === k(placedAims(d)) && k(a.mid) === k(midAims(d));
+};
+/** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで。pin = 保存の手から出した最後の木の狙いを組む間だけ留める (S-71b ⑮) */
+function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false, pin = true): Generator<TreeDoc | void, TreeDoc> {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   migrateStart(d);
+  const pinned = pin ? pinOf(data, d, rec) : null;
+  pinAims(d, pinned);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
   const onPath = new Set([...picks.keys()].flatMap((k) => k.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));
@@ -122,6 +146,9 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     const before = new Set(pathKeysOf(src).values());
     for (const [id, k] of pathKeysOf(d)) if (!before.has(k)) d.boxes[id]!.fresh = true;
   }
+  pinAims(d, null);
+  // 留めた狙いが組んだ木と違った (保存の手に無い当たりの箱ができた・消えた) 時は、留めずに組み直す (組む途中の判断を今までの組み方と同じにする)
+  if (pinned && !sameAims(pinned, d)) return yield* rebuildSteps(data, src, stepped, false);
   return d;
 }
 

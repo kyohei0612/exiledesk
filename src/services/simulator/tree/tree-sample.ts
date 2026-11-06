@@ -53,6 +53,8 @@ export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readon
  * (10-24 不在のアミュ B: 右側の結晶化 + 無限のエッセンスで冒涜の外れを消す。% 能力値を狙いに数えると、次の冒涜で置き換わった時に「狙いが消えた」になった)
  */
 export function aimsOf(doc: TreeDoc): Aim[] {
+  const pin = PINS.get(doc);
+  if (pin) return pin.aims;
   const out: Aim[] = [];
   // 完成形の設定 (memoAims) にフラクチャーの印でない狙いがある木だけ (印だけの古い見本 = 金の指輪はエッセンスの札も狙いのまま)
   const goals = doc.memoAims ?? [];
@@ -181,6 +183,13 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
   return canUse(data, item, h.currency, h.omens);
 }
 
+/**
+ * 組み直しの間だけ留める最後の木の狙い (S-105・S-71b ⑮)。木の狙い (aimsOf)・置き石・途中の狙いは見本の鍵に入るので、組む途中で当たりの箱が増えるたびに
+ * 全部の箱の見本を作り直していた (8 MOD ワンドの開きで見本作り 4247 回中 2893 回)。保存の手から先に最後の狙いを出して組む間はそれを使う
+ */
+const PINS = new WeakMap<TreeDoc, { aims: Aim[]; placed: Aim[]; mid: Aim[] }>();
+export const pinnedAims = (doc: TreeDoc): { aims: Aim[]; placed: Aim[]; mid: Aim[] } | undefined => PINS.get(doc);
+export function pinAims(doc: TreeDoc, pin: { aims: Aim[]; placed: Aim[]; mid: Aim[] } | null): void { if (pin) PINS.set(doc, pin); else PINS.delete(doc); }
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る

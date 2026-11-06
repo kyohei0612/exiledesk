@@ -6,7 +6,7 @@
  * 鍵を作るだけで 100 箱の 1 手の 3 割を使っていたので、判定と見本作りの間は段ごとの文字を 1 回だけ作る (links)
  */
 import type { StageItem } from "../../craft-stage/engine";
-import { boxAims, type TreeBox, type TreeDoc } from "./tree-model";
+import { boxAims, type Aim, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimsOf } from "./tree-sample";
 import { placedAims } from "./tree-veil";
 
@@ -38,8 +38,10 @@ export function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number, alt: boo
 }
 /** アイテムの比べの文字 (部位の表 cls はベースで決まるので入れない) */
 export const itemKeyOf = (it: StageItem): string => JSON.stringify(it, (k, v: unknown) => (k === "cls" ? undefined : v));
+const sortAims = (a: readonly Aim[]): Aim[] => [...a].sort((x, y) => (x.modId < y.modId ? -1 : x.modId > y.modId ? 1 : x.tier - y.tier));
 /** 箱によらない部分 (木の前提・木の狙いの札・置き石)。箱の数の分だけ掛かるので、木の変わらない間は 1 回だけ作る (tree-sample の keyOf) */
 export function docPartOf(doc: TreeDoc): string {
   const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, ...rest } = doc;
-  return JSON.stringify([rest, aimsOf(doc), placedAims(doc)], skipPos);
+  // 狙いの並びの順は見本に効かない (組み直しで留めた狙いと組んだ後の狙いで同じ鍵にする、S-71b ⑮)
+  return JSON.stringify([rest, sortAims(aimsOf(doc)), sortAims(placedAims(doc))], skipPos);
 }
