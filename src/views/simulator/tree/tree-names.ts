@@ -18,7 +18,8 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { midGoneOf } from "../../../services/simulator/tree/tree-judge";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
-import { modText, tr } from "../../../i18n/lang";
+import { modText, tr } from "../../../i18n/lang";import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
+
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
 const t = useTree();
@@ -57,6 +58,8 @@ export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT
 /** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」) */
 export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
   if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
+  // 神の目標 (S-202): 目標に届いた / 届かなかった
+  if (isDivineAim(h) && (out === "any" || out === "junk")) return out === "any" ? tr("目標以上", "Target met") : tr("目標未満", "Below target");
   // 印の無い木の狙い無しのフラクチャー (スイッチ fracPick)
   if (h?.free && effectOf(h.currency) === "fracture") {
     if (out === "hit" && aim) { const n = modShort(useTree().aimShort(aim)); return tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`); }
@@ -80,6 +83,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(S-42)
   const fixed = ph?.pick === "random" || (!!ph && effectOf(ph.currency) === "fracture");
   const free = fixed && !!ph?.free;
+  // 神の目標 (S-202)
+  if (isDivineAim(ph) && (b.out === "any" || b.out === "junk")) return outNameOf(ph, b.out);
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
     // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける

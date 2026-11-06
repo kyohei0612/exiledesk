@@ -66,7 +66,7 @@ export interface Hand {
   block?: true;
   /** 神のオーブの手の目標の数値 (S-202、☑ の狙いの MOD の値ごと)。結果は目標の以上 / 未満の 2 枝 (tree-divine) */
   targets?: DivineTarget[];
-  /** ヒネコラの後の神の「予見リセット」☑ (S-202 ⑤): 神 1 回で予見を消し、目標に届くまで打ち続ける 1 手 */
+  /** ヒネコラの後の神の「予見リセット」☑ (S-202 ⑤): 神 1 回で予見を消す。目標は道の手前の神で決めた値 (tree-divine の divineStart)、枝はふつうの神と同じ 2 つ */
   foreReset?: true;
 }
 /** 神の目標 1 つ = MOD の vi 番目の値を value 以上に */
@@ -350,7 +350,9 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 /** groupOf = 狙いの側 (渡すと同じ側の狙いは 1 つの当たりの箱、anyOf)。既定は渡さない = 狙いごと (10-26 オーナー「デフォではまとめないほうね」) */
 /** 同じ手か (カレンシーとお告げ。違えば結果が同じでも下を消す、S-57) */
-export const sameHand = (a: Hand, b: Hand): boolean => a.currency === b.currency && a.omens.join() === b.omens.join();
+/** 神の目標 (S-202) も比べる = 目標の違う神は別の手 (同じ手の戻り S-51 で別の目標の神の箱へ戻らない) */
+const targetsKey = (h: Hand): string => (h.targets ?? []).map((t) => `${t.modId}:${t.vi}:${t.value}`).sort().join();
+export const sameHand = (a: Hand, b: Hand): boolean => a.currency === b.currency && a.omens.join() === b.omens.join() && targetsKey(a) === targetsKey(b);
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string, holds?: boolean): void {
   // holds = この箱の見本に消せる ☑ の狙いがあるか (tree-hand-plan の holdsAimOf)。渡すと道の数え (mayHoldAim) の代わり (大本 1)
   const hold = (): boolean => holds ?? mayHoldAim(d, id);

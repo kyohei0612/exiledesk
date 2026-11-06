@@ -7,6 +7,7 @@ import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/en
 import { type Judge } from "./tree-judge";
 import { playHand } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { DIVINE_LT, isDivineAim } from "./tree-divine";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -38,6 +39,8 @@ export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
 export function idleLoop(doc: TreeDoc, id: string, t: string, j: Judge): boolean {
   if (straightUp(doc, id, t)) return true;
   const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
+  // 目標の数値を決めた神の未満の箱 (S-202 ④) は以上の枝で抜けるので輪にしない (以上の箱は今までどおり神の箱へ戻さない)
+  if (isDivineAim(p?.hand) && doc.boxes[id]?.junkKey === DIVINE_LT) return false;
   return !!p?.hand && sameHand(doc.boxes[t]?.hand, p.hand) && p.outs.every((o) => j.fitsBox(o, p.id));
 }
 

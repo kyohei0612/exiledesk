@@ -109,7 +109,8 @@ export function handOf(p: HandPick): Hand {
     catalyst: null, quality: isCatalyst(p.held) && p.qualityTo ? Math.round(p.qualityTo) : 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)
-    ...(p.free && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || effectOf(p.held) === "fracture") ? { free: true } : {}),
+    // 目標の無い神 (神で数値の変わる狙いの MOD が無い) は狙い無し = 打った後の 1 箱 (S-202 ⑥・S-39 ⑤b)
+    ...((p.free || (p.held === DIVINE && !p.targets?.length)) && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || effectOf(p.held) === "fracture") ? { free: true } : {}),
     // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も (S-27d。消せる MOD が無い手には呼ぶ側が渡さない)
     ...(p.keep ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && isBone(p.held) ? { veil: p.veil } : {}),
@@ -144,7 +145,8 @@ export function alignEssenceAims(data: PatchData, doc: TreeDoc, aims: readonly A
 }
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も)
-  if (veilKeep(h) || fracFree(doc, h)) return [];
+  // 神のオーブは MOD を付けない = 当たりは無し (目標があれば以上 / 未満の 2 枝 S-202、無ければ打った後の 1 箱 S-39 ⑤b)
+  if (veilKeep(h) || fracFree(doc, h) || h.currency === DIVINE) return [];
   // 窓の ☑ は完成の狙いだけ (高貴の窓と同じ。置き石は TreeVeilCheck の「ほかの MOD を選ぶ」、10-28 オーナー)
   if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h).filter((a) => (doc.memoAims ?? []).some((g) => g.modId === a.modId));
   const kind = kindOf(h);
@@ -288,17 +290,27 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (data) fillMissOuts(data, d, at);
-  // 目標の数値を決めた神の未満の箱は「もう一度神」= 同じ神の手の箱へ ↩ (S-202 ④、仮。オーナーの確かめで変わるかも)
-  if (isDivineAim(h)) for (const o of d.boxes[at]?.outs ?? []) if (d.boxes[o]?.junkKey === DIVINE_LT) setBack(d, o, at);
   joinSameShape(d, id);
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
   foldMisses(d, id);
   if (data) relinkByContent(data, d, had);
   if (data && isAnnulHand(h)) extendAnnul(data, d, [at]); // 消去は同じ枠か残り 1 MOD まで続ける (S-28g)
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
+  pinDivineMisses(d);
   return at;
 }
 
+/**
+ * 神の目標の未満の箱 (S-202 ④) の自動 ↩ は神の箱へ揃える (人が手で決めた ↩ はそのまま)。同じ枠探しだと隣の以上の箱や後の神の箱を拾い、
+ * 届かなかった人が届いた側へ流れた (11-06 乱数の確かめ)
+ */
+function pinDivineMisses(d: TreeDoc): void {
+  for (const c of Object.values(d.boxes)) {
+    const p = c.parent ? d.boxes[c.parent] : undefined;
+    if (c.junkKey !== DIVINE_LT || c.hand || c.done || c.split || !p || !isDivineAim(p.hand) || c.noAutoBack || (c.back && !c.autoBack) || c.back === p.id) continue;
+    setBack(d, c.id, p.id); c.autoBack = true;
+  }
+}
 /**
  * 組み替えのつなぎ (S-50・S-50b・S-66): 新しい箱と手も戻りも完成も無い箱を、中身の同じ手のある箱へ自動の ↩ (linkByContent)、
  * まだ手の無い同じ中身の箱をまとめ (mergeOpenSame)、新しい当たりの箱は中身の同じ当たりの箱へ統合し、最後に自動の ↩ を全部「箱どうし」で見直す
@@ -352,6 +364,7 @@ export function tidyJunk(d: TreeDoc, auto = false): void {
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
   dropUnplayable(data, d);
+  pinDivineMisses(d);
   for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main" && !auto) b.doneNow = true; }
   d.tidyRan = true;
 }

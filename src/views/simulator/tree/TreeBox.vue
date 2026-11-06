@@ -80,7 +80,7 @@ const sampled = computed(() => (s.data.value ? shapeSampleWithNote(s.data.value,
 const sample = computed(() => sampled.value?.item ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
-const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
+const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value, props.box.id) : null));
 /** ヒネコラで持っている所は枠を紫に (S-39、開発版だけ。11-05 オーナー「枠を紫にしようかヒネコラで持ってる挙動」): hold = ヒネコラの結果の箱 (手は「持つ」)、seenOut = そこに持った手の結果の箱 */
 const hold = computed(() => holdsAt(t.doc.value, props.box.id));
 const seenOut = computed(() => foreseenAt(t.doc.value, props.box.id));

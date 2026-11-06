@@ -22,7 +22,7 @@ import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../s
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
-import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE } from "../../../services/simulator/tree/tree-divine";
+import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE, divineStart } from "../../../services/simulator/tree/tree-divine";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { boxTagsOf, chosenMod } from "./tree-row-tags";
@@ -59,7 +59,7 @@ const item = computed(() => sample.value?.item ?? null);
  * 木の箱のカードには出さない (10-27 に箱へも出す書き換えをオーナーが止めた)
  */
 const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
-const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
+const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it, props.boxId) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return null; const c = cardOf(it); return removeTags(c, boxTagsOf(s.data.value, t.doc.value, props.boxId, c)); };
 /**
@@ -307,7 +307,7 @@ const goneNow = computed((): number => {
   return sameHand(props.current, h) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
-const problem = computed((): string | null => (divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD の数値を全部決めて (↑↓ か「この値」)", "Set every target mod value first (↑↓ or Keep)") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
+const problem = computed((): string | null => (divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
 const gone = later(handKey, goneNow);
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
@@ -368,7 +368,7 @@ function ok(): void {
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
       <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
-      <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" />
+      <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" :start="(modId, vi) => (item ? divineStart(t.doc.value, boxId, item, { modId, vi }) : null)" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" />
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
         <span v-else-if="noMod" data-tree-hand-nomod class="opacity-80">{{ noModTitle() }}</span>
@@ -387,10 +387,10 @@ function ok(): void {
       </label>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepAsk && !P27" :k="k" :adds="addLabels" />
-      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
-        <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
+        <span v-if="problem && !divOn" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
         <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${boxesEn(gone)} below (Undo restores)`) }}</span>
       </div>
     </div>

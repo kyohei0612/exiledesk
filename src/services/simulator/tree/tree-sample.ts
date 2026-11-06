@@ -26,7 +26,7 @@ import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
 import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
-import { DIVINE_LT, divineBranches, divineMet, isDivineAim, playForeReset } from "./tree-divine";
+import { DIVINE_LT, divineBranches, divineMet, isDivineAim } from "./tree-divine";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 
 /** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
@@ -159,8 +159,6 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     }
     return { ...r, item: it };
   }
-  // 予見リセットの神 (S-202 ⑤): 神を 1 回打って予見を消し、目標に届くまで打ち続ける 1 手 (1 回ずつはエンジンの applyHand)
-  if (isDivineAim(h) && h.foreReset) return { added: [], removed: [], ...playForeReset(item, h, (it) => applyHand(data, it, h.currency, rng, { omens: h.omens }), use) };
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま
   const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
   const r = applyHand(data, item, h.currency, rng, { omens: h.omens, reveal: !keepVeil });
