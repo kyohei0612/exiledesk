@@ -40,9 +40,15 @@ export const stageRuneIds = (item: StageItem): string[] =>
  * ルーン込みのベース (POE2Tube 要望 ㉙ 2026-10-04): 計算機と同じ withRunes で、セールの凱旋はサフィックスの枠 +1、
  * 特殊 MOD のルーン (コルの狩りなど) はそのタグの MOD を普通の置き場 (高貴・カオス・エッセンス・骨の抽選と「付く MOD」) に混ぜる
  */
+const EFFECTIVE = new WeakMap<StageItem, ItemBase>();
 export function effectiveCls(item: StageItem): ItemBase { // E-10a ルーンの特殊 MOD は差していれば一般 MOD の置き場に入る
+  // アイテムは書き換えないので 1 品 1 回だけ作る (1 回打つ間に枠・候補で何度も呼び、ルーンの効果を毎回 MOD の文から数えていた。シミュの見本作りの 1 割、S-71b ⑲)
+  const had = EFFECTIVE.get(item);
+  if (had) return had;
   const ids = stageRuneIds(item);
-  return ids.length ? withRunes(item.cls, ids, runeEffectPct(item)) : item.cls;
+  const out = ids.length ? withRunes(item.cls, ids, runeEffectPct(item)) : item.cls;
+  EFFECTIVE.set(item, out);
+  return out;
 }
 /**
  * ソケットの効果の増加 % (2026-10-10 オーナー「データ確かめてから入れて」「固定値のものなんて存在しない」、Benton の動画)。
