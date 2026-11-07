@@ -6,10 +6,11 @@
  * 画面・回し・精査からは呼ばれず、台本 scripts/_tree-patterns-ui.ts・_tree-autolink-probe.test.ts だけが読む
  */
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { backBody, bodyFixed, bodyKinds, bodyOf, boxBody, heldOfKey, type BodyOf } from "./tree-box-shape";
+import { backBody, bodyFixed, bodyKinds, bodyOf, boxBody, heldMiss, heldOfKey, type BodyOf } from "./tree-box-shape";
+import { missAims } from "./tree-miss";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
+import { aimsOf, essenceBoxFits, handProblem, playHand } from "./tree-sample";
 import { judgeMemo } from "./tree-judge";
 import { pruneByContent } from "./tree-judge-link";
 import { aimKey, keepCut, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
@@ -33,7 +34,7 @@ type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
 export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
   const held = new Set(aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).map(aimKey));
-  const junk = junkOf(item, targetsOf(data, aims), aimOpts(data));
+  const junk = junkOf(item, missAims(data, aims));
   const count = (side: "prefix" | "suffix" | "any", junkOnly: boolean): number =>
     (side !== "suffix" ? (junkOnly ? junk.prefix : item.prefixes.filter((m) => !m.fractured)).length : 0) + (side !== "prefix" ? (junkOnly ? junk.suffix : item.suffixes.filter((m) => !m.fractured)).length : 0);
   const ok = (w: SplitWhen): boolean =>
@@ -168,7 +169,7 @@ export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
 function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem; doc?: TreeDoc }): string | null {
   // 同じ形の箱が幾つかあれば、体 (tree-box-shape の bodyOf) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (合う箱が無くても止まりは増やさない)
   // ✦ の側とレアリティが違う箱へは行かない (✦ は消せない。外れが固定された枝の箱に狙いが固定された人が入り、見本の ✦ が箱ごとに変わった、10-28 モンキー 7。スイッチ boxShape)
-  const held = heldOfKey(key);
+  const held = at?.doc ? heldMiss(at.data, at.doc, heldOfKey(key)) : undefined;
   const fixed = at?.doc ? bodyFixed(bodyOf(at.data, at.doc, at.item, held)) : "";
   const all = shapes.filter((s) => s.key === key && (!fixed || s.sig == null || s.sig.startsWith("mixed") || bodyFixed(s.sig) === fixed)), sig = at?.doc ? bodyOf(at.data, at.doc, at.item, held) : null;
   const exact = sig ? all.filter((s) => s.sig == null || s.sig === sig) : [], kinds = sig ? all.filter((s) => s.sig == null || bodyKinds(s.sig) === bodyKinds(sig)) : [];
@@ -199,7 +200,7 @@ const JUNK_ONLY = shapeKey([], true);
 function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string {
   const held = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   const open = new Set(aims.filter((a) => !held.includes(a)).map((a) => sideOfMod(data, a.modId)));
-  const junk = junkOf(item, targetsOf(data, aims), aimOpts(data));
+  const junk = junkOf(item, missAims(data, aims));
   const junkOn = (side: "prefix" | "suffix"): boolean => (!open.size || open.has(side)) && junk[side].length > 0;
   return shapeKey(held.map(aimKey), junkOn("prefix") || junkOn("suffix"));
 }

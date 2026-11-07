@@ -4,6 +4,7 @@
  */
 import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, kindOf, OMEN_FOR, omenBlock, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
+import { missAims } from "./tree-miss";
 import { ECHO as ABYSSAL_ECHO_OMEN } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { isRevealHand } from "./tree-veil";
@@ -36,8 +37,9 @@ export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, a
   const bm = modsOf(before), am = modsOf(after);
   const had = aims.filter((a) => heldOn(data, bm, a, o));
   const has = aims.filter((a) => heldOn(data, am, a, o));
-  const ts = aims.map((a) => targetOf(data, a)), opts = o.sameText ? { data, sameText: true } : undefined;
-  const junk = (it: StageItem): number => { const j = junkOf(it, ts, opts); return j.prefix.length + j.suffix.length; };
+  // 外れは外れの式 1 本 (tree-miss、いつも同じ文の別 modId も当たり)
+  const miss = missAims(data, aims);
+  const junk = (it: StageItem): number => { const j = junkOf(it, miss); return j.prefix.length + j.suffix.length; };
   const was = new Set(bm.filter((m) => m.fractured).map((m) => m.modId));
   const fractured = am.find((m) => m.fractured && !was.has(m.modId)) ?? null;
   return {

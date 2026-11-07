@@ -105,6 +105,10 @@ export type End = "done" | "capped" | "stuck" | "failed";
 interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
+/** 止まった人のアイテム → その時の ☑ */
+const STOP_AIMED = new WeakMap<StageItem, ReadonlySet<string>>();
+/** 止まりの記録 (stuckWhy) のアイテムの人の ☑ (分からなければ null) */
+export const stopAimedOf = (item: StageItem): ReadonlySet<string> | null => STOP_AIMED.get(item) ?? null;
 
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
@@ -131,7 +135,11 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
   // 止まりの付け先 (S-72、スイッチ bodyStrict): 体 (外れの側・数) の違う人を ↩ で送り出した箱・形の合う箱へ移した箱。止まったらそこに数える
   // (10-29 オーナー「なんか止まり方が戻った先で止まるんだよな。結果を選んでその結果にしたがってるだけなのに」)
   let blame: string | null = null;
-  const fin = (p: Person): Person => (blame && p.end === "stuck" ? { ...p, blame } : p);
+  const fin = (p: Person): Person => {
+    // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
+    if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
+    return blame && p.end === "stuck" ? { ...p, blame } : p;
+  };
   /** 付いている完成形の狙い (段は完成形以上) の MOD */
   const aimsHeld = (it: StageItem): Set<string> => new Set((doc.memoAims ?? []).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
   let steps = 0;

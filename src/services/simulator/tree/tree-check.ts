@@ -11,13 +11,14 @@
 import { allMods, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { TIER } from "../../../state/for-share/tier-word";
-import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
+import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
+import { aimedMiss, isMissMod, missAims } from "./tree-miss";
 import { CATALYSING, effectOf, engineOmens } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
-import { aimOpts, aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
+import { aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
-import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
+import { runTreeSteps, stopAimedOf, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
 import { MATCH, outBoxOf, RESTART, splitTo } from "./tree-shape";
@@ -184,7 +185,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   // (10-27 夜オーナー、カマサのティアラの「外れ MOD が固定された」の箱。スイッチ tidyUnder)。固定は消せないので、レアの枠 − 固定の外れ < その側の狙いの数なら届かない。枝の一番上の箱だけに出す
   {
     // 完成の狙いの印の ✦ (フラクチャー済みからの始まり) は外れでない。aims には当たりの箱の札しか無く、印の ✦ を固定の外れと数えた (11-05 8 MOD ワンド)
-    const ts = targetsOf(data, [...aims, ...fractureMarks(doc)]), opts = aimOpts(data), stuckFix = new Set<string>();
+    const miss = missAims(data, [...aims, ...fractureMarks(doc)]), stuckFix = new Set<string>();
     for (const b of boxes) {
       if (b.parent && stuckFix.has(b.parent)) { stuckFix.add(b.id); continue; }
       if (b.done) continue;
@@ -192,7 +193,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
       try { item = sampleOf(data, doc, b.id, 1).item; } catch { continue; }
       const rare = { ...item, rarity: "rare" as const };
       for (const side of SIDES) {
-        const fixed = (side === "prefix" ? item.prefixes : item.suffixes).filter((m) => m.fractured && !isAimMod(m, ts, opts));
+        const fixed = (side === "prefix" ? item.prefixes : item.suffixes).filter((m) => m.fractured && isMissMod(m, miss));
         const want = aims.filter((a) => sideOfMod(data, a.modId) === side).length;
         if (!fixed.length || limitOf(rare, side) - fixed.length >= want) continue;
         stuckFix.add(b.id);
@@ -351,7 +352,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
       if (w?.spam) { add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
-      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (w?.item ? ` (${stuckDetail(doc, w)})` : ""));
+      add(id, "stuck", stuckText(data, doc, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (w?.item ? ` (${stuckDetail(doc, w)})` : ""));
       // 10-26: 前は「戻り先を分かれ目の箱に」と勧めていたが、分かれ目を作るボタンは 10-25 に外した (画面でできない直し方だった)
       for (const x of carry) add(x, "carry", tr(`ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻りをやめて外れを消す手 (${nameOfKey("annul", null)} + 満杯の側のお告げなど) を次の手にし、その結果から戻す。PC は × で外して＋、スマホは「次の手を決める」)`, `Returning here keeps the misses, so a later box runs out of room and stops (fix this return: replace it with a craft that removes the misses (e.g. ${nameOfKey("annul", null)} with the omen for the full side) and return from its result. On PC remove it with × and use +; on a phone choose "Next craft")`));
     }
@@ -367,7 +368,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
 }
 
 /** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
-function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem; noBox?: boolean } | undefined, carry: boolean, hand: Hand | null): string {
+function stuckText(data: PatchData, doc: TreeDoc, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem; noBox?: boolean } | undefined, carry: boolean, hand: Hand | null): string {
   const head = tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる`, `${n} of ${RUN_PEOPLE} runs stop here`);
   // 行き先の箱が無くて止まった (10-22 13 通り組んだ #11: 「手・戻り先が無い」だけでどの結果の箱が無いか分からなかった)
   if (w?.noBox) return `${head}: ${w.reason}`;
@@ -376,7 +377,8 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   if (!hand) return `${head}: ${w.reason}`;
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
-  const junkAll = junkOf(w.item, targetsOf(data, aims), aimOpts(data));
+  // 外れはその人の ☑ で (箱の比べと同じ外れの式。前は ☑ を見ず木の狙い全部で数え、箱の比べと外れの数が食い違いえた)。☑ が分からなければ木の狙い全部
+  const am = stopAimedOf(w.item), junkAll = junkOf(w.item, am ? aimedMiss(data, doc, am) : missAims(data, aims));
   // 満杯の側の外れを外しても打てない時は、満杯が理由ではない (レアに錬金術・マジックに消去 + 外せない側のお告げなど)。エンジンの理由をそのまま
   // (10-25 指輪の猿 3: 錬金術の外れを始めに戻すと「サフィックスが満杯 → 消去 + お告げが要る」と出て、直しても打てない手を足させていた)
   if (hand) {

@@ -7,6 +7,7 @@
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { sampleOf } from "./tree-sample";
 import { heldSets, MATCH, RESTART, shapeFits } from "./tree-shape";
+import { aimedMiss, isMissMod, type MissAims } from "./tree-miss";
 import type { TreeDoc } from "./tree-model";
 
 /**
@@ -15,18 +16,18 @@ import type { TreeDoc } from "./tree-model";
  * 10-28 オーナー「プレ 3 MOD どれがフラクチャーでも同一と扱う、サフィも同様、ただしプレとサフィは明確に別」)、最後にレアリティ。
  * 例 `1.0.0.1|0.0.0.0|✦g1j0.g0j0|rare`。スイッチ boxShape が閉じている間は前の外れの鍵 (`n.c.x|n.c.x`、10-27 夕 goalShape)
  */
-export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, held?: ReadonlySet<string>, placed?: ReadonlySet<string>): string {
-  const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
-  // held = その箱 (その人) が道で持っている狙いの MOD。渡すと、持っていない完成形の MOD は外れに数える (☑ の無い狙いは外れ、S-22・S-82。
-  // 数えないと、カオスの外れの見本のうち完成形の MOD を引いた見本だけ体が変わり mixed になって、同じ形の箱へつながらなかった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)
-  // placed = 付いている置き石の MOD (完成形に無いが外れに数えない、S-33)
-  const aim = (id: string): boolean => (goals.has(id) && (!held || held.has(id))) || !!placed?.has(id);
+export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, aims?: MissAims): string {
+  // aims = その箱 (その人) が ☑ で持っている狙い (と ☑ の置き石、S-33) = 当たりに数える札。外れは外れの式 1 本 (tree-miss の isMissMod)。
+  // 持っていない完成形の MOD は外れに数える (☑ の無い狙いは外れ、S-22・S-82。数えないと、カオスの外れの見本のうち完成形の MOD を引いた見本だけ体が変わり
+  // mixed になって、同じ形の箱へつながらなかった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)。渡さなければ完成形の狙い全部
+  const all = aimedMiss(data, d), miss = aims ?? all;
   const side = (ms: readonly StageMod[]): string => {
     let n = 0, c = 0, x = 0, u = 0;
-    for (const m of ms) { if (m.fractured || aim(m.modId)) continue; if (m.unrevealed) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
+    for (const m of ms) { if (m.fractured || !isMissMod(m, miss)) continue; if (m.unrevealed) u++; else if (m.desecrated) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
     return `${n}.${c}.${x}.${u}`;
   };
-  const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const g = f.filter((m) => goals.has(m.modId)).length; return `g${g}j${f.length - g}`; };
+  // ✦ は完成形の狙い全部で見る (☑ は見ない、前から)
+  const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const g = f.filter((m) => !isMissMod(m, all)).length; return `g${g}j${f.length - g}`; };
   return `${side(it.prefixes)}|${side(it.suffixes)}|✦${fr(it.prefixes)}.${fr(it.suffixes)}|${it.rarity}`;
 }
 /** 体の鍵の部分 (側ごとの外れ 2 つ・✦・レアリティ) */
@@ -56,12 +57,14 @@ export function heldOn(d: TreeDoc, id: string): Set<string> {
   for (const m of d.start?.mods ?? []) if (goals.has(m.modId)) out.add(m.modId);
   return out;
 }
+/** 道で持っている狙いの MOD (modId の組) を当たりに数える札に (前の世代の形の鍵の体。置き石は数えない = 前のまま) */
+export const heldMiss = (data: PatchData, d: TreeDoc, held: ReadonlySet<string>): MissAims => aimedMiss(data, d, held, { stones: false });
 /** 形の鍵 (tree-shape の shapeKey「modId|tier,…#外れ」) から持っている狙いの MOD */
 export const heldOfKey = (key: string): Set<string> => new Set(key.split("#")[0]!.split(",").filter(Boolean).map((k) => k.split("|")[0]!));
 export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): string | null {
   const s = sampleOf(data, d, id, 1);
   if (s.note === "none" || s.note?.startsWith("cant:")) return null;
-  const held = heldOn(d, id);
+  const held = heldMiss(data, d, heldOn(d, id));
   const body = bodyOf(data, d, s.item, held);
   if (id === "start" || one) return body;
   const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item, held)]; })].map(bodyKinds));

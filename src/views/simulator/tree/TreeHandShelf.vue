@@ -25,7 +25,7 @@ import TreeRevealCard from "./TreeRevealCard.vue";
 import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE, divineStart } from "../../../services/simulator/tree/tree-divine";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
-import { putMiss } from "./tree-row-tags"; import { cardFor } from "./box-card"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
+import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
@@ -70,13 +70,13 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
   // パーフェクトエッセンスは ☑ しなかった元の MOD も名前のまま (入れ替わって消えるだけ。S-29 のエッセンスの枝、11-07 オーナー「MODは固定だからハズレMODって出さんよね」)
   if (!keepAsk.value || k.isSwap.value) return tags;
   const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
-  // ☑ した完成形の狙いは前の手で外れでも狙いに戻る (結果の箱の判定 nextAimed と同じ)。外れのままなのは狙いでない外れ MOD だけ
-  const goals = new Set((t.doc.value.memoAims ?? []).map((g) => g.modId));
+  // ☑ した完成形の狙いは前の手で外れでも狙いに戻る (結果の箱の判定 nextAimed と同じ)。外れのままなのは狙いでない外れ MOD だけ (外れの式 1 本 = 完成形の狙いに当たらない)
+  const goals = aimedMiss(s.data.value!, t.doc.value);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
     // 残したい外れも札のまま。☑ の無い候補は選んで付けた MOD (エッセンス・冒涜・合金) も狙いも外れ MOD (11-07 オーナー「残したいMODで選択したらその他をハズレMOD扱いだろ」。
     // 前は選んで付けた MOD だけ名前のまま残した)。候補の外 (お告げで触らない側) は替えない。完成形に無いエッセンスの MOD は外れでも文のまま (S-33c)
-    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad" || goals.has(m.modId)) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
+    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad" || !isMissMod(m, goals)) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
     else putMiss(out, t.doc.value, m, tr(`消えてよい MOD: ${modText(m)}`, `May be removed: ${modText(m)}`));
   }
   return out;
