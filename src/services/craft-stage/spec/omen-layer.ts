@@ -6,7 +6,7 @@
  * 「今効くお告げ」(omensOfKind)・掛け替え (toggleOmen)・側・勢力のタグはここから引く。打つ処理 (planSpec)・棚 (omensFor)・お告げの一言 (omenNoteOf)・
  * 確率の表・数え上げが同じ物を見る。前は光 × 左右の消去・紋章 × ネクロマンシー・腐食をお告げの名前で 2〜3 か所に書いていた
  */
-import { allMods } from "../stage-core";
+import { liveAbyssMarkOf } from "../stage-core";
 import type { StageItem, StageSide } from "../types";
 import type { OmenSpec } from "./types";
 import { OMEN_SPECS } from "./desecrate-specs";
@@ -58,7 +58,7 @@ export function toggleOmen(held: readonly string[], key: string): string[] {
  *   同じ exclusive の組が幾つも掛かっていれば ALL_OMEN_SPECS の先の 1 つだけ (左 > 右、ウラマン > アマナム > クルガル。E-27)
  */
 export function omensOfKind(kind: string, held: readonly string[], item?: StageItem): OmenSpec[] {
-  const mark = !!item && allMods(item).some((m) => m.abyssMark && !m.fractured);
+  const mark = !!item && !!liveAbyssMarkOf(item);
   let used = held.flatMap((k) => { const o = BY_KEY.get(k); return o && o.appliesTo === kind ? [o] : []; });
   used = used.filter((o) => !(o.idleWhen === "abyssMark" && mark));
   const alone = used.find((o) => o.alone);

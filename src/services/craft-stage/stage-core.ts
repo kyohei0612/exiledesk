@@ -288,6 +288,10 @@ export const hasCatalystQuality = (item: StageItem): boolean => { const c = cata
 export const openSlots = (item: StageItem): number => SIDES.reduce((n, s) => n + Math.max(0, limitOf(item, s) - listOf(item, s).length), 0);
 /** 神のオーブで値が変わる MOD (固定・未発現でなく、値の幅がある物、E-39)。打つ処理 (parts の reroll) と光らせる所 (use-preview) が同じ物 */
 export const rerollableMods = (item: StageItem): StageMod[] => allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
+/** 次の骨が置き換える紋章 (固定されていない物)。骨の側と段の下限 (E-61・E-65)・ネクロマンシーが効かない (E-67) が同じ物 */
+export const liveAbyssMarkOf = (item: StageItem): StageMod | undefined => allMods(item).find((m) => m.abyssMark && !m.fractured);
+/** 紋章が付いているか (固定も数える)。深淵のエッセンスを打てるか (noAbyssMark、E-52) の問い。骨が置き換えるかは liveAbyssMarkOf */
+export const hasAbyssMark = (item: StageItem): boolean => allMods(item).some((m) => m.abyssMark);
 export function catalystRoom(item: StageItem, tag: string): { now: number; max: number; full: boolean } {
   const max = maxQualityOf(item);
   const same = item.qualityTag === tag;

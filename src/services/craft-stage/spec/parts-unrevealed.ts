@@ -4,7 +4,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, effectiveCls, makeStageMod, pickWeighted, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { allMods, candidates, effectiveCls, liveAbyssMarkOf, makeStageMod, pickWeighted, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
 import { boneSlotOf, boneSlotReason } from "./basis";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
@@ -73,7 +73,7 @@ interface UnrevealedPlan {
   weights: Array<{ s: StageSide; w: number }>;
 }
 export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan { // E-61 (E-11f の例外) 骨の側・E-11g ネクロマンシー
-  const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
+  const mark = liveAbyssMarkOf(item);
   const floor = Math.max(a.floor, mark ? markFloorOf(mark) : 0);
   const fixed: StageSide | null = mark ? mark.side : mods.side;
   const args = (tag: string | null, plain: boolean): PoolArgs => ({ pools: plain ? ["normal"] : a.pools, floor, exclusiveAnyLevel: a.exclusiveAnyLevel, tag });
