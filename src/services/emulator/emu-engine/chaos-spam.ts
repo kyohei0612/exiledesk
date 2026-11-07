@@ -17,11 +17,11 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 /** 1 人が打つ上限 (これを超えたら「付かなかった」) */
 export const SPAM_CAP = 50_000;
 
-/** 当たり: 狙いのどれか 1 つが (その段以上で) 付いている */
-const spamHit = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.some((t) => aimDone(item, [t]));
+/** 当たり: 狙いのどれか 1 つが (その段以上で) 付いている。式はエンジンの aimDone の sameText (同じ文の別 MOD も当たり、木・スパムの道と同じ。11-07 ブラック 57 の決め) */
+const spamHit = (data: PatchData, item: StageItem, ts: readonly AimTarget[]): boolean => ts.some((t) => aimDone(item, [t], { data, sameText: true }));
 /** 1 人分: 狙いのどれかが付くまでの回数 (付かなければ null) */
 export function spamOne(data: PatchData, start: StageItem, ts: readonly AimTarget[], key: string, rng: () => number, cap = SPAM_CAP): number | null {
-  if (spamHit(start, ts)) return 0;
+  if (spamHit(data, start, ts)) return 0;
   let item = start;
   for (let n = 1; n <= cap; n++) {
     const r = applyCurrency(data, item, key, rng);
@@ -31,7 +31,7 @@ export function spamOne(data: PatchData, start: StageItem, ts: readonly AimTarge
       continue;
     }
     item = r.item;
-    if (spamHit(item, ts)) return n;
+    if (spamHit(data, item, ts)) return n;
   }
   return null;
 }
