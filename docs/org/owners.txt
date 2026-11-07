@@ -201,6 +201,7 @@ scripts/analysis/**                  解析
 
 # 11-07 オーナー「カレンシーの挙動とかジンにおかないとダメなんじゃないの」: 画面の部の中にあった計算 (数え上げ・スパムの数え・エミュのスパムのモード) はエンジン部へ
 src/services/simulator/sim-engine/** ジン
+src/services/simulator/sim-engine.ts ジン
 src/services/emulator/emu-engine/**  ジン
 
 # サーバー管理人
