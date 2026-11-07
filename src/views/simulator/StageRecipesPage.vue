@@ -74,18 +74,16 @@ function overwrite(r: TreeRecipe): void {
   overwriteTreeRecipe(r.id, t.doc.value);
   setCurrentTreeRecipe(r.id);
   track("tree-recipe:overwrite");
-  say(tr(`「${r.name}」を今の木で上書きしました`, `Overwrote "${r.name}" with the current tree`));
 }
 function saveNow(): void {
   simAct("save");
-  const r = saveTreeRecipe(`${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`, t.doc.value);
+  saveTreeRecipe(`${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`, t.doc.value);
   track("tree-recipe:save");
   // 名前の欄には入らない (名前は決めなくてよい、後で ✎ で。10-26 オーナー「サクッと保存できるように」)
-  say(tr(`「${r.name}」で保存しました (名前は ✎ で変えられる)`, `Saved as "${r.name}" (rename with ✎)`));
 }
 function duplicate(r: TreeRecipe): void {
   const x = duplicateTreeRecipe(r.id, tr(" のコピー", " (copy)"));
-  if (x) { track("tree-recipe:duplicate"); say(tr(`「${x.name}」を作りました`, `Created "${x.name}"`)); }
+  if (x) track("tree-recipe:duplicate");
 }
 function remove(r: TreeRecipe): void {
   if (!arm.arm(`del:${r.id}`)) return;
@@ -102,9 +100,10 @@ function endRename(r: TreeRecipe, v: string): void { if (renaming.value !== r.id
 
 // 共有 = URL をコピー (共有・管理は URL が主、オーナー 10-22「URL で基本、共有・管理だね」。X に投稿は計算を繋いだ後)
 async function copyUrl(r: TreeRecipe): Promise<void> {
-  const { ok, short } = await copyRecipeUrl(r); // 短い URL (だめなら長い URL、10-26 夜オーナー OK)
+  const { ok } = await copyRecipeUrl(r); // 短い URL (だめなら長い URL、10-26 夜オーナー OK)
   track("tree-recipe:url");
-  say(!ok ? tr("コピーできませんでした", "Couldn't copy") : short ? tr(`「${r.name}」の短い URL をコピーしました (開いた人はこの木で始まり、その人のレシピにも残る)`, `Copied a short URL for "${r.name}" (opening it starts this tree and saves it)`) : tr(`「${r.name}」の URL をコピーしました (URL に木が全部入っている。開いた人はこの木で始まり、その人のレシピにも残る)`, `Copied the URL for "${r.name}" (the whole tree is in it; opening it starts this tree and saves it)`));
+  // 出来た事の知らせは出さない (11-07 オーナー「こういう通知いらない」)。できなかった時だけ
+  if (!ok) say(tr("コピーできませんでした", "Couldn't copy"));
 }
 
 // URL を貼って開く
@@ -128,7 +127,7 @@ async function importFile(e: Event): Promise<void> {
   const r = importTreeRecipes(await f.text());
   track("tree-recipe:import");
   if (!r) { say(tr("レシピのファイルではありませんでした", "Not a recipe file")); return; }
-  say(tr(`${r.added} 件を足しました${r.same ? ` (同じ物 ${r.same} 件は足さず)` : ""}${r.bad ? ` · 読めない ${r.bad} 件は控えに` : ""}`, `Added ${r.added}${r.same ? ` (${r.same} already here)` : ""}${r.bad ? ` · ${r.bad} unreadable kept aside` : ""}`));
+  if (r.bad) say(tr(`読めない ${r.bad} 件は控えに`, `${r.bad} unreadable kept aside`));
 }
 
 function back(): void { openTreePage(); }
