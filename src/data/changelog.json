@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.680",
+  "date": "2026-11-07",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形のカードに、品質のためのブリーチのエッセンスの行を自動で足さないようにしました。上限を大きく超える品質は、ツリーでブリーチのエッセンスを打って上げます",
+    "en": "Simulator: the final-item card no longer adds an Essence of the Breach line for quality on its own. For quality well above the cap, use Perfect Essence of the Breach in the tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の窓の「決めた (ツリーへ)」を、浮かせず説明の下に置きました",
+    "en": "Simulator: Done (back to the tree) in the final-item window now sits below the notes instead of floating"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形のエッセンス・合金の MOD の「途中で消える / 残る」の切り替えを無くしました。完成形に入れた MOD は全部狙いになり、入りきらない時は「どれか n つ残る」でまとめます",
+    "en": "Simulator: removed the \"lost partway / kept\" switch for Essence and Alloy mods in the final item. Every mod you add is now an aim, and when they don't all fit they're grouped as \"Any n stay\""
+   }
+  ]
+ },
+ {
   "v": "0.1.679",
   "date": "2026-11-07",
   "items": [
@@ -1083,24 +1107,6 @@
     "area": "",
     "text": "画面の幅が 768〜1279 の時、エミュレーターの狙い・ベース選び・スパムシミュレーターもスマホの形に揃えました",
     "en": "Between 768px and 1279px wide, the emulator’s aim panel, base picker and spam simulator now also use the phone layout"
-   }
-  ]
- },
- {
-  "v": "0.1.640",
-  "date": "2026-10-29",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "段の表: エッセンス・合金の名前を枠付きの札にして、MOD の文の後ろに続けるように",
-    "en": "Tier table: essence and alloy names are now framed tags that follow the mod text"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "画面の幅が 1280 未満の時はスマホの形で表示するように (前は 768 で切り替え)",
-    "en": "Windows narrower than 1280px now use the phone layout (it switched at 768px before)"
    }
   ]
  }
