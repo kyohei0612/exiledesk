@@ -131,9 +131,9 @@ function twoAdds(data: PatchData, item: StageItem, plan: SpecPlan, first: readon
   for (const c1 of first) {
     const p1 = c1.w / W;
     add(c1.mod.id, p1, c1.tiers, c1.w);
-    // 2 つ目は打つ処理 (parts.ts の add) と同じく、1 つ目が付いた後の状態から同じ側・同じ重みで
+    // 2 つ目は打つ処理 (parts.ts の add) と同じく、1 つ目が付いた後の状態から同じ側・同じ重みで。側の上限は打つ前の品から (E-30a、ctx.before と同じ)
     const it2 = withMod(item, makeStageMod(c1.mod, c1.side, c1.tiers[0]!.index, () => 0.5));
-    const second = addCands(data, it2, last.add, plan.mods);
+    const second = addCands(data, it2, last.add, plan.mods, item);
     const W2 = second.reduce((a, c) => a + c.w, 0);
     if (!(W2 > 0)) continue;
     for (const c2 of second) add(c2.mod.id, p1 * (c2.w / W2), c2.tiers, c2.w);
