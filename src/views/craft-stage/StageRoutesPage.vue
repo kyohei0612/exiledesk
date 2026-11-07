@@ -20,7 +20,7 @@ import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage, runesFit } from "./route-place";
-import { GRADE_KEY, type Grade } from "../../services/craft-stage/engine";
+import { GRADE_KEY, OMEN_KEY, type Grade } from "../../services/craft-stage/engine";
 import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
@@ -49,7 +49,7 @@ const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; gr
   ] },
   { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["base", "greater", "perfect"], steps: [
     { k: null, ja: "MOD 0 のレアから始める (作る費用は入れない)", en: "Start from a rare with 0 mods (its cost is not included)" },
-    { k: "OmenofGreaterExaltation", ja: "高貴 + 偉大な高貴のお告げで 2 つ付ける (どちらの側に付くかは運)", en: "Exalt with Omen of Greater Exaltation to add 2 mods (sides are random)" },
+    { k: OMEN_KEY.greater, ja: "高貴 + 偉大な高貴のお告げで 2 つ付ける (どちらの側に付くかは運)", en: "Exalt with Omen of Greater Exaltation to add 2 mods (sides are random)" },
     { k: "annul", ja: "外れたら消去 2 回で MOD 0 に戻して 2 から繰り返す", en: "On a miss, annul twice back to 0 mods and repeat from 2" },
   ] },
 ];

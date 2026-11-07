@@ -23,7 +23,7 @@ import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { flag } from "../web/release-flags";
-import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
+import { toggleOmen as toggledOmens } from "../services/craft-stage/omens";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch, type Ref, type WritableComputedRef } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
@@ -400,11 +400,11 @@ export const craftStage = {
     omens.value = snap.omens;
     rollSeed.value = freshSeed();
   },
-  /** お告げを掛ける / 外す。一緒に掛けられない組 (OMEN_EXCLUSIVE: 左と右・勢力 2 枚など) は、前の方を外して掛け替える */
+  /** お告げを掛ける / 外す。一緒に掛けられない組 (左と右・勢力 2 枚など) の掛け替えはエンジンの toggleOmen (シミュの棚と同じ物) */
   toggleOmen(id: string): void {
-    if (omens.value.includes(id)) { omens.value = omens.value.filter((o) => o !== id); return; }
-    const rivals = new Set(OMEN_EXCLUSIVE.filter((g) => g.includes(id)).flat());
-    omens.value = [...omens.value.filter((o) => !rivals.has(o)), id];
+    const was = omens.value.includes(id);
+    omens.value = toggledOmens(omens.value, id);
+    if (was) return;
     // 掛けた時の音 (ゲームのお告げを使った時の Item_Omen_Use_01。2026-10-16)
     playSfx("omen");
   },

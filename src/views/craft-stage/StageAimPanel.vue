@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
-import { OMEN_FOR, kindOf, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
+import { OMEN_KEY, kindOf, omensAllowedFor, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -119,12 +119,11 @@ const pct = (p: number): string => fmtPct(p);
 /** その打ち方を持つ: カレンシーを持ち、お告げはその手の種類の物をこの組み合わせに揃える (ほかの種類のお告げは残す) */
 function pick(r: AimOdd): void {
   if (r.currency === REVEAL) {
-    if (!s.omens.value.includes("OmenofAbyssalEchoes")) s.toggleOmen("OmenofAbyssalEchoes");
+    if (!s.omens.value.includes(OMEN_KEY.echoes)) s.toggleOmen(OMEN_KEY.echoes);
     scrollToTop(document.querySelector("[data-reveal-panel]"), "smooth", "center");
     return;
   }
-  const kinds = [kindOf(r.currency), ...(kindOf(r.currency) === "desecrate" ? ["reveal"] : [])];
-  const mine = new Set(kinds.flatMap((k) => OMEN_FOR[k] ?? []));
+  const mine = new Set(omensAllowedFor(r.currency));
   // 先に持ってからお告げを揃える (持ち替えでお告げを入れ替える omen-memory.ts が後から上書きしないように)
   s.hold(r.currency);
   s.omens.value = [...s.omens.value.filter((o) => !mine.has(o)), ...r.omens];
@@ -154,7 +153,7 @@ const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "E
 const howOpen = ref<string | null>(null);
 function howOf(r: AimOdd): string {
   const n = nameRow(r);
-  const om = r.omens.some((o) => o !== "OmenofAbyssalEchoes") ? tr("お告げは毎回掛け直し。", "Omens are reapplied every time. ") : "";
+  const om = r.omens.some((o) => o !== OMEN_KEY.echoes) ? tr("お告げは毎回掛け直し。", "Omens are reapplied every time. ") : "";
   if (r.currency === REVEAL) return tr("発現 (アビスの反響で 1 回引き直し) を、今の状態から繰り返す。候補に出れば当たり。", "Reveal (one reroll with Omen of Abyssal Echoes), repeated from the current state. A hit if the target is offered.");
   switch (kindOf(r.currency)) {
     case "desecrate":
