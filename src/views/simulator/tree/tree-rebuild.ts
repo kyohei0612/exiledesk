@@ -7,6 +7,7 @@
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
+import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { autoTarget, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
@@ -25,7 +26,7 @@ function dropBlock(data: PatchData, d: TreeDoc, h: Hand, aims: readonly Aim[]): 
   if (!("block" in h)) return { hand: h, aims: [...aims] };
   const { block: _old, ...rest } = h as Hand & { block?: unknown };
   const goals = [...(d.memoAims ?? []), ...aimsOf(data, d)];
-  return { hand: rest, aims: aims.filter((a) => goals.some((g) => g.modId === a.modId)) };
+  return { hand: rest, aims: aims.filter((a) => goals.some((g) => sameAimMod(data, g, a))) };
 }
 
 export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {

@@ -16,7 +16,7 @@ import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
 import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
-import { gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
+import { goalTierOf, gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
 
@@ -62,7 +62,7 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
   if (isDivineAim(h)) return divineOutcome(after, h!);
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
-  const am = withoutUnaimed(data, doc, before, aimed, noStones(data, doc, h, keptAimedOf(doc, h, aimed)));
+  const am = withoutUnaimed(data, doc, before, aimed, noStones(data, doc, h, keptAimedOf(data, doc, h, aimed)));
   const aims = countedAims(data, doc, h, before, aims0, aimed);
   const raw = boxOutcomeRaw(data, doc, h, own, before, after, aims);
   // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
@@ -95,7 +95,7 @@ function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, h
  * 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る)。
  * 木の狙いにあるかは札どうしをエンジンの当て方で (sameAimMod、段は見ない)
  */
-const keptPlus = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => sameAimMod(data, x, a)))] : aims; };
+const keptPlus = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(data, doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => sameAimMod(data, x, a)))] : aims; };
 /**
  * ☑ を選ぶ手の狙い = 打つ前に付いている狙いと、この手の ☑ (picked) だけ (S-22b)。☑ の無い完成形の MOD が付いても外れ MOD。
  * 前は木の狙い全部で数え、付いた知性 (☑ 無し) が「当たり」を取ってから外れに落ちて、同時に消えた最大ライフの「狙いが消えた」が抜けた (木 oWkFcwYX の b14 のカオス)
@@ -106,7 +106,7 @@ const pickedAims = (data: PatchData, before: StageItem, aims: readonly Aim[], pi
  * 消去の残したい MOD (☑) の段は完成形の段で見る (S-27c)。保存の ☑ は見本の段 (最大ライフ T4) で、完成形 (T5) の人の最大ライフが消えても
  * 「外れが消えた」になった (木 oWkFcwYX の b9)。完成形に無い MOD はそのまま
  */
-const keepAims = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
+const keepAims = goalTierOf;
 /** 狙いに数える物 = ☑ で付いている物と、まだ付いていない物 (付いていて ☑ の無い完成形の MOD は外れ MOD) */
 const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed: ReadonlySet<string>): Aim[] => aims.filter((a) => aimed.has(a.modId) || !aimHeldOn(data, before, a, { sameText: true }));
 /**
@@ -114,7 +114,7 @@ const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed:
  * 付いていて ☑ の無い完成形の MOD は入れない = 外れ (tree-miss の isMissMod の相手にこの札を渡すのと同じ、S-22・S-82)。aimed が無ければ木の狙いのまま
  */
 function countedAims(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Aim[] {
-  const am = noStones(data, doc, h, keptAimedOf(doc, h, aimed));
+  const am = noStones(data, doc, h, keptAimedOf(data, doc, h, aimed));
   if (!am) return [...aims0];
   const counted = keptPlus(data, doc, h, mineOf(data, before, aims0, am));
   return counted.filter((a) => !unaimedOn(data, doc, before, aimed, a.modId));
@@ -164,7 +164,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, h: Hand | null | undefined
   // 入れ替える・付ける手 (☑ を選ぶ手) は 消す → 付ける の順 (持っていた狙いが消えたら ☑ が付いても狙いが消えた、エッセンス S-29 と同じ順、S-22b)
   const pick = PICK_EFFECTS.includes(effectOf(key));
   // 残したい MOD も数える札 (countedAims) にある物だけ = ☑ 無しで付いている完成形の MOD は外れ (unaimedOn)
-  const mine = keep ? keepAims(doc, keep).filter((a) => aims.some((x) => x.modId === a.modId)) : pick ? pickedAims(data, before, aims, own) : aims;
+  const mine = keep ? keepAims(data, doc, keep).filter((a) => aims.some((x) => sameAimMod(data, x, a))) : pick ? pickedAims(data, before, aims, own) : aims;
   return ownHits(data, outcomeOf(data, before, after, mine, key, pick), own);
 }
 /** 結果 → 手を置く時の箱の形 (回す時の outBoxOf の受け方と同じ): 狙い無しの手は狙いが消えた以外を「打った後」、狙いの付かない当たり (エッセンスで外れを置き換える等) も「打った後」 */
@@ -221,7 +221,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const item = pre ? applyCurrency(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const aimed = aimedOfSample(boxId, smp.item) ?? sampleAimed(data, doc, boxId, seed);
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
-    const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item) : [item];
+    const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(data, doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item) : [item];
     for (const it of all) {
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64)。全部打てなければ下の list が空で null
@@ -237,7 +237,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
-        const kept = keptAimedOf(doc, h, aimed);
+        const kept = keptAimedOf(data, doc, h, aimed);
         for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, nextKeyOf(it, o.item, kept, veilPick(h)))!); }
         for (const o of outs) if (lostOf(o)) { const e = nextKeyed(doc, h, sided({ out: "lost", hits: [] }, it, o.item), it, o.item, kept); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
         continue;

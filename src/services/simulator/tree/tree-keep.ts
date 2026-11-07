@@ -9,18 +9,19 @@ import { stepOutcomes } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { engineOmens } from "./tree-hands";
 import { isMissMod, missAims } from "./tree-miss";
+import { sameAimMod } from "./tree-hand-core";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { joinKeys, rankVariants, WHITTLE } from "./tree-whittle";
 
 /** 残したい MOD を決めた手か。消去も同じ (11-04、[] = 全部消えてよい = 残したい MOD 無し。前は消去だけ tree-outcome の isKeepAnnul で別に数えた) */
 export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep;
 /** 残したい MOD の段は完成形の段 (消去の S-27c と同じ) */
-const goalTier = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
+export const goalTierOf = (data: PatchData, doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => { const g = (doc.memoAims ?? []).find((x) => sameAimMod(data, x, a)); return g ? { ...a, tier: g.tier } : a; });
 /** 消える手の残したい MOD (段は完成形の段)。残したい MOD を決めていない手は null (既定 = 持っている狙い) */
-export const keptAimsOf = (doc: TreeDoc, h: Hand | null | undefined): Aim[] | null => (isKeepHand(h) ? goalTier(doc, h.keep) : null);
+export const keptAimsOf = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined): Aim[] | null => (isKeepHand(h) ? goalTierOf(data, doc, h.keep) : null);
 /** 打つ前の ☑ の代わりに使う印 (残したい MOD + ✦ の印)。決めていない手は aimed のまま */
-export function keptAimedOf(doc: TreeDoc, h: Hand | null | undefined, aimed: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
-  const k = keptAimsOf(doc, h);
+export function keptAimedOf(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, aimed: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
+  const k = keptAimsOf(data, doc, h);
   return k ? new Set([...k, ...fractureMarks(doc)].map((a) => a.modId)) : aimed;
 }
 

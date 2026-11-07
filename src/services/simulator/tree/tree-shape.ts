@@ -6,6 +6,7 @@
  */
 import { parseKey, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { missAims } from "./tree-miss";
+import { sameAim } from "./tree-hand-core";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { essenceBoxFits } from "./tree-sample";
@@ -150,7 +151,7 @@ function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKi
   // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)。
   // 鍵の合う箱が無ければ (前の版の 1 箱の外れ、見本で出なかった側) 今までどおり種類の合う箱
   // 狙いが消えたの箱も側の鍵を持つので (S-71g)、外れの人を同じ鍵の狙いが消えたの箱へ入れない
-  if (oc.junkKey) { const k = b.outs.find((id) => doc.boxes[id]?.junkKey === oc.junkKey && (oc.out !== "lost" || doc.boxes[id]?.out === "lost") && (oc.out === "lost" || doc.boxes[id]?.out !== "lost") && (oc.out !== "hit" || !oc.hits.length || (doc.boxes[id]?.out === "hit" && boxAims(doc.boxes[id]!).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier))))); if (k) return k; }
+  if (oc.junkKey) { const k = b.outs.find((id) => doc.boxes[id]?.junkKey === oc.junkKey && (oc.out !== "lost" || doc.boxes[id]?.out === "lost") && (oc.out === "lost" || doc.boxes[id]?.out !== "lost") && (oc.out !== "hit" || !oc.hits.length || (doc.boxes[id]?.out === "hit" && boxAims(doc.boxes[id]!).some((x) => oc.hits.some((a) => sameAim(data, a, x)))))); if (k) return k; }
   // 種類がぴったり合う箱を先に (打った後の箱と狙いが消えたの箱が並ぶ時、狙いが消えた人を打った後へ入れない。10-25 起こりうる結果の箱 possibleOutsOf)
   // まとめた結果の箱 (mergedOuts) はまとめた種類も受ける (10-26)
   const exact = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && (c.out === oc.out || !!c.mergedOuts?.includes(oc.out)) && c.out !== "hit"; });
@@ -165,7 +166,7 @@ function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKi
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
     if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(data, doc, b, c, after);
     // 「どれか」の当たりの箱は、その一覧のどれかが付いたら (anyOf、10-26)
-    return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier));
+    return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => sameAim(data, a, x)));
   });
 }
 
