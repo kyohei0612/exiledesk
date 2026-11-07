@@ -26,7 +26,7 @@ import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
-export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
+export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null; /** 代表のほかにこの箱へ着く枝の品 (重い順、見本の種 2 以降 = 「見本を幾つか見る」所が 1 品の答えにならないように) */ alts?: readonly StageItem[] }
 /** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計)。from = ↩ で着く人の箱 (その箱の代表の品に手を当てた枝)、oc = 結果の分け */
 export interface FrameMiss { box: string; out: string; p: number; from?: string; oc: Outcome }
 /** 代表のほか (↩ で着く人・印の違う枝) の形で、その箱の手が打てない (cant) か、当たるまでの手が当たらない (noHit)。from = その形の元の箱 */
@@ -148,13 +148,14 @@ let framing = false;
  * 箱の見本の代わりの代表の品 (S-200 段階 3・4)。見本を引く所 (結果の箱の分け・箱のカード・☑) は全部これを通る = 打ち直さない。
  * この箱へ行く枝が無い箱は作れない見本 (none)。決まりで出せない箱 (枝の多すぎる手の下・分かれ目の下) は null = 前の見本のまま
  */
-export function frameSample(data: PatchData, doc: TreeDoc, id: string): { item: StageItem; note: string | null } | null {
+export function frameSample(data: PatchData, doc: TreeDoc, id: string, seed = 1): { item: StageItem; note: string | null } | null {
   if (framing) return null;
   framing = true;
   try {
     const f = frameOfDoc(data, doc).frames.get(id);
     if (!f) return null;
-    if (!f.note) return { item: f.item, note: null };
+    // 種 2 以降は代表のほかにこの箱へ着く枝の品 (無ければ代表)。打ち直さない (S-200 段階 3・4)
+    if (!f.note) return { item: (seed > 1 && f.alts?.[seed - 2]) || f.item, note: null };
     return f.note === "nobranch" ? { item: f.item, note: "none" } : null;
   } finally { framing = false; }
 }
@@ -236,7 +237,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const markOf = (fr: Frame): string => `${fr.key}|${blockMarkOf(data, doc, fr.item, fr.aimed)}`;
       if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); extra.push({ at, f: fr, from: o }); } } }
       // 数値の両端の形 (前の rollEnds) は当てない: 木の数値は既定で段の下限、数値を決めるのは神の目標 (S-202 ②、11-06 オーナー)
-      return best;
+      const alts = [...all, ...marked].filter((fr) => fr !== best).map((fr) => fr.item);
+      return alts.length ? { ...best, alts } : best;
     };
     const walk = (q: string[]): void => { while (q.length) {
       const id = q.shift()!, b = doc.boxes[id], f = frames.get(id);

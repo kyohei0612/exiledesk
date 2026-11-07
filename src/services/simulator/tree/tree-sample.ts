@@ -207,7 +207,7 @@ export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: num
   // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
   if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); okMemo.clear(); STARTS.clear(); clearRolls(); memoSig = ""; memoData = data; }
   // 配置の代表の品 (打ち直さない、S-200 段階 3・4)。決まりで出せない箱だけ前の見本
-  const fs = frameSample(data, doc, boxId);
+  const fs = frameSample(data, doc, boxId, seed);
   if (fs) return fs;
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }

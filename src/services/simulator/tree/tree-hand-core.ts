@@ -2,7 +2,7 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, sameAimTarget, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { missAims } from "./tree-miss";
 import { ECHO as ABYSSAL_ECHO_OMEN, splitOmens } from "./tree-hands";
@@ -51,17 +51,10 @@ export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, a
   };
 }
 
-/**
- * 札どうしが同じ MOD か (段は見ない) = 札を MOD の形にしてエンジンの aimHits (sameText) で当てる (同じ文の別 modId も同じ。前は modId の一致)。
- * aimHits が見るのは modId・系統・段だけなので数値は作らない。狙いの段は一番下 (段の番号 0) にして段を見ない (同じ modId は段の外の札 = T99 でも同じ)
- */
-export function sameAimMod(data: PatchData, x: TierAim, a: TierAim): boolean {
-  if (x.modId === a.modId) return true;
-  const m ={ modId: x.modId, family: data.mods.get(x.modId)?.family ?? "", tierIndex: tierIndexOf(data, x.modId, x.tier), tierName: `T${x.tier}` } as StageMod;
-  return hits(m, { modId: a.modId, minTierIndex: 0 }, { data, sameText: true });
-}
-/** 札どうしが同じ狙いか = 同じ MOD (sameAimMod) で段の T も同じ (sameText の段は段の名前の T で比べる、aimHits と同じ) */
-export const sameAim = (data: PatchData, x: TierAim, a: TierAim): boolean => x.tier === a.tier && sameAimMod(data, x, a);
+/** 札どうしが同じ MOD か (段は見ない、同じ文の別 modId も同じ) = エンジンの sameAimTarget (aimHits の sameText と同じ見方) */
+export const sameAimMod = (data: PatchData, x: TierAim, a: TierAim): boolean => sameAimTarget(data, targetOf(data, x), targetOf(data, a));
+/** 札どうしが同じ狙いか = 同じ MOD で段も同じ (エンジンの sameAimTarget の tier) */
+export const sameAim = (data: PatchData, x: TierAim, a: TierAim): boolean => sameAimTarget(data, targetOf(data, x), targetOf(data, a), { tier: true });
 
 /**
  * その手 (key + お告げ) がこのアイテムに打てない理由。打てるなら null。
