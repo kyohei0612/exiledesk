@@ -84,7 +84,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
   let skip = false;
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
-  watch([() => routeKeyOf(doc.value), treeRunRig], () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
+  // 道の形・種と値段が同じなら何もしない。箱の置き直し (use-row-settle の triggerRef) でも呼ばれ、回し始めに箱の高さが変わると回しを止めていた
+  // (11-07 猿「100 人回すが全体表示に引くだけで回らない」。treeRunRig が shallowRef なので値が同じでも呼ばれる)
+  watch([() => routeKeyOf(doc.value), treeRunRig], ([key, rig], was) => { if (was && key === was[0] && rig === was[1]) return; token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
   /** 開発版の記録 (S-197)。test = 最終チェックの 30 人 */
   const logRun = (): void => { const r = result.value; if (r) devLog("tree-run", { test: test.value, n: r.n, finished: r.finished, failed: r.failed, swamped: r.capped, stuck: r.stuck, perItem: Math.round(r.perItem), loopAt: r.loopAt, stuckAt: r.stuckAt, failAt: r.failAt, boxes: Object.keys(doc.value.boxes).length }); };
   /** opt.test = 穴チェックの走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
