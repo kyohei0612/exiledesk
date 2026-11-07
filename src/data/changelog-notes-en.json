@@ -1,4 +1,17 @@
 {
+  "0.1.679": [
+    "Emulator: Aim next move now also lists Bones without Omen of Abyssal Echoes, Omen of Catalysing Exaltation, and Omen of Whittling with Annulment Omens",
+    "Emulator: the \"Usable when\" line in currency help now follows the current item's slot (Bones, special Essences, Alloys)",
+    "Emulator: the quality setting now only lists Catalysts usable on the item (Jewels show Refined Catalysts)",
+    "Shared: on phones, long-press a currency on the shelf to see its help, and shelf names no longer include Greater / Perfect",
+    "Tutorial: the video tier table now shows chances as % only, and the tier-floor note includes Greater and Perfect Chaos Orbs",
+    "Simulator: rebuilt Omen of Whittling branches; placements now split by mod level, and mods to keep are only asked when there are 2 or more targets",
+    "Simulator: phones now run 100 like PC and zoom out to show the first run's path",
+    "Simulator: windows at medium screen widths now open from the bottom",
+    "Simulator: mods on the final-item card and tree boxes are now ordered Prefixes first, then Suffixes",
+    "Simulator: Essence mods not in the final item now count as misses and show as the mod text on cards",
+    "Simulator: in the Divine Orb window, click outside the highlighted frame or right-click to put the Divine Orb down"
+  ],
   "0.1.678": [
     "Simulator: boxes with the same contents in the tree are now merged into one, and socketed Runes count as part of a box's contents",
     "Simulator: Bone crafts now let you choose Reveal, No target, or Unrevealed",

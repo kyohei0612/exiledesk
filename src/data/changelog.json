@@ -1,5 +1,77 @@
 [
  {
+  "v": "0.1.679",
+  "date": "2026-11-07",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 「次の手で狙う」に、反響のお告げを使わない骨・触媒の高貴・削減と抹消の組み合わせの行を足しました",
+    "en": "Emulator: Aim next move now also lists Bones without Omen of Abyssal Echoes, Omen of Catalysing Exaltation, and Omen of Whittling with Annulment Omens"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: カレンシーの説明の「使える時」を、今のアイテムの部位どおりに出すようにしました (骨・特殊なエッセンス・合金)",
+    "en": "Emulator: the \"Usable when\" line in currency help now follows the current item's slot (Bones, special Essences, Alloys)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 品質の設定で選べるカタリストを、そのアイテムに使える物だけにしました (ジュエルは精製されたカタリスト)",
+    "en": "Emulator: the quality setting now only lists Catalysts usable on the item (Jewels show Refined Catalysts)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "共通: スマホで棚のカレンシーを長押しすると説明が出るようにし、棚の名前から「(上級)」「(完全)」を外しました",
+    "en": "Shared: on phones, long-press a currency on the shelf to see its help, and shelf names no longer include Greater / Perfect"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "チュートリアル: 動画の段の表の出やすさを % だけで出し、下限の注に上級・完全のカオスも入れました",
+    "en": "Tutorial: the video tier table now shows chances as % only, and the tier-floor note includes Greater and Perfect Chaos Orbs"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減の枝を作り直しました。配置でも MOD レベルどおりに分け、残したい MOD は標的が 2 つ以上の時だけ聞きます",
+    "en": "Simulator: rebuilt Omen of Whittling branches; placements now split by mod level, and mods to keep are only asked when there are 2 or more targets"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホでも PC と同じく 100 人回し、全体表示で 1 人目の軌跡を見せるようにしました",
+    "en": "Simulator: phones now run 100 like PC and zoom out to show the first run's path"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 画面が中くらいの幅の時の窓を、下から出る形にそろえました",
+    "en": "Simulator: windows at medium screen widths now open from the bottom"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形のカードと木の箱の MOD の並びを、プレフィックスを先・サフィックスを後にそろえました",
+    "en": "Simulator: mods on the final-item card and tree boxes are now ordered Prefixes first, then Suffixes"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形に無いエッセンスの MOD は外れとして数え、カードには MOD の文のまま出すようにしました",
+    "en": "Simulator: Essence mods not in the final item now count as misses and show as the mod text on cards"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 神のオーブの窓で、光った枠の外を押すか右クリックで手放せるようにしました",
+    "en": "Simulator: in the Divine Orb window, click outside the highlighted frame or right-click to put the Divine Orb down"
+   }
+  ]
+ },
+ {
   "v": "0.1.678",
   "date": "2026-11-07",
   "items": [
@@ -1029,36 +1101,6 @@
     "area": "",
     "text": "画面の幅が 1280 未満の時はスマホの形で表示するように (前は 768 で切り替え)",
     "en": "Windows narrower than 1280px now use the phone layout (it switched at 768px before)"
-   }
-  ]
- },
- {
-  "v": "0.1.639",
-  "date": "2026-10-29",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーターのレシピをシェアすると、X などにそのレシピのカード絵 (完成品・ツリーの形・完成の割合・平均の費用) が出るように",
-    "en": "Shared simulator recipes now show their own preview card on X and other sites (finished item, tree shape, completion rate, average cost)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 「1 手戻す」を押しても、持っているカレンシーとお告げはそのまま",
-    "en": "Emulator: “Undo” now keeps the currency and omens you are holding"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: ベース名・使い方のコースの題が「…」で切れず折り返すように",
-    "en": "Phone: base names and course titles now wrap instead of being cut off with “…”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "英語の画面: 「このアイテムで比べる」の題のベース名を英語に",
-    "en": "English UI: the base name under “Comparing on” is now in English"
    }
   ]
  }
