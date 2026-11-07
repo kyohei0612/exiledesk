@@ -250,6 +250,19 @@ export function installSimMonkey(): () => void {
       runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, startCost: t.startPrice(), onPerson: (p) => { if (p.end === "capped" && out.length < k) out.push({ cost: Math.round(p.cost), n: p.visits.length, last: p.visits.slice(-30).map((v) => `${v.box}:${Math.round(v.cost)}`), mods: p.why ? [...p.why.item.prefixes, ...p.why.item.suffixes].map((x) => x.modId) : null }); } });
       return out;
     },
+    /** 終わり方 end の人の道 (↩ の箱を通ったか)・止まった訳・最後のアイテム (止まりを人ごとに分けて数える台本用) */
+    people(n = RUN_N, seed = 1, end = "stuck") {
+      const d = s.data.value;
+      if (!d) return null;
+      const div = t.treePrice("divine") || 1, out: unknown[] = [];
+      runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, startCost: t.startPrice(), onPerson: (p) => {
+        if (p.end !== end) return;
+        const it = p.why?.item;
+        out.push({ at: p.at, reason: p.why?.reason ?? null, path: p.visits.map((v) => v.box + (v.pass ? "~" : "")), backs: p.visits.filter((v) => !!t.doc.value.boxes[v.box]?.back).map((v) => v.box),
+          q: it?.quality ?? null, cat: it?.qualityTag ?? null, mods: it ? [...it.prefixes, ...it.suffixes].map((x) => x.modId) : null });
+      } });
+      return out;
+    },
     /** 全部の箱の「箱のカード」と「手の窓のカード」の札の比べと、選んで付けた MOD が外れ MOD と出る行 (S-82 の台本用) */
     cards() {
       const d = s.data.value;

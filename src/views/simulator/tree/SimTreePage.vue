@@ -482,7 +482,7 @@ const phone = usePhone();
             <div data-tree-side-recipe data-tree-own class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
               <TreeRecipeBar @opened="v.openView()" />
             </div>
-            <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+            <TreeCanvasTools :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
           </div>
         </aside>
       </div>

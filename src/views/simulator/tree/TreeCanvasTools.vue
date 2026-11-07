@@ -1,7 +1,7 @@
 <!--
   TreeCanvasTools.vue — ツリーの右下に浮かぶ道具 (2026-10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 6・7・16):
   ミニマップ (箱は結果の色、今見ている所の枠。押す / 引っ張るとそこへ送る) と、ComfyUI の並びのツールバー
-  (選択 / 手 = 見るだけで画面を動かす・全体表示・− 倍率 ＋・ミニマップの切り替え)。ミニマップは既定で閉じ、開くと右の列の残りいっぱい (10-26 夜)
+  (全体表示・− 倍率 ＋・ミニマップの切り替え。選択 / 手のボタンは 11-08 に外した)。ミニマップは既定で開き、右の列の残りいっぱい (S-147g)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -12,13 +12,15 @@ import { gesture } from "./use-gesture";
 
 /** view = 今見ている所 (ツリーの座標。Vue Flow の viewport から use-tree-flow.ts で出す) */
 const props = defineProps<{ boxes: TreeBox[]; view: { x: number; y: number; w: number; h: number }; zoom: number }>();
-const hand = defineModel<boolean>("hand", { default: false });
 const emit = defineEmits<{ fit: []; zoomIn: []; zoomOut: []; reset: []; center: [x: number, y: number] }>();
 
 const view = computed(() => props.view);
-/** ミニマップは既定で閉じ、道具のボタンで出し入れ (10-26 夜オーナー「ミニマップいらんわ、デフォで閉じで必要な時出す形でおけ」)。開いたかはこのブラウザに覚える */
-const MAP_KEY = "exiledesk.tree.minimap2";
-const showMap = ref((() => { try { return localStorage.getItem(MAP_KEY) === "1"; } catch { return false; } })());
+/**
+ * ミニマップは既定で開き、道具のボタンで出し入れ。閉じたかはこのブラウザに覚える (S-147g、11-08 オーナー「ミニマップデフォでONでいいよあそこなんかさみしいし」。前は 10-26 夜の既定で閉じ)。
+ * 鍵は新しい名前 (前の鍵 minimap2 に残った「閉じた」を引き継がず、誰でも一度は開いた形から。11-08 オーナー「ミニマップデフォで表示して」)
+ */
+const MAP_KEY = "exiledesk.tree.minimap3";
+const showMap = ref((() => { try { return localStorage.getItem(MAP_KEY) !== "0"; } catch { return true; } })());
 watch(showMap, (v) => { try { localStorage.setItem(MAP_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 
 /**
@@ -72,13 +74,8 @@ const btn = "flex h-8 min-w-7 items-center justify-center rounded-md px-1 text-s
     </div>
     <!-- スマホの形 (1280 未満、U-53) は区切りを隠し % を細くして木の枠 (375 幅で 281px) に収める (帯が 286px で左の「選択」が枠の外に切れた、10-23 モンキー 5) -->
     <div class="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-1 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" role="toolbar" :aria-label="tr('見え方', 'View')">
-      <button type="button" data-tree-tool-select :class="[btn, !hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="!hand" :title="tr('選択 (箱を組む)', 'Select (edit boxes)')" :aria-label="tr('選択', 'Select')" @click="hand = false">
-        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 3l7 17 2.5-7.5L21 10z" /></svg>
-      </button>
-      <button type="button" data-tree-tool-hand :class="[btn, hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="hand" :title="tr('手 (見るだけ。どこを引いても画面が動く)', 'Hand (view only, drag anywhere to pan)')" :aria-label="tr('手', 'Hand')" @click="hand = true">
-        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8" /><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg>
-      </button>
-      <span class="hidden" aria-hidden="true" /><!-- 区切りの線は出さない (右の列 248px に 1 行で入らなかった、10-26 夜) -->
+      <!-- 矢印 (選択) と手 (見るだけで画面を動かす) のボタンは外した (S-147g、11-08 オーナー「この手いらんな　どうせ矢印でも動くし不要」「矢印も外してええよ確かに」)。いつも矢印の動き -->
+
       <button type="button" data-tree-fit :class="btn" :title="tr('全体を表示 (1)', 'Fit all (1)')" :aria-label="tr('全体を表示', 'Fit all')" @click="emit('fit')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
       </button>

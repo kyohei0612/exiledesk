@@ -31,6 +31,7 @@ import { tr } from "../../../i18n/lang";
 import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
 import { DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
+import { keepablesOf } from "./tree-row-tags";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -433,8 +434,8 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const stones = opt.hitAims?.length && veilPick(veilH) ? revealAimsOf(data, doc, id, it, veilH).filter((a) => !choices.some((c) => c.modId === a.modId)) : [];
   const pick = opt.hitAims ? pickedHits([...choices, ...stones], opt.hitAims, key, !!opt.spam) : null;
   // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)。消える手 (S-27d) も同じ口 (渡さなければ既定 = 持っている狙い)
-  // 残したい MOD に選べるのは狙い (☑ の印) だけ、外れ MOD は選べない (S-27b、棚の窓 use-hand-keep の picks と同じ)
-  const am = opt.keep ? aimedOfCard(data, doc, id, it) : null;
+  // 残したい MOD に選べるのは外れ MOD 以外 (☑ の印 + まだ外れでない付けたエッセンス、S-27b、棚の窓 use-hand-keep の picks と同じ)
+  const am = opt.keep ? new Set([...(aimedOfCard(data, doc, id, it) ?? []), ...keepablesOf(data, doc, id, it)]) : null;
   const keep = opt.keep && keepAskOf(data, it, key, omens, goals) ? opt.keep.filter((a) => !am || am.has(a.modId)) : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);

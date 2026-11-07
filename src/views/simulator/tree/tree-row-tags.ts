@@ -68,9 +68,24 @@ export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: Stag
     if (put) { putOn.add(put); continue; }
     if (!isKeepHand(h) || isSwapEssence(h)) continue;
     const gone = [...(goneOf(d, sampleOf(d, doc, p.id, 1).item, h.currency, h.omens) ?? [])];
-    for (const a of on) if (!putOn.has(a) && gone.some((id) => same(a, id))) cut.add(aimKey(a));
+    // 残したい MOD に選んだ物は外れにしない (S-27b、11-08)
+    for (const a of on) if (!putOn.has(a) && !h.keep.some((k) => same(a, k.modId)) && gone.some((id) => same(a, id))) cut.add(aimKey(a));
   }
   return cut;
+}
+/**
+ * 残したい MOD に選べる MOD (modId) = 外れ MOD 以外 = 箱のカードの ☑ の印 + 付けた完成形に無いエッセンスの MOD で、まだ外れになっていない物 (cutEssenceOf の外)。
+ * 選ばなければ外れ (S-27b、11-08 オーナー「ハズレMOD以外は狙いMODや残したいMODとして選択できるようにしてあげてくれ。選択されなかったらハズレMODとしてカウントしていいから」。
+ * 前は ☑ の印だけで、途中で付けたエッセンスを消去などで残せなかった)。手の窓 (use-hand-keep の picks) と猿の口 (planPick) が呼ぶ
+ */
+export function keepablesOf(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): ReadonlySet<string> {
+  const out = new Set<string>(aimedOfCard(d, doc, boxId, it) ?? []), mods = [...it.prefixes, ...it.suffixes];
+  const cut = cutEssenceOf(d, doc, boxId, it);
+  for (const a of midAims(d, doc)) {
+    if (cut.has(aimKey(a))) continue;
+    for (const m of mods) if (!m.fractured && sameAimMod(d, a, { modId: m.modId, tier: 99 })) out.add(m.modId);
+  }
+  return out;
 }
 /** 選んで付けた MOD (エッセンス・合金・発現済みの冒涜)。消去を持った時も手の窓のカードは箱のカードのまま (S-82) */
 export const chosenMod = (d: PatchData, m: StageMod): boolean => !m.unrevealed && !!(m.desecrated || m.crafted || craftedKindOf(d, m));
