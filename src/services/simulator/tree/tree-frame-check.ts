@@ -6,7 +6,6 @@
 import { mulberry32, type PatchData } from "../../craft-stage/engine";
 import { frameOfDoc } from "./tree-frame";
 import { handProblem, playHand } from "./tree-sample";
-import { qualityOk } from "./tree-unbounded";
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 
@@ -39,8 +38,6 @@ export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
     // お告げが効かないだけ (打てば進む) は精査と同じく止まりにしない
     const why = b.hand ? handProblem(data, f.item, b.hand) : null;
     if (why && b.hand && !playHand(data, f.item, { ...b.hand, repeat: null }, mulberry32(1)).applied) add({ boxId: b.id, kind: "cantUse", text: tr(`この箱の形では手が打てない: ${why}`, `The craft can't be used in this box's shape: ${why}`) });
-    // 代表のカタリストは 1 個 +1% (S-200 ③) なので、品質の値では比べず、品質の無い形で完成の条件に品質がある時だけ
-    if (b.done === "main" && !(f.item.quality ?? 0) && !(f.item.catalystQuality ?? 0) && !qualityOk(doc, f.item)) add({ boxId: b.id, kind: "frameDone", text: tr("この箱の形には品質が無く、完成の条件 (品質) に届かない", "This box's shape has no quality, so it can't meet the done condition (quality)") });
   }
   return out;
 }

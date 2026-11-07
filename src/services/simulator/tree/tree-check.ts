@@ -28,10 +28,15 @@ import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
 
-type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMiss" | "frameDone";
+type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMiss" | "frameDone";
 /** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
 /** 合格を止めない知らせ: 戻り先と外れの体だけ違う (S-73)・完成にしていない完成の箱 (S-77、印は付けるが止めない) */
 export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished", "frameMiss", "frameDone"];
+/**
+ * 100 人回すを止める足りない所 = 未設定 (open) だけ (S-205 ③、11-07 オーナー「未設定がないならそのまま数値だしておｋ」)。
+ * 止まり・輪・打てない手などは一覧に知らせとして残し、回した結果に止まった人の数で出る
+ */
+export const blocksRun = (k: CheckKind): boolean => k === "open";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -231,22 +236,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     else if (b.hand && b.outs.every((o) => !reach.has(o))) add(b.id, "noDone", tr("この先は完成の箱へ一度も着かない", "Nothing below this ever reaches a done box"));
   }
 
-  // 3) 完成の形の食い違い (完成の箱どうしで、道の札がそろっていない)
-  const pathAims = (id: string): string => {
-    const ks = new Set<string>();
-    for (let b: TreeDoc["boxes"][string] | undefined = doc.boxes[id]; b; b = b.parent ? doc.boxes[b.parent] : undefined) {
-      if (b.out === "hit" && b.aim) for (const a of boxAims(b)) ks.add(aimKey(a));
-      // 分かれ目の行の「付いている狙い」も道の札 (10-24 不在のアミュ B: 負けの後のカオスでキャスト・ルーンワードが残った人の完成の行が「狙い 2 つ」と出た)
-      const p = b.parent ? doc.boxes[b.parent] : undefined;
-      for (const k of p?.split?.find((r) => r.to === b!.id)?.when.has ?? []) ks.add(k);
-    }
-    return [...ks].sort().join(",");
-  };
-  const mains = done.filter((b) => b.done === "main");
-  // 比べるのは揃った狙いの数 (「どれか 2 つ」の木は完成ごとに札が違うのが正しい。前は札の組で比べ、靴の完成の箱ほぼ全部に ! が付いた、10-22)。
-  // 数は下の 4) でエンジンが辿った時に完成の箱で付いていた狙いの数の一番少ない物 (戻りの矢印で合流すると親をたどった札と違う、靴 b8、10-22)。着かなかった箱は親をたどった札の数
-  const nOfPath = (id: string): number => (pathAims(id) ? pathAims(id).split(",").length : 0);
-  const heldAtDone = new Map<string, number>();
+  // 3) 完成の形の食い違い (完成の箱どうしで揃った狙いの数を比べる doneShape) は 11-07 にやめた: 完成の箱に着いた人はそのまま完成で、狙いの数を数え直さない (S-05)。木のチェックは止まりと輪だけ
 
   // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
   {
@@ -271,7 +261,6 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (!b || seen.has(id + (viaBack ? "<" : ""))) return;
         seen.add(id + (viaBack ? "<" : ""));
         // × (要らない) の印の MOD が残ったまま完成 (印はこの箱と上の箱で付けた物、段は問わない)
-        if (b.done === "main") { const n = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).length; heldAtDone.set(id, Math.min(heldAtDone.get(id) ?? n, n)); }
         if (b.done === "main") for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
           if (aimHeldOn(data, item, { modId: m, tier: 99 }, { sameText: true })) add(id, "unwanted", tr("× (要らない) の印の MOD が残ったまま完成", "A mod marked × (unwanted) is still on the done item"));
         }
@@ -387,14 +376,6 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     }
     // 回しで 1 人でも着いた箱は出さない (5 人の辿りは上限つきの当たるまで・始まりに同じ系統が付いている人で外れた、10-22 13 通り組んだ #9 の誤報 3 本)
     for (const id of never) if (!run.boxes[id]?.reach) add(id, "neverHit", tr(`上の手を打ち直してもこの札が付かなかった (側・${TIER}・手を確かめる)`, "This mod never hit when the craft above was retried (check side, tier and craft)"));
-  }
-  // 3 の続き) 完成の形の食い違い (揃った狙いの数)
-  // 一番多く揃う完成の数より少ない形で着く人がいる完成の箱に ! (前は 1 つ目の完成の箱と比べ、どちらが組み違いか分からなかった)
-  if (mains.length > 1) {
-    // 着いた人の実物の数だけで比べる (道の札の数で補わない = S-137。着かなかった完成の箱は比べない)
-    const nOf = (id: string): number => heldAtDone.get(id) ?? (J ? NaN : nOfPath(id));
-    const most = Math.max(...mains.map((b) => nOf(b.id)).filter((n) => !Number.isNaN(n)));
-    for (const b of mains) if (!Number.isNaN(nOf(b.id)) && nOf(b.id) < most) add(b.id, "doneShape", tr(`狙いが ${nOf(b.id)} つしか揃っていない形で着く人がいる (ほかの完成は ${most} つ)`, `Some runs arrive here with only ${nOf(b.id)} target(s) (other done boxes have ${most})`));
   }
   return ranked(out);
 }

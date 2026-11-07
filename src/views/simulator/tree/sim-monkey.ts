@@ -28,7 +28,7 @@ import { baseCatalog, omenBlock, omensAllowedFor, useReason, type StageItem } fr
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
-import { checkTreeAsync, NOTICE_KINDS } from "../../../services/simulator/tree/tree-check";
+import { blocksRun, checkTreeAsync } from "../../../services/simulator/tree/tree-check";
 import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { boxShape, sameShape } from "../../../services/simulator/tree/tree-box-shape";
 import { judgeOf } from "./tree-hand-plan";
@@ -211,7 +211,7 @@ export function installSimMonkey(): () => void {
       const d = s.data.value;
       if (!d) return null;
       const issues = await checkTreeAsync(d, t.doc.value, () => {});
-      return { passed: !issues.filter((x) => !NOTICE_KINDS.includes(x.kind)).length, done: Object.values(t.doc.value.boxes).filter((b) => b.done === "main").map((b) => b.id), issues };
+      return { passed: !issues.some((x) => blocksRun(x.kind)), done: Object.values(t.doc.value.boxes).filter((b) => b.done === "main").map((b) => b.id), issues };
     },
     /** 画面の use-tree-run と同じ: 相場は高貴建てを神に直し、同じ物の値段は 1 回だけ引く。始めの値段はスタートの値段 (startPrice) */
     async result(n = RUN_N, seed = 1) {

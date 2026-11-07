@@ -15,11 +15,12 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
-import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, midMark, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { modText, tr } from "../../../i18n/lang";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
 
 /** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
 const contentAims = (doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(doc)];
@@ -107,13 +108,15 @@ export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   });
   if (pa[2] !== pb[2]) out.push(tr("フラクチャーの付き方が違う", "different fractured mods"));
   if (pa[3] !== pb[3]) out.push(tr("レアリティが違う", "different rarity"));
-  // 枠 (frameOf を配置の鍵 frameKeyOf にした物 = 品質は有り / 無しと種類・エンチャント・予見済み)
+  // 枠 (frameOf を配置の鍵 frameKeyOf にした物 = 品質は有り / 無しと種類・エンチャント・刺さったルーン・予見済み)
   const [, qa = "", ea = ""] = frameKeyOf(frameOf(it)).split("~"), [, qb = "", eb = ""] = frameKeyOf(frameOf(f.item)).split("~");
   if (qa !== qb) out.push(tr(`品質 ${it.quality ?? 0}% (見本 ${f.item.quality ?? 0}%)`, `${it.quality ?? 0}% quality (example ${f.item.quality ?? 0}%)`));
   if (ea !== eb) out.push(tr("エンチャントが違う", "different enchantment"));
+  const ra = runesOf(it), rb = runesOf(f.item), runeName = (s: string): string => (s ? s.split("+").map((en) => nameOfKey(`${RUNE_PREFIX}${en}`, it)).join(tr("・", ", ")) : tr("なし", "none"));
+  if (ra !== rb) out.push(tr(`刺さったルーンが違う (${runeName(ra)} / 見本 ${runeName(rb)})`, `different runes (${runeName(ra)} / example ${runeName(rb)})`));
+  if ((it.sockets ?? 0) !== (f.item.sockets ?? 0)) out.push(tr(`ソケット ${it.sockets ?? 0} (見本 ${f.item.sockets ?? 0})`, `${it.sockets ?? 0} sockets (example ${f.item.sockets ?? 0})`));
   if (!!it.foreseen !== !!f.item.foreseen) out.push(tr("予見済みかが違う", "foreseen differs"));
-  // 中身が同じで行けない = 完成の箱の品質・カタリストの n % に届かない (fitsItem の残り)
-  if (!out.length && !doneOk(doc, to, it)) out.push(tr(`品質が完成形に足りない (${it.quality ?? 0}% / ${doc.goalQuality ?? 0}%)`, `not enough quality for the final item (${it.quality ?? 0}% / ${doc.goalQuality ?? 0}%)`));
+  // 中身が同じで行けない = カタリストの n % に届かない (fitsItem の残り。完成形の品質は指標なので見ない = S-205)
   if (!out.length && !reachesCatalyst(doc, to, it)) out.push(tr(`カタリストの品質 ${catalystTo(doc, to)}% に届かない`, `cannot reach ${catalystTo(doc, to)}% catalyst quality`));
   return out;
 }
@@ -156,10 +159,13 @@ const MARKS = new WeakMap<StageItem, Map<string, string>>();
 /**
  * 枠に入れる品質 (値・カタリストの種類)・エンチャント・予見済み。全部同じ時だけ同じ枠 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」)。
  * 品質が 0% (値・カタリストの品質とも 0) の時は種類を見ない (11-06: 触媒の高貴が品質を使い切っても種類は残るが、0% の種類は打つ時に効かない)
- * 嵌めたルーン・ルーンの MOD の印 (m.rune = コルの狩りを差すと混ざるマークスマンの MOD)・ソケットの数は入れない (S-60e、11-07 オーナー「ミットはアストリッドをつけるツリーと
- * 付けないツリーでもう破綻してるよこれ」。ルーンは完成形の使用ルーンで自動に付く。前は入れていて、外れがマークスマンの MOD の人だけ別の枠になって止まった = 要望 b3956330)
+ * 品に刺さっているルーン (augments) は名前の組で入れる (順は見ない、11-05)。刺したルーンで確率・打てる手が変わるので別の状態 (11-07 オーナー「ルーンは手で付けたところとかでおｋ
+ * ツリーはあくまでもゲーム仕様にして」= S-60e)。ルーンの MOD の印 (m.rune = コルの狩りを差すと混ざるマークスマンの MOD) は入れない (外れは何の MOD でも外れ。前は入れていて、
+ * 外れがマークスマンの MOD の人だけ別の枠になって止まった = 要望 b3956330)。ソケットの数も入れる (ルーンの手は空きがあれば空きへ、無ければ左から置き換える = 空きの有る無しで結果が違う。ソケットを足すのは熟練工のオーブ、エンジンの applyRune)
  */
-const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${(it.quality ?? 0) + (it.catalystQuality ?? 0) > 0 ? it.qualityTag ?? "" : ""}~e${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
+const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${(it.quality ?? 0) + (it.catalystQuality ?? 0) > 0 ? it.qualityTag ?? "" : ""}~e${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~r${runesOf(it)}.${it.sockets ?? 0}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
+/** 刺さっているルーンの名前の組 (順は見ない) */
+const runesOf = (it: StageItem): string => (it.augments ?? []).map((a) => a.en).sort().join("+");
 /**
  * 外れは種類を見ない (S-60、10-29 深夜オーナー「そもそもハズレMODはどんな形であれハズレMODだからな」): 側ごとの 普通.エッセンス.冒涜の発現済み.未発現 を
  * 外れ.未発現 の 2 つに (「未発現のみ別枠として全然おｋ」)。冒涜の発現済みの数は最後の `#d<プレ>.<サフィ>` に残し、光のお告げの手のある箱と比べる時だけ見る (looseKey で落とす)
@@ -182,8 +188,6 @@ export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h 
 /** クラフト MOD を付ける手 (エッセンス・液化した感情) の箱か (クラフト MOD は 1 品 1 つ E-11h。クラフト MOD の外れを持つ人は打てないので、その数も合わせる、S-60d) */
 export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
 const LIGHT = "OmenofLight";
-/** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
-const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
 
 /** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c) */
 const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };
@@ -321,11 +325,11 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && reachesCatalyst(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
       const k = own(contentOf(data, doc, item, aimed));
-      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
       const k = own(contentOf(data, doc, item, aimed));

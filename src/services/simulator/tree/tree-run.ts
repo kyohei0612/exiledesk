@@ -7,7 +7,6 @@
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
-import { qualityOk } from "./tree-unbounded";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
@@ -153,14 +152,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail") return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     if (b.done === "main" && j) {
-      // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。品質も狙う ☑ の時だけ品質を見る)
-      if (!qualityOk(doc, item)) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`完成の箱に着いたが、品質が足りない (${item.quality ?? 0}% / 完成形 ${doc.goalQuality}%)`, `Reached a done box without enough quality (${item.quality ?? 0}% / final ${doc.goalQuality}%)`), item } });
+      // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)
       return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
     }
     if (b.done === "main") {
       // 完成のアイテムも残す (台本で完成図を出す。止まりの集計 stuckWhy には入れない)
-      // 品質も狙う (☑) の時は品質の値も見る。足りない人は止まり (10-27 夕オーナー)
-      if (doneOk(data, doc, at, item, aims) && !qualityOk(doc, item)) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`完成の箱に着いたが、品質が足りない (${item.quality ?? 0}% / 完成形 ${doc.goalQuality}%)`, `Reached a done box without enough quality (${item.quality ?? 0}% / final ${doc.goalQuality}%)`), item } });
+      // 完成形の品質は見ない (S-205。前は品質も狙う ☑ の時に足りない人を止まりにした、10-27 夕オーナー)
       if (doneOk(data, doc, at, item, aims)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
       odd.add(at);
       const to = ++hops > 1000 ? null : matchBox(data, shapes, item, aims, doc);
@@ -209,7 +206,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (!b.hand) {
       // 完成 = 完成の狙い (0 完成形の設定) が全部付いた時点。手の無い箱で揃っていれば完成 (狙いを全部付けたスタート、10-22 14 本目)
       const goals = doc.memoAims ?? [];
-      if (goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true })) && qualityOk(doc, item)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
+      if (goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }))) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } });
     }
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
