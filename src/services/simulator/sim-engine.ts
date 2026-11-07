@@ -38,7 +38,6 @@ export type { TierMod } from "./sim-engine/start-fracture";
 export type { RequiredRune } from "./sim-engine/start-fracture";
 export { fractureStart, placeMods, runeSocketed, requiredRunes } from "./sim-engine/start-fracture";
 export { GOAL_RUNE_MAX, socketGoalRunes } from "./sim-engine/goal-runes";
-// シミュのツリーで打つ時の規格外 (ルーンの手はソケットを足して嵌める、クラフト MOD が上限ならアストリッドの創造性を先に嵌める。オーナー 10-26)
 // 完成形の狙いの組にもう 1 つ足せるか (枠・系統・アイテムレベル・冒涜 1 つまで・クラフト MOD の上限。足せなければ理由の文、10-24 シミュ部長 19 本目)
 export { goalBlock, tagClash, TAG_CLASH } from "./sim-engine/start-fracture";
 export { rowBlockLines } from "./sim-engine/goal-row-blocks";

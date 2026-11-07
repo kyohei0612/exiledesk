@@ -180,8 +180,8 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
   // 作り方 (ルーン → 指名の MOD、マジックはノーマルから) はエンジンの入口の startWith (B10 10-22)
   // フラクチャー前から (印あり・start.from four) は必ず白 (ノーマル)。始まりの MOD も付けない (10-24 夜オーナー)
   if (!startsFractured(doc)) return startWith(data, doc.base, doc.itemLevel, { rarity: startRarity(doc), mods: marks.length ? [] : st.mods, runes: st.runes }, rng);
-  // ルーンを先に差したレア (ルーンの MOD の候補・＋の分のソケットも開ける) から
-  const pre = startWith(data, doc.base, doc.itemLevel, { rarity: "rare", mods: [], runes: st.runes, socketFor: [...marks, ...st.mods] }, rng);
+  // ルーンを先に差したレアから (ソケットは規格外の数のまま、ルーンの MOD の候補のルーンは付く時に入れ替わる)
+  const pre = startWith(data, doc.base, doc.itemLevel, { rarity: "rare", mods: [], runes: st.runes }, rng);
   if (pre.note) return pre;
   const from = pre.item;
   // 印の狙いは「その段以上」(10-24 オーナー「T2 を選んだら T2 以上」): 印の段から上の段 (T1 まで) を全部候補に渡す (アイテムレベルで付かない段はエンジンが外す)

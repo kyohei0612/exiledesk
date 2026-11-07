@@ -29,7 +29,8 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
       <template v-else-if="result && halted && halted.n === 1">{{ tr("1 人目が止まったので止めた (止まった箱を直して回し直す)", "Run 1 got stuck, stopped (fix the box and run again)") }}</template>
       <template v-else-if="result && halted">{{ tr(`${halted.n} 人目で止まったので止めた (止まった箱を直して回し直す)`, `Stopped at run ${halted.n}: a run got stuck (fix the box and run again)`) }}</template>
       <template v-else-if="result && test">{{ driveSum(result.n, result.finished) }}</template>
-      <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}</template>
+      <!-- 止まった人・失敗した人も数で並べる (止まりで回すのをやめない、S-205 ③) -->
+      <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}{{ result.stuck ? tr(` · 止まった ${result.stuck} 人`, ` · ${result.stuck} stuck`) : "" }}{{ result.failed ? tr(` · 失敗 ${result.failed} 人`, ` · ${result.failed} failed`) : "" }}</template>
       <!-- 回す前は「—」を並べず言葉で (壊れて見えた、11-03 オーナー「A でおｋ」、S-70b) -->
       <template v-else>{{ tr(`${RUN_N} 人: まだ回していない`, `${RUN_N} runs: not run yet`) }}</template>
     </span>

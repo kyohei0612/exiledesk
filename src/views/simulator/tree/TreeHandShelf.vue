@@ -58,7 +58,7 @@ const item = computed(() => sample.value?.item ?? null);
  * (10-27 オーナー「削減やらエッセンスやら、エミュだと消す候補の MOD の色を変えるよね。それをシミュにも同じのを導入しよう」)。打てない時は出さない。
  * 木の箱のカードには出さない (10-27 に箱へも出す書き換えをオーナーが止めた)
  */
-const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
+const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value && !runePick.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it, props.boxId) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return null; const c = cardOf(it); return removeTags(c, boxTagsOf(s.data.value, t.doc.value, props.boxId, c)); };
@@ -164,7 +164,16 @@ const boneVeil = computed(() => !!held.value && isBone(held.value));
 /** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b) */
 const pagedAims = computed(() => ((boneVeil.value && veilOn.value) || held.value === "reveal" ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : aimChoices.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
-function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); } // 反響は外す時だけ外す (付けるのは任意の ☑)
+function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) { boneFree.value = false; omens.value = om.filter((o) => o !== ECHO); } } // 反響は外す時だけ外す (付けるのは任意の ☑)
+/** 骨の 3 択 (S-32、11-07 オーナー「発現、狙い無し、未発現だね」): 発現 = veil pick + ☑、狙い無し = veil pick + 狙い無し (出た MOD は外れ)、未発現 = veil keep */
+const boneFree = ref(!!props.current && isBone(props.current.currency) && props.current.veil === "pick" && !!props.current.free);
+const boneMode = computed((): "reveal" | "free" | "keep" => (!veilOn.value ? "keep" : boneFree.value ? "free" : "reveal"));
+function setBoneMode(m: "reveal" | "free" | "keep"): void {
+  touched = true;
+  if (m === "keep") { setVeil(false); return; }
+  if (m === "free") { veilOn.value = true; boneFree.value = true; checked.value = []; return; }
+  boneFree.value = false;
+}
 const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
 const revealable = computed(() => !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
 const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
@@ -216,12 +225,13 @@ const noModTitle = (): string => tr("この手は MOD を付けない・消さ�
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = computed(() => !divOn.value && (canFree.value || (isInfinite.value && aimChoices.value.length > 0)));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
-const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length && !(boneVeil.value && veilOn.value)); // 発現させると狙い無しは同時にオンにしない (10-28 オーナー)
+const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length && !(boneVeil.value && boneMode.value === "reveal")); // 骨の発現は狙い無しにしない (10-28 オーナー)。骨の狙い無し・未発現は狙い無しの手
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
 function toggleFree(e: Event): void { const vWas = veilOn.value, om = [...omens.value]; touched = true; checked.value = []; if (boneVeil.value && vWas) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } (e.target as HTMLInputElement).checked = true; } // 骨: 狙い無し = 未発現のまま次へ
 function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey); touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
+  if (boneVeil.value && !cur.includes(k)) boneFree.value = false; // 骨で ☑ = 発現 (狙い無しから移る)
   const vWas = veilOn.value, om = [...omens.value]; if (boneVeil.value && !vWas && !cur.includes(k)) { veilOn.value = true; } else if (boneVeil.value && vWas && !checked.value.length) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } // 骨で ☑ = 発現させる、最後の ☑ を外したら未発現のまま (10-28 オーナー)
  
 }
@@ -234,23 +244,30 @@ watch(held, (k, old) => {
 /** 残したい MOD (消去 S-27 と の消える手 S-27d。use-hand-keep) */
 const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf });
 const keepAsk = k.ask;
+/** 残したい MOD の欄を出すか = 聞く時と、候補 1 つの消える手で消えない狙いを ☑ 固定で見せる時 (S-27f。打ち方の keep は聞く時だけ) */
+const keepShow = computed(() => keepAsk.value || k.fixedOnly.value);
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
-const addLabels = computed((): string[] => (keepAsk.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
+const addLabels = computed((): string[] => (keepShow.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
 /** エッセンスの「ブロックに使う」☑ (S-33b)。付く MOD が完成形の狙いの手には出さない */
 const blockOn = ref(!!props.current?.block);
 const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
 function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
 watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 /**
- * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (置き換え、エンジンの rune:名前@n)、
- * 本体 (と空き) = 規格外でソケットを足して嵌める。足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
+ * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (入れ替え、エンジンの rune:名前@n)、
+ * 本体 (と空き) = 空きへ。木でソケットを足す手は無い (11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
+ * 全部埋まっている時は押したソケットと入れ替えるだけで、本体・「使う」では左から置き換えない (11-07 オーナー「同じ動作で刺す方にクリックしたらつけれるはず」)。
+ * 足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
  */
 const runeAt = ref<number | null>(null);
 /** 置き換えられないソケット (バウンド) を押した訳。その押しだけ断り、持った物はそのまま (猿 release-668 ①: 断った後に別のソケットも押せなくなっていた) */
 const socketWhy = ref<string | null>(null);
 watch(held, () => { runeAt.value = null; socketWhy.value = null; });
 const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
-const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${tr("ルーンのソケットを押すと置き換え · カードを押すとソケットを足して嵌める · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to add a socket for it · Right-click / Esc to drop")}` : undefined));
+/** ルーンを持っていてソケットが全部埋まっている (まだソケットを押していない) = 入れ替えるソケットを選ぶ番 */
+const runePick = computed(() => { const it = item.value ?? shelfItem.value, n = it?.sockets ?? 0; return runeHold.value && !runeAt.value && n > 0 && (it?.augments?.length ?? 0) >= n; });
+const RUNE_PICK = (): string => tr("ソケットが埋まっている", "All sockets are filled");
+const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${runePick.value ? tr("入れ替えるルーンのソケットを押す · 右クリック / Esc で手放す", "Click the socket whose rune to swap · Right-click / Esc to drop") : tr("ルーンのソケットを押すと入れ替え · カードを押すと空きへ · 右クリック / Esc で手放す", "Click a filled socket to swap its rune · Click the item to use an empty socket · Right-click / Esc to drop")}` : undefined));
 function onSocket(n: number): void {
   // ルーン以外を持っている時はアイテムを押したのと同じ (StageItemCard の onSocket の決まり。前は何もせず、ルーンの入ったソケットを押しても打てなかった、11-05 動画の木)
   if (!runeHold.value) { ok(); return; }
@@ -294,7 +311,8 @@ const handKey = (): string => JSON.stringify([hand.value, hitAims.value, preCat.
 const only = later(handKey, onlyNow);
 const shownOnly = computed(() => {
   const b = t.doc.value.boxes[props.boxId], h = hand.value;
-  if (!only.value || !b?.hand || !h || b.hand.currency !== h.currency || b.hand.omens.join() !== h.omens.join()) return only.value;
+  // 骨の 3 択 (発現 / 狙い無し / 未発現) を替えるのは別の手 (今ある箱を出さない、S-32)
+  if (!only.value || !b?.hand || !h || b.hand.currency !== h.currency || b.hand.omens.join() !== h.omens.join() || b.hand.veil !== h.veil || !!b.hand.free !== !!h.free) return only.value;
   const l = b.outs.map((o) => t.doc.value.boxes[o]).filter((c): c is NonNullable<typeof c> => !!c);
   return l.length > only.value.length ? l.map((c) => ({ out: c.out, aim: c.aim ?? null })) : only.value;
 });
@@ -307,7 +325,8 @@ const goneNow = computed((): number => {
   return sameHand(props.current, h) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
-const problem = computed((): string | null => (divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
+// 入れ替えるソケットを選ぶ番は、ソケットを押した時にそのソケットで断る (左のソケットの訳を出さない)
+const problem = computed((): string | null => (runePick.value ? null : divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
 const gone = later(handKey, goneNow);
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
@@ -331,6 +350,7 @@ function use(): void {
 }
 function ok(): void {
   simOp("hand-decide");
+  if (runePick.value) { socketWhy.value = RUNE_PICK(); return; }
   if (!hand.value || !kind.value || problem.value) return;
   if (goneNow.value) warnOpen.value = true; else use();
 }
@@ -377,8 +397,8 @@ function ok(): void {
           <input type="checkbox" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
-        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
-        <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
+        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
+        <label v-if="!spam && !isInfinite && !boneVeil" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
@@ -386,7 +406,7 @@ function ok(): void {
         <input type="checkbox" class="max-md:size-5" :checked="blockOn" @change="toggleBlock" />{{ tr("ブロックに使う (付いた MOD を外れにしない)", "Use as a block (don't count the added mod as a miss)") }}
       </label>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
-      <TreeKeepList v-if="keepAsk && !P27" :k="k" :adds="addLabels" />
+      <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
       <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
@@ -420,7 +440,7 @@ function ok(): void {
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
         <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ current ? tr("使う (狙いを選び直す) ›", "Use (pick targets again) ›") : tr("使う (狙いを選ぶ) ›", "Use (pick targets) ›") }}</button>
       </div>
-      <div v-else-if="keepAsk && P27" class="flex gap-2">
+      <div v-else-if="keepShow && P27" class="flex gap-2">
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
         <button type="button" data-tree-hand-keep-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="keepStep = true">{{ tr("使う ›", "Use ›") }}</button>
       </div>
@@ -437,12 +457,12 @@ function ok(): void {
             <label v-for="a in pagedAims" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'">
               <input type="checkbox" class="size-5 shrink-0" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
             </label>
-            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
-            <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
+            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
+            <label v-if="!spam && !isInfinite && !boneVeil" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>
           </div>
-          <div v-if="keepAsk && !k.isRemove.value" class="mt-3 text-left"><h3 class="mb-1.5 text-[15px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h3><TreeKeepList big :k="k" /></div>
+          <div v-if="keepShow && !k.isRemove.value" class="mt-3 text-left"><h3 class="mb-1.5 text-[15px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h3><TreeKeepList big :k="k" /></div>
           <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
@@ -452,7 +472,7 @@ function ok(): void {
         </div>
       </div>
     <!-- スマホの消去の 2 ページ目「残したい MOD」(aimStep のページと同じ形。上に ☑ の並び、一番下に全部消えてよい。10-27 昼オーナー) -->
-      <div v-if="P27 && keepStep && held && keepAsk" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-sim-panel text-[14px]">
+      <div v-if="P27 && keepStep && held && keepShow" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-sim-panel text-[14px]">
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
           <p class="break-words text-[12px] text-sim-dim">{{ hand ? handLabel(hand) : handName(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>

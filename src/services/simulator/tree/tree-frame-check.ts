@@ -6,11 +6,21 @@
 import { mulberry32, type PatchData } from "../../craft-stage/engine";
 import { frameOfDoc } from "./tree-frame";
 import { handProblem, playHand } from "./tree-sample";
-import { qualityOk } from "./tree-unbounded";
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 
 export interface FrameIssue { boxId: string; kind: "frameMiss" | "cantUse" | "frameDone"; text: string }
+
+/**
+ * 箱の代表の品に打てない手の理由 (エンジンが断る手。打てるなら null)。お告げが効かないだけ (打てば進む) は精査と同じく打てる扱い。
+ * 開いた時の組み直しは保存の手を打てるか見ずに置き直すので、箱にも出す (S-107c、11-07 ブラック 54 の頼み 7: 手袋の木の左の道のプリズム)
+ */
+export function cantHandOf(data: PatchData, doc: TreeDoc, id: string): string | null {
+  const b = doc.boxes[id], f = b?.hand ? frameOfDoc(data, doc).frames.get(id) : undefined;
+  if (!b?.hand || !f || f.note) return null;
+  const why = handProblem(data, f.item, b.hand);
+  return why && !playHand(data, f.item, { ...b.hand, repeat: null }, mulberry32(1)).applied ? why : null;
+}
 
 const OUT_JA: Record<string, string> = { hit: "当たり", junk: "外れ", lost: "狙いが消えた", any: "打った後", junkGone: "外れが消えた" };
 const OUT_EN: Record<string, string> = { hit: "hit", junk: "miss", lost: "target lost", any: "after", junkGone: "miss removed" };
@@ -34,13 +44,8 @@ export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
       : tr("この箱へ来る形の一部で手が打てない (外れが狙い・エッセンスの系統を塞いでいるなど。回すとここで止まる)", "Some shapes reaching this box can't use the craft (a miss blocks the target's or essence's family; runs stop here)") });
   }
   for (const b of Object.values(doc.boxes)) {
-    const f = fr.frames.get(b.id);
-    if (!f || f.note) continue;
-    // お告げが効かないだけ (打てば進む) は精査と同じく止まりにしない
-    const why = b.hand ? handProblem(data, f.item, b.hand) : null;
-    if (why && b.hand && !playHand(data, f.item, { ...b.hand, repeat: null }, mulberry32(1)).applied) add({ boxId: b.id, kind: "cantUse", text: tr(`この箱の形では手が打てない: ${why}`, `The craft can't be used in this box's shape: ${why}`) });
-    // 代表のカタリストは 1 個 +1% (S-200 ③) なので、品質の値では比べず、品質の無い形で完成の条件に品質がある時だけ
-    if (b.done === "main" && !(f.item.quality ?? 0) && !(f.item.catalystQuality ?? 0) && !qualityOk(doc, f.item)) add({ boxId: b.id, kind: "frameDone", text: tr("この箱の形には品質が無く、完成の条件 (品質) に届かない", "This box's shape has no quality, so it can't meet the done condition (quality)") });
+    const why = cantHandOf(data, doc, b.id);
+    if (why) add({ boxId: b.id, kind: "cantUse", text: tr(`この箱の形では手が打てない: ${why}`, `The craft can't be used in this box's shape: ${why}`) });
   }
   return out;
 }

@@ -1,4 +1,14 @@
 {
+  "0.1.678": [
+    "Simulator: boxes with the same contents in the tree are now merged into one, and socketed Runes count as part of a box's contents",
+    "Simulator: Bone crafts now let you choose Reveal, No target, or Unrevealed",
+    "Simulator: holding a Rune and clicking a filled socket now swaps that socket's Rune",
+    "Simulator: crafts that can't be used on a box's item now show a red note on that box",
+    "Simulator: on phones, you can now close the final-item card in the detail view to see more of the tree",
+    "Simulator: the mod picker for Reveal now opens on regular mods",
+    "Simulator: fixed Run 100 and Final check sometimes stopping partway; runs now finish and show the count even if some get stuck",
+    "Simulator: fixed Omen of Whittling result boxes, short mod names in box titles, overlapping text on the Start box, default checks for mods to keep with Essences, and more"
+  ],
   "0.1.677": [
     "Emulator: removed the notice of added/removed mods that appeared in the bottom bar after each craft on phones (results stay visible in the mod list)"
   ],

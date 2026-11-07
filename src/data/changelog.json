@@ -1,5 +1,59 @@
 [
  {
+  "v": "0.1.678",
+  "date": "2026-11-07",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木で中身が同じ箱を 1 つにまとめ、刺さったルーンとソケットも箱の中身として見分けるようにしました",
+    "en": "Simulator: boxes with the same contents in the tree are now merged into one, and socketed Runes count as part of a box's contents"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 骨の手を「発現 / 狙い無し / 未発現」の 3 つから選べるようにしました",
+    "en": "Simulator: Bone crafts now let you choose Reveal, No target, or Unrevealed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ルーンを持ってはまったソケットを押すと、そのルーンと入れ替えるようにしました",
+    "en": "Simulator: holding a Rune and clicking a filled socket now swaps that socket's Rune"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 開いた木に残ったその品に打てない手を、箱に赤字で出すようにしました",
+    "en": "Simulator: crafts that can't be used on a box's item now show a red note on that box"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホの詳細で完成形のカードを閉じて、木を広く見られるようにしました",
+    "en": "Simulator: on phones, you can now close the final-item card in the detail view to see more of the tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 発現で選ぶ MOD の窓を一般の MOD から開くようにしました",
+    "en": "Simulator: the mod picker for Reveal now opens on regular mods"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 100 人回す・最終チェックが途中で止まることがあったのを直しました。止まった人がいても最後まで回して数を出します",
+    "en": "Simulator: fixed Run 100 and Final check sometimes stopping partway; runs now finish and show the count even if some get stuck"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減のお告げの結果の箱・箱の題の MOD の短い名前・スタートの箱の字の重なり・エッセンスの残したい MOD の既定のチェックなどを直しました",
+    "en": "Simulator: fixed Omen of Whittling result boxes, short mod names in box titles, overlapping text on the Start box, default checks for mods to keep with Essences, and more"
+   }
+  ]
+ },
+ {
   "v": "0.1.677",
   "date": "2026-11-07",
   "items": [
@@ -1005,66 +1059,6 @@
     "area": "",
     "text": "英語の画面: 「このアイテムで比べる」の題のベース名を英語に",
     "en": "English UI: the base name under “Comparing on” is now in English"
-   }
-  ]
- },
- {
-  "v": "0.1.638",
-  "date": "2026-10-28",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: アイテムの MOD を押すだけでフラクチャーできるように (右クリックでも)。シミュレーターの完成形のカードも同じです",
-    "en": "Emulator: click a mod on the item to fracture it (right-click still works). The same works on the simulator's final item card"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "画面の「段」をゲームと同じ「ティア」に",
-    "en": "Japanese UI: \"段\" is now \"ティア\" to match the game (English stays \"Tier\")"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: Ctrl+Shift+Z / Ctrl+Y で戻した手をやり直せるように",
-    "en": "Emulator: redo an undone step with Ctrl+Shift+Z / Ctrl+Y"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター (スマホ): カレンシーの説明は「説明 ▾」を押した時だけ出すように",
-    "en": "Emulator (phone): currency details now show only when you tap “Details ▾”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "次の手で狙う: MOD を選んでいない間はボタンを灰色に",
-    "en": "Target next move: the button stays greyed out until you check a mod"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「もう一度押すと…」のボタンは時間で戻らず、外を押すか Esc で戻るように",
-    "en": "“Click again to …” buttons no longer time out; click elsewhere or press Esc to cancel"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "戻るで前に見ていた位置へ戻るように",
-    "en": "Going back now returns you to where you were on the page"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベースの選び画面の兜・鎧・手袋・靴に「筋力・器用・知性」の札を足し、グラスピングメイルなど 3 属性のベースをタイルから選べるように",
-    "en": "Helmets, Body Armours, Gloves and Boots now have a Strength/Dexterity/Intelligence tab in the base picker, so Grasping Mail and other tri-attribute bases can be picked from the tiles"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "英語表示で「reduced」「less」の MOD の数字がマイナスで出ていたのを直しました",
-    "en": "Fixed mods with \"reduced\" or \"less\" showing a negative number in English (e.g. \"-24% reduced\")"
    }
   ]
  }

@@ -6,7 +6,7 @@
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { type Judge } from "./tree-judge";
 import { playHand } from "./tree-sample";
-import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { clearHand, MATCH_BACK, setBack, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { DIVINE_LT, isDivineAim } from "./tree-divine";
 
 const RESTART = "restart";
@@ -93,6 +93,50 @@ export function sameHandByContent(doc: TreeDoc, id: string, h: Hand, j: Judge): 
   if (p && sameHand(doc.boxes[p]?.hand, h) && j.fitsBox(id, p)) return p;
   const below = new Set(subtree(doc, id));
   return Object.values(doc.boxes).filter((t) => !below.has(t.id) && sameHand(t.hand, h) && j.fitsBox(id, t.id)).map((t) => t.id).sort(shallow(doc))[0] ?? null;
+}
+
+/**
+ * 同じ中身は木に 1 箱 (S-51d、S-51c を手を問わず): 手のある箱 id と中身の同じ手のある箱のうち、id より浅い (同じ段は先に作った) 箱 = 幹。
+ * 自分の下・打っても変わらない手の輪 (straightUp・idleLoop。ルーンの手の前後) は入れない。人の × (noAutoBack)・分かれ目・ヒネコラのハズレの箱は幹を探さない
+ */
+export function trunkOf(doc: TreeDoc, id: string, j: Judge): string | null {
+  const b = doc.boxes[id];
+  if (!b?.hand || b.out === "start" || b.split || b.noAutoBack || b.seen) return null;
+  const below = new Set(subtree(doc, id)), cmp = shallow(doc);
+  return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && !below.has(t.id) && cmp(t.id, id) < 0 && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
+}
+/** 箱 x の手と下を消して自動の ↩ to (同じ手なら選んだ手を handBack に持つ = S-51) */
+function foldInto(doc: TreeDoc, x: string, to: string): void {
+  const b = doc.boxes[x]!, h = b.hand!, same = sameHand(doc.boxes[to]?.hand, h);
+  clearHand(doc, x);
+  setBack(doc, x, to);
+  b.autoBack = true;
+  if (same) b.handBack = { ...h };
+}
+/**
+ * 木全体で同じ中身の手のある箱を幹へまとめる (S-51d、開いた時の組み直しの終わり): 浅い箱から見て、幹のある箱を foldInto。
+ * 1 つまとめるたびに判定を作り直す (下を消すと見本・中身が変わる)。まとめたら true
+ */
+export function foldToTrunks(doc: TreeDoc, judge: () => Judge): boolean {
+  let changed = false;
+  for (let n = 0; n < 64; n++) {
+    const j = judge(), cmp = shallow(doc);
+    const hit = Object.values(doc.boxes).map((b) => b.id).sort(cmp).map((id) => [id, trunkOf(doc, id, j)] as const).find((x) => !!x[1]);
+    if (!hit) return changed;
+    foldInto(doc, hit[0], hit[1]!);
+    changed = true;
+  }
+  return changed;
+}
+/** 手を決めた箱 id のまわりだけ (S-51d を手を決めた時に、S-51c と同じ所): id に幹があれば id を、無ければ id を幹にする深い箱をまとめる */
+export function foldAround(doc: TreeDoc, id: string, judge: () => Judge): void {
+  const tk = trunkOf(doc, id, judge());
+  if (tk) { foldInto(doc, id, tk); return; }
+  for (let n = 0; n < 64; n++) {
+    const j = judge(), x = Object.values(doc.boxes).find((b) => b.id !== id && trunkOf(doc, b.id, j) === id);
+    if (!x) return;
+    foldInto(doc, x.id, id);
+  }
 }
 
 /** 手を決めるたびに自動の ↩ を全部「箱どうし」で見直す (合わない物は外して未設定、S-50b)。人が付けた ↩ は触らない。外したら true */

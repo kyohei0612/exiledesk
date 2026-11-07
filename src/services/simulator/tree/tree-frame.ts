@@ -33,7 +33,8 @@ export interface FrameCant { box: string; from: string; why: "cant" | "noHit" }
 export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[]; cant: FrameCant[] }
 
 type Outcome = ReturnType<typeof boxOutcomeOf>;
-type Br = { item: StageItem; p: number };
+/** off = 札の鍵 (junkKey) の合わない結果を種類の合う箱へ寄せた枝 (代表には後に選ぶ) */
+type Br = { item: StageItem; p: number; off?: true };
 /** noHit = 当たるまでの手で当たりの枝が 1 つも無い (打ち続けても当たらない) */
 interface Split { to: Map<string, Br[]>; lost: Map<string, { p: number; oc: Outcome }>; noHit?: boolean }
 const missKey = (oc: Outcome): string => `${oc.out}${oc.hits.length ? `:${oc.hits.map((a) => a.modId).join("+")}` : ""}${oc.junkKey ? ` [${oc.junkKey}]` : ""}`;
@@ -94,7 +95,8 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   for (const { r, oc } of ocs) {
     const o = outBoxOf(doc, b, oc, r.item);
     if (!o) { const k = missKey(oc); lost.set(k, { p: (lost.get(k)?.p ?? 0) + r.p, oc }); continue; }
-    (to.get(o) ?? to.set(o, []).get(o)!).push(r);
+    const off = !!oc.junkKey && !!doc.boxes[o]?.junkKey && doc.boxes[o]!.junkKey !== oc.junkKey;
+    (to.get(o) ?? to.set(o, []).get(o)!).push(off ? { ...r, off } : r);
   }
   return noHit ? { to, lost, noHit } : { to, lost };
 }
@@ -195,7 +197,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
     const bestOf = (o: string, brs: Br[], from: Frame): Frame => {
       const c = doc.boxes[o]!, sum = brs.reduce((n, r) => n + r.p, 0);
       const pick = (r: Br): Frame => { const am = nextAimed(data, doc, from.aimed, o, r.item, from.item); return { item: r.item, aimed: am, key: frameKeyOf(contentOf(data, doc, r.item, am)), p: sum, note: null }; };
-      const sorted = [...brs].sort((x, y) => y.p - x.p), heavy = sorted.slice(0, LOOK);
+      // 札の鍵の合う枝を先に (削減は順位を見ずに枝を出すので (決め (a))、エンジンでは消えない狙いが消えた枝が「クリティカルが消えた」の箱の代表になった、11-07 猿の照らし b29)
+      const sorted = [...brs].sort((x, y) => Number(!!x.off) - Number(!!y.off) || y.p - x.p), heavy = sorted.slice(0, LOOK);
       const all = heavy.map(pick);
       // 重い順の LOOK に入らない枝も、木の族を塞ぐ MOD の組が違えば 1 つずつ当てる (外れの印 (g) の違う枝、代表には選ばない)
       const seenSig = new Set(heavy.map((r) => famSig(r.item))), marks = new Set(all.map((fr) => blockMarkOf(data, doc, fr.item, fr.aimed))), marked: Frame[] = [];
