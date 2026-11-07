@@ -62,7 +62,7 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
   if (isDivineAim(h)) return divineOutcome(after, h!);
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
-  const am = withoutUnaimed(data, doc, before, aimed, noStones(doc, h, keptAimedOf(doc, h, aimed)));
+  const am = withoutUnaimed(data, doc, before, aimed, noStones(data, doc, h, keptAimedOf(doc, h, aimed)));
   const aims = countedAims(data, doc, h, before, aims0, aimed);
   const raw = boxOutcomeRaw(data, doc, h, own, before, after, aims);
   // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
@@ -79,9 +79,9 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   return sw ? { ...sc, junkKey: joinKeys(sc.junkKey, sw) } : sc;
 }
 /** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33)。残したければ人が ☑ */
-function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
+function noStones(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
   if (!am || h?.keep) return am;
-  const st = new Set(stoneAims(doc).map((a) => a.modId));
+  const st = new Set(stoneAims(data, doc).map((a) => a.modId));
   return st.size ? new Set([...am].filter((id) => !st.has(id))) : am;
 }
 /** 外れ・打った後・狙いが消えたに次の MOD 群の鍵を足す (S-65b の総則)。残したい MOD の消去は中身の鍵 (S-28e)、印の無い乱数のフラクチャーは S-41 の鍵のまま、当たりは ☑ の札 */
@@ -114,7 +114,7 @@ const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed:
  * 付いていて ☑ の無い完成形の MOD は入れない = 外れ (tree-miss の isMissMod の相手にこの札を渡すのと同じ、S-22・S-82)。aimed が無ければ木の狙いのまま
  */
 function countedAims(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Aim[] {
-  const am = noStones(doc, h, keptAimedOf(doc, h, aimed));
+  const am = noStones(data, doc, h, keptAimedOf(doc, h, aimed));
   if (!am) return [...aims0];
   const counted = keptPlus(data, doc, h, mineOf(data, before, aims0, am));
   return counted.filter((a) => !unaimedOn(data, doc, before, aimed, a.modId));
@@ -200,7 +200,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     return [...extra.filter((a) => got.includes(a)).map((a) => ({ out: "hit" as OutKind, aim: a })), ...(got.includes(null) ? [{ out: "junk" as OutKind, aim: null }] : [])];
   }
   // 消去もほかの手と同じ狙いの並び (残したい MOD は keptAimedOf の印で見る、S-27d。11-04 に消去だけの見方は撤回)
-  const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => sameAim(data, x, a)))];
+  const tree = aimsOf(data, doc), aims = [...tree, ...extra.filter((a) => !tree.some((x) => sameAim(data, x, a)))];
   const found = new Map<string, BoxOut>();
   // 見本の中身だけで見る (持って着きうる狙いを足した形は作らない、狙いが消えうるのは見本に付いている狙い。大本 1)
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */

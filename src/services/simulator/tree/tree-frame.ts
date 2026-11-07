@@ -104,7 +104,7 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   if (b.hand!.repeat) { const hit = ocs.filter((x) => x.oc.out === "hit"); if (hit.length) { const t = hit.reduce((n, x) => n + x.r.p, 0); ocs = hit.map((x) => ({ ...x, r: { ...x.r, p: x.r.p / t } })); } else noHit = ocs.length > 0; }
   const to = new Map<string, Br[]>(), lost: Split["lost"] = new Map();
   for (const { r, oc } of ocs) {
-    const o = outBoxOf(doc, b, oc, r.item);
+    const o = outBoxOf(data, doc, b, oc, r.item);
     if (!o) { const k = missKey(oc); lost.set(k, { p: (lost.get(k)?.p ?? 0) + r.p, oc }); continue; }
     const off = !!oc.junkKey && !!doc.boxes[o]?.junkKey && doc.boxes[o]!.junkKey !== oc.junkKey;
     (to.get(o) ?? to.set(o, []).get(o)!).push(off ? { ...r, off } : r);
@@ -181,7 +181,7 @@ const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem }>(
 
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
-    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
+    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(data, doc), part = docPartOf(data, doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
     // 保存の例のアイテム (v2、S-200 ⑦)。同じ配置の枝があればその代わりに代表にする。例の無い箱・古いレシピは種 1 つのまま (決め (c))
     const keys = doc.examples ? pathKeysOf(doc) : null;

@@ -27,10 +27,10 @@ import { inWay, isBreachAim } from "./tree-way-mods";
  * エッセンス・合金で付いた行は「外れ MOD」にまとめず MOD の名前で出す: 完成形の狙い・途中で消える MOD・ブリーチはふつうの色、ほかは外れ MOD と同じ赤。それ以外の札はそのまま
  */
 export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
-  const out = new Map(tags), goalMiss = aimedMiss(d, doc), mid = new Set(midAims(doc).map((a) => a.modId));
+  const out = new Map(tags), goalMiss = aimedMiss(d, doc), mid = new Set(midAims(d, doc).map((a) => a.modId));
   for (const m of [...it.prefixes, ...it.suffixes]) {
     // 完成形に無いエッセンスの MOD は札が無い (S-33c) ので、ここでは外れと同じ赤の名前に拾う
-    const tag = out.get(m.modId) ?? (mid.has(m.modId) ? missTag(doc, m, modText(m), { evenChosen: true }) ?? undefined : undefined);
+    const tag = out.get(m.modId) ?? (mid.has(m.modId) ? missTag(d, doc, m, modText(m), { evenChosen: true }) ?? undefined : undefined);
     if (!tag?.replace || tag.tone !== "bad" || m.fractured || !(m.crafted || craftedKindOf(d, m))) continue;
     if (!isMissMod(m, goalMiss) || inWay(doc, m.modId) || isBreachAim(d, { modId: m.modId, tier: 1 })) out.delete(m.modId);
     else out.set(m.modId, { ...tag, text: modText(m) });
@@ -42,10 +42,10 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
  * 判定では外れでも札を付けず、MOD の文のまま (null。S-33c・S-82、11-07 オーナー「エッセンスはとりあいずハズレＭＯＤとして表示はしないでおこうか。
  * つけたエッセンスはそのままカードに表示させよう。」。前は「外れ MOD (エッセンス)」)。evenChosen = それでも札にする (固定された外れ・道の画面の赤い名前)
  */
-export const missTag = (doc: TreeDoc, m: StageMod, title: string, opts: { evenChosen?: boolean } = {}): RowTag | null =>
-  !opts.evenChosen && midAims(doc).some((a) => a.modId === m.modId) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
+export const missTag = (d: PatchData, doc: TreeDoc, m: StageMod, title: string, opts: { evenChosen?: boolean } = {}): RowTag | null =>
+  !opts.evenChosen && midAims(d, doc).some((a) => a.modId === m.modId) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
 /** 行に外れ MOD の札を置く (完成形に無いエッセンスの MOD は置かない = 文のまま) */
-export const putMiss = (out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: { evenChosen?: boolean } = {}): void => { const t = missTag(doc, m, title, opts); if (t) out.set(m.modId, t); };
+export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: { evenChosen?: boolean } = {}): void => { const t = missTag(d, doc, m, title, opts); if (t) out.set(m.modId, t); };
 /** 選んで付けた MOD (エッセンス・合金・発現済みの冒涜)。消去を持った時も手の窓のカードは箱のカードのまま (S-82) */
 export const chosenMod = (d: PatchData, m: StageMod): boolean => !m.unrevealed && !!(m.desecrated || m.crafted || craftedKindOf(d, m));
 /** 箱 boxId の見本 it の札 (箱のカードと同じ呼び方。手の窓のカードで同じ物) */
@@ -76,7 +76,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
   // 候補の外の印 (S-27e) は箱の見本の ☑ で見る (下の外れの箱の見方)
   if (chainBox && !aimedOfCard(d, doc, box!.id!, it)) {
-    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) putMiss(out, doc, m, tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`));
+    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) putMiss(d, out, doc, m, tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`));
     return out;
   }
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
@@ -99,19 +99,19 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const hitAm = box?.id && box.out === "hit" ? aimedOfCard(d, doc, markId ?? box.id, it) : null;
   const hitHeld = hitAm ? (doc.memoAims ?? []).filter((g) => hitAm.has(g.modId)) : null;
   // 以降の箱でも見本に付いている置き石は狙い (S-33)。ルーンの手の後の箱も ☑ はその箱の見本で引く (markId。親の id で引くと遺産のルーンの後のソケット効果が「外れ MOD」と出た、11-06 ワンド b12)
-  const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, markId ?? box.id!, it)?.has(a.modId)) : [];
+  const placed = box?.id ? placedAims(d, doc).filter((a) => aimedOfCard(d, doc, markId ?? box.id!, it)?.has(a.modId)) : [];
   // 外れ MOD の札は外れの式 1 本 (tree-miss の isMissMod): ここで決めた当たりに数える札 (☑ の狙い・置き石・この箱の当たりの札) に当たらない MOD
-  const miss = missAims(d, [...(missBox ? held : hitHeld ?? [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  const miss = missAims(d, [...(missBox ? held : hitHeld ?? [...aimsOf(d, doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalMiss = aimedMiss(d, doc);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま 
     // 固定された外れ (✦ の外れ) も「外れ MOD」だけ (値を出さない、S-82 仮。見本ごとに違う MOD が箱の名前に見えた、10-28 モンキー 7。スイッチ boxShape)
     // 比べるのは完成の狙い全部 (✦ で始まった狙いは道の当たりに無いので、道の狙いで見るとスペル +3 ✦ まで外れになった、10-28 見張り)
-    if (m.fractured && isMissMod(m, goalMiss)) { putMiss(out, doc, m, tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`), { evenChosen: true }); continue; }
+    if (m.fractured && isMissMod(m, goalMiss)) { putMiss(d, out, doc, m, tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`), { evenChosen: true }); continue; }
     if (m.fractured || m.unrevealed) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
-    else if (isMissMod(m, miss)) putMiss(out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`));
+    else if (isMissMod(m, miss)) putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`));
   }
   return out;
 }

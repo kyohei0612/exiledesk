@@ -223,7 +223,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } });
     }
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, aimed);
-    const next = oc ? outBoxOf(doc, b, oc, r.item) : null;
+    const next = oc ? outBoxOf(data, doc, b, oc, r.item) : null;
     // 予見で当たり以外が見えた人: 手を使わず、アイテム・☑・費用は持つ前のまま、まとめたハズレ箱の手へ (S-39)
     if (next && doc.boxes[next]?.seen && !b.hand.repeat) { const to = seenTo(doc, next); if (to !== next) visit(next, true); at = to; continue; }
     for (const [k, n] of spent) use(k, n);
@@ -389,7 +389,7 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
   const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand };
-  const aims = opts.aims ?? aimsOf(doc);
+  const aims = opts.aims ?? aimsOf(data, doc);
   const j = judgeMemo(data, doc);
   const rng = mulberry32(opts.seed);
   const people: Person[] = [];

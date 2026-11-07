@@ -142,11 +142,11 @@ export function joinSameHit(doc: TreeDoc, to: string, picks: readonly string[], 
 
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
 /** after = 打った後のアイテム (無限のエッセンスで当たりの箱が 2 つ以上の時、付いた MOD の箱を選ぶ。無ければ 1 つ目) */
-export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
+export function outBoxOf(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
   // 行き先の箱が無い結果を外れなどへ自動で寄せない (オーナー 10-26「ツリーは全ての結果を表示してそれをどう処理するかは当人が決めれるように」)。精査の unexpected で知らせ、箱を足す・まとめるは人が決める
-  return outBoxOfRaw(doc, b, oc, after);
+  return outBoxOfRaw(data, doc, b, oc, after);
 }
-function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
+function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
   // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)。
   // 鍵の合う箱が無ければ (前の版の 1 箱の外れ、見本で出なかった側) 今までどおり種類の合う箱
   // 狙いが消えたの箱も側の鍵を持つので (S-71g)、外れの人を同じ鍵の狙いが消えたの箱へ入れない
@@ -163,7 +163,7 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; 
     // 前は狙い無しの手の打った後に狙い持ちも入り、次のカオスに「狙いが消えた」が並んだ)。エッセンスの打った後 (付く MOD が狙いに無い) は hits が空なのでそのまま
     if (c.out === "any" || c.out === "pass") return oc.out !== "hit" || !oc.hits.length;
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
-    if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(doc, b, c, after);
+    if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(data, doc, b, c, after);
     // 「どれか」の当たりの箱は、その一覧のどれかが付いたら (anyOf、10-26)
     return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier));
   });

@@ -78,7 +78,7 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
     // 残したい外れも札のまま。☑ の無い候補は選んで付けた MOD (エッセンス・冒涜・合金) も狙いも外れ MOD (11-07 オーナー「残したいMODで選択したらその他をハズレMOD扱いだろ」。
     // 前は選んで付けた MOD だけ名前のまま残した)。候補の外 (お告げで触らない側) は替えない。完成形に無いエッセンスの MOD は外れでも文のまま (S-33c)
     if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad" || !isMissMod(m, goals)) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
-    else putMiss(out, t.doc.value, m, tr(`消えてよい MOD: ${modText(m)}`, `May be removed: ${modText(m)}`));
+    else putMiss(s.data.value!, out, t.doc.value, m, tr(`消えてよい MOD: ${modText(m)}`, `May be removed: ${modText(m)}`));
   }
   return out;
 }

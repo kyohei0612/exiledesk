@@ -21,7 +21,7 @@ export const missAims = (data: PatchData, aims: readonly Aim[]): MissAims =>
 export function aimedMiss(data: PatchData, doc: TreeDoc, aimed?: ReadonlySet<string> | null, o: { stones?: boolean } = {}): MissAims {
   const goals = doc.memoAims ?? [];
   if (!aimed) return missAims(data, goals);
-  return missAims(data, [...goals, ...(o.stones === false ? [] : placedAims(doc))].filter((a) => aimed.has(a.modId)));
+  return missAims(data, [...goals, ...(o.stones === false ? [] : placedAims(data, doc))].filter((a) => aimed.has(a.modId)));
 }
 /** 外れ = 当たりに数える札のどれにも当たらない MOD */
 export const isMissMod = (m: StageMod, x: MissAims): boolean => !x.targets.some((t) => aimHits(m, t, x.opts));

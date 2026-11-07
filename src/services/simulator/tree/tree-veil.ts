@@ -10,6 +10,7 @@ import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
 import { docHeld } from "./tree-sample";
+import { sameAimMod } from "./tree-hand-core";
 
 /** 後から打つ発現の手のキー (エンジンの発現は reveal:N。どれを選ぶかは tree-sample の revealBy が ☑ で決める) */
 export const REVEAL_KEY = "reveal";
@@ -42,15 +43,15 @@ const onceHeld = (m: WeakMap<TreeDoc, [number, Aim[]]>, doc: TreeDoc, make: () =
   m.set(doc, [n, v]);
   return v;
 };
-/** 木の発現で選ぶ手の当たりの札のうち、完成形に無い物 = 置き石 (S-33。エッセンスの「ブロックに使う」S-33b は 11-07 に撤回 = 置き石は発現だけ) */
-export const placedAims = (doc: TreeDoc): Aim[] => onceHeld(PLACED, doc, () => placedRaw(doc));
-function placedRaw(doc: TreeDoc): Aim[] {
+/** 木の発現で選ぶ手の当たりの札のうち、完成形に無い物 = 置き石 (S-33。エッセンスの「ブロックに使う」S-33b は 11-07 に撤回 = 置き石は発現だけ)。完成形にあるかはエンジンの sameAimTarget */
+export const placedAims = (data: PatchData, doc: TreeDoc): Aim[] => onceHeld(PLACED, doc, () => placedRaw(data, doc));
+function placedRaw(data: PatchData, doc: TreeDoc): Aim[] {
   const goals = doc.memoAims ?? [];
-  const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && veilPick(doc.boxes[b.parent]?.hand) && !goals.some((g) => g.modId === b.aim!.modId) ? [b.aim] : []));
+  const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && veilPick(doc.boxes[b.parent]?.hand) && !goals.some((g) => sameAimMod(data, g, b.aim!)) ? [b.aim] : []));
   return plain;
 }
 /** 置き石 = 発現で選んだ MOD。残したい MOD の既定に入らず、消えても「狙いが消えた」にしない (S-33) */
-export const stoneAims = (doc: TreeDoc): Aim[] => placedAims(doc);
+export const stoneAims = (data: PatchData, doc: TreeDoc): Aim[] => placedAims(data, doc);
 /** 手で付ける MOD が 1 つに決まるエッセンスの MOD (無限のエッセンスは決まらないので無し) */
 const ESSENCE_MOD = new Map<string, string | null>();
 export const essenceModOf = (key: string | undefined): string | null => { const had = ESSENCE_MOD.get(key ?? ""); if (had !== undefined) return had; const r = essenceModRaw(key); ESSENCE_MOD.set(key ?? "", r); return r; };
@@ -61,10 +62,10 @@ const essenceModRaw = (key: string | undefined): string | null => { const k = ke
  * ハズレMOD エッセンスって表示でいいよ」。前の「途中の狙い」= 道の上で狙いと同じ印は撤回)。使うのはカードの行を「外れ MOD」にせず MOD の文のまま出す所だけ
  * (S-82、11-07 オーナー「つけたエッセンスはそのままカードに表示させよう」。前の札「外れ MOD (エッセンス)」と完成形のカードの「途中で消える」行 S-30d はやめた)
  */
-export const midAims = (doc: TreeDoc): Aim[] => onceHeld(MID, doc, () => midRaw(doc));
-function midRaw(doc: TreeDoc): Aim[] {
+export const midAims = (data: PatchData, doc: TreeDoc): Aim[] => onceHeld(MID, doc, () => midRaw(data, doc));
+function midRaw(data: PatchData, doc: TreeDoc): Aim[] {
   const goals = doc.memoAims ?? [], out = new Map<string, Aim>();
-  for (const b of Object.values(doc.boxes)) { const k = essenceModOf(b.hand?.currency); if (k && !goals.some((g) => g.modId === k)) out.set(k, { modId: k, tier: 99 }); }
+  for (const b of Object.values(doc.boxes)) { const k = essenceModOf(b.hand?.currency); const a: Aim = { modId: k ?? "", tier: 99 }; if (k && !goals.some((g) => sameAimMod(data, g, a))) out.set(k, a); }
   return [...out.values()];
 }
 

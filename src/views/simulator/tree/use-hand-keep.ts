@@ -41,7 +41,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const defaults = (): string[] => {
     const d = s.data.value;
     if (!d || isRemove.value) return [];
-    return keepDefaultOf(choices.value, aimedNow(d, o.item.value), stoneAims(t.doc.value)).map(aimKey);
+    return keepDefaultOf(choices.value, aimedNow(d, o.item.value), stoneAims(d, t.doc.value)).map(aimKey);
   };
   /** 消去でない消える手で、候補が 1 つ (確定で消える = 聞かない) か (S-27f) */
   const lone = computed(() => !isRemove.value && !ask.value && choices.value.length === 1);

@@ -21,10 +21,10 @@ import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
 /** 前の保存の印 block (エッセンスの「ブロックに使う」☑、S-33b 撤回) を外し、当たりの札は木の狙いの物だけにする (完成形に無いエッセンスの MOD は外れ = S-33c) */
-function dropBlock(d: TreeDoc, h: Hand, aims: readonly Aim[]): { hand: Hand; aims: Aim[] } {
+function dropBlock(data: PatchData, d: TreeDoc, h: Hand, aims: readonly Aim[]): { hand: Hand; aims: Aim[] } {
   if (!("block" in h)) return { hand: h, aims: [...aims] };
   const { block: _old, ...rest } = h as Hand & { block?: unknown };
-  const goals = [...(d.memoAims ?? []), ...aimsOf(d)];
+  const goals = [...(d.memoAims ?? []), ...aimsOf(data, d)];
   return { hand: rest, aims: aims.filter((a) => goals.some((g) => g.modId === a.modId)) };
 }
 
@@ -81,7 +81,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
       // 前の版の骨の手 (veil 無し) は ☑ があれば発現させる・無ければ未発現のまま (S-59、tree-veil の oldVeil)
       // 狙い無し・ルーン・未発現のままの手は保存の当たりの札を渡さない (当たりの箱を出さない、S-23・S-31e)
       // 前の保存のエッセンスの「ブロックに使う」☑ (S-33b、11-07 撤回) は読んで捨てる: 付いた MOD は外れ = 完成形に無い MOD の当たりの箱は作らない (打った後の箱)
-      if (p.hand) { const { hand: h0, aims: a0 } = dropBlock(d, p.hand, p.aims ?? []), h = oldVeil(h0, a0), aims = noHitHand(h) ? [] : alignEssenceAims(data, d, a0), pre = p.pre ?? null; applyPick(d, id, h, kindOf(h), aims, pre, onlyOf(data, d, id, h, pre, aims)); }
+      if (p.hand) { const { hand: h0, aims: a0 } = dropBlock(data, d, p.hand, p.aims ?? []), h = oldVeil(h0, a0), aims = noHitHand(h) ? [] : alignEssenceAims(data, d, a0), pre = p.pre ?? null; applyPick(d, id, h, kindOf(h), aims, pre, onlyOf(data, d, id, h, pre, aims)); }
       const b = d.boxes[id];
       if (b) {
         if ((p.done || p.noAutoBack) && b.autoBack) { b.back = null; delete b.autoBack; delete b.merged; delete b.handBack; }

@@ -24,13 +24,13 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
 
 /** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
-const contentAims = (doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(doc)];
+const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc)];
 /** アイテムに付いている完成形の狙い (段は完成形以上) と置き石の MOD */
-const goalsOn = (data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
+const goalsOn = (data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
 /** 始まりの ☑ (始まりの MOD の完成形の狙いと ✦ の印) */
 export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): ReadonlySet<string> {
   const on = goalsOn(data, doc, it);
-  return new Set([...startGoalAims(doc), ...fractureMarks(doc)].map((a) => a.modId).filter((id) => on.has(id)));
+  return new Set([...startGoalAims(data, doc), ...fractureMarks(doc)].map((a) => a.modId).filter((id) => on.has(id)));
 }
 /** 打つ前の印のうち、この手で消えない MOD の物 (S-27e、候補の外は自動で残したい MOD。お告げの有無では分けない) */
 export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined): string[] {
@@ -38,7 +38,7 @@ export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | und
   const gone = goneOf(data, before, h.currency, h.omens);
   if (!gone) return [];
   const mods = [...before.prefixes, ...before.suffixes].filter((m) => gone.has(m.modId)), o = aimOpts(data);
-  return [...prev].filter((id) => { const g = contentAims(doc).find((a) => a.modId === id), ts = g ? targetsOf(data, [g]) : null; return !mods.some((m) => m.modId === id || (ts && isAimMod(m, ts, o))); });
+  return [...prev].filter((id) => { const g = contentAims(data, doc).find((a) => a.modId === id), ts = g ? targetsOf(data, [g]) : null; return !mods.some((m) => m.modId === id || (ts && isAimMod(m, ts, o))); });
 }
 /** 箱 boxId に着いた時の ☑ (prev = 着く前、item = 着いた時のアイテム、before = 打つ前のアイテム。打たずに着いた時は無し) */
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem, before?: StageItem | null): ReadonlySet<string> {
@@ -68,7 +68,7 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
 }
 /** 中身の鍵の部分 (keys = ☑ の狙いの札、miss = ☑ の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
 function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): { keys: Set<string>; miss: MissAims; body: string } {
-  const goals = contentAims(doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
+  const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
   const keys = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) keys.add(g.modId); }
   return { keys, miss, body: bodyOf(data, doc, it, miss) };
@@ -81,7 +81,7 @@ export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   const f = frameOfDoc(data, doc).frames.get(to);
   if (!f || f.note) return [];
   const a = contentParts(data, doc, it, aimed), b = contentParts(data, doc, f.item, f.aimed), opts = aimOpts(data), out: string[] = [];
-  const aimText = (x: StageItem, id: string): string => { const g = contentAims(doc).find((y) => y.modId === id), m = g && [...x.prefixes, ...x.suffixes].find((y) => isAimMod(y, targetsOf(data, [g]), opts)); return m ? modText(m) : id; };
+  const aimText = (x: StageItem, id: string): string => { const g = contentAims(data, doc).find((y) => y.modId === id), m = g && [...x.prefixes, ...x.suffixes].find((y) => isAimMod(y, targetsOf(data, [g]), opts)); return m ? modText(m) : id; };
   for (const id of [...a.keys].sort()) if (!b.keys.has(id)) out.push(tr(`狙い「${aimText(it, id)}」が付いている`, `has the target "${aimText(it, id)}"`));
   for (const id of [...b.keys].sort()) if (!a.keys.has(id)) out.push(tr(`狙い「${aimText(f.item, id)}」が無い`, `lacks the target "${aimText(f.item, id)}"`));
   // 体 (bodyOf の `n.c.x.u|n.c.x.u|✦…|レアリティ`): 外れの数 (種類は見ない = junkOne)・未発現、光のお告げ・骨 / エッセンスの手の箱へは冒涜 / クラフトの外れの数も (keyFor と同じ)
@@ -139,7 +139,7 @@ export function blockMarkOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   if (!memo) MARKS.set(it, (memo = new Map()));
   const mk = [...fams].sort().join(",") + "|" + [...aimed].sort().join(","), had = memo.get(mk);
   if (had !== undefined) return had;
-  const miss = missAims(data, contentAims(doc).filter((a) => aimed.has(a.modId))), out = new Set<string>();
+  const miss = missAims(data, contentAims(data, doc).filter((a) => aimed.has(a.modId))), out = new Set<string>();
   for (const m of near) if (isMissMod(m, miss)) for (const f of famsOf(m)) out.add(f);
   const r = [...out].sort().join("+");
   memo.set(mk, r);

@@ -59,7 +59,7 @@ export function afterQualityOf(doc: TreeDoc, boxId: string): boolean {
  * メモも見るのは 10-22 13 通り組んだ #7 (白紙ではいつもライフになった)
  */
 export function autoCatOf(data: PatchData, doc: TreeDoc, item: StageItem): string | null {
-  for (const a of [...aimsOf(doc), ...(doc.memoAims ?? [])].filter((x) => !aimHeldOn(data, item, x, { sameText: true }))) {
+  for (const a of [...aimsOf(data, doc), ...(doc.memoAims ?? [])].filter((x) => !aimHeldOn(data, item, x, { sameText: true }))) {
     const c = catalystForMod(data, item, a.modId, TREE_CATALYSTS);
     if (c) return c;
   }
@@ -137,7 +137,7 @@ export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] 
  * (10-29 合格レシピの武器 pass-weapon の b14、乱数のフラクチャーで物理の追加)。一般の MOD は段を上げて狙う事があるのでそのまま
  */
 export function alignEssenceAims(data: PatchData, doc: TreeDoc, aims: readonly Aim[]): Aim[] {
-  const tree = aimsOf(doc);
+  const tree = aimsOf(data, doc);
   return aims.map((a) => (craftedKindOf(data, a) ? tree.find((x) => x.modId === a.modId) ?? a : a));
 }
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
@@ -154,13 +154,13 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     // 出うる MOD ごとに当たりの箱 (前は 1 つ目だけで、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)。
     // 当たりにするのは完成の狙いの MOD だけ。狙いで無い MOD が付くだけのエッセンス (冒涜の外れを無限のエッセンスで置き換える等) は当たりを作らず、
     // applyPick が結果を「付いた」の箱 1 つにする (10-25 オーナー「ここに関してはあたりなんてもんは存在しない」、前は筋力・器用さ・知性の当たり 3 つ + 狙いが消えたで 4 つ出た)
-    const goals = [...(doc.memoAims ?? []), ...aimsOf(doc)];
+    const goals = [...(doc.memoAims ?? []), ...aimsOf(data, doc)];
     return out.filter((a) => goals.some((g) => g.modId === a.modId));
   }
   // 液化した感情 = 付く MOD は感情ごとに決まっている (版は空きのある側から等しく、E-73)。エッセンスと同じくエンジンの結果で新しく付いた完成の狙いを札に
   // (11-03 シミュ部長 68: 確率の表 reachableAims は感情の MOD を知らず、軽蔑・獰猛の ☑ が空で当たりの箱が作れなかった)
   if (isEmotion(h.currency)) {
-    const goals = [...(doc.memoAims ?? []), ...aimsOf(doc)];
+    const goals = [...(doc.memoAims ?? []), ...aimsOf(data, doc)];
     return essenceAimsOf(data, item, h).filter((a) => goals.some((g) => g.modId === a.modId));
   }
   // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
@@ -179,7 +179,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
-  const pool = [...aimsOf(doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i);
+  const pool = [...aimsOf(data, doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i);
   const open = pool.filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)。どの見本でも行き先が無ければ全部。
   // 当たるまで (どれでも) も同じ絞り: 前は付いていない狙い全部で、カオスで付かない狙い (冒涜の MOD・アイテムレベルの足りない段) だけが残ると

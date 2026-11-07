@@ -121,7 +121,7 @@ const CHECK_SPAM_CAP = 1000;
  */
 function capSpam(data: PatchData, doc: TreeDoc): { doc: TreeDoc; capped: Set<string>; dead: Set<string> } {
   const capped = new Set<string>(), dead = new Set<string>();
-  const boxes = { ...doc.boxes }, all = aimsOf(doc);
+  const boxes = { ...doc.boxes }, all = aimsOf(data, doc);
   for (const b of Object.values(doc.boxes)) {
     const r = b.hand?.repeat;
     if (!r) continue;
@@ -143,7 +143,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   // 木のチェック (S-201 ②): 打たずに配置の木を辿り、行き先の無い結果・代表で打てない手・完成の条件に届かない完成の箱
   for (const x of frameIssues(data, doc0)) add(x.boxId, x.kind, x.text);
   const boxes = Object.values(doc.boxes);
-  const aims = aimsOf(doc);
+  const aims = aimsOf(data, doc);
   /** 判定 (戻り先の比べ・辿りの行き先はこれだけ、S-50b・S-73) */
   const J = judgeMemo(data, doc);
   /** 戻りの矢印の行き先 (形の合う箱へ = 行きうる全部、作り直し = 始まり) */
@@ -287,7 +287,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る)
           const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);
           const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, aimed));
-          const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
+          const miss = shown.filter((oc) => !outBoxOf(data, doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
           if (all.length && shown.length === all.length) canBe = shown;
         }
