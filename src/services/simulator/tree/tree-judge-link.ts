@@ -52,7 +52,9 @@ export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
   const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null;
   const rank = (t: string): number => (t === p ? 0 : 1);
   const cmp = shallow(doc);
-  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
+  // 品質を枠に入れないので (S-60b、11-08)、カタリストの前後の箱が同じ枠になる。品質の届かない人 (触媒の高貴のお告げで品質を使い切った人など) が
+  // 打てない箱は飛ばして、次の同じ枠の箱 (カタリストを打つ箱) へ (S-52b・S-60c、11-08 オーナーの木 b39 ↩ b17 で 30 人中 24 人が止まった)
+  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !j.capShort(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y))[0] ?? null;
 }
 
 /**
@@ -88,11 +90,14 @@ export function sameHitsByContent(doc: TreeDoc, id: string, j: Judge): string[] 
 export function sameHandByContent(doc: TreeDoc, id: string, h: Hand, j: Judge): string | null {
   const b = doc.boxes[id];
   if (!b || b.out === "start" || b.split) return null;
-  if (b.back && b.back !== MATCH_BACK && b.back !== RESTART && sameHand(doc.boxes[b.back]?.hand, h) && j.fitsBox(id, b.back)) return b.back;
+  // 結果が 1 通りの手だけで上へ続く箱 (straightUp) へは戻さない = 打っても変わらない手の輪 (自動の ↩・まとめと同じ守り)。品質を枠に入れないので (S-60b、11-08)、
+  // カタリストで品質を満たした後の箱に置いた同じカタリスト (触媒の前に足す pre) がすぐ上のカタリストの箱へ戻り、下の手が全部消えて素通りと ↩ の輪になった (FmNY7Wwv、300 人が打ち止め)
+  const ok = (t: string): boolean => !straightUp(doc, id, t);
+  if (b.back && b.back !== MATCH_BACK && b.back !== RESTART && sameHand(doc.boxes[b.back]?.hand, h) && j.fitsBox(id, b.back) && ok(b.back)) return b.back;
   const p = b.parent;
-  if (p && sameHand(doc.boxes[p]?.hand, h) && j.fitsBox(id, p)) return p;
+  if (p && sameHand(doc.boxes[p]?.hand, h) && j.fitsBox(id, p) && ok(p)) return p;
   const below = new Set(subtree(doc, id));
-  return Object.values(doc.boxes).filter((t) => !below.has(t.id) && sameHand(t.hand, h) && j.fitsBox(id, t.id)).map((t) => t.id).sort(shallow(doc))[0] ?? null;
+  return Object.values(doc.boxes).filter((t) => !below.has(t.id) && sameHand(t.hand, h) && j.fitsBox(id, t.id) && ok(t.id)).map((t) => t.id).sort(shallow(doc))[0] ?? null;
 }
 
 /**
