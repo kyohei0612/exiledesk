@@ -163,7 +163,9 @@ export function recipeOf(data: PatchData | null | undefined, d: TreeDoc): TreeDo
 }
 
 /** 例のアイテムから組んだ品の覚え (組み直しの 1 手ごとに配置を出し直すので、毎回作ると重い。品は同じ物を使い回す = 品の鍵の覚えも効く) */
-const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem }>();
+const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem | null }>();
+/** 覚えの鍵 = スタートのベースと嵌めたルーン (完成形のルーンを替えると例を使えるかが変わる) */
+const runesAt = (it: StageItem): string => `${it.base}|${(it.augments ?? []).map((a) => a.en).join("+")}`;
 
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
@@ -174,10 +176,11 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
     const exOf = (id: string): StageItem | null => {
       const e = keys ? doc.examples![keys.get(id) ?? ""] : undefined;
       if (!e) return null;
-      const had = EXAMPLES.get(e);
-      if (had?.start === st.item.base) return had.item;
-      const item = fullExample(st.item, e);
-      EXAMPLES.set(e, { start: st.item.base, item });
+      const had = EXAMPLES.get(e), at = runesAt(st.item);
+      if (had?.start === at) return had.item;
+      // スタートのルーン (完成形のルーン、S-31h) を持たない例 (ルーンの手で嵌めていた前の保存) は使わない = 種 1 つで出し直す
+      const full = fullExample(st.item, e), item = (st.item.augments ?? []).every((a) => (full.augments ?? []).some((x) => x.en === a.en)) ? full : null;
+      EXAMPLES.set(e, { start: at, item });
       return item;
     };
     const sf: Frame = { item: st.item, aimed: sa, key: frameKeyOf(contentOf(data, doc, st.item, sa)), p: 1, note: st.note }, se = exOf("start");
