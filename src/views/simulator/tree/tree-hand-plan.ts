@@ -12,7 +12,7 @@ import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
-import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
@@ -75,7 +75,7 @@ export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, au
  * 狙い無し (結果は「打った後」の 1 つ) にできる手 = 付く MOD を選べない手 (足す・カオス。10-25 オーナー「全カレンシーで」。前は足す手だけ)。
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
  */
-export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
+export const FREE_EFFECTS: readonly string[] = PICK_EFFECTS; // 表は tree-hands の 1 つ (S-5)
 /**
  * 消去の「残したい MOD」の候補 = この箱のアイテムに付いている MOD (✦ は消えないので出さない。10-27 オーナー「手の窓に今付いている MOD を全部並べる」)。
  * 持った手 (currency・お告げ) があれば、エンジンで打って消えうる MOD だけ (光のお告げなら冒涜だけ。1 つなら確定で消える = 聞かない、S-27b)

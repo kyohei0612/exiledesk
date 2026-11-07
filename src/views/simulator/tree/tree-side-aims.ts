@@ -8,9 +8,9 @@ import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey, boxAims, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { hitAimsOf, kindOf } from "./tree-hand-plan";
+import { REACH_KINDS } from "../../../services/simulator/tree/tree-hands";
 
 /** 付く狙いを見る手 (消す・品質などは見ない、TreeModPick の reach と同じ) */
-const REACH_KINDS = ["add", "swap", "spam", "essence", "fracture"];
 
 /** 横の箱 (同じ親の結果の当たり) でもう選んでいる狙いの鍵。except = 選び直している箱 (自分の狙いは選べる) */
 export function takenBeside(doc: TreeDoc, boxId: string, except: string | null): Set<string> {

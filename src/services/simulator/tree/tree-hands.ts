@@ -2,7 +2,7 @@
  * tree-hands.ts — ツリーの打つ手の名前と種類 (2026-10-22)。手はクラフト台の棚から選ぶ (TreeHandShelf.vue、オーナー「下の＋も同じ感じにしてええよ」)。
  * 名前は画面の側 (views/simulator/tree/tree-names.ts、クラフト台の棚と同じ nameOfKey)。手の効果はエンジン (applyCurrency)、ここは種類と並びだけ
  */
-import { CATALYSTS, kindOf, OMEN_KEY } from "../../craft-stage/engine";
+import { actionClassOfKey, CATALYSTS, kindOf, OMEN_KEY, parseKey } from "../../craft-stage/engine";
 
 /** カタリスト = 品質だけ上げる手 (エンジンの kindOf。catalyst_<タグ>・jcatalyst_<タグ>) */
 export const isCatalyst = (key: string): boolean => kindOf(key) === "catalyst";
@@ -24,11 +24,22 @@ export const isBone = (key: string): boolean => kindOf(key) === "desecrate";
 export const engineOmens = (h: { omens: readonly string[] }): string[] => h.omens.filter((o) => o !== ECHO);
 /** 触媒の高貴の前に品質を上げるカタリスト = エンジンの CATALYSTS の並び (値段のキー catalyst_<タグ>。前は自前の 12 個、10-23 にエンジンを軸に) */
 export const TREE_CATALYSTS: readonly string[] = CATALYSTS.map((c) => `catalyst_${c.tag}`);
-/** 手の働き (箱の分け方を決める種類): quality = カタリスト (品質だけ)、essence = エッセンス、swap = カオス (1 つ消して 1 つ付く)、remove = 消去、fracture = フラクチャー、add = それ以外 (足す) */
+/**
+ * 手の働き (箱の分け方を決める種類) = エンジンの動作の部品 (actionClassOfKey、E-1) から引く。鍵の文字では決めない (G-1 S-5、11-07):
+ *   essence = 付く MOD が決まっている (addEssence、カレンシーの枝) / quality = カタリスト (catalyst、品質だけ) / fracture = 固定 (fracture) /
+ *   remove = 消すだけ (消す) / swap = レアリティを変えずに消して乱数で付ける (remove + add = カオス) / add = それ以外 (付ける・錬金・発現・感情・性質・値)
+ */
 export type CurrencyEffect = "quality" | "essence" | "swap" | "remove" | "fracture" | "add";
 export function effectOf(key: string): CurrencyEffect {
-  const k = kindOf(key);
-  if (k === "catalyst") return "quality";
-  if (k.startsWith("essence")) return "essence";
-  return k === "chaos" ? "swap" : k === "annul" ? "remove" : k === "fracture" ? "fracture" : "add";
+  const { cls, parts } = actionClassOfKey(key);
+  if (parts.includes("addEssence") || parseKey(key).type === "essence") return "essence";
+  if (parts.includes("catalyst")) return "quality";
+  if (parts.includes("fracture")) return "fracture";
+  if (cls === "remove") return "remove";
+  return cls === "replace" && parts.includes("add") && !parts.includes("setRarity") ? "swap" : "add";
 }
+/** ☑ で当たりの MOD を選ぶ手 = 乱数で付ける・入れ替える手 (前は tree-outcome の PICK_EFFECTS と tree-hand-plan の FREE_EFFECTS の 2 つ) */
+export const PICK_EFFECTS: readonly CurrencyEffect[] = ["add", "swap"];
+export const picksAim = (key: string): boolean => PICK_EFFECTS.includes(effectOf(key));
+/** 付きうる狙いを数える手の種類 (HandKind。前は tree-side-aims と TreeModPick の 2 つ) */
+export const REACH_KINDS: readonly string[] = ["add", "swap", "spam", "essence", "fracture"];

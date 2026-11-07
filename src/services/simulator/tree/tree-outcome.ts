@@ -5,7 +5,7 @@
 import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
-import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
+import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
 import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
@@ -86,8 +86,6 @@ function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, b
 const keptPlus = (doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => x.modId === a.modId))] : aims; };
 /** 残したい MOD の消去か (☑ が 1 つ以上) */
 export const isKeepAnnul = (h: Hand | null | undefined): h is Hand => !!h?.keep?.length && effectOf(h.currency) === "remove";
-/** ☑ を選ぶ手 (付け足す・入れ替える = 高貴・カオスなど。tree-hand-plan の FREE_EFFECTS と同じ) */
-const PICK_EFFECTS: readonly string[] = ["add", "swap"];
 /**
  * ☑ を選ぶ手の狙い = 打つ前に付いている狙いと、この手の ☑ (picked) だけ (S-22b)。☑ の無い完成形の MOD が付いても外れ MOD。
  * 前は木の狙い全部で数え、付いた知性 (☑ 無し) が「当たり」を取ってから外れに落ちて、同時に消えた最大ライフの「狙いが消えた」が抜けた (木 oWkFcwYX の b14 のカオス)

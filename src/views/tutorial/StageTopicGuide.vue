@@ -17,7 +17,7 @@ import { flag } from "../../web/release-flags";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
-import { sideOfMod, aimLabel, modListFor, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
+import { OMEN_KEY, sideOfMod, aimLabel, modListFor, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */
 defineProps<{ part?: "now" | "course" }>();
@@ -246,7 +246,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
             <img v-if="iconOfStep(b.sub)" :src="iconOfStep(b.sub)" alt="" class="size-7 shrink-0 object-contain" />
             <Icon v-else name="sparkles" class="size-6 shrink-0 text-violet-200" />
             <img v-for="o in b.sub.omens ?? []" :key="o" :src="iconOf(o)" alt="" class="size-6 shrink-0 object-contain" />
-            <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ b.need?.omens?.includes("OmenofAbyssalEchoes") ? tr("リロールして MOD を選んで発現", "Reroll, pick a mod and Reveal") : stepName(b.sub) }}</span>
+            <span class="text-[13px] text-[var(--exile-color-text-primary)]">{{ b.need?.omens?.includes(OMEN_KEY.echoes) ? tr("リロールして MOD を選んで発現", "Reroll, pick a mod and Reveal") : stepName(b.sub) }}</span>
           </button>
         </template>
         <!-- 発現の案内はボタンの名前に入れた (「MOD を選んで発現」。2026-10-17 オーナー「発現ややこしいから」) -->

@@ -9,7 +9,7 @@ import { computed } from "vue";
 defineOptions({ inheritAttrs: false });
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { course, courseBases, courseView, restartCourse } from "../../state/tutorial/craft-course";
-import { aimLabel } from "../../services/craft-stage/engine";
+import { aimLabel, OMEN_KEY } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { displayCurrency } from "../../state/display-currency";
 import Icon from "../../components/ui/Icon.vue";
@@ -61,7 +61,7 @@ function holdIt(): void {
   for (const o of a.omens ?? []) if (!s.omens.value.includes(o)) s.toggleOmen(o);
 }
 /** 発現の前に反響のお告げを掛ける */
-function echoes(): void { if (!s.omens.value.includes("OmenofAbyssalEchoes")) s.toggleOmen("OmenofAbyssalEchoes"); }
+function echoes(): void { if (!s.omens.value.includes(OMEN_KEY.echoes)) s.toggleOmen(OMEN_KEY.echoes); }
 const steps = computed(() => s.log.value.length);
 const cost = computed(() => s.log.value[s.log.value.length - 1]?.out.cost.cumulative ?? 0);
 </script>
