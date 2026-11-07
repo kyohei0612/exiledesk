@@ -1,19 +1,18 @@
 <!--
   TreeGoalQuality.vue — 完成形の品質 (10-27 夕オーナー、モンキー 7「品質 +40% を入れる所が見当たらない」)。
   既定はオフ (品質は見ない)。☑「品質も狙う」でオンにすると、エミュのクラフト台と同じ品質の帯 (StageQualityBar: 品質・上限・種類) で値を決める。
-  ベースの最大品質 (アクセサリーは 20%) を超える品質は、途中でブリーチのエッセンス (essence:breach、品質の最大値 +20%) を付けて品質を上げる。
-  品質はその後でブリーチの MOD が消えても残る (エンジンの applyCurrency で確かめた) ので、完成の狙いには足さない (狙いの枠を使わない)。
+  ベースの最大品質 (アクセサリーは 20%) を 11% 以上超える品質は、人が木でブリーチのエッセンス (品質の最大値 +20%) を打って品質を上げる。
+  完成形は見本なので、ブリーチの行は完成形に足さない (S-31、11-07 オーナー「品質付けたかったら勝手にブリーチやって品質付けるだろう」)。
   オンの時だけ回す時に品質を見る (tree-run の完成の箱。足りない人は止まり)
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import StageQualityBar from "../../../components/for-share/item/StageQualityBar.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { CATALYSTS, maxQualityOf, qualityFieldMax, type StageItem } from "../../../services/craft-stage/engine";
+import { CATALYSTS, INFUSER_OVER, maxQualityOf, qualityFieldMax, type StageItem } from "../../../services/craft-stage/engine";
 import { essenceTarget } from "../../../services/craft-stage/apply-essence";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
-import { BREACH_OVER } from "./use-goal-shown";
 import { askQuality } from "./tree-goal-quality";
 import { PRESET_QUALITY_MAX } from "../../../services/simulator/tree/tree-unbounded";
 
@@ -35,9 +34,10 @@ const baseMax = computed(() => (t.goalItem.value ? maxQualityOf(t.goalItem.value
 const hasBreach = computed(() => { const d = s.data.value, it = t.goalItem.value?.item; if (!d || !it) return false; try { return !!essenceTarget(d, it, "essence:breach"); } catch { return false; } });
 /** カタリスト以外の部位は最初に上げてある前提なので、ブリーチ・インフューザーの案内は出さない (S-31、11-05) */
 const over = computed(() => ask.value && on.value && (t.doc.value.goalQuality ?? 0) > baseMax.value);
-/** 上限を 11% 以上超える = ブリーチのエッセンスが要る (+10 まではヴァールのインフューザーで届く、10-27 夜オーナー) */
+/** 上限を 11% 以上超える = ブリーチのエッセンスが要る (+10 まではヴァールのインフューザーで届く = エンジンの INFUSER_OVER、10-27 夜オーナー) */
+const BREACH_OVER = INFUSER_OVER + 1;
 const needBreach = computed(() => over.value && (t.doc.value.goalQuality ?? 0) - baseMax.value >= BREACH_OVER);
-/** ☑ 品質も狙う (前の作りで狙いに足したブリーチの MOD があれば外す) */
+/** ☑ 品質も狙う (前の作りで狙いに足したブリーチの MOD があれば外す。開く時にも tree-migrate が外す) */
 function setOn(v: boolean): void {
   t.edit((d) => {
     if (v) d.goalQualityOn = true; else delete d.goalQualityOn;
@@ -45,7 +45,7 @@ function setOn(v: boolean): void {
   });
 }
 /**
- * 完成形で届く品質の上限 = エミュのクラフト台と同じ出し方 (qualityFieldMax: ベース + 暗黙などの「品質の最大値」) + 途中で付けるブリーチのエッセンスの +20 (付くベースだけ)。
+ * 完成形で届く品質の上限 = エミュのクラフト台と同じ出し方 (qualityFieldMax: ベース + 暗黙などの「品質の最大値」) + 木で打つブリーチのエッセンスの +20 (付くベースだけ)。
  * 帯の上限のプルダウン (80% まで) で上げても、この値より上にはしない (指輪で上限 80% にすると +41% にできた、10-27 夜モンキー 2 回目 11)
  */
 const limit = computed(() => (!ask.value ? PRESET_QUALITY_MAX : t.goalItem.value ? qualityFieldMax(t.goalItem.value.item) + (hasBreach.value ? 20 : 0) : 100));
@@ -111,7 +111,7 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
     <p v-if="on" data-tree-goal-quality-preset class="break-words opacity-70">{{ tr(`品質は始める前に上げてある前提で通す (${PRESET_QUALITY_MAX}% まで。完成の判定では見ない)`, `Quality is assumed to be raised before you start (up to ${PRESET_QUALITY_MAX}%; not part of the finish check)`) }}</p>
     </template>
     <p v-if="over && !needBreach" data-tree-goal-quality-infuser class="break-words text-amber-200/90">{{ tr(`${baseMax}% を超える分 (+10% まで) はヴァールのインフューザーで届く`, `Up to +10% above ${baseMax}% is reachable with an Infuser`) }}</p>
-    <p v-else-if="needBreach && hasBreach" data-tree-goal-quality-breach class="break-words text-amber-200/90">{{ tr(`${baseMax + 10}% を超えるには、途中でブリーチのエッセンス (品質の最大値 +20%) を付けて品質を上げる。その後でブリーチの MOD が消えても品質は残る (完成形のカードの「途中で消える」の行。完成の MOD の枠には数えない)`, `Above ${baseMax + 10}% needs a Perfect Essence of the Breach (+20% to Maximum Quality) on the way. The quality stays even if that mod is removed later (the "Removed on the way" row on the final item; not counted as a final mod slot)`) }}</p>
+    <p v-else-if="needBreach && hasBreach" data-tree-goal-quality-breach class="break-words text-amber-200/90">{{ tr(`${baseMax + 10}% を超えるには、ツリーでブリーチのエッセンス (品質の最大値 +20%) を打って品質を上げる。その後でブリーチの MOD が消えても品質は残る (完成形には出さない)`, `Above ${baseMax + 10}% needs a Perfect Essence of the Breach (+20% to Maximum Quality) used in the tree. The quality stays even if that mod is removed later (not shown on the final item)`) }}</p>
     <p v-else-if="needBreach" data-tree-goal-quality-cant class="break-words text-rose-200/90">{{ tr(`このベースでは ${baseMax + 10}% を超えられない (ブリーチのエッセンスが付かない)`, `This base can't go above ${baseMax + 10}% (no Essence of the Breach)`) }}</p>
   </div>
 </template>

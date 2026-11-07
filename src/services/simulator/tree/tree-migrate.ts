@@ -55,7 +55,7 @@ function healBox(id: string, raw: unknown, ids: ReadonlySet<string>): TreeBox {
 /** 木を今の形へ (読めない箱・手は要確認の印で残す)。木として読めなければ null。fixed = 要確認の印が付いた箱の数 */
 export function migrateTreeDoc(raw: unknown): { doc: TreeDoc; fixed: number } | null {
   // 保存の形 v1 (打ち方だけ、S-104〜S-108) はそのまま (開く時に組み直す)。v1 の後に形を変えたら v1 → v2 をここに 1 段ずつ
-  if (obj(raw) && isRecipeV1(raw)) { const doc = healRecipeV1(raw); return { doc, fixed: doc.orphans?.length ?? 0 }; }
+  if (obj(raw) && isRecipeV1(raw)) { const doc = dropForQuality(healRecipeV1(raw)); return { doc, fixed: doc.orphans?.length ?? 0 }; }
   let n = versionOf(raw);
   if (n === null || n > TREE_SCHEMA_N) return null;
   const d = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
@@ -70,5 +70,10 @@ export function migrateTreeDoc(raw: unknown): { doc: TreeDoc; fixed: number } | 
   d.itemLevel = num(d.itemLevel, 82);
   const doc = d as unknown as TreeDoc;
   migrateStart(doc);
-  return { doc, fixed };
+  return { doc: dropForQuality(doc), fixed };
+}
+/** 前の作りで完成形の品質のために狙いへ足したブリーチの MOD (forQuality) を外す (完成形はブリーチを足さない = S-31 の撤回 11-07。残すと完成の狙いになる) */
+function dropForQuality(doc: TreeDoc): TreeDoc {
+  if ((doc.memoAims ?? []).some((a) => a.forQuality)) doc.memoAims = (doc.memoAims ?? []).filter((a) => !a.forQuality);
+  return doc;
 }

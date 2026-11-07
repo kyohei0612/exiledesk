@@ -1,44 +1,24 @@
 /**
  * use-goal-shown.ts — 完成形のカードに出すアイテム (TreeGoalPage・TreeGoalCard・スマホの PhoneOverview で共通)。
- * 「品質も狙う」☑ がオンの時は品質の値・種類をカードに乗せる。品質がベースの上限を 11% 以上超える時 (上限 20 → 31% 以上。+10 まではヴァールのインフューザーで届く)、
- * ブリーチのエッセンスの MOD の行を足して「途中で消える」の札を付ける (10-27 夜オーナー「途中で消えるって書いとけばいいんじゃね、完成品に」)。
- * 足した行は見せるだけ: 完成の狙い・MOD の枠 (use-tree の goalItem の left)・完成の判定には数えない (品質の値で見るのは tree-unbounded の qualityOk のまま)
+ * 「品質も狙う」☑ がオンの時は品質の値・種類をカードに乗せる。品質を上げるブリーチのエッセンスの行は足さない (S-31、11-07 オーナー「結局完成形って見本だから途中の道でソケットやら勝手につけるでしょ」。
+ * 品質が欲しい人は自分で木にブリーチを打つ。前は上限を 11% 以上超える時に「途中で消える」の行を自動で足していた)
  */
 import { computed } from "vue";
-import { applyCurrency, INFUSER_OVER, isQualityCapMod, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import type { StageItem, StageMod } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
 import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
-import { catalystPart } from "../../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../../i18n/lang";
-
-/** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (インフューザーで越せる幅 = エンジンの INFUSER_OVER まではインフューザー) */
-export const BREACH_OVER = INFUSER_OVER + 1;
 
 export function useGoalShown() {
   const t = useTree();
-  /** 足すブリーチのエッセンスの MOD (要らない時・付かないベースは null)。エンジンで完成形にブリーチのエッセンスを打って、付いた MOD を取る */
-  const breach = computed((): StageMod | null => {
-    const d = s.data.value, g = t.goalItem.value?.item, doc = t.doc.value;
-    // カタリスト以外の部位の品質は最初に上げてある前提 (S-31、11-05) なので、ブリーチを途中で付ける行は出さない
-    if (!d || !g || !catalystPart(g) || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
-    // ブリーチのエッセンスを MOD 一覧で足してある時は、その行で足りる (同じ行を 2 つ出さない)
-    if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => isQualityCapMod(d, a.modId))) return null;
-    // 完成形に既にエッセンスの MOD があると「エッセンスの MOD は 1 つまで」で打てないので、エッセンスの MOD を除いた写しに打つ (途中で付けて消える物なので、完成形と同時には付かない)
-    const bare = { ...g, prefixes: g.prefixes.filter((m) => !m.crafted), suffixes: g.suffixes.filter((m) => !m.crafted) };
-    try { return applyCurrency(d, bare, "essence:breach", mulberry32(1)).added?.[0] ?? null; } catch { return null; }
-  });
-  /** 途中で消える行 = MOD 一覧で「途中で消える」にしたクラフト MOD (tree-way-mods) + 品質で自動で出るブリーチ */
-  const ways = computed((): StageMod[] => {
-    const d = s.data.value;
-    if (!d) return [];
-    const way = wayRows(d, t.doc.value), brq = breach.value;
-    // 木の手で打つエッセンスの MOD は出さない (S-30d 撤回 11-07、オーナー「別に途中で消えてもここに表示しなくてよくね」。完成形に無い物は外れ = S-33c)。
-    // 品質の上限超えで自動で出るブリーチの行は特例で残す (S-31、11-07 オーナー「完成形にはだしていいんじゃないあいつ特例でしょたしか」)
-    return [...way, ...(brq ? [brq] : [])];
-  });
+  /**
+   * 途中で消える行 = MOD 一覧で「途中で消える」にしたクラフト MOD (tree-way-mods) だけ。木の手で打つエッセンスの MOD は出さない (S-30d 撤回 11-07、
+   * 完成形に無い物は外れ = S-33c)。品質の上限超えで自動で出したブリーチの行も 11-07 に撤回 (S-31)
+   */
+  const ways = computed((): StageMod[] => (s.data.value ? wayRows(s.data.value, t.doc.value) : []));
   /** 上限を溢れたクラフト MOD の束 (S-30b)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
   const bundle = computed(() => (s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
   /** 冒涜の束 (2 つ目から、どれか 1 つ) */
@@ -94,5 +74,5 @@ ${WAY_ORDER()}` });
     for (const a of desecrated.value ?? []) m.set(a.modId, 2);
     return m.size ? m : null;
   });
-  return { item, tags, breach, bundled, groups };
+  return { item, tags, bundled, groups };
 }

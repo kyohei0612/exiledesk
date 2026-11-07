@@ -41,7 +41,7 @@ import { isPhoneWidth } from "../../../utils/use-phone";
 import { useGoalShown } from "./use-goal-shown";
 import HelpTip from "../../../components/ui/HelpTip.vue";
 import type { RowToggle } from "../../../components/for-share/item/stage-item-row-tag";
-import { dropWay, inWay, isBreachAim, isCraftAim, toggleWay, WAY_ORDER } from "./tree-way-mods";
+import { dropWay, inWay, isCraftAim, toggleWay, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
 import { useDismiss } from "../../../utils/use-dismiss";
@@ -53,7 +53,7 @@ import { simOp } from "../../../web/track";
 
 
 const t = useTree();
-/** 完成形のカード (品質・ブリーチの「途中で消える」の行) */
+/** 完成形のカード (品質・「途中で消える」の行) */
 const shown = useGoalShown();
 const step = computed(() => t.goalPage.value);
 const asking = ref<string | null>(null);
@@ -172,8 +172,8 @@ const crafts = computed(() => {
   const d = s.data.value, doc = t.doc.value;
   if (!d) return [];
   const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
-  // 束 (S-30b) の時は切り替えはブリーチと前に「途中で消える」にした物だけ (ほかは束の札「どれか n つ」)
-  return list.length >= 2 ? list.filter((c) => c.way || isBreachAim(d, c.a)) : [];
+  // 束 (S-30b) の時は切り替えは前に「途中で消える」にした物だけ (ほかは束の札「どれか n つ」。ブリーチの例外は 11-07 に撤回 = S-31)
+  return list.length >= 2 ? list.filter((c) => c.way) : [];
 });
 /** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
 const inRow = computed(() => true);
@@ -370,7 +370,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
-        <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー) -->
+        <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー) -->
         <div v-if="crafts.length" data-tree-goal-ways class="flex flex-col gap-1 px-1 text-[12px]">

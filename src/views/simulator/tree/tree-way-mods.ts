@@ -1,11 +1,11 @@
 /**
  * tree-way-mods.ts — 完成形の「途中で消える」クラフト MOD (エッセンス・合金などのエッセンスの MOD、ブリーチも。10-27 夜オーナー)。
  * 完成形の MOD 一覧でクラフト MOD を 2 つ目以降も足せる。足した物は完成の狙い (memoAims) に入り、カードの下の切り替えで「途中で消える」にすると
- * TreeDoc.wayMods へ移る (完成の狙い・MOD の枠・完成の判定には数えない。品質で自動で出るブリーチの行と同じ扱い)。戻すと完成の狙いへ戻る。
+ * TreeDoc.wayMods へ移る (完成の狙い・MOD の枠・完成の判定には数えない)。戻すと完成の狙いへ戻る。ブリーチもほかのクラフト MOD と同じ (特例は 11-07 に撤回 = S-31)。
  * 残る (完成の狙いにある) クラフト MOD はエンジンのクラフト MOD の上限 (craftedLimitOf: 1 つ、アストリッドの創造性で増える) まで。
  * 超えている間は「決めた (ツリーへ)」を押せない (2 つで片方を消えるにすれば、もう片方は残る方に決まる)
  */
-import { craftedKindOf, isDesecratedSource, isQualityCapMod, mulberry32, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { craftedKindOf, isDesecratedSource, mulberry32, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftedLimitOf } from "../../../services/craft-stage/apply-essence";
 import { placeMods } from "../../../services/simulator/sim-engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -38,15 +38,13 @@ export function toggleWay(d: TreeDoc, modId: string): void {
 export function dropWay(d: TreeDoc, modId: string): void { d.wayMods = (d.wayMods ?? []).filter((a) => a.modId !== modId); if (!d.wayMods.length) delete d.wayMods; }
 /** 残るクラフト MOD の上限 (完成形のアイテムのルーンから、エンジンの craftedLimitOf) */
 export const craftLimit = (goal: StageItem): number => craftedLimitOf(goal);
-/** 品質のためのブリーチのエッセンス (途中で消す前提。束に入れず独立、S-30b) */
-export const isBreachAim = (data: PatchData, a: Aim): boolean => !!a.forQuality || isQualityCapMod(data, a.modId); // 品質の上限を上げる MOD かはエンジンの isQualityCapMod
 /**
  * 上限を溢れたクラフト MOD の束 (S-30b、10-31 オーナー「固定で上限は今まで通りで、溢れたら、消えるかどっちかみたいな表記にする？」)。
- * 完成の狙いのクラフト MOD (ブリーチは除く) が上限を超えたら、その全部を「どれか n つ」の束にする。木の判定は替えない (ゲームどおり同時には付かない)
+ * 完成の狙いのクラフト MOD (ブリーチも同じ、前の例外は 11-07 に撤回) が上限を超えたら、その全部を「どれか n つ」の束にする。木の判定は替えない (ゲームどおり同時には付かない)
  */
 export function craftBundle(data: PatchData, doc: TreeDoc, goal: StageItem | null): { aims: Aim[]; lim: number } | null {
   if (!goal) return null;
-  const aims = (doc.memoAims ?? []).filter((a) => isCraftAim(data, a) && !isBreachAim(data, a)), lim = craftLimit(goal);
+  const aims = (doc.memoAims ?? []).filter((a) => isCraftAim(data, a)), lim = craftLimit(goal);
   return aims.length > lim ? { aims, lim } : null;
 }
 /**
