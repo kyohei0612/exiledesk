@@ -89,15 +89,17 @@ export function essenceBoxFits(doc: TreeDoc, parent: TreeBox, box: TreeBox, afte
 }
 
 /**
- * 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に)。key = 打った手 (エッセンスは付く MOD が必ず付くので、狙いが消えたかを先に見る。
- * 付いた MOD は hits のまま、10-22 オーナー「エッセンスの道」)
+ * 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に)。key = 打った手。
+ * 消す → 付ける の順 (狙いが消えたを先に見る) はここ 1 か所: エッセンス (付く MOD が必ず付く。付いた MOD は hits のまま、10-22 オーナー「エッセンスの道」) と、
+ * lostFirst = 入れ替える・付ける手で ☑ を選ぶ物 (持っていた狙いが消えたら ☑ が付いても狙いが消えた、S-22b。札は空)。結果の箱への分けは tree-outcome の handOutcome
  */
-export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[], key?: string): { out: OutKind; hits: Aim[] } {
+export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[], key?: string, lostFirst = false): { out: OutKind; hits: Aim[] } {
   // 狙いの付いた・消えた・外れが減った・新しく ✦ になった MOD はエンジンの入口の aimDiff (B12 10-22)。ここは箱の分け方だけ
   const d = aimDiff(data, before, after, aims, { sameText: true });
-  if (key && effectOf(key) === "essence" && d.lost.length) return { out: "lost", hits: d.hits };
+  const essence = !!key && effectOf(key) === "essence";
+  if ((essence || lostFirst) && d.lost.length) return { out: "lost", hits: essence ? d.hits : [] };
   // エッセンスの道は 2 つだけ (10-24 オーナー): 狙いが消えていなければ当たりの道 (付く MOD が完成の狙いに無くても。外れを消すだけのエッセンス)
-  if (key && effectOf(key) === "essence") return { out: "hit", hits: d.hits };
+  if (essence) return { out: "hit", hits: d.hits };
   // フラクチャー: 新しく ✦ になった MOD が狙いなら当たり (札 = その狙い)、ほかは外れ (MOD の数は変わらない)
   if (key && effectOf(key) === "fracture") return d.fracturedHits.length ? { out: "hit", hits: d.fracturedHits.slice(0, 1) } : { out: "junk", hits: [] };
   if (d.hits.length) return { out: "hit", hits: d.hits };
