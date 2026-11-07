@@ -7,7 +7,7 @@
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { aimHeldOn, isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { aimedMiss, isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
-import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { aimedOfCard } from "../../../services/simulator/tree/tree-judge";
@@ -41,12 +41,12 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
  * 外れ MOD の札 (札を作るのはここだけ。箱のカード・手の窓・スマホの道の画面が全部これ、G-1 V-1)。木の手で付けた完成形に無いエッセンスの MOD は
  * 判定では外れでも札を付けず、MOD の文のまま (null。S-33c・S-82、11-07 オーナー「エッセンスはとりあいずハズレＭＯＤとして表示はしないでおこうか。
  * つけたエッセンスはそのままカードに表示させよう。」。前は「外れ MOD (エッセンス)」)。evenChosen = それでも札にする (固定された外れ・道の画面の赤い名前)。
- * cut = 付いた後に残したい MOD を選ぶ手を通ったエッセンスの MOD (札にする、cutEssenceOf)
+ * cut = 付いた後に残したい MOD を選ぶ手を通ったエッセンスの MOD の札の鍵 aimKey (札にする、cutEssenceOf。midAims は木を回す外では毎回作り直すので物でなく鍵で比べる)
  */
-type MissOpts = { evenChosen?: boolean; cut?: ReadonlySet<Aim> };
+type MissOpts = { evenChosen?: boolean; cut?: ReadonlySet<string> };
 export const missTag = (d: PatchData, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): RowTag | null => {
   const mid = opts.evenChosen ? undefined : midAims(d, doc).find((a) => a.modId === m.modId);
-  return mid && !opts.cut?.has(mid) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
+  return mid && !opts.cut?.has(aimKey(mid)) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
 };
 /** 行に外れ MOD の札を置く (完成形に無いエッセンスの MOD は置かない = 文のまま) */
 export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): void => { const t = missTag(d, doc, m, title, opts); if (t) out.set(m.modId, t); };
@@ -55,8 +55,8 @@ export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m:
  * 文のまま出すのは付いてからその手を通るまでで、☑ しなかった物は以降の箱では「外れ MOD」(合金・ほかの MOD と同じ。S-33c・S-82、11-07 夜オーナー
  * 「エッセンスだろうが消去で全て消えてよい選んでんのになぜかブリーチエッセンスだけはMOD名がでる」)。パーフェクトエッセンスの手は ☑ しなかった MOD も外れにしない (S-29) ので数えない
  */
-export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): ReadonlySet<Aim> {
-  const cut = new Set<Aim>(), on = midAims(d, doc).filter((a) => aimHeldOn(d, it, a, { sameText: true }));
+export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): ReadonlySet<string> {
+  const cut = new Set<string>(), on = midAims(d, doc).filter((a) => aimHeldOn(d, it, a, { sameText: true }));
   // 見本に無ければ見ない (道を辿らない)
   if (!on.length) return cut;
   // 箱から上へ辿る。付いた所 (そのエッセンスの手) より前の手は数えない (付け直した後は付け直した所から)。MOD の当て方はエンジン (sameAimMod)
@@ -68,7 +68,7 @@ export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: Stag
     if (put) { putOn.add(put); continue; }
     if (!isKeepHand(h) || isSwapEssence(h)) continue;
     const gone = [...(goneOf(d, sampleOf(d, doc, p.id, 1).item, h.currency, h.omens) ?? [])];
-    for (const a of on) if (!putOn.has(a) && gone.some((id) => same(a, id))) cut.add(a);
+    for (const a of on) if (!putOn.has(a) && gone.some((id) => same(a, id))) cut.add(aimKey(a));
   }
   return cut;
 }
