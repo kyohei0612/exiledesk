@@ -35,7 +35,7 @@ export { catalystRoom } from "./stage-core";
 export { catalystQualityApplies, hasCatalystQuality, rerollableMods, openSlots } from "./stage-core";
 // 品質の上限を越えられる幅 (インフューザー、E-74)・削減のお告げの的 (MOD レベルの一番低い物、未発現は 1)
 export { INFUSER_OVER, whittleTargets, whittleLevel } from "./apply-currency";
-export { isQualityCapMod, essenceKeyForTier } from "./apply-essence";
+export { isQualityCapMod, essenceKeyForTier, craftedLimitOf, astridsFor, ASTRID_EN } from "./apply-essence";
 // MOD を段から作る (数値の決め方は rng)・アイテムに MOD を足した形 (withMod)・そのカタリストがその MOD を伸ばすか
 export { makeStageMod, withMod, catalystBoosts } from "./stage-core";
 // ソケットの上限・白の時からあるソケットの数 (規格外。エミュの新品とツリーのスタートが同じ数で始める)

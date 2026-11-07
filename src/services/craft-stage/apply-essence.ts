@@ -95,4 +95,12 @@ export const ABYSS_FAMILY = "EssenceAbyss";
 /** クラフト MOD の上限: 1 + アストリッドの創造性 (ソケットの効果 100% 以上で +2。stage-core の runeEffectPct・engine の boostedPlus) */
 export const craftedLimitOf = (item: StageItem): number => // E-11h クラフト MOD は 1 つ (アストリッドの創造性で +1)
   1 + (item.augments ?? []).filter((a) => a.en === ASTRID_EN).reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
+/**
+ * クラフト MOD を n 個持つのに要るアストリッドの創造性の本数 (craftedLimitOf の逆。1 本で増える数はその品のソケットの効果で決まる)。
+ * 無理なら Infinity (11-07 jin-base4、解析の係の頼み: 自動の順番の auto-model.ts が「1 本で 1 つ」を自前に持っていた)
+ */
+export const astridsFor = (item: StageItem, n: number): number => {
+  const per = boostedPlus(1, runeEffectPct(item));
+  return n <= 1 ? 0 : per > 0 ? Math.ceil((n - 1) / per) : Infinity;
+};
 
