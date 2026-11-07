@@ -22,6 +22,7 @@ import { tierDisplayRanges } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
 import { jewelEmotionsOf } from "../htc/patch";
 import { jaTypeName } from "../../i18n/item-names-ja";
+import { tierRankLabel } from "./tier-rank";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
 export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
@@ -242,9 +243,9 @@ export const factionOf = (tags: readonly string[]): string | null => tags.find((
 export const shownTags = (tags: readonly string[]): string[] => tags.filter((t) => TAG_STYLE[t] && !FACTION_TAGS.includes(t));
 
 /** aimLabel の後ろの段の札「(T3 以上)」「(T3+)」(覚えていた文から外す時もこの書式 1 つ) */
-const RANK_TAG = / \((T\d+ 以上|T\d+\+)\)$/;
+const RANK_TAG = / \(T\d+( 以上|\+)?\)$/;
 /**
- * 狙う MOD の札の文 (段の文 + 「T3 以上」)。選んだ時に文を固めず、出すたびに今の言語で作る
+ * 狙う MOD の札の文 (段の文 + 「T3 以上」、段の札は tierRankLabel = T1 は「T1」、D-04 と同じ)。選んだ時に文を固めず、出すたびに今の言語で作る
  * (2026-10-13 ランダム操作の確かめ: 英語の画面で選んだ狙いが、日本語に戻しても英語のままだった)。引けない時は覚えていた文。
  * rank: false = 段の札なし (段を問わない狙い・候補の一覧。前はチュートリアルが出来上がった文から札を剥がしていた、11-07 J-46)
  */
@@ -254,6 +255,5 @@ export function aimLabel(data: PatchData | null, a: { modId: string; minTierInde
   if (!raw || !tier) return o.rank === false ? a.label.replace(RANK_TAG, "") : a.label;
   const text = fillModText(oneOfMod(raw), tierDisplayRanges(tier));
   if (o.rank === false) return text;
-  const rank = `T${raw.tiers.length - a.minTierIndex}`;
-  return `${text} (${tr(`${rank} 以上`, `${rank}+`)})`;
+  return `${text} (${tierRankLabel(raw.tiers.length - a.minTierIndex)})`;
 }
