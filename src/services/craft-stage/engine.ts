@@ -29,6 +29,8 @@ export { omenBlock } from "./omen-block";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
+// その種類のカタリストをこの品に打つ時の今の % と入る上限 (何 % まで入るか)
+export { catalystRoom } from "./stage-core";
 // MOD を段から作る (数値の決め方は rng)・アイテムに MOD を足した形 (withMod)・そのカタリストがその MOD を伸ばすか
 export { makeStageMod, withMod, catalystBoosts } from "./stage-core";
 // ソケットの上限・白の時からあるソケットの数 (規格外。エミュの新品とツリーのスタートが同じ数で始める)

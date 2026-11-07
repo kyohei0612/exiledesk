@@ -277,6 +277,16 @@ export function catalystOf(item: StageItem): { tag: string | null; pct: number }
   return { tag: item.qualityTag ?? null, pct: item.quality };
 }
 /**
+ * その種類 (tag) のカタリストをこの品に打つ時の品質 (打つ処理の catalyst と同じ数): now = 今の % (違う種類が入っていれば 0 から、「Replaces other quality types」)、
+ * max = 入る上限 (maxQualityOf)、full = その種類でもう上限。「この品にこのカタリストで何 % まで入るか」はここ 1 本 (11-07、木の n % の箱・最大まで打つ手も同じ物)
+ */
+export function catalystRoom(item: StageItem, tag: string): { now: number; max: number; full: boolean } {
+  const max = maxQualityOf(item);
+  const same = item.qualityTag === tag;
+  const now = same ? catalystOf(item).pct : 0;
+  return { now, max, full: same && now >= max };
+}
+/**
  * その MOD がカタリストの種類 tag で伸びるか。指輪・アミュレットは MOD 自身の tags、ジュエルと上のベースは中身のタグ (displayTags)。
  * 上のベースの MOD の tags は出る場所の札 (ring など) なので中身のタグで見る。どの MOD にも乗るか (指輪の MOD だけか) は確かめていない (仮)
  */

@@ -4,17 +4,15 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "../../craft-stage/apply-currency";
-import { catalystOf, maxQualityOf } from "../../craft-stage/stage-core";
+import { catalystRoom } from "../../craft-stage/stage-core";
+import { parseKey } from "../../craft-stage/key";
 import type { StageApply, StageItem } from "../../craft-stage/types";
 import { tr } from "../../../i18n/lang";
 
-/** カタリストの種類 (タグ)。catalyst_<タグ>・jcatalyst_<タグ> (spec/run-spec と同じ取り方) */
-export const catalystTagOf = (key: string): string => key.slice(key.indexOf("_") + 1);
-/** そのカタリストの種類で品質が最大か (指輪・アミュレットなどは別の欄のカタリストの品質、catalystOf) */
-export function catalystFull(item: StageItem, key: string): boolean {
-  const c = catalystOf(item);
-  return c.tag === catalystTagOf(key) && c.pct >= maxQualityOf(item);
-}
+/** カタリストの種類 (タグ)。catalyst_<タグ>・jcatalyst_<タグ> (エンジンの鍵の読み parseKey。カタリストでない鍵は "") */
+export const catalystTagOf = (key: string): string => { const k = parseKey(key); return k.type === "catalyst" ? k.tag : ""; };
+/** そのカタリストの種類で品質が最大か (エンジンの catalystRoom。指輪・アミュレットなどは別の欄のカタリストの品質) */
+export const catalystFull = (item: StageItem, key: string): boolean => catalystRoom(item, catalystTagOf(key)).full;
 /** カタリストを打つ上限 (見張り。品質の上限より十分大きい) */
 const CAT_MAX = 200;
 /**
@@ -24,7 +22,8 @@ const CAT_MAX = 200;
 /** to = 「何 % まで」(S-31b、無ければ最大まで) */
 export function fillCatalyst(data: PatchData, item: StageItem, key: string, rng: () => number, to?: number): StageApply & { count: number } {
   let it = item, count = 0, last: StageApply = { applied: false, item, added: [], removed: [] };
-  const reached = (x: StageItem): boolean => !!to && catalystOf(x).tag === catalystTagOf(key) && catalystOf(x).pct >= to;
+  const tag = catalystTagOf(key);
+  const reached = (x: StageItem): boolean => !!to && catalystRoom(x, tag).now >= to;
   for (let i = 0; i < CAT_MAX && !catalystFull(it, key) && !reached(it); i++) {
     last = applyCurrency(data, it, key, rng, [], { oneCatalyst: true });
     if (!last.applied) break;

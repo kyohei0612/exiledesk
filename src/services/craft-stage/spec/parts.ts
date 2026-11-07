@@ -6,7 +6,7 @@
  * 結果は tests/currency-spec-golden.test.ts の控えで見張る。違う引き方にする時は、先にどちらが正しいかを決めてから控えを取り直す
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { addForced, addOne, allMods, catalystOf, hasExtraCatalyst, removeForced, type Force, makeStageMod, maxQualityOf, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
+import { addForced, addOne, allMods, catalystRoom, hasExtraCatalyst, removeForced, type Force, makeStageMod, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
 import { addSidesOf, catalysingBoost, nothingToRemove, removalOf } from "./basis";
 import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
@@ -231,10 +231,9 @@ function quality(ctx: PartCtx, item: StageItem, a: Quality): StageApply {
  */
 function catalyst(ctx: PartCtx, item: StageItem): StageApply {
   const tag = ctx.catalystTag!;
-  const max = maxQualityOf(item);
+  const { now: base, max } = catalystRoom(item, tag);
   // 暗黙でカタリストを許すベース (グラスピングメイル) はベースの品質とは別の欄 (catalystQuality) に入る
   const extra = hasExtraCatalyst(item.base);
-  const base = item.qualityTag === tag ? catalystOf(item).pct : 0;
   const put = (n: number): StageItem => (extra ? { ...item, catalystQuality: n, qualityTag: tag } : { ...item, quality: n, qualityTag: tag });
   const step = ctx.oneCatalyst ? QUALITY_PER_CATALYST : CATALYST_ROLLS[Math.floor(ctx.rng() * CATALYST_ROLLS.length)]!;
   return { applied: true, item: put(Math.min(max, base + step)), added: [], removed: [] };
