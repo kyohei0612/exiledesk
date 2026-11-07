@@ -5,18 +5,19 @@
  * box = その見本の箱。同じ側の「どれか」の当たりの箱 (anyOf) なら、一覧に当たる MOD の行を「A か B」で出す (10-26 オーナー「アイテム枠の中には狙いモッド2種を１MODの中においてどっちかみたいな話でいいんじゃない前みたく」)
  */
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { isAimMod } from "../../../services/simulator/tree/tree-aim";
+import { aimHeldOn, isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { aimedMiss, isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
-import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { aimedOfCard } from "../../../services/simulator/tree/tree-judge";
-import { midAims, placedAims } from "../../../services/simulator/tree/tree-veil";
+import { essenceModOf, midAims, placedAims } from "../../../services/simulator/tree/tree-veil";
+import { goneOf, isKeepHand, isSwapEssence } from "../../../services/simulator/tree/tree-keep";
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
-import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
+import { aimOpts, aimsOf, sampleOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -39,12 +40,38 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
 /**
  * 外れ MOD の札 (札を作るのはここだけ。箱のカード・手の窓・スマホの道の画面が全部これ、G-1 V-1)。木の手で付けた完成形に無いエッセンスの MOD は
  * 判定では外れでも札を付けず、MOD の文のまま (null。S-33c・S-82、11-07 オーナー「エッセンスはとりあいずハズレＭＯＤとして表示はしないでおこうか。
- * つけたエッセンスはそのままカードに表示させよう。」。前は「外れ MOD (エッセンス)」)。evenChosen = それでも札にする (固定された外れ・道の画面の赤い名前)
+ * つけたエッセンスはそのままカードに表示させよう。」。前は「外れ MOD (エッセンス)」)。evenChosen = それでも札にする (固定された外れ・道の画面の赤い名前)。
+ * cut = 付いた後に残したい MOD を選ぶ手を通ったエッセンスの MOD の札の鍵 aimKey (札にする、cutEssenceOf。midAims は木を回す外では毎回作り直すので物でなく鍵で比べる)
  */
-export const missTag = (d: PatchData, doc: TreeDoc, m: StageMod, title: string, opts: { evenChosen?: boolean } = {}): RowTag | null =>
-  !opts.evenChosen && midAims(d, doc).some((a) => a.modId === m.modId) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
+type MissOpts = { evenChosen?: boolean; cut?: ReadonlySet<string> };
+export const missTag = (d: PatchData, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): RowTag | null => {
+  const mid = opts.evenChosen ? undefined : midAims(d, doc).find((a) => a.modId === m.modId);
+  return mid && !opts.cut?.has(aimKey(mid)) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
+};
 /** 行に外れ MOD の札を置く (完成形に無いエッセンスの MOD は置かない = 文のまま) */
-export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: { evenChosen?: boolean } = {}): void => { const t = missTag(d, doc, m, title, opts); if (t) out.set(m.modId, t); };
+export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): void => { const t = missTag(d, doc, m, title, opts); if (t) out.set(m.modId, t); };
+/**
+ * 箱 boxId までの道で、完成形に無いエッセンスの MOD が付いた後に残したい MOD を選ぶ手 (消去・カオス・骨など ☑ のある手) の消えうる候補になった物。
+ * 文のまま出すのは付いてからその手を通るまでで、☑ しなかった物は以降の箱では「外れ MOD」(合金・ほかの MOD と同じ。S-33c・S-82、11-07 夜オーナー
+ * 「エッセンスだろうが消去で全て消えてよい選んでんのになぜかブリーチエッセンスだけはMOD名がでる」)。パーフェクトエッセンスの手は ☑ しなかった MOD も外れにしない (S-29) ので数えない
+ */
+export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): ReadonlySet<string> {
+  const cut = new Set<string>(), on = midAims(d, doc).filter((a) => aimHeldOn(d, it, a, { sameText: true }));
+  // 見本に無ければ見ない (道を辿らない)
+  if (!on.length) return cut;
+  // 箱から上へ辿る。付いた所 (そのエッセンスの手) より前の手は数えない (付け直した後は付け直した所から)。MOD の当て方はエンジン (sameAimMod)
+  const putOn = new Set<Aim>(), same = (a: Aim, id: string): boolean => sameAimMod(d, a, { modId: id, tier: 99 });
+  for (let b = doc.boxes[boxId], n = 0; b?.parent && n < 1000; b = doc.boxes[b.parent], n++) {
+    const p = doc.boxes[b.parent], h = p?.hand;
+    if (!p || !h) break;
+    const e = essenceModOf(h.currency), put = e ? on.find((a) => same(a, e)) : undefined;
+    if (put) { putOn.add(put); continue; }
+    if (!isKeepHand(h) || isSwapEssence(h)) continue;
+    const gone = [...(goneOf(d, sampleOf(d, doc, p.id, 1).item, h.currency, h.omens) ?? [])];
+    for (const a of on) if (!putOn.has(a) && gone.some((id) => same(a, id))) cut.add(aimKey(a));
+  }
+  return cut;
+}
 /** 選んで付けた MOD (エッセンス・合金・発現済みの冒涜)。消去を持った時も手の窓のカードは箱のカードのまま (S-82) */
 export const chosenMod = (d: PatchData, m: StageMod): boolean => !m.unrevealed && !!(m.desecrated || m.crafted || craftedKindOf(d, m));
 /** 箱 boxId の見本 it の札 (箱のカードと同じ呼び方。手の窓のカードで同じ物) */
@@ -71,11 +98,13 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
   // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない)
   const chainBox = !!box?.id && stripHand(doc.boxes[doc.boxes[box.id]?.parent ?? ""]?.hand);
+  // 残したい MOD を選ぶ手を通った完成形に無いエッセンスの MOD は「外れ MOD」(S-33c)。ルーンの手の後の箱はその箱の道で見る (markId)
+  const cut = box?.id ? cutEssenceOf(d, doc, markId ?? box.id, it) : undefined;
   // 箱の表示はその箱の見本と、その箱を作った手 (親の手) だけから (この箱に置いた手 = 子を作る手では変えない。10-28 オーナー OK の対策 2)。
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
   // 候補の外の印 (S-27e) は箱の見本の ☑ で見る (下の外れの箱の見方)
   if (chainBox && !aimedOfCard(d, doc, box!.id!, it)) {
-    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) putMiss(d, out, doc, m, tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`));
+    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) putMiss(d, out, doc, m, tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`), { cut });
     return out;
   }
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
@@ -110,7 +139,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     if (m.fractured || m.unrevealed) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
-    else if (isMissMod(m, miss)) putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`));
+    else if (isMissMod(m, miss)) putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
   }
   return out;
 }
