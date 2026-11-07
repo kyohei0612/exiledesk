@@ -80,7 +80,7 @@ export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probabi
 export { OMEN_FOR } from "./omens";
 // 土台とお告げの層・鍵の読み・手の種類 (2026-11-07 ジン jin-base、E-1〜E-5。シミュの木・画面はこれを呼ぶ)
 export { parseKey, type ParsedKey } from "./key";
-export { actionClass, actionClassOf, type ActionClass, type ActionName } from "./spec/action-class";
+export { actionClass, actionClassOf, actionClassOfKey, type ActionClass, type ActionName } from "./spec/action-class";
 export { FACTION_TAG, OMEN_EXCLUSIVE, omenFor, omenRivals, omenSideOf, omensOfKind, toggleOmen } from "./spec/omen-layer";
 export { OMEN_KEY } from "./spec/omen-keys";
 export { addCandidatesOf, addSidesOf, boneSlotOf, removalOf, removeSideOf, type BoneSlot, type Removal } from "./spec/basis";
