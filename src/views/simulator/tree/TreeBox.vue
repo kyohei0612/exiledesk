@@ -241,7 +241,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
     <div v-if="cardItem" data-tree-box-card :class="[box.out === 'start' ? 'mt-0.5' : 'mt-3', box.out === 'start' && !quiet ? 'nodrag cursor-pointer rounded-md hover:brightness-110' : 'pointer-events-none']" :title="box.out === 'start' ? startTitle : undefined" @click.stop="box.out === 'start' && !quiet && emit('aim')">
-      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
+      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :row-group="null" :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
     <!-- 読むだけ (スマホの全体図・道、縮めて見ている時) はボタンを出さない (11-07 ux-review 19) -->

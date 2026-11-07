@@ -54,7 +54,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
     <template v-if="q.kind === 'hand'">
       <h2 class="break-words text-[17px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.out === "start" ? tr("スタート", "Start") : quiz.boxTitle(q.id) }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
-      <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+      <StageItemCard :row-group="null" v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
       <template v-if="box.hand">
         <!-- ここで打った手 (10-27 オーナー「カオスオーブを選択とだけ出し、押したらカレンシーの選択画面へ」)。結果へは下の帯の「次へ」 -->
         <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>

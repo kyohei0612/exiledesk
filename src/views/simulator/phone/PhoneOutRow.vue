@@ -183,7 +183,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       {{ sit[0] }}
     </p>
     <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-sim-body">{{ sit[1] }}</p>
-    <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
+    <StageItemCard :row-group="null" v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
   </div>
@@ -212,7 +212,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
-        <StageItemCard class="mx-auto" :item="cardOf(backItem)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 14" compact :row-tags="tagsOf(backTo, backItem)" />
+        <StageItemCard :row-group="null" class="mx-auto" :item="cardOf(backItem)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 14" compact :row-tags="tagsOf(backTo, backItem)" />
       </div>
       <div class="mt-2 flex flex-wrap justify-center gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>

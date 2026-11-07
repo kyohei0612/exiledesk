@@ -34,7 +34,7 @@ const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 48;
     <div role="dialog" aria-modal="true" class="flex max-h-[86vh] w-full flex-col rounded-xl border-2 border-[#b08a3c] bg-sim-panel shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-2 pt-2 text-center">
         <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }} · {{ q.boxTitle(id) }}</p>
-        <StageItemCard v-if="card" class="mx-auto mt-2" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+        <StageItemCard :row-group="null" v-if="card" class="mx-auto mt-2" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
         <p data-phone-peek-hand class="mx-1.5 mt-2 break-words rounded-lg border border-amber-300/50 bg-[#2a2014] px-2 py-2 text-[13px] text-amber-50">
           {{ box.hand ? tr(`ここで打つ: ${handLabel(box.hand)}`, `Used here: ${handLabel(box.hand)}`) : tr("ここで打つ手はまだ無い", "No craft here yet") }}
         </p>

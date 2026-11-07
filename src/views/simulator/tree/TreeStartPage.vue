@@ -37,7 +37,7 @@ const item = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.valu
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div class="flex shrink-0 flex-col gap-1 md:w-[480px]">
         <p class="text-[12px] opacity-70">{{ tr("始まりのアイテム (外れの MOD・✦ の候補は 1 例)", "Starting item (miss mods and the ✦ pick are one example)") }}</p>
-        <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" />
+        <StageItemCard :row-group="null" v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" />
       </div>
     </div>
     <template #footer>

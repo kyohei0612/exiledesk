@@ -85,7 +85,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
           <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(id) }}</span>
         </p>
         <p class="break-words text-[11px] text-sim-dim">{{ q.pathText(id) }}</p>
-        <StageItemCard v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+        <StageItemCard :row-group="null" v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
         <p v-else-if="box.done" class="mt-2 text-[13px]" :class="box.done === 'fail' ? 'text-rose-300' : 'text-emerald-300'">{{ doneWord(box.done) }}</p>
         <p v-if="run" data-phone-sheet-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[id] ? 'text-rose-200' : 'text-amber-100/90'">{{ run }}</p>
