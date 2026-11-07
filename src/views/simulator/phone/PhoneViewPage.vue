@@ -9,6 +9,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import TreeRunReport from "../tree/TreeRunReport.vue";
+import TreeRunSum from "../tree/TreeRunSum.vue";
 import { holeBusy } from "../tree/hole-check";
 import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
 import { useGoalShown } from "../tree/use-goal-shown";
@@ -43,9 +44,9 @@ watch(check.checking, (on, was) => { if (was && !on) doneKey.value = routeKey.va
 const passed = computed(() => !check.checking.value && check.passed.value);
 const locked = computed(() => !check.checking.value && !passed.value && doneKey.value === routeKey.value);
 
-// 100 人回す (PC と同じ人数・回し方。結果のまとめも PC と同じ部品)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目の光と足跡を PC と同じ層で見せる
-// (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」、S-94e)
-const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, () => {}, true);
+// 100 人回す (PC と同じ人数・回し方・結果の行・結果のまとめ・木の上の層)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目が枠の外へ出たらその箱へ寄る (PC の onWalk と同じ)
+// (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」「挙動完全にPCに合わせていいよ…全て真似しておけ」、S-94e)
+const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, (id, i) => void (i ? map.value?.reveal(id) : map.value?.showAll()), true);
 const reportOpen = ref(false);
 watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) => { reportOpen.value = on; });
 async function go(): Promise<void> {
@@ -55,8 +56,6 @@ async function go(): Promise<void> {
   map.value?.showAll();
   void run.run();
 }
-const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
-const donePct = computed(() => { const r = run.result.value; return r ? Math.round((r.finished / (r.n || 1)) * 100) : 0; });
 const map = ref<InstanceType<typeof PhoneViewMap> | null>(null);
 /** 詳細 = 全体図。既定は完成までの道 (S-94h、オーナー 11-01「詳細ボタン付けたらオンオフで全体さっきのツリー見れるでいいんじゃね」) */
 const detail = ref(false);
@@ -82,7 +81,8 @@ onMounted(() => {
   ro.observe(document.body);
 });
 onBeforeUnmount(() => { document.documentElement.style.overflow = lockWas; window.removeEventListener("resize", measureTop); ro?.disconnect(); });
-watch([topEl, () => run.result.value?.n, () => passed.value, locked], () => void nextTick(measureTop), { flush: "post" });
+// 結果の行 (TreeRunSum) は 1 人目が進む間・回し終わりで字と札が替わり、390 では折り返して高さが変わる
+watch([topEl, () => run.result.value?.n, () => passed.value, locked, () => !!run.walk.value, () => run.walk.value?.fast, run.running, run.shown], () => void nextTick(measureTop), { flush: "post" });
 
 // 小さな完成形 = 広い幅で描いて倍率で縮めるだけ (S-92 の例外、D6)。押すと今の大きさ
 // 道の画面は下へ送るので最初から広げ、詳細の全体図の時は小さく (オーナー 11-01「これなら完成MODカードでかくていいよ今小さいから　どうせ下にスクロールするだけだしな」「最初から押すと広がるでおｋだったら」)
@@ -121,8 +121,8 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       <div data-phone-view-run class="flex min-w-0 flex-col gap-1">
         <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ tr("足りない所があるので回せない。PC で直す", "Can't run: this tree has gaps. Fix it on a PC") }}</p>
         <button v-else type="button" data-phone-view-go class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="!passed || !s.data.value || run.running.value" @click="go">{{ !passed ? holeBusy() : run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
-        <button v-if="run.result.value && !run.running.value && !run.halted.value" type="button" data-phone-view-sum class="flex min-h-9 items-center justify-between rounded-md border border-amber-300/40 px-3 text-[13px] tabular-nums text-amber-100" @click="reportOpen = true"><span>{{ tr(`1 個 ${fmt(run.result.value.perItem)} 神 · 完成 ${donePct}%`, `${fmt(run.result.value.perItem)} div/item · ${donePct}% done`) }}</span><span class="text-[12px]">{{ tr("結果のまとめ ›", "Summary ›") }}</span></button>
-        <p v-if="run.halted.value" data-phone-view-halt class="rounded-md border border-rose-400/60 px-3 py-2 text-center text-[13px] text-rose-100">{{ tr("途中で止まった人がいる。PC で直す", "Some runs got stuck. Fix it on a PC") }}</p>
+        <!-- 結果の行は PC と同じ部品 (1 人目が進んでいる n/m 箱・早送り・飛ばす・止まり・沼った場所・結果のまとめ・結果を隠す)。390 では折り返す -->
+        <TreeRunSum v-if="!locked" v-model:shown="run.shown.value" v-model:report="reportOpen" data-phone-view-sum class="flex-wrap text-[13px] text-amber-100" :result="run.result.value" :running="run.running.value" :stuck="run.stuckBoxes.value" :halted="run.halted.value" :walk="run.walk.value" :test="run.test.value" @go="goBox" @skip="run.skipWalk()" />
       </div>
       <div ref="topEl" />
       <section data-phone-view-sheet class="fixed inset-x-0 bottom-0 z-30 flex flex-col overscroll-contain rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel px-3 pb-2 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]" :class="detail ? '' : 'overflow-y-auto'" :style="{ top: `${sheetTop}px` }">
@@ -141,7 +141,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
             </div>
           </div>
         </div>
-        <PhoneViewMap v-if="detail" ref="map" :result="run.result.value" :walk="run.walk.value" />
+        <PhoneViewMap v-if="detail" ref="map" :result="run.shown.value ? run.result.value : null" :walk="run.shown.value ? run.walk.value : null" />
         <PhoneViewRoute v-else :result="run.result.value" />
       </section>
       <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形。PC と同じ 100 人なので「振れる」の一言は出さない、S-94e) -->
