@@ -9,7 +9,7 @@ import { computed, onMounted, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { useTree } from "../simulator/tree/use-tree";
-import { sureFracText } from "../simulator/tree/tree-names";
+import { startFromWords } from "../simulator/tree/tree-names";
 import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
 
@@ -26,12 +26,8 @@ onMounted(() => {
 });
 const card = computed(() => t.goalItem.value?.item ?? null);
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
-type Pair = [string, string];
-/** シミュの始め方の窓 (S-13) の (a) / (b) と同じ文。✦ は 1 つなので確定フラクチャーの素材は ×3 */
-const FROMS: Array<{ k: StartFrom; title: Pair; sub: Pair }> = [
-  { k: "fractured", title: ["(a) フラクチャー済みから", "(a) From fractured"], sub: ["選んだ MOD が ✦ で付いたレアから始める (フラクチャーの費用は無し)", "Start from a rare with the chosen mod fractured (no fracture cost)"] },
-  { k: "four", title: ["(b) 白から確定フラクチャー", "(b) From white, sure fracture"], sub: [`白 (ノーマル) のベースから始め、選んだ MOD を木の中でフラクチャー (必ず成功、素材 ${sureFracText(1)} の費用込み)`, `Start from a white (normal) base and fracture the chosen mod in the tree (sure success, materials ${sureFracText(1)} cost included)`] },
-];
+/** シミュの始め方の窓 (S-13) の (a) / (b) と同じ文 (1 か所 = tree-names の startFromWords、D-xx)。✦ は 1 つなので確定フラクチャーの素材は ×3 */
+const FROMS: Array<{ k: StartFrom; title: [string, string]; sub: [string, string] }> = startFromWords(1);
 const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
 </script>
 
