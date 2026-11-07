@@ -4,7 +4,7 @@
  * ヴァールのインフューザー (品質 50%・+6) の手は外した (2026-10-20 オーナー: 運の手で再現できない、no-vaal-chance と同じ線)。+6 は最後の文で品質の帯を案内する。
  * 聖別と品質の計算式はオーナーと決着済み (メモ poe2-craft-rules-confirmed の 10-21): 聖別は素の値 × 0.78〜1.22 を四捨五入、表示 = 切り捨て(素 × (1 + 品質))
  */
-import { OMEN_KEY, type Force } from "../craft-stage/engine";
+import { OMEN_KEY, SANCTIFY_MIN, SANCTIFY_MAX, type Force } from "../craft-stage/engine";
 import type { TopicCourse } from "./topic-courses";
 import { H } from "./topic-steps";
 
@@ -33,7 +33,7 @@ export const GUIDE_COURSES: TopicCourse[] = [
         ["今は +3 × 1.4 = 4.2 で +4。次の聖別で素の値を 4 にすれば +5", "Now it shows +4 (3 × 1.4 = 4.2). Sanctify the base value to 4 next for +5"],
       ], [BREACH]), startMods: AFTER_BREACH, untilMax: true, cont: true },
       { ...H("divine", ["聖別で +5 (約 13%)", "Sanctify for +5 (about 13%)"], [
-        ["聖別のお告げを掛けた神のオーブ。MOD ごとに素の値を 0.78〜1.22 倍して四捨五入し、聖別済みになる (もうカレンシーで変えられない)", "Divine Orb with Omen of Sanctification: each mod's base value is multiplied by 0.78–1.22 and rounded, and the item becomes Sanctified (no more currency)"],
+        [`聖別のお告げを掛けた神のオーブ。MOD ごとに素の値を ${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} 倍して四捨五入し、聖別済みになる (もうカレンシーで変えられない)`, `Divine Orb with Omen of Sanctification: each mod's base value is multiplied by ${SANCTIFY_MIN / 100}–${SANCTIFY_MAX / 100} and rounded, and the item becomes Sanctified (no more currency)`], // 幅はエンジンの聖別の定数 (E-35)
         ["素の +3 が 4 になるのは倍率 1.17 以上の時 (45 通り中 6 通り、約 13%)", "The base +3 becomes 4 only at 1.17× or more (6 of 45 rolls, about 13%)"],
         ["品質は素の値に掛かる: 素 4 × 1.4 = 5.6 で +5。素 3 なら +4、素 2 なら +2", "Quality applies to the base value: 4 × 1.4 = 5.6 → +5. Base 3 gives +4, base 2 gives +2"],
         ["このコースでは素 4 になる例 (+5) を見せる", "This course shows the base becoming 4 (+5)"],

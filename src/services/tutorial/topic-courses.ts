@@ -7,7 +7,7 @@
  * use の特別なキー: reset = 白に戻す / reveal = 発現 (どれを選んでも良い) / ess:<名前>:<段> = そのアイテムのエッセンス (棚から引く)
  */
 import type { JaEn } from "./quiz-tutorials";
-import { OMEN_KEY, parseKey, revealKey, type PatchData, type StageItem, type Force } from "../craft-stage/engine";
+import { OMEN_KEY, parseKey, revealKey, catalysingMultiplier, CATALYSING_FULL_PCT, CATALYSING_PER_PCT, SANCTIFY_MIN, SANCTIFY_MAX, type PatchData, type StageItem, type Force } from "../craft-stage/engine";
 import { essenceShelf } from "../../state/for-share/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 import { GUIDE_COURSES } from "./topic-courses-guide";
@@ -343,7 +343,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
       ], ["alchemy"])), omens: [OMEN_KEY.blessed] },
       { ...ALWAYS(H("divine", ["聖別する", "Sanctify"], [
         ["聖別のお告げを掛けると、神のオーブは黄 (レア) のアイテムを聖別する", "With Omen of Sanctification, the Divine Orb Sanctifies a yellow (Rare) item"],
-        ["MOD の数字が 0.78〜1.22 倍のどこかになる (上がるか下がるかは運)", "Mod values become 0.78–1.22× (up or down is luck)"],
+        [`MOD の数字が ${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} 倍のどこかになる (上がるか下がるかは運)`, `Mod values become ${SANCTIFY_MIN / 100}–${SANCTIFY_MAX / 100}× (up or down is luck)`], // 幅はエンジンの聖別の定数 (E-35)
         ["聖別したアイテムは、もうカレンシーで手を加えられない", "A Sanctified item can't be changed with currency anymore"],
       ], ["alchemy"])), omens: [OMEN_KEY.sanctification] },
     ],
@@ -378,7 +378,8 @@ export const TOPIC_COURSES: TopicCourse[] = [
       // 触媒の高貴は成功例 (足した MOD が全部火の MOD) を見せる (craft-lesson.ts の rigRare。2026-10-18 オーナー「触媒を使った成功例見せたい」)
       { ...ALWAYS(H("exalt", ["品質の種類の MOD が出やすい", "Quality's mod type is more likely"], [
         ["触媒の高貴のお告げを掛けた高貴なオーブは、品質の種類の MOD が付きやすくなる (火の品質なら、火耐性・火ダメージなど)", "With Omen of Catalysing Exaltation, the Exalted Orb favours mods of the quality's type (Fire quality: Fire Resistance, Fire Damage and so on)"],
-        ["品質 20% なら、火の MOD の出やすさが 5 倍 (Craft of Exile の式: 1 + 0.2 × 品質)", "At 20% quality, Fire mods are 5× as likely (Craft of Exile's formula: 1 + 0.2 × quality)"],
+        // 倍率・境・係数はエンジンの触媒の高貴の式 (E-32)
+        [`品質 ${CATALYSING_FULL_PCT}% なら、火の MOD の出やすさが ${catalysingMultiplier(CATALYSING_FULL_PCT)} 倍 (Craft of Exile の式: 1 + ${CATALYSING_PER_PCT} × 品質)`, `At ${CATALYSING_FULL_PCT}% quality, Fire mods are ${catalysingMultiplier(CATALYSING_FULL_PCT)}× as likely (Craft of Exile's formula: 1 + ${CATALYSING_PER_PCT} × quality)`],
         ["このコースでは火の MOD が付いた成功例を見せる。実際のゲームでは必ず火になるわけではない (出やすくなるだけ)", "This course shows a success (a Fire mod). In the real game it isn't always Fire, just more likely"],
         ["使うと品質は全部なくなって 0 に。品質が無いアイテムには掛けられない", "All the quality is used up (back to 0). It can't be used without quality"],
       ], FIRE20)), omens: [OMEN_KEY.catalysing], startMods: TWO },

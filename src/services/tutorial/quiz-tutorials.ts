@@ -14,7 +14,7 @@
  * 資料で決まらない所は assumed (画面に「仮」) に書く。値段は使わない (費用は出さず、打った数だけ出す)。
  */
 import { quizSlot, type QuizAction, type QuizRecipe, type QuizRule } from "../simulator/quiz-recipe";
-import { OMEN_KEY } from "../craft-stage/engine";
+import { OMEN_KEY, catalysingMultiplier } from "../craft-stage/engine";
 
 /** 日本語と英語の組 (画面の言葉。ゲームの言葉はキーからクライアントの名前で出す) */
 export type JaEn = readonly [string, string];
@@ -262,7 +262,8 @@ function ring(): QuizTutorial {
               d(use("exalt", "OmenofDextralExaltation"), "品質が無いと、火耐性も他のサフィックスと同じ確率", "Without quality, Fire Resistance is as likely as any other suffix")]),
           rule({ A: 3, B: 0, "s.junk": 0, cat: "fire" }, CAT_DEXTRAL,
             ["火の品質を使って、サフィックスに火耐性を狙うには?", "Use the fire quality to aim Fire Resistance on a suffix?"],
-            ["触媒の高貴のお告げで品質の分だけ火の MOD を重く (品質 45% で 8 倍)、右の高貴のお告げでサフィックスに。品質は使い切る", "Catalysing Exaltation weights fire mods by the quality (8x at 45% quality), Dextral Exaltation puts it on a suffix. The quality is used up"],
+            // 倍率はエンジンの触媒の高貴の式 (E-32)
+            [`触媒の高貴のお告げで品質の分だけ火の MOD を重く (品質 45% で ${catalysingMultiplier(45)} 倍)、右の高貴のお告げでサフィックスに。品質は使い切る`, `Catalysing Exaltation weights fire mods by the quality (${catalysingMultiplier(45)}x at 45% quality), Dextral Exaltation puts it on a suffix. The quality is used up`],
             [d(use("exalt", OMEN_KEY.catalysing), "側のお告げが無いとプレフィックスに付くこともある", "Without a side omen it may land on a prefix"),
               d(use("exalt", "OmenofDextralExaltation"), "触媒の高貴のお告げが無いと品質は効かない", "Without Catalysing Exaltation the quality does nothing")]),
           rule({ A: 3, B: 2, C: 0, "s.junk": 0 }, use("catalyst_cold"),
