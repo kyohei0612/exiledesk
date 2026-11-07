@@ -352,8 +352,8 @@ const goalItem = computed((): { item: StageItem; note: string | null; left: Arra
   if (goalRarity.value !== "rare") return { ...startItemOf(data, { ...d, memoAims: plain, start: { rarity: goalRarity.value, mods: goalRarity.value === "normal" ? [] : plain } }, MID_ROLL), left: [] };
   const marks = goals.value.filter((a) => a.fractured), one = marks.length === 1;
   const order = [...marks, ...goals.value.filter((a) => !a.fractured)].map((a) => ({ modId: a.modId, tier: a.tier, ...(one && a.fractured ? { fractured: true } : {}) }));
-  // 枠を増やす MOD (途中で消える物も) を先に付ける。枠の数はエンジンの limitOf (S-04b)
-  const r = placeWithSlots(data, d.base, d.itemLevel, order, (d.wayMods ?? []).map((a) => ({ modId: a.modId, tier: a.tier })), MID_ROLL, goalRunesOf(d));
+  // 枠を増やす MOD を先に付ける。枠の数はエンジンの limitOf (S-04b)。前の「途中で消える」物 (S-30) は 11-07 に撤回したので狙いの外の物は無い
+  const r = placeWithSlots(data, d.base, d.itemLevel, order, [], MID_ROLL, goalRunesOf(d));
   // 貼り付けで取り込んだ狙いは貼った素の値で出す (段の中央でなく、10-25 オーナー「コピペした時数値の変更が若干ある」)
   // 文 (textJa / textEn) も値から作り直す (エンジンの retext。値だけ替えると文は段の中央のままだった)
   // 貼り付けの読みは「減少」を負の値で返し、エンジンの MOD の値は正の向きの物がある。符号が合わない時は差し替えない (文が崩れた、t1 の要求能力値)

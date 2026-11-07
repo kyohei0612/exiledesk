@@ -20,11 +20,10 @@ import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tre
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
-import { inWay } from "./tree-way-mods";
 
 /**
  * スマホの道の画面だけの札 (S-94h。オーナー 11-01「これだとエッセンス系は全部名前ありでいいよ ただ狙いMOD以外のエッセンスは赤文字でハズレMODと同じ色でいいな ブリーチとかは必須モッドじゃないけど道で必要だからそのまま出していい気がするけどまぁこの最短ルート設定時は特別って事で」)。
- * エッセンス・合金で付いた行は「外れ MOD」にまとめず MOD の名前で出す: 完成形の狙い・途中で消える MOD はふつうの色、ほかは外れ MOD と同じ赤 (ブリーチも赤。前のブリーチの特例は 11-07 に撤回 = S-31)。それ以外の札はそのまま
+ * エッセンス・合金で付いた行は「外れ MOD」にまとめず MOD の名前で出す: 完成形の狙いはふつうの色、ほかは外れ MOD と同じ赤 (ブリーチも赤。前のブリーチ・途中で消える MOD の特例は 11-07 に撤回 = S-31・S-30)。それ以外の札はそのまま
  */
 export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
   const out = new Map(tags), goalMiss = aimedMiss(d, doc), mid = new Set(midAims(d, doc).map((a) => a.modId));
@@ -32,7 +31,7 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
     // 完成形に無いエッセンスの MOD は札が無い (S-33c) ので、ここでは外れと同じ赤の名前に拾う
     const tag = out.get(m.modId) ?? (mid.has(m.modId) ? missTag(d, doc, m, modText(m), { evenChosen: true }) ?? undefined : undefined);
     if (!tag?.replace || tag.tone !== "bad" || m.fractured || !(m.crafted || craftedKindOf(d, m))) continue;
-    if (!isMissMod(m, goalMiss) || inWay(doc, m.modId)) out.delete(m.modId);
+    if (!isMissMod(m, goalMiss)) out.delete(m.modId);
     else out.set(m.modId, { ...tag, text: modText(m) });
   }
   return out;

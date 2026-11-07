@@ -55,7 +55,7 @@ function healBox(id: string, raw: unknown, ids: ReadonlySet<string>): TreeBox {
 /** 木を今の形へ (読めない箱・手は要確認の印で残す)。木として読めなければ null。fixed = 要確認の印が付いた箱の数 */
 export function migrateTreeDoc(raw: unknown): { doc: TreeDoc; fixed: number } | null {
   // 保存の形 v1 (打ち方だけ、S-104〜S-108) はそのまま (開く時に組み直す)。v1 の後に形を変えたら v1 → v2 をここに 1 段ずつ
-  if (obj(raw) && isRecipeV1(raw)) { const doc = dropForQuality(healRecipeV1(raw)); return { doc, fixed: doc.orphans?.length ?? 0 }; }
+  if (obj(raw) && isRecipeV1(raw)) { const doc = oldGoalMarks(healRecipeV1(raw)); return { doc, fixed: doc.orphans?.length ?? 0 }; }
   let n = versionOf(raw);
   if (n === null || n > TREE_SCHEMA_N) return null;
   const d = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
@@ -70,10 +70,15 @@ export function migrateTreeDoc(raw: unknown): { doc: TreeDoc; fixed: number } | 
   d.itemLevel = num(d.itemLevel, 82);
   const doc = d as unknown as TreeDoc;
   migrateStart(doc);
-  return { doc: dropForQuality(doc), fixed };
+  return { doc: oldGoalMarks(doc), fixed };
 }
-/** 前の作りで完成形の品質のために狙いへ足したブリーチの MOD (forQuality) を外す (完成形はブリーチを足さない = S-31 の撤回 11-07。残すと完成の狙いになる) */
-function dropForQuality(doc: TreeDoc): TreeDoc {
+/**
+ * 完成形の前の印を読み捨てる (11-07): 品質のために狙いへ足したブリーチの MOD (forQuality) は外す (S-31 撤回。残すと完成の狙いになる)。
+ * 「途中で消える」にしたクラフト MOD (wayMods) は完成形から外す (S-30 撤回。完成形は見本 = 最後の品に無い物は入れない。木の手で打つエッセンスとして判定は外れ・カードは文のまま = S-33c。
+ * 狙いへ戻すと、残す合金と消すブリーチが「どれか 1 つ残る」の束になり、作った人の意味と逆になった、ブラック 59 11-07)
+ */
+function oldGoalMarks(doc: TreeDoc): TreeDoc {
   if ((doc.memoAims ?? []).some((a) => a.forQuality)) doc.memoAims = (doc.memoAims ?? []).filter((a) => !a.forQuality);
+  delete doc.wayMods;
   return doc;
 }

@@ -15,7 +15,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import { makeStageMod, mulberry32, sideOfMod, tierIndexOf, tierRankLabel, unfracturable, type StageMod } from "../../../services/craft-stage/engine";
+import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { goalBlockLoose } from "./tree-goal-cap";
 import { rowBlockLines } from "../../../services/simulator/sim-engine";
@@ -39,9 +39,7 @@ import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { qualityUndecided } from "./tree-goal-quality";
 import { isPhoneWidth } from "../../../utils/use-phone";
 import { useGoalShown } from "./use-goal-shown";
-import HelpTip from "../../../components/ui/HelpTip.vue";
-import type { RowToggle } from "../../../components/for-share/item/stage-item-row-tag";
-import { dropWay, inWay, isCraftAim, toggleWay, WAY_ORDER } from "./tree-way-mods";
+import { isCraftAim } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
 import { useDismiss } from "../../../utils/use-dismiss";
@@ -53,7 +51,7 @@ import { simOp } from "../../../web/track";
 
 
 const t = useTree();
-/** 完成形のカード (品質・「途中で消える」の行) */
+/** 完成形のカード (品質・束の行) */
 const shown = useGoalShown();
 const step = computed(() => t.goalPage.value);
 const asking = ref<string | null>(null);
@@ -162,25 +160,6 @@ function apply(en: string): void {
 }
 /** 貼り付けで取り込んだ (ベースと狙いは tree-paste が入れた) = 完成の MOD のページへ */
 function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
-/** 途中で消えるクラフト MOD (tree-way-mods) も一覧では狙いと同じに光り、押すと外れる  */
-const pickGoal = {
-  has: (modId: string, tier: number): boolean => t.hasGoal(modId, tier) || ((t.doc.value.wayMods ?? []).some((a) => a.modId === modId && a.tier === tier)),
-  toggle: (modId: string, tier: number): void => { if (inWay(t.doc.value, modId)) t.edit((d) => dropWay(d, modId)); else t.toggleGoal(modId, tier); },
-};
-/** カードの下の「途中で消える」の切り替えに並べるクラフト MOD (残る物 + 途中で消える物。2 つ以上の時だけ出す) */
-const crafts = computed(() => {
-  const d = s.data.value, doc = t.doc.value;
-  if (!d) return [];
-  const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
-  // 束 (S-30b) の時は切り替えは前に「途中で消える」にした物だけ (ほかは束の札「どれか n つ」。ブリーチの例外は 11-07 に撤回 = S-31)
-  return list.length >= 2 ? list.filter((c) => c.way) : [];
-});
-/** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
-const inRow = computed(() => true);
-const wayToggles = computed((): Map<string, RowToggle> | null => (inRow.value && crafts.value.length ? new Map(crafts.value.map((c) => [c.a.modId, { text: tr("途中で消える", "Removed on the way"), on: c.way, title: `${c.way ? tr("押すと残す (完成の狙いへ戻す)", "Click to keep it (back to the final targets)") : tr("押すと途中で消える物にする (完成の狙い・枠・完成の判定に数えない)", "Click to mark it removed on the way (not counted as a final target, slot or for completion)")}
-${WAY_ORDER()}` }])) : null));
-/** カードの札: 行の右に切り替えがある行は「途中で消える」の札を外す (押された切り替えと同じ言葉が 2 つ並ぶので) */
-const cardTags = computed(() => { const tg = shown.tags.value, tv = wayToggles.value; if (!tg || !tv) return tg; const m = new Map(tg); for (const k of tv.keys()) m.delete(k); return m; });
 /** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b。スイッチ goalAllIn では全部カードの中 = S-04c) */
 const overLeft = computed(() => { if (flag("goalAllIn")) return []; const l = t.goalItem.value?.left ?? [], b = shown.bundled.value; return b.size ? l.filter((a) => !b.has(a.modId)) : l; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
@@ -196,7 +175,7 @@ let blockMemo = new Map<string, string | null>(), blockFor = "";
 function blockOf(modId: string, tier: number): string | null {
   const d = s.data.value, doc = t.doc.value;
   if (!d) return null;
-  // クラフト MOD は 2 つ目以降も足せる (残すか途中で消えるかはカードの下で決める)。ほかのクラフト MOD を除いた組で聞く
+  // クラフト MOD は 2 つ目以降も足せる (上限を超えた分は束「どれか n つ残る」で自動でまとめる、S-30b)。ほかのクラフト MOD を除いた組で聞く
   const craft = isCraftAim(d, { modId });
   const lv = doc.ilvlFit ? FIT_ILVL : doc.itemLevel, aims = t.goals.value.filter((a) => a.modId !== modId && !(craft && isCraftAim(d, a))).map((a) => ({ modId: a.modId, tier: a.tier }));
   const key = `${doc.base}|${lv}|${craft ? 1 : 0}|${JSON.stringify(aims)}`;
@@ -210,14 +189,6 @@ function blockOf(modId: string, tier: number): string | null {
 function rowBlocks(r: Parameters<typeof rowBlockLines>[0]): Array<{ why: string; ranks: string }> {
   return rowGoal(r) ? [] : rowBlockLines(r, blockOf);
 }
-/** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、穴チェックで「始まりの形が作れない」) */
-const DESECRATED_NO_FRACTURE = (): string => tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured");
-/** 骨の池の行 (冒涜・異界) は骨で付く = 冒涜の印の付いた品の MOD。できるかはエンジンの unfracturable に聞く */
-function fracBlockOf(r: { group?: string }, modId: string, tier: number): string | null {
-  const d = s.data.value, mod = d?.mods.get(modId), it = t.goalItem.value?.item;
-  const m = d && mod && it ? { ...makeStageMod(mod, sideOfMod(d, modId), tierIndexOf(d, modId, tier), mulberry32(1)), ...(r.group === "desecrated" || r.group === "otherworldly" ? { desecrated: true as const } : {}) } : null;
-  return m && unfracturable(d, it!, m) ? DESECRATED_NO_FRACTURE() : blockOf(modId, tier);
-}
 /** その行 (系統) の狙い (段ごとに modId が違うまとめ行もあるので、行の段のどれかの modId で引く) */
 const rowGoal = (r: { id: string; tiers: Array<{ modId?: string }> }): Aim | undefined => t.goals.value.find((a) => a.modId === r.id || r.tiers.some((x) => x.modId === a.modId));
 /**
@@ -227,8 +198,6 @@ function goalAt(modId: string, tier: number): "pick" | "in" | null {
   const g = t.goals.value.find((a) => a.modId === modId);
   return !g ? null : g.tier === tier ? "pick" : tier < g.tier ? "in" : null;
 }
-/** その段の狙いにフラクチャーの印があるか */
-const isFrac = (modId: string, tier: number): boolean => t.goals.value.some((a) => a.modId === modId && a.tier === tier && a.fractured);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
 /** スマホの形で「フラクチャーから」の時は、カードの MOD を押すとフラクチャー (✦、1 つだけ。右クリックが無いので。10-26 夜オーナー) */
 const tapFrac = useTapFracture();
@@ -341,7 +310,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
-      <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="t.goalItem.value?.item ?? null" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => pickGoal.has(tt.modId ?? r.id, tt.tier)">
+      <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="t.goalItem.value?.item ?? null" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)">
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
         <!-- 狙いの MOD の行に札 (印ありは ✦ の色)、段の表では狙いの段の左に色の帯 (行の色、10-24 オーナー「フラクチャーにした行は色を変えて」) -->
@@ -357,11 +326,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <template #tier-actions="{ row: r, tier: tt }">
           <td class="w-48 whitespace-nowrap py-0.5 text-right">
             <!-- 選んだ段より上の段は狙いに含まれる印だけ (押すとそこから上に絞る)。ボタンの形にすると狙いが 2 つあるように見えた (10-24 オーナー) -->
-            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
-            <!-- 付け方 4 択の「付ける」1 つ (S-10b)。途中で消えるクラフト MOD は前のボタンのまま (押すと外れる) -->
-            <TreeAttachPick v-else-if="!inWay(t.doc.value, tt.modId ?? r.id)" :mod-id="tt.modId ?? r.id" :tier="tt.tier" :rank="tt.rank" :group="r.group" :block="blockOf(tt.modId ?? r.id, tt.tier)" :aim="t.goals.value.find((a) => a.modId === (tt.modId ?? r.id))" />
-            <button v-else type="button" data-mod-pick class="tbtn" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`))" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? (tt.tier === 1 ? tr("✓ 狙い", "✓ Target") : tr(`✓ 狙い (${tt.rank} 以上)`, `✓ Target (${tt.rank}+)`)) : tr("狙いにする", "Target") }}</button>
-            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in' && !!inWay(t.doc.value, tt.modId ?? r.id)" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!fracBlockOf(r, tt.modId ?? r.id, tt.tier) && !isFrac(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="fracBlockOf(r, tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="markFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
+            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="t.toggleGoal(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
+            <!-- 付け方 4 択の「付ける」1 つ (S-10b) -->
+            <TreeAttachPick v-else :mod-id="tt.modId ?? r.id" :tier="tt.tier" :rank="tt.rank" :group="r.group" :block="blockOf(tt.modId ?? r.id, tt.tier)" :aim="t.goals.value.find((a) => a.modId === (tt.modId ?? r.id))" />
           </td>
         </template>
       </ModTable></div>
@@ -369,19 +336,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
-        <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
-        <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー) -->
-        <div v-if="crafts.length" data-tree-goal-ways class="flex flex-col gap-1 px-1 text-[12px]">
-          <span v-if="!inRow" class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>
-          <!-- 行の右に置いた時: 打つ順の文はカードの札に乗せると出る。スマホは乗せられないので ? を 1 つ -->
-          <span v-else class="flex items-center gap-1 opacity-80 md:hidden">{{ tr("「途中で消える」の打つ順", "Order for \"removed on the way\"") }}<HelpTip :text="WAY_ORDER()" /></span>
-          <div v-for="c in inRow ? [] : crafts" :key="c.a.modId" data-tree-goal-way :data-mod="c.a.modId" class="flex min-w-0 flex-wrap items-center gap-2">
-            <span class="min-w-0 break-words" :class="c.way ? 'text-amber-200/80 line-through decoration-amber-200/40' : 'text-[#c8c8ff]'">{{ t.aimLabel(c.a) }}</span>
-            <button type="button" data-tree-goal-way-toggle class="tbtn ml-auto shrink-0" :class="c.way ? 'on' : ''" :aria-pressed="c.way" @click="t.edit((d) => toggleWay(d, c.a.modId))">{{ tr("途中で消える", "Removed on the way") }}</button><HelpTip v-if="c.way" :text="WAY_ORDER()" />
-          </div>
-        </div>
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <TreeGoalRunes v-if="flag('useRunes')" />
         <p v-else-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>

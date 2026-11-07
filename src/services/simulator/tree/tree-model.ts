@@ -203,7 +203,7 @@ export interface TreeDoc {
   tidyRan?: true;
   /** 開いた時に外した前の版の決めの数 (今の木に札の箱が無い物、S-107b。帯に 1 行出すだけ、保存しない) */
   droppedOld?: number;
-  /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー) */
+  /** 前の版の「途中で消える」にしたクラフト MOD (読むだけ。開く時に tree-migrate が完成形から外す、S-30 撤回 11-07) */
   wayMods?: Aim[];
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
