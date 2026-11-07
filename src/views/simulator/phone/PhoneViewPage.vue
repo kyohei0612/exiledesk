@@ -1,7 +1,7 @@
 <!--
   PhoneViewPage.vue — シミュのスマホの見るだけの 1 画面 (S-94〜S-94f、幅 768 未満 + オーナー 11-01「完全にスマホ版は見るだけに特化させた作りに変えよう修正もできない完全に観賞用」)。
-  上の帯 (タブ)・レシピとシェア・10 人回す、その下に開いたままのシート (小さな完成形 + 完成までの道 PhoneViewRoute、「詳細」で全体図 PhoneViewMap、S-94h)。木を変える入口は無い。
-  完成形は倍率で縮めるだけで文は切らず、押すと今の大きさ (D6)。10 人の結果はカードに載せない (D2、use-tree-run の view)。木が無い時は PhoneViewEmpty (S-94f)
+  上の帯 (タブ)・レシピとシェア・100 人回す (PC と同じ人数、11-07)、その下に開いたままのシート (小さな完成形 + 完成までの道 PhoneViewRoute、「詳細」で全体図 PhoneViewMap、S-94h)。木を変える入口は無い。
+  完成形は倍率で縮めるだけで文は切らず、押すと今の大きさ (D6)。スマホで回した結果はカードに載せない (D2、use-tree-run の view)。木が無い時は PhoneViewEmpty (S-94f)
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -43,7 +43,7 @@ watch(check.checking, (on, was) => { if (was && !on) doneKey.value = routeKey.va
 const passed = computed(() => !check.checking.value && check.passed.value);
 const locked = computed(() => !check.checking.value && !passed.value && doneKey.value === routeKey.value);
 
-// 10 人回す (PC と同じ回し方で 1 人目の再生は無し、結果のまとめも PC と同じ部品)
+// 100 人回す (PC と同じ人数・回し方で 1 人目の再生は無し、結果のまとめも PC と同じ部品)
 const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, () => {}, true);
 const reportOpen = ref(false);
 watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) => { reportOpen.value = on; });
@@ -110,7 +110,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       <div data-phone-recipe data-tree-own class="relative z-40 flex min-w-0 flex-wrap items-center justify-between gap-1 text-[13px]">
         <TreeRecipeBar class="!contents" view flat="flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-sim-body aria-expanded:text-amber-100" />
       </div>
-      <!-- 穴チェックの帯の所に 10 人回す。穴があれば短い文だけ (S-94e) -->
+      <!-- 穴チェックの帯の所に 100 人回す。穴があれば短い文だけ (S-94e) -->
       <div data-phone-view-run class="flex min-w-0 flex-col gap-1">
         <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ tr("足りない所があるので回せない。PC で直す", "Can't run: this tree has gaps. Fix it on a PC") }}</p>
         <button v-else type="button" data-phone-view-go class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="!passed || !s.data.value || run.running.value" @click="go">{{ !passed ? holeBusy() : run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
@@ -137,9 +137,9 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
         <PhoneViewMap v-if="detail" ref="map" :result="run.result.value" />
         <PhoneViewRoute v-else :result="run.result.value" />
       </section>
-      <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形)。人数が少ないので振れる事を 1 行 (S-94e) -->
+      <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形。PC と同じ 100 人なので「振れる」の一言は出さない、S-94e) -->
       <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
-        <TreeRunReport :result="run.result.value" :note="tr('人数が少ないので結果は振れます', 'Few runs, so results vary')" @close="reportOpen = false" @go="goBox" />
+        <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="goBox" />
       </div>
     </template>
   </div>
