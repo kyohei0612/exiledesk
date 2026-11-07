@@ -44,7 +44,7 @@ import { foreseeBlock, keepsMods } from "../../../services/simulator/tree/tree-f
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
-/** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
+/** only = 起こりうる結果の一覧 (tree-hand-plan の onlyOf = tree-outcome の possibleOutsOf、光のお告げ + 消去など) */
 const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; aim: [] }>();
 const t = useTree();
 

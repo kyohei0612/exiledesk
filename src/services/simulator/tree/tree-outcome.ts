@@ -63,7 +63,7 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   if (isDivineAim(h)) return divineOutcome(after, h!);
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = noStones(doc, h, keptAimedOf(doc, h, aimed));
-  const aims = am ? keptPlus(doc, h, mineOf(data, before, aims0, am)) : aims0;
+  const aims = countedAims(data, doc, h, before, aims0, aimed);
   const raw = boxOutcomeRaw(data, doc, h, own, before, after, aims);
   // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
   if (!key || effectOf(key) === "fracture") {
@@ -108,6 +108,14 @@ const pickedAims = (data: PatchData, before: StageItem, aims: readonly Aim[], pi
 const keepAims = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
 /** 狙いに数える物 = ☑ で付いている物と、まだ付いていない物 (付いていて ☑ の無い完成形の MOD は外れ MOD) */
 const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed: ReadonlySet<string>): Aim[] => aims.filter((a) => aimed.has(a.modId) || !aimHeldOn(data, before, a, { sameText: true }));
+/**
+ * 打つ前の品 before で狙いに数える札 (回す時の handOutcome と手を置く時の possibleOutsOf で 1 つ): ☑ で付いた狙い・まだ付いていない狙い・残したい MOD。
+ * 付いていて ☑ の無い完成形の MOD は入れない = 外れ (tree-miss の isMissMod の相手にこの札を渡すのと同じ、S-22・S-82)。aimed が無ければ木の狙いのまま
+ */
+function countedAims(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Aim[] {
+  const am = noStones(doc, h, keptAimedOf(doc, h, aimed));
+  return am ? keptPlus(doc, h, mineOf(data, before, aims0, am)) : [...aims0];
+}
 /** 当たりは ☑ の札だけ (付いた狙いが ☑ に無ければ外れ MOD) */
 const ownHits = (oc: Outcome, own: readonly Aim[]): Outcome => {
   if (oc.out !== "hit") return oc;
@@ -199,10 +207,11 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける)
       if (outs.some((o) => unrevealedOf(o.item)) && !unrevealedOf(it)) {
         veiled = true;
-        // 消えて「狙いが消えた」になるのは道で持っている狙い・持って着きうる狙いだけ (☑ の無い手で付いた完成形の MOD は外れ MOD。
-        // 狙い無しの錬金術の打った後に付いたキャストを骨が消すと「狙いが消えた」が出た、10-28 モンキー 6)
-        // 残したい MOD を決めた骨は、その MOD が消えた時だけ狙いが消えた (S-27d)
-        const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, keptAimsOf(doc, h) ?? aims, { sameText: true }).lost.length;
+        // 消えて「狙いが消えた」になるのは打つ前の ☑ で付いた狙いだけ = 回す時の handOutcome と同じ札 (countedAims)。☑ の無い完成形の MOD は外れなので、
+        // 骨が消しても外れの側 (外れ・未発現のまま なら打った後) に入る (11-07。前は木の狙い全部で数え、☑ の無い完成形の MOD が消えると手を置く時だけ「狙いが消えた」の箱が出た。
+        // 10-28 モンキー 6 の錬金術の打った後のキャストも同じ)。残したい MOD を決めた骨は、その MOD が消えた時だけ狙いが消えた (S-27d、countedAims の中)
+        const held = countedAims(data, doc, h, it, aims, aimed);
+        const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, held, { sameText: true }).lost.length;
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
@@ -236,11 +245,6 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 足す・入れ替える手が外れだけの時も外れ (と消えた) だけ = 箱の下はエンジンの結果と同じ (S-21、11-06 オーナー「直すのはいいけど」。前はまだ付いていない狙いがあると
   // 手の種類の箱へ逃がし、MOD を選ぶ当たりの箱を作ったが、エンジンではどの狙いも付かないので誰も来ない箱だった = 乱数の確かめの高貴のずれ)
   return list.length ? list : null;
-}
-/** 結果が 1 通りの手 (possibleOutsOf が 1 つだけの時。台本 scripts/_tree-patterns-ui が使う) */
-export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
-  const l = possibleOutsOf(data, doc, boxId, h, pre, extra);
-  return l?.length === 1 ? l[0]! : null;
 }
 
 /** ✦ 以外の MOD の数 (全部消えてよい消去では全部外れ MOD) */

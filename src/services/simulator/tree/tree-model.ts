@@ -104,7 +104,7 @@ export interface TreeBox {
   note?: string;
   /** × = この箱で付いている MOD のうち要らない物の印 (modId、段は問わない。オーナー 10-22「一度付けた物をバツにする仕組み」) */
   unwanted?: string[];
-  /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-run の linkSameShape。手で替えると外す) */
+  /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-judge-link の linkByContent ほか。手で替えると外す) */
   autoBack?: true;
   /** まだ手の無い同じ形の箱としてまとめた (tree-merge-open。箱は描かず、親の線をまとめ先へ直に引く = 案 A。戻り先を手で替えると autoBack と一緒に効かなくなる) */
   merged?: true;

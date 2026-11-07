@@ -108,7 +108,7 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
   return { out: "junk", hits: [] };
 }
 
-export { possibleOutsOf, singleOutOf } from "./tree-outcome";
+export { possibleOutsOf } from "./tree-outcome";
 /** 分かれ目の行の箱の見本を引き直す回数 */
 const SPLIT_TRIES = 40;
 /** 当たりの箱の狙いを持っていない親の見本を引き直す回数 (hitNew) と、引き直しの中か (入れ子で引き直さない) */

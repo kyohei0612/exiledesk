@@ -1,8 +1,9 @@
 /**
  * tree-box-shape.ts — 箱の形を 1 つに (10-28 オーナー OK の対策 1、スイッチ boxShape)。
  * 形 = 狙いの組 (held、道の当たりの札 = tree-shape の heldSets) + 体 (body: 外れの側・種類・数、✦ の側、レアリティ)。
- * 今の箱の判定 (tree-judge の judgeMemo) が使うのは bodyOf だけ。boxBody・bodyMemo・sameBody・backBody・bodyFixed・bodyKinds・heldOn・heldOfKey は
- * 前の世代の形の鍵の判定 (tree-shape の linkSameShape・matchBox、台本だけが読む) と猿の口 (sim-monkey、データを読む前だけの枝) の boxShape・sameShape が使う
+ * 今の箱の判定 (tree-judge の judgeMemo) が使うのは bodyOf だけ。boxBody・bodyMemo・sameBody・bodyKinds・heldOn・heldMiss は猿の口 (sim-monkey の shapeOf・sameShape、
+ * 見張り scripts/sim-watch が呼ぶ) の boxShape・sameShape だけが使う。前の世代の形の鍵の判定 (tree-shape の linkSameShape・matchBox) と、それだけが使った
+ * bodyFixed・backBody・heldOfKey は 11-07 に消した
  */
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { sampleOf } from "./tree-sample";
@@ -35,8 +36,6 @@ const partsOf = (body: string): { p: number[]; s: number[]; fr: string; rarity: 
   const [p = "", s = "", fr = "", rarity = ""] = body.split("|");
   return { p: p.split(".").map(Number), s: s.split(".").map(Number), fr, rarity };
 };
-/** ✦ の側とレアリティ (消せない・戻らない所。回す時の形の合う箱へで、これが違う箱へは行かない) */
-export const bodyFixed = (body: string): string => { if (body.startsWith("mixed")) return ""; const { fr, rarity } = partsOf(body); return `${fr}|${rarity}`; };
 /** 外れの種類があるかだけ (数・側は見ない)。回す時の 2 番目の比べと、見本ごとに種類が違う箱 (mixed) の見分け */
 export const bodyKinds = (body: string): string => {
   if (body.startsWith("mixed")) return body;
@@ -59,8 +58,6 @@ export function heldOn(d: TreeDoc, id: string): Set<string> {
 }
 /** 道で持っている狙いの MOD (modId の組) を当たりに数える札に (前の世代の形の鍵の体。置き石は数えない = 前のまま) */
 export const heldMiss = (data: PatchData, d: TreeDoc, held: ReadonlySet<string>): MissAims => aimedMiss(data, d, held, { stones: false });
-/** 形の鍵 (tree-shape の shapeKey「modId|tier,…#外れ」) から持っている狙いの MOD */
-export const heldOfKey = (key: string): Set<string> => new Set(key.split("#")[0]!.split(",").filter(Boolean).map((k) => k.split("|")[0]!));
 export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): string | null {
   const s = sampleOf(data, d, id, 1);
   if (s.note === "none" || s.note?.startsWith("cant:")) return null;
@@ -86,17 +83,6 @@ export function sameBody(body: BodyOf | undefined, from: string, to: string): bo
   const x = body(from), y = body(to);
   return x === null || y === null || x === y;
 }
-/**
- * 自動の ↩ (外れ・消えた・打った後の箱から前の箱へ) をつないでよいか: 体が両方分かって同じ時だけ (スイッチ bodyStrict。閉じている間は sameBody)。
- * 体が分からない箱 (見本が作れない・見本ごとに違う mixed) とはつながない (S-50、10-29 オーナーの木 FmNY7Wwv: 外れを 2 つ持ったまま始めの方のカオスへ戻り、
- * 当たりを経てサフィ満杯の箱で止まった。オーナー「おけ」= ブラック案 (a))。当たりの箱どうしの統合 (同じ MOD 群) は狙いの組で合わせる別の物なので使わない
- */
-export function backBody(body: BodyOf | undefined, from: string, to: string): boolean {
-  if (!body) return sameBody(body, from, to);
-  const x = body(from), y = body(to);
-  return x !== null && y !== null && x === y;
-}
-
 /** 箱の形 (猿の口・見張り) */
 export type BoxShape = { held: string[]; body: string | null };
 export function boxShape(data: PatchData, d: TreeDoc, id: string, body: BodyOf = bodyMemo(data, d)): BoxShape | null {
