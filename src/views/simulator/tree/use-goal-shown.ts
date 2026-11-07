@@ -5,18 +5,17 @@
  * 足した行は見せるだけ: 完成の狙い・MOD の枠 (use-tree の goalItem の left)・完成の判定には数えない (品質の値で見るのは tree-unbounded の qualityOk のまま)
  */
 import { computed } from "vue";
-import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { applyCurrency, INFUSER_OVER, isQualityCapMod, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
 import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
-import { midAims } from "../../../services/simulator/tree/tree-veil";
 import { catalystPart } from "../../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../../i18n/lang";
 
-/** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (+10 まではインフューザー) */
-export const BREACH_OVER = 11;
+/** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (インフューザーで越せる幅 = エンジンの INFUSER_OVER まではインフューザー) */
+export const BREACH_OVER = INFUSER_OVER + 1;
 
 export function useGoalShown() {
   const t = useTree();
@@ -26,7 +25,7 @@ export function useGoalShown() {
     // カタリスト以外の部位の品質は最初に上げてある前提 (S-31、11-05) なので、ブリーチを途中で付ける行は出さない
     if (!d || !g || !catalystPart(g) || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
     // ブリーチのエッセンスを MOD 一覧で足してある時は、その行で足りる (同じ行を 2 つ出さない)
-    if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => /LocalMaximumQuality/.test(a.modId))) return null;
+    if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => isQualityCapMod(d, a.modId))) return null;
     // 完成形に既にエッセンスの MOD があると「エッセンスの MOD は 1 つまで」で打てないので、エッセンスの MOD を除いた写しに打つ (途中で付けて消える物なので、完成形と同時には付かない)
     const bare = { ...g, prefixes: g.prefixes.filter((m) => !m.crafted), suffixes: g.suffixes.filter((m) => !m.crafted) };
     try { return applyCurrency(d, bare, "essence:breach", mulberry32(1)).added?.[0] ?? null; } catch { return null; }
@@ -35,10 +34,10 @@ export function useGoalShown() {
   const ways = computed((): StageMod[] => {
     const d = s.data.value;
     if (!d) return [];
-    const doc = t.doc.value, way = wayRows(d, doc), brq = breach.value;
-    // 木の手で打つエッセンスの MOD も完成形のカードに「途中で消える」で出す (S-30d。見せるだけ)
-    const hand = wayRows(d, doc, midAims(doc).filter((a) => !way.some((m) => m.modId === a.modId) && brq?.modId !== a.modId).map((a) => ({ ...a, tier: 1 })));
-    return [...way, ...hand, ...(brq ? [brq] : [])];
+    const way = wayRows(d, t.doc.value), brq = breach.value;
+    // 木の手で打つエッセンスの MOD は出さない (S-30d 撤回 11-07、オーナー「別に途中で消えてもここに表示しなくてよくね」。完成形に無い物は外れ = S-33c)。
+    // 品質の上限超えで自動で出るブリーチの行は特例で残す (S-31、11-07 オーナー「完成形にはだしていいんじゃないあいつ特例でしょたしか」)
+    return [...way, ...(brq ? [brq] : [])];
   });
   /** 上限を溢れたクラフト MOD の束 (S-30b)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
   const bundle = computed(() => (s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));

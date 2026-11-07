@@ -12,7 +12,7 @@
 import { TIER } from "../../state/for-share/tier-word";
 import { tierIdOf } from "../../services/emulator/emu-engine";
 import { aimRangeText } from "./aim-text";
-import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";
+import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf, tierRankLabel, tierRankOf } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onMounted, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
@@ -58,7 +58,7 @@ const idOf = (r: ListRow, t: ListTier): { modId: string; idx: number } => tierId
 const pickedOf = (r: ListRow): AimPick | undefined => draft.value.find((a) => r.tiers.some((t) => (t.modId ?? r.id) === a.modId));
 const pickOf = (r: ListRow, t: ListTier): AimPick | null => {
   const { modId, idx } = idOf(r, t);
-  return idx < 0 ? null : { modId, minTierIndex: idx, label: `${t.text} (${tr(`${t.rank} 以上`, `${t.rank}+`)})`, at: `${modId}:${t.rank}` };
+  return idx < 0 ? null : { modId, minTierIndex: idx, label: `${t.text} (${tierRankLabel(t.tier)})`, at: `${modId}:${t.rank}` };
 };
 const full = computed(() => draft.value.length >= MAX);
 /** 選べない理由 (灰色の行の下に文で。スマホはホバーが無い) */
@@ -94,9 +94,10 @@ const MONKEY = flag("monkeyEmu1023");
 /** 選んだ札の文。スパムシミュは当たりになる値の幅全部で (ページの狙いの札と同じ。モンキーテスト 10-23 の 6) */
 function chipOf(a: AimPick): string {
   const m = forRoutes && MONKEY ? s.data.value?.mods.get(a.modId) : undefined;
-  return m ? `${aimRangeText(m, a.minTierIndex, s.itemLevel.value)} (${tr(`${rankOf(a)} 以上`, `${rankOf(a)}+`)})` : aimLabel(s.data.value, a);
+  return m ? `${aimRangeText(m, a.minTierIndex, s.itemLevel.value)} (${rankOf(a)})` : aimLabel(s.data.value, a);
 }
-const rankOf = (a: AimPick): string => { const n = s.data.value?.mods.get(a.modId)?.tiers.length ?? 0; return `T${n - a.minTierIndex}`; };
+/** 狙いの段の札 (エンジンの tierRankLabel。T1 は「以上」を付けない) */
+const rankOf = (a: AimPick): string => (s.data.value ? tierRankLabel(tierRankOf(s.data.value, a.modId, a.minTierIndex)) : "");
 /** 段の表を開いている行 (押した段の行は最初から開く) */
 const expanded = ref<string | null>(seedRow?.id ?? null);
 /** 押した段の行は開いて見える所へ */
@@ -145,13 +146,13 @@ function decide(): void {
         </label>
       </template>
       <template #row-tag="{ row: r }">
-        <span v-if="pickedOf(r)" class="shrink-0 whitespace-nowrap rounded-sm bg-amber-500/25 px-1 py-px text-[10px] font-bold leading-none text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
+        <span v-if="pickedOf(r)" class="shrink-0 whitespace-nowrap rounded-sm bg-amber-500/25 px-1 py-px text-[10px] font-bold leading-none text-amber-100">{{ rankOf(pickedOf(r)!) }}</span>
         <span v-else-if="whyNot(r) && !r.on" class="shrink-0 whitespace-nowrap text-[10px] leading-none">{{ whyNot(r) }}</span>
       </template>
       <!-- 幅は決めておく (T12・✓ が付いても列が動かない、1 行のまま) -->
       <template #tier-actions="{ row: r, tier: t }">
         <td class="w-[92px] py-0.5 pl-2 text-right max-md:w-[76px] max-md:shrink-0">
-          <button type="button" class="tbtn w-[84px] max-md:w-[68px] max-md:!px-0" :class="isPickedTier(r, t) ? 'on' : isCoveredTier(r, t) ? '!border-amber-400/70 !text-amber-100' : ''" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
+          <button type="button" class="tbtn w-[84px] max-md:w-[68px] max-md:!px-0" :class="isPickedTier(r, t) ? 'on' : isCoveredTier(r, t) ? '!border-amber-400/70 !text-amber-100' : ''" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tierRankLabel(t.tier) }}</button>
         </td>
       </template>
     </ModTable>
@@ -164,7 +165,7 @@ function decide(): void {
             <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 shrink-0 accent-amber-500" :aria-label="r.text" @change="toggle(r, $event)" />
             <button type="button" class="g-plain flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-left" @click="expanded = expanded === r.id ? null : r.id; if (expanded === r.id) revealOpened(($event.currentTarget as HTMLElement).closest('[data-tier-row]'))">
               <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
-              <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
+              <span v-if="pickedOf(r)" class="rounded-sm bg-amber-500/25 px-1 text-[10px] font-bold text-amber-100">{{ rankOf(pickedOf(r)!) }}</span>
               <span v-else-if="whyNot(r)" class="text-[10px]">{{ whyNot(r) }}</span>
               <Icon :name="expanded === r.id ? 'chevron-up' : 'chevron-down'" class="size-3.5 opacity-50" />
             </button>
@@ -177,7 +178,7 @@ function decide(): void {
                 <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
                 <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                 <td class="w-20 py-0.5 text-right">
-                  <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30 max-md:min-h-9 max-md:px-2.5 max-md:text-[12px]" :class="isPickedTier(r, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : isCoveredTier(r, t) ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
+                  <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] disabled:opacity-30 max-md:min-h-9 max-md:px-2.5 max-md:text-[12px]" :class="isPickedTier(r, t) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50' : isCoveredTier(r, t) ? 'border-amber-400/70 bg-amber-500/15 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tierRankLabel(t.tier) }}</button>
                 </td>
               </tr>
             </tbody>

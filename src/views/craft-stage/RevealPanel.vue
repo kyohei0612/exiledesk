@@ -8,7 +8,7 @@
   候補は縦に 3 つ・文は真ん中、押すと金の枠で選んだ状態、下の「発現」で発現、引き直しは右下の回る矢印。プレ / サフィ・ティアはホバーで
 -->
 <script setup lang="ts">
-import { type StageMod, jaOfOmen, reqOfItem, planSpec } from "../../services/craft-stage/engine";
+import { type StageMod, OMEN_KEY, jaOfOmen, reqOfItem, planSpec, revealKey, unrevealedCount } from "../../services/craft-stage/engine";
 import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
 import { useDismiss } from "../../utils/use-dismiss";
@@ -32,7 +32,7 @@ useDismiss(() => chosen.value != null, [panel], () => { chosen.value = null; });
 // ボタンが出なかった。2026-10-16 要望 eb671189「反響を掛けていても引き直しができない時がある」)
 watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => { rerolled.value = false; chosen.value = null; });
 watch(() => craftStage.offers.value, () => { chosen.value = null; });
-const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
+const left = () => { const it = craftStage.item.value; return it ? unrevealedCount(it) : 0; };
 /** 引き直せるか: エンジンの発現の手に掛かっているお告げの効き目 (rerolls) で決める (spec/run-spec.ts の planSpec) */
 const canReroll = (): boolean => {
   const d = craftStage.data.value, it = craftStage.item.value;
@@ -40,13 +40,14 @@ const canReroll = (): boolean => {
 };
 /**
  * 選ぶと要求レベルが上がる候補は、乗せた時にその数字を出す (2026-10-10 オーナー「要求レベル出すのやっとこか」→「候補に出すのは邪魔、ホバーで」: 冒涜専用の MOD はアイテムレベルに関わらず T1 まで出て、
- * レベル上げ中の装備が着けられなくなる。reddit「Preserved rib can roll T1 mod on lower ilvl」)。決まりはアイテムのカードと同じ reqOfItem (MOD レベル × 0.8)
+ * レベル上げ中の装備が着けられなくなる。reddit「Preserved rib can roll T1 mod on lower ilvl」)。決まりはアイテムのカードと同じ reqOfItem: その候補を付けた品の要求と今を比べる
  */
 function raisesTo(m: StageMod): number | null {
   const it = craftStage.item.value;
   if (!it) return null;
   const now = reqOfItem(it)?.level ?? 0;
-  const need = Math.floor(m.modLevel * 0.8);
+  const side = m.side === "prefix" ? "prefixes" : "suffixes";
+  const need = reqOfItem({ ...it, [side]: [...it[side], { ...m, unrevealed: false }] })?.level ?? 0;
   return need > now ? need : null;
 }
 const nowReq = (): number => { const it = craftStage.item.value; return it ? reqOfItem(it)?.level ?? 0 : 0; };
@@ -61,7 +62,7 @@ function hoverOf(m: StageMod): string {
  */
 const lessonErr = ref("");
 watch(() => craftStage.offers.value, () => { lessonErr.value = ""; });
-const mustReroll = (): boolean => !!topicCur.value?.step.omens?.includes("OmenofAbyssalEchoes") && topicCur.value.step.use === "reveal";
+const mustReroll = (): boolean => !!topicCur.value?.step.omens?.includes(OMEN_KEY.echoes) && topicCur.value.step.use === "reveal";
 function confirm(): void {
   if (chosen.value == null) return;
   if (mustReroll() && !rerolled.value) {
@@ -82,7 +83,7 @@ function confirm(): void {
   lessonErr.value = "";
   const i = chosen.value;
   chosen.value = null;
-  craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
+  craftStage.use(revealKey(i + 1, rerolled.value));
 }
 function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.value = ""; wave.value++; }
 </script>
@@ -123,7 +124,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.
         type="button"
         data-rec="reveal-reroll"
         class="g-btn sm absolute right-0 !px-1.5"
-        :title="rerolled ? tr('引き直した候補', 'Rerolled options') : tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
+        :title="rerolled ? tr('引き直した候補', 'Rerolled options') : tr(`${jaOfOmen(OMEN_KEY.echoes) ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
         @click="reroll"
       ><Icon name="rotate" class="size-4" /></button>
     </div>

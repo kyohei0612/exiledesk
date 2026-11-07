@@ -11,7 +11,7 @@
  * 座標は 1280×720 の枠の中 (拡大しても合う)。skip() で残りを 0 秒にして一気に終わらせる (→ の連打)。
  */
 import { reactive, ref, type Ref } from "vue";
-import { revealOffers, mulberry32, isShard, type PlayedStep, type StageMod } from "../../services/craft-stage/engine";
+import { revealOffers, mulberry32, isShard, parseRuneKey, type PlayedStep, type StageMod } from "../../services/craft-stage/engine";
 import { craftStage } from "../../state/craft-stage";
 
 export interface Hand { x: number; y: number; dur: number; held: string; press: number; visible: boolean; hint: string }
@@ -92,8 +92,10 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
       }
       // 3. アイテムまで運ぶ。オーグメント (ルーン・ソウルコア・アイドル・傑作のルーン) は、はめる / 置き換える / 上げるソケットの丸の上まで
       // (POE2Tube 要望 ㉘)。ソケットは結果 JSON の augment_change.socket (打てなかった手は指した番号、無ければ 1 番目)
-      const augSock = (st.out as { augment_change?: { socket: number } }).augment_change?.socket ?? (/^rune:.*@(\d+)$/.exec(cur)?.[1] ? Number(/@(\d+)$/.exec(cur)![1]) : null);
-      const sockEl = cur.startsWith("rune:") ? card?.querySelector(`[data-stage-socket="${augSock ?? 1}"]`) : null;
+      // ルーンの鍵の読み (rune:<名前>[@n]) はエンジンの parseRuneKey
+      const rk = parseRuneKey(cur);
+      const augSock = (st.out as { augment_change?: { socket: number } }).augment_change?.socket ?? rk?.socket ?? null;
+      const sockEl = rk ? card?.querySelector(`[data-stage-socket="${augSock ?? 1}"]`) : null;
       await moveTo(sockEl ? pointOf(sockEl) : pointOf(card, 0.35), 700);
       if (rv && craftStage.data.value) {
         // 発現 (POE2Tube 要望 ㉗): アイテムを押すと魂の井戸の小窓がアイテムの枠の下に出る → (反響なら引き直しのボタンへ動いて押す →

@@ -10,11 +10,15 @@
  * 未発現の冒涜 MOD がもう付いている時は「発現」の 1 行 (反響込み)。
  */
 import { applyCurrency, kindOf } from "./apply-currency";
-import { revealOffers, unrevealedOf } from "./apply-desecrate";
+import { offeredMods, revealOffers, unrevealedOf } from "./apply-desecrate";
+import { OMEN_FOR } from "./omens";
 import { mulberry32 } from "../htc/rng";
 import type { StageItem, StageMod } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { tierNoOf } from "./tier-rank";
+import { isCraftedSource, tierNoOf } from "./tier-rank";
+import { omenRivals } from "./spec/omen-layer";
+import { OMEN_KEY } from "./spec/omen-keys";
+import { actionClassOfKey } from "./spec/action-class";
 
 export interface AimTarget { modId: string; minTierIndex: number }
 /** 試す打ち方 (カレンシー + お告げ)。reveal = 付いている未発現の MOD を発現させる (反響込み) */
@@ -22,27 +26,23 @@ export interface AimCombo { currency: string; omens: string[] }
 export interface AimOdd extends AimCombo { p: number; n: number }
 
 export const REVEAL = "reveal";
-const ECHOES = "OmenofAbyssalEchoes";
+const ECHOES = OMEN_KEY.echoes;
 
-/** お告げの組み合わせ (付く MOD の出方が変わる物だけ。片方の側のお告げは 1 つまで) */
+/** 付く MOD の出方が変わる手 (狙うでお告げの組を試す手) */
+const AIM_OMEN_KINDS: ReadonlySet<string> = new Set(["exalt", "chaos", "essence_perfect", "desecrate"]);
+/**
+ * お告げの組み合わせ = その手に掛かるお告げ (OMEN_FOR) の組のうち、一緒に掛けられない物 (OMEN_EXCLUSIVE、左と右・勢力 2 枚) を含まない物全部。
+ * 効かない組は aimCombos が結果の比べで外す (腐食と側のお告げ など)。前は手ごとの手書きの組で、触媒の高貴・削減 + 抹消・腐食が抜けていた
+ * (11-07 jin-base4、ブラック 57 の決め A10「お告げの層から組を作り触媒の高貴も入れる」)
+ */
 function omenSets(kind: string): string[][] {
-  switch (kind) {
-    case "exalt": {
-      const side = [[], ["OmenofSinistralExaltation"], ["OmenofDextralExaltation"]];
-      return [...side, ...side.map((s) => [...s, "OmenofGreaterExaltation"])];
-    }
-    case "chaos":
-      return [[], ["OmenofWhittling"], ["OmenofSinistralErasure"], ["OmenofDextralErasure"]];
-    case "essence_perfect":
-      return [[], ["OmenofSinistralCrystallisation"], ["OmenofDextralCrystallisation"]];
-    case "desecrate": {
-      const side = [[], ["OmenofSinistralNecromancy"], ["OmenofDextralNecromancy"]];
-      const fac = [[], ["OmenoftheSovereign"], ["OmenoftheLiege"], ["OmenoftheBlackblooded"]];
-      return side.flatMap((s) => fac.map((f) => [...s, ...f]));
-    }
-    default:
-      return [[]];
+  if (!AIM_OMEN_KINDS.has(kind)) return [[]];
+  let sets: string[][] = [[]];
+  for (const o of OMEN_FOR[kind] ?? []) {
+    const rivals = new Set(omenRivals(o));
+    sets = [...sets, ...sets.filter((s) => !s.some((x) => rivals.has(x))).map((s) => [...s, o])];
   }
+  return sets;
 }
 
 /**
@@ -63,11 +63,26 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   const same = m.modId === t.modId || (!!want.family && m.family === want.family && o!.data.mods.get(m.modId)?.text === want.text);
   return same && tierNoOf(m) <= want.tiers.length - t.minTierIndex;
 };
-const isEssenceSource = (s: unknown): boolean => s === "essence" || s === "perfect_essence";
-const has = (item: StageItem, t: AimTarget): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t));
+const isEssenceSource = isCraftedSource;
+/**
+ * 狙いの札どうしが同じ MOD か (aimHits の sameText と同じ見方: 同じ modId か、同じ系統で効果の文も同じ一般の MOD。エッセンスの MOD は同じ modId だけ)。
+ * tier: true = 段の T も同じ (sameText の段は段の名前の T = その MOD の段の数 − 段の番号)。省略 = 段は見ないが、aimHits と同じく a の T が b の段の数を超える時は別物
+ * (11-07 jin-base4、シミュ部長の頼み: 木の sameAimMod / sameAim が札から部分だけの MOD を組んで aimHits に当てていた)
+ */
+export function sameAimTarget(data: PatchData, a: AimTarget, b: AimTarget, o: { tier?: boolean } = {}): boolean {
+  const ma = data.mods.get(a.modId), mb = data.mods.get(b.modId);
+  const tA = (ma?.tiers.length ?? 0) - a.minTierIndex, tB = (mb?.tiers.length ?? 0) - b.minTierIndex;
+  if (a.modId === b.modId) return !o.tier || a.minTierIndex === b.minTierIndex;
+  if (!ma || !mb || isEssenceSource(ma.source) || isEssenceSource(mb.source)) return false;
+  if (!mb.family || ma.family !== mb.family || ma.text !== mb.text) return false;
+  return o.tier ? tA === tB : tA <= (mb.tiers.length ?? 0);
+}
+const has = (item: StageItem, t: AimTarget, o?: AimHitOpts): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, o));
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */
 const SAME_SEEDS = 8;
+/** 骨 (未発現を付ける部品の手、actionClassOfKey) = 発現の候補に出れば当たり。鍵の文字 (kindOf の "desecrate") でなく部品で見る */
+const addsUnrevealed = (key: string): boolean => actionClassOfKey(key).parts.includes("addUnrevealed");
 /** 1 回打った結果の印 (付いた MOD・値・側・レア度・品質。冒涜は発現の候補も) */
 function outcomeOf(data: PatchData, item: StageItem, key: string, omens: string[], seed: number): string {
   const rng = mulberry32(seed);
@@ -75,7 +90,7 @@ function outcomeOf(data: PatchData, item: StageItem, key: string, omens: string[
   if (!r.applied) return `x:${r.reason ?? ""}`;
   const it = r.item;
   const ms = [...it.prefixes, ...it.suffixes].map((m) => `${m.side}:${m.modId}#${m.tierIndex}:${JSON.stringify(m.values ?? null)}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}${m.unrevealed ? JSON.stringify(m.unrevealed) : ""}`);
-  const offers = kindOf(key) === "desecrate" && unrevealedOf(it) ? (({ first, reroll }) => [...first, ...reroll].map((m) => `${m.modId}#${m.tierIndex}`))(revealOffers(data, it, rng)) : [];
+  const offers = addsUnrevealed(key) && unrevealedOf(it) ? (({ first, reroll }) => [...first, ...reroll].map((m) => `${m.modId}#${m.tierIndex}`))(revealOffers(data, it, rng)) : [];
   return JSON.stringify([it.rarity, it.quality ?? 0, it.qualityTag ?? null, it.catalystQuality ?? 0, !!it.corrupted, ms, offers]);
 }
 
@@ -107,20 +122,39 @@ export function aimCombos(data: PatchData, item: StageItem, keys: readonly strin
       // コラプトさせる物は狙う手にしない。打てばその先クラフトできず、外れも当たりも狙いの役に立たない
       // (2026-10-09 オーナー「ヴァールに関しては意味わからん」: 書き換えの目でまれに付くので 1 位に出ていた)
       if (r.item.corrupted && !item.corrupted) continue;
-      out.push({ currency: k, omens: kind === "desecrate" ? [...om, ECHOES] : om });
+      // 骨は反響のお告げ無し (発現の候補 1 組) と有り (2 組、反響の値段も費用に) の両方 (E-69。確率の表と同じく反響を掛けた時だけ 2 組目を数える、11-07 A27)
+      if (kind === "desecrate") out.push({ currency: k, omens: om }, { currency: k, omens: [...om, ECHOES] });
+      else out.push({ currency: k, omens: om });
     }
   }
   return out;
 }
 
+/** 1 手の費用 = カレンシー + 掛けたお告げの値段 (発現は 0。狙う・スパムの道の打ち手が同じ物) */
+export const stepCost = (c: { currency: string; omens: readonly string[] }, price: (key: string) => number): number =>
+  (c.currency === REVEAL ? 0 : price(c.currency)) + c.omens.reduce((a, o) => a + price(o), 0);
+/**
+ * aimChain の回し方の種類 (画面の「何をどう回した数字か」の文はこれで分ける)。reveal = 発現を今の状態から / bone = 骨 → 発現の候補、毎回今の状態に戻す /
+ * spam = カオススパム (今の MOD が消えても揃えば当たり、外れはその結果に続ける) / keep = それ以外 (今の MOD が残っていれば続ける、打てなくなったら今の状態へ)。
+ * aimChain の本当の分かれ方の 4 つだけ (高貴も keep。11-07 エミュ部長: add を分けると変成・増強・王者・エッセンスの説明が変わる)
+ */
+export type AimChainMode = "reveal" | "bone" | "spam" | "keep";
+export function aimChainMode(c: AimCombo): AimChainMode {
+  if (c.currency === REVEAL) return "reveal";
+  if (addsUnrevealed(c.currency)) return "bone";
+  if (kindOf(c.currency) === "chaos") return "spam";
+  return "keep";
+}
 /** 1 つの打ち方で n 回試して、狙いが付いた (冒涜は候補に出た) 割合 */
 /**
  * 1 つの打ち方で n 回試して、狙い (全部。最大 4 つ、錬金術で一度に付く数) が揃った割合。冒涜は発現の候補に残りの 1 つが出れば揃った扱い
+ * hit = 当たりの式の設定 (aimHits と同じ。省略 = 同じ modId だけ、渡すと sameText などがそのまま効く)
  */
-export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readonly AimTarget[], c: AimCombo, n: number, seed: number): number {
+export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readonly AimTarget[], c: AimCombo, n: number, seed: number, hit0?: AimHitOpts): number {
   const list = Array.isArray(ts) ? (ts as readonly AimTarget[]) : [ts as AimTarget];
-  const missing = (it: StageItem): AimTarget[] => list.filter((t) => !has(it, t));
-  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!)));
+  const missing = (it: StageItem): AimTarget[] => list.filter((t) => !has(it, t, hit0));
+  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && offeredMods(o, c.omens.includes(ECHOES)).some((m) => hits(m, miss[0]!, hit0)));
+  const bone = addsUnrevealed(c.currency);
   let hit = 0;
   for (let i = 0; i < n; i++) {
     const rng = mulberry32(seed + i * 7919);
@@ -131,7 +165,7 @@ export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readon
     const used = c.omens.filter((o) => o !== ECHOES);
     const r = applyCurrency(data, item, c.currency, rng, used);
     if (!r.applied) continue;
-    if (kindOf(c.currency) === "desecrate") {
+    if (bone) {
       if (offered(revealOffers(data, r.item, rng), missing(r.item))) hit++;
     } else if (!missing(r.item).length) hit++;
   }
@@ -147,16 +181,17 @@ export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readon
  * - 冒涜は骨 → 発現の候補に出れば当たり、外れたら今の状態から (次の骨はもう打てないため)
  * - カオスはカオススパム: 今の MOD が消えても狙いが揃えば当たり、外れたらその結果に続けて打つ (2026-10-16 要望 63f6d901
  *   「カオススパムも候補に」: MOD が 1 つのレアはカオスで必ずその MOD が消え、消えたら外れの決まりでいつも 0% になって一覧に出なかった)
- * 返すのは 打った回数あたりの当たりの割合 (1 回の費用 ÷ これ = 付くまでの平均費用)
+ * 返すのは 打った回数あたりの当たりの割合 (1 回の費用 ÷ これ = 付くまでの平均費用)。hit = 当たりの式の設定 (aimOdds と同じ)
  */
-export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarget[], c: AimCombo, n: number, seed: number): number {
+export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarget[], c: AimCombo, n: number, seed: number, hit0?: AimHitOpts): number {
   const keepIds = [...start.prefixes, ...start.suffixes].filter((m) => !m.unrevealed).map((m) => m.modId);
   const keeps = (it: StageItem): boolean => !it.corrupted && keepIds.every((id) => [...it.prefixes, ...it.suffixes].some((m) => m.modId === id));
-  const missing = (it: StageItem): AimTarget[] => ts.filter((t) => !has(it, t));
-  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!)));
+  const missing = (it: StageItem): AimTarget[] => ts.filter((t) => !has(it, t, hit0));
+  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && offeredMods(o, c.omens.includes(ECHOES)).some((m) => hits(m, miss[0]!, hit0)));
   const rng = mulberry32(seed);
   const used = c.omens.filter((o) => o !== ECHOES);
-  const spam = c.currency !== REVEAL && kindOf(c.currency) === "chaos";
+  const mode = aimChainMode(c);
+  const spam = mode === "spam", bone = mode === "bone";
   let item = start, tries = 0, hit = 0, stuck = 0;
   while (tries < n) {
     if (c.currency === REVEAL) {
@@ -172,7 +207,7 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
       continue;
     }
     tries++;
-    if (kindOf(c.currency) === "desecrate") {
+    if (bone) {
       if (keeps(r.item) && offered(revealOffers(data, r.item, rng), missing(r.item))) hit++;
       item = start;
       continue;
@@ -190,5 +225,5 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
   return tries ? hit / tries : 0;
 }
 
-/** もう付いているか */
-export const aimDone = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.length > 0 && ts.every((t) => has(item, t));
+/** もう付いているか (o = 当たりの式の設定、aimHits と同じ。省略 = 同じ modId だけ) */
+export const aimDone = (item: StageItem, ts: readonly AimTarget[], o?: AimHitOpts): boolean => ts.length > 0 && ts.every((t) => has(item, t, o));

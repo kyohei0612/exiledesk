@@ -7,8 +7,9 @@
  *   OUT=<置き場> …  組んだ木の JSON を <置き場>/<名前>.json に書く (既定は書かない)
  *
  * 画面の真似 (Ui): 白紙 = newTree / 始まりの形 = TreeStartPick の change・toggleFracture・addRune・setStartRandom (一覧にある MOD・ルーンだけ) /
- * 手 = TreeHandShelf (見本 sampleOf(…,1)・棚にある物・掛けられるお告げ・hitAims・preCat・singleOutOf・problem) → SimTreePage の pickHand
- * (setHand → joinSameShape → linkSameShape) / 当たり = TreeModPick (hit は normal・desecrated の行だけ) → setAim・addHit / カオススパムの札 = onSpam /
+ * 手 = 手の窓 (見本 sampleOf(…,1)・棚 shelfKeysOf・掛けられるお告げ) → 猿の口 add と同じ tree-hand-plan の planPick (当たりの札・前のカタリスト・起こりうる結果・problem)
+ * → SimTreePage の pickHand と同じ applyPick (つなぎ・まとめは中の箱どうしの判定、11-07 に旧い形の鍵の linkSameShape から替えた) /
+ * 当たり = TreeModPick (hit は normal・desecrated の行だけ) → setAim・addHit / カオススパムの札 = カオスの当たるまで (前の onSpam は画面から無くなった) /
  * 戻り = onTarget (use-tree-link の灰色の判定。灰色でも＋の引っ張りでつながるので setBack はする) / 始めに戻る = pickBack / 分かれ目 = onSplit・TreeSplitPick の行 /
  * 完成 = onDone。画面で選べない物は入れずに「組めない」として記録する。
  * 値段は _tree-split-probe の EX 表 (神 = ÷ 696.929)。表に無いキーは 0 にして、使った物を並べる。並べるだけ (見張りではない)
@@ -347,6 +348,7 @@ for (const p of pats) {
     console.log(`\n■ ${p.name} (${p.base}) ${p.note}\n  箱 ${Object.keys(d.boxes).length} · 狙い ${aimsOf(d).length} · 組む ${t1 - t0}ms · 精査 ${t2 - t1}ms · 100 人 ${t3 - t2}ms`);
     for (const l of u.log) console.log(`  手 ${l}`);
     for (const f of u.finds) console.log(`  組めない ${f.where}: ${f.what}`);
+    console.log(`  安全網 (fillMissOuts) が足した箱: ${u.safety.length ? u.safety.join(" / ") : "0"} (骨の手 ${u.bones})`);
     const auto = Object.values(d.boxes).filter((b) => b.autoBack).map((b) => `${b.id}(${b.out})→${b.back}`);
     if (auto.length) console.log(`  自動でつながった: ${auto.join(" ")}`);
     console.log(`  精査 穴 ${issues.length}`);

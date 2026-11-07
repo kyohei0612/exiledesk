@@ -3,7 +3,7 @@
  * 1 コース = 1 つの小技。始めの状態は動画やビルドで本当に狙う MOD (靴・サファイア・金のアミュレット)。運の手は本当の確率のまま (外れたら「もう一度」)。
  * 作りは topic-courses.ts と同じ (start / prep / startMods / omens / chain)。prep の force:… は作った MOD・冒涜の MOD を決まった形で置く手、rune:… ははめる手、qset:… は品質を決める手
  */
-import { type Force } from "../craft-stage/engine";
+import { BASE_MAX_QUALITY, RAISED_MAX_QUALITY, displayedValue, type Force } from "../craft-stage/engine";
 import type { TopicCourse } from "./topic-courses";
 import { S, H, ALWAYS } from "./topic-steps";
 
@@ -18,6 +18,14 @@ const CONTEMPT = "force:Jewels_int/Emotion_CraftedJewelAdditionalSuffixAllowed|T
 const JEWEL_HIT: Force[] = [JI("JewelCriticalAilmentEffect"), JI("JewelDamagefromMana"), JI("JewelCriticalDamage")];
 /** ブリーチのエッセンスの「品質の最大値 +20%」を置く手 */
 const BREACH = "force:Amulets/PerfectEssence_LocalMaximumQuality|T1|e";
+/**
+ * 品質を上げてからカオスの数字 (文の言い回しは教材、数はエンジン = 品質の上限 E-71・品質の表示値 E-72、11-07 ブラック 58 の決め)。
+ * SPELL_RAW = 当てる「全てのスペルスキルのレベル +3」(T1) の素の値、SPELL_EDGE = それが 1 伸びる一番低い品質 (34%)
+ */
+const SPELL_RAW = 3;
+const SPELL_EDGE = Array.from({ length: RAISED_MAX_QUALITY }, (_, i) => i + 1).find((q) => displayedValue(SPELL_RAW, q) > SPELL_RAW) ?? RAISED_MAX_QUALITY;
+const SPELL_EDGE_X = (100 + SPELL_EDGE) / 100; // 1.34
+const SPELL_EDGE_V = Math.round(SPELL_RAW * (100 + SPELL_EDGE)) / 100; // 4.02
 /** 強化のエッセンスの「グローバル防御」を置く手 */
 const ENHANCE = "force:Amulets/PerfectEssence_AllDefences|T1|e";
 /** 不在のアミュレット (プレ 2・サフィ 2): 固定した最大マナ + スペルスキルのレベル・キャストスピード。prep の ENHANCE でプレフィックスが満杯になる */
@@ -109,23 +117,23 @@ export const ADV_COURSES: TopicCourse[] = [
   },
   {
     id: "adv-quality-chaos", level: 4, title: ["品質を上げてからカオス", "Quality first, then Chaos"], base: "Gold Amulet", itemLevel: 82,
-    learn: ["ブリーチで品質の上限を上げて 34% → カオスで当てたスペルスキルのレベル +3 が +4 に", "Breach for higher max quality, raise to 34%, then Chaos: +3 Spell Skills becomes +4"],
-    // 2026-10-18 オーナー「ブリーチ品質はスペルレベル上げる 34% にしてカオススパム後スペルスキル 4 になる流れ」。品質の丸めは切り捨て (34% が境目)
+    learn: [`ブリーチで品質の上限を上げて ${SPELL_EDGE}% → カオスで当てたスペルスキルのレベル +${SPELL_RAW} が +${displayedValue(SPELL_RAW, SPELL_EDGE)} に`, `Breach for higher max quality, raise to ${SPELL_EDGE}%, then Chaos: +${SPELL_RAW} Spell Skills becomes +${displayedValue(SPELL_RAW, SPELL_EDGE)}`],
+    // 2026-10-18 オーナー「ブリーチ品質はスペルレベル上げる 34% にしてカオススパム後スペルスキル 4 になる流れ」。品質の丸めは切り捨て (34% が境目 = SPELL_EDGE)
     steps: [
-      { ...H("ess:the Breach:perfect", ["品質の上限を 40% に", "Max quality to 40%"], [
-        ["ブリーチのエッセンスで「品質の最大値 +20%」を付ける (MOD を 1 つ消してから付く)", "Essence of the Breach adds “+20% to Maximum Quality” (it removes a mod first)"],
-        ["品質の上限が 20% から 40% に上がる", "Max quality goes from 20% to 40%"],
+      { ...H("ess:the Breach:perfect", [`品質の上限を ${RAISED_MAX_QUALITY}% に`, `Max quality to ${RAISED_MAX_QUALITY}%`], [
+        [`ブリーチのエッセンスで「品質の最大値 +${RAISED_MAX_QUALITY - BASE_MAX_QUALITY}%」を付ける (MOD を 1 つ消してから付く)`, `Essence of the Breach adds “+${RAISED_MAX_QUALITY - BASE_MAX_QUALITY}% to Maximum Quality” (it removes a mod first)`],
+        [`品質の上限が ${BASE_MAX_QUALITY}% から ${RAISED_MAX_QUALITY}% に上がる`, `Max quality goes from ${BASE_MAX_QUALITY}% to ${RAISED_MAX_QUALITY}%`],
       ], "rare"), startMods: [AM("EnergyShield", "T3"), AM("SpellDamage", "T3"), AM("IncreasedCastSpeed", "T3"), AM("ManaRegeneration", "T3")] },
-      { ...H("catalyst_caster", ["キャスターの品質を 34% に", "Caster quality to 34%"], [
-        ["歯擦音のカタリストで、キャスターの品質を 34% まで上げる (持ったまま連打)", "Raise Caster quality to 34% with Sibilant Catalysts (keep clicking)"],
+      { ...H("catalyst_caster", [`キャスターの品質を ${SPELL_EDGE}% に`, `Caster quality to ${SPELL_EDGE}%`], [
+        [`歯擦音のカタリストで、キャスターの品質を ${SPELL_EDGE}% まで上げる (持ったまま連打)`, `Raise Caster quality to ${SPELL_EDGE}% with Sibilant Catalysts (keep clicking)`],
         ["スペルスキルのレベルはキャスターの MOD。品質は、後から付いた MOD にも掛かる", "Spell Skill levels are Caster mods. Quality also applies to mods added later"],
-        ["+3 は品質 34% でちょうど +4 になる (3 × 1.34 = 4.02 の切り捨て)。33% では +3 のまま", "+3 becomes +4 at exactly 34% (3 × 1.34 = 4.02, rounded down). At 33% it stays +3"],
-      ], [BREACH]), startMods: [AM("EnergyShield", "T3"), AM("IncreasedCastSpeed", "T3"), AM("ManaRegeneration", "T3")], untilQuality: 34, cont: true },
+        [`+${SPELL_RAW} は品質 ${SPELL_EDGE}% でちょうど +${displayedValue(SPELL_RAW, SPELL_EDGE)} になる (${SPELL_RAW} × ${SPELL_EDGE_X} = ${SPELL_EDGE_V} の切り捨て)。${SPELL_EDGE - 1}% では +${displayedValue(SPELL_RAW, SPELL_EDGE - 1)} のまま`, `+${SPELL_RAW} becomes +${displayedValue(SPELL_RAW, SPELL_EDGE)} at exactly ${SPELL_EDGE}% (${SPELL_RAW} × ${SPELL_EDGE_X} = ${SPELL_EDGE_V}, rounded down). At ${SPELL_EDGE - 1}% it stays +${displayedValue(SPELL_RAW, SPELL_EDGE - 1)}`],
+      ], [BREACH]), startMods: [AM("EnergyShield", "T3"), AM("IncreasedCastSpeed", "T3"), AM("ManaRegeneration", "T3")], untilQuality: SPELL_EDGE, cont: true },
       { ...ALWAYS(H("chaos", ["品質を上げてからカオスを回す", "Quality first, then spam Chaos"], [
         ["右側の抹消のお告げを掛けたカオスで、サフィックスだけを入れ替える (プレフィックスのブリーチは消えない)", "Chaos with Omen of Dextral Erasure swaps only suffixes (the Breach prefix stays)"],
-        ["このコースでは「全てのスペルスキルのレベル +3」(T1) が付いた例を見せる。品質 34% が掛かって +4 になる", "This course shows a hit: “+3 to Level of all Spell Skills” (T1), which becomes +4 at 34% quality"],
+        [`このコースでは「全てのスペルスキルのレベル +${SPELL_RAW}」(T1) が付いた例を見せる。品質 ${SPELL_EDGE}% が掛かって +${displayedValue(SPELL_RAW, SPELL_EDGE)} になる`, `This course shows a hit: “+${SPELL_RAW} to Level of all Spell Skills” (T1), which becomes +${displayedValue(SPELL_RAW, SPELL_EDGE)} at ${SPELL_EDGE}% quality`],
         ["先に品質を上げておけば、当たった MOD がそのまま伸びた数字で出る", "With quality raised first, a hit shows up already boosted"],
-      ], [BREACH, "qset:34:caster"])), omens: ["OmenofDextralErasure"], want: { mod: "Amulets/GlobalIncreaseSpellSkillGemLevel", tier: "T1" }, cont: true,
+      ], [BREACH, `qset:${SPELL_EDGE}:caster`])), omens: ["OmenofDextralErasure"], want: { mod: "Amulets/GlobalIncreaseSpellSkillGemLevel", tier: "T1" }, cont: true,
       startMods: [AM("EnergyShield", "T3"), AM("SpellDamage", "T3"), AM("IncreasedCastSpeed", "T3"), AM("ManaRegeneration", "T3"), AM("Intelligence", "T4")] },
     ],
   },

@@ -15,18 +15,17 @@ import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
-import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, isRuneHand, rerollsValues } from "../../../services/simulator/tree/tree-hands";
 import { RUNE_PREFIX, runeNameOf } from "../../../services/craft-stage/engine";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
-import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE, divineStart } from "../../../services/simulator/tree/tree-divine";
+import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
-import { boxTagsOf, chosenMod } from "./tree-row-tags";
-import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
+import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
@@ -41,11 +40,12 @@ import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
 import { flag } from "../../../web/release-flags";
-import { foreseeBlock, keepsMods } from "../../../services/simulator/tree/tree-foresee";
+import { foreseeBlock } from "../../../services/simulator/tree/tree-foresee";
+import { keepsMods } from "../../../services/simulator/sim-engine";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
-/** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
+/** only = 起こりうる結果の一覧 (tree-hand-plan の onlyOf = tree-outcome の possibleOutsOf、光のお告げ + 消去など) */
 const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; aim: [] }>();
 const t = useTree();
 
@@ -60,21 +60,25 @@ const item = computed(() => sample.value?.item ?? null);
  */
 const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value && !runePick.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it, props.boxId) : it);
-/** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
-const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return null; const c = cardOf(it); return removeTags(c, boxTagsOf(s.data.value, t.doc.value, props.boxId, c)); };
+/** 狙いに当たらない MOD の行は「外れ MOD」(箱のカードと同じ組み立て box-card の cardFor に持った手の札を重ねる。10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
+const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return null; const c = cardFor(s.data.value, t.doc.value, props.boxId, it); return removeTags(c.item, c.tags); };
 /**
  * 消去を持った時は、フラクチャー以外で ☑ の無い MOD を全部「外れ MOD」と出し、☑ の MOD はふだんの表示 (狙い) に戻す。☑ を変えるとすぐ変わる
  * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)
  */
 function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
   // 確定で消える (候補 1 つ) は聞かないので替えない。替えるのは消えうる候補の MOD だけ (光のお告げなら冒涜だけ、S-27b)
-  if (!keepAsk.value) return tags;
+  // パーフェクトエッセンスは ☑ しなかった元の MOD も名前のまま (入れ替わって消えるだけ。S-29 のエッセンスの枝、11-07 オーナー「MODは固定だからハズレMODって出さんよね」)
+  if (!keepAsk.value || k.isSwap.value) return tags;
   const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
+  // ☑ した完成形の狙いは前の手で外れでも狙いに戻る (結果の箱の判定 nextAimed と同じ)。外れのままなのは狙いでない外れ MOD だけ (外れの式 1 本 = 完成形の狙いに当たらない)
+  const goals = aimedMiss(s.data.value!, t.doc.value);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
-    // 残したい外れも札のまま。選んで付けた MOD は箱のカードのまま (S-82)
-    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad") out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
-    else if (!s.data.value || !chosenMod(s.data.value, m)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
+    // 残したい外れも札のまま。☑ の無い候補は選んで付けた MOD (エッセンス・冒涜・合金) も狙いも外れ MOD (11-07 オーナー「残したいMODで選択したらその他をハズレMOD扱いだろ」。
+    // 前は選んで付けた MOD だけ名前のまま残した)。候補の外 (お告げで触らない側) は替えない。完成形に無いエッセンスの MOD は外れでも文のまま (S-33c)
+    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad" || !isMissMod(m, goals)) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
+    else putMiss(s.data.value!, out, t.doc.value, m, tr(`消えてよい MOD: ${modText(m)}`, `May be removed: ${modText(m)}`));
   }
   return out;
 }
@@ -146,7 +150,8 @@ function onShelfHold(k: string): void {
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
 /** 錯乱のエッセンスがこのアイテムに打てるのに棚から外している時は、窓に理由を 1 行 (シミュの棚は打てる札だけを出すので灰色の札は出ない) */
 const delirHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && Object.keys(ESSENCE_KEYS).some((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium" && !useReason(d, it, k)); });
-const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
+// 品の状態で効かないお告げ (紋章のある品の骨のネクロマンシー) も落とす = エンジンの omensFor に箱の見本を渡す
+const used = computed(() => (held.value ? omensFor(held.value, omens.value, item.value ?? undefined) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
 /**
@@ -211,11 +216,11 @@ async function showOmens(): Promise<void> {
 watch(held, (k) => { if (k && phone.value) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
-/** MOD が付かない・消えない・入れ替わらない手 (神・ヒネコラなど、エンジンで決める tree-foresee の keepsMods): 狙いの ☑ はグレーアウト、狙い無しだけ (11-06 オーナー「狙い無しのみ表示でこのさいグレーアウトさせちゃっていいよ」) */
+/** MOD が付かない・消えない・入れ替わらない手 (神・ヒネコラなど、エンジンの keepsMods): 狙いの ☑ はグレーアウト、狙い無しだけ (11-06 オーナー「狙い無しのみ表示でこのさいグレーアウトさせちゃっていいよ」) */
 const noMod = computed(() => { const d = s.data.value, it = shelfItem.value, h = held.value; return !!d && !!it && !!h && keepsMods(d, it, h, omens.value); });
 watch(noMod, (v) => { if (v) checked.value = []; }, { immediate: true });
 /** 神のオーブの手 (S-202): ☑ の狙いの MOD の数値の目標を全部決めてから置く (TreeDivinePick)。予見リセットはヒネコラの後の神だけ */
-const divOn = computed(() => held.value === DIVINE);
+const divOn = computed(() => !!held.value && rerollsValues(held.value));
 const divTargets = ref<DivineTarget[]>(props.current?.targets ? props.current.targets.map((x) => ({ ...x })) : []);
 const divReset = ref(!!props.current?.foreReset);
 watch(held, (h) => { divTargets.value = h === props.current?.currency && props.current?.targets ? props.current.targets.map((x) => ({ ...x })) : []; divReset.value = h === props.current?.currency && !!props.current?.foreReset; });
@@ -244,15 +249,10 @@ watch(held, (k, old) => {
 /** 残したい MOD (消去 S-27 と の消える手 S-27d。use-hand-keep) */
 const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf });
 const keepAsk = k.ask;
-/** 残したい MOD の欄を出すか = 聞く時と、候補 1 つの消える手で消えない狙いを ☑ 固定で見せる時 (S-27f。打ち方の keep は聞く時だけ) */
-const keepShow = computed(() => keepAsk.value || k.fixedOnly.value);
+/** 残したい MOD の欄を出すか = 聞く手で選べる狙いが 1 つ以上ある時 (外れしか消えない時は出さない、S-27b) と、候補 1 つの消える手で消えない狙いを ☑ 固定で見せる時 (S-27f。打ち方の keep は聞く時だけ) */
+const keepShow = computed(() => k.show.value || k.fixedOnly.value);
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
 const addLabels = computed((): string[] => (keepShow.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
-/** エッセンスの「ブロックに使う」☑ (S-33b)。付く MOD が完成形の狙いの手には出さない */
-const blockOn = ref(!!props.current?.block);
-const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
-function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
-watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 /**
  * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (入れ替え、エンジンの rune:名前@n)、
  * 本体 (と空き) = 空きへ。木でソケットを足す手は無い (11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
@@ -277,7 +277,7 @@ function onSocket(n: number): void {
   socketWhy.value = null;
   ok();
 }
-const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}), ...(divOn.value && divTargets.value.length ? { targets: divTargets.value.map((x) => ({ ...x })), ...(divReset.value && item.value?.foreseen ? { foreReset: true as const } : {}) } : {}) }) : null));
+const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: k.aims.value } : {}), ...(divOn.value && divTargets.value.length ? { targets: divTargets.value.map((x) => ({ ...x })), ...(divReset.value && item.value?.foreseen ? { foreReset: true as const } : {}) } : {}) }) : null));
 const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
@@ -366,7 +366,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :note="runeNote" @socket="onSocket" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard :row-group="null" v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :note="runeNote" @socket="onSocket" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
@@ -388,7 +388,7 @@ function ok(): void {
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
       <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
-      <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" :start="(modId, vi) => (item ? divineStart(t.doc.value, boxId, item, { modId, vi }) : null)" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" />
+      <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" :start="(modId, vi) => (item ? divineStart(t.doc.value, boxId, item, { modId, vi }) : null)" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" @cancel="release()" />
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
         <span v-else-if="noMod" data-tree-hand-nomod class="opacity-80">{{ noModTitle() }}</span>
@@ -402,9 +402,6 @@ function ok(): void {
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
-      <label v-if="canBlock" data-tree-hand-block class="flex min-h-7 cursor-pointer items-center gap-2 text-[12px] max-md:min-h-11 max-md:text-[14px]" :title="tr('付いた MOD を外れにせず、その MOD として箱に持つ (消えたら同じ中身の箱へ戻れる)', 'Keep the added mod as itself instead of a miss (once removed, the run can rejoin a matching box)')">
-        <input type="checkbox" class="max-md:size-5" :checked="blockOn" @change="toggleBlock" />{{ tr("ブロックに使う (付いた MOD を外れにしない)", "Use as a block (don't count the added mod as a miss)") }}
-      </label>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
       <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>

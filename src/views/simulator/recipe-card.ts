@@ -13,6 +13,7 @@ import { jaTypeName } from "../../i18n/item-names-ja";
 import { isEn } from "../../i18n/lang";
 import { routeKeyOf } from "./tree/use-tree-check";
 import { useTree } from "./tree/use-tree";
+import { shownCost, shownRate } from "../../services/simulator/tree/run-price";
 
 /** POST /r/new の card (どれも無くてよい) */
 export interface RecipeCard { l: "ja" | "en"; bn?: string; a?: string; m?: Array<[string, 0 | 1]>; p?: number; n?: number; c?: number; o?: string }
@@ -35,7 +36,8 @@ export function recipeCardOf(tree: TreeDoc): RecipeCard {
     bn: (en ? tree.base : jaTypeName(tree.base)).slice(0, 40),
     ...(art ? { a: art } : {}),
     ...(mine && tree.memoAims?.length ? { m: tree.memoAims.slice(0, 8).map((a): [string, 0 | 1] => [t.aimShort(a).slice(0, 80), a.fractured ? 1 : 0]) } : {}),
-    ...(run ? { p: Math.round(run.p), n: run.n, ...(Number.isFinite(run.c) ? { c: Math.round(run.c * 10) / 10 } : {}) } : {}),
+    // 丸めは木の帯・デイリーの検算と同じ 1 か所 (run-price)
+    ...(run ? { p: shownRate(run.p), n: run.n, ...(Number.isFinite(run.c) ? { c: shownCost(run.c) } : {}) } : {}),
     ...(orb.startsWith("https://web.poecdn.com/") ? { o: orb } : {}),
   };
 }

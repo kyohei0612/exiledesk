@@ -14,15 +14,17 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import TreeBox from "../tree/TreeBox.vue";
 import TreeHandChip from "../tree/TreeHandChip.vue";
 import TreeLaneTags from "../tree/TreeLaneTags.vue";
+import TreeRunLayer from "../tree/TreeRunLayer.vue";
+import type { TreeRunWalk } from "../tree/use-tree-run";
 import { LINE } from "../tree/use-tree-edges";
-import { backLabelOf, runText } from "../tree/tree-fail";
+import { backLabelOf } from "../tree/tree-fail";
 import { handIcon, OUT_LOOK } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
 import { useMapTouch, type MapBounds } from "./use-map-touch";
 
-const props = defineProps<{ /** 回した結果 (カードの箱に人数を添える) */ result?: TreeRunResult | null }>();
+const props = defineProps<{ /** 回した結果 (PC と同じ層 TreeRunLayer で線・人数・止まりを重ねる) */ result?: TreeRunResult | null; /** 回す時の 1 人目 (PC と同じ use-tree-run の walk) */ walk?: TreeRunWalk | null }>();
 const t = useTree();
 const doc = t.doc;
 /** 名前と手の絵を出す倍率 (箱の幅 56px) */
@@ -78,7 +80,14 @@ function goTo(id: string): void {
   const z = Math.max(m.k.value, NEAR_K);
   m.glideTo(b.x + BOX_W / 2, yOf(b) + ((wrap.value?.clientHeight ?? 0) / 2 - NEAR_TOP) / z, z);
 }
-defineExpose({ goTo });
+/** 1 人目が枠の外の箱へ進んだ時だけ、今の倍率のままその箱を真ん中へ (PC の use-tree-flow の reveal と同じ動き) */
+function reveal(id: string): void {
+  const b = doc.value.boxes[id], el = wrap.value;
+  if (!b || !el) return;
+  const z = m.k.value, sx = b.x * z + m.tx.value, sy = yOf(b) * z + m.ty.value, mg = 12;
+  if (sx < mg || sy < mg || sx + BOX_W * z > el.clientWidth - mg || sy + EST_H * z > el.clientHeight - mg) m.glideTo(b.x + BOX_W / 2, yOf(b) + EST_H / 2, z);
+}
+defineExpose({ goTo, reveal, showAll: () => { touched = false; refit(); } });
 /** ボタンは 2 つだけ: 全体が入る倍率と MOD が読めるぎりぎり。細かい調整は指でつまむ (オーナー 11-01「後拡大縮小ボタンでツリー全体表示と拡大でMODが見えるぎりぎりの大きさに調整で２つでいいよ調整は あとはピンチヒットは指でやるだろうしそこ」) */
 function showAll(): void { simOp("view-zoom", "all"); touched = false; refit(); }
 function showNear(): void {
@@ -108,6 +117,16 @@ const paths = computed(() => {
     return [{ id: b.id, d: `M${x0},${y0} V${y1 - BUS_DY} H${x1} V${y1}`, color: ["hit", "any", "pass", "branch"].includes(to.out) ? LINE.fwd : LINE.bad }];
   });
 });
+/** 回す時の重ねる層 (PC の TreeRunLayer) に渡す線: 親ごとに子への線 (幹は分けず、子の線が親から出る) */
+const runEdges = computed(() => {
+  const by = new Map<string, { id: string; d: string }[]>();
+  for (const l of paths.value) { const pid = lastToHead.value.get(l.id) ?? doc.value.boxes[l.id]?.parent; if (pid) by.set(pid, [...(by.get(pid) ?? []), { id: l.id, d: l.d }]); }
+  return [...by].map(([id, to]) => ({ id, stem: "", to }));
+});
+const runPos = (b: Box): { x: number; y: number } => ({ x: b.x, y: yOf(b) });
+/** 沼った人が回っていた箱 (PC の木の青枠 = TreeBox の swamp と同じ、回した結果を出している間だけ) */
+const swampOf = (id: string): boolean => !!props.result?.loopAt?.[id];
+const NO_PATHS = new Map<string, string>();
 const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], branch: ["分岐", "Split"] };
 /** 見えている箱 (木の座標の範囲で見る)。送るたびに読むので、変わった時だけ一覧を替える */
 const inView = computed(() => {
@@ -162,7 +181,7 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
       <svg class="pointer-events-none absolute inset-0 size-full">
         <g :transform="`translate(${m.tx.value},${m.ty.value}) scale(${m.k.value})`">
           <path v-for="l in paths" :key="l.id" :d="l.d" fill="none" :stroke="l.color" stroke-opacity="0.7" stroke-width="2" vector-effect="non-scaling-stroke" />
-          <rect v-for="b in rects" :key="b.id" :data-map-box="b.id" :x="b.x" :y="yOf(b)" :width="BOX_W" :height="EST_H" rx="20" :fill="`rgba(${rgbOf(b)},0.3)`" :stroke="`rgba(${rgbOf(b)},0.7)`" stroke-width="1.5" vector-effect="non-scaling-stroke" :stroke-dasharray="folds.has(b.id) ? '4 3' : undefined" />
+          <rect v-for="b in rects" :key="b.id" :data-map-box="b.id" :data-tree-swamp="swampOf(b.id) ? '' : undefined" :x="b.x" :y="yOf(b)" :width="BOX_W" :height="EST_H" rx="20" :fill="`rgba(${rgbOf(b)},0.3)`" :stroke="swampOf(b.id) ? '#38bdf8' : `rgba(${rgbOf(b)},0.7)`" :stroke-width="swampOf(b.id) ? 3 : 1.5" vector-effect="non-scaling-stroke" :stroke-dasharray="folds.has(b.id) ? '4 3' : undefined" />
         </g>
       </svg>
       <span v-for="n in names" :key="n.id" data-map-name class="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap text-[10px] text-white/90" :style="{ left: `${n.x}px`, top: `${n.y}px` }">{{ n.text }}<img v-if="n.icon" :src="n.icon" alt="" class="size-4" draggable="false" /></span>
@@ -170,9 +189,12 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
       <div v-if="cards.length || chips.length" data-map-cards class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">
         <TreeHandChip v-for="c in chips" :id="c.id" :key="c.id" :hand="c.hand" :split="c.split" :x="c.x" :y="c.y" :inv="1" off :room="CHIP_ROOM" />
         <template v-for="b in cards" :key="b.id">
-          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only />
-          <p v-if="runText(props.result, b.id)" data-map-run class="absolute text-center text-[13px] font-bold text-amber-100 [text-shadow:0_1px_3px_#000]" :style="{ left: `${b.x}px`, top: `${yOf(b) - 34}px`, width: `${BOX_W}px` }">{{ runText(props.result, b.id) }}</p>
+          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only :swamp="swampOf(b.id) ? Math.max(1, 1 / m.k.value) : 0" />
         </template>
+      </div>
+      <!-- 回す時: PC と同じ重ねる層 (1 人目の光・足跡・通った線・誰も来ない箱の暗さ・来た人数・回数・止まり)。線だけ画面の上の太さで描く (全体図の倍率は PC より小さい) -->
+      <div v-if="props.walk || props.result" data-map-run-layer class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">
+        <TreeRunLayer :result="props.result ?? null" :walk="props.walk ?? null" :k="1 / m.k.value" :boxes="boxes" :pos-of="runPos" :edges="runEdges" :lines="[]" :paths="NO_PATHS" :box-h="EST_H" screen-lines @go="goTo" />
       </div>
       <TreeLaneTags :lanes="lanes" :ty="m.ty.value" :k="m.k.value" />
       <p class="pointer-events-none absolute bottom-1 right-2 rounded bg-black/75 px-1 text-[11px] text-amber-100/60">{{ tr("ツリーを作るのは PC で", "Build trees on a PC") }}</p>

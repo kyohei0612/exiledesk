@@ -23,6 +23,8 @@ const str = (v: unknown): v is string => typeof v === "string" && !!v;
 const num = (v: unknown, d: number): number => (typeof v === "number" && Number.isFinite(v) ? v : d);
 const aimOk = (a: unknown): boolean => a === null || (obj(a) && str(a.modId) && typeof a.tier === "number");
 const handOk = (h: unknown): boolean => h === null || (obj(h) && str(h.currency) && Array.isArray(h.omens) && h.omens.every(str));
+/** 前の保存のエッセンスの「ブロックに使う」☑ の印 block (S-33b、11-07 撤回) は読んで捨てる (付いた MOD は外れ。保存の形 v1 の決めは tree-rebuild の dropBlock) */
+const noBlock = (h: TreeBox["hand"]): TreeBox["hand"] => { if (!h || !("block" in h)) return h; const { block: _old, ...rest } = h as NonNullable<TreeBox["hand"]> & { block?: unknown }; return rest; };
 
 /** 木として読めるか (start の箱がある) と、どの版か。読めなければ null */
 function versionOf(raw: unknown): number | null {
@@ -40,7 +42,7 @@ function healBox(id: string, raw: unknown, ids: ReadonlySet<string>): TreeBox {
   const bad = (k: "out" | "aim" | "hand" | "link", field: string): void => { check.add(k); keep[field] = b[field]; };
   const out = OUTS.has(b.out as string) ? (b.out as TreeBox["out"]) : (bad("out", "out"), id === "start" ? "start" : "any");
   const aim = aimOk(b.aim ?? null) ? ((b.aim ?? null) as TreeBox["aim"]) : (bad("aim", "aim"), null);
-  const hand = handOk(b.hand ?? null) ? ((b.hand ?? null) as TreeBox["hand"]) : (bad("hand", "hand"), null);
+  const hand = handOk(b.hand ?? null) ? noBlock((b.hand ?? null) as TreeBox["hand"]) : (bad("hand", "hand"), null);
   const outsRaw = Array.isArray(b.outs) ? b.outs : [];
   const outs = outsRaw.filter((x): x is string => str(x) && ids.has(x));
   if (outs.length !== outsRaw.length) bad("link", "outs");

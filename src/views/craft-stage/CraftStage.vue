@@ -36,7 +36,7 @@ import { openSharedRecipe } from "../../state/for-share/sim-links";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "../../components/for-share/shelf/CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
-import { forceKey, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX, IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, sanctifyPreview } from "../../services/craft-stage/engine";
+import { OMEN_KEY, forceKey, tierRankOf, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX, IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, sanctifyPreview } from "../../services/craft-stage/engine";
 import { sanctifyK } from "../../state/for-share/stage-tuning";
 import { previewUse, unsocketKey, sanctifySetKey, catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey } from "../../services/emulator/emu-engine";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson, CourseHost } from "../tutorial/course-entry"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
@@ -173,7 +173,7 @@ const SITE_LOOK = flag("siteLook");
 /** 聖別の倍率を決めている間のカードの見本 (今の値 × 倍率、スイッチ sanctifyHint、M-55)。打つまでアイテムは変わらない。打てない時は null */
 const sanctifySample = computed(() => {
   const it = s.item.value, d = s.data.value;
-  if (!flag("sanctifyHint") || !it || !d || s.replay.value || sanctifyK.value == null || !s.omens.value.includes("OmenofSanctification") || s.usable("divine")) return null;
+  if (!flag("sanctifyHint") || !it || !d || s.replay.value || sanctifyK.value == null || !s.omens.value.includes(OMEN_KEY.sanctification) || s.usable("divine")) return null;
   return sanctifyPreview(d, it, sanctifyK.value / 100);
 });
 function setSanctify(k: number | "max" | "min"): void {
@@ -192,7 +192,7 @@ function toModList(): void { s.modOverlay.value = true; }
 watch(() => s.item.value, (it) => { if (!it) s.modOverlay.value = false; });
 function fractureMod(m: StageMod): void {
   if (m.fractured) { s.use(forceKey(m.modId, null, "u")); return; } // フラクチャー済みは右クリック (押しても) で外す (2026-10-18 オーナー)
-  const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0; s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
+  const d = s.data.value; s.use(forceKey(m.modId, d?.mods.has(m.modId) ? `T${tierRankOf(d, m.modId, m.tierIndex)}` : null, "f"));
 }
 /** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
 function scrollToReveal(): void { scrollToTop(document.querySelector("[data-reveal-panel]"), "smooth", "center"); }

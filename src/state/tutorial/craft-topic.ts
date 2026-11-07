@@ -6,7 +6,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "../craft-stage";
 import { logRecord } from "../../utils/log-record";
-import { splitOmens } from "../../services/craft-stage/engine";
+import { aimDone, aimHits, OMEN_KEY, parseKey, splitOmens } from "../../services/craft-stage/engine";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
 
 export const topic = ref<TopicCourse | null>(null);
@@ -82,8 +82,10 @@ watch(() => s.log.value.length, (n, old) => {
   if (!cur || n <= (old ?? 0)) return;
   const e = s.log.value[n - 1];
   if (!e) return;
-  const want = cur.step.use === "reveal" ? e.out.currency.startsWith("reveal") : e.out.currency === cur.key;
-  const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === "OmenofAbyssalEchoes" && e.out.currency.endsWith(":reroll")));
+  // 手の種類は鍵の文字でなくエンジンの鍵の読み (parseKey。発現の鍵 reveal:N[:reroll])
+  const pk = parseKey(e.out.currency);
+  const want = cur.step.use === "reveal" ? pk.type === "reveal" : e.out.currency === cur.key;
+  const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === OMEN_KEY.echoes && pk.type === "reveal" && pk.reroll));
   if (!want || !omensOk || !e.out.applied) return;
   // 発現の手は、未発現の MOD が全部無くなるまで次へ進めない (腐食で最大 6 つ。2026-10-17 オーナー「腐食は全部発現させてから完了に、もったいない体験が」)
   if (cur.step.use === "reveal" && [...e.after.prefixes, ...e.after.suffixes].some((m) => m.unrevealed)) return;
@@ -91,10 +93,12 @@ watch(() => s.log.value.length, (n, old) => {
   if (cur.key && keepGoing(cur.step, cur.key)) return;
   // ループの手で狙いの MOD を発現したら、続き (エッセンス) を打たずに手を終える (2026-10-18 オーナー「スピリット 50 を発現させて終了」)
   const wr = topicStep.value?.step.wantReveal;
-  if (wr && cur.step.use === "reveal" && e.added.some((m) => m.modId === wr.mod && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
+  // 狙いが付いたかはエンジンの aimHits / aimDone (段は問わない。同じ文の別の MOD も当たり = sameText。値は教材の決め = 足し)
+  const d = s.data.value, hit = d ? { data: d, sameText: true } : undefined;
+  if (wr && cur.step.use === "reveal" && e.added.some((m) => aimHits(m, { modId: wr.mod, minTierIndex: 0 }, hit) && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
   // ループの手で決めた MOD が全部そろったら手を終える
   const lu = topicStep.value?.step.loopUntil;
-  if (lu && lu.mods.every((id) => [...e.after.prefixes, ...e.after.suffixes].some((m) => m.modId === id))) { topicUsed.value = true; return; }
+  if (lu && (!lu.mods.length || aimDone(e.after, lu.mods.map((modId) => ({ modId, minTierIndex: 0 })), hit))) { topicUsed.value = true; return; }
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   // ループの手は、続き (エッセンス) まで打ったら手の最初に戻して次の周へ (狙いを発現するまで手を終えない。2026-10-18 オーナー「エッセンス選んだあとクリア扱いでグレーアウト、復活させて」)
   else if (topicStep.value?.step.loop) {

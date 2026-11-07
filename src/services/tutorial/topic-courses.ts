@@ -7,7 +7,7 @@
  * use の特別なキー: reset = 白に戻す / reveal = 発現 (どれを選んでも良い) / ess:<名前>:<段> = そのアイテムのエッセンス (棚から引く)
  */
 import type { JaEn } from "./quiz-tutorials";
-import { type PatchData, type StageItem, type Force } from "../craft-stage/engine";
+import { OMEN_KEY, parseKey, revealKey, catalysingMultiplier, CATALYSING_FULL_PCT, CATALYSING_PER_PCT, SANCTIFY_MIN, SANCTIFY_MAX, type PatchData, type StageItem, type Force } from "../craft-stage/engine";
 import { essenceShelf } from "../../state/for-share/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 import { GUIDE_COURSES } from "./topic-courses-guide";
@@ -254,7 +254,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["発現の前にアビスの反響のお告げを掛けると、候補 3 つを 1 回だけ引き直せる", "Apply Omen of Abyssal Echoes before revealing to reroll the 3 options once"],
         ["骨を使ったら、反響のお告げのボタンを押して掛ける", "After using the Bone, press the Omen of Abyssal Echoes button to apply it"],
         ["候補の窓の右下の回る矢印で引き直してから、選んで「発現」", "Reroll with the circular arrow at the bottom right of the options, then pick one and Reveal"],
-      ], ["alchemy"])), chain: [S("reveal", ["発現 (反響)", "Reveal (Echoes)"], ["OmenofAbyssalEchoes"])] },
+      ], ["alchemy"])), chain: [S("reveal", ["発現 (反響)", "Reveal (Echoes)"], [OMEN_KEY.echoes])] },
       { ...ALWAYS(H("desecrate", ["勢力: ウラマン", "Faction: Ulaman"], [
         ["支配者のお告げを掛けると、発現の候補がウラマンの MOD だけになる", "With Omen of the Sovereign, the reveal options are Ulaman mods only"],
         ["このアイテムに付くウラマンの MOD は下の一覧", "The Ulaman mods this item can get are listed below"],
@@ -270,7 +270,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
       { ...ALWAYS(H("annul", ["冒涜の MOD だけを消す", "Remove only the Desecrated mod"], [
         ["光のお告げを掛けた消去は、冒涜の MOD (未発現も) だけを消す", "Annulment with Omen of Light removes only the Desecrated mod (Unrevealed too)"],
         ["ほかの MOD は消えない。冒涜をやり直したい時に使う", "Other mods stay. Use it to redo a Desecration"],
-      ], ["alchemy", "desecrate"])), omens: ["OmenofLight"] },
+      ], ["alchemy", "desecrate"])), omens: [OMEN_KEY.light] },
       { ...ALWAYS(H("ess:the Abyss:perfect", ["アビス → 骨 → 発現", "Abyss → bone → reveal"], [
         ["アビスのエッセンスで「アビサルロードの紋章を身につけている」が必ず付く", "Essence of the Abyss always adds “Bears the Mark of the Abyssal Lord”"],
         ["骨を使うと、紋章が未発現の冒涜 MOD に入れ替わる (側は紋章の側)", "A Bone then replaces the Mark with an Unrevealed Desecrated mod (on the Mark's side)"],
@@ -280,11 +280,11 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["腐食のお告げを掛けた骨は、MOD を全部消して、空き全部に未発現の MOD を付ける (最大 6 つ)", "A Bone with Omen of Putrefaction removes every mod and fills every slot with Unrevealed mods (up to 6)"],
         ["アイテムはコラプトする (もう手を加えられない)。発現で付くのは普通の MOD だけ", "The item becomes Corrupted (no further changes). Reveals offer normal mods only"],
         ["未発現の MOD を全部発現すると完了", "Reveal every Unrevealed mod to finish"],
-      ], ["alchemy"])), omens: ["OmenofPutrefaction"], chain: [S("reveal", ["発現", "Reveal"])] },
+      ], ["alchemy"])), omens: [OMEN_KEY.putrefaction], chain: [S("reveal", ["発現", "Reveal"])] },
     ],
   },
   {
-    id: "omens", level: 2, title: ["お告げを学ぶ", "Learn omens"], base: "Gold Ring", itemLevel: 82, icon: "OmenofWhittling",
+    id: "omens", level: 2, title: ["お告げを学ぶ", "Learn omens"], base: "Gold Ring", itemLevel: 82, icon: OMEN_KEY.whittling,
     learn: ["高貴 (左右・偉大なる)・消去 (左右)・カオス (削減・左右の抹消)・神 (祝福・聖別)", "Exalt (Sinistral, Dextral, Greater), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure), Divine (Blessed, Sanctification)"],
     // 2026-10-18 オーナー「お告げか次は順にいくべ」。基本のオーブと同じ作り (毎回の用意・やさしい箇条書き)。お告げはカレンシーと別のボタンで先に掛ける。
     // 付ける手は黄 (レア) の MOD 0 個から、消す手は MOD 4 つ (錬金術)、入れ替える手は MOD 6 つの満杯 (FULL) から。最後は神 (聖別) で完了
@@ -299,10 +299,10 @@ export const TOPIC_COURSES: TopicCourse[] = [
       { ...H("exalt", ["1 回で 2 つ足す", "Add 2 at once"], [
         ["偉大なる高貴なお告げを掛けると、高貴なオーブ 1 個で MOD が 2 つ付く", "With Omen of Greater Exaltation, one Exalted Orb adds 2 mods"],
         ["どちらの側に付くかは運。空きが 1 つしか無ければ 1 つだけ", "Which side is luck. If only 1 slot is open, only 1 is added"],
-      ], "rare"), omens: ["OmenofGreaterExaltation"] },
+      ], "rare"), omens: [OMEN_KEY.greater] },
       { ...H("exalt", ["プレフィックスに 2 つ足す", "Add 2 prefixes"], [
         ["お告げは重ねて掛けられる。偉大なる高貴 + 左側の高貴なら、プレフィックスに 2 つ", "Omens stack. Greater + Sinistral Exaltation adds 2 prefixes"],
-      ], "rare"), omens: ["OmenofGreaterExaltation", "OmenofSinistralExaltation"] },
+      ], "rare"), omens: [OMEN_KEY.greater, "OmenofSinistralExaltation"] },
       { ...ALWAYS(H("annul", ["プレフィックスからだけ消す", "Remove only a prefix"], [
         ["左側の消去のお告げを掛けると、消去のオーブはプレフィックスからだけ 1 つ消す", "With Omen of Sinistral Annulment, the Orb of Annulment removes only a prefix"],
         ["どのプレフィックスが消えるかは運 (フラクチャーは消えない)", "Which prefix is luck (Fractured mods stay)"],
@@ -316,7 +316,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["このアイテムでは 筋力 (MOD レベル 1) が一番低いので、必ず筋力が消える", "On this item Strength (mod level 1) is the lowest, so Strength is always removed"],
         ["消したあとに新しい MOD が 1 つ付く。何が付くかは運", "Then 1 new mod is added. Which one is luck"],
         ["MOD レベルは、MOD を押すと開く MOD 一覧の「Lv」の数字", "The mod level is the “Lv” number in the mod list (click a mod to open it)"],
-      ], "rare"), omens: ["OmenofWhittling"], startMods: [
+      ], "rare"), omens: [OMEN_KEY.whittling], startMods: [
         { mod: "Rings/IncreasedLife", tier: "T1" }, { mod: "Rings/IncreasedMana", tier: "T3" },
         { mod: "Rings/ColdResistance", tier: "T2" }, { mod: "Rings/Strength", tier: "T8" },
       ] },
@@ -333,19 +333,19 @@ export const TOPIC_COURSES: TopicCourse[] = [
         ["このアイテムでは プレフィックスの 命中力 (MOD レベル 11) が必ず消える。サフィックスの筋力 (MOD レベル 1) の方が低くても、サフィックスは消えない", "On this item the Accuracy prefix (mod level 11) is always removed. Strength (mod level 1) is lower, but it's a suffix, so it stays"],
         ["満杯なので、空いたプレフィックスに新しい MOD が付く", "The item is full, so the new mod goes into the freed prefix"],
         ["左右の抹消どうし (左 + 右) は一緒に掛けられない", "Sinistral and Dextral Erasure can't be used together"],
-      ], "rare"), omens: ["OmenofWhittling", "OmenofSinistralErasure"], startMods: [
+      ], "rare"), omens: [OMEN_KEY.whittling, "OmenofSinistralErasure"], startMods: [
         { mod: "Rings/IncreasedLife", tier: "T1" }, { mod: "Rings/IncreasedMana", tier: "T3" }, { mod: "Rings/IncreasedAccuracy", tier: "T7" },
         { mod: "Rings/FireResistance", tier: "T2" }, { mod: "Rings/IncreasedCastSpeed", tier: "T2" }, { mod: "Rings/Strength", tier: "T8" },
       ] },
       { ...ALWAYS(H("divine", ["暗黙の数字だけ振り直す", "Reroll only the implicit's values"], [
         ["祝福のお告げを掛けると、神のオーブは暗黙 MOD (アイテムの上にある MOD) の数字だけ振り直す", "With Omen of the Blessed, the Divine Orb rerolls only the implicit mod's values (the mod at the top of the item)"],
         ["ほかの MOD の数字は変わらない", "Other mods keep their values"],
-      ], ["alchemy"])), omens: ["OmenoftheBlessed"] },
+      ], ["alchemy"])), omens: [OMEN_KEY.blessed] },
       { ...ALWAYS(H("divine", ["聖別する", "Sanctify"], [
         ["聖別のお告げを掛けると、神のオーブは黄 (レア) のアイテムを聖別する", "With Omen of Sanctification, the Divine Orb Sanctifies a yellow (Rare) item"],
-        ["MOD の数字が 0.78〜1.22 倍のどこかになる (上がるか下がるかは運)", "Mod values become 0.78–1.22× (up or down is luck)"],
+        [`MOD の数字が ${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} 倍のどこかになる (上がるか下がるかは運)`, `Mod values become ${SANCTIFY_MIN / 100}–${SANCTIFY_MAX / 100}× (up or down is luck)`], // 幅はエンジンの聖別の定数 (E-35)
         ["聖別したアイテムは、もうカレンシーで手を加えられない", "A Sanctified item can't be changed with currency anymore"],
-      ], ["alchemy"])), omens: ["OmenofSanctification"] },
+      ], ["alchemy"])), omens: [OMEN_KEY.sanctification] },
     ],
   },
   {
@@ -378,15 +378,16 @@ export const TOPIC_COURSES: TopicCourse[] = [
       // 触媒の高貴は成功例 (足した MOD が全部火の MOD) を見せる (craft-lesson.ts の rigRare。2026-10-18 オーナー「触媒を使った成功例見せたい」)
       { ...ALWAYS(H("exalt", ["品質の種類の MOD が出やすい", "Quality's mod type is more likely"], [
         ["触媒の高貴のお告げを掛けた高貴なオーブは、品質の種類の MOD が付きやすくなる (火の品質なら、火耐性・火ダメージなど)", "With Omen of Catalysing Exaltation, the Exalted Orb favours mods of the quality's type (Fire quality: Fire Resistance, Fire Damage and so on)"],
-        ["品質 20% なら、火の MOD の出やすさが 5 倍 (Craft of Exile の式: 1 + 0.2 × 品質)", "At 20% quality, Fire mods are 5× as likely (Craft of Exile's formula: 1 + 0.2 × quality)"],
+        // 倍率・境・係数はエンジンの触媒の高貴の式 (E-32)
+        [`品質 ${CATALYSING_FULL_PCT}% なら、火の MOD の出やすさが ${catalysingMultiplier(CATALYSING_FULL_PCT)} 倍 (Craft of Exile の式: 1 + ${CATALYSING_PER_PCT} × 品質)`, `At ${CATALYSING_FULL_PCT}% quality, Fire mods are ${catalysingMultiplier(CATALYSING_FULL_PCT)}× as likely (Craft of Exile's formula: 1 + ${CATALYSING_PER_PCT} × quality)`],
         ["このコースでは火の MOD が付いた成功例を見せる。実際のゲームでは必ず火になるわけではない (出やすくなるだけ)", "This course shows a success (a Fire mod). In the real game it isn't always Fire, just more likely"],
         ["使うと品質は全部なくなって 0 に。品質が無いアイテムには掛けられない", "All the quality is used up (back to 0). It can't be used without quality"],
-      ], FIRE20)), omens: ["OmenofCatalysingExaltation"], startMods: TWO },
+      ], FIRE20)), omens: [OMEN_KEY.catalysing], startMods: TWO },
       { ...ALWAYS(H("exalt", ["偉大なると重ねて 2 つ", "Stack with Greater for 2"], [
         ["偉大なる高貴なお告げと重ねると、高貴なオーブ 1 個で MOD が 2 つ付き、2 つとも火の MOD が出やすい (2 つともはクラフト配信者の説明に合わせている)", "Stacked with Omen of Greater Exaltation, one Exalted Orb adds 2 mods, both favouring Fire (both, per crafting streamers' explanations)"],
         ["このコースでは 2 つとも火の MOD が付いた成功例を見せる", "This course shows a success with both mods Fire"],
         ["品質は 1 回で全部なくなる", "All the quality is used up at once"],
-      ], FIRE20)), omens: ["OmenofCatalysingExaltation", "OmenofGreaterExaltation"], startMods: TWO },
+      ], FIRE20)), omens: [OMEN_KEY.catalysing, OMEN_KEY.greater], startMods: TWO },
     ],
   },
   {
@@ -434,11 +435,12 @@ export const TOPIC_COURSES: TopicCourse[] = [
  */
 export function topicKey(st: TopicStep, data: PatchData, it: StageItem): string | null {
   if (st.use === "reset") return null;
-  if (st.use === "reveal") return st.omens?.includes("OmenofAbyssalEchoes") ? "reveal:1:reroll" : "reveal:1";
+  if (st.use === "reveal") return revealKey(1, !!st.omens?.includes(OMEN_KEY.echoes));
   if (st.use.startsWith("ess:")) {
     const [, name, lvl] = st.use.split(":");
     const g = essenceShelf(data, it).find((x) => x.kind === name);
-    return g?.keys.find((k) => k.startsWith(`essence:${lvl}:`)) ?? null;
+    // 段はエンジンの鍵の読み (parseKey の tier)
+    return g?.keys.find((k) => { const p = parseKey(k); return p.type === "essence" && p.tier === lvl; }) ?? null;
   }
   return st.use;
 }

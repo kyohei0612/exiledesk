@@ -6,14 +6,14 @@
  * (ルーンは差した状態) で引いて、札ごとの「当たり (狙いの段以上)」「段が低い」と外れの重みの素の表にする。
  * 近似 (中身は auto-actions.ts の頭): 外れの系統は置き場を減らさない・狙いと同じ系統の別の MOD は外れ (系統を塞がない)
  */
-import { ANCIENT_BONE_FLOOR, candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, limitOf, occupiedFamiliesOf, orbFloor, REVEAL_SPEC, sideOfMod, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
+import { ANCIENT_BONE_FLOOR, ASTRID_EN, astridsFor, candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, limitOf, occupiedFamiliesOf, orbFloor, REVEAL_SPEC, sideOfMod, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
 import { familyBlocked } from "../../mods/mod-rules";
 import type { Mod } from "../../../vendor/poe2htc/engine/types";
 import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
 import { fillEngine, startStates } from "./auto-engine";
-import { Shape } from "./auto-actions";
+import { AUTO_OMENS, Shape } from "./auto-actions";
 import type { AutoBuilt, AutoInput, AutoModel, Grade, MCand, MSlot } from "./auto-types";
 
 export type { Grade, MCand, MSlot, AutoModel } from "./auto-types";
@@ -21,11 +21,8 @@ export const GRADES: readonly Grade[] = ["a0", "a1", "a2", "b0", "b4"];
 
 const PRICE_KEYS = [
   "exalt", "exalt_greater", "exalt_perfect", "chaos", "chaos_greater", "chaos_perfect", "annul", "desecrate", "desecrate_ancient", "reveal",
-  "OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofSinistralErasure", "OmenofDextralErasure",
-  "OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralCrystallisation",
-  "OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenofAbyssalEchoes", "OmenofLight",
+  ...AUTO_OMENS,
 ];
-const ASTRID = "Astrid's Creativity";
 const no = (ja: string, en: string): AutoBuilt => ({ ok: false, reason: { ja, en } });
 
 /** 形と重みを組み立てる。対応していなければ ok: false と理由 */
@@ -51,8 +48,15 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   // ルーン: 狙い (と候補) の MOD に要るルーンは全部始めから差した扱い。始めに無い分は代金を 1 本ごとに足す
   const st = recipe.start;
   const runeAll = [...new Set(goal.flatMap((s) => s.mods).map((m) => d.mods.get(m.modId)?.rune).filter((r): r is string => !!r).map((r) => runeEnForId(r)).filter((r): r is string => !!r))];
-  // エッセンスの MOD はアイテムに 1 つまで、アストリッドの創造性 1 つごとに 1 つ増える (エンジンの craftedLimitOf)。エッセンスの札が 2 つ以上ならその分を差す (K8)
-  for (let i = goal.filter((s) => s.kind === "essence").length - 1; i > 0; i--) runeAll.push(ASTRID);
+  // エッセンスの札が 2 つ以上なら、その数のクラフト MOD を持つのに要るアストリッドの創造性を差す (本数はエンジンの astridsFor、1 本で増える数は品のソケットの効果で決まる。K8)
+  const essN = goal.filter((s) => s.kind === "essence").length;
+  if (essN > 1) {
+    let probe: StageItem;
+    try { probe = startFrom(d, x.base, x.itemLevel, { rarity: "rare", ...(x.sockets ? { sockets: x.sockets } : {}), runes: runeAll }, 1); } catch { return no("ベースが見つからない", "Base not found"); }
+    const nA = astridsFor(probe, essN);
+    if (!Number.isFinite(nA)) return no("エッセンスの狙いが多すぎる (アストリッドの創造性でも持てない)", "Too many essence targets for this item");
+    for (let i = 0; i < nA; i++) runeAll.push(ASTRID_EN);
+  }
   const runes0 = new Set(st.runes ?? []);
   if (runeAll.length > (x.sockets ?? st.sockets ?? 0) && runeAll.length) return no("要るルーンがソケットより多い", "More runes needed than sockets");
   const runeCost = runeAll.filter((r) => !runes0.has(r)).reduce((a, r) => a + (x.runePrice?.(r) ?? 0), 0);

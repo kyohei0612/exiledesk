@@ -18,6 +18,7 @@ import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey } from "../../../services/simulator/tree/tree-model";
 import { hitAimsOf, kindOf } from "./tree-hand-plan";
+import { REACH_KINDS } from "../../../services/simulator/tree/tree-hands";
 import { takenBeside } from "./tree-side-aims";
 
 /** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
@@ -79,7 +80,6 @@ const heldBefore = computed(() => {
  * 親の箱の手で付きうる狙い (modId の組。手を置く時の当たりの候補 hitAimsOf と同じ = エンジンの付きうる狙い)。見ない手 (消す・品質など) は null。
  * これに無い狙いは灰色で選べない (例 オーブの下のエッセンスの MOD、10-24 オーナー)
  */
-const REACH_KINDS = ["add", "swap", "spam", "essence", "fracture"];
 const reach = computed((): Set<string> | null => {
   const d = s.data.value, b = props.boxId ? t.doc.value.boxes[props.boxId] : null, p = b?.parent ? t.doc.value.boxes[b.parent] : null;
   if (!fromGoals.value || !d || !p?.hand || !REACH_KINDS.includes(kindOf(p.hand))) return null;

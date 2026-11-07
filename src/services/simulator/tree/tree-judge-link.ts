@@ -15,7 +15,7 @@ const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(
 export const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
 const keepSig = (h: Hand): string => (h.keep ?`k:${h.keep.map((a) => a.modId).sort().join()}` : "");
-const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && !x.block === !h.block && [...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);
+const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency &&[...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);
 
 /**
  * 人が × で ↩ を外した箱の、結果が 1 通りの手の先の箱で中身が同じ物か (S-50、木 xIH1EiqP の b11 → b13)。
@@ -173,7 +173,9 @@ export function routeOf(data: PatchData, doc: TreeDoc, j: Judge, at: string | nu
   // 完成・失敗の箱に着いた人はそのまま (着いた後に数え直さない、S-05)
   // 決め (手・戻り・完成 / 失敗) の無い箱には留めず、中身の同じ決めのある箱があればそこへ (S-64、古いレシピの組み直しで増えた結果の箱 = 10-29 共有の木 ibMlQuAV・A52PouGg・st0SuDWi)
   const unknownOpen = !!at && !doc.boxes[at]?.hand && !doc.boxes[at]?.back && !doc.boxes[at]?.split;
-  if (at && (doc.boxes[at]?.done || (j.fitsItem(item, aimed, at) && !unknownOpen))) return at;
+  // 狙いが消えた箱はどの狙いが消えたかを見ない (箱の鍵と同じ、fitsLost)
+  const fits = !!at && (j.fitsItem(item, aimed, at) || (doc.boxes[at]?.out === "lost" && j.fitsLost(item, aimed, at)));
+  if (at && (doc.boxes[at]?.done || (fits && !unknownOpen))) return at;
   const all = j.boxesOf(item, aimed);
   if (unknownOpen && !all.length) return at;
   const playable = all.find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); });

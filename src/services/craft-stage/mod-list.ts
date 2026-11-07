@@ -22,9 +22,12 @@ import { tierDisplayRanges } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
 import { jewelEmotionsOf } from "../htc/patch";
 import { jaTypeName } from "../../i18n/item-names-ja";
+import { tierRankLabel } from "./tier-rank";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
 export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
+/** エッセンスの節 (エッセンス + パーフェクトエッセンス = 付け方はエッセンスの手) */
+export const isEssenceGroup = (g: ModGroup): boolean => g === "essence" || g === "perfect_essence";
 /**
  * special = 創生の樹・ハンドラップ専用の MOD (ベースの special の置き場、重み 0)。カレンシーでは付かないが MOD としてはあるので、手で付ける分だけ出す
  * (2026-10-09 オーナー「創生の樹産の奴がクラフトでは付かないけど MOD としては存在する。カレンシーで出ちゃだめだけど、手動で付ける分はいる。分かりやすいように置いといて」)
@@ -239,14 +242,18 @@ export const factionOf = (tags: readonly string[]): string | null => tags.find((
 /** 出すタグ (細かすぎる物・重なる物は省く。勢力は別に札で出すので外す) */
 export const shownTags = (tags: readonly string[]): string[] => tags.filter((t) => TAG_STYLE[t] && !FACTION_TAGS.includes(t));
 
+/** aimLabel の後ろの段の札「(T3 以上)」「(T3+)」(覚えていた文から外す時もこの書式 1 つ) */
+const RANK_TAG = / \(T\d+( 以上|\+)?\)$/;
 /**
- * 狙う MOD の札の文 (段の文 + 「T3 以上」)。選んだ時に文を固めず、出すたびに今の言語で作る
- * (2026-10-13 ランダム操作の確かめ: 英語の画面で選んだ狙いが、日本語に戻しても英語のままだった)。引けない時は覚えていた文
+ * 狙う MOD の札の文 (段の文 + 「T3 以上」、段の札は tierRankLabel = T1 は「T1」、D-04 と同じ)。選んだ時に文を固めず、出すたびに今の言語で作る
+ * (2026-10-13 ランダム操作の確かめ: 英語の画面で選んだ狙いが、日本語に戻しても英語のままだった)。引けない時は覚えていた文。
+ * rank: false = 段の札なし (段を問わない狙い・候補の一覧。前はチュートリアルが出来上がった文から札を剥がしていた、11-07 J-46)
  */
-export function aimLabel(data: PatchData | null, a: { modId: string; minTierIndex: number; label: string }): string {
+export function aimLabel(data: PatchData | null, a: { modId: string; minTierIndex: number; label: string }, o: { rank?: boolean } = {}): string {
   const raw = data?.mods.get(a.modId);
   const tier = raw?.tiers[a.minTierIndex];
-  if (!raw || !tier) return a.label;
-  const rank = `T${raw.tiers.length - a.minTierIndex}`;
-  return `${fillModText(oneOfMod(raw), tierDisplayRanges(tier))} (${tr(`${rank} 以上`, `${rank}+`)})`;
+  if (!raw || !tier) return o.rank === false ? a.label.replace(RANK_TAG, "") : a.label;
+  const text = fillModText(oneOfMod(raw), tierDisplayRanges(tier));
+  if (o.rank === false) return text;
+  return `${text} (${tierRankLabel(raw.tiers.length - a.minTierIndex)})`;
 }

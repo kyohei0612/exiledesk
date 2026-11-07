@@ -57,7 +57,7 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
-import { applyPick, drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
+import { applyPick, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -161,8 +161,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
-  const below = drawnBelow(doc.value, id);
-  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); showGone(below.filter((x) => !doc.value.boxes[x]).length); return at; });
+  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); return at; });
   panel.value = null;
   // 視点は holdBox (S-147e)
 }
@@ -258,9 +257,6 @@ function openIssues(): void { simOp("open-missing"); issuesShown.value = true; i
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
-/** 手を替えて消えた箱の数の知らせ (S-57) */
-const goneN = ref(0); let goneTimer = 0;
-function showGone(n: number): void { goneN.value = n; clearTimeout(goneTimer); goneTimer = window.setTimeout(() => { goneN.value = 0; }, 5000); }
 /** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b) */
 const holeN = computed(() => new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size);
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
@@ -339,17 +335,15 @@ function onKey(e: KeyboardEvent): void {
   if ((e.ctrlKey || e.metaKey) && ((e.key.toLowerCase() === "z" && e.shiftKey) || e.key.toLowerCase() === "y")) { e.preventDefault(); t.redo(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
-  // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。何も開いていない時の Esc は何もしない
-  // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)
-  if (e.key === "Escape" && !e.defaultPrevented) {
-    // 乗せた時の印 (合流の線の光) は消す。カードは出さなくなったので、Esc 1 回はほかの物に使う (10-27 オーナー「ホバーのカードも一旦出さなくていい」)
-    cardBox.value = null; hoverBox.value = null;
-    if (plus.value) plus.value = null;
-    else if (picking.value) picking.value = null;
-    else if (panel.value) panel.value = null;
-    else if (full.value) void v.toggleFull();
-  }
+  // 何も開いていない時の Esc は何もしない (前はページを閉じてクラフトステージへ出た。2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)。
+  // 乗せた時の印 (合流の線の光) は消す (10-27 オーナー「ホバーのカードも一旦出さなくていい」)
+  if (e.key === "Escape" && !e.defaultPrevented) { cardBox.value = null; hoverBox.value = null; }
 }
+// ＋の選び・戻り先選び・全画面の Esc は共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。箱の重ね窓 panel は上の useDismiss。前はここで自前に順を決め、足りない所の一覧と一緒に 2 つ閉じていた)
+const escOff = (f: () => void) => (): void => { cardBox.value = null; hoverBox.value = null; f(); };
+useDismiss(() => !!plus.value, [], escOff(() => { plus.value = null; }), { escOnly: true });
+useDismiss(() => !!picking.value, [], escOff(() => { picking.value = null; }), { escOnly: true });
+useDismiss(() => !!full.value, [], escOff(() => void v.toggleFull()), { escOnly: true });
 onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
@@ -414,8 +408,7 @@ const phone = usePhone();
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :doc="doc" @go="goIssue" /><p v-if="goneN" data-tree-gone-note class="pointer-events-none absolute bottom-12 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-[12px] text-[#e8d8c8]">{{ tr(`${goneN} 箱消えた (1 つ戻すで戻せる)`, `${goneN} removed (Undo restores)`) }}</p>
-        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
+        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(issuesShown && issues?.length ? { bottom: `${44 * pageZ}px` } : {}) }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"

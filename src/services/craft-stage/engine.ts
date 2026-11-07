@@ -21,7 +21,7 @@ export { freshItem, startFrom, playPlan, splitOmens } from "./run-plan";
 // omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
 // useReason = その手が今打てない理由 (打てるなら null。乱数で決まる物は打てる扱い。クラフト台とシミュの棚の同じ判定)
 export { applyCurrency, kindOf, omensFor, omensAllowedFor, qualityCapOf, useReason } from "./apply-currency";
-export { revealOffers, unrevealedOf } from "./apply-desecrate";
+export { revealOffers, unrevealedOf, unrevealedCount } from "./apply-desecrate";
 // revealPool = 今の未発現の枠の発現に出うる MOD と段 (シミュの発現の MOD の窓の灰色、S-38)
 export { revealPool } from "./spec/parts-unrevealed";
 // そのお告げを今掛けられるか (掛けると打てない・意味が無いお告げの理由。棚のお告げの欄の灰色、棚は共通の部品なので核)
@@ -29,6 +29,13 @@ export { omenBlock } from "./omen-block";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
+// その種類のカタリストをこの品に打つ時の今の % と入る上限 (何 % まで入るか)
+export { catalystRoom } from "./stage-core";
+// カタリストの品質が効く品か・品質があるか・神で値が変わる MOD・両側の空きの数
+export { catalystQualityApplies, hasCatalystQuality, rerollableMods, openSlots } from "./stage-core";
+// 品質の上限を越えられる幅 (インフューザー、E-74)・削減のお告げの的 (MOD レベルの一番低い物、未発現は 1)
+export { INFUSER_OVER, whittleTargets, whittleLevel } from "./apply-currency";
+export { isQualityCapMod, essenceKeyForTier, craftedLimitOf, astridsFor, ASTRID_EN } from "./apply-essence";
 // MOD を段から作る (数値の決め方は rng)・アイテムに MOD を足した形 (withMod)・そのカタリストがその MOD を伸ばすか
 export { makeStageMod, withMod, catalystBoosts } from "./stage-core";
 // ソケットの上限・白の時からあるソケットの数 (規格外。エミュの新品とツリーのスタートが同じ数で始める)
@@ -47,6 +54,7 @@ export { orbFloor } from "./spec/orb-specs";
 export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 // MOD の一覧の行 (段に数の tier)
 export type { ListRow, ListTier, ModGroup } from "./mod-list";
+export { isEssenceGroup } from "./mod-list";
 export { modListFor } from "./mod-list";
 export { previewUse } from "./use-preview";
 export { tierDisplayRanges } from "../mods/stat-scale";
@@ -58,26 +66,41 @@ export type { OddsTarget } from "./spec/odds";
 export { addOddsBySpec, addHitOdds, hitShare, fractureHit } from "./spec/odds";
 export type { RouteKind, Grade as RouteGrade, Grade } from "./route-race";
 // スパムの道の打ち手 (増強・カオス・高貴の 1 人分。シミュの spam-counts とエミュのスパムシミュが同じ打ち方)
-export { routeRun, routeKey, GRADE_KEY } from "./route-race";
+export { routeRun, routeKey, GRADE_KEY, ROUTE_DEFS, ROUTE_FROM_STEP, ROUTE_ORDER, routeStepKey, type RouteDef, type RouteStepDef, type RouteStepId } from "./route-race";
+// スパムの道を使えない理由 (日英) と、今のアイテムから始められるか (レア・コラプトでない・MOD あり)
+export { routeOff, routeFromBlock, routeOffKey, routeFromBlockKey, routeOffText, type RouteOffKey } from "./route-race";
 // 解析君の頼み (K4): 系統の塞ぎ・古の骨の段の下限・発現の手 (候補の数は REVEAL_SPEC.actions の reveal.offers)
 export { occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 export { ANCIENT_BONE_FLOOR } from "../../vendor/poe2htc/engine/probability";
 export { REVEAL_SPEC } from "./spec/desecrate-specs";
+// 紋章から打つ骨の段の下限 (E-65 = 消された元の MOD のレベル × 0.4 の四捨五入 + 1。説明の文もここから引く)
+export { markFloorOf } from "./spec/desecrate-specs";
 // 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
 export type { ForceFlag } from "./apply-force";
 export { forceKey } from "./apply-force";
+// 指名の手が付けられない理由と、それが付け方のせいか (始めの状態の窓も同じ鍵で聞く、M-19)
+export { forceReason } from "./apply-currency";
 // 持った瞬間の % (クラフト台の MOD 一覧と同じ) と狙う
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 // aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
-export { aimCombos, aimChain, aimDone, hits as aimHits } from "./aim-odds";
+export { aimCombos, aimChain, aimDone, hits as aimHits, sameAimTarget } from "./aim-odds";
+// 1 手の費用 (カレンシー + お告げ、発現は 0) と aimChain の回し方の種類 (画面の「どう回したか」の文を分ける)
+export type { AimChainMode } from "./aim-odds";
+export { stepCost, aimChainMode } from "./aim-odds";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字)
-export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf } from "./tier-rank";
+export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf, isCraftedSource, isDesecratedSource, isEmotionMod, isAlloyName } from "./tier-rank";
 export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
 export { OMEN_FOR } from "./omens";
+// 土台とお告げの層・鍵の読み・手の種類 (2026-11-07 ジン jin-base、E-1〜E-5。シミュの木・画面はこれを呼ぶ)
+export { parseKey, revealKey, essenceKey, type ParsedKey, type EssenceTier } from "./key";
+export { actionClass, actionClassOf, actionClassOfKey, type ActionClass, type ActionName } from "./spec/action-class";
+export { FACTION_TAG, OMEN_EXCLUSIVE, omenFor, omenRivals, omenSideOf, omensOfKind, toggleOmen } from "./spec/omen-layer";
+export { OMEN_KEY } from "./spec/omen-keys";
+export { addCandidatesOf, addSidesOf, boneSlotOf, removalOf, removeSideOf, type BoneSlot, type Removal } from "./spec/basis";
 export { RUNES, runeOf, isRune, runeEffectFor, bondedFor } from "./stage-runes";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";
@@ -95,11 +118,22 @@ export { modBoostsOf } from "./boosts";
 
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
-export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, defaultWeightOf } from "./stage-tuning";
+export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, CATALYSING_OVER_RATIO, defaultWeightOf } from "./stage-tuning";
+// 触媒の高貴の既定の倍率 (品質 % → 倍率、式は htc/catalysing-multiplier.ts の 1 本)
+export { catalysingMultiplier, CATALYSING_FULL_PCT } from "../htc/catalysing-multiplier";
+// 重みしか変えないお告げか・付きうる範囲を変えるお告げだけ
+export { omenWeightOnly, reachOmens } from "./spec/omen-layer";
+// 説明の文 (日英): お告げの効き方と棚の一言 (spec/omen-words.ts)・カレンシーを打てる条件 (spec/use-words.ts、CurrencySpec の target・limits から)
+export { omenHelp, omenTag } from "./spec/omen-words";
+export type { Words2 } from "./spec/use-words";
+export { useConditions, limitWords, groupWords, essencePartsOf } from "./spec/use-words";
 // 重みを推定で埋めた MOD の印 (MOD 一覧の重みの札。一覧は共通の部品なので核)
 export { OVERRIDDEN } from "../htc/weight-overrides";
 // 聖別の数値の下限・上限 (棚のお告げの下の設定・聖別の帯)
-export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";
+export { SANCTIFY_MIN, SANCTIFY_MAX, sanctifiedValue } from "./apply-vaal";
+// 品質の上限と表示値 (データ無しで呼べる。教材の例の数もここから、11-07 チュートリアル係の頼み)
+export { BASE_MAX_QUALITY, RAISED_MAX_QUALITY, displayedValue } from "../htc/quality";
+export { maxQualityForBase } from "../htc/catalysing-setup";
 // 文
 export { fillModText } from "../htc/mod-text";
 export { tagLabel } from "../mods/tag-ja";

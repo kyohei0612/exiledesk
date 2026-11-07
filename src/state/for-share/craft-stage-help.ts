@@ -5,7 +5,7 @@
  * ゲームの公式の説明文 (currency-hover-ja.json、クライアント原本) とは別に、このステージ (= 計算機と同じ規則) で
  * **実際にどう動くか**を書く。規則の本体は services/craft-stage/apply-*.ts。ここを変えたら向こうも見る。
  */
-import { isRune, runeEffectFor, runeOf, socketCapOf, maxQualityOf, isShard, CURRENCY_FLOOR, type PatchData, type StageItem, isEmotion } from "../../services/craft-stage/engine";
+import { isRune, runeEffectFor, runeOf, socketCapOf, maxQualityOf, isShard, orbFloor, markFloorOf, parseKey, omenHelp, useConditions, ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT, SANCTIFY_MIN, SANCTIFY_MAX, type PatchData, type StageItem, isEmotion } from "../../services/craft-stage/engine";
 import { GNAWED_MAX_ILVL } from "../../services/craft-stage/apply-currency";
 import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
 import { hasRawFamily } from "../../services/mods/mod-rules";
@@ -17,7 +17,7 @@ import { JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, S
 import { lang, tr } from "../../i18n/lang";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
 import { jewelEmotionsOf } from "../../services/htc/patch";
-import { EXTRA_HELP, EXTRA_HELP_EN, OMEN, OMEN_EN } from "./craft-stage-help-text";
+import { EXTRA_HELP, EXTRA_HELP_EN } from "./craft-stage-help-text";
 import { essenceTierOf, specialEssence } from "./craft-stage-help-mods";
 export { shelfTag, shortMod, specialEssence, stageAdds } from "./craft-stage-help-mods";
 
@@ -26,36 +26,39 @@ const isEn = (): boolean => lang.value === "en";
 /** ゲームの書式記号 ([Projectile|投射物] → 投射物) を外す */
 const plainGame = (x: string): string => x.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 
-const FLOOR = (kind: "transmute" | "regal", s: string): string => {
-  const f = CURRENCY_FLOOR[kind];
-  if (isEn()) {
-    const tailEn = "(groups without such a tier use their top tier; can't be used below that Item Level)";
-    return s === "greater" ? `Greater: only tiers with mod level ${f.greater}+ ${tailEn}` : s === "perfect" ? `Perfect: only tiers with mod level ${f.perfect}+ ${tailEn}` : "";
-  }
-  const tail = "(上の段が無い系統は一番上の段。アイテムレベルが下限未満の品には使えない)";
-  return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上のティアだけ ${tail}` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上のティアだけ ${tail}` : "";
+type Strength = "base" | "greater" | "perfect";
+/** 段の下限の行。数はエンジンの orbFloor (E-11d) */
+const FLOOR = (kind: string, s: Strength): string => {
+  if (s === "base") return "";
+  const f = orbFloor(kind, s);
+  if (isEn()) return `${s === "greater" ? "Greater" : "Perfect"}: only tiers with mod level ${f}+ (groups without such a tier use their top tier; can't be used below that Item Level)`;
+  return `${s === "greater" ? "上級" : "完全"}: 付く MOD は MOD レベル ${f} 以上のティアだけ (上の段が無い系統は一番上の段。アイテムレベルが下限未満の品には使えない)`;
 };
-/** カオスの上級 / 完全の下限 (足す MOD の MOD レベル。説明の行と同じ数) */
-const CHAOS_FLOOR = { greater: 35, perfect: 50 } as const;
+/** 手の強さ (鍵の _greater / _perfect、エンジンの parseKey) */
+const strengthOf = (key: string): Strength => { const p = parseKey(key); return p.type === "currency" ? p.strength : "base"; };
+/** 印から打つ骨の段の下限の例に使う、消された元の MOD のレベル (E-65 の例と同じ 75) */
+const MARK_EXAMPLE_FROM = 75;
 /**
  * 上級・完全のカレンシーで付く MOD の MOD レベルの下限 (それ以外は null)。カードの頭に大きく出す
  * (2026-10-16 要望 9c8a5f99「付く下限の MOD レベルが小さく表示してるから一番最初の説明文に大きく分かりやすく。上級・完全とつくやつ全て」)
  */
 export function stageFloor(key: string): number | null {
-  const s = strengthOf(key);
-  if (s !== "greater" && s !== "perfect") return null;
-  const kind = key.replace(/_(greater|perfect)$/, "");
-  if (kind === "chaos") return CHAOS_FLOOR[s];
-  const k = kind === "augment" ? "augment" : kind === "transmute" ? "transmute" : kind === "regal" ? "regal" : kind === "exalt" ? "exalt" : null;
-  return k ? CURRENCY_FLOOR[k][s] : null;
+  const p = parseKey(key);
+  if (p.type !== "currency" || p.strength === "base") return null;
+  const f = orbFloor(p.kind, p.strength);
+  return f > 0 ? f : null;
 }
-const strengthOf = (key: string): string => (key.endsWith("_greater") ? "greater" : key.endsWith("_perfect") ? "perfect" : "base");
 const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く";
 const add = (): string => tr(ADD, "New mods are rolled by weight from that side's normal mod pool, excluding groups already on the item and tiers above the Item Level");
 
 export function stageHelp(key: string, data: PatchData | null, item: StageItem | null): string[] {
   const sp = specialEssence(key, item);
-  return [...(sp?.notes ?? []), ...stageHelpBase(key, data, item)];
+  return [...(sp?.notes ?? []), ...useLine(key, data, item), ...stageHelpBase(key, data, item)];
+}
+/** 使える時の行 (エンジンの useConditions = spec の対象のレアリティ・部位と上限。骨・エッセンスは品の部位で引くので品とデータを渡す。2026-11-07 オーナー「全て」) */
+function useLine(key: string, data: PatchData | null, item: StageItem | null): string[] {
+  const c = useConditions(key, item, data ?? undefined);
+  return c.length ? [tr(`使える時: ${c.map((w) => w.ja).join("・")}`, `Usable: ${c.map((w) => w.en).join(" / ")}`)] : [];
 }
 
 function stageHelpBase(key: string, data: PatchData | null, item: StageItem | null): string[] {
@@ -77,50 +80,49 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       tr("候補は勢力のお告げを掛けていればその勢力の MOD だけ。アビスの反響のお告げを掛けると、3 つを 1 回だけ引き直せる", "With a faction Omen the options are that faction's mods only. Omen of Abyssal Echoes lets you reroll the 3 once"),
     ];
   }
-  if (OMEN[key]) return [...((isEn() ? OMEN_EN[key] : null) ?? OMEN[key]!), tr("押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる", "Click to apply (stackable). Only consumed by the next currency it affects")];
+  const oh = omenHelp(key);
+  if (oh) return [...(isEn() ? oh.en : oh.ja), tr("押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる", "Click to apply (stackable). Only consumed by the next currency it affects")];
   const s = strengthOf(key);
-  const kind = key.replace(/_(greater|perfect)$/, "");
-  switch (kind) {
+  switch (parseKey(key).kind) {
     case "transmute":
       return [tr("**ノーマル → マジック** にして MOD を 1 つ付ける", "**Normal → Magic**, adds 1 mod"), add(), FLOOR("transmute", s)].filter(Boolean);
     case "augment":
-      return [tr("**マジック** で MOD が 1 つの時、空いている側に 1 つ足す (マジックはプレフィックス 1 / サフィックス 1 まで)", "On a **Magic** item with 1 mod, adds 1 mod to the open side (Magic: 1 prefix / 1 suffix)"), add(), FLOOR("transmute", s)].filter(Boolean);
+      return [tr("**マジック** で MOD が 1 つの時、空いている側に 1 つ足す (マジックはプレフィックス 1 / サフィックス 1 まで)", "On a **Magic** item with 1 mod, adds 1 mod to the open side (Magic: 1 prefix / 1 suffix)"), add(), FLOOR("augment", s)].filter(Boolean);
     case "regal":
       return [tr("**マジック → レア** にして MOD を 1 つ足す (付いている MOD は残る)", "**Magic → Rare**, adds 1 mod (existing mods stay)"), add(), FLOOR("regal", s)].filter(Boolean);
     case "alchemy":
       return [tr("**ノーマルかマジック → レア** にして MOD を **4 つ** 付ける (マジックの MOD は付け直し)", "**Normal or Magic → Rare** with **4 mods** (Magic mods are rerolled)"), add()];
     case "exalt":
-      return [tr("**レア** に MOD を 1 つ足す (プレフィックス・サフィックス合わせて空きがある時)", "Adds 1 mod to a **Rare** (needs an open prefix or suffix)"), add(), FLOOR("regal", s), tr("お告げ: 左右の高貴 (足す側) / 偉大なる高貴 (2 つ) / 触媒の高貴 (品質の種類を重く)", "Omens: Sinistral / Dextral Exaltation (side) / Greater Exaltation (2 mods) / Catalysing Exaltation (weights the quality type)")].filter(Boolean);
+      return [tr("**レア** に MOD を 1 つ足す (プレフィックス・サフィックス合わせて空きがある時)", "Adds 1 mod to a **Rare** (needs an open prefix or suffix)"), add(), FLOOR("exalt", s), tr("お告げ: 左右の高貴 (足す側) / 偉大なる高貴 (2 つ) / 触媒の高貴 (品質の種類を重く)", "Omens: Sinistral / Dextral Exaltation (side) / Greater Exaltation (2 mods) / Catalysing Exaltation (weights the quality type)")].filter(Boolean);
     case "chaos":
       return [
         tr("**レア** の MOD を 1 つ消して、1 つ足す", "Removes 1 mod from a **Rare** and adds 1"),
         tr("消すのはフラクチャー (固定) 以外から等しく 1 つ", "The removed mod is picked equally from non-Fractured mods"),
         add(),
-        s === "greater" ? tr(`上級: 足す MOD は MOD レベル ${CHAOS_FLOOR.greater} 以上のティアだけ`, `Greater: added mod only from tiers with mod level ${CHAOS_FLOOR.greater}+`) : s === "perfect" ? tr(`完全: 足す MOD は MOD レベル ${CHAOS_FLOOR.perfect} 以上のティアだけ`, `Perfect: added mod only from tiers with mod level ${CHAOS_FLOOR.perfect}+`) : "",
+        s === "base" ? "" : s === "greater" ? tr(`上級: 足す MOD は MOD レベル ${orbFloor("chaos", s)} 以上のティアだけ`, `Greater: added mod only from tiers with mod level ${orbFloor("chaos", s)}+`) : tr(`完全: 足す MOD は MOD レベル ${orbFloor("chaos", s)} 以上のティアだけ`, `Perfect: added mod only from tiers with mod level ${orbFloor("chaos", s)}+`),
         tr("お告げ: 削減 (一番低い MOD を消す) / 左右の抹消 (消す側)", "Omens: Whittling (removes the lowest mod) / Sinistral / Dextral Erasure (side)"),
       ].filter(Boolean);
     case "annul":
-      return [tr("**マジックかレア** の MOD を 1 つ消す (フラクチャー以外から等しく)", "Removes 1 mod from a **Magic or Rare** item (equally among non-Fractured mods)"), tr("お告げ: 左右の消去 (消す側) / 光 (冒涜の MOD だけ)", "Omens: Sinistral / Dextral Annulment (side) / Light (Desecrated mod only)")];
+      return [tr("MOD を 1 つ消す (フラクチャー以外から等しく)", "Removes 1 mod (equally among non-Fractured mods)"), tr("お告げ: 左右の消去 (消す側) / 光 (冒涜の MOD だけ)", "Omens: Sinistral / Dextral Annulment (side) / Light (Desecrated mod only)")];
     case "divine":
-      return [tr("フラクチャー以外の MOD の **数値だけ** を、そのティアの範囲の中で振り直す (ティアは変わらない)", "Rerolls **only the values** of non-Fractured mods within their tier range (tiers don't change)"), tr("お告げ: 聖別 (0.78〜1.22 倍にして聖別。以後手を加えられない) / 祝福 (暗黙 MOD だけ振り直す)", "Omens: Sanctification (x0.78-1.22 and sanctified; no further changes) / the Blessed (rerolls implicits only)")];
+      return [tr("フラクチャー以外の MOD の **数値だけ** を、そのティアの範囲の中で振り直す (ティアは変わらない)", "Rerolls **only the values** of non-Fractured mods within their tier range (tiers don't change)"), tr(`お告げ: 聖別 (${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} 倍にして聖別。以後手を加えられない) / 祝福 (暗黙 MOD だけ振り直す)`, `Omens: Sanctification (x${SANCTIFY_MIN / 100}-${SANCTIFY_MAX / 100} and sanctified; no further changes) / the Blessed (rerolls implicits only)`)];
     case "fracture":
-      return [tr("**レア** で MOD が **4 つ以上**、まだフラクチャーが無い時", "On a **Rare** with **4+ mods** and no Fractured mod yet"), tr("MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (冒涜の MOD は発現済みでも選ばれない。4 つの数には入る)", "**Fractures** 1 random mod (equal chance; Desecrated mods are never picked, revealed or not, but count toward the 4)"), tr("フラクチャーした MOD は、カオス・消去・エッセンスでも消えない", "Fractured mods can't be removed by Chaos, Annulment or Essences")];
+      return [tr("MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (冒涜の MOD は発現済みでも選ばれない。4 つの数には入る)", "**Fractures** 1 random mod (equal chance; Desecrated mods are never picked, revealed or not, but count toward the 4)"), tr("フラクチャーした MOD は、カオス・消去・エッセンスでも消えない", "Fractured mods can't be removed by Chaos, Annulment or Essences")];
     case "artificer": {
       const n = item ? socketCapOf(item.base, item.cls.category) : 1;
       return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)`, `Up to ${n} on this base (Body Armour / Two Handed Weapon 2, others 1; +1 via corruption)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];
     }
-    case "desecrate":
-    case "desecrate_ancient":
-    case "desecrate_altered":
-    case "desecrate_gnawed": {
+    case "desecrate": {
+      // 冒涜専用の MOD が候補に入る数の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT)
+      const exPct = (unit: (n: number) => string): string => DESECRATION_EXCLUSIVE_COUNT.map((c) => `${c.exclusive}${unit(c.exclusive)} ${Math.round(c.rate * 100)}%`).join(" / ");
       const bone = item ? { jawbone: "顎の骨 (武器・矢筒)", rib: "肋骨 (防具)", collarbone: "鎖骨 (アクセサリー)", cranium: "頭蓋骨 (ジュエル)" }[desecrationBoneFor(item.cls.category)] : "";
       if (isEn()) {
         const boneEn = item ? { jawbone: "Jawbone (weapons, quivers)", rib: "Rib (armour)", collarbone: "Collarbone (jewellery)", cranium: "Cranium (jewels)" }[desecrationBoneFor(item.cls.category)] : "";
         return [
           "Adds 1 **Unrevealed Desecrated mod** to a **Rare** (only 1 Desecrated mod per item)",
           "The side is decided by the total weight of possible mods on each side. If both sides are full, it replaces a mod on that side",
-          "On reveal you **pick 1 of 3 options**. Desecrated-only mods: 1 option 85% / 2 options 14% / 3 options 1% (always at least 1); the rest are normal mods by weight (no duplicate groups)",
-          key === "desecrate_ancient" ? "Ancient Jawbone / Rib / Collarbone: options only from tiers with mod level 40+" : "",
+          `On reveal you **pick 1 of 3 options**. Desecrated-only mods: ${exPct((n) => (n > 1 ? " options" : " option"))} (always at least 1); the rest are normal mods by weight (no duplicate groups)`,
+          key === "desecrate_ancient" ? `Ancient Jawbone / Rib / Collarbone: options only from tiers with mod level ${ANCIENT_BONE_FLOOR}+` : "",
           key === "desecrate_gnawed" ? `Gnawed Jawbone / Rib / Collarbone: only for **Item Level ${GNAWED_MAX_ILVL} or lower** (game data). Same options as Preserved ones` : "",
           key === "desecrate_altered" ? "Altered Collarbone: options also include **Otherworldly mods** (jewellery only)" : "",
           boneEn ? `Abyssal Bone used for this base: ${boneEn}` : "",
@@ -130,8 +132,8 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       return [
         "**レア** に **未発現の冒涜 MOD** を 1 つ付ける (冒涜の MOD はアイテムに 1 つまで)",
         "付く側は、その側で出うる MOD の重みの合計で決まる。両側が埋まっていれば、その側の MOD を 1 つ差し替える",
-        "発現で **候補 3 つから 1 つ選ぶ**。冒涜専用の MOD は 1 個 85% / 2 個 14% / 3 個 1% (必ず 1 個は入る)、残りは普通の MOD から重みで (系統の被りなし)",
-        key === "desecrate_ancient" ? "古びた骨: 候補は MOD レベル 40 以上のティアだけ" : "",
+        `発現で **候補 3 つから 1 つ選ぶ**。冒涜専用の MOD は ${exPct(() => " 個")} (必ず 1 個は入る)、残りは普通の MOD から重みで (系統の被りなし)`,
+        key === "desecrate_ancient" ? `古びた骨: 候補は MOD レベル ${ANCIENT_BONE_FLOOR} 以上のティアだけ` : "",
         key === "desecrate_gnawed" ? `噛み切られた骨: **アイテムレベル ${GNAWED_MAX_ILVL} 以下** にだけ使える (クライアントの表)。候補は保存された骨と同じ` : "",
         key === "desecrate_altered" ? "変質した鎖骨: 候補に **異界の MOD** も入る (アクセサリーだけ)" : "",
         bone ? `このベースで使う骨: ${bone}` : "",
@@ -182,23 +184,24 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
   }
   if (isShard(key) && isEn()) return [`**${SHARDS_PER_ORB} shards** make 1 ${SHARD_TO_ORB[key] === "transmute" ? "Orb of Transmutation" : SHARD_TO_ORB[key] === "regal" ? "Regal Orb" : SHARD_TO_ORB[key] === "artificer" ? "Artificer's Orb" : "Orb of Chance"} (game description)`, "Can't be used on items", "In video steps, 1 step = pick up 1 shard"];
   if (isShard(key)) return [`**${SHARDS_PER_ORB} 個** 集めると ${SHARD_TO_ORB[key] === "transmute" ? "変成" : SHARD_TO_ORB[key] === "regal" ? "王者" : SHARD_TO_ORB[key] === "artificer" ? "熟練工" : "可能性"}のオーブ 1 個になる (クライアントの説明文)`, "アイテムには使えない", "動画の手順では 1 手 = 1 個拾う"];
-  if (key.startsWith("catalyst_")) {
+  const pk = parseKey(key);
+  if (pk.type === "catalyst") {
     const max = item ? maxQualityOf(item) : 20;
     if (isEn()) {
       return [
-        `Raises the quality of **Rings and Amulets** by **+1% or +2%** per Catalyst (random, even odds; up to ${max}% on this item)`,
+        `Raises the quality of **${pk.jewel ? "Jewels" : "Rings and Amulets"}** by **+1% or +2%** per Catalyst (random, even odds; up to ${max}% on this item)`,
         "The quality type comes from the Catalyst. **Using a different type restarts quality from 0**",
         "With Omen of Catalysing Exaltation, mods of that type become more likely (quality is consumed). Stacked with Greater Exaltation, both mods are weighted",
       ];
     }
     return [
       // 上限はベースの最大品質 + MOD の「品質の最大値 +N%」(ブリーチのエッセンス) なので「このベースで」ではなく「今のアイテムで」
-      `**指輪・アミュレット** の品質を 1 個で **+1% か +2%** 上げる (ランダム、半々。上限は今のアイテムで ${max}%)`,
+      `**${pk.jewel ? "ジュエル" : "指輪・アミュレット"}** の品質を 1 個で **+1% か +2%** 上げる (ランダム、半々。上限は今のアイテムで ${max}%)`,
       "品質の種類はカタリストで決まる。**別の種類を使うと品質は 0 からやり直し**",
       "触媒の高貴のお告げと組むと、その種類の MOD が付きやすくなる (品質は使い切る)。大いなる高貴のお告げも重ねると 2 つとも付きやすくなる",
     ];
   }
-  if (key.startsWith("essence:") && data && item) {
+  if (pk.type === "essence" && data && item) {
     const t = essenceTarget(data, item, key);
     if (!t) return [tr("このベースには使えないエッセンス", "This Essence can't be used on this base")];
     const tier = essenceTierOf(t);
@@ -206,7 +209,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (hasRawFamily(t.mod, ABYSS_FAMILY) && isEn()) {
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
-        "The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level = item level × 0.4 rounded down (the description only says \"higher tier\"; same as Craft of Exile)",
+        `The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Its options are only tiers above the removed mod's level × 0.4 (rounded) (e.g. removing a level ${MARK_EXAMPLE_FROM} mod → mod level ${markFloorOf({ markFrom: MARK_EXAMPLE_FROM })}+; the description only says "higher tier")`,
         "With an **Unrevealed** Desecrated mod it can be used and the Mark **replaces that Unrevealed mod**. Can't be used once the Desecrated mod is revealed. The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
@@ -214,7 +217,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (hasRawFamily(t.mod, ABYSS_FAMILY)) {
       return [
         "**レア** の MOD を 1 つ消して、消した側に **アビサルロードの紋章** を付ける",
-        "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル = アイテムレベル × 0.4 の切り捨て (説明文は「より高い段」だけ。Craft of Exile と同じ式)",
+        `次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。候補は、消された元の MOD の MOD レベル × 0.4 (四捨五入) より上のティアだけ (例: MOD レベル ${MARK_EXAMPLE_FROM} を消すと ${markFloorOf({ markFrom: MARK_EXAMPLE_FROM })} 以上。説明文は「より高い段」だけ)`,
         "**未発現** の冒涜 MOD があれば打てて、印は **その未発現に入れ替わる**。発現済みの冒涜 MOD があると打てない。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
         "お告げ: 左右の結晶化 (消す側 = 印の付く側)",
       ];

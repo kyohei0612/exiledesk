@@ -10,7 +10,7 @@
  *   - 工程は入口の札 (entry) が付いたら切り替わる。どの入口も付いていなければ 1 つ目の工程
  * 打ち方はエミュレーターと同じ applyCurrency。当たり所で弾かれた手 (random) は数えずにもう一度 (書いてある効果どおり)。
  */
-import { type PatchData, type StageItem, type StageMod, type StageSide, applyCurrency, revealOffers, catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
+import { type PatchData, type StageItem, type StageMod, type StageSide, type AimHitOpts, aimHits, applyCurrency, omenFor, OMEN_KEY, revealOffers, revealKey, catalystOf, catalystRoom, limitOf, listOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
 
 export type SlotKind = "normal" | "desecrated" | "fractured" | "essence" | "crafted";
 /** 完成の札 1 つ。mods のどれか 1 つ (段は minTierIndex 以上) で埋まる。mods が空ならその側のどの MOD でも */
@@ -79,18 +79,25 @@ export interface QuizRecipe {
 // ── 状況 ──────────────────────────────────────────────
 
 const RARITY = { normal: "n", magic: "m", rare: "r", unique: "u" } as const;
-const fits = (m: StageMod, s: QuizSlot): 0 | 1 | 2 | 3 => {
+/**
+ * 札に当たるかはエンジンの aimHits (G-1 S-2・J-01、11-07。前は modId の一致と段の番号だけの自前の式)。o = 当たりの設定 (data を渡すと sameText:
+ * 同じ系統で文も同じ別の modId も当たり・エッセンスの MOD は別物 = エミュの「狙う」・シミュの木と同じ)。段を問わず当たれば 1、段まで当たれば 2 (固定は 3)
+ */
+export type QuizHit = AimHitOpts | undefined;
+const fits = (m: StageMod, s: QuizSlot, o?: QuizHit): 0 | 1 | 2 | 3 => {
   // 候補が空の札 = その側のどの MOD でも (「残りのサフィは何でも」)
   if (!s.mods.length) return (m.desecrated && s.kind !== "desecrated") || (m.crafted && s.kind !== "crafted" && s.kind !== "essence") ? 0 : m.fractured ? 3 : 2;
-  const c = s.mods.find((x) => m.modId === x.modId);
-  if (!c) return 0;
-  if (m.tierIndex < c.minTierIndex) return 1;
+  const c = s.mods.filter((x) => aimHits(m, { modId: x.modId, minTierIndex: 0 }, o));
+  if (!c.length) return 0;
+  if (!c.some((x) => aimHits(m, x, o))) return 1;
   return m.fractured ? 3 : 2;
 };
+/** クイズ・コースの当たりの設定 (エミュの「狙う」・シミュの木と同じ sameText)。データが無い時は同じ modId だけ */
+export const quizHit = (data: PatchData | null | undefined): QuizHit => (data ? { data, sameText: true } : undefined);
 const groupKey = (s: QuizSlot): string => `${s.side}|${s.kind}|${s.temp ? 1 : 0}|${s.mods.map((x) => `${x.modId}:${x.minTierIndex}`).sort().join(",")}`;
 
 /** 札に MOD を当てる (1 MOD は 1 札まで、合計の状態が一番高い当て方)。返り値は札ごとの状態と当てた MOD */
-export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state: Record<string, number>; used: Set<StageMod>; byId: Map<string, StageMod> } {
+export function assignSlots(item: StageItem, goal: readonly QuizSlot[], o?: QuizHit): { state: Record<string, number>; used: Set<StageMod>; byId: Map<string, StageMod> } {
   const state: Record<string, number> = {};
   let best = -1, bestPick: Array<StageMod | null> = [];
   const pick: Array<StageMod | null> = [];
@@ -100,7 +107,7 @@ export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state
     const s = goal[i]!;
     for (const m of listOf(item, s.side)) {
       if (taken.has(m) || m.unrevealed) continue;
-      const f = fits(m, s);
+      const f = fits(m, s, o);
       if (!f) continue;
       taken.add(m); pick.push(m);
       // 合計が同じなら、固定された MOD は固定の札へ (0.5 は引き分けを分けるだけ。固定の候補が「どれか」の札と重なる時に、
@@ -112,7 +119,7 @@ export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state
   };
   go(0, 0);
   const used = new Set<StageMod>(), byId = new Map<string, StageMod>();
-  goal.forEach((s, i) => { const m = bestPick[i]; state[s.id] = m ? fits(m, s) : 0; if (m) { used.add(m); byId.set(s.id, m); } });
+  goal.forEach((s, i) => { const m = bestPick[i]; state[s.id] = m ? fits(m, s, o) : 0; if (m) { used.add(m); byId.set(s.id, m); } });
   // 中身が同じ札は区別しない (A に付いて B に無い = B に付いて A に無い)。並びの早い札から高い状態に
   const groups = new Map<string, QuizSlot[]>();
   for (const s of goal) groups.set(groupKey(s), [...(groups.get(groupKey(s)) ?? []), s]);
@@ -125,10 +132,10 @@ export function assignSlots(item: StageItem, goal: readonly QuizSlot[]): { state
 }
 
 /** 今のアイテムで働いている工程 (入口の札が付いた工程。無ければ 1 つ目) */
-export function routeOf(recipe: QuizRecipe, item: StageItem): QuizRoute {
+export function routeOf(recipe: QuizRecipe, item: StageItem, o?: QuizHit): QuizRoute {
   for (const r of recipe.routes) {
     if (!r.entry?.length) continue;
-    const { state } = assignSlots(item, r.goal);
+    const { state } = assignSlots(item, r.goal, o);
     if (r.entry.some((id) => (state[id] ?? 0) >= 2)) return r;
   }
   return recipe.routes[0]!;
@@ -157,8 +164,9 @@ function maskedBy(order: readonly string[] | undefined, goal: readonly QuizSlot[
   return out;
 }
 
-export function situationOf(item: StageItem, goal: readonly QuizSlot[], order?: readonly string[]): Situation {
-  const { state, used, byId } = assignSlots(item, goal);
+/** 外れ (junk) = どの札にも当たらない MOD (当たりの判定は上の fits = エンジンの aimHits)。札の状態 0〜3 と関門の見ない札は教材の足し */
+export function situationOf(item: StageItem, goal: readonly QuizSlot[], order?: readonly string[], o?: QuizHit): Situation {
+  const { state, used, byId } = assignSlots(item, goal, o);
   // 見ない札は 0、当てていた MOD は外れに数える。当て直さない (見る札だけで当て直すと、固定のマナが「ES かマナ」の札に移り、固定の札が「付いている」になった)
   for (const id of maskedBy(order, goal, state)) { state[id] = 0; const m = byId.get(id); if (m) used.delete(m); }
   const sit: Situation = { r: RARITY[item.rarity] };
@@ -183,8 +191,8 @@ export function situationOf(item: StageItem, goal: readonly QuizSlot[], order?: 
   // 冒涜の MOD の数 (未発現込み、札の物も込み)。冒涜はアイテムに 1 つまでなので、札に普通の MOD が冒涜で付いた時に骨が打てない (2026-10-16 指輪のチュートリアル)
   sit.des = [...item.prefixes, ...item.suffixes].filter((m) => m.desecrated || m.unrevealed).length;
   // 触媒の品質が上限まで溜まっていればその種類 (fire・cold …)、溜まっていなければ "-" (2026-10-16 指輪のチュートリアル: 触媒の高貴を打つ前に品質を溜める)
-  const c = catalystOf(item);
-  sit.cat = c.tag && c.pct >= maxQualityOf(item) ? c.tag : "-";
+  const tag = catalystOf(item).tag;
+  sit.cat = tag && catalystRoom(item, tag).full ? tag : "-";
   return sit;
 }
 const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");
@@ -268,7 +276,7 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
   // 残りを乱数で埋める (側のお告げ付きの高貴。相場で買えるベースの代わり)
   for (const side of SIDES) {
     const want = st.fill?.[side] ?? 0;
-    const omen = side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation";
+    const omen = omenFor("exalt", side)!;
     for (let k = 0; listOf(it, side).length < want && k < 20; k++) it = applyCurrency(data, it, "exalt", rng, [omen]).item;
   }
   // 作った後に打つ物 (エッセンス → 壁) と、自前のフラクチャーで当たった MOD の固定
@@ -281,20 +289,20 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
 }
 
 /** 発現の候補が、まだ埋まっていない札に当たるか (チュートリアルの「どれを選ぶ?」の正解にも使う) */
-export function revealWanted(item: StageItem, goal: readonly QuizSlot[]): (m: StageMod) => boolean {
-  const { state } = assignSlots(item, goal);
+export function revealWanted(item: StageItem, goal: readonly QuizSlot[], o?: QuizHit): (m: StageMod) => boolean {
+  const { state } = assignSlots(item, goal, o);
   const open = goal.filter((s) => (state[s.id] ?? 0) < 2);
-  return (m) => open.some((s) => s.side === m.side && fits(m, s) >= 2);
+  return (m) => open.some((s) => s.side === m.side && fits(m, s, o) >= 2);
 }
-/** 発現の番号: 3 つ (と反響の 3 つ) から、埋まっていない札の MOD を取る */
-function revealKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], echoes: boolean, seed: number): string {
+/** 発現の番号: 3 つ (と反響の 3 つ) から、埋まっていない札の MOD を取る (鍵はエンジンの revealKey) */
+function revealPickKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], echoes: boolean, seed: number): string {
   const offers = revealOffers(data, item, mulberry32(seed));
-  const ok = revealWanted(item, goal);
+  const ok = revealWanted(item, goal, quizHit(data));
   const i1 = offers.first.findIndex(ok);
-  if (i1 >= 0) return `reveal:${i1 + 1}`;
-  if (!echoes) return "reveal:1";
+  if (i1 >= 0) return revealKey(i1 + 1);
+  if (!echoes) return revealKey(1);
   const i2 = offers.reroll.findIndex(ok);
-  return i2 >= 0 ? `reveal:${i2 + 1}:reroll` : "reveal:1:reroll";
+  return revealKey(i2 >= 0 ? i2 + 1 : 1, true);
 }
 
 /** 1 手の結果: restart = 買い直す、blocked = 当たり所に関係なく打てない、random = 当たり所で弾かれた (減らずにもう一度)、それ以外は打った */
@@ -312,8 +320,8 @@ export function applyQuizAction(data: PatchData, route: QuizRoute, it: StageItem
   let key: string, omens: string[];
   const rs = Math.floor(g() * 2 ** 31);
   if ("reveal" in a) {
-    key = revealKey(data, it, route.goal, a.reveal.echoes, rs);
-    omens = a.reveal.echoes ? ["OmenofAbyssalEchoes"] : [];
+    key = revealPickKey(data, it, route.goal, a.reveal.echoes, rs);
+    omens = a.reveal.echoes ? [OMEN_KEY.echoes] : [];
   } else { key = a.use; omens = a.omens ?? []; }
   const x = applyCurrency(data, it, key, "reveal" in a ? mulberry32(rs) : g, omens);
   if (!x.applied) return x.random ? { kind: "random" } : { kind: "blocked", reason: x.reason };
@@ -329,10 +337,11 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
   const count = (k: string): void => { r.uses[k] = (r.uses[k] ?? 0) + 1; r.cost += o.price(k); };
   const buy = (): StageItem => { r.bases++; r.cost += recipe.start.price; return buildStart(data, recipe, g); };
   let it = buy();
+  const hit = quizHit(data);
   for (; r.steps < cap; r.steps++) {
-    const route = routeOf(recipe, it);
+    const route = routeOf(recipe, it, hit);
     r.route = route.id;
-    const sit = situationOf(it, route.goal, route.order);
+    const sit = situationOf(it, route.goal, route.order, hit);
     if (routeDone(route, sit)) { r.done = true; break; }
     const rule = ruleFor(route.rules, sit);
     if (!rule) { r.stop = { kind: "unanswered", route: route.id, situation: sit, item: it }; break; }
@@ -350,7 +359,7 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
     if (o.log) r.log.push(`${x.key}${x.omens.length ? ` [${x.omens.join(",")}]` : ""}: -${x.removed.map((m) => m.textEn).join(" / ")} +${x.added.map((m) => m.textEn).join(" / ")}`);
     it = x.item;
   }
-  if (!r.done && !r.stop) r.stop = { kind: "cap", route: r.route, situation: (() => { const rt = routeOf(recipe, it); return situationOf(it, rt.goal, rt.order); })(), item: it };
+  if (!r.done && !r.stop) r.stop = { kind: "cap", route: r.route, situation: (() => { const rt = routeOf(recipe, it, hit); return situationOf(it, rt.goal, rt.order, hit); })(), item: it };
   r.item = it;
   return r;
 }
@@ -432,13 +441,13 @@ export function runQuiz(data: PatchData, recipe: QuizRecipe, n: number, o: QuizO
 
 /** エミュレーターの「レシピで 1 手」: 今のアイテムで次に打つ手 (完成・答えなしは null と理由) */
 export function nextMove(data: PatchData, recipe: QuizRecipe, item: StageItem, seed: number): { route: QuizRoute; rule: QuizRule | null; key: string | null; omens: string[]; done: boolean } {
-  const route = routeOf(recipe, item);
-  const sit = situationOf(item, route.goal, route.order);
+  const route = routeOf(recipe, item, quizHit(data));
+  const sit = situationOf(item, route.goal, route.order, quizHit(data));
   if (routeDone(route, sit)) return { route, rule: null, key: null, omens: [], done: true };
   const rule = ruleFor(route.rules, sit);
   if (!rule) return { route, rule: null, key: null, omens: [], done: false };
   const a = rule.do;
   if ("restart" in a) return { route, rule, key: "restart", omens: [], done: false };
-  if ("reveal" in a) return { route, rule, key: revealKey(data, item, route.goal, a.reveal.echoes, seed), omens: a.reveal.echoes ? ["OmenofAbyssalEchoes"] : [], done: false };
+  if ("reveal" in a) return { route, rule, key: revealPickKey(data, item, route.goal, a.reveal.echoes, seed), omens: a.reveal.echoes ? [OMEN_KEY.echoes] : [], done: false };
   return { route, rule, key: a.use, omens: a.omens ?? [], done: false };
 }

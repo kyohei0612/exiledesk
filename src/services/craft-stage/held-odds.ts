@@ -14,12 +14,13 @@ import type { PatchData, ItemState } from "../../vendor/poe2htc/engine/types";
 import { DES_BOSS_TAG, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { applyCurrency } from "./apply-currency";
 import { mulberry32 } from "../htc/rng";
-import { allMods, effectiveCls, makeStageMod, overLimit, room, SIDES, withMod, without, type Candidate } from "./stage-core";
-import { revealOffers } from "./apply-desecrate";
+import { effectiveCls, makeStageMod, withMod, without, type Candidate } from "./stage-core";
+import { boneSlotOf } from "./spec/basis";
+import { offeredMods, revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
 import { REVEAL_SPEC } from "./spec/desecrate-specs";
-import { unrevealedPlan, type AddUnrevealed } from "./spec/parts-unrevealed";
+import { drawsOtherworldly, unrevealedPlan, type AddUnrevealed } from "./spec/parts-unrevealed";
 import { addCands, addOddsBySpec } from "./spec/odds";
 
 export interface HeldOdds {
@@ -74,7 +75,7 @@ export function heldAnyOf(data: PatchData, item: StageItem, key: string, omens: 
     let got: readonly StageMod[] = r.added ?? [];
     if (h.bone) {
       const off = revealOffers(data, r.item, mulberry32(104729 * s));
-      got = echoes ? [...off.first, ...off.reroll] : off.first;
+      got = offeredMods(off, echoes);
     }
     if (got.some((m) => keys.has(aimTierKey(m.modId, m.tierIndex)))) hit++;
   }
@@ -130,9 +131,9 @@ function twoAdds(data: PatchData, item: StageItem, plan: SpecPlan, first: readon
   for (const c1 of first) {
     const p1 = c1.w / W;
     add(c1.mod.id, p1, c1.tiers, c1.w);
-    // 2 つ目は打つ処理 (parts.ts の add) と同じく、1 つ目が付いた後の状態から同じ側・同じ重みで
+    // 2 つ目は打つ処理 (parts.ts の add) と同じく、1 つ目が付いた後の状態から同じ側・同じ重みで。側の上限は打つ前の品から (E-30a、ctx.before と同じ)
     const it2 = withMod(item, makeStageMod(c1.mod, c1.side, c1.tiers[0]!.index, () => 0.5));
-    const second = addCands(data, it2, last.add, plan.mods);
+    const second = addCands(data, it2, last.add, plan.mods, item);
     const W2 = second.reduce((a, c) => a + c.w, 0);
     if (!(W2 > 0)) continue;
     for (const c2 of second) add(c2.mod.id, p1 * (c2.w / W2), c2.tiers, c2.w);
@@ -152,26 +153,21 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   // 両側が埋まっていれば固定していない MOD を全部から等しく 1 つ消して、その側に付く
   const sp = unrevealedPlan(data, item, a, plan.mods); // E-61 骨の側 (E-11f の例外)
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];
-  const removal = (side: StageSide, p: number): void => {
-    const rem = allMods(item).filter((m) => !m.fractured && m.side === side);
-    for (const r of rem) runs.push({ p: p / rem.length, it: without(item, r), side });
-  };
-  if (sp.mark) runs.push({ p: 1, it: without(item, sp.mark), side: sp.mark.side });
-  // 上限を超えている側は付かない (E-25、打つ処理と同じ)。お告げで決めた側なら全部 0%、当たり所の側は数えない (カオスの不成立の枝と同じ)
-  else if (sp.fixed) { if (overLimit(item, sp.fixed)) return { byMod, total: 1, bone: true }; if (room(item, sp.fixed)) runs.push({ p: 1, it: item, side: sp.fixed }); else removal(sp.fixed, 1); }
-  // 空きがある時は空いた側から等しく (両側なら半々、2026-10-16 Craft of Exile と同じ)
-  else if (SIDES.some((sd) => room(item, sd))) {
-    const W = sp.weights.reduce((x, y) => x + y.w, 0);
-    if (!(W > 0)) return { byMod, total: 1, bone: true };
-    for (const { s, w } of sp.weights) if (w > 0) runs.push({ p: w / W, it: item, side: s });
-  } else {
-    const ws = sp.weights.filter((x) => !overLimit(item, x.s));
-    const W = ws.reduce((x, y) => x + y.w, 0);
-    if (!(W > 0)) return { byMod, total: 1, bone: true };
-    for (const { s, w } of ws) if (w > 0) removal(s, w / W);
+  // 側ごとの枠は打つ処理と同じ土台 (basis.ts の boneSlotOf)。上限を超えている側は付かない (E-25): お告げで決めた側なら全部 0%、
+  // 当たり所の側は数えない (カオスの不成立の枝と同じ)。空きがある時は空いた側から (両側なら半々、2026-10-16 Craft of Exile と同じ)、
+  // 両側が埋まっていれば消せる MOD の数で側を分けて、その側の固定以外から等しく 1 つ消す
+  const sides = sp.mark ? [{ s: sp.mark.side, w: 1 }] : sp.fixed ? [{ s: sp.fixed, w: 1 }] : sp.weights;
+  const slots = sides.map((x) => ({ ...x, slot: boneSlotOf(item, x.s, sp.mark) })).filter((x) => !("over" in x.slot));
+  const W = slots.reduce((x, y) => x + y.w, 0);
+  if (!(W > 0)) return { byMod, total: 1, bone: true };
+  for (const { s, w, slot } of slots) {
+    if (!(w > 0)) continue;
+    if ("open" in slot) runs.push({ p: w / W, it: item, side: s });
+    const from = "mark" in slot ? [slot.mark] : "replace" in slot ? slot.replace : [];
+    for (const r of from) runs.push({ p: w / W / from.length, it: without(item, r), side: s });
   }
   const boss = plan.mods.guaranteeTag ? BOSS_OF_TAG.get(plan.mods.guaranteeTag) : undefined;
-  const opts: BoneOpts = { floor: sp.floor, altered: a.pools.includes("otherworldly"), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };
+  const opts: BoneOpts = { floor: sp.floor, altered: drawsOtherworldly(a), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };
   for (const run of runs) addBoneRun(data, run.it, opts, run.side, run.p, byMod);
   return { byMod, total: 1, bone: true };
 }

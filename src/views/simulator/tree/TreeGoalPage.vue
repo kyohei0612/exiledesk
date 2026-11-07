@@ -15,7 +15,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
+import { makeStageMod, mulberry32, sideOfMod, tierIndexOf, tierRankLabel, unfracturable, type StageMod } from "../../../services/craft-stage/engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { goalBlockLoose } from "./tree-goal-cap";
 import { rowBlockLines } from "../../../services/simulator/sim-engine";
@@ -173,7 +173,7 @@ const crafts = computed(() => {
   if (!d) return [];
   const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
   // 束 (S-30b) の時は切り替えはブリーチと前に「途中で消える」にした物だけ (ほかは束の札「どれか n つ」)
-  return list.length >= 2 ? list.filter((c) => c.way || isBreachAim(c.a)) : [];
+  return list.length >= 2 ? list.filter((c) => c.way || isBreachAim(d, c.a)) : [];
 });
 /** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
 const inRow = computed(() => true);
@@ -212,8 +212,11 @@ function rowBlocks(r: Parameters<typeof rowBlockLines>[0]): Array<{ why: string;
 }
 /** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、穴チェックで「始まりの形が作れない」) */
 const DESECRATED_NO_FRACTURE = (): string => tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured");
+/** 骨の池の行 (冒涜・異界) は骨で付く = 冒涜の印の付いた品の MOD。できるかはエンジンの unfracturable に聞く */
 function fracBlockOf(r: { group?: string }, modId: string, tier: number): string | null {
-  return r.group === "desecrated" || r.group === "otherworldly" ? DESECRATED_NO_FRACTURE() : blockOf(modId, tier);
+  const d = s.data.value, mod = d?.mods.get(modId), it = t.goalItem.value?.item;
+  const m = d && mod && it ? { ...makeStageMod(mod, sideOfMod(d, modId), tierIndexOf(d, modId, tier), mulberry32(1)), ...(r.group === "desecrated" || r.group === "otherworldly" ? { desecrated: true as const } : {}) } : null;
+  return m && unfracturable(d, it!, m) ? DESECRATED_NO_FRACTURE() : blockOf(modId, tier);
 }
 /** その行 (系統) の狙い (段ごとに modId が違うまとめ行もあるので、行の段のどれかの modId で引く) */
 const rowGoal = (r: { id: string; tiers: Array<{ modId?: string }> }): Aim | undefined => t.goals.value.find((a) => a.modId === r.id || r.tiers.some((x) => x.modId === a.modId));

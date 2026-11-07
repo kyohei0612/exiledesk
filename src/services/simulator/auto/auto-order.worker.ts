@@ -15,7 +15,7 @@ import type { AutoModel, OrderDetail, OrderResult } from "./auto-types";
 import { answerFor, methodsFromDetail, rulesForOrder } from "./auto-rules";
 import { quizFromSim, type QuizRules } from "../quiz-build";
 import type { QuizRecipe, QuizRule, Situation } from "../quiz-recipe";
-import { loadHtcPatch, type PatchData } from "../../craft-stage/engine";
+import { loadHtcPatch, RUNE_PREFIX, type PatchData } from "../../craft-stage/engine";
 import type { QuizSimIn } from "../quiz-build";
 
 /** 画面から送る狙いの入力 (データと関数は送れないので外す。ルーンの値段は表の `rune:<英語名>`) */
@@ -66,7 +66,7 @@ async function build(job: Extract<AutoJob, { kind: "build" }>): Promise<void> {
   const once = (): { built: ReturnType<typeof buildAutoModel>; missing: string[] } => {
     const missing = new Set<string>();
     const price = (k: string): number => { if (k in tab) return tab[k]!; missing.add(k); return 0; };
-    const sim = { ...job.sim, data: d, runePrice: (en: string) => price(`rune:${en}`) };
+    const sim = { ...job.sim, data: d, runePrice: (en: string) => price(`${RUNE_PREFIX}${en}`) };
     lastSim = sim;
     lastFill = null;
     const built = buildAutoModel({ sim, price });

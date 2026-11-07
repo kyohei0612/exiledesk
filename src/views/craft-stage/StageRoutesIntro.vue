@@ -9,12 +9,13 @@ import { baseArt } from "../../components/art/base-art";
 import { computed } from "vue";
 import { craftStage as s, iconOf } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
+import { routeKey, type Grade, type RouteKind } from "../../services/craft-stage/engine";
 import StageRouteRunes from "./StageRouteRunes.vue";
 
 type Route = { route: string; ja: string; en: string; main: string; grades: string[]; start: [string, string]; steps: Array<{ ja: string; en: string }> };
 defineProps<{ routes: Route[]; runs: number; picked: readonly string[]; required: readonly string[] }>();
 const emit = defineEmits<{ pick: []; runes: [ids: string[]] }>();
-const GRADE: Record<string, [string, string, string]> = { base: ["無印", "Regular", ""], greater: ["上級", "Greater", "_greater"], perfect: ["完全", "Perfect", "_perfect"] };
+const GRADE: Record<string, [string, string]> = { base: ["無印", "Regular"], greater: ["上級", "Greater"], perfect: ["完全", "Perfect"] };
 const art = computed(() => (s.item.value ? baseArt(s.item.value.base) : null));
 const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
 </script>
@@ -45,7 +46,7 @@ const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
             <p class="poe-prop mb-1">{{ tr("比べる等級", "Grades compared") }}</p>
             <div class="flex justify-center gap-2">
               <span v-for="g in r.grades" :key="g" class="flex flex-col items-center gap-0.5">
-                <span class="g-slot grid size-12 place-items-center"><img :src="iconOf(`${r.main}${GRADE[g]![2]}`)" alt="" class="size-10 object-contain" /></span>
+                <span class="g-slot grid size-12 place-items-center"><img :src="iconOf(routeKey(r.route as RouteKind, g as Grade))" alt="" class="size-10 object-contain" /></span>
                 <span class="poe-desc text-[12px]">{{ tr(GRADE[g]![0], GRADE[g]![1]) }}</span>
               </span>
             </div>

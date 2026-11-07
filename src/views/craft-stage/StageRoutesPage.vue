@@ -20,7 +20,7 @@ import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage, runesFit } from "./route-place";
-import { GRADE_KEY, type Grade } from "../../services/craft-stage/engine";
+import { GRADE_KEY, ROUTE_DEFS, ROUTE_FROM_STEP, ROUTE_ORDER, routeFromBlock, routeOffText, tierRankLabel, tierRankOf, type Grade, type RouteDef, type RouteStepDef, type RouteStepId } from "../../services/craft-stage/engine";
 import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
@@ -35,26 +35,28 @@ const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect
 /** 1 通りの人数。PC は 30 人 (M-61、スイッチ spam30。オーナー 10-31「後エミュのスパムだけど30人にして今100っしょなげーわパソコンでも」)。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
 const RUNS = isPhoneWidth() ? 10 : flag("spam30") ? 30 : 100;
 type Step = { k: string | null; ja: string; en: string };
-/** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (route-race.ts と同じ。絵と文) */
-const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; grades: Grade[]; steps: Step[] }> = [
-  { route: "augment", ja: "増強スパム", en: "Augment spam", main: "augment", grades: ["base", "greater", "perfect"], steps: [
-    { k: "transmute", ja: "白のベースに変成 (等級は増強と同じ) でマジックにする", en: "Transmute the white base (same grade as the augment) to magic" },
-    { k: "annul", ja: "狙いの側に MOD が付いていたら消去 (どれが消えるかは運。反対側が消えることもある。狙いの側が空くまで続ける)", en: "If the target side has a mod, annul (which mod goes is random, the other side may go instead; repeat until the target side is empty)" },
-    { k: "augment", ja: "狙いの側が空いたら増強 (両側とも空いている時はどちらに付くかは運。反対側に付いたら次は増強で狙いの側へ)", en: "When the target side is empty, augment (if both sides are empty the side is random; if it lands on the other side, the next augment goes to the target side)" },
-    { k: null, ja: "狙いが付くまで 2・3 を繰り返す。マジックで狙いの側に枠が無いベースは使えない", en: "Repeat 2–3 until the target rolls. Bases with no slot on that side while magic can't use this" },
-  ] },
-  { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["base", "greater", "perfect"], steps: [
-    { k: "exalt", ja: "MOD 1 つのレアから始める (狙いでない MOD が 1 つ。作る費用は入れない)", en: "Start from a rare with 1 mod (not the target; its cost is not included)" },
-    { k: "chaos", ja: "狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付くので、MOD はずっと 1 つ)", en: "Keep using the same Chaos Orb until the target rolls (one out, one in, so it stays at 1 mod)" },
-  ] },
-  { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["base", "greater", "perfect"], steps: [
-    { k: null, ja: "MOD 0 のレアから始める (作る費用は入れない)", en: "Start from a rare with 0 mods (its cost is not included)" },
-    { k: "OmenofGreaterExaltation", ja: "高貴 + 偉大な高貴のお告げで 2 つ付ける (どちらの側に付くかは運)", en: "Exalt with Omen of Greater Exaltation to add 2 mods (sides are random)" },
-    { k: "annul", ja: "外れたら消去 2 回で MOD 0 に戻して 2 から繰り返す", en: "On a miss, annul twice back to 0 mods and repeat from 2" },
-  ] },
-];
+/** 道の名前 (文は画面。何をどの順に打つか・札の絵・主のカレンシー・等級はエンジンの ROUTE_DEFS = routeStep と同じ定義、M-60・engine-gaps ① 14) */
+const ROUTE_NAME: Record<RouteKind, [string, string]> = { augment: ["増強スパム", "Augment spam"], chaos: ["カオススパム", "Chaos spam"], exalt: ["高貴スパム", "Exalt spam"] };
+/** 手の文 (手の id ごと。道ごとに文が違う始めの手だけ `道:start`) */
+const STEP_TEXT: Partial<Record<RouteStepId | `${RouteKind}:start`, [string, string]>> = {
+  transmute: ["白のベースに変成 (等級は増強と同じ) でマジックにする", "Transmute the white base (same grade as the augment) to magic"],
+  annulMiss: ["狙いの側に MOD が付いていたら消去 (どれが消えるかは運。反対側が消えることもある。狙いの側が空くまで続ける)", "If the target side has a mod, annul (which mod goes is random, the other side may go instead; repeat until the target side is empty)"],
+  augment: ["狙いの側が空いたら増強 (両側とも空いている時はどちらに付くかは運。反対側に付いたら次は増強で狙いの側へ)", "When the target side is empty, augment (if both sides are empty the side is random; if it lands on the other side, the next augment goes to the target side)"],
+  repeat: ["狙いが付くまで 2・3 を繰り返す。マジックで狙いの側に枠が無いベースは使えない", "Repeat 2–3 until the target rolls. Bases with no slot on that side while magic can't use this"],
+  "chaos:start": ["MOD 1 つのレアから始める (狙いでない MOD が 1 つ。作る費用は入れない)", "Start from a rare with 1 mod (not the target; its cost is not included)"],
+  chaos: ["狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付くので、MOD はずっと 1 つ)", "Keep using the same Chaos Orb until the target rolls (one out, one in, so it stays at 1 mod)"],
+  "exalt:start": ["MOD 0 のレアから始める (作る費用は入れない)", "Start from a rare with 0 mods (its cost is not included)"],
+  exaltPair: ["高貴 + 偉大な高貴のお告げで 2 つ付ける (どちらの側に付くかは運)", "Exalt with Omen of Greater Exaltation to add 2 mods (sides are random)"],
+  annulBack: ["外れたら消去 2 回で MOD 0 に戻して 2 から繰り返す", "On a miss, annul twice back to 0 mods and repeat from 2"],
+  fromItem: ["今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま、狙いのルーンが足りなければ嵌める。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", "Start from the current craft item (fractures, quality and runes kept, adding the target's rune if missing; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)"],
+};
+/** 始めの品の文 (ROUTE_DEFS の start) */
+const START_TEXT: Record<RouteDef["start"], [string, string]> = { white: ["白のベース", "White base"], rare1: ["MOD 1 つのレア", "Rare with 1 mod"], rare0: ["MOD 0 のレア", "Rare with 0 mods"] };
+const stepOf = (route: RouteKind, st: RouteStepDef): Step => { const [ja, en] = STEP_TEXT[st.id === "start" ? (`${route}:start` as const) : st.id]!; return { k: st.key, ja, en }; };
+/** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (定義はエンジン、絵と文を足す) */
+const ROUTES = ROUTE_DEFS.map((d) => ({ route: d.route, ja: ROUTE_NAME[d.route][0], en: ROUTE_NAME[d.route][1], main: d.main, grades: [...d.grades], steps: d.steps.map((st) => stepOf(d.route, st)) }));
 /** 最初の画面のカード (始めの状態。打ち方は steps をそのまま出す) */
-const INTRO = ROUTES.map((r) => ({ ...r, start: ({ augment: ["白のベース", "White base"], chaos: ["MOD 1 つのレア", "Rare with 1 mod"], exalt: ["MOD 0 のレア", "Rare with 0 mods"] } as const)[r.route] as [string, string] }));
+const INTRO = ROUTES.map((r, i) => ({ ...r, start: START_TEXT[ROUTE_DEFS[i]!.start] }));
 /**
  * 嵌めて打つルーン (StageRouteRunes.vue。2026-10-19 オーナー「ルーン嵌めた状態でスパムシミュレーターやらないと確率違うぞ」)。
  * 既定はエミュレーターのアイテムに嵌めている物 (この部位で確率が変わる物だけ)。狙いが特殊 MOD なら、そのルーンは必ず嵌める
@@ -73,8 +75,8 @@ const prep = computed(() => (s.data.value && !fromItem.value ? runePrep(s.data.v
  */
 const FROM_ON = true;
 const fromItem = shallowRef<StageItem | null>(null);
-/** コラプトしたアイテムにはカレンシーが打てないので、今のアイテムからは始められない (M-63、オーナー 10-31「てかコラプトはカレンシーなくね」) */
-const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && !s.item.value.corrupted && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
+/** 今のアイテムから始められるか (MOD のあるレアでコラプトしていない) はエンジンの routeFromBlock (M-63、オーナー 10-31「てかコラプトはカレンシーなくね」) */
+const canFrom = computed(() => FROM_ON && !!s.item.value && !routeFromBlock(s.item.value));
 /** 実際に打ち始める形: 今のアイテムに狙いのルーンが足りなければ嵌めた形 (M-63)。クラフト台は当たった形を置くまで変わらない */
 const fromWorn = computed(() => (fromItem.value && s.data.value ? wearAimRunes(s.data.value, fromItem.value, runeNeed.value) : null));
 const fromStart = computed(() => fromWorn.value?.item ?? null);
@@ -95,18 +97,13 @@ function setFrom(on: boolean): void {
 }
 // 開いている間も台は Ctrl+Z・やり直しで変わる。始められなくなったら決まりの形へ戻す
 watch(canFrom, (on) => { if (!on) setFrom(false); });
-/** 使えない理由の英語 (route-race.ts の文) */
-const OFF_EN: Record<string, string> = {
-  "マジックに狙いの側の枠が無いベース": "This base has no slot on the target side while magic",
-  "上限の手数までに付かなかった (この等級では付かない段かも)": "Didn't hit within the use cap (this grade may not roll that tier)",
-  "今のアイテムから始める時はカオスだけ": "Only Chaos when starting from the current item",
-  "今のアイテムがレアでない": "The current item isn't rare",
-  "今のアイテムにもう狙いが付いている": "The current item already has the target",};
-const offText = (x: string): string => tr(x.replace("段かも", `${TIER}かも`), OFF_EN[x] ?? x);
-/** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりを差し替える) */
-const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま、狙いのルーンが足りなければ嵌める。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", en: "Start from the current craft item (fractures, quality and runes kept, adding the target's rune if missing; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)" };
+/** 使えない理由: エンジンの鍵 (前の共有の日本語の文も) を routeOffText で日英の文に。段の言い方だけ画面の言葉に */
+const offText = (x: string): string => routeOffText(x).replace("段かも", `${TIER}かも`);
+/** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりをエンジンの ROUTE_FROM_STEP に差し替える) */
+const FROM_STEP = stepOf("chaos", ROUTE_FROM_STEP);
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
-const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
+/** 回す順 (道 × 等級、無印から) はエンジンの ROUTE_ORDER */
+const ORDER = ROUTE_ORDER;
 
 /** モンキーテスト 10-23 のエミュの直し (Esc は運試しの欄だけ・運試しの間の戻るを出さない・スマホの札の折り返し・題を 1 行・狙いの文を幅全部で)。本番は OK まで前の形 (release-flags の monkeyEmu1023) */
 const MONKEY = flag("monkeyEmu1023");
@@ -119,8 +116,9 @@ const aims = computed(() => (t.value ?? []).flatMap((tt) => {
   // 当たりになる値の幅全部 (T8 以上なら T8 の下〜付く一番上の段の上。モンキーテスト 10-23 の 6)。本番は OK まで一番下の段の幅だけ
   const tier = m.tiers[tt.minTierIndex];
   const text = (MONKEY ? aimRangeText(m, tt.minTierIndex, ilvl.value) : fillModText(m, tier ? tierDisplayRanges(tier) : [])).replace(/\n/g, " / ");
-  const rank = `T${m.tiers.length - tt.minTierIndex}`;
-  return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${tr(`${rank} 以上`, `${rank}+`)})` }];
+  // 段の札はエンジンの tierRankLabel (T1 は「以上」を付けない、D-04 と同じ)
+  const rank = tierRankLabel(tierRankOf(s.data.value!, tt.modId, tt.minTierIndex));
+  return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${rank})` }];
 }));
 const aimKey = computed(() => (t.value ?? []).map((x) => `${x.modId}#${x.minTierIndex}`).join(","));
 /** 当たりを 1 つ外す (最後の 1 つは外さない、選び直しで変える) */
@@ -314,7 +312,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <template v-if="aims.length === 1">
             <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("狙い", "TARGET") }} · {{ aims[0]!.side }}</p>
             <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ aims[0]!.text }}</p>
-            <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${aims[0]!.rank} 以上で当たり`, `Hit at ${aims[0]!.rank}+`) }}</span></p>
+            <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${aims[0]!.rank} で当たり`, `Hit at ${aims[0]!.rank}`) }}</span></p>
           </template>
           <!-- 当たりが 2 つ以上 (開発版だけ): どれか 1 つが付いたら止める -->
           <template v-else>
@@ -323,7 +321,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <li v-for="(a, i) in aims" :key="i" class="flex min-w-0 items-center gap-2 rounded bg-white/[0.04] px-2 py-1">
                 <span class="w-6 shrink-0 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ a.m.type === "suffix" ? "S" : "P" }}</span>
                 <span class="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--color-rarity-magic)]" :title="a.text">{{ a.text }}</span>
-                <span class="shrink-0 rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${a.rank} 以上`, `${a.rank}+`) }}</span>
+                <span class="shrink-0 rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ a.rank }}</span>
                 <button type="button" class="g-plain grid size-7 shrink-0 place-items-center opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="busy" :title="tr('この当たりを外す', 'Remove this target')" @click="removeAim(i)">×</button>
               </li>
             </ul>

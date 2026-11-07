@@ -5,7 +5,7 @@
  * 道に全部消えてよい消去の手がある箱だけ、止まる所 (stripStop) が木全体を見るので木全体の中身も入れる
  * 鍵を作るだけで 100 箱の 1 手の 3 割を使っていたので、判定と見本作りの間は段ごとの文字を 1 回だけ作る (links)
  */
-import type { StageItem } from "../../craft-stage/engine";
+import type { PatchData, StageItem } from "../../craft-stage/engine";
 import { boxAims, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimsOf } from "./tree-sample";
 import { placedAims } from "./tree-veil";
@@ -44,7 +44,7 @@ export function premiseOf(doc: TreeDoc): string {
   return JSON.stringify(rest, skipPos);
 }
 /** 箱によらない部分 (木の前提・木の狙いの札・置き石)。箱の数の分だけ掛かるので、木の変わらない間は 1 回だけ作る (tree-sample の keyOf) */
-export function docPartOf(doc: TreeDoc): string {
+export function docPartOf(data: PatchData, doc: TreeDoc): string {
   const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
-  return JSON.stringify([rest, aimsOf(doc), placedAims(doc)], skipPos);
+  return JSON.stringify([rest, aimsOf(data, doc), placedAims(data, doc)], skipPos);
 }

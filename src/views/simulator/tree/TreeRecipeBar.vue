@@ -7,6 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openRecipesPage } from "../../../web/page";
@@ -65,9 +66,8 @@ function endRename(v: string): void {
   if (!renaming.value) return;
   renaming.value = false;
   if (!v.trim()) return;
-  // 名前を変えたら新しい名前で一言 (前は「〜で保存しました」が前の名前のまま残り、新しい名前で残ったか分からなかった、10-26 猿の 7)
-  if (currentTreeRecipe.value) { renameTreeRecipe(currentTreeRecipe.value.id, v); say(tr(`「${v.trim()}」に名前を変えました`, `Renamed to "${v.trim()}"`)); }
-  else { saveTreeRecipe(v, t.doc.value); track("tree-recipe:save"); say(tr(`「${v.trim()}」で保存しました`, `Saved as "${v.trim()}"`)); }
+  if (currentTreeRecipe.value) renameTreeRecipe(currentTreeRecipe.value.id, v);
+  else { saveTreeRecipe(v, t.doc.value); track("tree-recipe:save"); }
 }
 /**
  * 保存: 開いているレシピがあれば上書き (名前は聞かない)。まだ名前が無ければ名前の窓 (欄には最初からベースの名前と日時、そのまま「保存」でその名前。
@@ -79,8 +79,7 @@ const saveInput = ref<HTMLInputElement | null>(null);
 function save(): void {
   if (!currentTreeRecipe.value) { saveName.value = defaultName(); naming.value = true; pop.value = false; share.value = false; void nextTick(() => saveInput.value?.select()); return; }
   simAct("save");
-  const { r, over } = quickSave();
-  say(over ? tr(`「${r.name}」に保存しました`, `Saved to "${r.name}"`) : tr(`「${r.name}」で保存しました (名前を押すと変えられる)`, `Saved as "${r.name}" (click the name to rename)`));
+  quickSave();
 }
 /** 名前の窓の「保存」 */
 function saveNamed(): void {
@@ -89,16 +88,14 @@ function saveNamed(): void {
   simAct("save");
   saveTreeRecipe(v, t.doc.value);
   track("tree-recipe:save");
-  say(tr(`「${v}」で保存しました`, `Saved as "${v}"`));
 }
 /** 名前の押し口: 保存したレシピなら名前を変える、まだなら名前の窓 */
 function onName(): void { if (currentTreeRecipe.value) startRename(); else save(); }
 function saveAs(): void {
   simAct("save");
-  const r = saveTreeRecipe(currentTreeRecipe.value ? `${currentTreeRecipe.value.name}${tr(" のコピー", " (copy)")}` : defaultName(), t.doc.value);
+  saveTreeRecipe(currentTreeRecipe.value ? `${currentTreeRecipe.value.name}${tr(" のコピー", " (copy)")}` : defaultName(), t.doc.value);
   track("tree-recipe:save-as");
   pop.value = false;
-  say(tr(`「${r.name}」で保存しました`, `Saved as "${r.name}"`));
   startRename();
 }
 
@@ -119,10 +116,11 @@ const { url, urlNote, openUrl, onPaste } = useRecipeUrl({
 });
 async function copyUrl(): Promise<void> {
   const name = currentTreeRecipe.value?.name ?? defaultName();
-  const { ok, short } = await copyRecipeUrl({ name, tree: t.doc.value }); // 短い URL (だめなら長い URL、10-26 夜オーナー OK)
+  const { ok } = await copyRecipeUrl({ name, tree: t.doc.value }); // 短い URL (だめなら長い URL、10-26 夜オーナー OK)
   track("tree-recipe:url");
   pop.value = false; share.value = false;
-  say(!ok ? tr("コピーできませんでした", "Couldn't copy") : short ? tr("今の木の短い URL をコピーしました (開いた人はこの木で始まる)", "Copied a short URL for this tree (opening it starts with this tree)") : tr("今の木の URL をコピーしました (開いた人はこの木で始まる)", "Copied a URL for this tree (opening it starts with this tree)"));
+  // 出来た事の知らせは出さない (11-07 オーナー「こういう通知いらない」)。できなかった時だけ
+  if (!ok) say(tr("コピーできませんでした", "Couldn't copy"));
 }
 /** レシピの行の × を押した行 (その行の中で「消しますか?」、別の画面へ行かない) */
 const askDel = ref<string | null>(null);
@@ -130,7 +128,6 @@ function del(r: TreeRecipe): void {
   removeTreeRecipe(r.id); // 開いている木の行なら、木はそのままで (未保存) に戻る (removeTreeRecipe が今のレシピを外す)
   track("tree-recipe:delete");
   askDel.value = null;
-  say(tr(`「${r.name}」を消しました`, `Deleted "${r.name}"`));
 }
 /** シェアの小窓 (短い URL をコピー・X に出す) */
 const share = ref(false);
@@ -146,20 +143,21 @@ async function shareX(): Promise<void> {
 }
 /** 小窓 (レシピ・名前・シェア) を全部閉じる */
 function closeAll(): void { pop.value = false; naming.value = false; share.value = false; askDel.value = null; }
-function onDown(e: PointerEvent): void { if ((pop.value || naming.value || share.value) && root.value && !root.value.contains(e.target as Node)) closeAll(); }
+// 小窓の外を押す・Esc で全部閉じる = 共通の useDismiss (U-21: Esc は一番後に開いた 1 つだけ。前は window の捕まえる段で先に取り、後から開いた窓より先に効いていた)。
+// 押した物にはそのまま届ける (swallow: false、前と同じ)
+useDismiss(() => pop.value || naming.value || share.value, [root], closeAll, { swallow: false });
 /**
  * Ctrl+S (Mac は Cmd+S) = 保存 (ブラウザの「ページを保存」は止める。文字の欄に入力中でも効く)。PC のツリーの帯だけ (スマホ・完成形の設定の右端の「レシピ ▾」だけの帯では効かない)。
  * 10-26 オーナー「コントロールSだっけホットキー保存させよう」
  */
 const phone = usePhone();
 function onKey(e: KeyboardEvent): void {
-  if (e.key === "Escape" && (pop.value || naming.value || share.value)) { closeAll(); e.stopImmediatePropagation(); return; }
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !props.view && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
 // 小窓を開いた時に向きと高さを測る (placePop)
 watch([pop, naming, share], ([a, b, c]) => { if (a || b || c) placePop(); });
-onMounted(() => { window.addEventListener("pointerdown", onDown, true); window.addEventListener("keydown", onKey, true); void seedDevRecipes(); });
-onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true); window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
+onMounted(() => { window.addEventListener("keydown", onKey, true); void seedDevRecipes(); });
+onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
 </script>
 
 <template>

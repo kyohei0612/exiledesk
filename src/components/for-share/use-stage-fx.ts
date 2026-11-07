@@ -10,7 +10,7 @@
  *     何も出ていなかった手 (高貴・カオス・消去・神・カタリスト等) にも「T3 がついた!」「T4 が消えた」「数値を振り直し!」などを出す
  * 手が増えた時と、打てなかった時 (craftStage.miss。工程には積まない) だけ動く (1 手戻す・再生では動かない)。色と文字は style.css の stage-* と --fx。
  */
-import type { StageItem, PlayedStep } from "../../services/craft-stage/engine";
+import { parseKey, type StageItem, type PlayedStep } from "../../services/craft-stage/engine";
 import { EL_JA } from "../../services/craft-stage/stage-runes";
 import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -134,7 +134,8 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     else if (st.after.disposed && !st.before.disposed) next = { kind: "up", color: COLOR.top, text: disposeText(st.before, st.after) };
     else if (act) next = st.after.corrupted && !st.before.corrupted ? { ...act, color: COLOR.corrupt, text: tr(`${act.text} — コラプト!`, `${act.text} — Corrupted!`) } : act;
     else if (extra) next = { kind: "up", color: COLOR.top, text: `${extra}${mods ? ` ${mods}` : ""}` };
-    else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.desecrated, text: tr("腐食!", "Putrefied!") };
+    // コラプトは手の種類で分ける (エンジンの parseKey): 骨 = 腐食のお告げ、それ以外 = ヴァール (前は同じ条件が 2 行並び、ヴァールでも「腐食!」が出ていた)
+    else if (st.after.corrupted && !st.before.corrupted && parseKey(o.currency).type === "bone") next = { kind: "up", color: COLOR.desecrated, text: tr("腐食!", "Putrefied!") };
     else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: tr("聖別!", "Sanctified!") };
     // オーグメント (POE2Tube 要望 ㉘): 傑作のルーンで上げた / 置き換えた / はめた (ルーン・ソウルコア・アイドルは名前で)

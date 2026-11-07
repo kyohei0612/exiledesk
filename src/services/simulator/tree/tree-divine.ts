@@ -7,15 +7,16 @@
  */
 import { allMods, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { replaced, withValues } from "../../craft-stage/stage-core";
+import { divineChance } from "../sim-engine";
 import type { Hand, DivineTarget, TreeDoc } from "./tree-model";
+import { rerollsValues } from "./tree-hands";
 
-export const DIVINE = "divine";
 /** 神の目標の 2 枝の鍵 (箱の junkKey)。以上 = 打った後 (any)、未満 = 外れ (junk) = 自動の ↩ で神の箱へ (S-202 ④) */
 export const DIVINE_GE = "dv:ge";
 export const DIVINE_LT = "dv:lt";
 
-/** 目標の数値を決めた神の手か */
-export const isDivineAim = (h: Hand | null | undefined): boolean => !!h && h.currency === DIVINE && !!h.targets?.length;
+/** 目標の数値を決めた神の手か (神の手 = 値を振り直す手、エンジンの手の部品 reroll) */
+export const isDivineAim = (h: Hand | null | undefined): boolean => !!h && rerollsValues(h.currency) && !!h.targets?.length;
 const modOf = (item: StageItem, modId: string): StageMod | undefined => allMods(item).find((m) => m.modId === modId && !m.fractured);
 /** 目標に全部届いたか (目標の MOD が無い目標は届かない) */
 export function divineMet(item: StageItem, targets: readonly DivineTarget[]): boolean {
@@ -32,19 +33,7 @@ function withTargets(data: PatchData, item: StageItem, targets: readonly DivineT
   }
   return cur;
 }
-/** 神 1 回で目標に届く割合 (エンジンと同じ転がし = withValues を乱数の目盛り 0〜1 で数える。値ごとに別々に転がるので掛け算) */
-export function divineChance(data: PatchData, item: StageItem, targets: readonly DivineTarget[]): number {
-  const N = 400;
-  let p = 1;
-  for (const t of targets) {
-    const m = modOf(item, t.modId), mod = data.mods.get(t.modId);
-    if (!m || !mod) return 0;
-    let ok = 0;
-    for (let k = 0; k < N; k++) if ((withValues(m, mod, () => (k + 0.5) / N).values[t.vi] ?? -Infinity) >= t.value) ok++;
-    p *= ok / N;
-  }
-  return p;
-}
+// 神 1 回で目標に届く割合はエンジンの divineChance (sim-engine、前はここに同じ数えの写し)
 /**
  * 配置の枝 (tree-frame の outsOf): 代表の品に神を当てた 2 枝。以上の枝の代表は目標の値、未満の枝の代表は目標の MOD を下限 (S-202 ③)。
  * 神が打てない品 (振り直せる MOD が無い) は空

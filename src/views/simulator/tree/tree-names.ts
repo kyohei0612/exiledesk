@@ -8,17 +8,17 @@ import { iconOfKey, nameOfKey } from "../../../state/for-share/craft-stage-shelf
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
-import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type StartFrom, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isSideKey, isStripKey, sideKeyLabel, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { rankLabel } from "../../../services/simulator/tree/tree-whittle";
+import { swapGoneOf } from "../../../services/simulator/tree/tree-keep";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
-import { midGoneOf } from "../../../services/simulator/tree/tree-judge";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
-import { modText, tr } from "../../../i18n/lang";import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
+import { tr } from "../../../i18n/lang";import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
@@ -95,6 +95,11 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const free = fixed && !!ph?.free;
   // 神の目標 (S-202)
   if (isDivineAim(ph) && (b.out === "any" || b.out === "junk")) return outNameOf(ph, b.out);
+  // ☑ の無いパーフェクトエッセンスの枝 (S-29): どの MOD がエッセンスに入れ替わったか
+  const sw = swapGoneOf((b as { junkKey?: string }).junkKey), doc0 = useTree().doc.value;
+  const swName = (id: string): string => { if (id === "j") return tr("外れ MOD", "a miss mod"); const a = (doc0.memoAims ?? []).find((g) => g.modId === id); return a ? modShort(aimShort(a)) : id; };
+  const swl: [string, string] | null = sw.length ? [`${sw.map(swName).join("・")} と入れ替わり`, `replaced ${sw.map(swName).join(", ")}`] : null;
+  if (b.out === "hit" && b.aim && swl && !fixed) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた (${swl[0]})`, `${n} added (${swl[1]})`); }
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
     // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける
@@ -106,12 +111,11 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 骨を未発現のまま次へ 
   const k = (b as { junkKey?: string }).junkKey;
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
-  // 手で付けたエッセンスの MOD が消えた箱は「<MOD> が消えた」(S-33c。題だけ、鍵と保存は替えない)
-  const gone = s.data.value && "id" in b ? midGoneOf(s.data.value, useTree().doc.value, b.id as string) : null;
-  const base = gone ? tr(`${modShort(modText(gone))}が消えた`, `${modShort(modText(gone))} removed`) : b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
+  // 完成形に無いエッセンスの MOD は外れなので、消えても MOD 名の題は作らない (S-33c、11-07。前の「<MOD> が消えた」は撤回)
+  const base = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
   // 側で分けた箱 (S-65): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
   // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
-  const rk = k && b.parent ? rankLabel(k) : null;
+  const rk = k && b.parent ? rankLabel(k) ?? swl : null;
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
   // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
   if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.out === b.out).length > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }
@@ -137,6 +141,14 @@ export function sureFracText(k: number): string {
   const p = FRACTURE_POOL, n = Math.min(p, Math.max(1, k)), x = p / n;
   return `×${Number.isInteger(x) ? x : x.toFixed(1)} = ${Math.round((n / p) * 100)}%`;
 }
+/**
+ * フラクチャーの始め方 (a) / (b) の見出しと説明 (シミュの始め方の窓 TreeStartAsk、S-13)。文を持つのはここ 1 か所
+ * (デイリーの始め方 DailyFracPick も同じ文の写しを持ち、言い回しが食い違っている = デイリー部へ。G-1 V-3 J-41)。k = ✦ の数 (素材の倍、S-43)
+ */
+export const startFromWords = (k = 1): Array<{ k: StartFrom; title: [string, string]; sub: [string, string] }> => { const x = sureFracText(k); return [
+  { k: "fractured", title: ["(a) フラクチャー済みから", "(a) From fractured"], sub: ["選んだ MOD が ✦ で付いたレアから始める (フラクチャーの費用は無し)", "Start from a rare with the chosen mod fractured (no fracture cost)"] },
+  { k: "four", title: ["(b) 白から確定フラクチャー", "(b) From white, sure fracture"], sub: [`白 (ノーマル) のベースから始め、選んだ MOD を木の中でフラクチャー (必ず成功、素材 ${x} の費用込み)`, `Start from a white (normal) base and fracture the chosen mod in the tree (sure success, materials ${x} cost included)`] },
+]; };
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);
 /** 値段のキー → 絵 (骨の絵も部位で変わるので木のベースで引く。前はクラフト台のアイテムで引いていた、10-28) */

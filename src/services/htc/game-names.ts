@@ -10,6 +10,7 @@ import type { ItemBase } from "../../vendor/poe2htc/engine/types";
 import keys from "./price-keys.json";
 import { ESSENCE_KEYS as ESSENCE_TABLE } from "./essence-key-table";
 import type { GameName } from "./prices";
+import { parseKey } from "../craft-stage/key";
 
 interface PriceKeys {
   currency: Record<string, GameName>;
@@ -28,13 +29,12 @@ const ESSENCE_KEYS: Readonly<Record<string, GameName>> = ESSENCE_TABLE;
  */
 export function jaOfPriceKey(key: string, cls?: ItemBase): string | null { // E-90・E-93 名前はデータの表から
   // ブリーチのエッセンスは essence-keys に無く、カレンシーの表にだけある (要望 ㉝ の 8: 手順の名前が "essence:breach" のままだった)
-  if (key.startsWith("essence:")) return ESSENCE_KEYS[key]?.ja ?? KEYS.currency[key]?.ja ?? null;
-  const boneMatch = /^desecrate(?:_(ancient|altered|gnawed))?$/.exec(key);
-  if (cls && boneMatch) {
-    const bone = desecrationBoneFor(cls.category);
-    const boneKey = boneMatch[1] ? `${bone}_${boneMatch[1]}` : bone;
-    return KEYS.bones[boneKey]?.ja ?? null;
-  }
+  // 鍵の読みは craft-stage/key.ts の parseKey 1 か所 (E-20a)
+  const k = parseKey(key);
+  if (k.type === "essence") return ESSENCE_KEYS[key]?.ja ?? KEYS.currency[key]?.ja ?? null;
+  // 骨: 鍵の desecrate の後ろ (_ancient・_altered・_gnawed) を部位の骨の名前に付ける。部位 → 骨は上流の desecrationBoneFor のまま
+  // (エンジンの骨の選び = resolveSpec の groupsFit は StageItem が要り、ここには部位 ItemBase しか無い。骨の名前の表を別に作らない)
+  if (cls && k.type === "bone") return KEYS.bones[desecrationBoneFor(cls.category) + key.slice("desecrate".length)]?.ja ?? null;
   return KEYS.currency[key]?.ja ?? KEYS.bones[key]?.ja ?? null;
 }
 

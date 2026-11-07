@@ -6,7 +6,7 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
-import { isEmotion, ESSENCE_KEYS, ESSENCE_TABLE, OMEN_FOR, PRICE_KEYS, isGem, isRune, runeEffectFor, runeOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
+import { isEmotion, ESSENCE_KEYS, ESSENCE_TABLE, OMEN_FOR, PRICE_KEYS, isGem, parseKey, isRune, runeEffectFor, runeOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
 import { isSpam, parseSpam } from "../../services/craft-stage/apply-spam";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
 import { baseArt } from "../../components/art/base-art";
@@ -95,7 +95,8 @@ export function bonesFor(item: StageItem | null): string[] {
   if (desecrationBoneFor(item.cls.category) === "cranium") return ["desecrate"];
   return desecrationBoneFor(item.cls.category) === "collarbone" ? BONES : BONES.filter((k) => k !== "desecrate_altered");
 }
-export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => k.startsWith("catalyst_"));
+/** 棚のカタリスト (指輪・アミュレット用。ジュエル用の精製された物は棚に出さない) */
+export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => { const p = parseKey(k); return p.type === "catalyst" && !p.jewel; });
 const OMEN_LABEL: Record<string, string> = {
   exalt: "高貴", regal: "王者", alchemy: "錬金", chaos: "カオス", annul: "消去", essence_perfect: "パーフェクトエッセンス",
   desecrate: "冒涜", reveal: "発現", divine: "神",

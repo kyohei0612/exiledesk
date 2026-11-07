@@ -13,6 +13,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import vaal from "../../i18n/vaal-enchants.json";
 import { allMods, replaced, retext, skip, withValues } from "./stage-core";
+import { SET_PREFIX } from "./key";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
@@ -55,14 +56,16 @@ export function rollText(text: string, vals: readonly number[]): string {
 
 /** 聖別の倍率の幅 (×100。聖別のお告げの 0.78〜1.22。置き場は stage-tuning.ts) */
 export { SANCTIFY_MIN, SANCTIFY_MAX } from "./stage-tuning";
+/** 聖別で 1 つの値を k 倍して丸める (整数は四捨五入で整数、小数は 2 桁、E-35)。打つ処理・教材の例の数が同じ物 (11-07 jin-base4、チュートリアル係の頼み) */
+export const sanctifiedValue = (v: number, k: number): number => { const d = Number.isInteger(v) ? 1 : 100; return Math.round(v * k * d) / d; };
 /** 掛けて丸める (整数は整数、小数は 2 桁) */
 function scaled(vals: readonly number[], k: number): number[] {
-  return vals.map((v) => { const d = Number.isInteger(v) ? 1 : 100; return Math.round(v * k * d) / d; });
+  return vals.map((v) => sanctifiedValue(v, k));
 }
 
 /** 聖別の数値を手で決める手 (聖別の帯、2026-10-20 オーナー「聖別の数値も手で決めて使えるといい」)。費用 0
  * `sset:122` = 全部の MOD を ×1.22 (掛ける前の値はそのまま)、`sset:max` = 段の最大 × 1.22、`sset:min` = 段の最小 × 0.78 */
-const SANCTIFY_SET = "sset:";
+const SANCTIFY_SET = SET_PREFIX.sanctify;
 export const sanctifySetKey = (k: number | "max" | "min"): string => `${SANCTIFY_SET}${k}`;
 export const isSanctifySet = (key: string): boolean => key.startsWith(SANCTIFY_SET);
 export function applySanctifySet(data: PatchData, item: StageItem, currency: string): StageApply {

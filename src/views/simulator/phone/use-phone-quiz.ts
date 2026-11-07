@@ -2,15 +2,14 @@
  * use-phone-quiz.ts — シミュのスマホ版の組み方 = 質問で進める形 (2026-10-25 オーナー「スマホだけ自動完成で作って ただ、自動完成はあくまでも補助ね」)。
  * 木は PC と同じ TreeDoc (use-tree)。質問 = 「残りの道」。答え = PC と同じ操作 (手を付ける applyPick・↩ 戻り先 setBack・完成 setDone)。
  * 質問は 2 種類: ① hand = この箱で何を打つ? (始まり・「次の手を決める」にした結果の箱・品質だけ上げた後) / ② outs = 手の結果ごとにどうする? (まだ答えていない結果の箱がある手)。
- * 同じ状態の箱があれば PC と同じく自動の矢印 (applyPick の中の linkSameShape) で閉じ、その道は聞かない。
+ * 同じ状態の箱があれば PC と同じく自動の矢印 (applyPick の中の linkByContent) で閉じ、その道は聞かない。
  * 完成の狙いが全部そろう道の箱はスマホだけ自動で完成 (markDone、答えと同じ 1 手 = 1 つ戻すで一緒に戻る)。「次の手を決める」にした箱は自動で完成にしない
  * (完成の後も答え直せる。PC は今のまま枝分かれできる。10-25 にやめた PC の「自動の完成」とは別、決めはメモ sim-decisions)
  */
 import { computed, ref, shallowRef } from "vue";
 import { useTreeLink } from "../tree/use-tree-link";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
-import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { heldSets } from "../../../services/simulator/tree/tree-shape";
+import { setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { judgeOf } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
@@ -42,11 +41,9 @@ export function walkOrder(d: TreeDoc): string[] {
 export function completes(d: TreeDoc, id: string): boolean {
   const goals = (d.memoAims ?? []).filter((g) => !g.fractured);
   if (!goals.length) return false;
-  // 箱の見本の中身 (☑ で付いた狙い) で見る。見本が全部、完成の狙いを持っている時だけ (道の組では数えない、大本 1)
+  // 箱の見本の中身 (☑ で付いた狙い) で見る。見本が全部、完成の狙いを持っている時だけ (道の組では数えない、大本 1)。データを読み込む前は判定が無いので完成にしない
   const j = judgeOf(d);
-  if (j) return j.holdsAll(id);
-  const sets = heldSets(d, id);
-  return sets.length > 0 && sets.every((s) => goals.every((g) => s.includes(aimKey(g))));
+  return !!j && j.holdsAll(id);
 }
 /** 始まりからその箱までの道 (箱の id の並び) */
 export function pathOf(d: TreeDoc, id: string): string[] {

@@ -10,10 +10,12 @@
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { BREACH_FAMILY } from "../htc/omens";
+import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { runeEffectPct, SIDES, takenFamilies } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
+import { essenceKey, parseKey, type EssenceTier } from "./key";
 import type { StageItem, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
@@ -27,14 +29,14 @@ function essenceMods(data: PatchData, item: StageItem): Array<{ mod: Mod; side: 
 /** キー → 段の強さと MOD (このクラスで使えない物は null) */
 export function essenceTarget(data: PatchData, item: StageItem, key: string): { level: string; mod: Mod; side: StageSide } | null {
   const list = essenceMods(data, item);
-  if (key === "essence:breach") {
+  const k = parseKey(key); // 鍵の読みは key.ts の parseKey 1 か所
+  if (k.type === "essence" && k.breach) {
     const hit = list.find((x) => hasFamily(x.mod, BREACH_FAMILY));
     return hit ? { level: "perfect", ...hit } : null;
   }
-  const m = /^essence:(lesser|normal|greater|perfect):(.+)$/.exec(key);
-  if (!m) return null;
-  const hit = list.find((x) => x.mod.id === m[2]);
-  return hit ? { level: m[1]!, ...hit } : null;
+  if (k.type !== "essence" || !k.tier || !k.modId) return null;
+  const hit = list.find((x) => x.mod.id === k.modId);
+  return hit ? { level: k.tier, ...hit } : null;
 }
 
 /**
@@ -55,12 +57,22 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
   return {};
 }
 
+/** 品質の上限を上げる MOD か (ブリーチのエッセンスの「品質の最大値 +20%」= LocalMaximumQuality の系統、E-71)。木の狙い・品質の上限の見せ方が同じ物 */
+export const isQualityCapMod = (data: PatchData, modId: string): boolean => { const m = data.mods.get(modId); return !!m && hasFamily(m, BREACH_FAMILY); };
+/**
+ * エッセンスの MOD のその段を付けるエッセンスの棚の鍵 (essence:<レッサー / 普通 / グレーター>:<MOD の id>)。段の名前から強さを読むのは essenceLevelOf
+ * (11-07 jin-base4、シミュ部長の頼み: 木の sim-greater.ts の essenceKeyFor の写し)。パーフェクトは段の名前に出ないので返さない (前の写しと同じ)
+ */
+export const essenceKeyForTier = (data: PatchData, modId: string, tierIndex: number): string =>
+  essenceKey(essenceLevelOf(String(data.mods.get(modId)?.tiers[tierIndex]?.name ?? "")) as EssenceTier, modId);
+/** 鍵の段 (essence:<段>:<MOD の id> の段。ブリーチ・形の違う鍵は undefined) */
+const essenceTierOf = (key: string): string | undefined => { const k = parseKey(key); return k.type === "essence" && k.modId ? k.tier ?? undefined : undefined; };
 /** 無限のエッセンスで付きうる MOD (付いていない系統のうち、同じ強さで同じ名前のエッセンスの物)。pickInfinite はここから等しく 1 つ (engine-sim の行き先の一覧も同じ一覧で枝を分ける) */
 export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> { // E-50
-  const level = /^essence:([a-z]+):/.exec(key)?.[1];
+  const level = essenceTierOf(key);
   const en = ESSENCE_KEYS[key]?.en;
   const taken = takenFamilies(data, item);
-  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !familyBlocked(x.mod, taken));
+  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[essenceKey(level as EssenceTier, x.mod.id)]?.en === en && !familyBlocked(x.mod, taken));
 }
 /**
  * 無限のエッセンス: 筋力・器用さ・知性のどれかが付く (poe2db はどの部位にも 3 つ並べている。2026-10-09)。
@@ -68,17 +80,27 @@ export function infiniteChoices(data: PatchData, item: StageItem, key: string): 
  */
 export const isInfiniteEssence = (key: string): boolean => / of the Infinite$/.test(ESSENCE_KEYS[key]?.en ?? "");
 export function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
-  const level = /^essence:([a-z]+):/.exec(key)?.[1];
+  const level = essenceTierOf(key);
   const list = infiniteChoices(data, item, key);
   if (!level || !list.length) return null;
   return { level, ...list[Math.floor(rng() * list.length)]! };
 }
 
 
+/** アストリッドの創造性 (クラフト MOD の上限を増やすルーン、E-11h) の英名 */
+export const ASTRID_EN = "Astrid's Creativity";
 /** 深淵のエッセンスの MOD の系統 (アビサルロードの紋章) */
 export const ABYSS_FAMILY = "EssenceAbyss";
 /** 持てるクラフト MOD の数 (アストリッドの創造性で +1) */
 /** クラフト MOD の上限: 1 + アストリッドの創造性 (ソケットの効果 100% 以上で +2。stage-core の runeEffectPct・engine の boostedPlus) */
 export const craftedLimitOf = (item: StageItem): number => // E-11h クラフト MOD は 1 つ (アストリッドの創造性で +1)
-  1 + (item.augments ?? []).filter((a) => a.en === "Astrid's Creativity").reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
+  1 + (item.augments ?? []).filter((a) => a.en === ASTRID_EN).reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
+/**
+ * クラフト MOD を n 個持つのに要るアストリッドの創造性の本数 (craftedLimitOf の逆。1 本で増える数はその品のソケットの効果で決まる)。
+ * 無理なら Infinity (11-07 jin-base4、解析の係の頼み: 自動の順番の auto-model.ts が「1 本で 1 つ」を自前に持っていた)
+ */
+export const astridsFor = (item: StageItem, n: number): number => {
+  const per = boostedPlus(1, runeEffectPct(item));
+  return n <= 1 ? 0 : per > 0 ? Math.ceil((n - 1) / per) : Infinity;
+};
 

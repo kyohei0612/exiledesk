@@ -25,6 +25,8 @@ import { craftedLimitOf, normalTierOf } from "./apply-essence";
 import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, unfracturable, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
+import { isCraftedSource, isDesecratedSource } from "./tier-rank";
+import { limitBlock } from "./spec/judge";
 
 export type ForceFlag = "n" | "e" | "d" | "f" | "x" | "u";
 export const isForce = (key: string): boolean => key.startsWith("force:");
@@ -37,6 +39,8 @@ export function parseForce(key: string): { modId: string; rank: string | null; f
   return { modId, rank: rank || null, flag: f };
 }
 const SIDE_JA: Record<StageSide, string> = { prefix: "プレフィックス", suffix: "サフィックス" };
+/** この付け方のせいで付かない (品の状態ではない、StageApply.way) */
+const skipWay = (item: StageItem, reason: string): StageApply => ({ ...skip(item, reason), way: true });
 
 export function applyForce(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply {
   const p = parseForce(key);
@@ -73,23 +77,26 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     it = { ...it, prefixes: f(it.prefixes), suffixes: f(it.suffixes) };
     removed.push(m);
   };
+  // 冒涜でしか付かない MOD (冒涜専用・異界で普通の置き場に無い物) は「冒涜」で付ける (E-62。そのまま・エッセンス・フラクチャーでは付かない)
+  const otherworldlyOnly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId) && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId);
+  if ((p.flag === "n" || p.flag === "e") && (isDesecratedSource(mod.source) || otherworldlyOnly)) return skipWay(item, tr("冒涜の MOD は「冒涜」で付ける", "Desecrated mods are added as Desecrated"));
   // 冒涜で付けられるのは冒涜の MOD と普通の MOD (骨の発現には普通の MOD も出る。2026-10-18 オーナー「一般 MOD も冒涜で付けれるでしょ」で 10-08 の「冒涜 MOD だけ」を変えた)。
   // エッセンスなどの MOD は冒涜では付かない。ルーンの MOD (出どころは normal) は差していれば付く (2026-10-20 オーナーがトレードで確認)
-  if (p.flag === "d" && mod.source !== "desecrated" && mod.source !== "normal" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
+  if (p.flag === "d" && !isDesecratedSource(mod.source) && mod.source !== "normal" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skipWay(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
   // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
   if (p.flag === "f") {
     if (allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
     const have = allMods(it).find((m) => m.modId === p.modId);
     if (have) {
       // エッセンスの MOD は固定できる。冒涜の MOD は発現済みでも未発現でも固定されない (オーブと同じ unfracturable。2026-10-10 ゲームで実測)
-      if (unfracturable(data, it, have)) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
+      if (unfracturable(data, it, have)) return skipWay(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
       const fixed = { ...have, fractured: true };
       const swap = (ms: StageItem["prefixes"]): StageItem["prefixes"] => ms.map((m) => (m === have ? fixed : m));
       return { applied: true, item: { ...it, prefixes: swap(it.prefixes), suffixes: swap(it.suffixes) }, added: [fixed], removed: [] };
     }
   }
-  // 冒涜は 1 つまで: 付いている冒涜 (未発現も) は入れ替える
-  if (p.flag === "d") for (const m of allMods(it).filter((x) => x.desecrated)) drop(m);
+  // 冒涜は 1 つまで・置き換わらない (E-60、オーナー 10-24「消さんと入れ替わらんやろ」。10-11 の入れ替えは E-60 が後なのでやめた)。先に消去などで消す
+  if (p.flag === "d") { const why = limitBlock({ kind: "oneDesecratedMod" }, it); if (why) return skip(item, why); }
   // 同じ系統の MOD は外して入れ替える (固定した物が塞いでいる時だけ止める)。理由は枠より先
   if (familyBlocked(mod, takenFamilies(data, it))) {
     const blockers = allMods(it).filter((m) => { const md = data.mods.get(m.modId); return !!md && familyBlocked(mod, new Set(occupiedKeysOf(md))); });
@@ -100,9 +107,9 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   // 固定で付けるエッセンスの MOD は、その印も付ける (上限まで。2026-10-10 要望「創生の樹もフラクチャーできるように」。冒涜は固定できない)
   const otherworldly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId);
   // 冒涜でしか付かない MOD (冒涜専用・異界) をフラクチャーで付ける事はできない (冒涜専用の MOD は固定されない。2026-10-10)
-  if (p.flag === "f" && (mod.source === "desecrated" || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
+  if (p.flag === "f" && (isDesecratedSource(mod.source) || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skipWay(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
   const asDesecrated = p.flag === "d";
-  const asCrafted = p.flag === "e" || (p.flag === "f" && (mod.source === "essence" || mod.source === "perfect_essence"));
+  const asCrafted = p.flag === "e" || (p.flag === "f" && isCraftedSource(mod.source));
   if (asCrafted) {
     // 上限 (1 つ、アストリッドの創造性で 2 つ) を超える分は入れ替える (固定した物は外さない)。同じ系統の物は上の共通の処理で外してある
     const limit = craftedLimitOf(it);

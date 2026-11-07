@@ -13,6 +13,7 @@
  */
 import type { Aim, TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { newTree } from "../../../services/simulator/tree/tree-model";
+import { omenFor } from "../../../services/craft-stage/engine";
 
 export const TUT_BASE = "Absent Amulet";
 export const TUT_ILVL = 75;
@@ -26,8 +27,9 @@ export const TUT_GOALS: Aim[] = [
 export const SPIRIT = "Amulets/BaseSpirit", CAST = "Amulets/IncreasedCastSpeed", WARD = "Amulets/PerfectEssence_RunicWardPercent";
 /** ルーンの合金 (棚の名前はエンジンの名前で出す) */
 export const WARD_KEY = "essence:perfect:Amulets/PerfectEssence_RunicWardPercent";
-export const SIN_EXALT = "OmenofSinistralExaltation";
-export const DEX_ANNUL = "OmenofDextralAnnulment";
+/** 左側の高貴・右側の消去のお告げ (名前はエンジンのお告げの層の omenFor、E-27) */
+export const SIN_EXALT = omenFor("exalt", "prefix")!;
+export const DEX_ANNUL = omenFor("annul", "suffix")!;
 
 /**
  * チュートリアルの木の始め: 完成形の 4 つは入れておき、✦ の印・品質の決め・始め方は空 (手順 0・1 で人が決める、Q3 A)。

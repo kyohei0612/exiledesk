@@ -17,7 +17,8 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { isWhittleHand, WHITTLE } from "./tree-whittle";
+import { aimedAims, carryFloors, isWhittleHand, rankVariants } from "./tree-whittle";
+import { keptAimedOf } from "./tree-keep";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
 import { divineBranches, isDivineAim } from "./tree-divine";
@@ -25,7 +26,7 @@ import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
-export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null }
+export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null; /** 代表のほかにこの箱へ着く枝の品 (重い順、見本の種 2 以降 = 「見本を幾つか見る」所が 1 品の答えにならないように) */ alts?: readonly StageItem[] }
 /** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計)。from = ↩ で着く人の箱 (その箱の代表の品に手を当てた枝)、oc = 結果の分け */
 export interface FrameMiss { box: string; out: string; p: number; from?: string; oc: Outcome }
 /** 代表のほか (↩ で着く人・印の違う枝) の形で、その箱の手が打てない (cant) か、当たるまでの手が当たらない (noHit)。from = その形の元の箱 */
@@ -47,22 +48,32 @@ const MARKED = 2;
  * 手の起こりうる行き先 (打たない)。数え上げで表せない手 (ルーン・品質・無限のエッセンスなど結果が 1 つに決まる物) は決まった種で 1 回当てるだけ、
  * カタリストは回す時と同じ playHand (品質の上限まで繰り返す 1 手、11-06 オーナー「A」)。発現で選ぶ手は未発現を出うる MOD ごとに分ける (revealOutcomes)
  */
-function outsOf(data: PatchData, item: StageItem, b: TreeBox): Br[] | "tooMany" {
+function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = []): Br[] | "tooMany" {
   const h = b.hand!, key = h.currency;
   let rs: Br[];
   if (isRevealHand(key)) rs = [{ p: 1, item }];
   // 目標の数値を決めた神 (S-202): 目標の以上 / 未満の 2 枝 (予見リセットは以上の 1 枝)
   else if (isDivineAim(h)) rs = divineBranches(data, item, h, (it) => { const r = applyHand(data, it, key, mulberry32(1), { omens: h.omens }); return r.applied ? r.item : null; });
   else if (isCatalyst(key)) { const r = playHand(data, item, h, mulberry32(1)); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
-  else {
-    // 削りのお告げは段の順位を見ない = 消せる MOD のどれもが消えうる (外れは一律、削りは当たり / ハズレの 2 枝を必ず。S-200 決め (a))
-    const om = isWhittleHand(h) ? engineOmens(h).filter((o) => o !== WHITTLE) : engineOmens(h);
-    const s = stepOutcomesOrTooMany(data, item, key, om, { merge: (r) => itemKeyOf(r.item) });
+  else if (isWhittleHand(h)) {
+    // 削減は一番低い MOD レベルの MOD が消える (E-33)。外れの MOD レベルは、その外れが付いた手の池で出うる MOD レベルの出方ごとに差し替えて打つ
+    // (tree-whittle の rankVariants、割合 = その出方の重み)。消えうる MOD が 1 つなら 1 枝 (11-07 オーナー「削減の対象先がハズレMODの場合かな」で決め (a) の「2 枝を必ず」をやめた、S-65b)
+    rs = [];
+    for (const v of rankVariants(data, item, wanted)) {
+      const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
+      if (s === "tooMany") return s;
+      // 残った外れに、消えた MOD の MOD レベルを下限として持たせる (次の削減で絞る、S-65b)
+      if (s) rs.push(...s.filter((r) => !r.void).map((r) => { carryFloors(data, v.item, r.item, wanted); return { p: v.p * r.p, item: r.item }; }));
+    }
+  } else {
+    const s = stepOutcomesOrTooMany(data, item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
     if (s === "tooMany") return s;
     if (s) rs = s.filter((r) => !r.void);
     else { const r = applyHand(data, item, key, mulberry32(1), { omens: h.omens }); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
   }
   if (veilPick(h)) rs = rs.flatMap((r) => (unrevealedOf(r.item) ? revealOutcomes(data, r.item).map((x) => ({ p: r.p * x.p, item: x.item })) : [r]));
+  // ほかの手は残った MOD の下限をそのまま持ち回る (削減の手は上で付けた)
+  if (!isWhittleHand(h)) for (const r of rs) if (r.item !== item) carryFloors(data, item, r.item, null);
   const tot = rs.reduce((n, r) => n + r.p, 0) || 1;
   return rs.map((r) => ({ item: r.item, p: r.p / tot }));
 }
@@ -86,14 +97,14 @@ function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem
 }
 /** 代表の品 f に箱 b の手を当てた枝を、行き先の箱ごとに分ける。当たるまでの手 (repeat) は当たりの枝だけ (当たるまで打ち続ける挙動) */
 function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
-  const rs = outsOf(data, f.item, b);
+  const rs = outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(data, doc, b.hand, f.aimed)) : []);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;
   if (b.hand!.repeat) { const hit = ocs.filter((x) => x.oc.out === "hit"); if (hit.length) { const t = hit.reduce((n, x) => n + x.r.p, 0); ocs = hit.map((x) => ({ ...x, r: { ...x.r, p: x.r.p / t } })); } else noHit = ocs.length > 0; }
   const to = new Map<string, Br[]>(), lost: Split["lost"] = new Map();
   for (const { r, oc } of ocs) {
-    const o = outBoxOf(doc, b, oc, r.item);
+    const o = outBoxOf(data, doc, b, oc, r.item);
     if (!o) { const k = missKey(oc); lost.set(k, { p: (lost.get(k)?.p ?? 0) + r.p, oc }); continue; }
     const off = !!oc.junkKey && !!doc.boxes[o]?.junkKey && doc.boxes[o]!.junkKey !== oc.junkKey;
     (to.get(o) ?? to.set(o, []).get(o)!).push(off ? { ...r, off } : r);
@@ -137,13 +148,14 @@ let framing = false;
  * 箱の見本の代わりの代表の品 (S-200 段階 3・4)。見本を引く所 (結果の箱の分け・箱のカード・☑) は全部これを通る = 打ち直さない。
  * この箱へ行く枝が無い箱は作れない見本 (none)。決まりで出せない箱 (枝の多すぎる手の下・分かれ目の下) は null = 前の見本のまま
  */
-export function frameSample(data: PatchData, doc: TreeDoc, id: string): { item: StageItem; note: string | null } | null {
+export function frameSample(data: PatchData, doc: TreeDoc, id: string, seed = 1): { item: StageItem; note: string | null } | null {
   if (framing) return null;
   framing = true;
   try {
     const f = frameOfDoc(data, doc).frames.get(id);
     if (!f) return null;
-    if (!f.note) return { item: f.item, note: null };
+    // 種 2 以降は代表のほかにこの箱へ着く枝の品 (無ければ代表)。打ち直さない (S-200 段階 3・4)
+    if (!f.note) return { item: (seed > 1 && f.alts?.[seed - 2]) || f.item, note: null };
     return f.note === "nobranch" ? { item: f.item, note: "none" } : null;
   } finally { framing = false; }
 }
@@ -169,7 +181,7 @@ const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem }>(
 
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
-    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(doc), part = docPartOf(doc);
+    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(data, doc), part = docPartOf(data, doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
     // 保存の例のアイテム (v2、S-200 ⑦)。同じ配置の枝があればその代わりに代表にする。例の無い箱・古いレシピは種 1 つのまま (決め (c))
     const keys = doc.examples ? pathKeysOf(doc) : null;
@@ -225,7 +237,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const markOf = (fr: Frame): string => `${fr.key}|${blockMarkOf(data, doc, fr.item, fr.aimed)}`;
       if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); extra.push({ at, f: fr, from: o }); } } }
       // 数値の両端の形 (前の rollEnds) は当てない: 木の数値は既定で段の下限、数値を決めるのは神の目標 (S-202 ②、11-06 オーナー)
-      return best;
+      const alts = [...all, ...marked].filter((fr) => fr !== best).map((fr) => fr.item);
+      return alts.length ? { ...best, alts } : best;
     };
     const walk = (q: string[]): void => { while (q.length) {
       const id = q.shift()!, b = doc.boxes[id], f = frames.get(id);
@@ -243,7 +256,10 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const held = [...s.to.values()].flat();
       for (const o of kids) {
         const c = doc.boxes[o]!, brs = s.to.get(o) ?? (holdsAt(doc, o) && held.length ? held : undefined);
-        if (c.seen || !brs?.length) { same(o, c.seen ? null : "nobranch"); continue; }
+        // 枝の来ない箱も印はこの箱の手の後 (残したい MOD の ☑ の無い候補は外れ、S-27e)。親の印の写しのままだと、その下の箱で ☑ しなかった MOD が狙いと出た
+        // (11-07 カオス + 左側の抹消 b19 と親 b14 の手の窓のカード、a61362897)。品は親の代表のまま (作れない見本 = カードも親の品)
+        if (c.seen) { same(o, null); continue; }
+        if (!brs?.length) { frames.set(o, { ...f, aimed: nextAimed(data, doc, f.aimed, o, f.item, f.item), note: "nobranch" }); continue; }
         frames.set(o, bestOf(o, brs, f));
       }
     } };

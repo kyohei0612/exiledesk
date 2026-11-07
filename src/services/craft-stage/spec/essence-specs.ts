@@ -18,6 +18,8 @@ import type { StageItem, StageMod, StageSide } from "../types";
 import type { CurrencySpec, OmenSpec, Source, Words } from "./types";
 import { tr } from "../../../i18n/lang";
 import deliriumNotables from "../../../data/delirium-notables.json";
+import { parseKey } from "../key";
+import { isAlloyName } from "../tier-rank";
 
 const UPGRADE_TEXT = {
   en: ["Upgrades a [ItemRarity|Magic] item to a [ItemRarity|Rare] item, adding a guaranteed modifier"],
@@ -81,12 +83,12 @@ export const ALLOY_SPEC: CurrencySpec = {
   text: { en: PERFECT_TEXT.en, ja: ["ランダムなモッドを1個取り除き、[Rarity|レア]アイテムに確定で新しいモッドを追加する"] },
 };
 /** 合金か (クライアントの名前の「Alloy」。エッセンスの鍵の表に一緒に入っている) */
-export const isAlloyKey = (key: string): boolean => / Alloy$/.test(ESSENCE_KEYS[key]?.en ?? "");
+export const isAlloyKey = (key: string): boolean => isAlloyName(ESSENCE_KEYS[key]?.en ?? "");
 
 /** 手順の鍵 (essence:<段>:<MOD の id> / essence:breach) → 段 (アイテムを見ない) */
 export function essenceLevelOfKey(key: string): string | null {
-  if (key === "essence:breach") return "perfect";
-  return /^essence:(lesser|normal|greater|perfect):/.exec(key)?.[1] ?? null;
+  const k = parseKey(key); // 鍵の読みは key.ts の 1 か所 (ブリーチは perfect)
+  return k.type === "essence" ? k.tier : null;
 }
 
 interface EssenceResolved { spec: CurrencySpec; reason?: string }
@@ -140,7 +142,7 @@ const crystal = (key: string, hover: string, side: "prefix" | "suffix", word: Wo
     en: ["While this item is active in your inventory your next", `Perfect or Corrupted Essence will remove only ${word.en} modifiers`],
     ja: ["インベントリ内でアクティブ状態の時", `次回使用するパーフェクトまたはコラプトエッセンスは${word.ja}モッドだけを取り除く`],
   },
-  effect: { removeSide: side },
+  effect: { removeSide: side }, exclusive: "crystallisationSide",
   source: { client: "currency-hover の説明文", owner: "付ける側が埋まっていて反対側を指すと打てない (2026-10-10、CoE も同じ)" },
 });
 export const ESSENCE_OMEN_SPECS: readonly OmenSpec[] = [

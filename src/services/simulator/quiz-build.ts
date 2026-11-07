@@ -8,8 +8,8 @@
  */
 import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } from "./quiz-recipe";
 import { runeEnForId } from "./pattern";
-import { sideLimits } from "./sim-methods";
-import { sideOfMod, type PatchData, type StageItem, type StageSide, type Force, CRAFTED_SOURCES } from "../craft-stage/engine";
+import { methodsFor, sideLimits } from "./sim-methods";
+import { omenFor, sideOfMod, type PatchData, type StageItem, type StageSide, type Force } from "../craft-stage/engine";
 import { membersOf } from "./recipe-defs";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
@@ -42,14 +42,8 @@ export interface QuizSimIn {
  */
 export const GATE_CAPS = { spam: 3000, step: 300 } as const;
 
-/** その MOD に使える付け方 (最初が既定)。シミュレーターの 2 狙う MOD と同じ */
-export function methodsFor(data: PatchData, modId: string): SimMethod[] {
-  const m = data.mods.get(modId);
-  if (!m) return ["exalt"];
-  if (m.source === "desecrated") return ["desecrate"];
-  if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
-  return ["exalt", "chaos", "augment", "desecrate"];
-}
+/** その MOD に使える付け方 (最初が既定) は sim-methods の methodsFor 1 本 (シミュの 2 狙う MOD と同じ) */
+export { methodsFor };
 export const methodOfTarget = (data: PatchData, t: { modId: string; method?: SimMethod }): SimMethod =>
   t.method === "fracture" ? "fracture" : t.method && methodsFor(data, t.modId).includes(t.method) ? t.method : methodsFor(data, t.modId)[0]!;
 
@@ -176,7 +170,7 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
       const keeps = x.greater.keep ? [{ modId: x.greater.keep.modId, minTierIndex: x.greater.keep.minTierIndex }, ...(x.greater.keep.alts ?? [])] : [null];
       const forceOf = (c: { modId: string; minTierIndex: number }) => { const len = x.data.mods.get(c.modId)?.tiers.length ?? 0; return { mod: c.modId, ...(c.minTierIndex > 0 && len ? { tier: `T${len - c.minTierIndex}` } : {}) }; };
       const pick = frac.flatMap((c) => keeps.map((k) => ({ mods: [forceOf(c), ...(k ? [forceOf(k)] : [])], runes: r0, w: (x.fracWeights?.[c.modId] ?? 1) / keeps.length, fracture: c.modId })));
-      const wallOmen = fracSide === "suffix" ? "OmenofDextralNecromancy" : "OmenofSinistralNecromancy";
+      const wallOmen = omenFor("desecrate", fracSide === "suffix" ? "suffix" : "prefix")!;
       start = { kind: "bought", rarity: "magic", mods: pick[0]!.mods, price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}), ...(r0.length ? { runes: r0 } : {}), pick, fracture: pick[0]!.fracture,
         // レアにするのはそのエッセンス、無ければ王者 (反対側の狙いを一緒に揃えた時。2026-10-20)
         steps: [{ use: x.greater.essKey ?? "regal" }, ...(x.greater.keep ? [] : [{ use: "exalt" }]), { use: "desecrate", omens: [wallOmen] }] };

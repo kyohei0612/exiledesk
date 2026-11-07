@@ -8,8 +8,9 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
-import { OMEN_FOR, kindOf, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
+import { OMEN_KEY, aimChainMode, omensAllowedFor, stepCost, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
+import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
@@ -40,7 +41,9 @@ const showAll = ref(false);
 let gen = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 
-const done = computed(() => (s.item.value ? aimDone(s.item.value, s.aims.value) : false));
+/** 当たり方はエンジンの aimHits の sameText (同じ系統・同じ文の別 MOD も当たり。スパムシミュ・木と同じ、11-07 ブラック 57 の決め) */
+const hitOf = (d: PatchData) => ({ data: d, sameText: true });
+const done = computed(() => (s.item.value && s.data.value ? aimDone(s.item.value, s.aims.value, hitOf(s.data.value)) : false));
 
 /** 今のアイテムと狙いで出し直す (少しずつ。画面を止めない) */
 function recompute(): void {
@@ -61,7 +64,7 @@ function recompute(): void {
     const out: AimOdd[] = [];
     while (i < combos.length && performance.now() - t0 < 30) {
       const c = combos[i++]!;
-      out.push({ ...c, p: aimChain(d, it, t, c, TRIALS, 17), n: TRIALS });
+      out.push({ ...c, p: aimChain(d, it, t, c, TRIALS, 17, hitOf(d)), n: TRIALS });
     }
     rows.value = [...rows.value, ...out].sort(byValue);
     if (i < combos.length) timer = setTimeout(step, 0);
@@ -99,7 +102,7 @@ const busy = computed(() => rows.value.length < total.value);
  * 2026-10-09 オーナー「消えたら外れで、やり直しは回数で」)。付くまでの平均 = 1 回 ÷ 確率。
  * 前は 1 回だけの確率で、何も消さない高貴がいつも上・ヴァールが 1 位など当てにならなかった
  */
-const costOf = (r: AimCombo): number => (r.currency === REVEAL ? 0 : priceOf(r.currency)) + r.omens.reduce((a, o) => a + priceOf(o), 0);
+const costOf = (r: AimCombo): number => stepCost(r, priceOf);
 const perHit = (r: AimOdd): number => { const c = costOf(r); return r.p > 0 && c > 0 ? c / r.p : Infinity; };
 /**
  * 並びは付きやすい順 (2026-10-09 オーナー「やっぱり付きやすさランキングじゃないとダメ、費用で並べると高貴が絶対上に来る。付きやすさで下に通貨書いてればおｋ」)。
@@ -119,12 +122,11 @@ const pct = (p: number): string => fmtPct(p);
 /** その打ち方を持つ: カレンシーを持ち、お告げはその手の種類の物をこの組み合わせに揃える (ほかの種類のお告げは残す) */
 function pick(r: AimOdd): void {
   if (r.currency === REVEAL) {
-    if (!s.omens.value.includes("OmenofAbyssalEchoes")) s.toggleOmen("OmenofAbyssalEchoes");
+    if (!s.omens.value.includes(OMEN_KEY.echoes)) s.toggleOmen(OMEN_KEY.echoes);
     scrollToTop(document.querySelector("[data-reveal-panel]"), "smooth", "center");
     return;
   }
-  const kinds = [kindOf(r.currency), ...(kindOf(r.currency) === "desecrate" ? ["reveal"] : [])];
-  const mine = new Set(kinds.flatMap((k) => OMEN_FOR[k] ?? []));
+  const mine = new Set(omensAllowedFor(r.currency));
   // 先に持ってからお告げを揃える (持ち替えでお告げを入れ替える omen-memory.ts が後から上書きしないように)
   s.hold(r.currency);
   s.omens.value = [...s.omens.value.filter((o) => !mine.has(o)), ...r.omens];
@@ -140,7 +142,7 @@ const keyOf = (r: AimOdd): string => r.currency + "|" + r.omens.join("+");
 function roll(r: AimOdd): void {
   const d = s.data.value, it = s.item.value, t = s.aims.value;
   if (!d || !it || !t.length) return;
-  const p = aimChain(d, it, t, r, rollN.value, (recNext() ?? Math.floor(Math.random() * 1e9)));
+  const p = aimChain(d, it, t, r, rollN.value, (recNext() ?? Math.floor(Math.random() * 1e9)), hitOf(d));
   const hit = Math.round(p * rollN.value);
   rolled.value = { key: keyOf(r), n: rollN.value, hit };
   logAim("aim_roll", { combo: keyOf(r), n: rollN.value, hit, odds: r.p });
@@ -149,20 +151,19 @@ watch([() => s.aims.value, () => s.item.value], () => { rolled.value = null; });
 /** 平均で何回に 1 回付くか */
 const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "Every time") : tr(`${Math.round(1 / p).toLocaleString()} 回に 1 回`, `1 in ${Math.round(1 / p).toLocaleString()}`));
 /**
- * 数えた回し方を 1 行で (2026-10-16 要望 007801cc「何をどう回した数字か」)。aimChain の決まりそのまま。開いた時だけ出す (文字は最低限)
+ * 数えた回し方を 1 行で (2026-10-16 要望 007801cc「何をどう回した数字か」)。文の分けはエンジンの aimChainMode (aimChain と同じ分かれ方)。開いた時だけ出す (文字は最低限)
  */
 const howOpen = ref<string | null>(null);
 function howOf(r: AimOdd): string {
   const n = nameRow(r);
-  const om = r.omens.some((o) => o !== "OmenofAbyssalEchoes") ? tr("お告げは毎回掛け直し。", "Omens are reapplied every time. ") : "";
-  if (r.currency === REVEAL) return tr("発現 (アビスの反響で 1 回引き直し) を、今の状態から繰り返す。候補に出れば当たり。", "Reveal (one reroll with Omen of Abyssal Echoes), repeated from the current state. A hit if the target is offered.");
-  switch (kindOf(r.currency)) {
-    case "desecrate":
+  const om = r.omens.some((o) => o !== OMEN_KEY.echoes) ? tr("お告げは毎回掛け直し。", "Omens are reapplied every time. ") : "";
+  const mode = aimChainMode(r);
+  if (mode === "reveal") return tr("発現 (アビスの反響で 1 回引き直し) を、今の状態から繰り返す。候補に出れば当たり。", "Reveal (one reroll with Omen of Abyssal Echoes), repeated from the current state. A hit if the target is offered.");
+  switch (mode) {
+    case "bone":
       return tr(`${n} → 発現 (アビスの反響で 1 回引き直し)。候補に出れば当たり。毎回今の状態に戻して打ち直す。${om}`, `${n} → reveal (one reroll with Omen of Abyssal Echoes). A hit if the target is offered. Restarts from the current state every time. ${om}`);
-    case "chaos":
+    case "spam":
       return tr(`${n} を続けて打つ (カオススパム)。今の MOD が消えても狙いが揃えば当たり。外れたらその結果に続けて打つ。${om}`, `${n} is used repeatedly (Chaos spam). A hit when all targets are on, even if current mods were removed. A miss keeps going from the result. ${om}`);
-    case "exalt":
-      return tr(`${n} を空きがあるうちは続けて打つ。狙いが揃えば当たり。今の MOD が消えた・空きが無くなったら今の状態に戻す。${om}`, `${n} is used repeatedly while there is an open slot. A hit when all targets are on. Restarts from the current state when a current mod is removed or no slot is left. ${om}`);
     default:
       return tr(`${n} を続けて打つ (外れても今の MOD が残っていればそのまま)。狙いが揃えば当たり。今の MOD が消えたら今の状態に戻す。${om}`, `${n} is used repeatedly (a miss keeps going while the current mods stay). A hit when all targets are on. Restarts from the current state when a current mod is removed. ${om}`);
   }

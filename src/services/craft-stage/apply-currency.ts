@@ -8,18 +8,18 @@
  * 液化した感情・処分・手で決める品質や暗黙の値。
  * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
-import { isEmotion } from "./apply-emotion";
+import { parseKey, SET_PREFIX } from "./key";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
+import { inAny, type ItemGroup } from "../mods/item-classes";
 import { allMods, hasExtraCatalyst, maxQualityOf, skip, type Force } from "./stage-core";
 import { applyForce, isForce } from "./apply-force";
 import { applySpam, isSpam } from "./apply-spam";
 /** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
-const QUALITY_SET = "qset:";
+const QUALITY_SET = SET_PREFIX.quality;
 export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
 export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
 /** カタリストの品質を手で決める手 (ベースの品質とは別に持つグラスピングメイル。指輪・アミュレットは qset のまま) */
-const CATALYST_SET = "cqset:";
+const CATALYST_SET = SET_PREFIX.catalystQuality;
 export const catalystSetKey = (n: number, tag: string): string => `${CATALYST_SET}${n}:${tag}`;
 export const isCatalystSet = (key: string): boolean => key.startsWith(CATALYST_SET);
 /**
@@ -27,7 +27,7 @@ export const isCatalystSet = (key: string): boolean => key.startsWith(CATALYST_S
  * (指輪・アミュレット・防具・物理武器。クライアントの説明「上限を最大 10% 超えて」)。洗練されたブリーチの指輪 45 + 20 + 10 = 75 は取引所の上限と同じ。
  * 2026-10-10 オーナー「上限を固定値にせず合計で伸びるように、マックス値を設定できるだけで、これ以上つけれないってしないで」
  */
-const INFUSER_OVER = 10;
+export const INFUSER_OVER = 10;
 /** インフューザーがある部位 (指輪・アミュレット・防具・マーシャル武器・ワンド・スタッフ・セプター)。前の一覧はキャスターが漏れていた (2026-10-13 総点検) */
 const INFUSABLE: readonly ItemGroup[] = ["ringAmulet", "armour", "martial", "caster"];
 /** インフューザーを棚に出しているか (2026-10-09 にヴァールの道具と一緒に外した)。外している間は「今の最大」に +10 を足さない (2026-10-13 オーナー「インフューザー非表示じゃなかったっけ」) */
@@ -36,34 +36,33 @@ export function qualityFieldMax(item: StageItem): number {
   return maxQualityOf(item) + (INFUSERS_ON_SHELF && inAny(item.cls.category, INFUSABLE) ? INFUSER_OVER : 0);
 }
 /** 暗黙の MOD の値を手で決める手 (`iset:0:5` = 1 行目を 5、範囲が 2 つなら `iset:0:2,4`)。暗黙の行の上下のボタン (2026-10-12 オーナー「暗黙はティアとかないから上下できるボタン」)。費用 0 */
-export const IMPLICIT_SET = "iset:";
+export const IMPLICIT_SET = SET_PREFIX.implicit;
 export const implicitSetKey = (line: number, values: readonly number[]): string => `${IMPLICIT_SET}${line}:${values.join(",")}`;
-/**
- * ジュエルはアイテムレベルを見ない (MOD は全部レベル 1・重みは全部同じで、画面にもアイテムレベルを出さない。2026-10-12 オーナー
- * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
- */
-export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel");
+// ジュエルはアイテムレベルを見ない (E-11b の例外)。決まりは説明文の判定 spec/judge.ts の 1 か所
+export { noIlvl } from "./spec/judge";
 /** 品質の上限を手で決める手 (`qcap:40`)。品質の帯のプルダウン (2026-10-10 オーナー「エッセンス打つのが面倒な人はプルダウンで上限上げてね」) */
-export const QUALITY_CAP = "qcap:";
+export const QUALITY_CAP = SET_PREFIX.qualityCap;
 export const qualityCapKey = (n: number): string => `${QUALITY_CAP}${n}`;
 /**
  * アイテムレベルを変える手 (`ilvl:84`)。カオススパム確率機で狙いごとにアイテムレベルを選んで回した時に、手順にこの手を入れる
  * (2026-10-16 オーナー「MOD 決めた時点で再度レベル変わるからそこ都度都度」。前は手順の始めのアイテムレベルを書き換えていて、前の手まで別物になった)。費用 0
  */
-export const ITEM_LEVEL_SET = "ilvl:";
+export const ITEM_LEVEL_SET = SET_PREFIX.itemLevel;
 export const itemLevelKey = (n: number): string => `${ITEM_LEVEL_SET}${n}`;
 /** 今の品質の上限: 手で決めた値があればそれ、無ければ足し算 (ベース + 品質の最大値の MOD + インフューザー) */
 export function qualityCapOf(item: StageItem): number {
   return item.qualityCap ?? qualityFieldMax(item);
 }
 import { applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
-import { isFlask, isGem, uniqueBaseOf } from "./stage-bases";
+import { uniqueBaseOf } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../../i18n/item-names-ja";
-import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
+import { OMEN_FOR } from "./omens";
+import { omensOfKind } from "./spec/omen-layer";
+import { itemStateBlock, lockedStateBlock, removedOmenBlock, sanctifiedReason, modlessBlock } from "./spec/judge";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
-import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
-import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
+import { ANY_STATE, applyExtra, dropForesight, FOR_CORRUPTED, isExtra } from "./apply-extra";
+import { applyDispose, isDispose } from "./apply-dispose";
 import { applyUnsocket, isUnsocket } from "./stage-runes";
 import { tr } from "../../i18n/lang";
 import { mulberry32 } from "../htc/rng";
@@ -72,21 +71,9 @@ export { GNAWED_MAX_ILVL } from "./stage-core";
 import { applyBySpec } from "./spec/run-spec";
 import { applySanctifySet, isSanctifySet } from "./apply-vaal";
 
-/** カレンシーのキー (price-keys.json) → 種類と強さ */
-function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
-  const m = /^(.*)_(greater|perfect)$/.exec(key);
-  return m ? { kind: m[1]!, strength: m[2] as "greater" | "perfect" } : { kind: key, strength: "base" };
-}
-
-/** その手の種類 (お告げの対応を引く鍵) */
-export function kindOf(currency: string): string {
-  if (currency.startsWith("essence:")) return currency === "essence:breach" || currency.startsWith("essence:perfect:") ? "essence_perfect" : "essence";
-  if (currency.startsWith("desecrate")) return "desecrate";
-  if (currency.startsWith("reveal")) return "reveal";
-  if (currency.startsWith("catalyst_") || currency.startsWith("jcatalyst_")) return "catalyst";
-  if (isEmotion(currency)) return "emotion";
-  return parseKey(currency).kind;
-}
+/** その手の種類 (お告げの対応を引く鍵)。鍵の読みは key.ts の parseKey 1 か所 */
+export const kindOf = (currency: string): string => parseKey(currency).kind;
+export { parseKey, type ParsedKey } from "./key";
 /**
  * 削減のお告げでカオスを打った時に消える候補: フラクチャー以外で MOD レベルが一番低い物 (同じなら全部、等しい確率)。
  * 左右の抹消のお告げも掛けていれば、その側の中で一番低い物 (side。2026-10-11 要望 aa132a4a: 併用できる)。
@@ -95,18 +82,21 @@ export function kindOf(currency: string): string {
 export function whittleTargets(item: StageItem, side?: StageSide | null): StageMod[] {
   const rem = allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
   if (!rem.length) return [];
-  // 未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。modLevel も 1、要望 ㉟-3)
-  const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
-  const low = Math.min(...rem.map(lv));
-  return rem.filter((m) => lv(m) === low);
+  const low = Math.min(...rem.map(whittleLevel));
+  return rem.filter((m) => whittleLevel(m) === low);
 }
-/** その手に掛かるお告げ (持っている中から) */
-export function omensFor(currency: string, held: readonly string[]): string[] {
-  const ok = OMEN_FOR[kindOf(currency)] ?? [];
-  const used = held.filter((o) => ok.includes(o));
-  // 腐食のお告げは単体で効く (全部の MOD を置き換えるので、左右のネクロマンシー・勢力は関係が無い)。他のお告げは使わずに残す
-  // (2026-10-05 オーナー「腐食は単体だよね、属さないはず」)
-  return used.includes("OmenofPutrefaction") ? ["OmenofPutrefaction"] : used;
+/**
+ * 削減のお告げで比べる MOD レベル。未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。modLevel も 1、要望 ㉟-3)。
+ * 打つ処理 (whittleTargets) と木の削減の見方が同じ物 (11-07 jin-base4、シミュ部長の頼み)
+ */
+export const whittleLevel = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
+/**
+ * その手に掛かるお告げ (持っている中から、エンジンが食う物)。打つ処理の planSpec と同じお告げの層 (spec/omen-layer.ts の omensOfKind):
+ * 腐食は単体で効く (2026-10-05 オーナー「腐食は単体だよね、属さないはず」)・光を使う時は左右の消去は効かない・一緒に効かない組は先の 1 つ。
+ * item を渡すと状態で効かない物 (紋章がある骨のネクロマンシー、E-67) も落とす
+ */
+export function omensFor(currency: string, held: readonly string[], item?: StageItem): string[] {
+  return omensOfKind(kindOf(currency), held, item).map((o) => o.key);
 }
 /**
  * その手に付けられるお告げ (OMEN_FOR の手の種類の物)。骨 (冒涜) の手には、後の発現で使うアビスの反響も並べる
@@ -126,6 +116,15 @@ export function omensAllowedFor(key: string | null | undefined): string[] {
 export function useReason(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): string | null {
   const r = applyCurrency(data, item, key, mulberry32(0), [...omens]);
   return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
+}
+
+/**
+ * 指名の手 (force:、始めの状態を組む窓も同じ鍵で聞く) が今付けられない理由と、それが付け方のせいか (way = 別の付け方なら付きうる、M-19)。付けられるなら null。
+ * 決まり (冒涜の置き場は冒涜で・冒涜は 1 つまで E-60・フラクチャーは 1 つまで・冒涜は固定できない) は apply-force.ts の 1 か所で、画面は自前で持たない
+ */
+export function forceReason(data: PatchData, item: StageItem, key: string): { text: string; way: boolean } | null {
+  const r = applyCurrency(data, item, key, mulberry32(0), []);
+  return r.applied || r.random ? null : { text: r.reason ?? tr("付けられない", "Can't add"), way: !!r.way };
 }
 
 /**
@@ -162,24 +161,24 @@ function toUniqueBase(data: PatchData, r: StageApply): StageApply {
 }
 
 /** 聖別済みのアイテムに打とうとした時の理由 (エンジンの入口と説明文の判定 spec/judge.ts で同じ文) */
-export const SANCTIFIED_REASON = (): string => tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item"); // E-26 聖別済みの品には何も打てない
+export const SANCTIFIED_REASON = sanctifiedReason; // E-26 聖別済みの品には何も打てない
 
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
   if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, shardReason());
-  if (item.destroyed) return skip(item, tr("壊れたアイテムには何も使えない", "Item is destroyed"));
-  if (item.disposed) return skip(item, tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`));
-  if (item.mirrored && !ANY_STATE.includes(currency)) return skip(item, tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item"));
+  // 品の状態の決まりは説明文で打つ手 (spec/judge.ts の stateBlock) と同じ関数
+  const broken = itemStateBlock(item, ANY_STATE.includes(currency));
+  if (broken) return skip(item, broken);
   // 未鑑定は先に鑑定の巻物 (MOD が見えないアイテムには打てない)
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
   // 聖別の後は何もできない (2026-10-22 オーナーのゲームでの確認「聖別の後は本当に何もできない」): 品質・カタリスト・オーブ・お告げ・エッセンス・骨・ルーンの差し替え、
   // 品質・アイテムレベルの欄も。通すのは聖別の数値の帯 (聖別そのものの値)・状態を問わない物 (鏡・抽出)・解呪・サルベージだけ
-  if (item.sanctified && !isSanctifySet(currency) && !ANY_STATE.includes(currency)) return skip(item, SANCTIFIED_REASON());
-  if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
+  const locked = lockedStateBlock(item, { sanctifiedOk: isSanctifySet(currency) || ANY_STATE.includes(currency), unidentifiedOk: currency === "wisdom" });
+  if (locked) return skip(item, locked);
   // スパムシミュの当たった形を置く 1 手 (apply-spam.ts。乱数を使わない)
   if (isSpam(currency)) return applySpam(data, item, currency);
-  // ADR-004 (2026-10-16): 移し終えた手 (spec/run-spec.ts の specCovers) は説明文の分解で打つ。まだ移していない手 (聖別など) は下で
+  // ADR-004 (2026-10-16): 説明文に移した手 (spec/run-spec.ts の resolveSpec が引ける鍵) は説明文の分解で打つ。まだ移していない手 (指名・手で決める欄など) は下で
   const bySpec = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
   if (bySpec) return bySpec;
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未発現の MOD の発現だけはできる (ゲームと同じ)
@@ -218,17 +217,15 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   }
   // 聖別の数値を手で決める (聖別の帯。聖別の後に打つ手、費用 0)
   if (isSanctifySet(currency)) return applySanctifySet(data, item, currency);
-  if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
-  // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)
-  const gone = omens.find((o) => REMOVED_OMENS.includes(o));
-  if (gone) return skip(item, tr("今のゲームに無いお告げ", "This Omen is no longer in the game"));
+  if (item.corrupted && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
+  // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」。説明文で打つ手と同じ判定)
+  const gone = removedOmenBlock(omens);
+  if (gone) return skip(item, gone);
   const used = omensFor(currency, omens);
-  const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
-  if (bad) return skip(item, tr("このお告げの効果はまだ入れていない", "This Omen isn't supported yet"));
   const r = applyInner(data, item, currency, rng, hint);
   if (!r.applied) return r;
-  // ヒネコラの予見は「アイテムを変えると消える」(説明文)
-  const item2 = currency !== "hinekora" && r.item.foreseen ? { ...r.item, foreseen: false } : r.item;
+  // ヒネコラの予見は「アイテムを変えると消える」(説明文、決まりは apply-extra.ts の dropForesight 1 か所)
+  const item2 = dropForesight(r.item, currency);
   return { ...r, item: item2, omensUsed: used };
 }
 
@@ -240,7 +237,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
-  if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
+  const modless = modlessBlock(item);
+  if (modless) return skip(item, modless);
   // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーン・感情・フラックス・聖別は説明文の分解 (spec/) で打つ (ADR-004、2026-10-16〜17 に今の関数から外した)
   return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`)); // E-28・E-29 棚に無い手・ヴァールは古い手順の再生だけ
 }

@@ -8,12 +8,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { treeRowTags } from "../tree/tree-row-tags";
+import { boxCardOf } from "../tree/box-card";
 import { handLabel } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
-import { fixedValues } from "../tree/tree-fixed-values";
-import type { StageItem } from "../../../services/craft-stage/types";
 import { usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { stepOf } from "../tree/tree-fail";
 import PhoneOutRow from "./PhoneOutRow.vue";
@@ -26,11 +23,9 @@ const t = useTree();
 const quiz = usePhoneQuiz();
 // 「打つ手を替える」は外した (10-27 昼オーナー「意味が分からない」。手は「○○を選択」の枠で替え、消すのは結果の枠の右上の ×)
 const box = computed(() => t.doc.value.boxes[props.q.id]);
-const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
-const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
+/** 今の箱のカード (PC の箱と同じ box-card の 1 本: 見本 → 値を揃える (神の目標値も) → 札) */
+const card = computed(() => (s.data.value && box.value ? boxCardOf(s.data.value, t.doc.value, props.q.id) : null));
 /** カードの幅 = 画面の幅 - 左右の余白 (360 まで) */
-/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
-const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 const cardW = ref(340);
 /** カードの幅 = 画面の幅 - ページの左右の余白 (8px ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限にしてもいいね、空ける必要ない」) */
 const fit = (): void => { cardW.value = window.innerWidth - 16; };
@@ -54,7 +49,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
     <template v-if="q.kind === 'hand'">
       <h2 class="break-words text-[17px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.out === "start" ? tr("スタート", "Start") : quiz.boxTitle(q.id) }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
-      <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+      <StageItemCard :row-group="null" v-if="card" :item="card.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="card.tags" />
       <template v-if="box.hand">
         <!-- ここで打った手 (10-27 オーナー「カオスオーブを選択とだけ出し、押したらカレンシーの選択画面へ」)。結果へは下の帯の「次へ」 -->
         <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>

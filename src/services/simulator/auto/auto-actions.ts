@@ -14,7 +14,11 @@
  *   - 外れが何かは持たない。付いている外れ 1 つごとに、その側の外れの重みから平均 (Σw² ÷ Σw) を引く (系統を塞ぐ分の近似)。狙いと同じ系統の別の MOD は外れに数える (札の系統を塞がない)
  *   - 発現の候補 3 つは置き場から重みで戻しなしに引く (エンジンの drawOffers)。札の候補は引いたら外し、外れは平均の重み (Σw² ÷ Σw) を外す。冒涜専用の数の割合はエンジンと同じ
  *   - 表の代表のアイテムでは外れを代表の MOD で置く (auto-engine.ts)
+ * 付ける部分をエンジンの stepOutcomes の表にするのは見送り (engine-gaps ② 25、11-07 ブラック 58 の決め。使うのはアプリの画面だけで当分触らない G-07):
+ *   11-07 に試した (付ける手も形ごとの代表に stepOutcomes)。最安は手袋 1946.0 → 1941.0 神・靴 74.3 → 73.1 神、安い順の上位 3 は同じ、
+ *   エンジンで打った数とのずれは手袋 −4.7% → −4.3%・靴 −27.6% → −31.4% で近さは変わらず、組み立ては 1 秒 → 6〜9 秒。差分は共有メモ progress/auto-own-25-engine-add.patch
  */
+import { OMEN_KEY, omenFor, type StageSide } from "../../craft-stage/engine";
 import type { AutoModel, Grade, MCand, State } from "./auto-types";
 
 export type { State } from "./auto-types";
@@ -24,11 +28,17 @@ export interface Act { name: string; cost: number; out: Outs }
 const D_NONE = 0, D_JP = 5, D_JS = 6, D_T = 7;
 const isU = (d: number): boolean => d >= 1 && d <= 4;
 const uSide = (d: number): 0 | 1 => (d <= 2 ? 0 : 1);
-const SIDE_OMEN = {
-  exalt: ["OmenofSinistralExaltation", "OmenofDextralExaltation"], erasure: ["OmenofSinistralErasure", "OmenofDextralErasure"],
-  annul: ["OmenofSinistralAnnulment", "OmenofDextralAnnulment"], crystal: ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
-  necro: ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"],
+/** 手の種類 (CurrencySpec.kind) の側のお告げ [プレ, サフィ] をエンジンの omenFor で引く (名前は書かない) */
+const sidePair = (kind: string): readonly [string, string] => {
+  const one = (side: StageSide): string => { const k = omenFor(kind, side); if (!k) throw new Error(`側のお告げが無い: ${kind} ${side}`); return k; };
+  return [one("prefix"), one("suffix")];
+};
+/** 側のお告げ: 高貴 (左右の高貴)・カオス (左右の消去)・抹消 (左右の抹消)・完璧なエッセンス (左右の結晶化)・骨 (左右の死霊術) */
+export const SIDE_OMEN = {
+  exalt: sidePair("exalt"), erasure: sidePair("chaos"), annul: sidePair("annul"), crystal: sidePair("essence_perfect"), necro: sidePair("desecrate"),
 } as const;
+/** 自動の手で使うお告げ全部 (値段の鍵) */
+export const AUTO_OMENS: readonly string[] = [...Object.values(SIDE_OMEN).flat(), OMEN_KEY.greater, OMEN_KEY.echoes, OMEN_KEY.light];
 const ADD_KEY = { a0: ["exalt", "chaos"], a1: ["exalt_greater", "chaos_greater"], a2: ["exalt_perfect", "chaos_perfect"] } as const;
 
 /** 形の扱い (札の数・候補の数を model から) */
@@ -187,7 +197,7 @@ export function engActs(m: AutoModel): EngAct[] {
   const om = (x: 0 | 1 | null, t: readonly [string, string]) => (x == null ? [] : [t[x]]);
   const out: EngAct[] = [];
   for (const x of [null, 0, 1] as const) out.push({ name: `an|${sd(x)}`, kind: "an", key: "annul", omens: om(x, SIDE_OMEN.annul), k: -1, m: -1 });
-  out.push({ name: "li", kind: "li", key: "annul", omens: ["OmenofLight"], k: -1, m: -1 });
+  out.push({ name: "li", kind: "li", key: "annul", omens: [OMEN_KEY.light], k: -1, m: -1 });
   for (const [g, key] of [["b0", "desecrate"], ["b4", "desecrate_ancient"]] as const) for (const x of [null, 0, 1] as const) out.push({ name: `bo|${g}|${sd(x)}`, kind: "bo", key, omens: om(x, SIDE_OMEN.necro), grade: g, k: -1, m: -1 });
   m.slots.forEach((sl, k) => { if (sl.kind === "essence") sl.members.forEach((mb, mi) => { if (mb.ess) for (const x of [null, 0, 1] as const) out.push({ name: `es|${k}|${mi}|${sd(x)}`, kind: "es", key: null, omens: om(x, SIDE_OMEN.crystal), k, m: mi }); }); });
   return out;
@@ -298,13 +308,13 @@ export function actionsOf(sh: Shape, s: State): Act[] {
     if (room[0] || room[1]) {
       push(`ex|${g}|`, [ex], addOuts(sh, s, g, null));
       const o1 = addOuts(sh, s, g, null);
-      if (o1) push(`ex|${g}|G`, [ex, "OmenofGreaterExaltation"], then(sh, o1, add1(null), true));
+      if (o1) push(`ex|${g}|G`, [ex, OMEN_KEY.greater], then(sh, o1, add1(null), true));
     }
     for (const sd of [0, 1] as const) {
       if (!room[sd]) continue;
       const o = addOuts(sh, s, g, sd);
       push(`ex|${g}|${sd ? "D" : "S"}`, [ex, SIDE_OMEN.exalt[sd]], o);
-      if (o) push(`ex|${g}|G${sd ? "D" : "S"}`, [ex, "OmenofGreaterExaltation", SIDE_OMEN.exalt[sd]], then(sh, o, add1(sd), true));
+      if (o) push(`ex|${g}|G${sd ? "D" : "S"}`, [ex, OMEN_KEY.greater, SIDE_OMEN.exalt[sd]], then(sh, o, add1(sd), true));
     }
     // カオス = 消去と同じ消し方 (表の an|…、打つ処理のスペックが同じ。auto-engine.ts の頭) の後に 1 つ付ける (付けられなければ消しただけ)
     for (const sd of [null, 0, 1] as const) {
@@ -325,7 +335,7 @@ export function actionsOf(sh: Shape, s: State): Act[] {
   if (isU(d)) for (const echo of [false, true]) {
     const r = revealOuts(sh, s, echo);
     if (!r) continue;
-    const e = pr("OmenofAbyssalEchoes");
+    const e = pr(OMEN_KEY.echoes);
     if (echo && e == null) continue;
     A.push({ name: echo ? "rv|1" : "rv|0", cost: (P.reveal ?? 0) + r.pEcho * (e ?? 0), out: r.out });
   }
@@ -337,11 +347,11 @@ export function quizActionOf(m: AutoModel, name: string): { use: string; omens?:
   const [kind, a, b, c] = name.split("|");
   const om = (x: string | undefined, table: readonly [string, string]) => (x === "S" ? [table[0]] : x === "D" ? [table[1]] : []);
   const w = (use: string, omens: string[]) => (omens.length ? { use, omens } : { use });
-  if (kind === "ex") { const g = a as "a0" | "a1" | "a2"; const os = [...(b!.includes("G") ? ["OmenofGreaterExaltation"] : []), ...om(b!.replace("G", ""), SIDE_OMEN.exalt)]; return w(ADD_KEY[g][0], os); }
+  if (kind === "ex") { const g = a as "a0" | "a1" | "a2"; const os = [...(b!.includes("G") ? [OMEN_KEY.greater] : []), ...om(b!.replace("G", ""), SIDE_OMEN.exalt)]; return w(ADD_KEY[g][0], os); }
   if (kind === "ch") return w(ADD_KEY[a as "a0"][1], om(b, SIDE_OMEN.erasure));
   if (kind === "an") return w("annul", om(a, SIDE_OMEN.annul));
   if (kind === "es") return w(m.slots[Number(a)]!.members[Number(b)]!.ess!, om(c, SIDE_OMEN.crystal));
   if (kind === "bo") return w(a === "b4" ? "desecrate_ancient" : "desecrate", om(b, SIDE_OMEN.necro));
   if (kind === "rv") return { reveal: { echoes: a === "1" } };
-  return { use: "annul", omens: ["OmenofLight"] };
+  return { use: "annul", omens: [OMEN_KEY.light] };
 }

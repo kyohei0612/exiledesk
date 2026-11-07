@@ -18,7 +18,7 @@ import { toCss } from "../../../utils/zoom";
 import { shelfTag } from "../../../state/for-share/craft-stage-help";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { omenNote } from "../../../services/craft-stage/omens";
-import { omenBlock } from "../../../services/craft-stage/engine";
+import { omenBlock, omenTag as omenTagOf, parseKey } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
@@ -31,16 +31,22 @@ const emit = defineEmits<{ pick: [key: string] }>();
  */
 const nameParts = (s: string): string[] => s.split(/(?<=の)|(?= \()/);
 
-const BADGE: Array<[RegExp, [string, string], string]> = [
-  [/_greater$/, ["上級", "Greater"], "text-sky-300"],
-  [/_perfect$/, ["完全", "Perfect"], "text-amber-300"],
-  [/^essence:lesser:/, ["レッサー", "Lesser"], "text-white/60"],
-  [/^essence:greater:/, ["グレーター", "Greater"], "text-sky-300"],
-  [/^essence:perfect:/, ["パーフェクト", "Perfect"], "text-amber-300"],
-  [/^desecrate_ancient$/, ["古びた", "Ancient"], "text-sky-300"],
-  [/^desecrate_altered$/, ["変質", "Altered"], "text-fuchsia-300"],
-];
-const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
+/** 段の札。強さ・エッセンスの段はエンジンの parseKey で読む (骨の種類は鍵そのもの) */
+const BADGE: Record<string, [[string, string], string]> = {
+  greater: [["上級", "Greater"], "text-sky-300"],
+  perfect: [["完全", "Perfect"], "text-amber-300"],
+  "essence:lesser": [["レッサー", "Lesser"], "text-white/60"],
+  "essence:greater": [["グレーター", "Greater"], "text-sky-300"],
+  "essence:perfect": [["パーフェクト", "Perfect"], "text-amber-300"],
+  desecrate_ancient: [["古びた", "Ancient"], "text-sky-300"],
+  desecrate_altered: [["変質", "Altered"], "text-fuchsia-300"],
+};
+const badge = computed(() => {
+  const p = parseKey(props.k);
+  const id = p.type === "currency" ? p.strength : p.type === "essence" ? (p.breach ? "" : `essence:${p.tier}`) : props.k;
+  const b = BADGE[id];
+  return b ? ([id, ...b] as const) : null;
+});
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
 const shelf = useShelf();
 // 名前・絵・値段は棚のアイテムで引く (シミュの棚は箱の見本を渡す。今のエミュのアイテムで引くと骨の名前と値段がずれた。2026-10-24 シミュ部長)
@@ -52,21 +58,12 @@ const reason = computed(() => (props.omen ? null : shelf.usable(props.k)));
 /** 掛けているお告げのせいで打てない (お告げを抜けば打てる)。灰色にせず、値段の代わりに理由を出す */
 const omenBlocked = computed(() => !!reason.value && !!shelf.usableBare && !shelf.usableBare(props.k));
 /**
- * お告げの効き方の一言 (アイコンの下。2026-10-10 オーナー「サフィにつくのかプレにつくのかぱっと見わからない、カタリストみたいにアイコンの下に」)
+ * お告げの効き方の一言 (アイコンの下。2026-10-10 オーナー「サフィにつくのかプレにつくのかぱっと見わからない、カタリストみたいにアイコンの下に」)。
+ * 文はエンジンの omenTag (側のお告げは効き目から、2026-11-07)
  */
-const OMEN_TAG: Record<string, [string, string]> = {
-  OmenofSinistralExaltation: ["プレフィックスに付く", "Adds prefix"], OmenofDextralExaltation: ["サフィックスに付く", "Adds suffix"],
-  OmenofGreaterExaltation: ["2 つ付く", "Adds 2"], OmenofCatalysingExaltation: ["品質で重く", "Quality-weighted"],
-  OmenofSinistralAnnulment: ["プレフィックスを消す", "Removes prefix"], OmenofDextralAnnulment: ["サフィックスを消す", "Removes suffix"], OmenofLight: ["冒涜を消す", "Removes desecrated"],
-  OmenofWhittling: ["最低を消す", "Removes lowest"], OmenofSinistralErasure: ["プレフィックスを消す", "Removes prefix"], OmenofDextralErasure: ["サフィックスを消す", "Removes suffix"],
-  OmenofSinistralCrystallisation: ["プレフィックスを消す", "Removes prefix"], OmenofDextralCrystallisation: ["サフィックスを消す", "Removes suffix"],
-  OmenofSinistralNecromancy: ["プレフィックスに付く", "Adds prefix"], OmenofDextralNecromancy: ["サフィックスに付く", "Adds suffix"],
-  OmenoftheSovereign: ["ウラマン", "Ulaman"], OmenoftheLiege: ["アマナム", "Amanamu"], OmenoftheBlackblooded: ["クルガル", "Kurgal"],
-  OmenofPutrefaction: ["全部冒涜", "All desecrated"], OmenofAbyssalEchoes: ["引き直し", "Reroll"],
-};
 const omenTag = computed(() => {
-  const t = props.omen ? OMEN_TAG[props.k] : undefined;
-  return t ? tr(t[0], t[1]) : null;
+  const t = props.omen ? omenTagOf(props.k) : null;
+  return t ? tr(t.ja, t.en) : null;
 });
 /** 今のアイテムでは意味が無い / 掛けると打てない (2026-10-10 オーナー「空きに勝手に入るから意味ないこと教えてあげた方がいい」) */
 /** 掛けると持った物が打てなくなる・掛けても意味が無い (エンジンの omenBlock)。灰色で押せない、理由は omenWarn の所に (2026-10-22 オーナー「進行不能」) */

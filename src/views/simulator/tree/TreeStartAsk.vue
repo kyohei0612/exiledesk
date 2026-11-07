@@ -11,7 +11,7 @@ import { tr } from "../../../i18n/lang";
 import { aimKey, type StartFrom } from "../../../services/simulator/tree/tree-model";
 import { applyStartChoice } from "./tree-start-choice";
 import { useTree } from "./use-tree";
-import { sureFracText } from "./tree-names";
+import { startFromWords } from "./tree-names";
 import { simOp } from "../../../web/track";
 
 const emit = defineEmits<{ done: []; close: [] }>();
@@ -33,11 +33,8 @@ const hasMarks = goals.value.some((a) => a.fractured);
 const onePicks = ref<string[]>(hasMarks ? goals.value.filter((a) => a.fractured).map(aimKey) : []);
 const multiWhite = computed(() => onePicks.value.length > 1);
 const from = ref<StartFrom>(t.doc.value.start?.from ?? "fractured");
-type Pair = [string, string];
-const FROMS = computed((): Array<{ k: StartFrom; title: Pair; sub: Pair }> => { const x = sureFracText(1); return [ // 素材の倍は ✦ の数で (S-43)
-  { k: "fractured", title: ["(a) フラクチャー済みから", "(a) From fractured"], sub: ["その MOD が ✦ で付いたレアから始める (フラクチャーの費用は無し)", "Start from a rare with that mod fractured (no fracture cost)"] },
-  { k: "four", title: ["(b) 白から確定フラクチャーのコース", "(b) From white, sure fracture"], sub: [`白 (ノーマル) のベースから始め、木の中でフラクチャー (必ず成功、素材 ${x} の費用込み)`, `Start from a white (normal) base and fracture in the tree (sure success, materials ${x} cost included)`] },
-]; });
+// (a) / (b) の文は tree-names の startFromWords 1 か所 (素材の倍は ✦ の数で、S-43)
+const FROMS = computed(() => startFromWords(1));
 /* ✦ を複数 (10-28 オーナー「✦ を複数設定してよい」「フラクチャーせずに開始にするなよとは思う」): MOD は ☑ で選び、既定は印のある MOD
  * (無ければ完成の MOD 全部 = ✦ 付きで始めるのを勧める)。☑ を全部外すと白ベースから (フラクチャー無し、一番下)
  */

@@ -6,7 +6,7 @@
   打ち始める前 (始めの状態を組む時) は addStartMod、打ち始めた後は指名の手 (force:…、費用 0・1 手戻すで外せる)
 -->
 <script setup lang="ts">
-import { forceKey, type ForceFlag, allMods, type ModGroup } from "../../services/craft-stage/engine";
+import { forceKey, forceReason, type ForceFlag, type ModGroup } from "../../services/craft-stage/engine";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
@@ -17,35 +17,37 @@ import { swallowNextClick } from "../../utils/swallow-click";
 const props = defineProps<{ group: ModGroup; modId: string; rank: string }>();
 /** 始めの状態を組める (まだ打っていない・再生でない) */
 const canStart = computed(() => !s.log.value.length && !s.replay.value);
-const desecratedPool = computed(() => props.group === "desecrated" || props.group === "otherworldly");
 const essence = computed(() => props.group === "essence" || props.group === "perfect_essence");
 /** 始めの状態に入れられる種類 (普通・冒涜)。エッセンス・ルーン・異界は打ち始めた後と同じ指名の手 */
 const startable = computed(() => canStart.value && (props.group === "normal" || props.group === "desecrated"));
 
-interface Way { flag: ForceFlag; label: string; why: string | null; run: () => void }
+interface Way { flag: ForceFlag; label: string; why: string | null; way: boolean; run: () => void }
+/**
+ * 3 つの付け方と、この MOD・このアイテムで付けられない理由。理由はエンジンの forceReason 1 本 (冒涜の置き場は冒涜で・冒涜は 1 つまで・フラクチャーは 1 つまで・
+ * 冒涜は固定できない、M-19)。始めの状態を組む時も今のアイテム (始めの MOD を足した物) に同じ鍵で聞く
+ */
 const ways = computed<Way[]>(() => {
-  const it = s.item.value;
-  const hasFr = startable.value ? s.startMods.value.some((f) => f.fractured) : !!it && allMods(it).some((m) => m.fractured);
-  const hasDe = startable.value ? s.startMods.value.some((f) => f.desecrated) : !!it && allMods(it).some((m) => m.desecrated);
-  const plain: ForceFlag = desecratedPool.value ? "d" : essence.value ? "e" : "n";
-  // 3 つの付け方と、この MOD・このアイテムで付けられない理由 (付けられるなら null で、次に打てるかを見る)
-  const list: Array<{ flag: ForceFlag; label: string; block: string | null }> = [
-    { flag: plain === "d" ? "n" : plain, label: tr("そのまま", "As is"), block: desecratedPool.value ? tr("冒涜の MOD は「冒涜」で付ける", "Desecrated mods are added as Desecrated") : null },
-    { flag: "d", label: tr("冒涜", "Desecrated"), block: !desecratedPool.value && props.group !== "normal" ? tr("冒涜で付けられるのは冒涜専用の MOD と一般 MOD だけ", "Only desecrated-only and regular mods can be added as Desecrated") : hasDe ? tr("既に冒涜の MOD が付いているため (1 つまで)", "A desecrated mod is already on the item (1 max)") : null },
-    { flag: "f", label: tr("フラクチャー", "Fracture"), block: desecratedPool.value ? tr("冒涜の MOD は固定できない", "Desecrated mods can't be fractured") : hasFr ? tr("既にフラクチャーの MOD が付いているため (1 つまで)", "A fractured mod is already on the item (1 max)") : null },
+  const it = s.item.value, d = s.data.value;
+  const plain: ForceFlag = essence.value ? "e" : "n";
+  const list: Array<{ flag: ForceFlag; label: string }> = [
+    { flag: plain, label: tr("そのまま", "As is") },
+    { flag: "d", label: tr("冒涜", "Desecrated") },
+    { flag: "f", label: tr("フラクチャー", "Fracture") },
   ];
-  return list.map(({ flag, label, block }) => {
-    if (block) return { flag, label, why: block, run: () => {} };
+  return list.map(({ flag, label }) => {
+    const key = forceKey(props.modId, props.rank, flag);
+    const r = d && it ? forceReason(d, it, key) : null;
+    if (r) return { flag, label, why: r.text, way: r.way, run: () => {} };
     if (startable.value) {
       const run = (): void => s.addStartMod({ mod: props.modId, tier: props.rank, ...(flag === "f" ? { fractured: true } : flag === "d" ? { desecrated: true } : {}) });
-      return { flag, label, why: null, run };
+      return { flag, label, why: null, way: false, run };
     }
-    const key = forceKey(props.modId, props.rank, flag);
-    return { flag, label, why: s.replay.value ? tr("再生中は打てない", "Cannot use during replay") : s.usable(key), run: () => s.use(key) };
+    return { flag, label, why: s.replay.value ? tr("再生中は打てない", "Cannot use during replay") : s.usable(key), way: false, run: () => s.use(key) };
   });
 });
 const none = computed(() => ways.value.every((w) => w.why));
-const why = computed(() => (none.value ? ways.value.find((w) => w.why && !/だけ|で付ける|固定できない|only|as Desecrated|can't be fractured/.test(w.why))?.why ?? ways.value[0]!.why : null));
+/** 全部付けられない時の一言: 付け方のせいでない理由 (品の状態) を先に */
+const why = computed(() => (none.value ? ways.value.find((w) => w.why && !w.way)?.why ?? ways.value[0]!.why : null));
 
 // ── プルダウン (body に出す固定の小窓。MOD 一覧の窓 z-[300] の上) ─────
 const open = ref(false);

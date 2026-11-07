@@ -9,7 +9,7 @@
  * ヒネコラで予見したアイテムの神だけ、一番上に「予見リセット」の ☑ (S-202 ⑤、☑ で全部の MOD を手前の神の目標で完了にする)
  */
 import { computed, nextTick, ref, watch } from "vue";
-import { allMods, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { rerollableMods, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { retext } from "../../../services/simulator/sim-engine";
 import { divineRange } from "../../../services/simulator/tree/tree-divine";
 import type { Aim, DivineTarget } from "../../../services/simulator/tree/tree-model";
@@ -18,10 +18,10 @@ import { tr } from "../../../i18n/lang";
 /** targets = 完了した目標 (完了していない MOD の値は入れない)。aims = 木の完成の狙い (☑)。start = 値の始まり (divineStart) */
 /** problem = 置けない訳 (完了していない MOD がある・打てない)。あれば「決定」は押せない */
 const props = defineProps<{ item: StageItem; aims: readonly Aim[]; targets: readonly DivineTarget[]; foreReset: boolean; problem: string | null; start: (modId: string, vi: number) => number | null }>();
-const emit = defineEmits<{ targets: [DivineTarget[]]; foreReset: [boolean]; decide: [] }>();
+const emit = defineEmits<{ targets: [DivineTarget[]]; foreReset: [boolean]; decide: []; cancel: [] }>();
 
-/** 神で数値が振り直される MOD (✦・未発現・数値の無い物は振り直されない = エンジンの reroll と同じ) */
-const rolled = computed((): StageMod[] => allMods(props.item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length));
+/** 神で数値が振り直される MOD (✦・未発現・数値の無い物は振り直されない = エンジンの rerollableMods) */
+const rolled = computed((): StageMod[] => rerollableMods(props.item));
 const isAim = (m: StageMod): boolean => props.aims.some((a) => a.modId === m.modId);
 const lit = computed(() => rolled.value.filter(isAim));
 const gray = computed(() => rolled.value.filter((m) => !isAim(m)));
@@ -73,8 +73,8 @@ watch(() => current.value?.modId ?? null, async (id) => { await nextTick(); (id 
 
 <template>
   <div data-tree-divine class="flex flex-col gap-2 text-[12px]">
-    <!-- 暗幕: 画面全部 (木・ほかの箱・窓のほかの所) を暗くする。押すのは通す (Esc・枠の外で閉じるのはそのまま) -->
-    <div v-if="spot" data-tree-divine-spot aria-hidden="true" class="pointer-events-none fixed inset-0 z-[1] bg-black/75" />
+    <!-- 暗幕: 画面全部 (木・ほかの箱・窓のほかの所) を暗くする。光った枠の外 (暗い所) を押す・右クリックで神を手放す (右クリックのメニューは出さない。11-07 オーナー、S-202 ①) -->
+    <div v-if="spot" data-tree-divine-spot aria-hidden="true" class="fixed inset-0 z-[1] bg-black/75" @pointerdown.prevent.stop="emit('cancel')" @contextmenu.prevent.stop="emit('cancel')" />
     <label v-if="item.foreseen" data-tree-divine-reset class="flex min-h-7 items-center gap-2">
       <input type="checkbox" :checked="foreReset" @change="setReset(($event.target as HTMLInputElement).checked)" />
       <span>{{ tr("予見リセット (神 1 回で予見を消す。目標は手前の神で決めた値)", "Reset foresight (1 Divine clears it; targets are the values set by the earlier Divine)") }}</span>

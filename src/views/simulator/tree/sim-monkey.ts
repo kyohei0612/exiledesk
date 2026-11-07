@@ -46,6 +46,7 @@ import { useTree } from "./use-tree";
 import { boxTagsOf, chosenMod, treeRowTags } from "./tree-row-tags";
 import { fixedValues } from "./tree-fixed-values";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
+import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
@@ -231,6 +232,16 @@ export function installSimMonkey(): () => void {
     prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
     /** 全部の箱の見本 seeds 個 (item・note) と ☑ ( のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
+    /**
+     * 箱のカードで外れ MOD でないはずの行の数 = カードの品 (箱のカードと同じ見本と数値) のうち配置の ☑ の印の MOD (フラクチャー・未発現は数えない)。
+     * 見張り (scripts/sim-watch/watch.mjs の checkCards、R-34「外れ MOD でない行は配置の印とちょうど同じ」) が札の数と比べる。配置が無い箱は null
+     */
+    aimedRows(id: string): number | null {
+      const d = s.data.value, f = d ? frameOfDoc(d, t.doc.value).frames.get(id) : null;
+      if (!d || !f || f.note) return null;
+      const it = fixedValues(d, t.doc.value, shapeSampleWithNote(d, t.doc.value, id).item, id);
+      return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && f.aimed.has(m.modId)).length;
+    },
     /** 上限に届いた人の最後の道とアイテム (沼った訳を見る台本用、S-72) */
     tails(n = RUN_N, seed = 1, k = 3) {
       const d = s.data.value;

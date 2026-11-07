@@ -3,6 +3,7 @@
  * (2026-10-23 エンジンの for-sim から戻した。オーナー「元からエンジンにあった物をシミュが勝手に自前で作っただけ」)
  */
 import { aimHits as hits, heldOdds, makeStageMod, tierIndexOf, type AimHitOpts, type AimTarget, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { isMissMod, type MissAims } from "./tree-miss";
 
 // 付きうる狙い (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits を呼ぶだけ。10-25 に画面の tree-hand-plan から精査と一緒に使うここへ)
 interface TierAim { modId: string; tier: number }
@@ -35,11 +36,11 @@ function poolOf(data: PatchData, h: HeldOdds): StageMod[] {
 /** その MOD がどれかの狙いに当たる */
 export const isAimMod = (m: StageMod, ts: readonly AimTarget[], o?: AimHitOpts): boolean => ts.some((t) => hits(m, t, o));
 /**
- * 外れ = 固定 (フラクチャー) でも狙いでもない MOD、側ごと (2026-10-22 シミュの自前の式を入口へ、sim-own-logic.md の B2。
- * ツリーの junkCount・分かれ目の数え・形の鍵・満杯の文・行の札が同じ数え方)
+ * 外れ = 固定 (フラクチャー) でなく外れの式 (tree-miss の isMissMod) で外れの MOD、側ごと (2026-10-22 シミュの自前の式を入口へ、sim-own-logic.md の B2。
+ * ツリーの junkCount・分かれ目の数え・形の鍵・満杯の文が同じ数え方)
  */
-export function junkOf(item: StageItem, ts: readonly AimTarget[], o?: AimHitOpts): { prefix: StageMod[]; suffix: StageMod[] } {
-  const junk = (ms: readonly StageMod[]): StageMod[] => ms.filter((m) => !m.fractured && !isAimMod(m, ts, o));
+export function junkOf(item: StageItem, x: MissAims): { prefix: StageMod[]; suffix: StageMod[] } {
+  const junk = (ms: readonly StageMod[]): StageMod[] => ms.filter((m) => !m.fractured && isMissMod(m, x));
   return { prefix: junk(item.prefixes), suffix: junk(item.suffixes) };
 }
 /**

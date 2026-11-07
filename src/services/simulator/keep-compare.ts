@@ -11,8 +11,11 @@ import type { PatchData, StageItem } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import { magicEssenceTarget, magicLoopCounts } from "./sim-greater";
 import { blankWith, chaosAfterFix, fractureOdds, magicAugOdds } from "./sim-odds";
-import { sideOfMod } from "../craft-stage/engine";
+import { routeKey, sideOfMod, type RouteGrade } from "../craft-stage/engine";
 import { membersOf } from "./recipe-defs";
+
+/** 等級の強い順 (値段の鍵はエンジンの routeKey) */
+const GRADES_DOWN: readonly RouteGrade[] = ["perfect", "greater", "base"];
 
 interface KeepCompare {
   /** 狙いの手順の本体の modId */
@@ -40,7 +43,7 @@ export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: nu
   // 狙いのルーンを差した MOD の無いマジック (ルーンの MOD も割る方に入る)
   const blank = blankWith(d, it, o.itemLevel, "magic", o.targets.flatMap((t) => [t, ...(t.alts ?? [])]));
   // 増強の等級: 候補が付く一番上の物 (③ と同じ)
-  const grades = ["augment_perfect", "augment_greater", "augment"].map((aug) => ({ aug, odds: magicAugOdds(d, blank, aug) }));
+  const grades = GRADES_DOWN.map((gr) => routeKey("augment", gr)).map((aug) => ({ aug, odds: magicAugOdds(d, blank, aug) }));
   const g = grades.find((x) => x.odds.hit(fracSide, frac) > 0) ?? grades[0]!;
   const p = g.odds.hit(fracSide, frac);
   const share = g.odds.share[fracSide];
@@ -49,7 +52,7 @@ export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: nu
   const loopCost = (q: number | null): number => { const c = magicLoopCounts(p, q, share); return c.augment * o.price(g.aug) + c.annul * o.price("annul"); };
   const base = loopCost(null);
   const forced = !!magicEssenceTarget(d, o.targets);
-  const chaosGrades = ["chaos", "chaos_greater", "chaos_perfect"];
+  const chaosGrades = [...GRADES_DOWN].reverse().map((gr) => routeKey("chaos", gr));
   const out: KeepCompare[] = [];
   for (const t of o.targets) {
     const m = methodOfTarget(d, t);

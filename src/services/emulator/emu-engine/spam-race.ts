@@ -5,7 +5,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem } from "../../craft-stage/types";
-import { routeOff, routeRun, routeSeed, targetSides, type Grade, type RaceTarget, type RouteKind, type RoutePrep } from "../../craft-stage/route-race";
+import { routeOffKey, routeRun, routeSeed, targetSides, type Grade, type RaceTarget, type RouteKind, type RoutePrep } from "../../craft-stage/route-race";
 
 /**
  * シェアに入れる計算済みの結果 (開いた人は計算せずにこれを出して、すぐ運試し。2026-10-19 オーナー「シェア押したら即運試しのページで計算済みのを出して」)。
@@ -28,6 +28,7 @@ export function unpackRace(s: SharedRace): RaceRow[] {
 export interface RaceRow {
   route: RouteKind; grade: Grade;
   /** 使えない理由 (マジックに枠が無い など)。使える時は null */
+  /** 使えない理由の鍵 (route-race の RouteOffKey。文は開いた側の言葉で routeOffText) */
   off: string | null;
   /** 上限までに着いた割合 */
   hitRate: number;
@@ -52,7 +53,7 @@ export interface RaceStats { hitRate: number; avgCost: number; avgSteps: number;
 export async function raceOne(data: PatchData, base: string, itemLevel: number, targets: readonly RaceTarget[], price: (key: string) => number, route: RouteKind, grade: Grade,
   opts: { runs: number; maxSteps?: number; seed?: number; prep?: RoutePrep; from?: StageItem; stop?: () => boolean; sliceMs?: number; /** 1 人終わるごと (読み込み中の n/m) */ onPerson?: (done: number) => void }): Promise<RaceRow | null> {
   const runs = opts.runs, maxSteps = opts.maxSteps ?? 3000, sliceMs = opts.sliceMs ?? 25;
-  const off = routeOff(data, base, itemLevel, targets, route, opts.prep, opts.from);
+  const off = routeOffKey(data, base, itemLevel, targets, route, opts.prep, opts.from);
   if (off) return { route, grade, off, hitRate: 0, avgCost: 0, avgSteps: 0, p50: 0, p90: 0, uses: {}, tries: [], people: runs, hitsBy: targets.map(() => 0) };
   let t0 = performance.now();
   const breathe = async (): Promise<boolean> => {
@@ -90,5 +91,5 @@ export async function raceOne(data: PatchData, base: string, itemLevel: number, 
   if (!one) return null;
   const both = route === "augment" && targetSides(data, targets).length > 1 ? await people("both") : undefined;
   if (both === null) return null;
-  return { route, grade, off: one.steps.length === 0 ? "上限の手数までに付かなかった (この等級では付かない段かも)" : null, ...one.stats, uses: one.uses, tries: [...one.steps].sort((a, b) => a - b), people: runs, hitsBy: one.hitsBy, ...(both ? { both: both.stats } : {}) };
+  return { route, grade, off: one.steps.length === 0 ? "cap" : null, ...one.stats, uses: one.uses, tries: [...one.steps].sort((a, b) => a - b), people: runs, hitsBy: one.hitsBy, ...(both ? { both: both.stats } : {}) };
 }

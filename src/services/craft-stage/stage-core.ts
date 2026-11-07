@@ -277,6 +277,28 @@ export function catalystOf(item: StageItem): { tag: string | null; pct: number }
   return { tag: item.qualityTag ?? null, pct: item.quality };
 }
 /**
+ * その種類 (tag) のカタリストをこの品に打つ時の品質 (打つ処理の catalyst と同じ数): now = 今の % (違う種類が入っていれば 0 から、「Replaces other quality types」)、
+ * max = 入る上限 (maxQualityOf)、full = その種類でもう上限。「この品にこのカタリストで何 % まで入るか」はここ 1 本 (11-07、木の n % の箱・最大まで打つ手も同じ物)
+ */
+/** カタリストの品質が効く品か (指輪・アミュレット・ジュエル、暗黙でカタリストを許すベース = グラスピングメイル。catalystBoosts の頭と同じ、E-71) */
+export const catalystQualityApplies = (item: StageItem): boolean => hasExtraCatalyst(item.base) || inAny(item.cls.category, ["ringAmulet", "jewel"]);
+/** カタリストの品質があるか (種類と 1% 以上。触媒の高貴のお告げに要る、E-32)。打てるかの判定 (judge の hasCatalystQuality) とお告げの一言が同じ物 */
+export const hasCatalystQuality = (item: StageItem): boolean => { const c = catalystOf(item); return !!c.tag && c.pct > 0; };
+/** 両側の空きの数 (スパムの道の偉大な高貴・お告げの一言「1 つしか付かない」が同じ物) */
+export const openSlots = (item: StageItem): number => SIDES.reduce((n, s) => n + Math.max(0, limitOf(item, s) - listOf(item, s).length), 0);
+/** 神のオーブで値が変わる MOD (固定・未発現でなく、値の幅がある物、E-39)。打つ処理 (parts の reroll) と光らせる所 (use-preview) が同じ物 */
+export const rerollableMods = (item: StageItem): StageMod[] => allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
+/** 次の骨が置き換える紋章 (固定されていない物)。骨の側と段の下限 (E-61・E-65)・ネクロマンシーが効かない (E-67) が同じ物 */
+export const liveAbyssMarkOf = (item: StageItem): StageMod | undefined => allMods(item).find((m) => m.abyssMark && !m.fractured);
+/** 紋章が付いているか (固定も数える)。深淵のエッセンスを打てるか (noAbyssMark、E-52) の問い。骨が置き換えるかは liveAbyssMarkOf */
+export const hasAbyssMark = (item: StageItem): boolean => allMods(item).some((m) => m.abyssMark);
+export function catalystRoom(item: StageItem, tag: string): { now: number; max: number; full: boolean } {
+  const max = maxQualityOf(item);
+  const same = item.qualityTag === tag;
+  const now = same ? catalystOf(item).pct : 0;
+  return { now, max, full: same && now >= max };
+}
+/**
  * その MOD がカタリストの種類 tag で伸びるか。指輪・アミュレットは MOD 自身の tags、ジュエルと上のベースは中身のタグ (displayTags)。
  * 上のベースの MOD の tags は出る場所の札 (ring など) なので中身のタグで見る。どの MOD にも乗るか (指輪の MOD だけか) は確かめていない (仮)
  */

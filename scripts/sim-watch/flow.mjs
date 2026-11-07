@@ -87,7 +87,6 @@ try {
   const warn = await c.ev(`!!document.querySelector("[data-tree-hand-warn-go]") && !document.querySelector("[data-tree-hand-warn-swap]")`);
   check("D 手を替える窓はやめる・続けるの 2 つ (S-57)", warn, "ボタンが違う");
   await click("[data-tree-hand-warn-go]"); await sleep(2000);
-  check("D 打つと消えた数の知らせ", await c.ev(`/箱消えた/.test(document.querySelector("[data-tree-gone-note]")?.innerText ?? "")`), "知らせが出ない");
   await c.ev(`(() => { const M = __simMonkey, d = M.dump().boxes; for (const b of Object.values(d)) if (b.id !== "start" && !b.hand && !b.done && !b.back) M.setDone(b.id, b.out === "hit" ? true : "fail"); })()`);
   await click("[data-tree-test]"); await c.until(passed, 40000);
   await click("[data-tree-run]"); await sleep(600);

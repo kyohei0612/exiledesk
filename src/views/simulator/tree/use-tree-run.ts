@@ -14,6 +14,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf, type CheckRun } from "./use-tree-check";
 import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
+import { runPrice } from "../../../services/simulator/tree/run-price";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -22,8 +23,11 @@ export const RUN_N = 100;
  * 「変な作りでも普通にカレンシーを付けた時の動きだから止まる事は無いでしょ、ループはあると思うけど。それで止まる所が分かる」)。1 人目の歩きは見せず、止まった人が出ても止めない
  */
 export const TEST_N = 30;
-/** スマホの見るだけの 1 画面で回す人数 (S-94e、オーナー 11-01「まぁスマホ版だと10人とかになりそうだけど回すのは別にいいんじゃね」) */
-export const VIEW_N = 10;
+/**
+ * スマホの見るだけの 1 画面で回す人数 = PC と同じ (S-94e)。前は 10 人 (オーナー 11-01「まぁスマホ版だと10人とかになりそうだけど回すのは別にいいんじゃね」)、
+ * 11-07 に 100 人 (オーナー「後スマホ版でも軽くなったよねレシピ なら100人でいいんじゃね10人より」)
+ */
+export const VIEW_N = RUN_N;
 /** 途中の結果を出す間隔 (人) と、その間の最低の間 (ms)。速い木でも 3 秒ほどかけて数字が増えていくのが見える (オーナー「ヌルヌルとカウントアップ」) */
 const EVERY = 2;
 /** 1 人の打ち止めの費用 (tree-run の既定と同じ) */
@@ -49,22 +53,19 @@ const FAST_MS = 1200;
 const FAST_AGAIN_MS = 400;
 const FRAME_MS = 30;
 
-/** 回す時の値段 (相場は高貴建て → 神に直す。tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た) */
-export function runPrice(priceOf: (key: string) => number): (key: string) => number {
-  const div = priceOf("divine") || 1;
-  // 回す間は相場が変わらないので、同じ物の値段は 1 回だけ引く (1 手ごとに相場の表を引くのが重く、飛ばしても 100 人に 18 秒かかった、10-23 モンキー 7)
-  const memo = new Map<string, number>();
-  return (k) => { let v = memo.get(k); if (v === undefined) { v = priceOf(k) / div; memo.set(k, v); } return v; };
-}
+/** 回す時の値段 (相場は高貴建て → 神に直す) は services の run-price 1 か所 (デイリーの検算と同じ数え方) */
+export { runPrice };
 /**
  * 木を外から持たせる画面 (デイリーの挑戦、D-41 ④) が回す時の種・値段・ベースの値段 (S-70c)。null = 普段 (種 1・木の相場・木のベースの値段)。
  * price は相場のまま (高貴建て、priceOfKey と同じ形)。神に直すのは runPrice。入れた画面が出る時に null に戻す
  */
 export type TreeRunRig = { seed: number; price: (key: string) => number; startCost?: number };
+/** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・1 箱の間 ms・通った箱・早送り中か)。PC の木とスマホの全体図が同じ物を描く */
+export type TreeRunWalk = { box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean };
 export const treeRunRig = shallowRef<TreeRunRig | null>(null);
 /**
  * _onHalt = 前の「止まった人が出て止めた時 (その箱へ寄る)」。11-07 から止めずに最後まで回すので呼ばない (S-205 ③)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ)。
- * view = スマホの見るだけの 1 画面 (VIEW_N 人、1 人目の再生なし、印は sim:run-view、結果はカード絵に載せない = D2)
+ * view = スマホの見るだけの 1 画面 (VIEW_N 人、1 人目の再生は PC と同じ、印は sim:run-view、結果はカード絵に載せない = D2)
  */
 export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, priceOf: (key: string) => number, _onHalt: (box: string) => void, onWalk: (box: string, i: number) => void, view = false) {
   const startCost = (): number => treeRunRig.value?.startCost ?? treeStartCost();
@@ -79,7 +80,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
   /** 今の結果が穴チェックの走行か (帯・まとめの文と、費用を出さない) */
   const test = ref(false);
   /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・早送り中か) */
-  const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean } | null>(null);
+  const walk = ref<TreeRunWalk | null>(null);
   /** 1 人目を飛ばす (帯の「飛ばす」) */
   let skip = false;
   let token = 0;
@@ -96,7 +97,8 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     // 記録の印 (1 押し 1 回、PC・スマホとも。画面を離れる時にまとめて POST /log、10-25 オーナー「回すボタンに記録足して」)
     track(opt.test ? "sim:test" : view ? "sim:run-view" : "sim:run");
     const my = ++token;
-    running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test || view;
+    // スマホ (view) も 1 人目を歩かせる (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」)。飛ばすのは穴チェックだけ
+    running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test;
     const d = doc.value;
     // 精査で回した同じ 30 人を使い回す (S-71b)。走行は 1 人 2,000 神で打ち止めなので、誰も届いていない時だけ同じ結果になる
     const re = opt.reuse, rig = treeRunRig.value;

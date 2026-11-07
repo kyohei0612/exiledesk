@@ -4,13 +4,16 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, effectiveCls, makeStageMod, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { allMods, candidates, effectiveCls, liveAbyssMarkOf, makeStageMod, pickWeighted, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { boneSlotOf, boneSlotReason } from "./basis";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import type { Mods, PartCtx } from "./parts";
 import { markFloorOf } from "./desecrate-specs";
+import { isDesecratedSource } from "../tier-rank";
 import { jaOfOmen } from "../../htc/game-names";
 import { tr } from "../../../i18n/lang";
+import { OMEN_KEY } from "./omen-keys";
 
 const POOL_ORDER: readonly ModPool[] = ["normal", "desecrated", "otherworldly"];
 /** 置き場の MOD の id (同じ MOD を 2 回数えない: 置き場が重なっていると重みが倍になる)。普通の置き場は特殊 MOD のルーン込み (要望 ㉙) */
@@ -28,7 +31,7 @@ function poolIds(item: StageItem, pools: readonly ModPool[], side: StageSide): s
 /** 冒涜専用の MOD (冒涜の置き場の物と異界の MOD) */
 const exclusiveTest = (item: StageItem, side: StageSide) => {
   const other = new Set(item.cls.pools.otherworldly?.[side === "prefix" ? "prefixes" : "suffixes"] ?? []);
-  return (mod: { id: string; source?: string }): boolean => mod.source === "desecrated" || other.has(mod.id);
+  return (mod: { id: string; source?: string }): boolean => isDesecratedSource(mod.source) || other.has(mod.id);
 };
 interface PoolArgs { pools: readonly ModPool[]; floor: number; exclusiveAnyLevel: boolean; tag: string | null; except?: StageMod } // E-11b の例外 (冒涜専用はアイテムレベルを見ない = exclusiveAnyLevel、噛み切られた骨は見る)
 /** 発現の候補の置き場。tag (勢力の保証) があれば、そのタグの MOD だけを MOD ごとに等しく (2026-10-10 オーナー「等しい確率」) */
@@ -54,6 +57,10 @@ export const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unreveal
 });
 
 export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
+/** その骨が異界の MOD も出すか (変質した鎖骨、E-10a)。打つ処理・数え上げ・確率の表が同じ物を見る */
+export const drawsOtherworldly = (a: AddUnrevealed): boolean => a.pools.includes("otherworldly");
+/** その手に異界の MOD も出す骨があるか (手の定義の actions から) */
+export const specDrawsOtherworldly = (spec: { actions: readonly Action[] }): boolean => spec.actions.some((a) => "addUnrevealed" in a && drawsOtherworldly(a.addUnrevealed));
 /**
  * 未発現の冒涜 MOD をどの側に付けるか (打つ処理と確率表 held-odds.ts の骨が同じ物を使う)。
  *   - アビサルロードの紋章 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限は消された元の MOD のレベル × 0.4 の四捨五入より上 (markFloorOf、E-65)
@@ -70,7 +77,7 @@ interface UnrevealedPlan {
   weights: Array<{ s: StageSide; w: number }>;
 }
 export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan { // E-61 (E-11f の例外) 骨の側・E-11g ネクロマンシー
-  const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
+  const mark = liveAbyssMarkOf(item);
   const floor = Math.max(a.floor, mark ? markFloorOf(mark) : 0);
   const fixed: StageSide | null = mark ? mark.side : mods.side;
   const args = (tag: string | null, plain: boolean): PoolArgs => ({ pools: plain ? ["normal"] : a.pools, floor, exclusiveAnyLevel: a.exclusiveAnyLevel, tag });
@@ -98,21 +105,18 @@ export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): 
     side = pick.s;
   }
   if (!(weights.find((x) => x.s === side)!.w > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
-  // 上限を超えている側 (侮蔑・合金が消えた後) には付かない。お告げで決めた側なら打てない、側が当たり所なら手ごと不成立 (E-25。オーナー 11-05 ゲームの事実)
-  if (!mark && overLimit(item, side)) return (fixed ? skip : skipRandom)(item, tr("その側は上限を超えているので冒涜の MOD を付けられない", "That side is over its limit, so no Desecrated mod can be added"));
+  // 選んだ側の枠は土台 (basis.ts の boneSlotOf、確率の表・数え上げ・プレビューと同じ)。上限を超えている側 (侮蔑・合金が消えた後) には付かない (E-25。オーナー 11-05 ゲームの事実)、
+  // 満杯ならその側の固定以外から等しく 1 つ消して付く。付かない時、お告げで決めた側なら打てない、側が当たり所なら手ごと不成立
+  const slot = boneSlotOf(item, side, mark, ctx.before);
+  if ("over" in slot || "stuck" in slot) return (fixed ? skip : skipRandom)(item, boneSlotReason(slot));
   let cur = item;
   const removed: StageMod[] = [];
-  if (mark) {
-    cur = without(cur, mark);
-    removed.push(mark);
-  } else if (!room(cur, side, ctx.before)) {
-    const r = removeOne(cur, rng, [side]);
-    // 側を重みで選んだ時は、選ばれた側が固定の MOD だけかは当たり所 (お告げで決めた側なら打つ前に分かる)
-    if (!r) return (fixed ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));
-    cur = r.item;
-    removed.push(r.mod);
+  const gone = "mark" in slot ? slot.mark : "replace" in slot ? slot.replace[Math.floor(rng() * slot.replace.length)]! : null;
+  if (gone) {
+    cur = without(cur, gone);
+    removed.push(gone);
   }
-  const altered = a.pools.includes("otherworldly");
+  const altered = drawsOtherworldly(a);
   const hidden = unrevealedMod(side, { floor, altered, faction: mods.guaranteeTag, ...(a.exclusiveAnyLevel ? {} : { gnawed: true }) });
   return { applied: true, item: withMod(cur, hidden), added: [hidden], removed };
 }
@@ -251,7 +255,7 @@ export function reveal(ctx: PartCtx, item: StageItem, a: { offers: number }): St
   const hidden = allMods(item).find((m) => m.unrevealed)!;
   const r = ctx.reveal;
   if (!r || "invalid" in r) return skip(item, tr(`発現の手の形が違う (${r && "invalid" in r ? r.invalid : ""})`, `Invalid reveal step (${r && "invalid" in r ? r.invalid : ""})`));
-  if (r.reroll && ctx.mods.rerolls < 1) return skip(item, tr(`引き直しには${jaOfOmen("OmenofAbyssalEchoes") ?? "アビスの反響のお告げ"}が要る`, "Rerolling needs Omen of Abyssal Echoes"));
+  if (r.reroll && ctx.mods.rerolls < 1) return skip(item, tr(`引き直しには${jaOfOmen(OMEN_KEY.echoes) ?? "アビスの反響のお告げ"}が要る`, "Rerolling needs Omen of Abyssal Echoes"));
   const { sets, chances } = drawOffers(ctx.data, item, hidden, ctx.rng, a.offers, r.reroll ? 2 : 1);
   const pick = sets[r.reroll ? 1 : 0]![r.index - 1];
   if (!pick) return skipRandom(item, tr("その番号の候補が無い", "No option with that number"));

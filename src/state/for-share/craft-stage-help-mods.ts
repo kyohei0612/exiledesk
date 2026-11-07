@@ -1,7 +1,7 @@
 /**
  * craft-stage-help-mods.ts — 棚のカードの「付く MOD」・短い名前・特別なエッセンス。craft-stage-help.ts から分けた (2026-10-16、500 行の決まり)
  */
-import { fillModText, tierDisplayRanges, essenceLevelOf, isRune, runeEffectFor, runeOf, type Mod, type PatchData, CATALYSTS as HTC_CATALYSTS, type StageItem, isEmotion } from "../../services/craft-stage/engine";
+import { fillModText, tierDisplayRanges, essenceLevelOf, isRune, runeEffectFor, runeOf, parseKey, essencePartsOf, type Mod, type PatchData, CATALYSTS as HTC_CATALYSTS, type StageItem, isEmotion } from "../../services/craft-stage/engine";
 import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
 import { hasRawFamily, sharesRawFamily } from "../../services/mods/mod-rules";
 import { enOf } from "./craft-stage-shelf";
@@ -122,23 +122,25 @@ function shortModEn(raw: string): string {
 /**
  * 特殊なエッセンス (レアだけ・MOD を 1 つ消して付ける物) の説明 (2026-10-05 オーナー「錯乱ちょっと違うかもな、ランダムなノータブルパッシブ付くし
  * 鎧だけやな。説明しっかり作ろか、細かい所」)。部位は同梱の MOD の表 (perfect_essence) で確かめた。
- * short = 棚の短い名前、groups = カードの「使える装備と付く MOD」(クライアントの文が壊れている・無い物だけ差し替え)、notes = 動きの先頭に足す
+ * short = 棚の短い名前、groups = カードの「使える装備と付く MOD」(クライアントの文が壊れている・無い物だけ差し替え)、notes = 動きの先頭に足す、
+ * parts = 先頭に「使える部位」の行を付ける (部位はエンジンの essencePartsOf、2026-11-07 前は「レアの胴の防具だけ」などを手書き)
  */
-const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: string; l: string[] }>; notes: string[] }> = {
+type SpecialEssence = { short?: string; groups?: Array<{ h: string; l: string[] }>; notes: string[]; parts?: true };
+const SPECIAL_ESSENCE: Record<string, SpecialEssence> = {
   "Essence of Delirium": {
     short: "ランダムノータブル",
     // クライアントの文は「0 を割り当てる」(ノード名の差し込みが空) なので書き直す
     groups: [{ h: "鎧 (胴の防具) だけ", l: ["ランダムなノータブルパッシブスキルを割り当てる (プレフィックス)"] }],
+    parts: true,
     notes: [
-      "**レアの胴の防具 (鎧) だけ**。他の部位には使えない",
       "付くのは「ランダムなノータブルパッシブスキルを割り当てる」。どのノータブルかはパッシブツリーのノータブルからランダムで、**選べない** (重みは公開値なし)。付いた後は「○○を割り当てる」とノード名が出る (ここでは poe2db のアノイントできるノータブルから等しく 1 つ)",
       "数値の無い MOD なので神のオーブで変わらない",
     ],
   },
   "Essence of Horror": {
     short: "オーグメント効果",
+    parts: true,
     notes: [
-      "**レアの手袋・靴だけ**",
       "サフィックスに「ソケットされているアイテムの効果が 60% 増加する」(固定値)。はめたルーン・ソウルコア等の効き目が 1.6 倍になるので、ソケットの多い物ほど得",
     ],
   },
@@ -147,13 +149,14 @@ const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: stri
   },
   "Essence of Insanity": {
     short: "コラプトでエンチャ2",
+    parts: true,
     notes: [
-      "**レアのベルトだけ**",
       "サフィックスに「コラプト時に、アイテムは 2 個のエンチャントを獲得する」。ヴァールのオーブでエンチャントが付く結果になった時、1 個ではなく 2 個付く",
     ],
   },
   "Essence of the Breach": {
-    notes: ["**レアの指輪・アミュレットだけ**", "プレフィックスに「品質の最大値 +20%」。カタリストで品質を 40% まで盛れる (触媒の MOD がその分強くなる)"],
+    parts: true,
+    notes: ["プレフィックスに「品質の最大値 +20%」。カタリストで品質を 40% まで盛れる (触媒の MOD がその分強くなる)"],
   },
   "Essence of the Abyss": {
     short: "アビサルロードの紋章",
@@ -162,20 +165,20 @@ const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: stri
   },
 };
 /** SPECIAL_ESSENCE の英語 (英語の画面) */
-const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: string; l: string[] }>; notes: string[] }> = {
+const SPECIAL_ESSENCE_EN: Record<string, SpecialEssence> = {
   "Essence of Delirium": {
     short: "Random Notable",
     groups: [{ h: "Body Armour only", l: ["Allocates a random Notable Passive Skill (prefix)"] }],
+    parts: true,
     notes: [
-      "**Rare Body Armour only**. Can't be used on other slots",
       "Adds \"Allocates a random Notable Passive Skill\". Which Notable is random from the passive tree and **can't be chosen** (no public weights). The node name shows after it's added (here: one of poe2db's anointable notables, equally)",
       "Has no values, so Divine Orbs don't change it",
     ],
   },
   "Essence of Horror": {
     short: "Augment effect",
+    parts: true,
     notes: [
-      "**Rare Gloves and Boots only**",
       "Suffix \"60% increased effect of Socketed Items\" (fixed). Socketed runes / Soul Cores become 1.6x as strong, so more sockets = more value",
     ],
   },
@@ -184,13 +187,14 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
   },
   "Essence of Insanity": {
     short: "2 enchants on corrupt",
+    parts: true,
     notes: [
-      "**Rare Belts only**",
       "Suffix \"On Corruption, Item gains two Enchantments\". When a Vaal Orb adds an enchantment, it adds 2 instead of 1",
     ],
   },
   "Essence of the Breach": {
-    notes: ["**Rare Rings and Amulets only**", "Prefix \"+20% to Maximum Quality\". Catalysts can then push quality to 40% (catalyst mods get stronger accordingly)"],
+    parts: true,
+    notes: ["Prefix \"+20% to Maximum Quality\". Catalysts can then push quality to 40% (catalyst mods get stronger accordingly)"],
   },
   "Essence of the Abyss": {
     short: "Mark of the Abyssal Lord",
@@ -201,7 +205,10 @@ const SPECIAL_ESSENCE_EN: Record<string, { short?: string; groups?: Array<{ h: s
 export function specialEssence(key: string, item: StageItem | null) {
   if (!key.startsWith("essence:")) return null;
   const en = enOf(key, item);
-  return (isEn() ? SPECIAL_ESSENCE_EN[en] : null) ?? SPECIAL_ESSENCE[en] ?? null;
+  const sp = (isEn() ? SPECIAL_ESSENCE_EN[en] : null) ?? SPECIAL_ESSENCE[en] ?? null;
+  if (!sp?.parts) return sp;
+  const ps = essencePartsOf(en);
+  return ps.length ? { ...sp, notes: [tr(`使える部位: **${ps.map((w) => w.ja).join("・")}**`, `Usable on: **${ps.map((w) => w.en).join(", ")}**`), ...sp.notes] } : sp;
 }
 
 /** 棚のボタンの値段の代わりに出す、付く MOD の短い名前 (エッセンス・カタリスト)。無い物は null (値段のまま) */
@@ -212,7 +219,8 @@ export function shelfTag(key: string, data: PatchData | null, item: StageItem | 
     const a = stageAdds(key, data, item);
     return a ? a.lines.map(shortMod) : null;
   }
-  if (key.startsWith("catalyst_")) {
+  const pk = parseKey(key);
+  if (pk.type === "catalyst") {
     const en = enOf(key, item);
     const c = HTC_CATALYSTS.find((x) => x.en === en);
     if (c && isEn()) { const e = /\((.+?)( Modifiers)?\)/.exec(c.label.en); return e ? [e[1]!] : null; }

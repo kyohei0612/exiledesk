@@ -5,7 +5,7 @@
  * 残る (完成の狙いにある) クラフト MOD はエンジンのクラフト MOD の上限 (craftedLimitOf: 1 つ、アストリッドの創造性で増える) まで。
  * 超えている間は「決めた (ツリーへ)」を押せない (2 つで片方を消えるにすれば、もう片方は残る方に決まる)
  */
-import { craftedKindOf, mulberry32, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { craftedKindOf, isDesecratedSource, isQualityCapMod, mulberry32, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftedLimitOf } from "../../../services/craft-stage/apply-essence";
 import { placeMods } from "../../../services/simulator/sim-engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -39,14 +39,14 @@ export function dropWay(d: TreeDoc, modId: string): void { d.wayMods = (d.wayMod
 /** 残るクラフト MOD の上限 (完成形のアイテムのルーンから、エンジンの craftedLimitOf) */
 export const craftLimit = (goal: StageItem): number => craftedLimitOf(goal);
 /** 品質のためのブリーチのエッセンス (途中で消す前提。束に入れず独立、S-30b) */
-export const isBreachAim = (a: Aim): boolean => !!a.forQuality || /LocalMaximumQuality/.test(a.modId);
+export const isBreachAim = (data: PatchData, a: Aim): boolean => !!a.forQuality || isQualityCapMod(data, a.modId); // 品質の上限を上げる MOD かはエンジンの isQualityCapMod
 /**
  * 上限を溢れたクラフト MOD の束 (S-30b、10-31 オーナー「固定で上限は今まで通りで、溢れたら、消えるかどっちかみたいな表記にする？」)。
  * 完成の狙いのクラフト MOD (ブリーチは除く) が上限を超えたら、その全部を「どれか n つ」の束にする。木の判定は替えない (ゲームどおり同時には付かない)
  */
 export function craftBundle(data: PatchData, doc: TreeDoc, goal: StageItem | null): { aims: Aim[]; lim: number } | null {
   if (!goal) return null;
-  const aims = (doc.memoAims ?? []).filter((a) => isCraftAim(data, a) && !isBreachAim(a)), lim = craftLimit(goal);
+  const aims = (doc.memoAims ?? []).filter((a) => isCraftAim(data, a) && !isBreachAim(data, a)), lim = craftLimit(goal);
   return aims.length > lim ? { aims, lim } : null;
 }
 /**
@@ -58,7 +58,7 @@ export function desecratedBundle(data: PatchData, doc: TreeDoc): Aim[] | null {
   return aims.length > 1 ? aims : null;
 }
 /** 冒涜で付く狙い (「冒涜」で付けた狙いと冒涜専用 MOD) */
-export const isDesecratedAim = (data: PatchData, a: Aim): boolean => a.via === "desecrated" || data.mods.get(a.modId)?.source === "desecrated";
+export const isDesecratedAim = (data: PatchData, a: Aim): boolean => a.via === "desecrated" || isDesecratedSource(data.mods.get(a.modId)?.source);
 /** 冒涜の束の行の札 */
 export const desecratedTag = (): RowTag => ({
   text: tr("どれか 1 つ", "Any 1"),

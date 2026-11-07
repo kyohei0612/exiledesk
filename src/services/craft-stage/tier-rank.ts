@@ -6,6 +6,10 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageMod } from "./types";
 import { tr } from "../../i18n/lang";
+import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+
+/** クラフト MOD (エッセンス・完全エッセンス・合金) で付く MOD の出どころか (E-20a。判定はここ 1 か所で、計算機の CRAFTED_SOURCES と同じ集まり。11-07 jin-base) */
+export const isCraftedSource = (s: unknown): boolean => CRAFTED_SOURCES.has(s as never);
 
 /** 段の名前の T (T1 = 一番上) → 段の番号。MOD が無ければ 1 段として数える (シミュの ixOf と同じ) */
 export const tierIndexOf = (data: PatchData, modId: string, rank: number): number => (data.mods.get(modId)?.tiers.length ?? 1) - rank;
@@ -20,7 +24,7 @@ export const tierNoOf = (m: Pick<StageMod, "tierName">): number => Number(/\d+/.
 export function minIlvlFor(data: PatchData, aims: ReadonlyArray<{ modId: string; tier: number }>): number | null {
   const lv = aims.map((a) => {
     const m = data.mods.get(a.modId);
-    if (!m || m.source === "essence" || m.source === "perfect_essence") return 0;
+    if (!m || isCraftedSource(m.source)) return 0;
     return m.tiers[m.tiers.length - a.tier]?.ilvl ?? 0;
   }).filter((x) => x > 0);
   return lv.length ? Math.max(...lv) : null;
@@ -33,7 +37,7 @@ export const tierRankLabel = (rank: number, atLeast = true): string => (!atLeast
  */
 export function cardTierName(data: PatchData, m: Pick<StageMod, "modId" | "tierName">): string {
   const src = data.mods.get(m.modId)?.source;
-  return src === "essence" || src === "perfect_essence" ? "T0" : m.tierName;
+  return isCraftedSource(src) ? "T0" : m.tierName;
 }
 /**
  * カードの札の種類 (2026-10-24 デザイン部長 4 本目): エッセンス・完全エッセンスで付いた MOD は "essence"、合金で付いた MOD は "alloy"、ほかは null。
@@ -43,5 +47,11 @@ export function craftedKindOf(data: PatchData, m: Pick<StageMod, "modId">): "ess
   const mod = data.mods.get(m.modId);
   if (mod?.source === "essence") return "essence";
   if (mod?.source !== "perfect_essence") return null;
-  return mod.tiers.some((t) => /Alloy$/.test(String(t.name ?? ""))) ? "alloy" : "essence";
+  return mod.tiers.some((t) => isAlloyName(String(t.name ?? ""))) ? "alloy" : "essence";
 }
+/** 合金の名前か (クライアントの名前の終わりが「Alloy」)。MOD の段の名前 (craftedKindOf) と鍵の英名 (essence-specs の isAlloyKey) が同じ物を見る */
+export const isAlloyName = (name: string): boolean => /\bAlloy$/.test(name);
+/** 冒涜専用の MOD か (出どころ desecrated。骨の発現・冒涜専用の数え・フラクチャーできない、E-41・E-62) */
+export const isDesecratedSource = (src: string | undefined | null): boolean => src === "desecrated";
+/** 液化した感情 (デリリウム) で付いた MOD か (作った MOD の id がジュエルの Emotion_、E-73) */
+export const isEmotionMod = (m: { modId: string; crafted?: boolean }): boolean => !!m.crafted && m.modId.includes("/Emotion_");

@@ -6,7 +6,7 @@
 import { runeEnForId } from "./pattern";
 import { blankWith, FRACTURE_POOL, fractureOdds } from "./sim-odds";
 import { greaterRouteCost, type GreaterRoute } from "./sim-greater";
-import { sideOfMod, type PatchData, type RouteGrade, type StageItem } from "../craft-stage/engine";
+import { essenceKey, sideOfMod, type PatchData, type RouteGrade, type StageItem } from "../craft-stage/engine";
 import { spamCounts, spamCountsSteps, type SpamCounts } from "../simulator/sim-engine";
 import { addGradeFor, anyOfAddOdds } from "../simulator/sim-engine";
 import { keepCompare } from "./keep-compare";
@@ -111,7 +111,7 @@ export function startCalc(o: StartCalcIn) {
   // 候補ごとに自分の側の候補の中で (候補は両側でも良い)。回数は pHit (側の割合込みの pAny を使うと側の割合を 2 回掛ける、解析君 10-22)
   const any = anyOfAddOdds(d, gr.odds, o.fracMembers), pHit = any.pHit;
   const each = any.each.map((x, i) => ({ ...x, name: `${o.fracMembers[i]!.text} (${o.fracMembers[i]!.rank} 以上)` }));
-  const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
+  const abyss = essenceKey("perfect", `${it.cls.id}/PerfectEssence_EssenceAbyss`);
   // マジックのループの変成・増強・消去の平均 (上の augmentLoop の説明)
   const fside = sideOfMod(d, m.id);
   // 増強で付く確率が 0 の MOD (金の指輪の見本の特殊な MOD など) は回して数えない (打ち止めまで打ち続け 1 回 4 秒、ツリーを開くと真っ黒、10-22。結果は前も ∞)

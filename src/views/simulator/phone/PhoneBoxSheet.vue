@@ -5,21 +5,20 @@
   動くのは下のボタンだけ: 「この回の質問へ」(答え直す) / 戻り先を選んでいる時は「ここへ戻す」
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
+import ModalShell from "../../../components/ui/ModalShell.vue";
 import TreeNote from "../tree/TreeNote.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { treeRowTags } from "../tree/tree-row-tags";
+import { boxCardOf } from "../tree/box-card";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { routeText, runText } from "../tree/tree-fail";
 import { useTree } from "../tree/use-tree";
-import { fixedValues } from "../tree/tree-fixed-values";
-import type { StageItem } from "../../../services/craft-stage/types";
 import { mapPick, phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneMap from "./PhoneMap.vue";
 import { tr } from "../../../i18n/lang";
 import { stepOf } from "../tree/tree-fail";
+import { simSheet } from "./sim-sheet";
 import PhoneBoxPeek from "./PhoneBoxPeek.vue";
 
 const t = useTree();
@@ -27,13 +26,11 @@ const q = usePhoneQuiz();
 const id = computed(() => sheet.value?.id ?? "");
 const box = computed(() => t.doc.value.boxes[id.value]);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
-const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, id.value, 1).item : null));
-const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
+/** その箱のカード (PC の箱と同じ box-card の 1 本: 見本 → 値を揃える (神の目標値も) → 札) */
+const card = computed(() => (s.data.value && box.value ? boxCardOf(s.data.value, t.doc.value, id.value) : null));
 /** 箱のメモを書いている (PC の TreeNote をそのまま、文だけ) */
 const noteEdit = ref(false);
 watch(id, () => { noteEdit.value = false; });
-/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
-const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** カードの幅 = 窓の中いっぱい (左右の余白 12 ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 24;
 const name = (x: string): string => q.boxTitle(x);
@@ -65,17 +62,13 @@ function returnHere(): void {
 // 木の中の位置: 今の段を横に書き、小さい箱を押すとその箱のアイテムと打つカレンシーの窓 (10-27 昼オーナー)
 const peek = ref<string | null>(null);
 watch(id, () => { peek.value = null; });
-// Esc は上の窓から 1 つずつ (アイテムの窓が開いていればそれだけ閉じる)
-const onKey = (e: KeyboardEvent): void => { if (e.key !== "Escape") return; if (peek.value) peek.value = null; else sheet.value = null; };
-onMounted(() => window.addEventListener("keydown", onKey));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
+// 殻は共通の ModalShell の下から出る形 (U-15・U-21、11-07 オーナー OK): Esc・後ろを押す・後ろのページの止め・重なりの段 z-300 は共通の物。
+// 中のアイテムの窓 PhoneBoxPeek は自分の useDismiss で、Esc は窓の中の物から先に閉じる (ModalShell の cancelTopIn)
 </script>
 
 <template>
-  <div v-if="box" data-phone-sheet :data-box-id="id" class="fixed inset-0 z-[60] flex flex-col justify-end bg-black/55" @click.self="sheet = null">
-    <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-      <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
-        <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
+  <ModalShell v-if="box" :open="true" sheet :label="q.boxTitle(id)" :panel-class="simSheet()" body-class="px-3 pb-3 pt-2" @close="sheet = null">
+      <div data-phone-sheet :data-box-id="id">
         <!-- 足りない所から開いた時: 何が足りないかと直しに行くボタン (10-26 モンキー 7 の 22「押した先で何も直せず行き止まり」) -->
         <div v-if="sheet?.issue" data-phone-sheet-issue class="mb-2 rounded-lg border border-rose-400/50 bg-[#2a1416] px-2 py-1.5 text-[12px] text-rose-100">
           <p class="break-words">{{ sheet.issue }}</p>
@@ -85,7 +78,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
           <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(id) }}</span>
         </p>
         <p class="break-words text-[11px] text-sim-dim">{{ q.pathText(id) }}</p>
-        <StageItemCard v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+        <StageItemCard :row-group="null" v-if="card" class="mt-2" :item="card.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="card.tags" />
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
         <p v-else-if="box.done" class="mt-2 text-[13px]" :class="box.done === 'fail' ? 'text-rose-300' : 'text-emerald-300'">{{ doneWord(box.done) }}</p>
         <p v-if="run" data-phone-sheet-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[id] ? 'text-rose-200' : 'text-amber-100/90'">{{ run }}</p>
@@ -109,12 +102,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <p class="mt-2 text-[11px] text-sim-dim">{{ tr("木の中の位置", "Where it is in the tree") }}<span> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></span></p>
         <PhoneMap :mini="id" peek @peek="(x) => (peek = x)" />
       </div>
-      <div class="flex gap-2 border-t border-white/10 px-3 py-2">
+    <PhoneBoxPeek v-if="peek" :id="peek" @close="peek = null" />
+    <template #footer>
         <!-- 戻り先を選んでいる時は「ここへ戻る」。普段は閉じるだけ (箱の中身とこの箱からの手を見る窓、10-26 夜オーナー) -->
         <button v-if="sheet?.pickFrom" type="button" data-phone-sheet-return class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="returnHere">{{ tr("ここへ戻る", "Return here") }}</button>
         <button type="button" data-phone-sheet-close class="g-btn !min-h-11 flex-1" @click="sheet = null">{{ tr("閉じる", "Close") }}</button>
-      </div>
-    </div>
-    <PhoneBoxPeek v-if="peek" :id="peek" @close="peek = null" />
-  </div>
+    </template>
+  </ModalShell>
 </template>

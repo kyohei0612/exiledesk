@@ -61,9 +61,10 @@ describe("指名で付ける (force:)", () => {
     const one = A(rare, forceKey(d1, "T1", "d"));
     expect(one.applied).toBe(true);
     expect(allMods(one.item).some((m) => m.desecrated)).toBe(true);
+    // 冒涜の MOD は 1 つまで・置き換わらない (E-60、11-07 ブラック 57 の決め B。前は付いている冒涜を入れ替えていた)
     const two = A(one.item, forceKey(d2, "T1", "d"));
-    expect(two.applied || /埋まって/.test(two.reason ?? "")).toBe(true);
-    if (two.applied) { expect(allMods(two.item).filter((m) => m.desecrated).map((m) => m.modId)).toEqual([d2]); expect(two.removed?.some((m) => m.modId === d1)).toBe(true); }
+    expect(two.applied).toBe(false);
+    expect(two.reason).toMatch(/1 つまで/);
   });
   it("エッセンスの MOD はクラフト MOD として付く (1 つまで、付いている物は入れ替える)", () => {
     const e = data.bases.get("Rings")!.pools.essence;

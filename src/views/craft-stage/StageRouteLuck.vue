@@ -82,7 +82,7 @@ function sync(): void {
 }
 watch(() => [props.row, props.targets, props.ilvl, props.prep, props.from], fresh, { immediate: true });
 /** 止まった当たり (付いていなければ null)。札で光らせるのも、付いていなければ 1 つ目 */
-const hitAim = computed(() => { const i = item.value ? routeHitIndex(item.value, props.targets) : -1; return i >= 0 ? i : null; });
+const hitAim = computed(() => { const i = item.value ? routeHitIndex(item.value, props.targets, s.data.value ?? undefined) : -1; return i >= 0 ? i : null; });
 const focusId = computed(() => props.targets[hitAim.value ?? 0]?.modId ?? null);
 
 let raf = 0, t0 = 0, lastT = 0;

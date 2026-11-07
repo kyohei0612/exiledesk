@@ -1,11 +1,12 @@
 /**
  * daily-cost.ts — 提出の費用と完成率の数え方 (D-34・D-58)。16:00 の検算の台本 (scripts/_daily-roll-entry.ts の Verify) がこれを呼ぶ。
- * 画面の木の帯 (use-tree-run → recipe-card) と同じ数え方: 費用 = runTree の perItem (withStartCost の後) を 0.1 神に丸め、完成率 = round(finished / n × 100)。
+ * 画面の木の帯 (use-tree-run → recipe-card) と同じ数え方 (run-price.ts の runShown): 費用 = runTree の perItem (withStartCost の後) を 0.1 神に丸め、完成率 = round(finished / n × 100)。
  * 種と値段はお題に固定した物 (start の返りの seed・prices)。画面がお題の種・値段で回すのはシミュの D-41 ④ の後で、それまで検算は合わない (checked = null のまま)
  */
 import type { PatchData } from "../../services/craft-stage/engine";
 import { healRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import { runTree, withStartCost } from "../../services/simulator/tree/tree-run";
+import { runPrice, runShown } from "../../services/simulator/tree/run-price";
 import { aimOpts, sampleOf, targetsOf } from "../../services/simulator/tree/tree-sample";
 import { isAimMod } from "../../services/simulator/tree/tree-aim";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
@@ -30,7 +31,7 @@ export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId:
 }
 
 /**
- * 提出の木 (exiledesk-recipe/1 の JSON) をお題の形で組み直して 100 人回す。price は相場のまま (高貴建て、priceOfKey の値) を渡し、ここで神に直す (use-tree-run.ts の runPrice と同じ)。
+ * 提出の木 (exiledesk-recipe/1 の JSON) をお題の形で組み直して 100 人回す。price は相場のまま (高貴建て、priceOfKey の値) を渡す。神に直すのと見せる数の丸めは画面の木の帯と同じ runPrice・runShown (run-price.ts、写さない)。
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
@@ -42,8 +43,5 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   doc.itemLevel = topic.ilvl;
   fillTopicDoc(doc, topic.aims, frac, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
   if (unmetDone(data, doc, topic.aims).length) return null;
-  const div = price("divine") || 1, memo = new Map<string, number>();
-  const p = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = price(k) / div; memo.set(k, v); } return v; };
-  const r = withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: p, startCost: 0 }), 0);
-  return { cost: Math.round(r.perItem * 10) / 10, rate: Math.round((r.finished / r.n) * 100) };
+  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0 }), 0));
 }

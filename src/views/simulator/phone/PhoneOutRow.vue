@@ -6,9 +6,10 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import ModalShell from "../../../components/ui/ModalShell.vue";
+import { simSheet } from "./sim-sheet";
 import { useTree } from "../tree/use-tree";
-import { fixedValues } from "../tree/tree-fixed-values";
-import type { StageItem } from "../../../services/craft-stage/types";
+import { boxCardOf } from "../tree/box-card";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK, boxesEn } from "../tree/tree-names";
@@ -18,8 +19,6 @@ import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../
 import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { treeRowTags } from "../tree/tree-row-tags";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -146,12 +145,10 @@ const backKind = computed(() => (state.value !== "back" ? null : box.value?.back
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
 const run = computed(() => runText(phoneRun.value, props.boxId));
 /** この結果のアイテムと、戻り先の箱のアイテム (いつも開いたまま、10-26 オーナー「アイテムは基本展開」) */
-const itemOf = (id: string | null) => (s.data.value && id && t.doc.value.boxes[id] ? sampleOf(s.data.value, t.doc.value, id, 1).item : null);
-const item = computed(() => itemOf(props.boxId));
-const backItem = computed(() => (backTo.value && backTo.value !== "start" ? itemOf(backTo.value) : null));
-const tagsOf = (id: string, it: ReturnType<typeof itemOf>) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[id]?.unwanted ?? [], it, t.doc.value.boxes[id]) : null);
-/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
-const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
+/** 箱のカード (PC の箱と同じ box-card の 1 本: 見本 → 値を揃える (神の目標値も) → 札) */
+const cardOfBox = (id: string | null) => (s.data.value && id ? boxCardOf(s.data.value, t.doc.value, id) : null);
+const item = computed(() => cardOfBox(props.boxId));
+const backItem = computed(() => (backTo.value && backTo.value !== "start" ? cardOfBox(backTo.value) : null));
 /** カードの幅 = 行の中いっぱい (ページの余白 16 + 行の枠 2 + 行の左右の余白 12)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
 /**
@@ -183,7 +180,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       {{ sit[0] }}
     </p>
     <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-sim-body">{{ sit[1] }}</p>
-    <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
+    <StageItemCard :row-group="null" v-if="item" data-phone-out-item class="mx-auto mt-2" :item="item.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="item.tags" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
   </div>
@@ -201,18 +198,15 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <!-- 手のほかの答え (失敗・戻る・完成)。主ボタンは下の帯のまま、S-93 -->
     <button v-if="parent && state !== 'hand'" type="button" data-phone-out-open class="min-h-10 px-3 text-[13px] text-white/60 underline decoration-white/20" @click="pickOpen = true">{{ tr("ほかの答え ▾", "Other answers ▾") }}</button>
   </div>
-  <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
-  <Teleport to="body">
-    <div v-if="box && pickOpen" data-phone-out-pick :data-box-id="boxId" class="fixed inset-0 z-[55] flex flex-col justify-end bg-black/55" @click.self="pickOpen = false">
-      <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2 text-center" @click.capture="onPickClick">
-          <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
+  <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま。殻は共通の ModalShell の下から出る形 = Esc・後ろ・ページの止め・z-300、U-15・U-21) -->
+  <ModalShell v-if="box" :open="pickOpen" sheet :label="q.boxTitle(boxId)" :panel-class="simSheet()" body-class="px-3 pb-3 pt-2" @close="pickOpen = false">
+        <div data-phone-out-pick :data-box-id="boxId" class="text-center" @click.capture="onPickClick">
           <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ q.boxTitle(boxId) }}</p>
           <p class="mb-1 break-words text-[12px] text-sim-dim">{{ tr("この結果の次", "After this result") }}</p>
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
-        <StageItemCard class="mx-auto" :item="cardOf(backItem)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 14" compact :row-tags="tagsOf(backTo, backItem)" />
+        <StageItemCard :row-group="null" class="mx-auto" :item="backItem.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 14" compact :row-tags="backItem.tags" />
       </div>
       <div class="mt-2 flex flex-wrap justify-center gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
@@ -236,10 +230,8 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 始めに戻れない理由 (始めの手がこのアイテムに打てない。10-26 モンキー 7 の 1) -->
       <p v-if="startNo" data-phone-start-no class="mt-1 break-words text-[11px] text-rose-200/90">{{ startNo }}</p>
         </div>
-        <div class="flex border-t border-white/10 px-3 py-2">
+    <template #footer>
           <button type="button" data-phone-out-pick-close class="g-btn !min-h-11 flex-1" @click="pickOpen = false">{{ tr("閉じる", "Close") }}</button>
-        </div>
-      </div>
-    </div>
-  </Teleport>
+    </template>
+  </ModalShell>
 </template>

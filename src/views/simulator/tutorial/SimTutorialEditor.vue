@@ -5,6 +5,7 @@
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import { editSteps, newNoteId, saveTutData, setTarget, setText, tutData, tutDirty } from "./tut-data";
 
 const props = defineProps<{ textKey: string; stepId: string; boxId?: string; draft: [string, string] }>();
@@ -34,7 +35,7 @@ const hover = ref<{ x: number; y: number; w: number; h: number } | null>(null);
 function stopPick(): void {
   picking.value = false; hover.value = null;
   window.removeEventListener("pointerdown", onDown, true); window.removeEventListener("click", swallow, true); window.removeEventListener("mousedown", swallow, true);
-  window.removeEventListener("pointermove", onMove, true); window.removeEventListener("keydown", onKey, true);
+  window.removeEventListener("pointermove", onMove, true);
 }
 function swallow(e: Event): void { if (!(e.target as Element).closest?.("[data-tut-card]")) { e.preventDefault(); e.stopImmediatePropagation(); } }
 function onDown(e: PointerEvent): void {
@@ -46,11 +47,12 @@ function onDown(e: PointerEvent): void {
   if (sel) { setTarget(props.textKey, sel); window.setTimeout(stopPick, 0); }
 }
 function onMove(e: PointerEvent): void { const el = e.target as Element; if (el.closest?.("[data-tut-card]")) { hover.value = null; return; } const r = el.getBoundingClientRect(); hover.value = { x: r.left, y: r.top, w: r.width, h: r.height }; }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape") { e.stopImmediatePropagation(); stopPick(); } }
+// Esc でやめる = 共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ)
+useDismiss(() => picking.value, [], stopPick, { escOnly: true });
 function startPick(): void {
   picking.value = true; note.value = "光らせたい所を押す (Esc でやめる)";
   window.addEventListener("pointerdown", onDown, true); window.addEventListener("click", swallow, true); window.addEventListener("mousedown", swallow, true);
-  window.addEventListener("pointermove", onMove, true); window.addEventListener("keydown", onKey, true);
+  window.addEventListener("pointermove", onMove, true);
 }
 onBeforeUnmount(stopPick);
 

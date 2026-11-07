@@ -14,9 +14,11 @@
 import { computed } from "vue";
 import { useAnim } from "./use-anim";
 import type { ResistsBlock } from "../../state/craft-stage";
+import { DEF } from "../../services/craft-stage/engine";
 
 const props = defineProps<{ r: ResistsBlock; act: number | null; penalty: boolean }>();
-const CAP = 75;
+/** 耐性の上限 (エンジンの防御の定数、PoB の base_maximum_all_resistances_% = 75) */
+const CAP = DEF.constants.resistCap;
 const ELEMS = [
   { key: "fire", ja: "火耐性", color: "#ff7a45" },
   { key: "cold", ja: "冷気耐性", color: "#6fc3ff" },
@@ -73,7 +75,7 @@ const bars = computed(() =>
         <!-- 棒: 0 の線・上限 75% の線・装備の合計 (枠)・実際の値 (塗り)。上限を超えた分は薄く、マイナスは赤 -->
         <div class="relative h-12 rounded-lg bg-white/10">
           <span class="absolute inset-y-0 w-[2px] bg-white/50" :style="{ left: `${x(0)}%` }" />
-          <span class="absolute -top-6 -translate-x-1/2 text-[15px] font-bold text-amber-200" :style="{ left: `${x(CAP)}%` }">上限 75%</span>
+          <span class="absolute -top-6 -translate-x-1/2 text-[15px] font-bold text-amber-200" :style="{ left: `${x(CAP)}%` }">上限 {{ CAP }}%</span>
           <span class="absolute inset-y-[-4px] w-[3px] bg-amber-300" :style="{ left: `${x(CAP)}%` }" />
           <!-- 装備の合計 (ペナルティ前) -->
           <span class="absolute inset-y-1 rounded border-2 border-dashed border-white/60" :style="{ left: `${x(Math.min(0, b.total))}%`, width: `${Math.abs(x(b.total) - x(0))}%` }" />
@@ -81,7 +83,7 @@ const bars = computed(() =>
           <template v-if="showPenalty">
             <span
               class="absolute inset-y-2 rounded transition-all duration-500"
-              :class="[b.value < 0 ? 'bg-rose-500/80' : '', done && b.value < 75 ? 'shadow-[0_0_18px_4px_rgba(244,63,94,0.55)]' : '']"
+              :class="[b.value < 0 ? 'bg-rose-500/80' : '', done && b.value < CAP ? 'shadow-[0_0_18px_4px_rgba(244,63,94,0.55)]' : '']"
               :style="{ left: `${x(Math.min(0, b.value))}%`, width: `${Math.abs(x(b.value) - x(0))}%`, ...(b.value >= 0 ? { background: b.color } : {}) }"
             />
             <span v-if="b.over" class="absolute inset-y-2 rounded opacity-30" :style="{ left: `${x(CAP)}%`, width: `${x(b.after) - x(CAP)}%`, background: b.color }" />
@@ -94,7 +96,7 @@ const bars = computed(() =>
       </div>
     </div>
     <p class="mt-6 text-[15px] text-white/50">
-      点線 = 装備の合計 (ペナルティ前)<template v-if="showPenalty">、塗り = ペナルティ後の実際の値 (上限 75% を超えた分は薄く、マイナスは赤)</template>。数値は Path of Building {{ r.version }} の計算
+      点線 = 装備の合計 (ペナルティ前)<template v-if="showPenalty">、塗り = ペナルティ後の実際の値 (上限 {{ CAP }}% を超えた分は薄く、マイナスは赤)</template>。数値は Path of Building {{ r.version }} の計算
     </p>
   </div>
 </template>

@@ -10,6 +10,7 @@
  * 元の動画の狙いのうち、必ずは付かない物 (普通の MOD のハイブリッドなど) は、必ず付く物に替えた (assumed に書く)
  */
 import { quizSlot, type QuizRecipe, type QuizSlot } from "../simulator/quiz-recipe";
+import { OMEN_KEY } from "../craft-stage/engine";
 import type { JaEn } from "./quiz-tutorials";
 
 const slot = quizSlot;
@@ -24,7 +25,7 @@ const EMPTY_MAGIC: Array<[QuizRecipe["routes"][number]["rules"][number], JaEn]> 
 ];
 /** 残りの「何でも」を高貴で埋める (空きが 2 つ以上なら偉大なる高貴のお告げで 2 つまとめて) */
 const FILL = (free2: Record<string, number | number[] | string>, free1: Record<string, number | number[] | string>): Array<[QuizRecipe["routes"][number]["rules"][number], JaEn]> => [
-  [{ when: free2, do: { use: "exalt_greater", omens: ["OmenofGreaterExaltation"] } }, ["残りは何でも良い。偉大なる高貴なお告げを掛けた上級の高貴で 2 つまとめて埋める", "The rest can be anything: a Greater Exalted Orb with Omen of Greater Exaltation adds 2 at once"]],
+  [{ when: free2, do: { use: "exalt_greater", omens: [OMEN_KEY.greater] } }, ["残りは何でも良い。偉大なる高貴なお告げを掛けた上級の高貴で 2 つまとめて埋める", "The rest can be anything: a Greater Exalted Orb with Omen of Greater Exaltation adds 2 at once"]],
   [{ when: free1, do: { use: "exalt" } }, ["最後の 1 つは普通の高貴で", "A plain Exalted Orb for the last one"]],
 ];
 function build(base: string, start: QuizRecipe["start"], goal: QuizSlot[], pairs: Array<[QuizRecipe["routes"][number]["rules"][number], JaEn]>, assumed: JaEn[]): CourseRecipe {
@@ -43,7 +44,7 @@ export function wandCourse(): CourseRecipe {
     [{ when: { r: "m", n: 0 }, do: { use: "essence:greater:" + W + "Essence_WeaponCasterDamagePrefix" } }, ["空のマジックに魔法のグレーターエッセンス。スペルダメージが必ず付いてレアになる", "A Greater Essence of Sorcery on the empty magic wand: Spell Damage for sure, and it turns rare"]],
     [{ when: { r: "r", E: 2, C: 0, "p.hid": 0, "p.bad": 0 }, do: { use: "desecrate", omens: ["OmenofSinistralNecromancy", "OmenoftheLiege"] } }, ["元素ダメージはアマナムの冒涜のプレフィックス。骨に左手のネクロマンシー (プレフィックスに) と君主のお告げ (アマナムだけに) を掛ける。ワンドのプレフィックスのアマナムは 3 種類なので、候補 3 つに必ず入る", "Elemental Damage is an Amanamu desecrated prefix: Sinistral Necromancy + Omen of the Liege on the bone. Wands have only 3 Amanamu prefixes, so it is always among the 3 options"]],
     [{ when: { "p.hid": 1 }, do: { reveal: { echoes: false } } }, ["発現して元素ダメージを選ぶ", "Reveal and pick Elemental Damage"]],
-    [{ when: { "p.bad": 1 }, do: { use: "annul", omens: ["OmenofLight"] } }, ["(選び間違えた時) 光のお告げ + 消去で冒涜だけ消して、骨からやり直す", "(If you picked the wrong one) Omen of Light + Annulment removes only the desecrated mod; desecrate again"]],
+    [{ when: { "p.bad": 1 }, do: { use: "annul", omens: [OMEN_KEY.light] } }, ["(選び間違えた時) 光のお告げ + 消去で冒涜だけ消して、骨からやり直す", "(If you picked the wrong one) Omen of Light + Annulment removes only the desecrated mod; desecrate again"]],
     ...FILL({ C: 2, n: [2, 3, 4] }, { C: 2, n: 5 }),
   ], [["動画は冷気スペルのレベル付きのマジックを買っている。ここでは白から、必ず付く手だけで", "The video buys a magic wand with Cold Spell level; here you start from white with sure moves only"]]);
 }
@@ -60,7 +61,7 @@ export function spearCourse(): CourseRecipe {
     [{ when: { r: "m", n: 0 }, do: { use: "essence:greater:" + S + "Essence_PhysicalDamage" } }, ["空のマジックに擦傷のグレーターエッセンス。物理ダメージが必ず付いてレアになる", "A Greater Essence of Abrasion on the empty magic spear: physical damage for sure, and it turns rare"]],
     [{ when: { r: "r", E: 2, C: 0, "p.hid": 0, "p.bad": 0 }, do: { use: "desecrate", omens: ["OmenofSinistralNecromancy", "OmenoftheBlackblooded"] } }, ["近接ダメージはクルガルの冒涜のプレフィックス。骨に左手のネクロマンシーとブラックブラッドのお告げ (クルガルだけに) を掛ける。槍のプレフィックスのクルガルは 3 種類なので、候補 3 つに必ず入る", "Melee Damage is a Kurgal desecrated prefix: Sinistral Necromancy + Omen of the Blackblooded on the bone. Spears have only 3 Kurgal prefixes, so it is always among the 3 options"]],
     [{ when: { "p.hid": 1 }, do: { reveal: { echoes: false } } }, ["発現して近接ダメージを選ぶ", "Reveal and pick Melee Damage"]],
-    [{ when: { "p.bad": 1 }, do: { use: "annul", omens: ["OmenofLight"] } }, ["(選び間違えた時) 光のお告げ + 消去で冒涜だけ消して、骨からやり直す", "(If you picked the wrong one) Omen of Light + Annulment removes only the desecrated mod; desecrate again"]],
+    [{ when: { "p.bad": 1 }, do: { use: "annul", omens: [OMEN_KEY.light] } }, ["(選び間違えた時) 光のお告げ + 消去で冒涜だけ消して、骨からやり直す", "(If you picked the wrong one) Omen of Light + Annulment removes only the desecrated mod; desecrate again"]],
     ...FILL({ C: 2, n: [2, 3, 4] }, { C: 2, n: 5 }),
   ], [["動画は冒涜で物理と命中のハイブリッド (普通の MOD で必ずは出ない) を狙う。ここでは必ず出るクルガルの近接ダメージに替えた", "The video aims for a physical + accuracy hybrid (a normal mod, not guaranteed); here it is Kurgal Melee Damage, which always shows up"]]);
 }
@@ -78,7 +79,7 @@ export function amuletCourse(): CourseRecipe {
     [{ when: { r: "r", E: 0, n: 1 }, do: { use: "essence:perfect:" + A + "PerfectEssence_AllDefences" } }, ["パーフェクトエッセンスは MOD を 1 つ消してから付ける。MOD が 1 つだけなら消えるのはそれ。グローバル防御が必ず付く", "A Perfect Essence removes a mod before adding its own. With only one mod, that one goes. Global Defences for sure"]],
     [{ when: { E: 2, C: 0, "p.hid": 0, "p.bad": 0 }, do: { use: "desecrate", omens: ["OmenofSinistralNecromancy", "OmenoftheBlackblooded"] } }, ["アミュレットのプレフィックスのクルガルは 3 種類なので、左手のネクロマンシーとブラックブラッドのお告げで、狙いが候補 3 つに必ず入る", "Amulets have only 3 Kurgal prefixes, so with Sinistral Necromancy + Omen of the Blackblooded the target is always among the 3"]],
     [{ when: { "p.hid": 1 }, do: { reveal: { echoes: false } } }, ["発現して「ボディアーマーの最大エナジーシールド」を選ぶ", "Reveal and pick the Energy Shield from Body Armour mod"]],
-    [{ when: { "p.bad": 1 }, do: { use: "annul", omens: ["OmenofLight"] } }, ["(選び間違えた時) 光のお告げ + 消去で冒涜だけ消す", "(If you picked the wrong one) Omen of Light + Annulment removes only the desecrated mod"]],
+    [{ when: { "p.bad": 1 }, do: { use: "annul", omens: [OMEN_KEY.light] } }, ["(選び間違えた時) 光のお告げ + 消去で冒涜だけ消す", "(If you picked the wrong one) Omen of Light + Annulment removes only the desecrated mod"]],
     ...FILL({ C: 2, n: [2, 3, 4] }, { C: 2, n: 5 }),
   ], [["見本の形 (動画ではない)。必ず付く手だけで組んだ", "An example build (not from a video), made of sure moves only"]]);
 }

@@ -11,6 +11,7 @@ import { closeDailyPage, openDailyPage } from "../../web/page";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
 import { fullMods } from "./daily-check";
+import { allMods } from "../../services/craft-stage/engine";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyNick from "./DailyNick.vue";
 
@@ -21,12 +22,14 @@ const note = ref("");
 const sent = ref<DailyBoxItem | null>(null);
 const asking = ref(false);
 
-const emu = computed(() => { const i = s.item.value; return i && i.prefixes.length + i.suffixes.length ? i : null; });
+/** フル MOD でない品の断り (送る前の block と、サーバーの not-full の返りで同じ文) */
+const notFull = (): string => tr("MOD の数がそのベースのプレ・サフィの上限の合計以上の品だけ投稿できる", "Only items with at least as many mods as the base allows (prefix + suffix limits) can be posted");
+const emu = computed(() => { const i = s.item.value; return i && allMods(i).length ? i : null; });
 /** 弾く訳 (D-14)。フル MOD でない品も送る前に止める (D-84、確かめの boxCheck と同じ fullMods) */
 const block = computed(() => {
   const p = item.value, d = s.data.value;
   if (!p) return null;
-  return postBlock(p) ?? (d && !fullMods(d, p.base, p.aims) ? tr("MOD の数がそのベースのプレ・サフィの上限の合計以上の品だけ投稿できる", "Only items with at least as many mods as the base allows (prefix + suffix limits) can be posted") : null);
+  return postBlock(p) ?? (d && !fullMods(d, p.base, p.aims) ? notFull() : null);
 });
 const useEmu = (): void => { const d = s.data.value; if (d && emu.value) { why.value = null; item.value = itemFromEmu(d, emu.value); } };
 function read(raw: string): void {
@@ -59,7 +62,7 @@ const failText = (e: BoxError): string =>
     <button v-if="!sent" type="button" class="g-btn sm daily-post-back" data-daily-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     <template v-if="sent">
       <h2 class="g-brush daily-post-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
-      <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "not-full" ? tr("MOD の数がそのベースのプレ・サフィの上限の合計以上の品だけ投稿できる。", "Only items with at least as many mods as the base allows (prefix + suffix limits) can be posted.") : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
+      <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "not-full" ? notFull() : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why }}</p>
       <p v-else-if="sent.status === 'wait'" data-daily-post-wait class="mb-4 text-[15px]">{{ tr("16:00 に機械が確かめて、通れば箱のお題になる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "It's checked at 16:00 JST, and if it passes it becomes a challenge from the box. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は、元が T1 の MOD は T1、ほかは T2 以上になる。", "Posts in the box are used first for the 16:00 challenge. Tier floors become T1 for T1 mods and T2+ for the rest.") }}</p>
       <button type="button" class="g-btn" data-daily-post-back @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
@@ -95,7 +98,7 @@ const failText = (e: BoxError): string =>
         <section data-daily-from-emu>
           <h3 class="name mb-2 text-[17px] text-[var(--exile-color-text-title)]">{{ tr("エミュレーターのアイテムから", "From the Emulator") }}</h3>
           <template v-if="emu">
-            <p class="mb-3 text-[14px]">{{ tr(`${emu.baseJa}、MOD ${emu.prefixes.length + emu.suffixes.length} つ`, `${emu.base}, ${emu.prefixes.length + emu.suffixes.length} mods`) }}</p>
+            <p class="mb-3 text-[14px]">{{ tr(`${emu.baseJa}、MOD ${allMods(emu).length} つ`, `${emu.base}, ${allMods(emu).length} mods`) }}</p>
             <button type="button" class="g-btn" data-daily-use-emu @click="useEmu">{{ tr("このアイテムを使う", "Use this item") }}</button>
           </template>
           <template v-else>

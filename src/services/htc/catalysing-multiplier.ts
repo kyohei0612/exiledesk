@@ -28,10 +28,13 @@ export const CATALYSING_CAVEAT =
  * Craft of Exile の作り (package_poe2.js の exaltedParams、OmenOnExaltConsumeQuality。2026-10-16 オーナー「CoE に合わせて」):
  * 1 + 0.2 × 品質 (20% で 5 倍)。標準の上限 20% を超えた分は 1% ごとに +0.12 (40% で 7.4 倍)。reddit の実測 2 点 (上の表) の区間の中に入る
  */
-const DEFAULT_MAX = 20;
-function coeMultiplier(q: number): number {
-  return q <= DEFAULT_MAX ? 1 + 0.2 * q : 1 + 0.2 * DEFAULT_MAX + 0.12 * (q - DEFAULT_MAX);
-}
+/** 標準の品質の上限 (この % までは 1% あたり CATALYSING_PER_PCT、超えた分は × CATALYSING_OVER_RATIO)。説明の文・教材が同じ数を引く (11-07 jin-base4) */
+export const CATALYSING_FULL_PCT = 20;
+const DEFAULT_MAX = CATALYSING_FULL_PCT;
+/** 既定の 1% あたり (CoE) と、20% を超えた分の 1% あたり (= 0.2 × 0.6) */
+export const CATALYSING_PER_PCT = 0.2;
+export const CATALYSING_OVER_RATIO = 0.6;
+const OVER_PER_PCT = 0.12;
 /** 区間は reddit の実測 2 点 (各 100 個) の 95% 区間を結んだ物 (画面の幅だけに使う) */
 function lineThrough(loSample: number, hiSample: number): (q: number) => number {
   const [a, b] = CATALYSING_SAMPLES as readonly [CatalysingSample, CatalysingSample];
@@ -42,10 +45,15 @@ function lineThrough(loSample: number, hiSample: number): (q: number) => number 
 const LOWER = lineThrough(CATALYSING_SAMPLES[0]!.lo, CATALYSING_SAMPLES[1]!.lo);
 const UPPER = lineThrough(CATALYSING_SAMPLES[0]!.hi, CATALYSING_SAMPLES[1]!.hi);
 
-/** 品質 (%) → タグ付き MOD の重みに掛かる倍率。品質 0 ではお告げを使う意味が無いので 1。 */
-export function catalysingMultiplier(qualityPct: number): number {
+/**
+ * 品質 (%) → タグ付き MOD の重みに掛かる倍率。品質 0 ではお告げを使う意味が無いので 1。
+ * 式はここ 1 本 (11-07): 1 + r × 品質 (20% まで) + r × 0.6 × 20% を超えた分。perPct = r (手で直した値、stage-tuning の tunedCatalysingMultiplier)、既定は CoE の 0.2
+ */
+export function catalysingMultiplier(qualityPct: number, perPct = CATALYSING_PER_PCT): number {
   if (!(qualityPct > 0)) return 1;
-  return coeMultiplier(Math.min(qualityPct, ABSOLUTE_MAX_QUALITY));
+  const q = Math.min(qualityPct, ABSOLUTE_MAX_QUALITY);
+  const over = perPct === CATALYSING_PER_PCT ? OVER_PER_PCT : perPct * CATALYSING_OVER_RATIO;
+  return 1 + perPct * Math.min(q, DEFAULT_MAX) + over * Math.max(0, q - DEFAULT_MAX);
 }
 
 /** 同じ品質での 95% 区間。画面には幅ごと出す。 */

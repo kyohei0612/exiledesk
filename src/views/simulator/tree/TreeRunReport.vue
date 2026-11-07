@@ -18,7 +18,7 @@ import { driveHead } from "./hole-check";
 import { simOp } from "../../../web/track";
 
 /** test = 穴チェックの走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
-/** note = 見出しの下の 1 行 (スマホの 10 人、S-94e) */
+/** note = 見出しの下の 1 行 (前はスマホの 10 人の「振れます」。11-07 に 100 人にして今は渡す画面が無い、S-94e) */
 const props = defineProps<{ result: TreeRunResult; test?: boolean; note?: string }>();
 const emit = defineEmits<{ close: []; go: [id: string] }>();
 const t = useTree();

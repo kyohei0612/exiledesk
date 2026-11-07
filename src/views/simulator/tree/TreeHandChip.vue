@@ -11,6 +11,7 @@ import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
+import { parseRuneKey } from "../../../services/craft-stage/engine";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
@@ -26,7 +27,7 @@ const icons = computed(() => (props.hand ? [props.hand.currency, ...props.hand.o
 const runeOn = computed((): string | null => {
   const h = props.hand;
   if (!h) return null;
-  return h.currency.startsWith("rune:") ? handName(h.currency) : null;
+  return parseRuneKey(h.currency) ? handName(h.currency) : null;
 });
 /** 予見の枠の手 (ヒネコラの後) は「打つ」でなく「持つ」(S-39、11-05 オーナー「ヒネコラ後は打つじゃなくて持つになる」) */
 const t = useTree();

@@ -20,7 +20,7 @@ import { jewelEmotionsOf } from "../htc/patch";
 import type { StageItem } from "./types";
 import { tr } from "../../i18n/lang";
 
-const EMOTION_PREFIX = "emotion:";
+import { EMOTION_PREFIX } from "./key";
 export const isEmotion = (key: string): boolean => key.startsWith(EMOTION_PREFIX);
 export const emotionNameOf = (key: string): string => key.slice(EMOTION_PREFIX.length);
 

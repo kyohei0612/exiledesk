@@ -14,6 +14,8 @@ const IDS = new WeakMap<object, number>();
 let idSeq = 0;
 /** 元の番号 (番号は使い回さない) */
 const idOf = (it: StageItem): number => { const o = ORIGIN.get(it) ?? it; let n = IDS.get(o); if (!n) IDS.set(o, (n = ++idSeq)); return n; };
+/** 写しの元 (写しでなければそのもの。品ごとに持たせた物を写しからも引く、tree-whittle の下限) */
+export const originOf = (it: StageItem): object => ORIGIN.get(it) ?? it;
 /** 見本として返す写し (元を覚える) */
 export function handOut(it: StageItem): StageItem { const c = { ...it }; ORIGIN.set(c, ORIGIN.get(it) ?? it); return c; }
 

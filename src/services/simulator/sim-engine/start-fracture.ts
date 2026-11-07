@@ -4,9 +4,10 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "../../craft-stage/apply-currency";
-import { craftedLimitOf } from "../../craft-stage/apply-essence";
+import { craftedLimitOf, ASTRID_EN } from "../../craft-stage/apply-essence";
 import { forceKey } from "../../craft-stage/apply-force";
 import { hits } from "../../craft-stage/aim-odds";
+import { isCraftedSource, isDesecratedSource } from "../../craft-stage/tier-rank";
 import { freshItem } from "../../craft-stage/run-plan";
 import { baseSocketsOf } from "../../craft-stage/stage-runes";
 import { socketGoalRunes } from "./goal-runes";
@@ -23,13 +24,13 @@ export interface TierMod { modId: string; tier: number; fractured?: boolean }
 const flagOf = (data: PatchData, m: TierMod): "f" | "e" | "n" => {
   if (m.fractured) return "f";
   const src = data.mods.get(m.modId)?.source;
-  return src === "essence" || src === "perfect_essence" ? "e" : "n";
+  return isCraftedSource(src) ? "e" : "n";
 };
 const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.tier}`, flagOf(data, m));
 /** クラフト MOD (エッセンス・完全エッセンス・合金で付く物、✦ で付ける物は数えない) */
-const isCrafted = (data: PatchData, m: TierMod): boolean => /essence/.test(String(data.mods.get(m.modId)?.source ?? "")) && !m.fractured;
+const isCrafted = (data: PatchData, m: TierMod): boolean => isCraftedSource(data.mods.get(m.modId)?.source) && !m.fractured;
 /** クラフト MOD の上限を +1 するルーン (英語名、差す手 rune:<英語名>) */
-const ASTRID = "Astrid's Creativity";
+const ASTRID = ASTRID_EN;
 
 /**
  * フラクチャーの候補から始めのアイテム (J1): 候補のどれか 1 つが ✦ で付いたレア + 外れ junk 個 (既定 3 = フラクチャーのオーブを打てる MOD 4 つのレア)。
@@ -165,7 +166,7 @@ export function goalBlock(data: PatchData, base: string, itemLevel: number, aims
   if (!data.mods.get(add.modId)) return tr("この MOD はベースに無い", "This mod is not on the base");
   const src = (m: TierMod): string => String(data.mods.get(m.modId)?.source ?? "");
   const all = [...aims, add];
-  if (src(add) === "desecrated" && all.filter((m) => src(m) === "desecrated").length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
+  if (isDesecratedSource(src(add)) && all.filter((m) => isDesecratedSource(src(m))).length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
   // 同じ系統 (同じ MOD の別の段も): 指名の手は段を置き換えて通るので、ここで断る。エッセンスの MOD も例外なし (E-11a、11-02 にエッセンスだけ別の系統はやめた)
   const same = (a: TierMod): boolean => { const x = data.mods.get(a.modId), y = data.mods.get(add.modId); return !!x && !!y && sharesFamily(x, y); };
   if (aims.some(same)) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");

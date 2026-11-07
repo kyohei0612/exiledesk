@@ -14,7 +14,7 @@ import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "../for-share/stage-steps";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
-import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, type StageItem, catalystBoosts, revealOffers, unrevealedOf } from "../../services/craft-stage/engine";
+import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, type StageItem, catalystBoosts, revealOffers, unrevealedOf, OMEN_KEY, aimDone, aimHits, parseKey } from "../../services/craft-stage/engine";
 import { isRareChance } from "../../utils/format-pct";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
@@ -139,7 +139,7 @@ function restore(x: Snap): void {
  */
 const RIG = new Set(["regal_perfect", "exalt_perfect", "chaos_perfect"]);
 /** 触媒の高貴のお告げを掛けた高貴は、足した MOD が全部品質の種類の物 (火の品質なら火の MOD) になる乱数を選ぶ (2026-10-18 オーナー「触媒を使った成功例見せたい」) */
-const CATALYSING = "OmenofCatalysingExaltation";
+const CATALYSING = OMEN_KEY.catalysing;
 export function rigRare(key: string): void {
   const it = s.item.value, d = s.data.value;
   if (!topic.value || !it || !d || s.usable(key)) return;
@@ -163,8 +163,10 @@ export function rigRare(key: string): void {
       const roll = Math.floor(Math.random() * 2_147_483_647);
       const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
       if (!r.applied) continue;
-      const all = lu.mods.every((id) => [...r.item.prefixes, ...r.item.suffixes].some((m) => m.modId === id));
-      const ok = loopRound.value >= lu.from ? !r.removed.some((m) => lu.mods.includes(m.modId)) : !all;
+      // 狙いが全部付いたか・狙いが消えたかはエンジンの aimDone / aimHits (段は問わない。同じ文の別の MOD も当たり = sameText)
+      const hit = { data: d, sameText: true };
+      const all = !lu.mods.length || aimDone(r.item, lu.mods.map((modId) => ({ modId, minTierIndex: 0 })), hit);
+      const ok = loopRound.value >= lu.from ? !r.removed.some((m) => lu.mods.some((modId) => aimHits(m, { modId, minTierIndex: 0 }, hit))) : !all;
       if (ok) { s.rollSeed.value = roll; return; }
     }
     return;
@@ -237,13 +239,14 @@ export function rigRare(key: string): void {
 // 骨を打った直後に必ず選ぶ (前は「未発現がある」の切り替わりを見ていて、途中でやめて始め直すと見落として 1 周目にスピリットが出た。2026-10-18 オーナー「リセットかかってない」)
 watch(() => s.log.value.length, (n, old) => {
   const e = s.log.value[n - 1], st = topic.value?.steps[topicAt.value], want = st?.wantReveal, it = s.item.value, d = s.data.value;
-  if (n <= (old ?? 0) || !e?.out.applied || !e.out.currency.startsWith("desecrate") || !want || !it || !d || !unrevealedOf(it)) return;
+  if (n <= (old ?? 0) || !e?.out.applied || parseKey(e.out.currency).type !== "bone" || !want || !it || !d || !unrevealedOf(it)) return;
   const hit = loopRound.value >= want.from;
   for (let i = 0; i < 20000; i++) {
     const roll = Math.floor(Math.random() * 2_147_483_647);
     const o = revealOffers(d, it, mulberry32(seedOfRoll(roll, "reveal")));
-    const got = o.first.some((m) => m.modId === want.mod && (want.value == null || m.values[0] === want.value));
-    const any = o.first.some((m) => m.modId === want.mod);
+    const same = { data: d, sameText: true };
+    const any = o.first.some((m) => aimHits(m, { modId: want.mod, minTierIndex: 0 }, same));
+    const got = o.first.some((m) => aimHits(m, { modId: want.mod, minTierIndex: 0 }, same) && (want.value == null || m.values[0] === want.value));
     if (hit ? got : !any) { s.rollSeed.value = roll; return; }
   }
 });

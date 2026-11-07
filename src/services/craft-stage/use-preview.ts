@@ -3,7 +3,7 @@
  * エッセンス然り冒涜で入れ替わるなら入れ替わる奴。高貴とか追加する系は空いている枠を光らせる、偉大ならマックス 4 枠」)。
  *
  * カレンシーごとには書かない。打つ処理と同じ planSpec (対象・制約・お告げの効き目) と動作の部品 (actions) をたどる:
- *   remove → 消える候補 (parts.ts の remove と同じ選び方: お告げの側・削りのお告げ・付ける側が満杯ならその側・未発現が先・光のお告げは冒涜だけ)
+ *   remove → 消える候補 (土台 spec/basis.ts の removalOf = 打つ処理と同じ: お告げの側・削りのお告げ・付ける側が満杯ならその側・光のお告げは冒涜だけ。当たると手ごと不成立の上限超えの側 (E-25) は光らせない)
  *   reroll → 数値が変わる MOD (固定と未発現以外。祝福のお告げは暗黙だけなので無し)、fracture → 固定される候補
  *   addUnrevealed → 骨で入れ替わる物 (アビサルロードの紋章、満杯の側の候補)
  *   add → 付く空き (お告げの側 ∩ 空きのある側に、付く数まで。大いなる高貴なら 2 ずつ = 最大 4)。消してから付ける手 (カオス) は空きを光らせない
@@ -11,8 +11,8 @@
  * お告げを掛けていない時は何も光らせない (お告げで変わる所を見せる物)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { allMods, limitOf, listOf, room, SIDES, unfracturable } from "./stage-core";
-import { whittleTargets } from "./apply-currency";
+import { allMods, limitOf, listOf, rerollableMods, room, SIDES, unfracturable } from "./stage-core";
+import { addSidesOf, boneSlotOf, removalOf } from "./spec/basis";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { planSpec } from "./spec/run-spec";
 import { prepareEssence } from "./spec/essence-specs";
@@ -44,30 +44,26 @@ export function previewUse(data: PatchData, item: StageItem, key: string, omens:
     if ("setRarity" in a) cur = { ...cur, rarity: a.setRarity };
     else if ("remove" in a) {
       removes = true;
-      const r = a.remove;
-      if (r.n === "all") { mark(allMods(cur).filter((m) => !m.fractured)); continue; }
-      if ((mods.pick ?? r.pick) === "desecrated") { mark(allMods(cur).filter((m) => m.desecrated && !m.fractured)); continue; }
-      const side: StageSide | null = mods.removeSide ?? mods.side;
-      if (r.unrevealedFirst) {
-        const us = allMods(cur).filter((m) => m.unrevealed && !m.fractured && (!side || m.side === side));
-        if (us.length) { mark(us); continue; }
-      }
-      let sides: readonly StageSide[] = side ? [side] : SIDES;
-      if (r.sideWhenFull && essence && !room(cur, essence.side)) sides = [essence.side];
-      mark(mods.pickLowest ? whittleTargets(cur, side) : allMods(cur).filter((m) => !m.fractured && sides.includes(m.side)));
+      // 消える候補は打つ処理と同じ土台 (basis.ts の removalOf)。打つ前に分かって弾かれる組・当たると手ごと不成立の MOD (E-25) は光らせない
+      const R = removalOf(cur, a.remove, mods, essence?.side);
+      if ("all" in R) mark(R.all);
+      else if ("pick" in R) mark(R.pick(cur).filter((m) => !R.voids(cur, m)));
     } else if ("reroll" in a) {
-      if (!mods.implicitOnly) mark(allMods(cur).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length));
+      if (!mods.implicitOnly) mark(rerollableMods(cur));
     } else if ("fracture" in a) mark(allMods(cur).filter((m) => !unfracturable(data, cur, m)));
     else if ("addUnrevealed" in a) {
       if (a.addUnrevealed.fill) continue;
       const p = unrevealedPlan(data, cur, a.addUnrevealed, mods);
-      if (p.mark) { mark([p.mark]); continue; }
-      // 付ける側が満杯なら、その側の固定以外のどれかが消えて入れ替わる
-      const sides = p.fixed ? [p.fixed] : SIDES.filter((s) => room(cur, s)).length ? [] : SIDES;
-      mark(allMods(cur).filter((m) => !m.fractured && sides.includes(m.side) && !room(cur, m.side)));
+      // 付ける側が満杯なら、その側の固定以外のどれかが消えて入れ替わる (枠は打つ処理と同じ土台の boneSlotOf。上限を超えた側には付かない = 光らせない、E-25)
+      const sides = p.mark ? [p.mark.side] : p.fixed ? [p.fixed] : SIDES.filter((s) => room(cur, s)).length ? [] : SIDES;
+      for (const s of sides) {
+        const slot = boneSlotOf(cur, s, p.mark);
+        if ("mark" in slot) mark([slot.mark]);
+        else if ("replace" in slot) mark(slot.replace);
+      }
     } else if ("add" in a && !removes) {
       const n = mods.addCount ?? a.add.n;
-      for (const s of mods.side ? [mods.side] : SIDES) open[s] = Math.min(n, Math.max(0, limitOf(cur, s) - listOf(cur, s).length));
+      for (const s of addSidesOf(mods)) open[s] = Math.min(n, Math.max(0, limitOf(cur, s) - listOf(cur, s).length));
     }
   }
   return { change: [...change], open };
