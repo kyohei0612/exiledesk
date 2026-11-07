@@ -108,7 +108,7 @@ export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   if ((it.sockets ?? 0) !== (f.item.sockets ?? 0)) out.push(tr(`ソケット ${it.sockets ?? 0} (見本 ${f.item.sockets ?? 0})`, `${it.sockets ?? 0} sockets (example ${f.item.sockets ?? 0})`));
   if (!!it.foreseen !== !!f.item.foreseen) out.push(tr("予見済みかが違う", "foreseen differs"));
   // 中身が同じで行けない = カタリストの n % に届かない (fitsItem の残り。完成形の品質は指標なので見ない = S-205)
-  if (!out.length && !reachesCatalyst(doc, to, it)) out.push(tr(`カタリストの品質 ${catalystTo(doc, to)}% に届かない`, `cannot reach ${catalystTo(doc, to)}% catalyst quality`));
+  if (!out.length && !reachesCatalyst(doc, to, it, f.item)) out.push(tr(`カタリストの品質 ${catalystTo(doc, to, f.item)}% に届かない`, `cannot reach ${catalystTo(doc, to, f.item)}% catalyst quality`));
   return out;
 }
 /** 木の族 = 完成形の狙いと、木の手で付けるエッセンスの MOD の系統 (E-11a)。外れの印 (S-200 ② の (g)) で見る */
@@ -180,11 +180,15 @@ export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h 
 export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
 const LIGHT = OMEN_KEY.light;
 
-/** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c) */
-const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };
-/** このアイテムは箱 id のカタリストの n % に届くか (同じ種類の品質がもう n 以上か、品質の上限が n 以上) */
-function reachesCatalyst(doc: TreeDoc, id: string, it: StageItem): boolean {
-  const n = catalystTo(doc, id), h = doc.boxes[id]?.hand;
+/**
+ * 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c)。
+ * rep = 箱 id の代表の品: n はその品で打てる上限 (エンジンの maxQualityOf) まで。手の % は完成形の品質から入るので上限を超えうるが、
+ * エンジンは上限で止めて打てる (fillCatalyst)。前は手の 40 のまま比べ、上限 20 のアミュレットが誰も箱に入れず止まった (goalQ b5、11-07 エミュでの枝の確かめ)
+ */
+const catalystTo = (doc: TreeDoc, id: string, rep?: StageItem | null): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? Math.min(h.quality ?? 0, rep ? maxQualityOf(rep) : Number.POSITIVE_INFINITY) : 0; };
+/** このアイテムは箱 id のカタリストの n % に届くか (同じ種類の品質がもう n 以上か、品質の上限が n 以上)。rep は catalystTo と同じ */
+function reachesCatalyst(doc: TreeDoc, id: string, it: StageItem, rep?: StageItem | null): boolean {
+  const n = catalystTo(doc, id, rep), h = doc.boxes[id]?.hand;
   if (!n || !h) return true;
   const c = catalystOf(it);
   return maxQualityOf(it) >= n || (c.pct >= n && c.tag === catalystTagOf(h.currency));
@@ -233,6 +237,11 @@ export interface Judge {
   fitsBox(from: string, to: string): boolean;
   /** 人と箱: この人のアイテムの中身が to の見本の中身のどれかと同じ (to が分からない箱は合う扱い) */
   fitsItem(item: StageItem, aimed: ReadonlySet<string>, to: string): boolean;
+  /**
+   * 狙いが消えた箱 to へ枝で着いた人: どの狙いが消えたかは見ず、☑ の狙いの数と体・枠が同じなら同じ箱 (箱の鍵 = 狙いが消えた + 側の増減・未発現。
+   * 付く MOD の決まっていない骨・カオスは「狙いが消えた」1 箱 = オーナーの決め。前は中身の比べで消えた狙いの違う人が止まった = bone3、11-07 エミュでの枝の確かめ)
+   */
+  fitsLost(item: StageItem, aimed: ReadonlySet<string>, to: string): boolean;
   /** 中身が item と同じ箱 (手のある箱・完成 / 失敗の箱。浅い段・先に作った箱から。ok で更に絞る) */
   boxesOf(item: StageItem, aimed: ReadonlySet<string>, ok?: (id: string) => boolean): string[];
   /** 中身が item と同じ、決め (手・戻り・完成 / 失敗・分かれ目) の無い箱 (浅い段・先に作った箱から。S-64) */
@@ -294,8 +303,11 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const capShort = (from: string, to: string): number => {
     // 触媒のお告げの手は品質が要るので、品質の無い人の箱とは同じ枠にしない (打てずに止まった、S-60c)
     if (doc.boxes[to]?.hand?.omens.includes(CATALYSING) && samples(from).some((s) => !(s.item.quality ?? 0))) return 1;
-    return catalystTo(doc, to) && samples(from).some((s) => !reachesCatalyst(doc, to, s.item)) ? catalystTo(doc, to) : 0;
+    const rep = frameAt(to)?.item, n = catalystTo(doc, to, rep);
+    return n && samples(from).some((s) => !reachesCatalyst(doc, to, s.item, rep)) ? n : 0;
   };
+  /** 中身の鍵の ☑ の狙いの札 (先頭から最初の枠 ~ まで) を数だけにした物 (狙いが消えた箱、fitsLost) */
+  const aimCount = (k: string): string => { const i = k.indexOf("~"), head = i < 0 ? k : k.slice(0, i); return `${head ? head.split(",").length : 0}${i < 0 ? "" : k.slice(i)}`; };
   return {
     contents,
     capShort,
@@ -312,11 +324,17 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && reachesCatalyst(doc, to, item);
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && reachesCatalyst(doc, to, item, frameAt(to)?.item);
+    },
+    fitsLost(item, aimed, to) {
+      const b = setFor(to, to);
+      if (!b) return true;
+      const k = aimCount(keyFor(to, own(contentOf(data, doc, item, aimed))));
+      return [...b].some((x) => aimCount(x) === k) && reachesCatalyst(doc, to, item, frameAt(to)?.item);
     },
     boxesOf(item, aimed, ok) {
       const k = own(contentOf(data, doc, item, aimed));
-      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && reachesCatalyst(doc, id, item, frameAt(id)?.item) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
       const k = own(contentOf(data, doc, item, aimed));

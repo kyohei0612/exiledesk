@@ -16,9 +16,5 @@ export const COURSE_LEVEL: Record<1 | 2 | 3 | 4 | 5, { label: JaEn; chip: string
 /** 級の番号から (無い番号は undefined。画面は ! で読んでいた) */
 export const courseLevel = (n: number): { label: JaEn; chip: string } | undefined => COURSE_LEVEL[n as 1 | 2 | 3 | 4 | 5];
 
-/**
- * 狙いの MOD の名前から段の札「(T n 以上)」を外した文 (段を問わない狙い・候補の一覧)。エンジンの aimLabel に札なしの口が無いので、
- * 書式 (mod-list.ts の aimLabel の後ろの括弧) を読むのはここ 1 か所だけ (書式を変えた時に直すのもここ。札なしの口はエンジンに頼む)
- */
-const TIER_TAG = / \((T\d+ 以上|T\d+\+)\)$/;
-export const aimNameBare = (d: PatchData | null, a: { modId: string; minTierIndex: number; label: string }): string => aimLabel(d, a).replace(TIER_TAG, "");
+/** 狙いの MOD の名前から段の札「(T n 以上)」を外した文 (段を問わない狙い・候補の一覧)。札なしはエンジンの aimLabel の口 (rank: false、E-80) */
+export const aimNameBare = (d: PatchData | null, a: { modId: string; minTierIndex: number; label: string }): string => aimLabel(d, a, { rank: false });
