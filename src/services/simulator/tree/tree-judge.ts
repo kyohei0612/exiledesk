@@ -233,6 +233,11 @@ export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> 
  * 札が道の数え (heldSets) へ落ち、狙いが消えた箱の下のカードで残っている狙いが全部「外れ MOD」と出た (S-27e)。ここで見本の順に引く
  */
 export function aimedOfCard(data: PatchData, doc: TreeDoc, id: string, item: StageItem): ReadonlySet<string> | null {
+  // 判定と同じ ☑ = 配置の ☑ (S-200、箱の代表の品と同じ道で数える)。見本の道で数えると、残したい MOD の手の後で前の箱の ☑ が配置と食い違い、
+  // お告げで触らない側の狙いがカードだけ「外れ MOD」と出た (11-07 カオス + 左側の抹消のお告げの打った後、S-27e)。画面の部品だけが呼ぶ (配置の計算の中では呼ばない)。
+  // 枝の来ない箱 (nobranch) も配置の印 (その下の箱は配置から出すので、カードと下の箱が同じ印から)
+  const f = frameOfDoc(data, doc).frames.get(id);
+  if (f && (!f.note || f.note === "nobranch")) return f.aimed;
   const had = aimedOfSample(id, item);
   if (had) return had;
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) { sampleAimed(data, doc, id, seed); const am = aimedOfSample(id, item); if (am) return am; }

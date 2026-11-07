@@ -254,7 +254,10 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const held = [...s.to.values()].flat();
       for (const o of kids) {
         const c = doc.boxes[o]!, brs = s.to.get(o) ?? (holdsAt(doc, o) && held.length ? held : undefined);
-        if (c.seen || !brs?.length) { same(o, c.seen ? null : "nobranch"); continue; }
+        // 枝の来ない箱も印はこの箱の手の後 (残したい MOD の ☑ の無い候補は外れ、S-27e)。親の印の写しのままだと、その下の箱で ☑ しなかった MOD が狙いと出た
+        // (11-07 カオス + 左側の抹消 b19 と親 b14 の手の窓のカード、a61362897)。品は親の代表のまま (作れない見本 = カードも親の品)
+        if (c.seen) { same(o, null); continue; }
+        if (!brs?.length) { frames.set(o, { ...f, aimed: nextAimed(data, doc, f.aimed, o, f.item, f.item), note: "nobranch" }); continue; }
         frames.set(o, bestOf(o, brs, f));
       }
     } };
