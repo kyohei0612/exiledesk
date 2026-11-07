@@ -5,7 +5,7 @@
  * ☑ の MOD が完成の狙いに無い物 (置き石。例: 全耐性の前に冷気耐性で系統を埋める) は、その手の時だけ当たりで、以降は冒涜の外れ MOD (aimsOf で数えない)。
  * 付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
  */
-import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, parseKey, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
@@ -54,7 +54,8 @@ export const stoneAims = (doc: TreeDoc): Aim[] => placedAims(doc);
 /** 手で付ける MOD が 1 つに決まるエッセンスの MOD (無限のエッセンスは決まらないので無し) */
 const ESSENCE_MOD = new Map<string, string | null>();
 export const essenceModOf = (key: string | undefined): string | null => { const had = ESSENCE_MOD.get(key ?? ""); if (had !== undefined) return had; const r = essenceModRaw(key); ESSENCE_MOD.set(key ?? "", r); return r; };
-const essenceModRaw = (key: string | undefined): string | null => { const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(key ?? ""); return m && !isInfiniteEssence(key!) ? m[1]! : null; };
+/** 鍵の読みはエンジンの parseKey (essence の modId。ブリーチは modId 無し) */
+const essenceModRaw = (key: string | undefined): string | null => { const k = key ? parseKey(key) : null; return k?.type === "essence" && k.modId && !isInfiniteEssence(key!) ? k.modId : null; };
 /**
  * 木の手で打つエッセンスの MOD のうち完成形に無い物。付いた時から外れ (S-33c、11-07 オーナー「そもそも狙いモッドじゃないエッセンスでしょ例外なくハズレMODと同じ扱いで
  * ハズレMOD エッセンスって表示でいいよ」。前の「途中の狙い」= 道の上で狙いと同じ印は撤回)。使うのはカードの行を「外れ MOD」にせず MOD の文のまま出す所だけ

@@ -7,7 +7,7 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
-import { OMEN_KEY, toggleOmen as toggleHeld, useReason, type StageItem } from "../../services/craft-stage/engine";
+import { OMEN_KEY, parseRuneKey, toggleOmen as toggleHeld, useReason, type StageItem } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
 import { flag } from "../../web/release-flags";
@@ -30,7 +30,7 @@ const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_cha
 /** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */
 const SPECIAL_RUNE_KEYS = new Set(RUNE_GROUPS.find((g) => g.kind === "special")?.keys ?? []);
 /** スイッチ runeSocket ではクラフト以外のルーンも消さず、エミュの棚と同じく畳んだ節に出す (S-20・S-31f、11-05 オーナー「いつでもルーンは展開して使えるように」) */
-const otherRune = (key: string): boolean => !flag("runeSocket") && key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key);
+const otherRune = (key: string): boolean => !flag("runeSocket") && !!parseRuneKey(key) && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key);
 /**
  * ヒネコラの髪束 (予見) は木の棚に出す。神のオーブは予見したアイテムの時だけ (予見を消す手、S-39・開発版だけ = FORESEE_ON。
  * 11-05 オーナー「神うって同じようにヒネコラしてどうループするのかって挙動みたら」)。ほかの所の神のオーブは今までどおり出さない (S-20)

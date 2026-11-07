@@ -11,6 +11,7 @@ import { aimedOfCard, outsideAimed, sampleAimed } from "../../../services/simula
 import { fractureMarks } from "../../../services/simulator/tree/tree-model";
 import { stoneAims } from "../../../services/simulator/tree/tree-veil";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
+import { isSwapEssenceKey } from "../../../services/simulator/tree/tree-keep";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
 import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
@@ -23,7 +24,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   /** 消去 (全部消えてよい = 消去の箱を並べる、全部は残せない) か */
   const isRemove = computed(() => !!o.held.value && effectOf(o.held.value) === "remove");
   /** パーフェクトエッセンス (付く MOD が決まった入れ替え): ☑ しなかった MOD も外れにせず、☑ が無ければ消えた MOD ごとに枝 (S-29 のエッセンスの枝、11-07) */
-  const isSwap = computed(() => !!o.held.value && o.held.value.startsWith("essence:perfect:"));
+  const isSwap = computed(() => isSwapEssenceKey(o.held.value));
   const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h ? keepChoicesOf(d, it, h, o.omens.value, t.goals.value) : []; });
   /** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value, t.goals.value); });

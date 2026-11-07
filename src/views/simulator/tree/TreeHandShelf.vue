@@ -150,7 +150,8 @@ function onShelfHold(k: string): void {
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
 /** 錯乱のエッセンスがこのアイテムに打てるのに棚から外している時は、窓に理由を 1 行 (シミュの棚は打てる札だけを出すので灰色の札は出ない) */
 const delirHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && Object.keys(ESSENCE_KEYS).some((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium" && !useReason(d, it, k)); });
-const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
+// 品の状態で効かないお告げ (紋章のある品の骨のネクロマンシー) も落とす = エンジンの omensFor に箱の見本を渡す
+const used = computed(() => (held.value ? omensFor(held.value, omens.value, item.value ?? undefined) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
 /**

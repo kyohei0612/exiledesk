@@ -1,19 +1,11 @@
 /**
- * tree-sample-shape.ts — 箱の形 (道で付いている狙いの組) に合う見本 (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」)。
- * 起こりうる結果の箱 (tree-sample の possibleOutsOf) が、形違いの戻りで入った人のアイテムを使わないように。tree-sample.ts が 500 行を超えたので分けた
+ * tree-sample-shape.ts — 箱の見本 (着いた人の最初の 1 人)。tree-sample.ts が 500 行を超えたので分けた。
+ * 前の箱の形 (道で付いている狙いの組) に合う見本を選ぶ shapeFit は使い手が無くなったので 11-07 に消した (判定は tree-judge の judgeMemo 1 本)
  */
 import type { PatchData, StageItem } from "../../craft-stage/engine";
-import { aimHeldOn } from "./tree-aim";
-import { aimKey, type TreeDoc } from "./tree-model";
-import { aimsOf, sampleOf, SINGLE_SEEDS, startGoalAims } from "./tree-sample";
-import { heldSets } from "./tree-shape";
+import type { TreeDoc } from "./tree-model";
+import { sampleOf, SINGLE_SEEDS } from "./tree-sample";
 
-/** その箱の形 (道で付いている狙いの組 = heldSets) にアイテムが合うか。始めから付いている狙いは数えない */
-export function shapeFit(data: PatchData, doc: TreeDoc, boxId: string): (item: StageItem) => boolean {
-  const sets = new Set(heldSets(doc, boxId).map((h) => [...h].sort().join(",")));
-  const st = startGoalAims(doc), shapeAims = aimsOf(doc).filter((a) => !st.some((x) => x.modId === a.modId && x.tier === a.tier));
-  return (item) => sets.has(shapeAims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).map(aimKey).sort().join(","));
-}
 /** 箱の形に合う見本 (着いた人の 1〜SINGLE_SEEDS 人目のうち最初。合う人がいなければ 1 人目) */
 export function shapeSampleOf(data: PatchData, doc: TreeDoc, boxId: string): StageItem { return shapeSampleWithNote(data, doc, boxId).item; }
 /** 見本と、合う見本が無かった時の印 (cant:unreachable = この道では作れない箱。見張りが箱の data-sample-note で見分ける、10-28 夜 最終チェック長) */

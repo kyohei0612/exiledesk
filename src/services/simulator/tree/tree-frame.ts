@@ -63,7 +63,7 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
       const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
       if (s === "tooMany") return s;
       // 残った外れに、消えた MOD の MOD レベルを下限として持たせる (次の削減で絞る、S-65b)
-      if (s) rs.push(...s.filter((r) => !r.void).map((r) => { carryFloors(v.item, r.item, wanted); return { p: v.p * r.p, item: r.item }; }));
+      if (s) rs.push(...s.filter((r) => !r.void).map((r) => { carryFloors(data, v.item, r.item, wanted); return { p: v.p * r.p, item: r.item }; }));
     }
   } else {
     const s = stepOutcomesOrTooMany(data, item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
@@ -73,7 +73,7 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
   }
   if (veilPick(h)) rs = rs.flatMap((r) => (unrevealedOf(r.item) ? revealOutcomes(data, r.item).map((x) => ({ p: r.p * x.p, item: x.item })) : [r]));
   // ほかの手は残った MOD の下限をそのまま持ち回る (削減の手は上で付けた)
-  if (!isWhittleHand(h)) for (const r of rs) if (r.item !== item) carryFloors(item, r.item, null);
+  if (!isWhittleHand(h)) for (const r of rs) if (r.item !== item) carryFloors(data, item, r.item, null);
   const tot = rs.reduce((n, r) => n + r.p, 0) || 1;
   return rs.map((r) => ({ item: r.item, p: r.p / tot }));
 }

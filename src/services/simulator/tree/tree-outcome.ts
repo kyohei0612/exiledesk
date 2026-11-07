@@ -4,11 +4,12 @@
  * 分け方は handOutcome の 1 本 (G-1 S-1、11-07): 箱の結果は boxOutcomeOf、手を置く時に起こりうる結果の箱 (possibleOutsOf) は列挙した枝を handOutcome に通して集めるだけ
  */
 import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { stepOutcomes } from "../../simulator/sim-engine";
+import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
 import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
+import { sameAim, sameAimMod } from "./tree-hand-core";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
@@ -28,7 +29,6 @@ export const infiniteAim = (key: string | undefined): boolean => !!key && isInfi
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
 /** 手を置く時の結果の箱の形 (当たりは札 1 つ) */
 type BoxOut = { out: OutKind; aim: Aim | null; junkKey?: string };
-const same = (x: { modId: string; tier: number }, a: { modId: string; tier: number }): boolean => x.modId === a.modId && x.tier === a.tier;
 /** 箱の当たりの札 = この手の当たりの箱の ☑ */
 const ownOf = (doc: TreeDoc, b: Pick<TreeBox, "outs">): Aim[] => b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
 /** 外れ・打った後・外れが消えた・狙いが消えたに側の鍵を付ける (S-65・S-71g。狙いが消えたは消去もほかの手と同じく側で分ける、11-04。鍵があればそのまま) */
@@ -91,16 +91,17 @@ function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, h
   const nk = nextKeyOf(before, after, kept, veilPick(h));
   return nk ? { ...oc, junkKey: joinKeys(oc.junkKey, nk) } : oc;
 }
-/** 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る) */
-const keptPlus = (doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => x.modId === a.modId))] : aims; };
-/** 残したい MOD の消去か (☑ が 1 つ以上) */
-export const isKeepAnnul = (h: Hand | null | undefined): h is Hand => !!h?.keep?.length && effectOf(h.currency) === "remove";
+/**
+ * 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る)。
+ * 木の狙いにあるかは札どうしをエンジンの当て方で (sameAimMod、段は見ない)
+ */
+const keptPlus = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => sameAimMod(data, x, a)))] : aims; };
 /**
  * ☑ を選ぶ手の狙い = 打つ前に付いている狙いと、この手の ☑ (picked) だけ (S-22b)。☑ の無い完成形の MOD が付いても外れ MOD。
  * 前は木の狙い全部で数え、付いた知性 (☑ 無し) が「当たり」を取ってから外れに落ちて、同時に消えた最大ライフの「狙いが消えた」が抜けた (木 oWkFcwYX の b14 のカオス)
  */
 const pickedAims = (data: PatchData, before: StageItem, aims: readonly Aim[], picked: readonly Aim[]): Aim[] =>
-  aims.filter((a) => picked.some((x) => same(x, a)) || aimHeldOn(data, before, a, { sameText: true }));
+  aims.filter((a) => picked.some((x) => sameAim(data, x, a)) || aimHeldOn(data, before, a, { sameText: true }));
 /**
  * 消去の残したい MOD (☑) の段は完成形の段で見る (S-27c)。保存の ☑ は見本の段 (最大ライフ T4) で、完成形 (T5) の人の最大ライフが消えても
  * 「外れが消えた」になった (木 oWkFcwYX の b9)。完成形に無い MOD はそのまま
@@ -115,7 +116,7 @@ const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed:
 function countedAims(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Aim[] {
   const am = noStones(doc, h, keptAimedOf(doc, h, aimed));
   if (!am) return [...aims0];
-  const counted = keptPlus(doc, h, mineOf(data, before, aims0, am));
+  const counted = keptPlus(data, doc, h, mineOf(data, before, aims0, am));
   return counted.filter((a) => !unaimedOn(data, doc, before, aimed, a.modId));
 }
 /**
@@ -130,17 +131,17 @@ function unaimedOn(data: PatchData, doc: TreeDoc, before: StageItem, aimed: Read
 /** 残したい MOD の印から unaimedOn の物を落とす (次の MOD 群の鍵も同じ見方) */
 const withoutUnaimed = (data: PatchData, doc: TreeDoc, before: StageItem, aimed: ReadonlySet<string> | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined =>
   am && aimed ? new Set([...am].filter((id) => !unaimedOn(data, doc, before, aimed, id))) : am;
-/** 当たりは ☑ の札だけ (付いた狙いが ☑ に無ければ外れ MOD) */
-const ownHits = (oc: Outcome, own: readonly Aim[]): Outcome => {
+/** 当たりは ☑ の札だけ (付いた狙いが ☑ に無ければ外れ MOD。札どうしはエンジンの当て方で sameAim) */
+const ownHits = (data: PatchData, oc: Outcome, own: readonly Aim[]): Outcome => {
   if (oc.out !== "hit") return oc;
-  const hits = oc.hits.filter((a) => own.some((x) => same(x, a)));
+  const hits = oc.hits.filter((a) => own.some((x) => sameAim(data, x, a)));
   return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
 };
 function boxOutcomeRaw(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, own: readonly Aim[], before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
   const key = h?.currency;
   // ルーンの手は確定の手: はめた人は全員「打った後」の 1 箱へ (当たり / 外れに分けない、S-31e)
   if (key && isRuneHand(key)) return { out: "any", hits: [] };
-  if (key && infiniteAim(key)) return ownHits(outcomeOf(data, before, after, aims, key), own);
+  if (key && infiniteAim(key)) return ownHits(data, outcomeOf(data, before, after, aims, key), own);
   // 印の無い木の狙い無しのフラクチャー: 固定された MOD の箱 (スイッチ fracPick)
   if (fracFree(doc, h)) {
     const m = newlyFractured(before, after), hit = fracFreeHit(data, m, own);
@@ -164,7 +165,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, h: Hand | null | undefined
   const pick = PICK_EFFECTS.includes(effectOf(key));
   // 残したい MOD も数える札 (countedAims) にある物だけ = ☑ 無しで付いている完成形の MOD は外れ (unaimedOn)
   const mine = keep ? keepAims(doc, keep).filter((a) => aims.some((x) => x.modId === a.modId)) : pick ? pickedAims(data, before, aims, own) : aims;
-  return ownHits(outcomeOf(data, before, after, mine, key, pick), own);
+  return ownHits(data, outcomeOf(data, before, after, mine, key, pick), own);
 }
 /** 結果 → 手を置く時の箱の形 (回す時の outBoxOf の受け方と同じ): 狙い無しの手は狙いが消えた以外を「打った後」、狙いの付かない当たり (エッセンスで外れを置き換える等) も「打った後」 */
 function boxOutOf(oc: Outcome, free: boolean): BoxOut {
@@ -190,10 +191,16 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (h.repeat || isCatalyst(h.currency)) return null;
   // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
   if (isRuneHand(h.currency)) return [{ out: "any", aim: null }];
-  // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない)
-  if (isRevealHand(h.currency)) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
+  // 後から打つ発現の手: 見本の未発現に出うる MOD (エンジンの revealOutcomes) が ☑ の札に当たれば当たり、どれにも当たらない MOD があれば外れ (発現は MOD を消さない。
+  // 当て方は回す時の revealHitOf と同じ。前は ☑ の札全部 + 外れの決め打ち)。箱に着いた見本が無ければ前の形のまま
+  if (isRevealHand(h.currency)) {
+    const got = Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1)).filter((x) => x.note !== "none" && !x.note?.startsWith("cant:"))
+      .flatMap((x) => revealOutcomes(data, x.item).map((o) => revealHitOf(data, revealedOf(x.item, o.item), extra)));
+    if (!got.length) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
+    return [...extra.filter((a) => got.includes(a)).map((a) => ({ out: "hit" as OutKind, aim: a })), ...(got.includes(null) ? [{ out: "junk" as OutKind, aim: null }] : [])];
+  }
   // 消去もほかの手と同じ狙いの並び (残したい MOD は keptAimedOf の印で見る、S-27d。11-04 に消去だけの見方は撤回)
-  const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => same(x, a)))];
+  const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => sameAim(data, x, a)))];
   const found = new Map<string, BoxOut>();
   // 見本の中身だけで見る (持って着きうる狙いを足した形は作らない、狙いが消えうるのは見本に付いている狙い。大本 1)
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */

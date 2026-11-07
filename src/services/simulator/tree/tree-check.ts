@@ -279,10 +279,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない。
-        // フラクチャーも見ない: 必ず選んだ狙いを固定し、外れは費用で数える、10-24 オーナー)
+        // フラクチャーもほかの手と同じに見る: 外れを費用で数える 10-24 の決め (S-43) は 11-05 に撤回、外れが固定された枝も箱 = S-200 ①)
         /** 起こりうる結果が全部見えている時の一覧 (無い結果の箱は下で打ち直さない) */
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
-        if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
+        if (!b.hand.repeat) {
           const all = stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
           // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る)
           const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);

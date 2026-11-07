@@ -173,7 +173,7 @@ const crafts = computed(() => {
   if (!d) return [];
   const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
   // 束 (S-30b) の時は切り替えはブリーチと前に「途中で消える」にした物だけ (ほかは束の札「どれか n つ」)
-  return list.length >= 2 ? list.filter((c) => c.way || isBreachAim(c.a)) : [];
+  return list.length >= 2 ? list.filter((c) => c.way || isBreachAim(d, c.a)) : [];
 });
 /** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
 const inRow = computed(() => true);

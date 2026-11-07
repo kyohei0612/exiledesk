@@ -9,28 +9,30 @@
  * 結果の箱は、打つ前からあって残った外れの順位 (欲しい MOD に対して) を鍵に持つ (④、TreeBox.junkKey の `w:` の部分、側の鍵 `s:` とは `;` で並べる)。
  * 次の削減は鍵の順位に合う外れを差し替えない (見本の MOD レベルがその順位の代わり)
  */
-import { candidates, makeStageMod, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { candidates, makeStageMod, OMEN_KEY, whittleLevel, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { effectiveCls, without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
+import { isMissMod, missAims, type MissAims } from "./tree-miss";
+import type { Aim } from "./tree-model";
 import { originOf } from "./tree-rolls";
 
 export const WHITTLE = OMEN_KEY.whittling;
 /** 削減のお告げを含む手か ( が閉じていれば false = 今のまま見本の MOD レベルで決まる) */
 export const isWhittleHand = (h: { omens: readonly string[] } | null | undefined): boolean => !!h && engineOmens(h).includes(WHITTLE);
 
-/** MOD レベル (未発現は 1、apply-currency の whittleTargets と同じ) */
-const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
+/** 削減の MOD レベル (未発現は 1) はエンジンの whittleLevel (whittleTargets と同じ物) */
+const lv = whittleLevel;
 const loose = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured);
+/** 差し替えの途中の品で同じ MOD を探す (当たりの判定ではない) */
 const sameMod = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.tierIndex === b.tierIndex && a.side === b.side;
-type AimLike = { modId: string };
-const isAim = (aims: readonly AimLike[], m: StageMod): boolean => aims.some((a) => a.modId === m.modId);
+type AimLike = Pick<Aim, "modId" | "tier">;
 /**
  * 差し替え (rankVariants) で見る欲しい MOD = 見本の ☑ の印 (打つ前の aimed、tree-judge の sampleAimed) の付いた狙いだけ (S-65b)。
  * 印の無い完成形の MOD は外れ MOD (S-22・S-60) なので、付いていれば差し替え、付いていなければ付きうる外れの重みに入れる。回す人の順位 (boxOutcomeOf の mineOf) と同じ見方。印が無ければ今のまま
  */
 export const aimedAims = <T extends AimLike>(aims: readonly T[], aimed: ReadonlySet<string> | null | undefined): readonly T[] => (aimed ? aims.filter((a) => aimed.has(a.modId)) : aims);
-/** 欲しい MOD の MOD レベル (低い順) */
-const wantedLevels = (it: StageItem, aims: readonly AimLike[]): number[] => loose(it).filter((m) => isAim(aims, m)).map(lv).sort((a, b) => a - b);
+/** 欲しい MOD の MOD レベル (低い順)。欲しい MOD か = 外れの式 (tree-miss の isMissMod、当たり方はエンジンの aimHits の sameText) */
+const wantedLevels = (it: StageItem, miss: MissAims): number[] => loose(it).filter((m) => !isMissMod(m, miss)).map(lv).sort((a, b) => a - b);
 /** 順位 = 欲しい MOD のうち MOD レベルがそれより低い物の数。同じ MOD レベルの物があれば「=」(E-33 どおりどちらも等しく消える) */
 export function rankCode(wanted: readonly number[], x: number): string {
   const below = wanted.filter((w) => w < x).length;
@@ -64,10 +66,11 @@ const FREE_MAX = 2;
  * 欲しい MOD が無い・差し替える外れが無ければ見本 1 つ (p 1)
  */
 export function rankVariants(data: PatchData, item: StageItem, aims: readonly AimLike[], boxKey?: string): Array<{ p: number; item: StageItem }> {
-  const w = wantedLevels(item, aims);
+  const miss = missAims(data, aims);
+  const w = wantedLevels(item, miss);
   if (!w.length) return [{ p: 1, item }];
   // 前の削減で順位の決まった箱 (④): 見本の一番低い外れの順位が鍵と同じなら、見本の MOD レベルがその順位の代わり (差し替えない)
-  const junk = loose(item).filter((m) => !isAim(aims, m));
+  const junk = loose(item).filter((m) => isMissMod(m, miss));
   const code = codesOf(boxKey)[0];
   if (code !== undefined && junk.length && rankCode(w, Math.min(...junk.map(lv))) === code) return [{ p: 1, item }];
   const free = junk.filter((m) => !m.crafted && !m.unrevealed);
@@ -88,12 +91,12 @@ export function rankVariants(data: PatchData, item: StageItem, aims: readonly Ai
       const k = j.side === "prefix" ? "prefixes" : "suffixes";
       const pool = j.desecrated ? { pools: () => [...(base.cls.pools.desecrated?.[k] ?? []), ...effectiveCls(base).pools.normal[k]] } : {};
       for (const c of candidates(data, base, [j.side], 0, pool)) {
-        if (aims.some((a) => a.modId === c.mod.id)) continue;
         for (const t of c.tiers) {
           if (!(t.w > 0)) continue;
           const sm0 = makeStageMod(c.mod, c.side, t.index, () => 0.5);
           const sm = j.desecrated ? { ...sm0, desecrated: true } : sm0;
-          if (lv(sm) < floor) continue;
+          // 代わりは外れだけ (狙いに当たる段は入れない)
+          if (!isMissMod(sm, miss) || lv(sm) < floor) continue;
           const code = rankCode(w, lv(sm));
           const e = by.get(code);
           total += t.w;
@@ -125,12 +128,13 @@ const FLOORS = new WeakMap<object, ReadonlyMap<string, number>>();
 const fKey = (m: StageMod): string => `${m.side}|${m.modId}|${m.tierIndex}`;
 const floorsOf = (it: StageItem): ReadonlyMap<string, number> | undefined => FLOORS.get(it) ?? FLOORS.get(originOf(it));
 /** before に手を打った after へ下限を持ち回る。wanted = 削減の手の欲しい MOD (削減でなければ null): 消えた MOD の MOD レベルを、残った外れの下限に足す */
-export function carryFloors(before: StageItem, after: StageItem, wanted: readonly AimLike[] | null): void {
+export function carryFloors(data: PatchData, before: StageItem, after: StageItem, wanted: readonly AimLike[] | null): void {
   const was = floorsOf(before), bm = loose(before), am = loose(after), next = new Map<string, number>();
   const kept = am.filter((m) => bm.some((b) => fKey(b) === fKey(m)));
   for (const m of kept) { const f = was?.get(fKey(m)); if (f !== undefined) next.set(fKey(m), f); }
   const gone = wanted ? bm.filter((b) => !am.some((m) => fKey(m) === fKey(b))) : [];
-  if (gone.length) { const low = Math.min(...gone.map(lv)); for (const m of kept) if (!isAim(wanted!, m)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, low)); }
+  // 外れかは rankVariants と同じ isMissMod (sameText・段も見る)
+  if (gone.length) { const low = Math.min(...gone.map(lv)), miss = missAims(data, wanted!); for (const m of kept) if (isMissMod(m, miss)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, low)); }
   if (next.size) FLOORS.set(after, next);
 }
 /** 外れを差し替えたアイテム (元の外れと同じ並びの位置へ) */

@@ -4,10 +4,11 @@
  * keep の無い手 (前に保存した手・候補が 1 つ以下で聞かなかった手) は既定 = 持っている狙い (☑ の印) 全部 = 今までの数え。
  * 狙いが消えた人に付ける狙い (☑・エッセンスの MOD) が付いたら、狙いが消えた箱を別にして (鍵 `g:`)「狙いが消えた・狙いが付いた」、付いた狙いは ☑ の印に数える
  */
-import { omensFor, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { omensFor, parseKey, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { engineOmens } from "./tree-hands";
+import { isMissMod, missAims } from "./tree-miss";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { joinKeys, rankVariants, WHITTLE } from "./tree-whittle";
 
@@ -34,11 +35,13 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
   let m = GONE.get(data);
   if (!m) GONE.set(data, (m = new Map()));
   const whittle = omens.includes(WHITTLE) && wanted.length > 0;
-  const key = [currency, ...omens, item.rarity, ...[...item.prefixes, ...item.suffixes].map((x) => `${x.modId}.${x.tierIndex}${x.fractured ? "f" : ""}${x.unrevealed ? "u" : ""}`), ...(whittle ? wanted.map((a) => `w:${a.modId}`) : [])].join("|");
+  const key = [currency, ...omens, item.rarity, ...[...item.prefixes, ...item.suffixes].map((x) => `${x.modId}.${x.tierIndex}${x.fractured ? "f" : ""}${x.unrevealed ? "u" : ""}`), ...(whittle ? wanted.map((a) => `w:${a.modId}.${a.tier}`) : [])].join("|");
   if (m.has(key)) return m.get(key)!;
-  const mods = [...item.prefixes, ...item.suffixes], ids = new Set(mods.map((x) => x.modId));
-  const junkOn = (side: string): string[] => mods.filter((x) => x.side === side && !x.fractured && !wanted.some((a) => a.modId === x.modId)).map((x) => x.modId);
-  const outs = (whittle ? rankVariants(data, item, wanted).map((v) => v.item) : [item]).flatMap((it) => stepOutcomes(data, it, currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void) ?? []);
+  const mods = [...item.prefixes, ...item.suffixes], ids = new Set(mods.map((x) => x.modId)), miss = missAims(data, wanted);
+  // 外れか = 外れの式 (tree-miss の isMissMod、当たり方はエンジンの aimHits の sameText)
+  const junkOn = (side: string): string[] => mods.filter((x) => x.side === side && !x.fractured && isMissMod(x, miss)).map((x) => x.modId);
+  // お告げは品を渡して効かない状態の物を落とす (omensFor の第 3 引数)
+  const outs = (whittle ? rankVariants(data, item, wanted).map((v) => v.item) : [item]).flatMap((it) => stepOutcomes(data, it, currency, engineOmens({ omens: omensFor(currency, [...omens], it) }))?.filter((o) => !o.void) ?? []);
   const out = outs.length ? new Set(outs.flatMap((o) => o.removed.flatMap((x) => (ids.has(x.modId) ? [x.modId] : junkOn(x.side))))) : null;
   if (m.size > 20000) m.clear();
   m.set(key, out);
@@ -49,7 +52,9 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
  * パーフェクトエッセンス (付く MOD が決まっている入れ替え) の手か (S-29 のエッセンスの枝、11-07 オーナー「エッセンスは入れ替わりの挙動だけど、MODは固定だからハズレMODって出さんよね」
  * 「枝の出し方はエッセンスは特別仕様やな」)。カオス・骨は付く MOD が決まっていないので今のまま (☑ しなかった候補は外れ、S-27e)
  */
-export const isSwapEssence = (h: Hand | null | undefined): boolean => !!h && h.currency.startsWith("essence:perfect:");
+// 鍵の読みはエンジンの parseKey (パーフェクトの段・ブリーチでない)。手の窓 (use-hand-keep) も同じ物を呼ぶ
+export const isSwapEssenceKey = (key: string | null | undefined): boolean => { const k = key ? parseKey(key) : null; return k?.type === "essence" && k.tier === "perfect" && !k.breach; };
+export const isSwapEssence = (h: Hand | null | undefined): boolean => !!h && isSwapEssenceKey(h.currency);
 const SWAP = "e:";
 /**
  * ☑ が 1 つも無いパーフェクトエッセンス (全部消えてよい) の枝の鍵 `e:<消えた狙いの modId>` (外れが消えたら `e:j`)。消えた MOD ごとに 1 箱 (S-29)。

@@ -5,7 +5,7 @@
  * 足した行は見せるだけ: 完成の狙い・MOD の枠 (use-tree の goalItem の left)・完成の判定には数えない (品質の値で見るのは tree-unbounded の qualityOk のまま)
  */
 import { computed } from "vue";
-import { applyCurrency, INFUSER_OVER, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { applyCurrency, INFUSER_OVER, isQualityCapMod, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
@@ -25,7 +25,7 @@ export function useGoalShown() {
     // カタリスト以外の部位の品質は最初に上げてある前提 (S-31、11-05) なので、ブリーチを途中で付ける行は出さない
     if (!d || !g || !catalystPart(g) || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
     // ブリーチのエッセンスを MOD 一覧で足してある時は、その行で足りる (同じ行を 2 つ出さない)
-    if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => /LocalMaximumQuality/.test(a.modId))) return null;
+    if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => isQualityCapMod(d, a.modId))) return null;
     // 完成形に既にエッセンスの MOD があると「エッセンスの MOD は 1 つまで」で打てないので、エッセンスの MOD を除いた写しに打つ (途中で付けて消える物なので、完成形と同時には付かない)
     const bare = { ...g, prefixes: g.prefixes.filter((m) => !m.crafted), suffixes: g.suffixes.filter((m) => !m.crafted) };
     try { return applyCurrency(d, bare, "essence:breach", mulberry32(1)).added?.[0] ?? null; } catch { return null; }

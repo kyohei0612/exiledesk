@@ -9,17 +9,13 @@
 import type { PatchData, StageSide } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import type { magicAugOdds } from "./sim-odds";
-import { essenceLevelOf, omenFor, sideOfMod } from "../craft-stage/engine";
+import { essenceKeyForTier, omenFor, sideOfMod } from "../craft-stage/engine";
 
 /** マジックをレアにするエッセンスで付ける狙い (無ければ null) */
 export function magicEssenceTarget(data: PatchData, targets: readonly SimTargetIn[]): SimTargetIn | null {
   return targets.find((t) => methodOfTarget(data, t) === "essence" && data.mods.get(t.modId)?.source === "essence") ?? null;
 }
 
-/** その段のエッセンスの棚のキー (段の名前から段の強さを読むのはエンジンの essenceLevelOf。前は自前の正規表現) */
-function essenceKeyFor(data: PatchData, modId: string, minTierIndex: number): string {
-  return `essence:${essenceLevelOf(data.mods.get(modId)?.tiers[minTierIndex]?.name)}:${modId}`;
-}
 
 /**
  * フラクチャーの候補の反対側に残す MOD: 反対側の普通の付け方 (高貴ガチャ・カオススパム) の狙いの 1 つ目 (「どれか」の候補ごと)。
@@ -114,7 +110,7 @@ export function greaterRouteCost(o: {
   const q = keep ? o.odds.hit(o.fracSide === "prefix" ? "suffix" : "prefix", [keep, ...(keep.alts ?? [])]) : null;
   const share = o.odds.share[o.fracSide];
   const { augment, annul } = magicLoopCounts(o.p, q, share);
-  const essKey = essenceKeyFor(o.data, ess.modId, ess.minTierIndex);
+  const essKey = essenceKeyForTier(o.data, ess.modId, ess.minTierIndex); // その段のエッセンスの棚の鍵はエンジンの essenceKeyForTier
   const necro = omenFor("desecrate", o.fracSide === "prefix" ? "prefix" : "suffix")!;
   const lines: GreaterLine[] = [
     { name: "白のベース", n: 1, each: o.white },

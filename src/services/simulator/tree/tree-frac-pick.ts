@@ -6,10 +6,9 @@
  *     どれが固定されるかはエンジンの乱数のまま (行ごとに等しく、同じ枝の行は足す)
  *   - ☑ あり: ☑ の MOD が固定された = 当たり、ほかが固定された = 外れ (今までの fracRandom の形)
  */
-import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { aimHeldOn, isAimMod } from "./tree-aim";
+import { aimHits, tierIndexOf, unfracturable, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHeldOn } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, targetsOf } from "./tree-sample";
 import { stepOutcomes } from "../sim-engine";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 
@@ -20,18 +19,18 @@ export function newlyFractured(before: StageItem, after: StageItem): StageMod | 
   const had = new Set([...before.prefixes, ...before.suffixes].filter((m) => m.fractured).map((m) => m.modId));
   return [...after.prefixes, ...after.suffixes].find((m) => m.fractured && !had.has(m.modId)) ?? null;
 }
-/** 固定されうる MOD (✦・未発現・冒涜で付いた物は固定されない) */
-const fixable = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && !m.desecrated);
+/** 固定されうる MOD (✦ と、エンジンの unfracturable = 未発現・冒涜で付いた物は固定されない) */
+const fixable = (data: PatchData, it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !unfracturable(data, it, m));
 /**
  * 狙い無しの枝: 見本のどれかで固定されうる完成の狙い (完成形の段、完成形の設定の順) と、固定されうる外れ MOD の側と種類 (外れの枝の鍵)
  */
 export function fracFreeOuts(data: PatchData, doc: TreeDoc, items: readonly StageItem[]): { aims: Aim[]; junk: string[] } {
   const goals = doc.memoAims ?? [];
-  const aims = goals.filter((a) => items.some((it) => aimHeldOn(data, { ...it, prefixes: fixable(it).filter((m) => m.side === "prefix"), suffixes: fixable(it).filter((m) => m.side === "suffix") }, a, { sameText: true }))).map((a) => ({ modId: a.modId, tier: a.tier }));
+  const aims = goals.filter((a) => items.some((it) => aimHeldOn(data, { ...it, prefixes: fixable(data, it).filter((m) => m.side === "prefix"), suffixes: fixable(data, it).filter((m) => m.side === "suffix") }, a, { sameText: true }))).map((a) => ({ modId: a.modId, tier: a.tier }));
   const isGoal = (m: StageMod): boolean => goals.some((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true }));
   // 外れは固定後の形 (側と種類) が同じ物どうしで 1 枝 (10-27 夜オーナー「外れ 2 つは同じ側・同じ種類なので固定後の形が同じ」)。並びはプレ → サフィ、普通 → エッセンス
   const junk = new Set<string>();
-  for (const it of items) for (const m of fixable(it)) if (!isGoal(m)) junk.add(junkKeyOf(data, m));
+  for (const it of items) for (const m of fixable(data, it)) if (!isGoal(m)) junk.add(junkKeyOf(data, m));
   return { aims, junk: [...junk].sort() };
 }
 /**
@@ -49,19 +48,6 @@ export function junkKeyLabel(key: string): [string, string] {
 export function fracFreeHit(data: PatchData, m: StageMod | null, own: readonly Aim[]): Aim | null {
   if (!m) return null;
   return own.find((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })) ?? null;
-}
-
-/**
- * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」、10-25 オーナーが 10-24 の決めに戻した)。
- * aims = この手の当たりの箱の札 (= この箱で付いている完成の MOD の印の狙い、tree-hand-plan の hitAimsOf) のうち、付いている最初の物。無ければ null (エンジンの乱数のまま)
- */
-export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[], rng?: () => number): string | null {
-  if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
-  const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
-  // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、S-42)
-  if (rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
-  for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
-  return null;
 }
 
 /** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */

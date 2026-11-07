@@ -2,10 +2,10 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, kindOf, OMEN_FOR, omenBlock, revealKey, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { missAims } from "./tree-miss";
-import { ECHO as ABYSSAL_ECHO_OMEN } from "./tree-hands";
+import { ECHO as ABYSSAL_ECHO_OMEN, splitOmens } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { isRevealHand } from "./tree-veil";
 
@@ -52,14 +52,16 @@ export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, a
 }
 
 /**
- * 手に付けたお告げを、その手に掛かる物 (now) と続けて打つ発現に掛かる物 (reveal = アビスの反響) に分ける。
- * 骨 (冒涜) の手に付けた反響は骨には掛からず (渡すとエンジンが弾く)、その後の発現で使う。発現の手そのものなら now
+ * 札どうしが同じ MOD か (段は見ない) = 札を MOD の形にしてエンジンの aimHits (sameText) で当てる (同じ文の別 modId も同じ。前は modId の一致)。
+ * aimHits が見るのは modId・系統・段だけなので数値は作らない。狙いの段は一番下 (段の番号 0) にして段を見ない (同じ modId は段の外の札 = T99 でも同じ)
  */
-function handOmens(key: string, omens: readonly string[]): { now: string[]; reveal: string[] } {
-  if (kindOf(key) === "reveal") return { now: [...omens], reveal: [] };
-  const rv = OMEN_FOR.reveal ?? [];
-  return { now: omens.filter((o) => !rv.includes(o)), reveal: omens.filter((o) => rv.includes(o)) };
+export function sameAimMod(data: PatchData, x: TierAim, a: TierAim): boolean {
+  if (x.modId === a.modId) return true;
+  const m ={ modId: x.modId, family: data.mods.get(x.modId)?.family ?? "", tierIndex: tierIndexOf(data, x.modId, x.tier), tierName: `T${x.tier}` } as StageMod;
+  return hits(m, { modId: a.modId, minTierIndex: 0 }, { data, sameText: true });
 }
+/** 札どうしが同じ狙いか = 同じ MOD (sameAimMod) で段の T も同じ (sameText の段は段の名前の T で比べる、aimHits と同じ) */
+export const sameAim = (data: PatchData, x: TierAim, a: TierAim): boolean => x.tier === a.tier && sameAimMod(data, x, a);
 
 /**
  * その手 (key + お告げ) がこのアイテムに打てない理由。打てるなら null。
@@ -67,15 +69,15 @@ function handOmens(key: string, omens: readonly string[]): { now: string[]; reve
  * - 手そのもの: エンジンの useReason (クラフト台の棚の灰色と同じ判定。乱数で決まる物は打てる扱い、10-25 置き換え)
  */
 export function canUse(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): string | null {
-  const now = handOmens(key, omens).now;
-  // 後から打つ発現の手: 未発現の MOD があれば打てる
-  if (isRevealHand(key)) return unrevealedOf(item) ? null : tr("未発現の MOD が無い", "No unrevealed mod");
+  const now = splitOmens(key, omens).now;
+  // 後から打つ発現の手: エンジンの発現 (reveal:1、反響があれば引き直した組) が打てるか。revealFirst と同じ鍵
+  if (isRevealHand(key)) return revealReason(data, item, now.includes(ABYSSAL_ECHO_OMEN));
   for (const o of now) { const why = omenBlock(data, item, key, now, o); if (why) return why; } // エミュと同じ判定 (「今は意味なし」も止める。S-20b は 11-06 撤回)
   return useReason(data, item, key, now);
 }
 
 interface HandSpec {
-  /** 手に付けたお告げ (反響は handOmens で発現の側へ) */
+  /** 手に付けたお告げ (反響は tree-hands の splitOmens で発現の側へ) */
   omens?: readonly string[];
   /** 未発現が付いた時、そのまま発現まで打つ */
   reveal?: boolean;
@@ -95,14 +97,17 @@ function revealFirst(data: PatchData, r: StageApply, rng: () => number, echo: bo
   const x = echo ? applyCurrency(data, r.item, revealKey(1, true), rng, [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, revealKey(1), rng);
   return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
 }
+/** 発現が打てない理由 (エンジンの useReason。打てるなら null) */
+const revealReason = (data: PatchData, item: StageItem, echo: boolean): string | null =>
+  echo ? useReason(data, item, revealKey(1, true), [ABYSSAL_ECHO_OMEN]) : useReason(data, item, revealKey(1));
 
 /** 手を 1 回打つ (エンジンの applyCurrency を 1 回、骨の後は発現まで) */
 export function applyHand(data: PatchData, item: StageItem, key: string, rng: () => number, spec: HandSpec = {}): HandResult {
-  const { now, reveal } = handOmens(key, spec.omens ?? []);
-  // 後から打つ発現の手。反響はこの手のお告げ
+  const { now, reveal } = splitOmens(key, spec.omens ?? []);
+  // 後から打つ発現の手。反響はこの手のお告げ。打てるかは canUse と同じエンジンの発現
   if (isRevealHand(key)) {
-    if (!unrevealedOf(item)) return { applied: false, item, added: [], removed: [], reason: tr("未発現の MOD が無い", "No unrevealed mod"), handOmensUsed: [], echoUsed: false };
-    const echo = now.includes(ABYSSAL_ECHO_OMEN);
+    const echo = now.includes(ABYSSAL_ECHO_OMEN), why = revealReason(data, item, echo);
+    if (why) return { applied: false, item, added: [], removed: [], reason: why, handOmensUsed: [], echoUsed: false };
     return { ...revealFirst(data, { applied: true, item, added: [], removed: [] }, rng, echo), handOmensUsed: [], echoUsed: echo };
   }
   const r = applyCurrency(data, item, key, rng, now);

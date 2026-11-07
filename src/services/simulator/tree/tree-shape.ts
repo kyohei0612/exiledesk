@@ -4,7 +4,7 @@
  * 箱の比べ (行き先・つなぎ・まとめ) は tree-judge の judgeMemo 1 本 (S-50b)。前の世代の形の鍵の判定 (shapesOf・matchBox・settle・matchItem・matchTargets・linkSameShape と、
  * その下の形の鍵・体の比べ) は、台本 2 本 (_tree-patterns-ui・_tree-autolink-probe) を今の判定 (applyPick・runTree) へ移したので 11-07 に消した
  */
-import { type PatchData, type StageItem } from "../../craft-stage/engine";
+import { parseKey, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { missAims } from "./tree-miss";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
@@ -30,6 +30,8 @@ export type { SplitRule, SplitWhen } from "./tree-model";
 export type SplitBox = TreeBox & { next?: string };
 type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
+/** エッセンスの手の鍵の MOD (読みはエンジンの parseKey。ブリーチは null) */
+const essenceModIdOf = (key: string): string | null => { const k = parseKey(key); return k.type === "essence" ? k.modId : null; };
 export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
   const held = new Set(aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).map(aimKey));
   const junk = junkOf(item, missAims(data, aims));
@@ -87,7 +89,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       const p = c.parent ? doc.boxes[c.parent] : undefined;
       // 当たりの箱が無い時 (結果が「狙いが消えた」1 通り) も、手のエッセンスの MOD が完成の狙いにあれば付いている (10-27 夕モンキー 1: スピリット + ✦ だけの箱で
       // 強化のエッセンスを打つとスピリットが消えてグローバル防御が付くのに、狙い 0 の形に見えて始まりへ戻り、エッセンスを持ったまま回って止まった)
-      const essKey = p?.hand && effectOf(p.hand.currency) === "essence" ? p.hand.currency.split(":").slice(2).join(":") : null;
+      const essKey = p?.hand && effectOf(p.hand.currency) === "essence" ? essenceModIdOf(p.hand.currency) : null;
       const ess = p?.hand && effectOf(p.hand.currency) === "essence"
         ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim ?? (doc.memoAims ?? []).find((g) => g.modId === essKey)
         : undefined;

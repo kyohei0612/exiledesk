@@ -26,7 +26,7 @@ import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
 import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
 import { DIVINE_LT, divineBranches, divineMet, isDivineAim } from "./tree-divine";
-export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
+export { fractureChoices } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 
 /** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
 const TRIES_LIGHT = 1000;
@@ -134,8 +134,9 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     // カオススパム = その手 (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり (エミュのエンジンと同じ。前の木だけの「空きがあれば先に高貴を 1 回」は 11-05 オーナー「なんでそもそもこれエミュと違うエンジンなの」で外した)。
     // 1 手ずつはエンジンの applyCurrency (applyHand)、当たりはエンジンの aimDone。ツリーの物は繰り返す順番だけ (スパムシミュは使わない、オーナー「あっちはカオスオーブ全部打つ仕組み」)
     const cap = h.repeat.max ?? SPAM_CAP;
-    const open = targetsOf(data, aims).filter((t) => !aimDone(item, [t]));
-    const done = (x: StageItem): boolean => open.some((t) => aimDone(x, [t]));
+    // 当たり方は木の箱の分けと同じ sameText (aimOpts。前は modId だけで、同じ文の別 MOD で止まらず箱の分けと食い違った)
+    const open = targetsOf(data, aims).filter((t) => !aimDone(item, [t], aimOpts(data)));
+    const done = (x: StageItem): boolean => open.some((t) => aimDone(x, [t], aimOpts(data)));
     let r: StageApply = { applied: false, item, added: [], removed: [] };
     let it = item;
     for (let i = 0; i < cap; i++) {
@@ -369,7 +370,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
-  const had = okMemo.get(fk), got = (item: StageItem): Sample => { carryFloors(base.item, item, isWhittleHand(h) ? aimedAims(aims, aimedNow()) : null); const c = handOut(item); putCapped(okMemo, fk, c); return { item: c, note: null }; }; // 削減で残った外れの下限を持ち回る (S-65b)
+  const had = okMemo.get(fk), got = (item: StageItem): Sample => { carryFloors(data, base.item, item, isWhittleHand(h) ? aimedAims(aims, aimedNow()) : null); const c = handOut(item); putCapped(okMemo, fk, c); return { item: c, note: null }; }; // 削減で残った外れの下限を持ち回る (S-65b)
   if (had) return { item: had, note: null };
   for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
     const r = roll(from + i);
