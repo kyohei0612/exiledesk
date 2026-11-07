@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
-import { OMEN_KEY, kindOf, omensAllowedFor, stepCost, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
+import { OMEN_KEY, aimChainMode, omensAllowedFor, stepCost, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -148,20 +148,19 @@ watch([() => s.aims.value, () => s.item.value], () => { rolled.value = null; });
 /** 平均で何回に 1 回付くか */
 const every = (p: number): string => (p <= 0 ? "" : p >= 0.995 ? tr("毎回", "Every time") : tr(`${Math.round(1 / p).toLocaleString()} 回に 1 回`, `1 in ${Math.round(1 / p).toLocaleString()}`));
 /**
- * 数えた回し方を 1 行で (2026-10-16 要望 007801cc「何をどう回した数字か」)。aimChain の決まりそのまま。開いた時だけ出す (文字は最低限)
+ * 数えた回し方を 1 行で (2026-10-16 要望 007801cc「何をどう回した数字か」)。文の分けはエンジンの aimChainMode (aimChain と同じ分かれ方)。開いた時だけ出す (文字は最低限)
  */
 const howOpen = ref<string | null>(null);
 function howOf(r: AimOdd): string {
   const n = nameRow(r);
   const om = r.omens.some((o) => o !== OMEN_KEY.echoes) ? tr("お告げは毎回掛け直し。", "Omens are reapplied every time. ") : "";
-  if (r.currency === REVEAL) return tr("発現 (アビスの反響で 1 回引き直し) を、今の状態から繰り返す。候補に出れば当たり。", "Reveal (one reroll with Omen of Abyssal Echoes), repeated from the current state. A hit if the target is offered.");
-  switch (kindOf(r.currency)) {
-    case "desecrate":
+  const mode = aimChainMode(r);
+  if (mode === "reveal") return tr("発現 (アビスの反響で 1 回引き直し) を、今の状態から繰り返す。候補に出れば当たり。", "Reveal (one reroll with Omen of Abyssal Echoes), repeated from the current state. A hit if the target is offered.");
+  switch (mode) {
+    case "bone":
       return tr(`${n} → 発現 (アビスの反響で 1 回引き直し)。候補に出れば当たり。毎回今の状態に戻して打ち直す。${om}`, `${n} → reveal (one reroll with Omen of Abyssal Echoes). A hit if the target is offered. Restarts from the current state every time. ${om}`);
-    case "chaos":
+    case "spam":
       return tr(`${n} を続けて打つ (カオススパム)。今の MOD が消えても狙いが揃えば当たり。外れたらその結果に続けて打つ。${om}`, `${n} is used repeatedly (Chaos spam). A hit when all targets are on, even if current mods were removed. A miss keeps going from the result. ${om}`);
-    case "exalt":
-      return tr(`${n} を空きがあるうちは続けて打つ。狙いが揃えば当たり。今の MOD が消えた・空きが無くなったら今の状態に戻す。${om}`, `${n} is used repeatedly while there is an open slot. A hit when all targets are on. Restarts from the current state when a current mod is removed or no slot is left. ${om}`);
     default:
       return tr(`${n} を続けて打つ (外れても今の MOD が残っていればそのまま)。狙いが揃えば当たり。今の MOD が消えたら今の状態に戻す。${om}`, `${n} is used repeatedly (a miss keeps going while the current mods stay). A hit when all targets are on. Restarts from the current state when a current mod is removed. ${om}`);
   }

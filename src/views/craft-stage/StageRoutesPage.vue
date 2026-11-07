@@ -20,7 +20,7 @@ import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage, runesFit } from "./route-place";
-import { GRADE_KEY, OMEN_KEY, routeFromBlock, type Grade } from "../../services/craft-stage/engine";
+import { GRADE_KEY, OMEN_KEY, routeFromBlock, tierRankLabel, tierRankOf, type Grade } from "../../services/craft-stage/engine";
 import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
@@ -119,8 +119,9 @@ const aims = computed(() => (t.value ?? []).flatMap((tt) => {
   // 当たりになる値の幅全部 (T8 以上なら T8 の下〜付く一番上の段の上。モンキーテスト 10-23 の 6)。本番は OK まで一番下の段の幅だけ
   const tier = m.tiers[tt.minTierIndex];
   const text = (MONKEY ? aimRangeText(m, tt.minTierIndex, ilvl.value) : fillModText(m, tier ? tierDisplayRanges(tier) : [])).replace(/\n/g, " / ");
-  const rank = `T${m.tiers.length - tt.minTierIndex}`;
-  return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${tr(`${rank} 以上`, `${rank}+`)})` }];
+  // 段の札はエンジンの tierRankLabel (T1 は「以上」を付けない、D-04 と同じ)
+  const rank = tierRankLabel(tierRankOf(s.data.value!, tt.modId, tt.minTierIndex));
+  return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${rank})` }];
 }));
 const aimKey = computed(() => (t.value ?? []).map((x) => `${x.modId}#${x.minTierIndex}`).join(","));
 /** 当たりを 1 つ外す (最後の 1 つは外さない、選び直しで変える) */
@@ -314,7 +315,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <template v-if="aims.length === 1">
             <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("狙い", "TARGET") }} · {{ aims[0]!.side }}</p>
             <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ aims[0]!.text }}</p>
-            <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${aims[0]!.rank} 以上で当たり`, `Hit at ${aims[0]!.rank}+`) }}</span></p>
+            <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${aims[0]!.rank} で当たり`, `Hit at ${aims[0]!.rank}`) }}</span></p>
           </template>
           <!-- 当たりが 2 つ以上 (開発版だけ): どれか 1 つが付いたら止める -->
           <template v-else>
@@ -323,7 +324,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <li v-for="(a, i) in aims" :key="i" class="flex min-w-0 items-center gap-2 rounded bg-white/[0.04] px-2 py-1">
                 <span class="w-6 shrink-0 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ a.m.type === "suffix" ? "S" : "P" }}</span>
                 <span class="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--color-rarity-magic)]" :title="a.text">{{ a.text }}</span>
-                <span class="shrink-0 rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${a.rank} 以上`, `${a.rank}+`) }}</span>
+                <span class="shrink-0 rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ a.rank }}</span>
                 <button type="button" class="g-plain grid size-7 shrink-0 place-items-center opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="busy" :title="tr('この当たりを外す', 'Remove this target')" @click="removeAim(i)">×</button>
               </li>
             </ul>

@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { computed, nextTick, ref, watch } from "vue";
-import { aimTierKey, heldAnyOf, type ListRow, type ListTier } from "../../services/craft-stage/engine";
+import { aimTierKey, heldAnyOf, tierRankLabel, type ListRow, type ListTier } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, scrollToTop } from "../../utils/keep-place";
@@ -89,12 +89,12 @@ function isAim(modId: string, t: { name: string; ilvl: number }): boolean {
   return s.aims.value.some((a) => a.modId === modId && a.minTierIndex === idx);
 }
 /** 窓では押した段が最初からチェック済み (ほかの MOD も足せる。1 つだけならそのまま「確率を見る」) */
-function aimAt(modId: string, t: { name: string; ilvl: number; rank: string; text: string }, el: Element): void {
+function aimAt(modId: string, t: { name: string; ilvl: number; rank: string; tier: number; text: string }, el: Element): void {
   // やめる: 上の確率の一覧が消えて押した段が上へずれ、次のタップが棚に当たっていた (2026-10-09 スマホで確認)。押した段を同じ高さに残す
   if (isAim(modId, t)) { keepPlace(el, () => { s.aims.value = s.aims.value.filter((a) => a.modId !== modId); }); return; }
   const idx = tierIndexOf(modId, t);
   if (idx < 0) return;
-  s.aimPicker.value = { seed: { modId, minTierIndex: idx, label: `${t.text} (${tr(`${t.rank} 以上`, `${t.rank}+`)})`, at: `${modId}:${t.rank}` } };
+  s.aimPicker.value = { seed: { modId, minTierIndex: idx, label: `${t.text} (${tierRankLabel(t.tier)})`, at: `${modId}:${t.rank}` } };
 }
 
 /** 畳んだかどうか (見る人ごとの好み。保存できなくても動く) */
