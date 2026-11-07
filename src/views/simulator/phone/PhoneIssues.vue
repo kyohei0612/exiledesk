@@ -6,7 +6,8 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watchEffect } from "vue";
-import { useDismiss } from "../../../utils/use-dismiss";
+import ModalShell from "../../../components/ui/ModalShell.vue";
+import { simSheet } from "./sim-sheet";
 import { useTree } from "../tree/use-tree";
 import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
 import { phoneCheck, sheet, testedKey, usePhoneQuiz } from "./use-phone-quiz";
@@ -35,8 +36,7 @@ function open(id: string): void {
   listOpen.value = false;
   sheet.value = { id, issue: issues.value.filter((x) => x.boxId === id).map((x) => x.text).join(" / ") };
 }
-// 下から出る窓の形は共通の ModalShell に無いので殻は自前のまま、Esc だけ共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。前は自前の Esc で、重なった窓・中の段の表と一緒に 2 つ閉じていた)。外押しは後ろの @click.self のまま (escOnly)
-useDismiss(() => listOpen.value && issues.value.length > 0, [], () => { listOpen.value = false; }, { escOnly: true });
+// 殻は共通の ModalShell の下から出る形 (U-15・U-21、11-07 オーナー OK): Esc・後ろを押す・後ろのページの止め・重なりの段 z-300 は共通の物
 </script>
 
 <template>
@@ -48,10 +48,8 @@ useDismiss(() => listOpen.value && issues.value.length > 0, [], () => { listOpen
     <span v-if="issues.length" class="shrink-0 text-[12px] font-normal text-rose-100/80">{{ tr("見る ▾", "View ▾") }}</span>
   </button>
   <!-- 一覧の重ね窓 (閉じれば元の場所・スクロールのまま) -->
-  <div v-if="listOpen && issues.length" data-phone-issues-sheet class="fixed inset-0 z-[60] flex flex-col justify-end bg-black/55" @click.self="listOpen = false">
-    <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-rose-400/70 bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-      <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
-        <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
+  <ModalShell :open="listOpen && issues.length > 0" sheet :label="holesCount(issues.length)" :panel-class="simSheet('border-rose-400/70')" body-class="px-3 pb-3 pt-2" @close="listOpen = false">
+      <div data-phone-issues-sheet>
         <p class="text-[14px] font-bold text-rose-200">{{ holesCount(issues.length) }}</p>
         <p class="mb-2 break-words text-[12px] text-sim-dim">{{ tr("直さないと回した人がここで止まる。押すとその箱", "Runs stop here until fixed. Tap to open the box") }}</p>
         <div class="flex flex-col gap-1.5">
@@ -61,9 +59,8 @@ useDismiss(() => listOpen.value && issues.value.length > 0, [], () => { listOpen
           </button>
         </div>
       </div>
-      <div class="flex border-t border-white/10 px-3 py-2">
+    <template #footer>
         <button type="button" data-phone-issues-close class="g-btn !min-h-11 flex-1" @click="listOpen = false">{{ tr("閉じる", "Close") }}</button>
-      </div>
-    </div>
-  </div>
+    </template>
+  </ModalShell>
 </template>

@@ -6,7 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useDismiss } from "../../../utils/use-dismiss";
+import ModalShell from "../../../components/ui/ModalShell.vue";
 import TreeNote from "../tree/TreeNote.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -18,6 +18,7 @@ import { mapPick, phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneMap from "./PhoneMap.vue";
 import { tr } from "../../../i18n/lang";
 import { stepOf } from "../tree/tree-fail";
+import { simSheet } from "./sim-sheet";
 import PhoneBoxPeek from "./PhoneBoxPeek.vue";
 
 const t = useTree();
@@ -61,16 +62,13 @@ function returnHere(): void {
 // 木の中の位置: 今の段を横に書き、小さい箱を押すとその箱のアイテムと打つカレンシーの窓 (10-27 昼オーナー)
 const peek = ref<string | null>(null);
 watch(id, () => { peek.value = null; });
-// Esc は上の窓から 1 つずつ (アイテムの窓 PhoneBoxPeek は自分の useDismiss で先に閉じる)。
-// 下から出る窓の形は共通の ModalShell に無いので殻は自前のまま、Esc だけ共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。前は自前の Esc で、重なった窓・中の段の表と一緒に 2 つ閉じていた)。外押しは後ろの @click.self のまま (escOnly)
-useDismiss(() => !!box.value, [], () => { sheet.value = null; }, { escOnly: true });
+// 殻は共通の ModalShell の下から出る形 (U-15・U-21、11-07 オーナー OK): Esc・後ろを押す・後ろのページの止め・重なりの段 z-300 は共通の物。
+// 中のアイテムの窓 PhoneBoxPeek は自分の useDismiss で、Esc は窓の中の物から先に閉じる (ModalShell の cancelTopIn)
 </script>
 
 <template>
-  <div v-if="box" data-phone-sheet :data-box-id="id" class="fixed inset-0 z-[60] flex flex-col justify-end bg-black/55" @click.self="sheet = null">
-    <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-      <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
-        <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
+  <ModalShell v-if="box" :open="true" sheet :label="q.boxTitle(id)" :panel-class="simSheet()" body-class="px-3 pb-3 pt-2" @close="sheet = null">
+      <div data-phone-sheet :data-box-id="id">
         <!-- 足りない所から開いた時: 何が足りないかと直しに行くボタン (10-26 モンキー 7 の 22「押した先で何も直せず行き止まり」) -->
         <div v-if="sheet?.issue" data-phone-sheet-issue class="mb-2 rounded-lg border border-rose-400/50 bg-[#2a1416] px-2 py-1.5 text-[12px] text-rose-100">
           <p class="break-words">{{ sheet.issue }}</p>
@@ -104,12 +102,11 @@ useDismiss(() => !!box.value, [], () => { sheet.value = null; }, { escOnly: true
         <p class="mt-2 text-[11px] text-sim-dim">{{ tr("木の中の位置", "Where it is in the tree") }}<span> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></span></p>
         <PhoneMap :mini="id" peek @peek="(x) => (peek = x)" />
       </div>
-      <div class="flex gap-2 border-t border-white/10 px-3 py-2">
+    <PhoneBoxPeek v-if="peek" :id="peek" @close="peek = null" />
+    <template #footer>
         <!-- 戻り先を選んでいる時は「ここへ戻る」。普段は閉じるだけ (箱の中身とこの箱からの手を見る窓、10-26 夜オーナー) -->
         <button v-if="sheet?.pickFrom" type="button" data-phone-sheet-return class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="returnHere">{{ tr("ここへ戻る", "Return here") }}</button>
         <button type="button" data-phone-sheet-close class="g-btn !min-h-11 flex-1" @click="sheet = null">{{ tr("閉じる", "Close") }}</button>
-      </div>
-    </div>
-    <PhoneBoxPeek v-if="peek" :id="peek" @close="peek = null" />
-  </div>
+    </template>
+  </ModalShell>
 </template>
