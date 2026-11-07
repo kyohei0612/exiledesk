@@ -77,6 +77,8 @@ export { markFloorOf } from "./spec/desecrate-specs";
 // 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
 export type { ForceFlag } from "./apply-force";
 export { forceKey } from "./apply-force";
+// 指名の手が付けられない理由と、それが付け方のせいか (始めの状態の窓も同じ鍵で聞く、M-19)
+export { forceReason } from "./apply-currency";
 // 持った瞬間の % (クラフト台の MOD 一覧と同じ) と狙う
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";

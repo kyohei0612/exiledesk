@@ -116,6 +116,15 @@ export function useReason(data: PatchData, item: StageItem, key: string, omens: 
 }
 
 /**
+ * 指名の手 (force:、始めの状態を組む窓も同じ鍵で聞く) が今付けられない理由と、それが付け方のせいか (way = 別の付け方なら付きうる、M-19)。付けられるなら null。
+ * 決まり (冒涜の置き場は冒涜で・冒涜は 1 つまで E-60・フラクチャーは 1 つまで・冒涜は固定できない) は apply-force.ts の 1 か所で、画面は自前で持たない
+ */
+export function forceReason(data: PatchData, item: StageItem, key: string): { text: string; way: boolean } | null {
+  const r = applyCurrency(data, item, key, mulberry32(0), []);
+  return r.applied || r.random ? null : { text: r.reason ?? tr("付けられない", "Can't add"), way: !!r.way };
+}
+
+/**
  * 1 個打つ。打てない状態なら applied:false と理由 (item はそのまま)。
  * rng は 1 手ごとに mulberry32(seed) を渡す (同じ seed なら同じ結果)。omens は持っているお告げ
  */
