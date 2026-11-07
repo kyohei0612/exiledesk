@@ -15,7 +15,7 @@ import { ANCIENT_BONE_FLOOR, startFrom, type PatchData, type StageItem, type Sta
 import { stepOutcomes } from "../../simulator/sim-engine";
 import type { QuizStart } from "../quiz-recipe";
 import type { AutoModel } from "./auto-types";
-import { actionsOf, engActs, engKey, junkToView, Shape, type EngAct, type State } from "./auto-actions";
+import { actionsOf, engActs, engKey, junkToView, Shape, SIDE_OMEN, type EngAct, type State } from "./auto-actions";
 
 /** 代表を組む材料 */
 export interface EngCtx {
@@ -27,7 +27,6 @@ export interface EngCtx {
 }
 
 const SIDE = ["prefix", "suffix"] as const;
-const NECRO = ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"] as const;
 /** 形の数の上限 (これを超えたら対応外) */
 const MAX_STATES = 40000;
 
@@ -142,7 +141,7 @@ function repItem(sh: Shape, s: State, ctx: EngCtx): { item: StageItem; roles: Ma
   // 未発現は骨を打って付ける (側はお告げで決める)
   if (d >= 1 && d <= 4) {
     const side = d <= 2 ? 0 : 1;
-    const r = stepOutcomes(ctx.data, item, d === 2 || d === 4 ? "desecrate_ancient" : "desecrate", [NECRO[side]]);
+    const r = stepOutcomes(ctx.data, item, d === 2 || d === 4 ? "desecrate_ancient" : "desecrate", [SIDE_OMEN.necro[side]]);
     const o = r?.find((x) => !x.void && x.added.some((y) => y.unrevealed));
     if (!o || o.removed.length) return null;
     item = o.item;
@@ -152,7 +151,6 @@ function repItem(sh: Shape, s: State, ctx: EngCtx): { item: StageItem; roles: Ma
 }
 
 type Bought = Extract<QuizStart, { kind: "bought" }>;
-const SIDE_OMEN_EX = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" } as const;
 const sig = (x: StageItem): string => [...x.prefixes, ...x.suffixes].map((m) => `${m.modId}|${m.tierIndex}|${m.unrevealed ? "u" : ""}|${m.desecrated ? "d" : ""}|${m.fractured ? "f" : ""}`).sort().join(",");
 
 /**
@@ -182,7 +180,7 @@ export function startStates(sh: Shape, ctx: EngCtx, st: Bought, minT: number[][]
     };
     for (const side of SIDE) {
       const want = st.fill?.[side] ?? 0;
-      for (let k = 0; k < 20 && br.some((b) => b.item[side === "prefix" ? "prefixes" : "suffixes"].length < want); k++) step("exalt", [SIDE_OMEN_EX[side]], (x) => x[side === "prefix" ? "prefixes" : "suffixes"].length < want);
+      for (let k = 0; k < 20 && br.some((b) => b.item[side === "prefix" ? "prefixes" : "suffixes"].length < want); k++) step("exalt", [SIDE_OMEN.exalt[SIDE.indexOf(side)]!], (x) => x[side === "prefix" ? "prefixes" : "suffixes"].length < want);
     }
     for (const x of st.steps ?? []) step(x.use, x.omens ?? []);
     const fracture = pk.fracture ?? st.fracture;

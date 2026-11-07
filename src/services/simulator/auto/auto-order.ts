@@ -8,6 +8,7 @@
  * (アストリッドの創造性は 2 つ目のエッセンスのすぐ前)、自分で足したルーンはすぐ後ろの行に付いて動く。
  * 1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
+import { RUNE_PREFIX } from "../../craft-stage/engine";
 import type { OrderResult } from "./auto-types";
 import type { AutoFilled, AutoJob, AutoMsg, AutoSimIn } from "./auto-order.worker";
 import type { QuizRule, Situation } from "../quiz-recipe";
@@ -31,7 +32,7 @@ export const movableOf = (inp: OrderInput): string[] => inp.keys.filter((k) => m
 /** 並べた行から ④ の順番を組み立てる (増強は上・要るルーンは前・自分で足したルーンはすぐ後ろの行に付く) */
 export function assemble(inp: OrderInput, movable: string[]): string[] {
   // 自分で足したルーン: 今の順番ですぐ後ろの並べる行に付く (無ければ一番下)
-  const free = inp.keys.filter((k) => k.startsWith("rune:") && !inp.runeAt[k]);
+  const free = inp.keys.filter((k) => k.startsWith(RUNE_PREFIX) && !inp.runeAt[k]);
   const attach = new Map<string, string[]>();
   const tail: string[] = [];
   for (const r of free) {

@@ -13,7 +13,7 @@ import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
 import { fillEngine, startStates } from "./auto-engine";
-import { Shape } from "./auto-actions";
+import { AUTO_OMENS, Shape } from "./auto-actions";
 import type { AutoBuilt, AutoInput, AutoModel, Grade, MCand, MSlot } from "./auto-types";
 
 export type { Grade, MCand, MSlot, AutoModel } from "./auto-types";
@@ -21,9 +21,7 @@ export const GRADES: readonly Grade[] = ["a0", "a1", "a2", "b0", "b4"];
 
 const PRICE_KEYS = [
   "exalt", "exalt_greater", "exalt_perfect", "chaos", "chaos_greater", "chaos_perfect", "annul", "desecrate", "desecrate_ancient", "reveal",
-  "OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofSinistralErasure", "OmenofDextralErasure",
-  "OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralCrystallisation",
-  "OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenofAbyssalEchoes", "OmenofLight",
+  ...AUTO_OMENS,
 ];
 const ASTRID = "Astrid's Creativity";
 const no = (ja: string, en: string): AutoBuilt => ({ ok: false, reason: { ja, en } });

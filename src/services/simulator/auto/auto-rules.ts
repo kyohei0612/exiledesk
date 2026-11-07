@@ -6,6 +6,7 @@
  *   answerFor: ⑥ で答えの無かった状況 → 計算の形に落として方策の手 (段が低いまま付いた札は外れに数える)
  * 画面の側で使う (recipe は quizFromSim の物)。エンジンのデータは読まない
  */
+import { RUNE_PREFIX } from "../../craft-stage/engine";
 import type { QuizRules } from "../quiz-build";
 import type { QuizAction, QuizRecipe, QuizRule, Situation, When } from "../quiz-recipe";
 import type { AutoModel } from "./auto-types";
@@ -64,7 +65,7 @@ function missingRunes(m: AutoModel, recipe: QuizRecipe): string[] {
 /** 方策 → ⑤ の答え (工程 routeId、既定 main)。要るルーンを差す答えが先、完成の形は書かない */
 export function rulesFromDetail(m: AutoModel, det: OrderDetail, recipe: QuizRecipe, routeId = "main"): QuizRules {
   const have = startRunes(recipe).length;
-  const rules: QuizRule[] = missingRunes(m, recipe).map((en, i) => ({ when: { aug: have + i }, do: { use: `rune:${en}` } }));
+  const rules: QuizRule[] = missingRunes(m, recipe).map((en, i) => ({ when: { aug: have + i }, do: { use: `${RUNE_PREFIX}${en}` } }));
   const t = tableOf(m, det, recipe, routeId);
   for (const { when, act } of t.best.values()) {
     if (m.slots.every((sl) => when[sl.id] === 2)) continue;
