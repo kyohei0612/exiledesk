@@ -11,7 +11,6 @@ import type { RowTag } from "../../../components/for-share/item/stage-item-row-t
 import { useTree } from "./use-tree";
 import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
-import { midAims } from "../../../services/simulator/tree/tree-veil";
 import { catalystPart } from "../../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../../i18n/lang";
 
@@ -35,10 +34,10 @@ export function useGoalShown() {
   const ways = computed((): StageMod[] => {
     const d = s.data.value;
     if (!d) return [];
-    const doc = t.doc.value, way = wayRows(d, doc), brq = breach.value;
-    // 木の手で打つエッセンスの MOD も完成形のカードに「途中で消える」で出す (S-30d。見せるだけ)
-    const hand = wayRows(d, doc, midAims(doc).filter((a) => !way.some((m) => m.modId === a.modId) && brq?.modId !== a.modId).map((a) => ({ ...a, tier: 1 })));
-    return [...way, ...hand, ...(brq ? [brq] : [])];
+    const way = wayRows(d, t.doc.value), brq = breach.value;
+    // 木の手で打つエッセンスの MOD は出さない (S-30d 撤回 11-07、オーナー「別に途中で消えてもここに表示しなくてよくね」。完成形に無い物は外れ = S-33c)。
+    // 品質の上限超えで自動で出るブリーチの行は特例で残す (S-31、11-07 オーナー「完成形にはだしていいんじゃないあいつ特例でしょたしか」)
+    return [...way, ...(brq ? [brq] : [])];
   });
   /** 上限を溢れたクラフト MOD の束 (S-30b)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
   const bundle = computed(() => (s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));

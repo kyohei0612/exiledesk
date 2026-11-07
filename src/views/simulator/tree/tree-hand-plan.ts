@@ -25,7 +25,7 @@ import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
-import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
+import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
 import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
@@ -36,7 +36,6 @@ export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: s
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
   /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil) */ veil?: "keep" | "pick";
-  /** エッセンスの「ブロックに使う」☑ (S-33b) */ block?: boolean;
   /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number;
   /** 神の手の目標の数値と予見リセット (S-202、tree-model の Hand.targets・foreReset) */ targets?: readonly DivineTarget[]; foreReset?: boolean }
 
@@ -114,7 +113,6 @@ export function handOf(p: HandPick): Hand {
     // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も (S-27d。消せる MOD が無い手には呼ぶ側が渡さない)
     ...(p.keep ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && isBone(p.held) ? { veil: p.veil } : {}),
-    ...(p.block && effectOf(p.held) === "essence" ? { block: true as const } : {}),
     ...(p.targets?.length && p.held === DIVINE ? { targets: p.targets.map((x) => ({ ...x })), ...(p.foreReset ? { foreReset: true as const } : {}) } : {}),
   };
 }
@@ -157,8 +155,6 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     // 出うる MOD ごとに当たりの箱 (前は 1 つ目だけで、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)。
     // 当たりにするのは完成の狙いの MOD だけ。狙いで無い MOD が付くだけのエッセンス (冒涜の外れを無限のエッセンスで置き換える等) は当たりを作らず、
     // applyPick が結果を「付いた」の箱 1 つにする (10-25 オーナー「ここに関してはあたりなんてもんは存在しない」、前は筋力・器用さ・知性の当たり 3 つ + 狙いが消えたで 4 つ出た)
-    // ブロックに使う ☑ は付く MOD を当たりの箱にする (S-33b)
-    if (blockHand(h)) return out;
     const goals = [...(doc.memoAims ?? []), ...aimsOf(doc)];
     return out.filter((a) => goals.some((g) => g.modId === a.modId));
   }

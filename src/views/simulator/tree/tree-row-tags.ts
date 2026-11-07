@@ -25,9 +25,10 @@ import { inWay, isBreachAim } from "./tree-way-mods";
  * エッセンス・合金で付いた行は「外れ MOD」にまとめず MOD の名前で出す: 完成形の狙い・途中で消える MOD・ブリーチはふつうの色、ほかは外れ MOD と同じ赤。それ以外の札はそのまま
  */
 export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
-  const out = new Map(tags), goalT = targetsOf(d, doc.memoAims ?? []), o = aimOpts(d);
+  const out = new Map(tags), goalT = targetsOf(d, doc.memoAims ?? []), o = aimOpts(d), mid = new Set(midAims(doc).map((a) => a.modId));
   for (const m of [...it.prefixes, ...it.suffixes]) {
-    const tag = out.get(m.modId);
+    // 完成形に無いエッセンスの MOD は札が無い (S-33c) ので、ここでは外れと同じ赤の名前に拾う
+    const tag = out.get(m.modId) ?? (mid.has(m.modId) ? ({ text: "", tone: "bad", replace: true, title: modText(m) } satisfies RowTag) : undefined);
     if (!tag?.replace || tag.tone !== "bad" || m.fractured || !(m.crafted || craftedKindOf(d, m))) continue;
     if (isAimMod(m, goalT, o) || inWay(doc, m.modId) || isBreachAim({ modId: m.modId, tier: 1 })) out.delete(m.modId);
     else out.set(m.modId, { ...tag, text: modText(m) });
@@ -35,10 +36,12 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
   return out;
 }
 /**
- * 行に外れ MOD の札を置く。木の手で付けた完成形に無いエッセンスの MOD は外れでも札を付けず、MOD の文のまま (S-33c・S-82、11-07 オーナー
- * 「エッセンスはとりあいずハズレＭＯＤとして表示はしないでおこうか。つけたエッセンスはそのままカードに表示させよう。」。fb-tier-label の b2b0ab9db の表示の所だけ)
+ * 外れ MOD の札。木の手で付けた完成形に無いエッセンスの MOD は判定では外れでも札を付けず、MOD の文のまま (null。S-33c・S-82、11-07 オーナー
+ * 「エッセンスはとりあいずハズレＭＯＤとして表示はしないでおこうか。つけたエッセンスはそのままカードに表示させよう。」。前は「外れ MOD (エッセンス)」)
  */
-export const putMiss = (out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string): void => { if (!midAims(doc).some((a) => a.modId === m.modId)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title }); };
+export const missTag = (doc: TreeDoc, m: StageMod, title: string): RowTag | null => (midAims(doc).some((a) => a.modId === m.modId) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title });
+/** 行に外れ MOD の札を置く (完成形に無いエッセンスの MOD は置かない = 文のまま) */
+export const putMiss = (out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string): void => { const t = missTag(doc, m, title); if (t) out.set(m.modId, t); };
 /** 選んで付けた MOD (エッセンス・合金・発現済みの冒涜)。消去を持った時も手の窓のカードは箱のカードのまま (S-82) */
 export const chosenMod = (d: PatchData, m: StageMod): boolean => !m.unrevealed && !!(m.desecrated || m.crafted || craftedKindOf(d, m));
 /** 箱 boxId の見本 it の札 (箱のカードと同じ呼び方。手の窓のカードで同じ物) */

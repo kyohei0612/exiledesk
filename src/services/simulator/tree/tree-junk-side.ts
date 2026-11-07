@@ -12,15 +12,15 @@ export function sideKeyOf(before: StageItem, after: StageItem): string | undefin
 }
 /**
  * 1 手の後の次の MOD 群の鍵 (S-65b の総則): 側の増減だけでは同じに見える差を足す。打った後の形が＝なら同じ鍵 = 1 枝 (オーナー 11-01「ようは＝ってはなしだからね」)。
- * `x:` 消えた狙い (kept = 印、S-27d の残したい MOD) / `u:` 冒涜の未発現の増減 / `f:` 増えた ✦ の側と狙いか外れか
+ * `u:` 冒涜の未発現の増減 / `f:` 増えた ✦ の側と狙いか外れか (kept = 印)。
+ * 消えた狙いの `x:` は 11-07 にやめた: ☑ の無い途中の狙いも外れになったので、消えた途中の狙いは外れの数で分かれる (S-27e・S-33c ④)
  */
-export function nextKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined, held: (it: StageItem, id: string) => boolean, noVeil = false): string | undefined {
+export function nextKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined, noVeil = false): string | undefined {
   const all = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes];
-  const gone = [...(kept ?? [])].filter((id) => held(before, id) && !held(after, id)).sort();
   const veil = (l: StageMod[]): number => l.filter((m) => m.unrevealed).length;
   const up = veil(after.prefixes) - veil(before.prefixes), us = veil(after.suffixes) - veil(before.suffixes);
   const star = all(after).find((m) => m.fractured && !all(before).some((x) => x.fractured && x.modId === m.modId));
-  const parts = [...(gone.length ? [`x:${gone.join(",")}`] : []), ...((up || us) && !noVeil ? [`u:${up}|${us}`] : []), ...(star ? [`f:${star.side === "prefix" ? "p" : "s"}${kept?.has(star.modId) ? "a" : "j"}`] : [])];
+  const parts = [...((up || us) && !noVeil ? [`u:${up}|${us}`] : []), ...(star ? [`f:${star.side === "prefix" ? "p" : "s"}${kept?.has(star.modId) ? "a" : "j"}`] : [])];
   return parts.join(";") || undefined;
 }
 /** 側の鍵か (フラクチャーの鍵と見分ける) */

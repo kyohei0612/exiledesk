@@ -9,7 +9,7 @@ import type { PatchData, StageItem, StageMod } from "../../../services/craft-sta
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { aimedOfCard, outsideAimed, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { fractureMarks } from "../../../services/simulator/tree/tree-model";
-import { midAims, stoneAims } from "../../../services/simulator/tree/tree-veil";
+import { stoneAims } from "../../../services/simulator/tree/tree-veil";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
 import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample";
@@ -34,16 +34,11 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const picks = computed(() => { const d = s.data.value; if (!d) return []; const am = aimedNow(d, o.item.value); return choices.value.filter((c) => am.has(c.mod.modId)); });
   /** 残したい MOD の欄を出すか = 聞く手で、選べる狙いが 1 つ以上 (0 なら欄を出さず全部消えてよい) */
   const show = computed(() => ask.value && picks.value.length > 0);
-  /**
-   * 消える手の既定 = 持っている狙い (カードの見本の ☑ の印)。消去の既定は全部消えてよいだが、持っている途中の狙いは残す側 (S-33c。全部の候補になる時は全部消えてよいのまま、S-27b。
-   * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」)
-   */
+  /** 消える手の既定 = 持っている狙い (カードの見本の ☑ の印)。消去の既定は全部消えてよい (S-27。完成形に無いエッセンスの MOD は外れなので残す側に入れない = S-33c、11-07) */
   const defaults = (): string[] => {
     const d = s.data.value;
-    if (!d) return [];
-    if (!isRemove.value) return keepDefaultOf(choices.value, aimedNow(d, o.item.value), stoneAims(t.doc.value)).map(aimKey);
-    const am = aimedNow(d, o.item.value), mid = choices.value.filter((c) => am.has(c.aim.modId) && midAims(t.doc.value).some((a) => a.modId === c.aim.modId));
-    return mid.length && mid.length < choices.value.length ? mid.map((c) => aimKey(c.aim)) : [];
+    if (!d || isRemove.value) return [];
+    return keepDefaultOf(choices.value, aimedNow(d, o.item.value), stoneAims(t.doc.value)).map(aimKey);
   };
   /** 消去でない消える手で、候補が 1 つ (確定で消える = 聞かない) か (S-27f) */
   const lone = computed(() => !isRemove.value && !ask.value && choices.value.length === 1);
@@ -52,7 +47,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     const d = s.data.value, it = o.item.value, h = o.held.value;
     if (!d || !it || !h || !(ask.value || lone.value)) return [];
     const am = aimedNow(d, it), stay = new Set(outsideAimed(d, t.doc.value, { currency: h, omens: o.omens.value, catalyst: null, quality: 0 }, am, it));
-    const goals = [...(t.doc.value.memoAims ?? []), ...midAims(t.doc.value)].filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
+    const goals = [...(t.doc.value.memoAims ?? [])].filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
     return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !choices.value.some((c) => c.mod.modId === m.modId) && goals.some((g) => aimOn(d, m, g)));
   });
   const checked = ref<string[]>((o.current?.keep ?? []).map(aimKey));

@@ -25,7 +25,7 @@ import TreeRevealCard from "./TreeRevealCard.vue";
 import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE, divineStart } from "../../../services/simulator/tree/tree-divine";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
-import { boxTagsOf, chosenMod } from "./tree-row-tags";
+import { boxTagsOf, putMiss } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -70,11 +70,14 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
   // 確定で消える (候補 1 つ) は聞かないので替えない。替えるのは消えうる候補の MOD だけ (光のお告げなら冒涜だけ、S-27b)
   if (!keepAsk.value) return tags;
   const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
+  // ☑ した完成形の狙いは前の手で外れでも狙いに戻る (結果の箱の判定 nextAimed と同じ)。外れのままなのは狙いでない外れ MOD だけ
+  const goals = new Set((t.doc.value.memoAims ?? []).map((g) => g.modId));
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
-    // 残したい外れも札のまま。選んで付けた MOD は箱のカードのまま (S-82)
-    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad") out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
-    else if (!s.data.value || !chosenMod(s.data.value, m)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
+    // 残したい外れも札のまま。☑ の無い候補は選んで付けた MOD (エッセンス・冒涜・合金) も狙いも外れ MOD (11-07 オーナー「残したいMODで選択したらその他をハズレMOD扱いだろ」。
+    // 前は選んで付けた MOD だけ名前のまま残した)。候補の外 (お告げで触らない側) は替えない。完成形に無いエッセンスの MOD は外れでも文のまま (S-33c)
+    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad" || goals.has(m.modId)) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
+    else putMiss(out, t.doc.value, m, tr(`消えてよい MOD: ${modText(m)}`, `May be removed: ${modText(m)}`));
   }
   return out;
 }
@@ -248,11 +251,6 @@ const keepAsk = k.ask;
 const keepShow = computed(() => k.show.value || k.fixedOnly.value);
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
 const addLabels = computed((): string[] => (keepShow.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
-/** エッセンスの「ブロックに使う」☑ (S-33b)。付く MOD が完成形の狙いの手には出さない */
-const blockOn = ref(!!props.current?.block);
-const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
-function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
-watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 /**
  * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (入れ替え、エンジンの rune:名前@n)、
  * 本体 (と空き) = 空きへ。木でソケットを足す手は無い (11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
@@ -277,7 +275,7 @@ function onSocket(n: number): void {
   socketWhy.value = null;
   ok();
 }
-const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}), ...(divOn.value && divTargets.value.length ? { targets: divTargets.value.map((x) => ({ ...x })), ...(divReset.value && item.value?.foreseen ? { foreReset: true as const } : {}) } : {}) }) : null));
+const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: k.aims.value } : {}), ...(divOn.value && divTargets.value.length ? { targets: divTargets.value.map((x) => ({ ...x })), ...(divReset.value && item.value?.foreseen ? { foreReset: true as const } : {}) } : {}) }) : null));
 const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
@@ -402,9 +400,6 @@ function ok(): void {
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
-      <label v-if="canBlock" data-tree-hand-block class="flex min-h-7 cursor-pointer items-center gap-2 text-[12px] max-md:min-h-11 max-md:text-[14px]" :title="tr('付いた MOD を外れにせず、その MOD として箱に持つ (消えたら同じ中身の箱へ戻れる)', 'Keep the added mod as itself instead of a miss (once removed, the run can rejoin a matching box)')">
-        <input type="checkbox" class="max-md:size-5" :checked="blockOn" @change="toggleBlock" />{{ tr("ブロックに使う (付いた MOD を外れにしない)", "Use as a block (don't count the added mod as a miss)") }}
-      </label>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
       <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>

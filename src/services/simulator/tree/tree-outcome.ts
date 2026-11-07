@@ -15,26 +15,17 @@ import { isInfiniteEssence } from "../../craft-stage/apply-essence";
  * 筋力・器用さが付いた = 外れ MOD の 2 枝」)。ほかのエッセンスは付く MOD が決まっているので今のまま
  */
 export const infiniteAim = (key: string | undefined): boolean => !!key && isInfiniteEssence(key);
-import { isRevealHand, midAims, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
+import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
 import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
-import { goneOf, gotOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
+import { gotOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 import { itemKeyOf } from "./tree-sample-key";
 import { mainSideOf, rolledOutcomes } from "./tree-uncountable";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
-/** 途中の狙いのうち、この人が印を持ち、この手で「狙いが消えた」に数える物。確定で消える時 (候補 1 つ、S-27b) は消えてよい扱いで数えない (S-33b) */
-function midOf(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aimed: ReadonlySet<string> | null | undefined): Aim[] {
-  const mid = midAims(doc).filter((a) => aimed?.has(a.modId));
-  if (!mid.length || !h) return mid;
-  const g = goneOf(data, before, h.currency, h.omens);
-  return g?.size === 1 ? mid.filter((a) => !g.has(a.modId)) : mid;
-}
-/** aims に途中の狙いを足す (同じ MOD は足さない) */
-const withMid = (aims: readonly Aim[], mid: readonly Aim[]): Aim[] => [...aims, ...mid.filter((a) => !aims.some((x) => x.modId === a.modId))];
 /** 狙いが消えたも側で分ける (S-65・S-71g)。消去もほかの手と同じ (11-04、S-28e の中身の鍵は撤回) */
 const lostSided = (_h: Hand | null | undefined): boolean => true;
 /** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65。閉じていれば今のまま) */
@@ -60,30 +51,20 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
   if (isDivineAim(b.hand)) return divineOutcome(after, b.hand!);
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
-  const am = noStones(doc, b.hand, keptAimedOf(doc, b.hand, aimed)), nx = nextKept(doc, b.hand, am, aimed);
-  const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, withMid(aims0, midOf(data, doc, b.hand, before, am)), am)) : aims0;
+  const am = noStones(doc, b.hand, keptAimedOf(doc, b.hand, aimed)), nx = am;
+  const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, aims0, am)) : aims0;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
   // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
   if (!key || effectOf(key) === "fracture") {
-    const fo = withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, nx), before, after, got);
+    const fo = withGot(data, nextKeyed(doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, nx), before, after, got);
     // ☑ に無い狙いが固定された結果は外れ (当たりの箱は ☑ の札だけ = 手を置く時の onlyOf と同じ、S-22。前は当たりのまま行き先が無かった = 枝の外れ探しの rowFracStar b9、11-06)
     return key && fo.out === "hit" && own.length && !fo.hits.some((a) => own.some((x) => x.modId === a.modId)) ? { ...fo, out: "junk", hits: [] } : fo;
   }
-  const oc = withGot(data, nextKeyed(data, doc, b, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, nx), before, after, got);
+  const oc = withGot(data, nextKeyed(doc, b, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, nx), before, after, got);
   // 数え上げられない手は当たりの人も形で分ける (S-21。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
   return oc.out === "hit" && b.hand && mainSideOf(data, before, b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
-}
-/**
- * 次の鍵 (x: 消えた狙い) で見る狙い = 残したい MOD の印 + 打つ前の ☑ の途中の狙い (S-33c、付いている間は狙い = nextAimed の midKept と同じ)。
- * 途中の狙いは消えてよいので狙いが消えたにはしない (aims には足さない) が、消えた枝と残った枝は x: で別の箱 (前は同じ「外れが消えた」に入り、中身の違う人が 1 箱に混ざった = FmNY7Wwv b18・b23)
- */
-function nextKept(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined, aimed: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
-  // 消去は ☑ していない MOD を全部外れに数える (途中の狙い = エッセンスも。nextAimed の midKept と同じ、11-06 オーナー「残したいMODで選んでない奴は全部ハズレだろ」)
-  if (!am || !aimed || !keptAimsOf(doc, h) || (h && effectOf(h.currency) === "remove")) return am;
-  const mid = midAims(doc).map((a) => a.modId).filter((id) => aimed.has(id) && !am.has(id));
-  return mid.length ? new Set([...am, ...mid]) : am;
 }
 /** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33)。残したければ人が ☑ */
 function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
@@ -91,13 +72,11 @@ function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<stri
   const st = new Set(stoneAims(doc).map((a) => a.modId));
   return st.size ? new Set([...am].filter((id) => !st.has(id))) : am;
 }
-/** この人が狙いを持っているか (段は完成形の段。同じ MOD の低い段に替わった人は消えた人、狙いの中身 S-60 と同じ) */
-const heldBy = (data: PatchData, doc: TreeDoc) => (it: StageItem, id: string): boolean => aimHeldOn(data, it, (doc.memoAims ?? []).find((g) => g.modId === id) ?? { modId: id, tier: 99 }, { sameText: true });
 /** 外れ・打った後・狙いが消えたに次の MOD 群の鍵を足す (S-65b の総則)。残したい MOD の消去は中身の鍵 (S-28e)、印の無い乱数のフラクチャーは S-41 の鍵のまま、当たりは ☑ の札 */
-function nextKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, b: Pick<TreeBox, "hand">, oc: T, before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): T {
+function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, b: Pick<TreeBox, "hand">, oc: T, before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): T {
   if ((oc.out === "hit" && (oc as { hits?: readonly Aim[] }).hits?.length !== 0) || fracFree(doc, b.hand)) return oc;
   // 発現で選ぶ手は打った後に未発現が残らない (③ 見積もりは発現の前の形)
-  const nk = nextKeyOf(before, after, kept, heldBy(data, doc), veilPick(b.hand));
+  const nk = nextKeyOf(before, after, kept, veilPick(b.hand));
   return nk ? { ...oc, junkKey: joinKeys(oc.junkKey, nk) } : oc;
 }
 /** 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る) */
@@ -232,13 +211,13 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
-        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, nextKeyOf(it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)), heldBy(data, doc), veilPick(h)))!); }
-        for (const o of outs) if (lostOf(o)) { const e = nextKeyed(data, doc, { hand: h }, sided({ out: "lost", hits: [] }, it, o.item, h), it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed))); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
+        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, nextKeyOf(it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)), veilPick(h)))!); }
+        for (const o of outs) if (lostOf(o)) { const e = nextKeyed(doc, { hand: h }, sided({ out: "lost", hits: [] }, it, o.item, h), it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed))); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
         continue;
       }
       for (const o of outs) {
         const am = noStones(doc, h, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)));
-        const ra0 = am ? keptPlus(doc, h, withMid(aims, midOf(data, doc, h, it, am)).filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
+        const ra0 = am ? keptPlus(doc, h, aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
         const pick = PICK_EFFECTS.includes(k);
         // 残したい MOD の消去は ☑ の物だけで消えた / 残ったを見る (外れの MOD でも「消えた」の枝を出す、S-28e・S-21。印で絞ると枝が無くて人が止まった)
         const ra = pick ? pickedAims(data, it, ra0, extra) : ra0;
@@ -247,7 +226,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         // 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // フラクチャーは側で分けない (エッセンスは分ける。boxOutcomeOf と同じ、S-65・S-65b。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = k === "fracture" ? undefined : sideKeyOf(it, o.item);
-        const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(data, doc, { hand: h }, e, it, o.item, nextKept(doc, h, am, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)));
+        const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(doc, { hand: h }, e, it, o.item, am);
         if (freeSide) { const e = nk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
         if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = nk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk }); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」

@@ -4,6 +4,7 @@
  * ここは画面の作りを呼ばない (同じ関数で答えを作ると、関数が間違っていても合ってしまう)。
  */
 import { inflateRawSync } from "node:zlib";
+import { readFileSync } from "node:fs";
 
 export const GAP_Y = 360; // src/services/simulator/tree/tree-model.ts の GAP_Y
 const SPECIAL = new Set(["restart"]);
@@ -62,49 +63,21 @@ export const isStrip = (b) => Array.isArray(b?.hand?.keep) && b.hand.keep.length
 export const MISS_OUTS = ["junk", "lost", "junkGone", "any"];
 /** 消去の直線の途中の箱 = 直線の箱で、自分に戻りが無く、どの箱も自分へ戻らない (乗せても線が出ないはず) */
 export const stripMiddles = (doc) => Object.values(doc.boxes).filter((b) => isStrip(b) && !b.back && !Object.values(doc.boxes).some((x) => x.back === b.id));
+// 道の上の狙いの数え pathAims・pathMids は 11-07 にやめた: 外れ MOD でない行は配置の ☑ の印 + 完成形に無いエッセンスの MOD とちょうど同じ (R-34) = 猿の口の aimedRows と下の midEssences で見る (watch.mjs の checkCards)
+/** 無限のエッセンスの鍵 (付く MOD が 1 つに決まらないので外す、tree-veil の essenceModOf と同じ)。表はクライアント由来の src/services/htc/essence-keys.json */
+const INFINITE = new Set(Object.entries(JSON.parse(readFileSync(new URL("../../src/services/htc/essence-keys.json", import.meta.url), "utf8")).keys).filter(([, v]) => / of the Infinite$/.test(v?.en ?? "")).map(([k]) => k));
 /**
- * その箱へ来られる道の上の狙い (親と、その箱・上の箱へ戻ってくる箱をたどる。道の狙いより広め)。
- * 外れの箱の見本で「外れ MOD」でない行は、この中の狙いのはず (junkByCheck: ☑ していない完成形の MOD も外れ MOD)
+ * 完成形に無いエッセンスの MOD の modId (木の手で打つエッセンスの MOD のうち完成形に無い物、S-33c)。判定では外れでもカードは MOD の文のまま (11-07 オーナー
+ * 「つけたエッセンスはそのままカードに表示させよう」) = R-34 の「外れ MOD でない行」に入る。木の手の鍵だけから出す (画面の tree-veil の midAims は呼ばない)
  */
-export function pathAims(doc, id) {
-  // 始まりから付いている完成の狙いも狙い (外れの箱の札で「外れ MOD」と出さない、a1abbf41)
-  const goals = new Set((doc.memoAims ?? []).map((a) => a.modId));
-  const aims = new Set((doc.start?.mods ?? []).map((m) => m.modId).filter((m) => goals.has(m)));
-  for (const x of pathBoxes(doc, id)) {
-    if (x === id) continue;
-    const b = doc.boxes[x];
-    if (b.aim?.modId) aims.add(b.aim.modId);
-    for (const a of b.anyOf ?? []) aims.add(a.modId);
-  }
-  // 途中の狙い (S-33c) も付いている間は名前の行
-  for (const m of pathMids(doc, id)) aims.add(m);
-  return aims;
-}
-/** その箱へ来られる道の箱 (親と、その箱・上の箱へ戻ってくる箱をたどる) */
-function pathBoxes(doc, id) {
-  const seen = new Set(), todo = [id];
-  while (todo.length) {
-    const x = todo.pop();
-    if (!x || seen.has(x) || !doc.boxes[x]) continue;
-    seen.add(x);
-    todo.push(doc.boxes[x].parent, ...Object.values(doc.boxes).filter((y) => y.back === x).map((y) => y.id));
-  }
-  return seen;
-}
-/**
- * その箱へ来られる道で手で打つエッセンスの MOD のうち完成形に無い物 = 途中の狙い (S-33c、tree-veil の midAims と同じ。無限のエッセンスはキーの表が TS にあり見分けない = 許す数が甘くなるだけ)。
- * ☑ を外した手・全部消えてよい消去の後も付いている間は狙いなので、外れ MOD でない行に数えてよい (11-02 オーナー「狙いの完成に含めるって話」)
- */
-export function pathMids(doc, id) {
+export function midEssences(doc) {
   const goals = new Set((doc.memoAims ?? []).map((a) => a.modId)), out = new Set();
-  for (const x of pathBoxes(doc, id)) {
-    if (x === id) continue;
-    const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(doc.boxes[x].hand?.currency ?? "");
-    if (m && !goals.has(m[1])) out.add(m[1]);
+  for (const b of Object.values(doc.boxes)) {
+    const k = b.hand?.currency ?? "", m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(k);
+    if (m && !INFINITE.has(k) && !goals.has(m[1])) out.add(m[1]);
   }
   return out;
 }
-
 /** 外れの箱 (外れ・狙いが消えた) で、親の手と同じ手を選べば戻るはずの箱 (見張りの (6) で手を足す所) */
 export function missBoxes(doc) {
   return Object.values(doc.boxes).filter((b) => (b.out === "junk" || b.out === "lost") && b.parent && doc.boxes[b.parent]?.hand);

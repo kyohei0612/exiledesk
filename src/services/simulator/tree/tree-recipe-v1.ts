@@ -111,6 +111,8 @@ export function premiseOf(rec: TreeDoc, schema: TreeDoc["schema"]): TreeDoc {
   return { ...d, schema, seq: 0, boxes: { start: { id: "start", x: 0, y: 0, out: "start", aim: null, hand: null, outs: [], back: null, done: null, parent: null } } };
 }
 
+/** 道の札から鍵 x: (消えた途中の狙い、11-07 にやめた) を外す。例 `s/junk[s:0|1;x:A]` → `s/junk[s:0|1]`、`s/junk[x:A]` → `s/junk` */
+const noOldKey = (k: string): string => k.replace(/\[([^\]]*)\]/g, (_, inner: string) => { const parts = inner.split(";").filter((x) => !x.startsWith("x:")); return parts.length ? `[${parts.join(";")}]` : ""; });
 /** 読んだ v1 の形を直す (picks の読めない物は要確認へ、捨てない) */
 export function healRecipeV1(raw: Record<string, unknown>): TreeDoc {
   const d = clone(raw) as unknown as TreeDoc;
@@ -120,5 +122,12 @@ export function healRecipeV1(raw: Record<string, unknown>): TreeDoc {
   // 例のアイテムは札 → 品の形の物だけ (読めない物は捨てる。次に開いた時に種 1 つで出し直す = 決め (c))
   const ex = d.examples && typeof d.examples === "object" && !Array.isArray(d.examples) ? Object.fromEntries(Object.entries(d.examples).filter(([, v]) => !!v && typeof v === "object" && Array.isArray(v.prefixes) && Array.isArray(v.suffixes))) : {};
   if (Object.keys(ex).length) d.examples = ex; else delete d.examples;
-  return { ...d, base: typeof d.base === "string" ? d.base : "", itemLevel: typeof d.itemLevel === "number" ? d.itemLevel : 82, boxes: {}, seq: 0, picks: list.filter(ok), ...(bad.length || d.orphans?.length ? { orphans: [...(d.orphans ?? []), ...bad] } : {}) };
+  // 消えた途中の狙いの鍵 x: (11-07 にやめた、S-33c) の付いた決めは x: を外した箱へ付ける。外して同じ所になった決めは先の物だけ (後の物は要確認へ)
+  const seen = new Set<string>(), picks: RecipePick[] = [];
+  for (const p of list.filter(ok)) {
+    const q = { ...p, at: noOldKey(p.at), ...(p.back ? { back: noOldKey(p.back) } : {}) };
+    if (seen.has(q.at)) { bad.push({ at: q.at, why: "check", raw: p }); continue; }
+    seen.add(q.at); picks.push(q);
+  }
+  return { ...d, base: typeof d.base === "string" ? d.base : "", itemLevel: typeof d.itemLevel === "number" ? d.itemLevel : 82, boxes: {}, seq: 0, picks, ...(bad.length || d.orphans?.length ? { orphans: [...(d.orphans ?? []), ...bad] } : {}) };
 }

@@ -16,7 +16,7 @@ import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
-import { essenceModOf, midAims, midMark, placedAims } from "./tree-veil";
+import { essenceModOf, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -39,13 +39,6 @@ export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | und
   const mods = [...before.prefixes, ...before.suffixes].filter((m) => gone.has(m.modId)), o = aimOpts(data);
   return [...prev].filter((id) => { const g = contentAims(doc).find((a) => a.modId === id), ts = g ? targetsOf(data, [g]) : null; return !mods.some((m) => m.modId === id || (ts && isAimMod(m, ts, o))); });
 }
-/**
- * 打つ前の印のうち途中の狙い (S-33c)。残したい MOD の ☑ を外した手・全部消えてよい消去の後も外れに落とさず、付いている間ずっと狙い (消えたら印も外れる)。
- * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」
- * 消去の手 (h) の後は残さない = ☑ していない MOD は残したい MOD の有る無しに関わらず全部外れ、エッセンスも (11-06 オーナー「残したいMODで選んでない奴は全部ハズレだろ」)
- */
-const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined, h?: Hand | null): string[] => (prev && !isRemoveHand(h) ? midAims(doc).map((a) => a.modId).filter((id) => prev.has(id)) : []);
-const isRemoveHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove";
 /** 箱 boxId に着いた時の ☑ (prev = 着く前、item = 着いた時のアイテム、before = 打つ前のアイテム。打たずに着いた時は無し) */
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem, before?: StageItem | null): ReadonlySet<string> {
   const b = doc.boxes[boxId];
@@ -54,11 +47,10 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d)
   const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
-  const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev, b.parent ? doc.boxes[b.parent]?.hand : null)] : prev);
+  // 残したい MOD を聞く手の後は、候補なのに ☑ しなかった MOD は付け方に関わらず外れ (途中の狙い = エッセンスも。S-27e の基本動作 1 本、11-07。
+  // 前はカオス・骨の後だけ途中の狙いを残した = midKept)。候補の外 (お告げで触らない側) は outsideAimed で残る
+  const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
-  // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b)
-  const em = before ? midMark(doc, b.parent ? doc.boxes[b.parent]?.hand : null) : null;
-  if (em) base.add(em);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
   if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
   const on = goalsOn(data, doc, item);
@@ -66,8 +58,8 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
 }
 /** 全部消えてよい消去の後 (☑ の無い消去は全部外れ MOD、S-28。✦ の印の狙いは残る) */
 export const strippedOf = (doc: TreeDoc): ReadonlySet<string> => new Set(fractureMarks(doc).map((a) => a.modId));
-/** 消去の手 h の後の ☑ (keep = 残したい MOD の modId、全部消えてよいは無し)。打つ前の印のうち候補の外と途中の狙いも残す (S-27e・S-33c) */
-export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined, keep: readonly string[] = []): ReadonlySet<string> => new Set([...strippedOf(doc), ...keep, ...outsideAimed(data, doc, h, prev, before), ...midKept(doc, prev, h)]);
+/** 消去の手 h の後の ☑ (keep = 残したい MOD の modId、全部消えてよいは無し)。打つ前の印のうち候補の外は残す (S-27e) */
+export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined, keep: readonly string[] = []): ReadonlySet<string> => new Set([...strippedOf(doc), ...keep, ...outsideAimed(data, doc, h, prev, before)]);
 /**
  * アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える。
  * 狙いに当たる MOD は文が同じなら別の modId でも当たる (エンジンの sameText) ので、体 (bodyOf) から外すのは実物の MOD の modId (前は完成形の modId で外し、同じ文の別 modId が狙いと外れの両方に数わった)
@@ -213,15 +205,6 @@ export function sampleAimed(data: PatchData, doc: TreeDoc, id: string, seed: num
   m.set(id, out);
   return out;
 }
-/** 箱 id を作った手で消えた途中の狙いの MOD (見本 1 の前後から、箱の題「<MOD> が消えた」S-33c。当たり・狙いが消えた・全部消えてよい消去の箱は無し) */
-export function midGoneOf(data: PatchData, doc: TreeDoc, id: string): StageMod | null {
-  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : null, h = p?.hand, mids = midAims(doc);
-  if (!b || !p || !h || !mids.length || b.out === "hit" || b.out === "lost" || (effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length)) return null;
-  const was = sampleOf(data, doc, p.id, 1), now = sampleOf(data, doc, id, 1);
-  if ([was.note, now.note].some((n) => n === "none" || n?.startsWith("cant:"))) return null;
-  const am = sampleAimed(data, doc, p.id, 1), left = [...now.item.prefixes, ...now.item.suffixes];
-  return [...was.item.prefixes, ...was.item.suffixes].find((m) => am.has(m.modId) && mids.some((a) => a.modId === m.modId) && !left.some((x) => x.modId === m.modId)) ?? null;
-}
 /** 見本を出す時の写し (値を揃えたカード、tree-fixed-values) → 元の見本 */
 const COPY_OF = new WeakMap<StageItem, StageItem>();
 /** copy は sample の写し (☑ は元の見本の物を引く) */
@@ -341,8 +324,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
     aimedOf: (id) => samples(id).map(() => aimedAt(id)),
-    // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)。途中の狙いは数える (S-33b)
-    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = aimedAt(id); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
+    // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)
+    holdsAim: (id) => { const placed = new Set(placedAims(doc).map((a) => a.modId)); return samples(id).some((s) => { const am = aimedAt(id); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
     holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every(() => { const am = aimedAt(id); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };
