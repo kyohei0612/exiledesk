@@ -14,7 +14,10 @@
  * 資料で決まらない所は assumed (画面に「仮」) に書く。値段は使わない (費用は出さず、打った数だけ出す)。
  */
 import { quizSlot, type QuizAction, type QuizRecipe, type QuizRule } from "../simulator/quiz-recipe";
-import { OMEN_KEY, catalysingMultiplier } from "../craft-stage/engine";
+import { OMEN_KEY, catalysingMultiplier, BASE_MAX_QUALITY, maxQualityForBase } from "../craft-stage/engine";
+
+/** 触媒の高貴のレシピの指輪 (Refined Breach Ring) の品質の上限 (エンジンの maxQualityForBase、45%) */
+const RING_Q = maxQualityForBase("Refined Breach Ring");
 
 /** 日本語と英語の組 (画面の言葉。ゲームの言葉はキーからクライアントの名前で出す) */
 export type JaEn = readonly [string, string];
@@ -257,13 +260,14 @@ function ring(): QuizTutorial {
             [d(use("annul", "OmenofSinistralAnnulment"), "左の消去はプレフィックスを消す", "Sinistral Annulment removes a prefix"), CHAOS_ANY]),
           rule({ A: 3, B: 0, "s.junk": 0 }, use("catalyst_fire"),
             ["火耐性を付きやすくする準備は?", "Prepare to make Fire Resistance more likely?"],
-            ["ゾフのカタリストで火の品質を上限まで溜める (この指輪は暗黙の「品質の最大値 +25%」で 45%)。火のタグの MOD (火耐性) が重く引かれるようになる", "Fill fire quality to the cap with Xoph's Catalysts (45% on this ring thanks to its +25% maximum quality implicit): fire-tagged mods (Fire Resistance) get weighted up"],
+            // 上限はエンジンの品質の上限 (E-71。RING_Q = この指輪の上限、差が暗黙の分)
+            [`ゾフのカタリストで火の品質を上限まで溜める (この指輪は暗黙の「品質の最大値 +${RING_Q - BASE_MAX_QUALITY}%」で ${RING_Q}%)。火のタグの MOD (火耐性) が重く引かれるようになる`, `Fill fire quality to the cap with Xoph's Catalysts (${RING_Q}% on this ring thanks to its +${RING_Q - BASE_MAX_QUALITY}% maximum quality implicit): fire-tagged mods (Fire Resistance) get weighted up`],
             [d(use("catalyst_cold"), "トゥルのカタリストは冷気の MOD を重くする", "Tul's Catalyst boosts cold mods"),
               d(use("exalt", "OmenofDextralExaltation"), "品質が無いと、火耐性も他のサフィックスと同じ確率", "Without quality, Fire Resistance is as likely as any other suffix")]),
           rule({ A: 3, B: 0, "s.junk": 0, cat: "fire" }, CAT_DEXTRAL,
             ["火の品質を使って、サフィックスに火耐性を狙うには?", "Use the fire quality to aim Fire Resistance on a suffix?"],
             // 倍率はエンジンの触媒の高貴の式 (E-32)
-            [`触媒の高貴のお告げで品質の分だけ火の MOD を重く (品質 45% で ${catalysingMultiplier(45)} 倍)、右の高貴のお告げでサフィックスに。品質は使い切る`, `Catalysing Exaltation weights fire mods by the quality (${catalysingMultiplier(45)}x at 45% quality), Dextral Exaltation puts it on a suffix. The quality is used up`],
+            [`触媒の高貴のお告げで品質の分だけ火の MOD を重く (品質 ${RING_Q}% で ${catalysingMultiplier(RING_Q)} 倍)、右の高貴のお告げでサフィックスに。品質は使い切る`, `Catalysing Exaltation weights fire mods by the quality (${catalysingMultiplier(RING_Q)}x at ${RING_Q}% quality), Dextral Exaltation puts it on a suffix. The quality is used up`],
             [d(use("exalt", OMEN_KEY.catalysing), "側のお告げが無いとプレフィックスに付くこともある", "Without a side omen it may land on a prefix"),
               d(use("exalt", "OmenofDextralExaltation"), "触媒の高貴のお告げが無いと品質は効かない", "Without Catalysing Exaltation the quality does nothing")]),
           rule({ A: 3, B: 2, C: 0, "s.junk": 0 }, use("catalyst_cold"),
