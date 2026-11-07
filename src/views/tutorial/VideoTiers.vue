@@ -2,7 +2,7 @@
   VideoTiers.vue — 動画用の段の表 (POE2Tube 要望 ⑪-1、2026-09-29)
 
   URL: ?video=1&layout=clip&view=tiers&base=<英語のベース名>&mod=<MOD の id か系統>&ilvl=N
-  手で打つ画面の MOD 一覧 (StageModList) の段の表を 1 画面で大きく。T1〜Tn の数値の幅・必要アイテムレベル・出やすさの棒。
+  手で打つ画面の MOD 一覧 (StageModList) の段の表を 1 画面で大きく。T1〜Tn の数値の幅・必要アイテムレベル・出やすさの % (色の棒は 11-07 オーナー「色が意味わかんないからそこ％でおけじゃね」で外した)。
   ilvl を渡したら、その ilvl で出うる一番上の段を金で強調し、それより上 (まだ出ない段) は薄く。
   出やすさ = その MOD が付いた時にどの段になるか (出うる段の重みの割合)。下 15% (612px より下) は空ける。
   画面に「アイテムレベル」の文字を出す (POE2Tube の撮影の準備判定)。
@@ -53,12 +53,11 @@ const view = computed(() => {
     const shareOf = (i: number): number => (cand && cand.w > 0 ? (cand.tiers.find((x) => x.index === n - 1 - i)?.w ?? 0) / cand.w : 0);
     const shares = row.tiers.map((_, i) => shareOf(i));
     const top = props.hl ? (shares.findIndex((x) => x > 0) >= 0 ? row.tiers[shares.findIndex((x) => x > 0)]!.rank : null) : null;
-    const maxW = Math.max(1, ...row.tiers.map((t) => t.weight));
     return {
       item, row,
       tiers: row.tiers.map((t, i) => {
         const below = t.ilvl < floor && !shares[i];
-        return { ...t, open: t.ilvl <= lv, below, top: t.rank === top, share: shares[i]!, bar: t.weight / maxW };
+        return { ...t, open: t.ilvl <= lv, below, top: t.rank === top, share: shares[i]! };
       }),
     };
   } catch (e) {
@@ -99,23 +98,20 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
       </div>
       <!-- 段の表 -->
       <div class="w-full overflow-hidden rounded-2xl border border-white/15 bg-black/55">
-        <div class="grid h-[44px] grid-cols-[90px_1fr_240px_300px] items-center gap-4 border-b border-white/15 px-6 text-[19px] text-white/60">
-          <span>ティア</span><span>数値</span><span>必要アイテムレベル</span><span>出やすさ</span>
+        <div class="grid h-[44px] grid-cols-[90px_1fr_240px_180px] items-center gap-4 border-b border-white/15 px-6 text-[19px] text-white/60">
+          <span>ティア</span><span>数値</span><span>必要アイテムレベル</span><span class="text-right">出やすさ</span>
         </div>
         <div
           v-for="t in view.tiers"
           :key="t.rank"
-          class="relative grid grid-cols-[90px_1fr_240px_300px] items-center gap-4 border-b border-white/5 px-6"
+          class="relative grid grid-cols-[90px_1fr_240px_180px] items-center gap-4 border-b border-white/5 px-6"
           :class="[t.top ? 'bg-amber-400/15 ring-[3px] ring-inset ring-amber-300/85' : '', t.below ? 'bg-white/[0.02] text-white/35' : t.open ? '' : 'opacity-30']"
           :style="{ height: `${rowH}px`, fontSize: `${rowFont}px` }"
         >
           <b :class="t.below ? 'line-through decoration-white/40' : t.top ? 'text-amber-200' : 'text-white/85'">{{ t.rank }}</b>
           <span class="truncate" :class="t.below ? 'line-through decoration-white/40' : 'text-[#c8c8ff]'">{{ t.text }}</span>
           <span class="tabular-nums" :class="t.below ? 'line-through decoration-white/40' : ''">Lv {{ t.ilvl }}</span>
-          <span class="flex items-center gap-3">
-            <span class="h-4 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="t.below ? 'bg-white/15' : t.top ? 'bg-amber-300' : 'bg-rarity-magic'" :style="{ width: `${t.bar * 100}%` }" /></span>
-            <span class="w-28 whitespace-nowrap text-right tabular-nums">{{ t.below ? "付かない" : pct(t.share) }}</span>
-          </span>
+          <span class="whitespace-nowrap text-right tabular-nums">{{ t.below ? "付かない" : pct(t.share) }}</span>
         </div>
       </div>
       <p v-if="floorNote" class="mt-2 w-full text-right text-[18px] font-bold text-white/80">{{ floorNote }}</p>
