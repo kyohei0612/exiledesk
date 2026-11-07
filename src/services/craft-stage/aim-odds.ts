@@ -127,14 +127,15 @@ export const stepCost = (c: { currency: string; omens: readonly string[] }, pric
   (c.currency === REVEAL ? 0 : price(c.currency)) + c.omens.reduce((a, o) => a + price(o), 0);
 /**
  * aimChain の回し方の種類 (画面の「何をどう回した数字か」の文はこれで分ける)。reveal = 発現を今の状態から / bone = 骨 → 発現の候補、毎回今の状態に戻す /
- * spam = カオススパム (今の MOD が消えても揃えば当たり、外れはその結果に続ける) / add = 付ける手 (空きがあるうち続ける) / keep = それ以外 (今の MOD が残っていれば続ける)
+ * spam = カオススパム (今の MOD が消えても揃えば当たり、外れはその結果に続ける) / keep = それ以外 (今の MOD が残っていれば続ける、打てなくなったら今の状態へ)。
+ * aimChain の本当の分かれ方の 4 つだけ (高貴も keep。11-07 エミュ部長: add を分けると変成・増強・王者・エッセンスの説明が変わる)
  */
-export type AimChainMode = "reveal" | "bone" | "spam" | "add" | "keep";
+export type AimChainMode = "reveal" | "bone" | "spam" | "keep";
 export function aimChainMode(c: AimCombo): AimChainMode {
   if (c.currency === REVEAL) return "reveal";
   if (addsUnrevealed(c.currency)) return "bone";
   if (kindOf(c.currency) === "chaos") return "spam";
-  return actionClassOfKey(c.currency).cls === "add" ? "add" : "keep";
+  return "keep";
 }
 /** 1 つの打ち方で n 回試して、狙いが付いた (冒涜は候補に出た) 割合 */
 /**

@@ -90,28 +90,55 @@ export interface RouteRun {
 /** prep = 始めのアイテムの下ごしらえ (ルーンを嵌める。route-runes.ts の runePrep) */
 export type RoutePrep = ((it: StageItem) => StageItem) | undefined;
 
-/** 今のアイテムからスパムを始められるか (MOD のあるレアでコラプトしていない、M-63)。始められなければ理由 (日英) */
-export function routeFromBlock(from: StageItem): string | null {
-  if (from.rarity !== "rare") return tr("今のアイテムがレアでない", "The current item isn't rare");
-  if (from.corrupted) return tr("コラプトしたアイテムにはカレンシーが打てない", "Currency can't be used on a Corrupted item");
-  if (!from.prefixes.length && !from.suffixes.length) return tr("今のアイテムに MOD が無い", "The current item has no mods");
+/**
+ * スパムの道を使えない理由の鍵 (共有の詰め物 packRace にはこの鍵を入れ、文は開いた側の言葉で routeOffText が引く。11-07 エミュ部長の頼み)。
+ * cap = 上限の手数までに付かなかった (100 人の競争 raceOne の結果)
+ */
+export type RouteOffKey = "chaosOnly" | "notRare" | "corrupted" | "noMods" | "hasTarget" | "noSlot" | "cap";
+const OFF_WORDS: Record<RouteOffKey, readonly [string, string]> = {
+  chaosOnly: ["今のアイテムから始める時はカオスだけ", "Only Chaos when starting from the current item"],
+  notRare: ["今のアイテムがレアでない", "The current item isn't rare"],
+  corrupted: ["コラプトしたアイテムにはカレンシーが打てない", "Currency can't be used on a Corrupted item"],
+  noMods: ["今のアイテムに MOD が無い", "The current item has no mods"],
+  hasTarget: ["今のアイテムにもう狙いが付いている", "The current item already has the target"],
+  noSlot: ["マジックに狙いの側の枠が無いベース", "This base has no slot on the target side while magic"],
+  cap: ["上限の手数までに付かなかった (この等級では付かない段かも)", "Didn't hit within the use cap (this grade may not roll that tier)"],
+};
+/** 理由の文 (日英、今の言葉)。鍵のほか、前の共有に入っている日本語の文もそのまま鍵に読み替える。知らない物はそのまま */
+export function routeOffText(k: string): string {
+  const key = (k in OFF_WORDS ? k : (Object.keys(OFF_WORDS) as RouteOffKey[]).find((x) => OFF_WORDS[x][0] === k)) as RouteOffKey | undefined;
+  return key ? tr(OFF_WORDS[key][0], OFF_WORDS[key][1]) : k;
+}
+/** 今のアイテムからスパムを始められるか (MOD のあるレアでコラプトしていない、M-63)。始められなければ理由の鍵 */
+export function routeFromBlockKey(from: StageItem): RouteOffKey | null {
+  if (from.rarity !== "rare") return "notRare";
+  if (from.corrupted) return "corrupted";
+  if (!from.prefixes.length && !from.suffixes.length) return "noMods";
   return null;
 }
-export function routeOff(data: PatchData, base: string, itemLevel: number, targets: readonly RaceTarget[], route: RouteKind, prep?: RoutePrep, from?: StageItem): string | null {
+/** routeFromBlockKey の文 (日英) */
+export const routeFromBlock = (from: StageItem): string | null => { const k = routeFromBlockKey(from); return k ? routeOffText(k) : null; };
+/** 道を使えない理由の鍵 (無ければ null) */
+export function routeOffKey(data: PatchData, base: string, itemLevel: number, targets: readonly RaceTarget[], route: RouteKind, prep?: RoutePrep, from?: StageItem): RouteOffKey | null {
   const sides = targetSides(data, targets);
   if (from) {
-    if (route !== "chaos") return tr("今のアイテムから始める時はカオスだけ", "Only Chaos when starting from the current item");
-    const why = routeFromBlock(from);
+    if (route !== "chaos") return "chaosOnly";
+    const why = routeFromBlockKey(from);
     if (why) return why;
-    if (routeHit(data, from, targets)) return tr("今のアイテムにもう狙いが付いている", "The current item already has the target");
+    if (routeHit(data, from, targets)) return "hasTarget";
     return null;
   }
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)。当たりが両側にあれば両側とも
   if (route === "augment") {
     const magic: StageItem = { ...(prep ? prep(freshItem(data, base, itemLevel)) : freshItem(data, base, itemLevel)), rarity: "magic" };
-    if (sides.some((sd) => limitOf(magic, sd) < 1)) return tr("マジックに狙いの側の枠が無いベース", "This base has no slot on the target side while magic");
+    if (sides.some((sd) => limitOf(magic, sd) < 1)) return "noSlot";
   }
   return null;
+}
+/** routeOffKey の文 (日英) */
+export function routeOff(...a: Parameters<typeof routeOffKey>): string | null {
+  const k = routeOffKey(...a);
+  return k ? routeOffText(k) : null;
 }
 
 /** 始めの状態を置いた 1 人分 (作れなければ null) */

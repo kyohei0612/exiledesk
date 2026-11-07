@@ -67,7 +67,7 @@ export type { RouteKind, Grade as RouteGrade, Grade } from "./route-race";
 // スパムの道の打ち手 (増強・カオス・高貴の 1 人分。シミュの spam-counts とエミュのスパムシミュが同じ打ち方)
 export { routeRun, routeKey, GRADE_KEY } from "./route-race";
 // スパムの道を使えない理由 (日英) と、今のアイテムから始められるか (レア・コラプトでない・MOD あり)
-export { routeOff, routeFromBlock } from "./route-race";
+export { routeOff, routeFromBlock, routeOffKey, routeFromBlockKey, routeOffText, type RouteOffKey } from "./route-race";
 // 解析君の頼み (K4): 系統の塞ぎ・古の骨の段の下限・発現の手 (候補の数は REVEAL_SPEC.actions の reveal.offers)
 export { occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 export { ANCIENT_BONE_FLOOR } from "../../vendor/poe2htc/engine/probability";
