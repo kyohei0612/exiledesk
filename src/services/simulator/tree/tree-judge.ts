@@ -15,7 +15,7 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
-import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
+import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { modText, tr } from "../../../i18n/lang";
@@ -45,7 +45,8 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // ヒネコラのハズレ (打たない、S-39) の箱は手を使わないので印も前のまま
   if (!b || b.seen) return prev;
   // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d)
-  const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
+  // パーフェクトエッセンスは付く MOD が決まった入れ替えなので、☑ しなかった元の MOD も狙いのまま (消えた物だけ外れる。S-29 のエッセンスの枝、11-07)
+  const keep = isSwapEssence(b.parent ? doc.boxes[b.parent]?.hand : null) ? null : keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
   // 残したい MOD を聞く手の後は、候補なのに ☑ しなかった MOD は付け方に関わらず外れ (途中の狙い = エッセンスも。S-27e の基本動作 1 本、11-07。
   // 前はカオス・骨の後だけ途中の狙いを残した = midKept)。候補の外 (お告げで触らない側) は outsideAimed で残る

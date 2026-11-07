@@ -22,6 +22,8 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const t = useTree();
   /** 消去 (全部消えてよい = 消去の箱を並べる、全部は残せない) か */
   const isRemove = computed(() => !!o.held.value && effectOf(o.held.value) === "remove");
+  /** パーフェクトエッセンス (付く MOD が決まった入れ替え): ☑ しなかった MOD も外れにせず、☑ が無ければ消えた MOD ごとに枝 (S-29 のエッセンスの枝、11-07) */
+  const isSwap = computed(() => !!o.held.value && o.held.value.startsWith("essence:perfect:"));
   const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h ? keepChoicesOf(d, it, h, o.omens.value, t.goals.value) : []; });
   /** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value, t.goals.value); });
@@ -73,6 +75,6 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
    * ☑ 固定の行だけを見せ、打ち方・保存 (Hand.keep) は変えない
    */
   const fixedOnly = computed(() => lone.value && fixed.value.length > 0);
-  return { isRemove, choices, picks, show, fixed, ask, fixedOnly, checked, aims, toggle, none, label, fixedLabel };
+  return { isRemove, isSwap, choices, picks, show, fixed, ask, fixedOnly, checked, aims, toggle, none, label, fixedLabel };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;

@@ -68,7 +68,8 @@ const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return nul
  */
 function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
   // 確定で消える (候補 1 つ) は聞かないので替えない。替えるのは消えうる候補の MOD だけ (光のお告げなら冒涜だけ、S-27b)
-  if (!keepAsk.value) return tags;
+  // パーフェクトエッセンスは ☑ しなかった元の MOD も名前のまま (入れ替わって消えるだけ。S-29 のエッセンスの枝、11-07 オーナー「MODは固定だからハズレMODって出さんよね」)
+  if (!keepAsk.value || k.isSwap.value) return tags;
   const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
   // ☑ した完成形の狙いは前の手で外れでも狙いに戻る (結果の箱の判定 nextAimed と同じ)。外れのままなのは狙いでない外れ MOD だけ
   const goals = new Set((t.doc.value.memoAims ?? []).map((g) => g.modId));

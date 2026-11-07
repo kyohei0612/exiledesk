@@ -45,6 +45,27 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
   return out;
 }
 
+/**
+ * パーフェクトエッセンス (付く MOD が決まっている入れ替え) の手か (S-29 のエッセンスの枝、11-07 オーナー「エッセンスは入れ替わりの挙動だけど、MODは固定だからハズレMODって出さんよね」
+ * 「枝の出し方はエッセンスは特別仕様やな」)。カオス・骨は付く MOD が決まっていないので今のまま (☑ しなかった候補は外れ、S-27e)
+ */
+export const isSwapEssence = (h: Hand | null | undefined): boolean => !!h && h.currency.startsWith("essence:perfect:");
+const SWAP = "e:";
+/**
+ * ☑ が 1 つも無いパーフェクトエッセンス (全部消えてよい) の枝の鍵 `e:<消えた狙いの modId>` (外れが消えたら `e:j`)。消えた MOD ごとに 1 箱 (S-29)。
+ * 狙いかは完成形の狙いで見る (見本ごとの印で見ると手を置く時と回す時で鍵がずれる)。☑ のある手は今までどおり ☑ の MOD が消えたかで分ける (鍵は付けない)
+ */
+export function swapKeyOf(doc: TreeDoc, h: Hand | null | undefined, before: StageItem, after: StageItem): string | undefined {
+  if (!isSwapEssence(h) || !h?.keep || h.keep.length) return undefined;
+  const left = new Set([...after.prefixes, ...after.suffixes].map((m) => m.modId));
+  const gone = [...before.prefixes, ...before.suffixes].filter((m) => !m.fractured && !left.has(m.modId));
+  if (!gone.length) return undefined;
+  const aim = new Set((doc.memoAims ?? []).map((a) => a.modId));
+  return `${SWAP}${[...new Set(gone.map((m) => (aim.has(m.modId) ? m.modId : "j")))].sort().join(",")}`;
+}
+/** 箱の鍵からエッセンスに入れ替わって消えた MOD (modId、外れは "j"。無ければ []) */
+export const swapGoneOf = (key: string | undefined): string[] => key?.split(";").find((s) => s.startsWith(SWAP))?.slice(SWAP.length).split(",").filter(Boolean) ?? [];
+
 const GOT = "g:";
 /** 狙いが消えた人に付いた狙い (own = この手の当たりの札。打つ前に無く、打った後にある物) の鍵 `g:modId,…`。付いていなければ undefined */
 export function gotKeyOf(data: PatchData, before: StageItem, after: StageItem, own: readonly Aim[]): string | undefined {

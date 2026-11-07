@@ -14,6 +14,7 @@ import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tr
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isSideKey, isStripKey, sideKeyLabel, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { rankLabel } from "../../../services/simulator/tree/tree-whittle";
+import { swapGoneOf } from "../../../services/simulator/tree/tree-keep";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
@@ -94,6 +95,11 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const free = fixed && !!ph?.free;
   // 神の目標 (S-202)
   if (isDivineAim(ph) && (b.out === "any" || b.out === "junk")) return outNameOf(ph, b.out);
+  // ☑ の無いパーフェクトエッセンスの枝 (S-29): どの MOD がエッセンスに入れ替わったか
+  const sw = swapGoneOf((b as { junkKey?: string }).junkKey), doc0 = useTree().doc.value;
+  const swName = (id: string): string => { if (id === "j") return tr("外れ MOD", "a miss mod"); const a = (doc0.memoAims ?? []).find((g) => g.modId === id); return a ? modShort(aimShort(a)) : id; };
+  const swl: [string, string] | null = sw.length ? [`${sw.map(swName).join("・")} と入れ替わり`, `replaced ${sw.map(swName).join(", ")}`] : null;
+  if (b.out === "hit" && b.aim && swl && !fixed) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた (${swl[0]})`, `${n} added (${swl[1]})`); }
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
     // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける
@@ -109,7 +115,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const base = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
   // 側で分けた箱 (S-65): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
   // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
-  const rk = k && b.parent ? rankLabel(k) : null;
+  const rk = k && b.parent ? rankLabel(k) ?? swl : null;
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
   // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
   if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.out === b.out).length > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }

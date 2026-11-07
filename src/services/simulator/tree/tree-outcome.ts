@@ -20,7 +20,7 @@ import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
 import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
-import { gotOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
+import { gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
 import { itemKeyOf } from "./tree-sample-key";
 import { mainSideOf, rolledOutcomes } from "./tree-uncountable";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
@@ -64,7 +64,10 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   }
   const oc = withGot(data, nextKeyed(doc, b, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, nx), before, after, got);
   // 数え上げられない手は当たりの人も形で分ける (S-21。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
-  return oc.out === "hit" && b.hand && mainSideOf(data, before, b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
+  const sc = oc.out === "hit" && b.hand && mainSideOf(data, before, b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
+  // ☑ の無いパーフェクトエッセンスは入れ替わって消えた MOD ごとに分ける (S-29 のエッセンスの枝、possibleOutsOf と同じ鍵)
+  const sw = swapKeyOf(doc, b.hand, before, after);
+  return sw ? { ...sc, junkKey: joinKeys(sc.junkKey, sw) } : sc;
 }
 /** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33)。残したければ人が ☑ */
 function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
@@ -226,14 +229,17 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         // 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // フラクチャーは側で分けない (エッセンスは分ける。boxOutcomeOf と同じ、S-65・S-65b。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = k === "fracture" ? undefined : sideKeyOf(it, o.item);
+        // ☑ の無いパーフェクトエッセンスは入れ替わって消えた MOD ごとの箱 (S-29 のエッセンスの枝、boxOutcomeOf と同じ鍵)
+        const sw = swapKeyOf(doc, h, it, o.item);
+        const withSw = <T extends object>(x: T): T & { junkKey?: string } => (sw ? { ...x, junkKey: joinKeys((x as { junkKey?: string }).junkKey, sw) } : x);
         const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(doc, { hand: h }, e, it, o.item, am);
-        if (freeSide) { const e = nk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
-        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = nk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk }); found.set(`junk::${e.junkKey}`, e); continue; }
+        if (freeSide) { const e = withSw(nk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) })); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
+        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = withSw(nk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk })); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
         const e = r.out === "hit" && (!r.hits.length || (infiniteAim(h.currency) && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier))) ? { out: (infiniteAim(h.currency) ? "junk" : "any") as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
         // 狙いが消えた人に ☑ (エッセンスなら付く MOD) が付いたら別の箱「狙いが消えた・狙いが付いた」(S-27d、鍵 g:)
         const ek = withGot(data, nk(sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone" || (e.out === "lost" && lostSided(h))) ? { ...e, junkKey: sk } : e), it, o.item, extra); // 箱の鍵も回す人と同じ印で (渡さないと鍵が合わず見本が作れなかった)
-        const ek2 = roll && ek.out === "hit" && sk ? { ...ek, junkKey: sk } : ek;
+        const ek2 = withSw(roll && ek.out === "hit" && sk ? { ...ek, junkKey: sk } : ek);
         found.set(`${ek2.out}:${ek2.aim ? `${ek2.aim.modId}/${ek2.aim.tier}` : ""}:${"junkKey" in ek2 ? ek2.junkKey : ""}`, ek2);
       }
     }

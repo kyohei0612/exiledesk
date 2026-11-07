@@ -387,7 +387,9 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const groups: Aim[][] = [];
   for (const a of all) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
   for (const g of groups) g.sort((x, y) => order(x) - order(y));
-  b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k !== "hit" && keysOf(k).length ? keysOf(k).map((jk) => { const j = mk(d, k, id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
+  // ☑ の無いパーフェクトエッセンスの当たりは入れ替わって消えた MOD ごとの箱 (鍵 `e:`、S-29 のエッセンスの枝、tree-keep の swapKeyOf)。ほかの当たりの鍵 (数え上げられない手の側) は今までどおり 1 箱
+  const swapHits = (only ?? []).filter((o, i, l) => o.out === "hit" && o.aim && !!o.junkKey?.split(";").some((s) => s.startsWith("e:")) && l.findIndex((x) => x.out === "hit" && x.junkKey === o.junkKey && x.aim?.modId === o.aim?.modId) === i);
+  b.outs = want.flatMap((k) => (k === "hit" && swapHits.length ? swapHits.map((o) => { const h = mk(d, "hit", id); h.aim = { ...o.aim! }; h.junkKey = o.junkKey; return h.id; }) : k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k !== "hit" && keysOf(k).length ? keysOf(k).map((jk) => { const j = mk(d, k, id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
   // 消去の結果 (外れが消えた) も外れの道なので自動の ↩ を付けない (S-190b、11-04 オーナー「はい、未設定にして」)。
   // 前は外れが消えた → 外れの前の箱 (S-50d の残り)・全部消えてよい消去 → 回す時に形の合う箱 (MATCH_BACK、S-28d)
   if (kind === "free") addHits(d, b, aims, order);
