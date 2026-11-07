@@ -72,6 +72,8 @@ function placeAnchor(): void {
   const k = craftStage.held.value, r = root.value;
   if (!k || !r || props.inlineHeld) { dropHolder(); return; }
   let btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-row]") && !b.closest(".ess-anchor"));
+  // 指の端末の ⓘ の包み (ShelfButton の data-shelf-wrap、U-13a) は札ごと 1 つに数える
+  if (btn?.parentElement?.hasAttribute("data-shelf-wrap")) btn = btn.parentElement;
   if (btn?.parentElement?.hasAttribute("data-ess-keys")) btn = btn.parentElement;
   const grid = btn?.parentElement;
   if (!btn || !grid) { dropHolder(); return; }

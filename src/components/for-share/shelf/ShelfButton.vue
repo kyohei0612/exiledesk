@@ -6,9 +6,11 @@
   2026-09-28 オーナー:
     「お告げとかオンにした時の挙動とかもゲーム内リスペクトで表示させて」→ 掛けたお告げはゲームの有効化と同じく赤金に脈打って「有効」
     「カレンシー詳細カードは…細かく書いてくれ」→ 0.7 秒乗せると [[StageCurrencyCard.vue]] (公式の説明 + ステージでの動き)
+  2026-11-07 オーナー「スマホってホバーないからさ」: 指の端末はアイコンの右下の ⓘ から同じカードを下の窓で (U-13a)。
+    ⓘ はボタンの入れ子にせず、包みの span (data-shelf-wrap) の中で横に置く。PC は包まない (並びは前のまま)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount } from "vue";
+import { computed, h, onBeforeUnmount, ref, type FunctionalComponent } from "vue";
 import { isTouchOnly } from "../../../utils/use-phone";
 import { hoverStack } from "../../../state/hover-stack";
 import { afterPointerMoves } from "../../../utils/pointer-moved";
@@ -21,6 +23,10 @@ import { omenNote } from "../../../services/craft-stage/omens";
 import { omenBlock, omenTag as omenTagOf, parseKey } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
+import ModalShell from "../../ui/ModalShell.vue";
+import StageCurrencyCard from "../../../views/craft-stage/StageCurrencyCard.vue";
+
+defineOptions({ inheritAttrs: false });
 
 /** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
 const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean; corner?: string }>();
@@ -109,10 +115,18 @@ function openCard(el: HTMLElement): void {
 }
 function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);
+/** 指の端末の ⓘ (U-13a)。まとめたアイコン (corner) は押すと段の欄が開くので、ⓘ は欄の中の 1 つずつに付く */
+const infoOn = computed(() => touchOnly && flag("shelfInfo") && !props.corner);
+const infoOpen = ref(false);
+/** ⓘ の時だけ包む (PC は包まず、棚の升目・お告げの欄の差し込みは前のまま) */
+const Wrap: FunctionalComponent<{ on: boolean }> = (p, { slots }) => (p.on ? h("span", { class: "relative inline-flex", "data-shelf-wrap": "" }, slots.default?.()) : slots.default?.());
+Wrap.props = ["on"];
 </script>
 
 <template>
+  <Wrap :on="infoOn">
   <button
+    v-bind="$attrs"
     type="button"
     class="group relative flex w-[74px] md:w-[80px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
     :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '']"
@@ -143,4 +157,22 @@ onBeforeUnmount(leave);
     </span>
     <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
+  <!-- 押せる所 32px、見た目の丸 18px は枠の右下の角 (絵・札・名前に掛けない) -->
+  <button
+    v-if="infoOn"
+    type="button"
+    class="g-plain absolute left-[calc(50%+8px)] top-6 grid size-8 place-items-center bg-transparent"
+    :aria-label="tr(`${nameOf(k)} の説明`, `About ${nameOf(k)}`)"
+    aria-haspopup="dialog"
+    data-shelf-info
+    @click.stop="infoOpen = true"
+  >
+    <span class="grid size-[18px] place-items-center rounded-full border border-amber-200/70 bg-black/80 font-serif text-[12px] font-bold italic leading-none text-amber-100 shadow-[0_0_0_1px_rgba(0,0,0,0.8)]" aria-hidden="true">i</span>
+  </button>
+  <!-- still は StageCurrencyCard の外の枠 (GameItemCard) へそのまま届く (Vue の attrs の受け渡し) -->
+  <ModalShell v-if="infoOn" :open="infoOpen" sheet :label="nameOf(k)" panel-class="border-t border-white/15 bg-[var(--exile-color-card-bg)]" body-class="px-3 pt-2 pb-3" @close="infoOpen = false">
+    <StageCurrencyCard v-if="infoOpen" :k="k" :reason="reason" :omen="!!omen" :item="shelf.item.value" :x="0" :y="0" :layer-key="-1" :pinned="false" :z="0" still />
+    <template #footer><button type="button" class="g-btn !min-h-11 w-full" @click="infoOpen = false">{{ tr("閉じる", "Close") }}</button></template>
+  </ModalShell>
+  </Wrap>
 </template>
