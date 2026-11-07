@@ -245,14 +245,15 @@ function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputEle
 watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 /**
  * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (置き換え、エンジンの rune:名前@n)、
- * 本体 (と空き) = 規格外でソケットを足して嵌める。足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
+ * 本体 (と空き) = 空きへ、空きが無ければ左から置き換えられる物を置き換える (エンジンの applyRune。木でソケットを足す手は無い、11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
+ * 足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
  */
 const runeAt = ref<number | null>(null);
 /** 置き換えられないソケット (バウンド) を押した訳。その押しだけ断り、持った物はそのまま (猿 release-668 ①: 断った後に別のソケットも押せなくなっていた) */
 const socketWhy = ref<string | null>(null);
 watch(held, () => { runeAt.value = null; socketWhy.value = null; });
 const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
-const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${tr("ルーンのソケットを押すと置き換え · カードを押すとソケットを足して嵌める · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to add a socket for it · Right-click / Esc to drop")}` : undefined));
+const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${tr("ルーンのソケットを押すと置き換え · カードを押すと空きへ (空きが無ければ左から置き換え) · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to use an empty socket (or replace from the left if none) · Right-click / Esc to drop")}` : undefined));
 function onSocket(n: number): void {
   // ルーン以外を持っている時はアイテムを押したのと同じ (StageItemCard の onSocket の決まり。前は何もせず、ルーンの入ったソケットを押しても打てなかった、11-05 動画の木)
   if (!runeHold.value) { ok(); return; }
