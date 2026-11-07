@@ -2,7 +2,7 @@
  * stage-mod-list-look.ts — StageModList.vue の見た目の表と名前の小物 (2026-10-22 StageModList が 500 行に届いたので分けた。中身は前のまま)。
  * 節の色 (TONE)・重みの出どころの文 (weightNote)・エッセンスの名前 (essName・tierName)
  */
-import { ESSENCE_KEYS, type ListRow, type ModGroup, type StageItem } from "../../../services/craft-stage/engine";
+import { DESECRATION_EXCLUSIVE_COUNT, ESSENCE_KEYS, type ListRow, type ModGroup, type StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { jewelEmotionJa } from "../../../services/htc/patch";
@@ -27,10 +27,12 @@ export function essName(r: ListRow, item: StageItem | null): string | null {
   return top ? tr(ESS_JA.get(top) ?? jewelEmotionJa(top) ?? top, top) : null;
 }
 export const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
+/** 冒涜専用 MOD が候補 3 つに入る数の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT) */
+const exPct = (unit: string, sep: string): string => DESECRATION_EXCLUSIVE_COUNT.map((c) => `${c.exclusive}${unit} ${Math.round(c.rate * 100)}%`).join(sep);
 /** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
 export const weightNote = (): Partial<Record<string, string>> => ({
   rune: tr("ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。ゲームは公開していない", "Rune special mod weights are community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09). The game does not publish them"),
-  desecrated: tr("冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が 1 個 85% / 2 個 14% / 3 個 1% は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)", "Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (1: 85% / 2: 14% / 3: 1%) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)"),
+  desecrated: tr(`冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が ${exPct(" 個", " / ")} は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)`, `Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (${exPct(":", " / ")}) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)`),
   otherworldly: tr("異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "Otherworldly mod weights are not published. They are rolled the same way (same weights) as desecrated-only mods"),
 });
 /**

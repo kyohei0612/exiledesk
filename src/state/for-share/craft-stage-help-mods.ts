@@ -1,7 +1,7 @@
 /**
  * craft-stage-help-mods.ts — 棚のカードの「付く MOD」・短い名前・特別なエッセンス。craft-stage-help.ts から分けた (2026-10-16、500 行の決まり)
  */
-import { fillModText, tierDisplayRanges, essenceLevelOf, isRune, runeEffectFor, runeOf, type Mod, type PatchData, CATALYSTS as HTC_CATALYSTS, type StageItem, isEmotion } from "../../services/craft-stage/engine";
+import { fillModText, tierDisplayRanges, essenceLevelOf, isRune, runeEffectFor, runeOf, parseKey, type Mod, type PatchData, CATALYSTS as HTC_CATALYSTS, type StageItem, isEmotion } from "../../services/craft-stage/engine";
 import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
 import { hasRawFamily, sharesRawFamily } from "../../services/mods/mod-rules";
 import { enOf } from "./craft-stage-shelf";
@@ -212,7 +212,8 @@ export function shelfTag(key: string, data: PatchData | null, item: StageItem | 
     const a = stageAdds(key, data, item);
     return a ? a.lines.map(shortMod) : null;
   }
-  if (key.startsWith("catalyst_")) {
+  const pk = parseKey(key);
+  if (pk.type === "catalyst") {
     const en = enOf(key, item);
     const c = HTC_CATALYSTS.find((x) => x.en === en);
     if (c && isEn()) { const e = /\((.+?)( Modifiers)?\)/.exec(c.label.en); return e ? [e[1]!] : null; }

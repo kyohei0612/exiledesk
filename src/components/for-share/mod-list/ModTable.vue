@@ -16,7 +16,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import { flag } from "../../../web/release-flags";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
-import { blockedTitle, tierFreeShare } from "./use-held-shares";
+import { blockedTitle, canRollNow, tierFreeShare } from "./use-held-shares";
 import { TIER } from "../../../state/for-share/tier-word";
 import { isPhoneWidth } from "../../../utils/use-phone";
 /** ティアの列の幅: 「ティア」が 1 行で入る分 (段・英語の T は前のまま) */
@@ -68,8 +68,8 @@ const props = withDefaults(defineProps<{
 }>(), { overlay: false, stickTop: 0, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
 
 const rows = computed(() => (props.data && props.item ? modListFor(props.data, props.item) : []));
-/** 今は付かない行 (同じ系統が付いている・差していないルーン・骨を使わないと付かない冒涜と異界) は 0% (2026-10-09 オーナー) */
-const cannowBase = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed) && r.group !== "desecrated" && r.group !== "otherworldly";
+/** 今は付かない行は 0% (骨を持っていない時の式、use-held-shares の canRollNow) */
+const cannowBase = (r: ListRow): boolean => canRollNow(r, false);
 const shareOf = (r: ListRow): number => (props.share ? props.share(r) : cannowBase(r) ? r.share : 0);
 const dimOf = (r: ListRow): boolean => (props.rowDim ? props.rowDim(r) : r.blocked || (r.group === "rune" && !r.socketed));
 const tierShareText = (r: ListRow, t: ListTier): string => (props.tierShare ? props.tierShare(r, t) : !cannowBase(r) ? "0%" : tierFreeShare(r, t));

@@ -8,6 +8,7 @@
  * iPhone の Safari は <audio> の音量を無視するので Web Audio の GainNode で絞る。オフは端末に覚える (sfx-off)
  */
 import { ref } from "vue";
+import { parseKey } from "../services/craft-stage/key";
 
 /** 小さめ (ゲームの音は 0 dB まで出ているので、そのままだと大きい) */
 const VOLUME = 0.12;
@@ -30,29 +31,24 @@ export function setSfxOff(v: boolean): void {
  * 専用の音が無い物 (増強・神・熟練工のオーブ・エッセンス・触媒など) は OrbUse_01
  */
 const BONES = 5;
+/** 手の種類 (エンジンの parseKey の kind = 強さを削った鍵) → 音 */
+const SFX_OF_KIND: Record<string, string> = {
+  transmute: "transmute", alchemy: "alchemy", regal: "regal", exalt: "exalt", chaos: "chaos", annul: "annul", fracture: "fracture",
+  whetstone: "whetstone", scrap: "scrap", etcher: "etcher", bauble: "bauble", gemcutter: "gemcutter",
+  jeweller: "jeweller", jeweller_lesser: "jeweller-lesser", hinekora: "hinekora",
+  // かけら (動画の手順で拾う時) は元のオーブの音
+  transmute_shard: "transmute", regal_shard: "regal",
+};
 function sfxOf(key: string): string {
-  if (key.startsWith("transmute")) return "transmute";
-  if (key.startsWith("alchemy")) return "alchemy";
-  if (key.startsWith("regal")) return "regal";
-  if (key.startsWith("exalt")) return "exalt";
-  if (key.startsWith("chaos")) return "chaos";
-  if (key.startsWith("annul")) return "annul";
-  if (key.startsWith("fracture")) return "fracture";
-  if (key === "whetstone") return "whetstone";
-  if (key === "scrap") return "scrap";
-  if (key === "etcher") return "etcher";
-  if (key === "bauble") return "bauble";
-  if (key === "gemcutter") return "gemcutter";
-  if (key === "jeweller_lesser") return "jeweller-lesser";
+  const p = parseKey(key);
+  // 骨 (5 通りからランダム) と発現 (アビスの UI の音)
+  if (p.type === "bone") return `bone-${1 + Math.floor(Math.random() * BONES)}`;
+  if (p.type === "reveal") return key.startsWith("reveal:") ? "reveal" : "orb";
+  if (p.type !== "currency") return "orb";
   if (key === "jeweller_greater") return "jeweller-greater";
-  if (key.startsWith("jeweller")) return "jeweller";
-  if (key === "hinekora") return "hinekora";
   if (key.startsWith("vaal_infuser")) return "vaal-infuser";
   if (key.startsWith("rune:")) return /Soul Core/i.test(key) ? "soulcore" : "rune";
-  // 骨 (5 通りからランダム) と発現 (アビスの UI の音)
-  if (key.startsWith("desecrate")) return `bone-${1 + Math.floor(Math.random() * BONES)}`;
-  if (key.startsWith("reveal:")) return "reveal";
-  return "orb";
+  return SFX_OF_KIND[p.kind] ?? "orb";
 }
 
 let ctx: AudioContext | null = null;

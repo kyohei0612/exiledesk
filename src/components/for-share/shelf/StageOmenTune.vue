@@ -8,7 +8,7 @@
 import { computed } from "vue";
 import { tr } from "../../../i18n/lang";
 import { useShelf } from "../../../state/for-share/shelf-context";
-import { catalystOf } from "../../../services/craft-stage/engine";
+import { catalystOf, OMEN_KEY, SANCTIFY_MAX, SANCTIFY_MIN } from "../../../services/craft-stage/engine";
 import { CATALYSING_PER_PCT, sanctifyChanceAtLeast, tunedCatalysingMultiplier } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
@@ -17,8 +17,8 @@ import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_
 const props = defineProps<{ k: string }>();
 /** お告げ・アイテムは棚の文脈から (クラフト台は craftStage、シミュは provideShelf の物。2026-10-22) */
 const shelf = useShelf();
-const CAT = "OmenofCatalysingExaltation";
-const SAN = "OmenofSanctification";
+const CAT = OMEN_KEY.catalysing;
+const SAN = OMEN_KEY.sanctification;
 const show = computed(() => TUNING_ON && (props.k === CAT || props.k === SAN) && shelf.omens.value.includes(props.k));
 
 const pct = computed(() => (shelf.item.value ? catalystOf(shelf.item.value).pct : 0));
@@ -45,7 +45,7 @@ const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLea
       <button v-if="catalysingPerPct != null" type="button" class="g-plain h-6 rounded border border-white/15 px-1 text-white/70 hover:bg-white/10" :title="tr('既定に戻す', 'Reset to default')" @click="setCatalysingPerPct(null)">↺</button>
     </template>
     <template v-else>
-      <label class="flex cursor-pointer items-center gap-1" :title="tr('入れると付く倍率を決める (外すと 0.78〜1.22 の中でランダム)', 'Pick the multiplier (off: random in 0.78-1.22)')">
+      <label class="flex cursor-pointer items-center gap-1" :title="tr(`入れると付く倍率を決める (外すと ${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} の中でランダム)`, `Pick the multiplier (off: random in ${SANCTIFY_MIN / 100}-${SANCTIFY_MAX / 100})`)">
         <input type="checkbox" :checked="sanctifyK != null" @change="setSanctifyK(($event.target as HTMLInputElement).checked ? 100 : null)" />
         <span>{{ tr("倍率", "Multiplier") }}</span>
       </label>

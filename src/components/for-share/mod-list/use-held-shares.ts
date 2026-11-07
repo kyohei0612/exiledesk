@@ -8,6 +8,13 @@ import { heldOdds, type ListRow, type ListTier, type PatchData, type StageItem }
 import { TIER } from "../../../state/for-share/tier-word";
 import { fmtPct } from "../../../utils/format-pct";
 import { tr } from "../../../i18n/lang";
+
+/**
+ * 今付きうる行か (付かない行は表の % を 0 に): 同じ系統が付いている (エンジンの ListRow.blocked)・差していないルーン・冒涜と異界は骨を持っている時だけ (2026-10-09 オーナー)。
+ * MOD 表の既定 (ModTable) と、持っているカレンシーで出す表 (useHeldShares) の同じ式
+ */
+export const canRollNow = (r: ListRow, boneHeld: boolean): boolean =>
+  !r.blocked && !(r.group === "rune" && !r.socketed) && (boneHeld || (r.group !== "desecrated" && r.group !== "otherworldly"));
 /** ModTable の節 (ModSection) のうち、ここで見る所だけ (.ts から .vue の型を引かない) */
 type SectionLike = { columns: Array<{ items: ListRow[] }>; rune?: unknown; socketed?: boolean };
 
@@ -56,8 +63,7 @@ export function useHeldShares(held: () => HeldAt | null, data: () => PatchData |
     const idx = tierIndexOf(id, t);
     return (h.byMod.get(id)?.tiers.find((x) => x.index === idx)?.w ?? 0) / h.total;
   }
-  /** 今は付かない行は 0% (同じ系統が付いている・差していないルーン。冒涜・異界は骨を持っている時だけ。2026-10-09 オーナー) */
-  const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed) && !((r.group === "desecrated" || r.group === "otherworldly") && !(heldCands.value && "bone" in heldCands.value));
+  const cannow = (r: ListRow): boolean => canRollNow(r, !!heldCands.value && "bone" in heldCands.value);
   /** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
   const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
   const tierShareOf = (r: ListRow, t: ListTier): string => (!cannow(r) || t.blockedBy ? "0%" : heldCands.value ? fmtPct(heldTierShare(r, t)) : tierFreeShare(r, t));

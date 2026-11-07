@@ -18,7 +18,7 @@ import { toCss } from "../../../utils/zoom";
 import { shelfTag } from "../../../state/for-share/craft-stage-help";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { omenNote } from "../../../services/craft-stage/omens";
-import { omenBlock } from "../../../services/craft-stage/engine";
+import { omenBlock, parseKey } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
@@ -31,16 +31,22 @@ const emit = defineEmits<{ pick: [key: string] }>();
  */
 const nameParts = (s: string): string[] => s.split(/(?<=の)|(?= \()/);
 
-const BADGE: Array<[RegExp, [string, string], string]> = [
-  [/_greater$/, ["上級", "Greater"], "text-sky-300"],
-  [/_perfect$/, ["完全", "Perfect"], "text-amber-300"],
-  [/^essence:lesser:/, ["レッサー", "Lesser"], "text-white/60"],
-  [/^essence:greater:/, ["グレーター", "Greater"], "text-sky-300"],
-  [/^essence:perfect:/, ["パーフェクト", "Perfect"], "text-amber-300"],
-  [/^desecrate_ancient$/, ["古びた", "Ancient"], "text-sky-300"],
-  [/^desecrate_altered$/, ["変質", "Altered"], "text-fuchsia-300"],
-];
-const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
+/** 段の札。強さ・エッセンスの段はエンジンの parseKey で読む (骨の種類は鍵そのもの) */
+const BADGE: Record<string, [[string, string], string]> = {
+  greater: [["上級", "Greater"], "text-sky-300"],
+  perfect: [["完全", "Perfect"], "text-amber-300"],
+  "essence:lesser": [["レッサー", "Lesser"], "text-white/60"],
+  "essence:greater": [["グレーター", "Greater"], "text-sky-300"],
+  "essence:perfect": [["パーフェクト", "Perfect"], "text-amber-300"],
+  desecrate_ancient: [["古びた", "Ancient"], "text-sky-300"],
+  desecrate_altered: [["変質", "Altered"], "text-fuchsia-300"],
+};
+const badge = computed(() => {
+  const p = parseKey(props.k);
+  const id = p.type === "currency" ? p.strength : p.type === "essence" ? (p.breach ? "" : `essence:${p.tier}`) : props.k;
+  const b = BADGE[id];
+  return b ? ([id, ...b] as const) : null;
+});
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
 const shelf = useShelf();
 // 名前・絵・値段は棚のアイテムで引く (シミュの棚は箱の見本を渡す。今のエミュのアイテムで引くと骨の名前と値段がずれた。2026-10-24 シミュ部長)
