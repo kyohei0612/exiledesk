@@ -11,7 +11,7 @@ import type { StageApply, StageItem } from "../types";
 import type { Action, CurrencySpec, OmenSpec } from "./types";
 import { ANNUL_SPEC, BONE_SPECS, REVEAL_SPEC } from "./desecrate-specs";
 import { ORB_SPEC_BY_KEY } from "./orb-specs";
-import { prepareEssence, resolveEssence } from "./essence-specs";
+import { ALLOY_SPEC, ESSENCE_SPEC, isAlloyKey, PERFECT_ESSENCE_SPEC, prepareEssence, resolveEssence } from "./essence-specs";
 import { ALL_OMEN_SPECS, omensOfKind } from "./omen-layer";
 import { ARTIFICER_SPEC, CATALYST_SPEC_BY_KEY, EMOTION_SPEC, FLUX_SPECS, QUALITY_SPECS, RUNE_SPEC } from "./other-specs";
 import { emotionReason, isEmotion } from "../apply-emotion";
@@ -51,6 +51,20 @@ export function resolveSpec(key: string, item: StageItem, data?: PatchData): Res
   const reason = bones.length === 1 ? targetBlock(bones[0]!.target, item) ?? "" : tr("この部位に使える骨が無い", "No bone of this kind for this item class");
   return { spec: bones[0]!, reveal: null, reason };
 }
+/**
+ * 品も data も使わずに鍵 → カレンシー (resolveSpec と同じ引き。2026-11-07 シミュ部長 sim-light22 の頼み、木の手の鍵だけで手の種類を引く)。
+ * 骨は同じ鍵のどれか (種類で部品の並びは同じ)、エッセンスは段と完全かで決まる spec (深淵のエッセンスも部品の種類は完全エッセンスと同じ)。
+ * 打てるか・お告げで置き換わる部品は見ない (それは planSpec)。移していない鍵は null
+ */
+export function specOfKey(key: string): CurrencySpec | null {
+  const k = parseKey(key);
+  if (k.type === "essence") return !k.tier ? null : k.tier !== "perfect" ? ESSENCE_SPEC : isAlloyKey(key) ? ALLOY_SPEC : PERFECT_ESSENCE_SPEC;
+  if (k.type === "emotion") return EMOTION_SPEC;
+  if (k.type === "bone") return BONE_SPECS.find((s) => s.stageKey === key) ?? null;
+  // 残りの鍵 (オーブ・消去・品質・触媒・熟練工・ルーン・フラックス・発現) は resolveSpec の中で品を見ない
+  return resolveSpec(key, {} as StageItem)?.spec ?? null;
+}
+
 // 全部のお告げとお告げの層 (今効くお告げ・排他・側) は omen-layer.ts。シミュ・チュートリアルはここから読む
 export { ALL_OMEN_SPECS } from "./omen-layer";
 

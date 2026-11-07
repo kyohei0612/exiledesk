@@ -9,7 +9,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { StageItem } from "../types";
 import type { Action } from "./types";
-import { planSpec } from "./run-spec";
+import { planSpec, specOfKey } from "./run-spec";
 
 /** 動作の部品の名前 (Action の鍵) */
 export type ActionName = "add" | "addUnrevealed" | "addEssence" | "addEmotion" | "remove" | "reveal" | "fracture" | "corrupt" | "setRarity" | "quality" | "catalyst" | "addSocket" | "socketAugment" | "convertElements" | "reroll" | "sanctify";
@@ -37,4 +37,12 @@ export function actionClass(actions: readonly Action[]): { cls: ActionClass | nu
 export function actionClassOf(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): { cls: ActionClass | null; parts: ActionName[] } {
   const plan = planSpec(data, item, key, omens);
   return plan ? actionClass(plan.actions) : { cls: null, parts: [] };
+}
+/**
+ * 品の無い所 (木の手の鍵だけ) での種類: 鍵 → カレンシーの部品の並び (run-spec.ts の specOfKey)。お告げは掛けない
+ * (腐食・聖別のようにお告げで部品が置き換わる手は actionClassOf)。2026-11-07 シミュ部長 sim-light22 の頼み (木の effectOf を部品から引く、G-1 の S-5)
+ */
+export function actionClassOfKey(key: string): { cls: ActionClass | null; parts: ActionName[] } {
+  const spec = specOfKey(key);
+  return spec ? actionClass(spec.actions) : { cls: null, parts: [] };
 }
