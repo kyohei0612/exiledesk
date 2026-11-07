@@ -130,7 +130,10 @@ export { useConditions, limitWords, groupWords, essencePartsOf } from "./spec/us
 // 重みを推定で埋めた MOD の印 (MOD 一覧の重みの札。一覧は共通の部品なので核)
 export { OVERRIDDEN } from "../htc/weight-overrides";
 // 聖別の数値の下限・上限 (棚のお告げの下の設定・聖別の帯)
-export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";
+export { SANCTIFY_MIN, SANCTIFY_MAX, sanctifiedValue } from "./apply-vaal";
+// 品質の上限と表示値 (データ無しで呼べる。教材の例の数もここから、11-07 チュートリアル係の頼み)
+export { BASE_MAX_QUALITY, RAISED_MAX_QUALITY, displayedValue } from "../htc/quality";
+export { maxQualityForBase } from "../htc/catalysing-setup";
 // 文
 export { fillModText } from "../htc/mod-text";
 export { tagLabel } from "../mods/tag-ja";
