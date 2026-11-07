@@ -31,6 +31,10 @@ export { omenBlock } from "./omen-block";
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
 // その種類のカタリストをこの品に打つ時の今の % と入る上限 (何 % まで入るか)
 export { catalystRoom } from "./stage-core";
+// カタリストの品質が効く品か・品質があるか・神で値が変わる MOD・両側の空きの数
+export { catalystQualityApplies, hasCatalystQuality, rerollableMods, openSlots } from "./stage-core";
+// 品質の上限を越えられる幅 (インフューザー、E-74)・削減のお告げの的 (MOD レベルの一番低い物、未発現は 1)
+export { INFUSER_OVER, whittleTargets } from "./apply-currency";
 // MOD を段から作る (数値の決め方は rng)・アイテムに MOD を足した形 (withMod)・そのカタリストがその MOD を伸ばすか
 export { makeStageMod, withMod, catalystBoosts } from "./stage-core";
 // ソケットの上限・白の時からあるソケットの数 (規格外。エミュの新品とツリーのスタートが同じ数で始める)
@@ -49,6 +53,7 @@ export { orbFloor } from "./spec/orb-specs";
 export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 // MOD の一覧の行 (段に数の tier)
 export type { ListRow, ListTier, ModGroup } from "./mod-list";
+export { isEssenceGroup } from "./mod-list";
 export { modListFor } from "./mod-list";
 export { previewUse } from "./use-preview";
 export { tierDisplayRanges } from "../mods/stat-scale";
@@ -82,13 +87,13 @@ export { aimCombos, aimChain, aimDone, hits as aimHits } from "./aim-odds";
 export type { AimChainMode } from "./aim-odds";
 export { stepCost, aimChainMode } from "./aim-odds";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字)
-export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf, isCraftedSource } from "./tier-rank";
+export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf, isCraftedSource, isDesecratedSource, isEmotionMod, isAlloyName } from "./tier-rank";
 export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
 export { OMEN_FOR } from "./omens";
 // 土台とお告げの層・鍵の読み・手の種類 (2026-11-07 ジン jin-base、E-1〜E-5。シミュの木・画面はこれを呼ぶ)
-export { parseKey, revealKey, type ParsedKey } from "./key";
+export { parseKey, revealKey, essenceKey, type ParsedKey, type EssenceTier } from "./key";
 export { actionClass, actionClassOf, actionClassOfKey, type ActionClass, type ActionName } from "./spec/action-class";
 export { FACTION_TAG, OMEN_EXCLUSIVE, omenFor, omenRivals, omenSideOf, omensOfKind, toggleOmen } from "./spec/omen-layer";
 export { OMEN_KEY } from "./spec/omen-keys";

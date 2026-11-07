@@ -51,3 +51,7 @@ export function craftedKindOf(data: PatchData, m: Pick<StageMod, "modId">): "ess
 }
 /** 合金の名前か (クライアントの名前の終わりが「Alloy」)。MOD の段の名前 (craftedKindOf) と鍵の英名 (essence-specs の isAlloyKey) が同じ物を見る */
 export const isAlloyName = (name: string): boolean => /\bAlloy$/.test(name);
+/** 冒涜専用の MOD か (出どころ desecrated。骨の発現・冒涜専用の数え・フラクチャーできない、E-41・E-62) */
+export const isDesecratedSource = (src: string | undefined | null): boolean => src === "desecrated";
+/** 液化した感情 (デリリウム) で付いた MOD か (作った MOD の id がジュエルの Emotion_、E-73) */
+export const isEmotionMod = (m: { modId: string; crafted?: boolean }): boolean => !!m.crafted && m.modId.includes("/Emotion_");

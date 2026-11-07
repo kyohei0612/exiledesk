@@ -25,7 +25,7 @@ import { craftedLimitOf, normalTierOf } from "./apply-essence";
 import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, unfracturable, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
-import { isCraftedSource } from "./tier-rank";
+import { isCraftedSource, isDesecratedSource } from "./tier-rank";
 
 export type ForceFlag = "n" | "e" | "d" | "f" | "x" | "u";
 export const isForce = (key: string): boolean => key.startsWith("force:");
@@ -76,7 +76,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   };
   // 冒涜で付けられるのは冒涜の MOD と普通の MOD (骨の発現には普通の MOD も出る。2026-10-18 オーナー「一般 MOD も冒涜で付けれるでしょ」で 10-08 の「冒涜 MOD だけ」を変えた)。
   // エッセンスなどの MOD は冒涜では付かない。ルーンの MOD (出どころは normal) は差していれば付く (2026-10-20 オーナーがトレードで確認)
-  if (p.flag === "d" && mod.source !== "desecrated" && mod.source !== "normal" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
+  if (p.flag === "d" && !isDesecratedSource(mod.source) && mod.source !== "normal" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skip(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
   // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
   if (p.flag === "f") {
     if (allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
@@ -101,7 +101,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   // 固定で付けるエッセンスの MOD は、その印も付ける (上限まで。2026-10-10 要望「創生の樹もフラクチャーできるように」。冒涜は固定できない)
   const otherworldly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId);
   // 冒涜でしか付かない MOD (冒涜専用・異界) をフラクチャーで付ける事はできない (冒涜専用の MOD は固定されない。2026-10-10)
-  if (p.flag === "f" && (mod.source === "desecrated" || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
+  if (p.flag === "f" && (isDesecratedSource(mod.source) || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
   const asDesecrated = p.flag === "d";
   const asCrafted = p.flag === "e" || (p.flag === "f" && isCraftedSource(mod.source));
   if (asCrafted) {

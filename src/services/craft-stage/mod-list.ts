@@ -25,6 +25,8 @@ import { jaTypeName } from "../../i18n/item-names-ja";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
 export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
+/** エッセンスの節 (エッセンス + パーフェクトエッセンス = 付け方はエッセンスの手) */
+export const isEssenceGroup = (g: ModGroup): boolean => g === "essence" || g === "perfect_essence";
 /**
  * special = 創生の樹・ハンドラップ専用の MOD (ベースの special の置き場、重み 0)。カレンシーでは付かないが MOD としてはあるので、手で付ける分だけ出す
  * (2026-10-09 オーナー「創生の樹産の奴がクラフトでは付かないけど MOD としては存在する。カレンシーで出ちゃだめだけど、手動で付ける分はいる。分かりやすいように置いといて」)

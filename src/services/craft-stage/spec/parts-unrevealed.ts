@@ -10,6 +10,7 @@ import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import type { Mods, PartCtx } from "./parts";
 import { markFloorOf } from "./desecrate-specs";
+import { isDesecratedSource } from "../tier-rank";
 import { jaOfOmen } from "../../htc/game-names";
 import { tr } from "../../../i18n/lang";
 import { OMEN_KEY } from "./omen-keys";
@@ -30,7 +31,7 @@ function poolIds(item: StageItem, pools: readonly ModPool[], side: StageSide): s
 /** 冒涜専用の MOD (冒涜の置き場の物と異界の MOD) */
 const exclusiveTest = (item: StageItem, side: StageSide) => {
   const other = new Set(item.cls.pools.otherworldly?.[side === "prefix" ? "prefixes" : "suffixes"] ?? []);
-  return (mod: { id: string; source?: string }): boolean => mod.source === "desecrated" || other.has(mod.id);
+  return (mod: { id: string; source?: string }): boolean => isDesecratedSource(mod.source) || other.has(mod.id);
 };
 interface PoolArgs { pools: readonly ModPool[]; floor: number; exclusiveAnyLevel: boolean; tag: string | null; except?: StageMod } // E-11b の例外 (冒涜専用はアイテムレベルを見ない = exclusiveAnyLevel、噛み切られた骨は見る)
 /** 発現の候補の置き場。tag (勢力の保証) があれば、そのタグの MOD だけを MOD ごとに等しく (2026-10-10 オーナー「等しい確率」) */

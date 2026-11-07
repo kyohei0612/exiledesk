@@ -14,7 +14,7 @@ import { runeEffectPct, SIDES, takenFamilies } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
-import { parseKey } from "./key";
+import { essenceKey, parseKey, type EssenceTier } from "./key";
 import type { StageItem, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
@@ -64,7 +64,7 @@ export function infiniteChoices(data: PatchData, item: StageItem, key: string): 
   const level = essenceTierOf(key);
   const en = ESSENCE_KEYS[key]?.en;
   const taken = takenFamilies(data, item);
-  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !familyBlocked(x.mod, taken));
+  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[essenceKey(level as EssenceTier, x.mod.id)]?.en === en && !familyBlocked(x.mod, taken));
 }
 /**
  * 無限のエッセンス: 筋力・器用さ・知性のどれかが付く (poe2db はどの部位にも 3 つ並べている。2026-10-09)。

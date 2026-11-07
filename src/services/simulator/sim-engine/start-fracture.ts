@@ -7,7 +7,7 @@ import { applyCurrency } from "../../craft-stage/apply-currency";
 import { craftedLimitOf } from "../../craft-stage/apply-essence";
 import { forceKey } from "../../craft-stage/apply-force";
 import { hits } from "../../craft-stage/aim-odds";
-import { isCraftedSource } from "../../craft-stage/tier-rank";
+import { isCraftedSource, isDesecratedSource } from "../../craft-stage/tier-rank";
 import { freshItem } from "../../craft-stage/run-plan";
 import { baseSocketsOf } from "../../craft-stage/stage-runes";
 import { socketGoalRunes } from "./goal-runes";
@@ -166,7 +166,7 @@ export function goalBlock(data: PatchData, base: string, itemLevel: number, aims
   if (!data.mods.get(add.modId)) return tr("この MOD はベースに無い", "This mod is not on the base");
   const src = (m: TierMod): string => String(data.mods.get(m.modId)?.source ?? "");
   const all = [...aims, add];
-  if (src(add) === "desecrated" && all.filter((m) => src(m) === "desecrated").length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
+  if (isDesecratedSource(src(add)) && all.filter((m) => isDesecratedSource(src(m))).length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
   // 同じ系統 (同じ MOD の別の段も): 指名の手は段を置き換えて通るので、ここで断る。エッセンスの MOD も例外なし (E-11a、11-02 にエッセンスだけ別の系統はやめた)
   const same = (a: TierMod): boolean => { const x = data.mods.get(a.modId), y = data.mods.get(add.modId); return !!x && !!y && sharesFamily(x, y); };
   if (aims.some(same)) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");

@@ -29,6 +29,8 @@ export type ParsedKey =
   | { type: "currency"; kind: string; strength: "base" | "greater" | "perfect" };
 
 const EMOTION_PREFIX = "emotion:";
+/** エッセンスの手の鍵 (parseKey の essence の逆)。tier = lesser / normal / greater / perfect、modId = 付くエッセンスの MOD */
+export const essenceKey = (tier: EssenceTier, modId: string): string => `essence:${tier}:${modId}`;
 /** 発現の手の鍵 (parseKey の reveal の逆)。index = 候補の何番目 (1 から)、reroll = アビスの反響で引き直した組から */
 export const revealKey = (index: number, reroll = false): string => `reveal:${index}${reroll ? ":reroll" : ""}`;
 export function parseKey(key: string): ParsedKey {
