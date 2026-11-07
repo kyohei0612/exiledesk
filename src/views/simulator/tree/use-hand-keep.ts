@@ -23,9 +23,9 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const t = useTree();
   /** 消去 (全部消えてよい = 消去の箱を並べる、全部は残せない) か */
   const isRemove = computed(() => !!o.held.value && effectOf(o.held.value) === "remove");
-  const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h ? keepChoicesOf(d, it, h, o.omens.value) : []; });
+  const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h ? keepChoicesOf(d, it, h, o.omens.value, t.goals.value) : []; });
   /** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
-  const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value); });
+  const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value, t.goals.value); });
   /** カードの見本の ☑ の印 (箱のカードと同じ見本、S-82) */
   const aimedNow = (d: PatchData, it: StageItem | null): ReadonlySet<string> => (it && aimedOfCard(d, t.doc.value, o.boxId, it)) || sampleAimed(d, t.doc.value, o.boxId, 1);
   /**

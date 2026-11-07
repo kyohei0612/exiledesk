@@ -17,7 +17,8 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { isWhittleHand, WHITTLE } from "./tree-whittle";
+import { aimedAims, isWhittleHand, rankVariants } from "./tree-whittle";
+import { keptAimedOf } from "./tree-keep";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
 import { divineBranches, isDivineAim } from "./tree-divine";
@@ -47,17 +48,24 @@ const MARKED = 2;
  * 手の起こりうる行き先 (打たない)。数え上げで表せない手 (ルーン・品質・無限のエッセンスなど結果が 1 つに決まる物) は決まった種で 1 回当てるだけ、
  * カタリストは回す時と同じ playHand (品質の上限まで繰り返す 1 手、11-06 オーナー「A」)。発現で選ぶ手は未発現を出うる MOD ごとに分ける (revealOutcomes)
  */
-function outsOf(data: PatchData, item: StageItem, b: TreeBox): Br[] | "tooMany" {
+function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = []): Br[] | "tooMany" {
   const h = b.hand!, key = h.currency;
   let rs: Br[];
   if (isRevealHand(key)) rs = [{ p: 1, item }];
   // 目標の数値を決めた神 (S-202): 目標の以上 / 未満の 2 枝 (予見リセットは以上の 1 枝)
   else if (isDivineAim(h)) rs = divineBranches(data, item, h, (it) => { const r = applyHand(data, it, key, mulberry32(1), { omens: h.omens }); return r.applied ? r.item : null; });
   else if (isCatalyst(key)) { const r = playHand(data, item, h, mulberry32(1)); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
-  else {
-    // 削りのお告げは段の順位を見ない = 消せる MOD のどれもが消えうる (外れは一律、削りは当たり / ハズレの 2 枝を必ず。S-200 決め (a))
-    const om = isWhittleHand(h) ? engineOmens(h).filter((o) => o !== WHITTLE) : engineOmens(h);
-    const s = stepOutcomesOrTooMany(data, item, key, om, { merge: (r) => itemKeyOf(r.item) });
+  else if (isWhittleHand(h)) {
+    // 削減は一番低い MOD レベルの MOD が消える (E-33)。外れの MOD レベルは、その外れが付いた手の池で出うる MOD レベルの出方ごとに差し替えて打つ
+    // (tree-whittle の rankVariants、割合 = その出方の重み)。消えうる MOD が 1 つなら 1 枝 (11-07 オーナー「削減の対象先がハズレMODの場合かな」で決め (a) の「2 枝を必ず」をやめた、S-65b)
+    rs = [];
+    for (const v of rankVariants(data, item, wanted)) {
+      const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
+      if (s === "tooMany") return s;
+      if (s) rs.push(...s.filter((r) => !r.void).map((r) => ({ p: v.p * r.p, item: r.item })));
+    }
+  } else {
+    const s = stepOutcomesOrTooMany(data, item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
     if (s === "tooMany") return s;
     if (s) rs = s.filter((r) => !r.void);
     else { const r = applyHand(data, item, key, mulberry32(1), { omens: h.omens }); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
@@ -86,7 +94,7 @@ function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem
 }
 /** 代表の品 f に箱 b の手を当てた枝を、行き先の箱ごとに分ける。当たるまでの手 (repeat) は当たりの枝だけ (当たるまで打ち続ける挙動) */
 function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
-  const rs = outsOf(data, f.item, b);
+  const rs = outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(doc, b.hand, f.aimed)) : []);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;

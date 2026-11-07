@@ -9,7 +9,7 @@ import { stepOutcomes } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { engineOmens } from "./tree-hands";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
-import { joinKeys } from "./tree-whittle";
+import { joinKeys, rankVariants, WHITTLE } from "./tree-whittle";
 
 /** 残したい MOD を決めた手か。消去も同じ (11-04、[] = 全部消えてよい = 残したい MOD 無し。前は消去だけ tree-outcome の isKeepAnnul で別に数えた) */
 export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep;
@@ -25,14 +25,21 @@ export function keptAimedOf(doc: TreeDoc, h: Hand | null | undefined, aimed: Rea
 
 /** goneOf の覚え (1 手ごとに人の数だけ呼ぶ。手と MOD の組が同じなら同じ) */
 const GONE = new WeakMap<PatchData, Map<string, ReadonlySet<string> | null>>();
-/** 手 (お告げ込み) でこのアイテムから消えうる MOD の modId (S-27b の候補・S-27e)。打てなければ null */
-export function goneOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): ReadonlySet<string> | null {
+/**
+ * 手 (お告げ込み) でこのアイテムから消えうる MOD の modId (S-27b の候補・S-27e)。打てなければ null。
+ * 削減は一番低い MOD レベルの MOD が消えるので、外れの MOD レベルをその外れが付いた手の池で出うる出方ごとに差し替えて見る (wanted = 欲しい MOD、tree-whittle の rankVariants)。
+ * 差し替えた外れが消えたら元の外れが消えうる (11-07 オーナー「残したいMODの設定は2個以上候補ある時かな削減先が」)
+ */
+export function goneOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], wanted: readonly Aim[] = []): ReadonlySet<string> | null {
   let m = GONE.get(data);
   if (!m) GONE.set(data, (m = new Map()));
-  const key = [currency, ...omens, item.rarity, ...[...item.prefixes, ...item.suffixes].map((x) => `${x.modId}.${x.tierIndex}${x.fractured ? "f" : ""}${x.unrevealed ? "u" : ""}`)].join("|");
+  const whittle = omens.includes(WHITTLE) && wanted.length > 0;
+  const key = [currency, ...omens, item.rarity, ...[...item.prefixes, ...item.suffixes].map((x) => `${x.modId}.${x.tierIndex}${x.fractured ? "f" : ""}${x.unrevealed ? "u" : ""}`), ...(whittle ? wanted.map((a) => `w:${a.modId}`) : [])].join("|");
   if (m.has(key)) return m.get(key)!;
-  const outs = stepOutcomes(data, item, currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void);
-  const out = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((x) => x.modId))) : null;
+  const mods = [...item.prefixes, ...item.suffixes], ids = new Set(mods.map((x) => x.modId));
+  const junkOn = (side: string): string[] => mods.filter((x) => x.side === side && !x.fractured && !wanted.some((a) => a.modId === x.modId)).map((x) => x.modId);
+  const outs = (whittle ? rankVariants(data, item, wanted).map((v) => v.item) : [item]).flatMap((it) => stepOutcomes(data, it, currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void) ?? []);
+  const out = outs.length ? new Set(outs.flatMap((o) => o.removed.flatMap((x) => (ids.has(x.modId) ? [x.modId] : junkOn(x.side))))) : null;
   if (m.size > 20000) m.clear();
   m.set(key, out);
   return out;

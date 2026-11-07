@@ -81,19 +81,19 @@ export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
  * 消去の「残したい MOD」の候補 = この箱のアイテムに付いている MOD (✦ は消えないので出さない。10-27 オーナー「手の窓に今付いている MOD を全部並べる」)。
  * 持った手 (currency・お告げ) があれば、エンジンで打って消えうる MOD だけ (光のお告げなら冒涜だけ。1 つなら確定で消える = 聞かない、S-27b)
  */
-export function keepChoicesOf(data: PatchData, item: StageItem, currency?: string, omens: readonly string[] = []): Array<{ aim: Aim; mod: StageMod }> {
+export function keepChoicesOf(data: PatchData, item: StageItem, currency?: string, omens: readonly string[] = [], wanted: readonly Aim[] = []): Array<{ aim: Aim; mod: StageMod }> {
   const all = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
   // 消去でない手 (S-27d) は打てなければ候補無し (消去は前のまま、打てない時は全部を出す)
-  const gone = (currency ? goneOf(data, item, currency, omens) : null) ?? (currency && effectOf(currency) !== "remove" ? new Set<string>() : null);
+  const gone = (currency ? goneOf(data, item, currency, omens, wanted) : null) ?? (currency && effectOf(currency) !== "remove" ? new Set<string>() : null);
   return all.filter((m) => !gone || gone.has(m.modId)).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
 }
 /**
  * 残したい MOD を聞く手か = 消えうる MOD が 2 つ以上 (S-27b)。消去と では消去でない消える手 (カオス・パーフェクトエッセンス・満杯の側の骨、S-27d) も。
  * 消せる MOD の無い手 (高貴・ふつうのエッセンス・空きのある側の骨) は候補 0 なので聞かない
  */
-export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): boolean {
+export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], wanted: readonly Aim[] = []): boolean {
   if (effectOf(currency) !== "remove" && !(!isRuneHand(currency) && !isCatalyst(currency) && effectOf(currency) !== "fracture")) return false;
-  return keepChoicesOf(data, item, currency, omens).length > 1;
+  return keepChoicesOf(data, item, currency, omens, wanted).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
 export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null, stones: readonly Aim[] = []): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId) && !stones.some((a) => a.modId === c.aim.modId)).map((c) => c.aim);
@@ -435,7 +435,7 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const stones = opt.hitAims?.length && veilPick(veilH) ? revealAimsOf(data, doc, id, it, veilH).filter((a) => !choices.some((c) => c.modId === a.modId)) : [];
   const pick = opt.hitAims ? pickedHits([...choices, ...stones], opt.hitAims, key, !!opt.spam) : null;
   // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)。消える手 (S-27d) も同じ口 (渡さなければ既定 = 持っている狙い)
-  const keep = opt.keep && keepAskOf(data, it, key, omens) ? opt.keep : undefined;
+  const keep = opt.keep && keepAskOf(data, it, key, omens, goals) ? opt.keep : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
