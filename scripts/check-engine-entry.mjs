@@ -13,6 +13,11 @@
  *     MOD の段・幅を直に触る (.tiers・.ranges)・文の # を自分で埋める (replace(/#/…))・エンジンの生のデータ (vendor/poe2htc/data・services/htc/*.json・
  *     services/craft-stage/*.json・i18n/mod-text-ja) を import する・Math.random で自前の乱数を引く。見せるために読む物もあるので、今ある分は控えに持ち、
  *     増えた時だけ落とす (増えたら: その中身がエンジンに無いならジン部長に頼む。見せるだけなら控えを取り直す)
+ *   F ゲームの仕様の自前 (2026-11-07 オーナー「要は、自前でゲーム仕様をいじるなってフックだろうな」「ゲームシステムはジンだけ追加修正可能って話だね。フックで」):
+ *     画面の部 (エミュ・シミュ・チュートリアル・デイリー・デザインの持ち物。src/utils・sim-engine・emu-engine も入る) が、エンジンに聞かずに
+ *     ① MOD の当たりを自前で比べる (modId の === / includes など、aimHits を通さない一致) ② カレンシー・お告げの鍵の文字を読む
+ *     (startsWith("essence:")・kindOf(…) === "…" など、parseKey / actionClassOfKey を通さない) ③ お告げの名前を文字で書く ("Omenof…") ④ ゲームの数字を書く
+ *     (段の下限 33・35・40・44・50・70、冒涜専用の 85%・14%、聖別の 0.78・1.22、紋章の × 0.4)。コメントは数えない。今ある分は控え、増えた時だけ落とす
  *   A (入口の外) は 10-25 夜にやめた (画面はエンジンの関数を直接呼んでよい)
  * 今の数をファイルごとに控え (check-engine-entry.baseline.json) に持ち、決まりごとの合計が控えより増えた時だけ落ちる (オーナー 10-20 OK)。
  * ファイルを割って移っただけの時は合計が同じなので落とさず、ファイルごとの増えは知らせだけ。減ったら `--head --write` で控えを取り直す。
@@ -60,6 +65,18 @@ const OWN_LOGIC = [
   ["文の # を自分で埋める", /replace\(\s*\/#\//g],
   ["自前の乱数 (Math.random)", /Math\.random\(/g],
 ];
+/** F で見る画面の部 (ゲームの仕様を足す・直すのはジンだけ。ジンの「共通」とアプリ・解析は数えない) */
+const GAME_SCREEN = new Set(["エミュ", "シミュ", "チュートリアル", "デザイン", "デイリー"]);
+/** カレンシー・お告げの鍵の頭 (price-keys.json の鍵・手順の鍵 key.ts の SET_PREFIX ほか) */
+const KEY_HEAD = "essence:|reveal|desecrate|catalyst_|jcatalyst_|emotion:|rune:|spam|qset:|cqset:|qcap:|ilvl:|iset:|sset:|transmute|augment|regal|alchemy|exalt|chaos|annul|divine|fracture|artificer|hinekora|jeweller|vaal|flux_|Omen|_greater|_perfect";
+const GAME_RULE = [
+  ["① MOD の当たりを自前で比べる (aimHits を通さない modId の一致)", /\bmodId\s*[!=]==?|[!=]==?\s*[\w$.?![\]]*\bmodId\b|\.(?:includes|has|indexOf)\(\s*[\w$.?!]*\bmodId\s*\)/g],
+  ["② 鍵の文字を読む (parseKey / actionClassOfKey を通さない)", new RegExp(String.raw`\.(?:startsWith|endsWith|includes)\(\s*["'` + "`" + String.raw`](?:${KEY_HEAD})|\bkindOf\([^)]*\)\s*[!=]==?\s*["'` + "`" + String.raw`]|[!=]==?\s*kindOf\(`, "g")],
+  ["③ お告げの名前を文字で書く (OMEN_KEY・omenFor を通さない)", /["'`]Omen[oO]f\w+/g],
+  ["④ ゲームの数字を書く (段の下限・冒涜専用の割合・聖別の幅・紋章の 0.4)", /(?:MOD ?レベル|mod level|[Ff][Ll][Oo][Oo][Rr]\w*|greater|perfect)\D{0,6}\b(?:33|35|40|44|50|70)\b|\b(?:85|14) ?%|\b0\.78\b|\b1\.22\b|(?:×|\*)\s*0\.4\b/g],
+];
+/** コメントを消す (F はコメントの説明を数えない)。文字列の中の // (URL など、: や引用符の直後) は残す */
+const stripComments = (t) => t.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`\\])\/\/.*$/gm, "$1");
 const CS = "src/services/craft-stage/";
 /** シミュだけ・エミュだけの、エンジンを使う置き場 (2026-10-26 にエンジンから出した、オーナー「全部それシミュに渡して削除してくれ」) */
 const SIM_ENGINE = ["src/services/simulator/sim-engine.ts", "src/services/simulator/sim-engine/", "src/services/simulator/paste/"];
@@ -98,14 +115,18 @@ for (const f of files) {
     if (screen && RAW_DATA.test(t)) hits.push({ rule: "E", file: f, target: `生のデータ ${t}` });
   }
   if (screen) for (const [what, re] of OWN_LOGIC) for (const _ of text.matchAll(re)) hits.push({ rule: "E", file: f, target: what });
+  if (GAME_SCREEN.has(who)) {
+    const code = stripComments(text);
+    for (const [what, re] of GAME_RULE) for (const m of code.matchAll(re)) hits.push({ rule: "F", file: f, target: `${what}: ${m[0].trim()}` });
+  }
 }
 
-const RULES = ["B", "C", "D", "E"];
+const RULES = ["B", "C", "D", "E", "F"];
 const count = {};
 for (const h of hits) count[`${h.rule} ${h.file}`] = (count[`${h.rule} ${h.file}`] ?? 0) + 1;
 const total = (r) => hits.filter((h) => h.rule === r).length;
 const filesOf = (r) => new Set(hits.filter((h) => h.rule === r).map((h) => h.file)).size;
-console.log(`見張り: B 凍結の htc/ ${total("B")} 行・C エンジン ⇄ シミュ・エミュの置き場 ${total("C")} 行・D エミュ ⇄ シミュ ${total("D")} 行・E 画面の中のエンジンらしき物 ${total("E")} か所 (${filesOf("E")} ファイル) (${head ? "HEAD" : "作業ツリー"})`);
+console.log(`見張り: B 凍結の htc/ ${total("B")} 行・C エンジン ⇄ シミュ・エミュの置き場 ${total("C")} 行・D エミュ ⇄ シミュ ${total("D")} 行・E 画面の中のエンジンらしき物 ${total("E")} か所 (${filesOf("E")} ファイル)・F ゲームの仕様の自前 ${total("F")} か所 (${filesOf("F")} ファイル) (${head ? "HEAD" : "作業ツリー"})`);
 if (args.has("--list")) for (const h of hits) console.log(`${h.rule}\t${h.file}\t→ ${h.target}`);
 
 if (args.has("--write")) {
@@ -124,8 +145,10 @@ const WHY = {
   C: "エンジン (craft-stage) はシミュ・エミュの物を読まない、sim-engine と emu-engine は互いを読まない",
   D: "エミュとシミュは互いの物を読まない。両方で使う部品は共通 src/components へ",
   E: "打つ・読む・MOD の文や値を作る中身は画面に書かず、エンジンの関数を呼ぶ (無ければジン部長に頼む)。見せるために読むだけなら --head --write で控えを取り直す",
+  F: "ゲームの仕様はジンだけ。エンジンの関数を呼ぶか、無ければジンに頼む (G-40、オーナー 11-07「ゲームシステムはジンだけ追加修正可能」)",
 };
-for (const [k, n] of worse) console.log(`${over.includes(k[0]) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}`);
+// 止める行 (フック G-40 はファイル名の入った「増えた:」の行だけを見せる) に訳を付ける。何が増えたかは --list で
+for (const [k, n] of worse) console.log(`${over.includes(k[0]) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}${over.includes(k[0]) ? ` (${WHY[k[0]]})` : ""}`);
 for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (${WHY[r]})`);
 if (better.length) console.log(`減った ${better.length} ファイル: 良い。\`node scripts/check-engine-entry.mjs --head --write\` で控えを取り直す`);
 if (over.length) process.exit(1);
