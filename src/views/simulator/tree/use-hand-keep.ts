@@ -71,11 +71,13 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const text = (m: StageMod): string => { const it = o.item.value ? o.cardOf(o.item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
   /** 選べるのは狙いだけなので一覧の字はいつも MOD の名前 (前は乱数の外れを「外れ MOD」の字で並べた、S-83) */
   const label = (c: { aim: Aim; mod: StageMod }): string => text(c.mod);
+  /** この手で消えない MOD の行の字も値はカードと同じ (木の数値は既定で段の下限、S-202 ②。前は元の品の値で、欄 27% / カード 25% と割れた) */
+  const fixedLabel = (m: StageMod): string => text(m);
   /**
    * 聞かないが欄は出す = 候補 1 つの消える手で、消えない狙いがある時 (S-27f、11-07 オーナー「残したいMODってのでまぁデフォでチェック欲しいね 一応ね」)。
    * ☑ 固定の行だけを見せ、打ち方・保存 (Hand.keep) は変えない
    */
   const fixedOnly = computed(() => lone.value && fixed.value.length > 0);
-  return { isRemove, choices, picks, show, fixed, ask, fixedOnly, checked, aims, toggle, none, label };
+  return { isRemove, choices, picks, show, fixed, ask, fixedOnly, checked, aims, toggle, none, label, fixedLabel };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;
