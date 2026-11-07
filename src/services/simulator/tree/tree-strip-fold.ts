@@ -45,7 +45,9 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
       for (const o of b.outs) walk(o, n + 1);
     };
     for (const o of r.outs) walk(o, 1);
-    out.set(head, { head, mids, stops, steps });
+    // 畳んだ中の箱へまとめた箱 (同じ段のまとめ S-66) は札の中 = 止まった箱にしない。線の先に描かない箱が混ざると札の線ごと消えた (11-06 MISV6HZL、オーナー「普通に線が消えてね」)
+    const inside = new Set(mids);
+    out.set(head, { head, mids, stops: stops.filter((id) => { const b = d.boxes[id]!; return !(b.merged && b.back && inside.has(b.back)); }), steps });
   }
   return out;
 }

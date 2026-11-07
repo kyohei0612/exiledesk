@@ -25,7 +25,7 @@ const BUS_DY = HAND_DY - CHIP_HALF;
 const CHIP_MAX = 340;
 
 /** layout = 段の決め (tree-row-tops の rowLayout)。渡すと札と枝分かれを段で揃える */
-export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }, layout?: () => RowLayout | null) {
+export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }, layout?: () => RowLayout | null, heightOf?: (id: string) => number) {
   /** 箱の真ん中 */
   const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
   /** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
@@ -50,8 +50,12 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
     const Lr = layout?.() ?? null, r = Lr?.rows.get(b.id);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
-    const jy = pass ? p.y : rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
-    const busY = (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(b.id) ?? 0);
+    // 畳んだ消去の続きの札の上下 (人の消去の箱 → 札・札 → 止まった箱) は、手の札を前の箱の下端と次の箱の上端の真ん中に (上下の線を同じ長さ。
+    // 段の札の高さに揃えると、背の低い札の下の線だけ長くなった。11-07 オーナー「消去と前の枠と次のわくの間において欲しい…不細工にならないように線の長さが」)
+    const mid = !pass && !multi && (fold.value.folds.has(b.id) || fold.value.folds.has(kids[0]!.id));
+    const midJy = mid ? (fold.value.folds.has(b.id) ? py : p.y + (heightOf?.(b.id) || BOX_H)) / 2 + top / 2 : null;
+    const jy = pass ? p.y : midJy ?? rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
+    const busY = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {

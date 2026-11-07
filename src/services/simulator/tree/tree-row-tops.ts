@@ -7,7 +7,7 @@
  * 札と枝分かれの高さは use-tree-edges が同じ式で引く。画面は木を開いた時・手を足した時・箱の高さが変わった時にいつも掛け直す (use-row-settle、1 つ戻すには入れない)
  */
 import { BOX_W, type TreeBox, type TreeDoc } from "./tree-model";
-import { foldOuts, stripFolds, stripHidden } from "./tree-strip-fold";
+import { foldOuts, stopToHead, stripFolds, stripHidden } from "./tree-strip-fold";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
 export const LINE_Y = 48;
@@ -108,10 +108,13 @@ const ROOM_X = 24;
  */
 export function centerMerged(d: TreeDoc): boolean {
   let moved = false;
+  // 親は描く親 (畳んだ消去の続きの止まった箱は札、S-28g)。隠した箱は古い位置のままなので、真ん中に入れると札から離れた (11-06 MISV6HZL、オーナー「たたんだ状態でそれだすなよ」)
+  const toHead = stopToHead(stripFolds(d));
+  const drawnParent = (b: TreeBox): string | null => toHead.get(b.id) ?? b.parent;
   for (const t of Object.values(d.boxes)) {
     const into = Object.values(d.boxes).filter((b) => b.back === t.id && away(d, b));
     if (!into.length || !t.parent) continue;
-    const ps = [t.parent, ...into.map((b) => b.parent!)].map((id) => d.boxes[id]).filter((p): p is TreeBox => !!p);
+    const ps = [...new Set([drawnParent(t), ...into.map(drawnParent)])].map((id) => (id ? d.boxes[id] : undefined)).filter((p): p is TreeBox => !!p);
     const cs = ps.map((p) => p.x + BOX_W / 2), x = Math.round((Math.min(...cs) + Math.max(...cs)) / 2 - BOX_W / 2), dx = x - t.x;
     if (Math.abs(dx) < 1) continue;
     const sub = new Set<string>();
