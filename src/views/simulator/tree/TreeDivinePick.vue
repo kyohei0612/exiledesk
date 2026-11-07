@@ -9,7 +9,7 @@
  * ヒネコラで予見したアイテムの神だけ、一番上に「予見リセット」の ☑ (S-202 ⑤、☑ で全部の MOD を手前の神の目標で完了にする)
  */
 import { computed, nextTick, ref, watch } from "vue";
-import { allMods, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { rerollableMods, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { retext } from "../../../services/simulator/sim-engine";
 import { divineRange } from "../../../services/simulator/tree/tree-divine";
 import type { Aim, DivineTarget } from "../../../services/simulator/tree/tree-model";
@@ -20,8 +20,8 @@ import { tr } from "../../../i18n/lang";
 const props = defineProps<{ item: StageItem; aims: readonly Aim[]; targets: readonly DivineTarget[]; foreReset: boolean; problem: string | null; start: (modId: string, vi: number) => number | null }>();
 const emit = defineEmits<{ targets: [DivineTarget[]]; foreReset: [boolean]; decide: []; cancel: [] }>();
 
-/** 神で数値が振り直される MOD (✦・未発現・数値の無い物は振り直されない = エンジンの reroll と同じ) */
-const rolled = computed((): StageMod[] => allMods(props.item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length));
+/** 神で数値が振り直される MOD (✦・未発現・数値の無い物は振り直されない = エンジンの rerollableMods) */
+const rolled = computed((): StageMod[] => rerollableMods(props.item));
 const isAim = (m: StageMod): boolean => props.aims.some((a) => a.modId === m.modId);
 const lit = computed(() => rolled.value.filter(isAim));
 const gray = computed(() => rolled.value.filter((m) => !isAim(m)));

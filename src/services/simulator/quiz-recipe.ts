@@ -10,7 +10,7 @@
  *   - 工程は入口の札 (entry) が付いたら切り替わる。どの入口も付いていなければ 1 つ目の工程
  * 打ち方はエミュレーターと同じ applyCurrency。当たり所で弾かれた手 (random) は数えずにもう一度 (書いてある効果どおり)。
  */
-import { type PatchData, type StageItem, type StageMod, type StageSide, type AimHitOpts, aimHits, applyCurrency, omenFor, OMEN_KEY, revealOffers, catalystOf, catalystRoom, limitOf, listOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
+import { type PatchData, type StageItem, type StageMod, type StageSide, type AimHitOpts, aimHits, applyCurrency, omenFor, OMEN_KEY, revealOffers, revealKey, catalystOf, catalystRoom, limitOf, listOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
 
 export type SlotKind = "normal" | "desecrated" | "fractured" | "essence" | "crafted";
 /** 完成の札 1 つ。mods のどれか 1 つ (段は minTierIndex 以上) で埋まる。mods が空ならその側のどの MOD でも */
@@ -294,15 +294,15 @@ export function revealWanted(item: StageItem, goal: readonly QuizSlot[], o?: Qui
   const open = goal.filter((s) => (state[s.id] ?? 0) < 2);
   return (m) => open.some((s) => s.side === m.side && fits(m, s, o) >= 2);
 }
-/** 発現の番号: 3 つ (と反響の 3 つ) から、埋まっていない札の MOD を取る */
-function revealKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], echoes: boolean, seed: number): string {
+/** 発現の番号: 3 つ (と反響の 3 つ) から、埋まっていない札の MOD を取る (鍵はエンジンの revealKey) */
+function revealPickKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], echoes: boolean, seed: number): string {
   const offers = revealOffers(data, item, mulberry32(seed));
   const ok = revealWanted(item, goal, quizHit(data));
   const i1 = offers.first.findIndex(ok);
-  if (i1 >= 0) return `reveal:${i1 + 1}`;
-  if (!echoes) return "reveal:1";
+  if (i1 >= 0) return revealKey(i1 + 1);
+  if (!echoes) return revealKey(1);
   const i2 = offers.reroll.findIndex(ok);
-  return i2 >= 0 ? `reveal:${i2 + 1}:reroll` : "reveal:1:reroll";
+  return revealKey(i2 >= 0 ? i2 + 1 : 1, true);
 }
 
 /** 1 手の結果: restart = 買い直す、blocked = 当たり所に関係なく打てない、random = 当たり所で弾かれた (減らずにもう一度)、それ以外は打った */
@@ -320,7 +320,7 @@ export function applyQuizAction(data: PatchData, route: QuizRoute, it: StageItem
   let key: string, omens: string[];
   const rs = Math.floor(g() * 2 ** 31);
   if ("reveal" in a) {
-    key = revealKey(data, it, route.goal, a.reveal.echoes, rs);
+    key = revealPickKey(data, it, route.goal, a.reveal.echoes, rs);
     omens = a.reveal.echoes ? [OMEN_KEY.echoes] : [];
   } else { key = a.use; omens = a.omens ?? []; }
   const x = applyCurrency(data, it, key, "reveal" in a ? mulberry32(rs) : g, omens);
@@ -448,6 +448,6 @@ export function nextMove(data: PatchData, recipe: QuizRecipe, item: StageItem, s
   if (!rule) return { route, rule: null, key: null, omens: [], done: false };
   const a = rule.do;
   if ("restart" in a) return { route, rule, key: "restart", omens: [], done: false };
-  if ("reveal" in a) return { route, rule, key: revealKey(data, item, route.goal, a.reveal.echoes, seed), omens: a.reveal.echoes ? [OMEN_KEY.echoes] : [], done: false };
+  if ("reveal" in a) return { route, rule, key: revealPickKey(data, item, route.goal, a.reveal.echoes, seed), omens: a.reveal.echoes ? [OMEN_KEY.echoes] : [], done: false };
   return { route, rule, key: a.use, omens: a.omens ?? [], done: false };
 }

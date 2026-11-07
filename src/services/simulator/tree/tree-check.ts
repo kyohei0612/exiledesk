@@ -8,7 +8,7 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, catalystOf, hasCatalystQuality, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { TIER } from "../../../state/for-share/tier-word";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
@@ -293,8 +293,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         }
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
         // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
-        // 触媒の品質の種類はこの人のアイテムの品質の種類 (どの手で上げたかは見ない、S-31b)
-        const tag = b.hand.omens.includes(CATALYSING) && item.qualityTag && (item.catalystQuality ?? item.quality ?? 0) > 0 ? item.qualityTag : null;
+        // 触媒の品質の種類はこの人のアイテムの品質の種類 (どの手で上げたかは見ない、S-31b)。品質があるかと種類はエンジンの hasCatalystQuality・catalystOf
+        const tag = b.hand.omens.includes(CATALYSING) && hasCatalystQuality(item) ? catalystOf(item).tag : null;
         let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;

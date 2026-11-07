@@ -40,7 +40,8 @@ import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
 import { flag } from "../../../web/release-flags";
-import { foreseeBlock, keepsMods } from "../../../services/simulator/tree/tree-foresee";
+import { foreseeBlock } from "../../../services/simulator/tree/tree-foresee";
+import { keepsMods } from "../../../services/simulator/sim-engine";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -214,7 +215,7 @@ async function showOmens(): Promise<void> {
 watch(held, (k) => { if (k && phone.value) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
-/** MOD が付かない・消えない・入れ替わらない手 (神・ヒネコラなど、エンジンで決める tree-foresee の keepsMods): 狙いの ☑ はグレーアウト、狙い無しだけ (11-06 オーナー「狙い無しのみ表示でこのさいグレーアウトさせちゃっていいよ」) */
+/** MOD が付かない・消えない・入れ替わらない手 (神・ヒネコラなど、エンジンの keepsMods): 狙いの ☑ はグレーアウト、狙い無しだけ (11-06 オーナー「狙い無しのみ表示でこのさいグレーアウトさせちゃっていいよ」) */
 const noMod = computed(() => { const d = s.data.value, it = shelfItem.value, h = held.value; return !!d && !!it && !!h && keepsMods(d, it, h, omens.value); });
 watch(noMod, (v) => { if (v) checked.value = []; }, { immediate: true });
 /** 神のオーブの手 (S-202): ☑ の狙いの MOD の数値の目標を全部決めてから置く (TreeDivinePick)。予見リセットはヒネコラの後の神だけ */

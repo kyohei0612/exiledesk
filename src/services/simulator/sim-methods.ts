@@ -3,7 +3,7 @@
  * 普通の MOD は 高貴ガチャ / カオススパム / 増強スパム / 冒涜 / フラクチャー から選ぶ。冒涜の MOD は冒涜、エッセンス・合金の MOD はエッセンスに決まっている (選ばせない)。
  * 付け方のポップアップ (SimMethodPop・methodsOff) は 2026-10-23 にクラフト台の中の旧シミュと一緒に消えた
  */
-import { type PatchData, freshItem, isCraftedSource, limitOf } from "../craft-stage/engine";
+import { type PatchData, freshItem, isCraftedSource, isDesecratedSource, limitOf } from "../craft-stage/engine";
 import type { SimMethod } from "./quiz-build";
 
 /**
@@ -14,7 +14,7 @@ import type { SimMethod } from "./quiz-build";
 export function methodsFor(d: PatchData | null, modId: string): SimMethod[] {
   const m = d?.mods.get(modId);
   if (!m) return ["exalt"];
-  if (m.source === "desecrated") return ["desecrate"];
+  if (isDesecratedSource(m.source)) return ["desecrate"];
   if (isCraftedSource(m.source)) return ["essence"];
   return ["exalt", "chaos", "augment", "desecrate"];
 }

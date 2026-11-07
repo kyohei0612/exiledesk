@@ -2,7 +2,7 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, kindOf, OMEN_FOR, omenBlock, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, kindOf, OMEN_FOR, omenBlock, revealKey, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { missAims } from "./tree-miss";
 import { ECHO as ABYSSAL_ECHO_OMEN } from "./tree-hands";
@@ -92,7 +92,7 @@ interface HandResult extends StageApply {
  * echo = アビスの反響を掛けた手は引き直した 3 つの 1 つ目 (エンジンの reveal:1:reroll)。発現できなければ r のまま
  */
 function revealFirst(data: PatchData, r: StageApply, rng: () => number, echo: boolean): StageApply {
-  const x = echo ? applyCurrency(data, r.item, "reveal:1:reroll", rng, [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, "reveal:1", rng);
+  const x = echo ? applyCurrency(data, r.item, revealKey(1, true), rng, [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, revealKey(1), rng);
   return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
 }
 

@@ -7,6 +7,7 @@
  */
 import { allMods, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { replaced, withValues } from "../../craft-stage/stage-core";
+import { divineChance } from "../sim-engine";
 import type { Hand, DivineTarget, TreeDoc } from "./tree-model";
 
 export const DIVINE = "divine";
@@ -32,19 +33,7 @@ function withTargets(data: PatchData, item: StageItem, targets: readonly DivineT
   }
   return cur;
 }
-/** 神 1 回で目標に届く割合 (エンジンと同じ転がし = withValues を乱数の目盛り 0〜1 で数える。値ごとに別々に転がるので掛け算) */
-export function divineChance(data: PatchData, item: StageItem, targets: readonly DivineTarget[]): number {
-  const N = 400;
-  let p = 1;
-  for (const t of targets) {
-    const m = modOf(item, t.modId), mod = data.mods.get(t.modId);
-    if (!m || !mod) return 0;
-    let ok = 0;
-    for (let k = 0; k < N; k++) if ((withValues(m, mod, () => (k + 0.5) / N).values[t.vi] ?? -Infinity) >= t.value) ok++;
-    p *= ok / N;
-  }
-  return p;
-}
+// 神 1 回で目標に届く割合はエンジンの divineChance (sim-engine、前はここに同じ数えの写し)
 /**
  * 配置の枝 (tree-frame の outsOf): 代表の品に神を当てた 2 枝。以上の枝の代表は目標の値、未満の枝の代表は目標の MOD を下限 (S-202 ③)。
  * 神が打てない品 (振り直せる MOD が無い) は空

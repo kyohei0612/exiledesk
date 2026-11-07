@@ -5,7 +5,7 @@
  * 残る (完成の狙いにある) クラフト MOD はエンジンのクラフト MOD の上限 (craftedLimitOf: 1 つ、アストリッドの創造性で増える) まで。
  * 超えている間は「決めた (ツリーへ)」を押せない (2 つで片方を消えるにすれば、もう片方は残る方に決まる)
  */
-import { craftedKindOf, mulberry32, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { craftedKindOf, isDesecratedSource, mulberry32, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftedLimitOf } from "../../../services/craft-stage/apply-essence";
 import { placeMods } from "../../../services/simulator/sim-engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -58,7 +58,7 @@ export function desecratedBundle(data: PatchData, doc: TreeDoc): Aim[] | null {
   return aims.length > 1 ? aims : null;
 }
 /** 冒涜で付く狙い (「冒涜」で付けた狙いと冒涜専用 MOD) */
-export const isDesecratedAim = (data: PatchData, a: Aim): boolean => a.via === "desecrated" || data.mods.get(a.modId)?.source === "desecrated";
+export const isDesecratedAim = (data: PatchData, a: Aim): boolean => a.via === "desecrated" || isDesecratedSource(data.mods.get(a.modId)?.source);
 /** 冒涜の束の行の札 */
 export const desecratedTag = (): RowTag => ({
   text: tr("どれか 1 つ", "Any 1"),

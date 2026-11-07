@@ -4,7 +4,7 @@
  * (同じ系統・タグで止め合う組・冒涜 1 つ・クラフト MOD の上限は 2 つの組でも出る。アイテムレベル・ベースに無いは組無しで出る)
  */
 import { goalBlock, tagClash, TAG_CLASH } from "../../../services/simulator/sim-engine";
-import { craftedKindOf, type PatchData } from "../../../services/craft-stage/engine";
+import { craftedKindOf, familiesOf as familiesOfMod, isDesecratedSource, type PatchData } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -28,7 +28,7 @@ export function goalBlockLoose(data: PatchData, base: string, itemLevel: number,
   }
   return null;
 }
-const isDesecrated = (data: PatchData, m: TierMod): boolean => data.mods.get(m.modId)?.source === "desecrated";
+const isDesecrated = (data: PatchData, m: TierMod): boolean => isDesecratedSource(data.mods.get(m.modId)?.source);
 /** 付け方の分け (MOD の出どころで見る: エッセンス・合金 = クラフト MOD、冒涜専用 MOD = 冒涜、ほか = ふつう) */
 type Kind = "normal" | "craft" | "desecrated";
 const kindOf = (data: PatchData, m: TierMod): Kind => (craftedKindOf(data, m) ? "craft" : isDesecrated(data, m) ? "desecrated" : "normal");
@@ -37,5 +37,6 @@ const KIND_FULL: Record<Kind, () => string> = {
   craft: () => tr(`エッセンス・合金の MOD の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} Essence / Alloy mod targets`),
   desecrated: () => tr(`冒涜の MOD の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} desecrated mod targets`),
 };
-const familiesOf = (data: PatchData, m: TierMod): string[] => { const d = data.mods.get(m.modId); return d ? (d.families?.length ? [...d.families] : [d.family]) : []; };
+/** 系統 (同じ系統は 1 品に 1 つ) はエンジンの familiesOf */
+const familiesOf = (data: PatchData, m: TierMod): readonly string[] => { const d = data.mods.get(m.modId); return d ? familiesOfMod(d) : []; };
 const SAME_FAMILY = (): string => tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");

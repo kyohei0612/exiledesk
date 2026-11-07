@@ -5,7 +5,7 @@
  * 足した行は見せるだけ: 完成の狙い・MOD の枠 (use-tree の goalItem の left)・完成の判定には数えない (品質の値で見るのは tree-unbounded の qualityOk のまま)
  */
 import { computed } from "vue";
-import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { applyCurrency, INFUSER_OVER, maxQualityOf, mulberry32, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
@@ -14,8 +14,8 @@ import { flag } from "../../../web/release-flags";
 import { catalystPart } from "../../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../../i18n/lang";
 
-/** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (+10 まではインフューザー) */
-export const BREACH_OVER = 11;
+/** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (インフューザーで越せる幅 = エンジンの INFUSER_OVER まではインフューザー) */
+export const BREACH_OVER = INFUSER_OVER + 1;
 
 export function useGoalShown() {
   const t = useTree();

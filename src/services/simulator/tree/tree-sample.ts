@@ -7,9 +7,8 @@
  * 引けなかった結果の箱は作れない印 (note) を返す (指名で付けて作らない)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { frameSample } from "./tree-frame";
-import { keepsMods } from "./tree-foresee";
 import { aimDone, freshItem, mulberry32, stageTuning, tierIndexOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { catalystFull, fractureStart } from "../../simulator/sim-engine";
+import { catalystFull, fractureStart, keepsMods } from "../../simulator/sim-engine";
 import { aimDiff, applyHand, canUse, startWith } from "./tree-hand-core";
 export { aimDiff } from "./tree-hand-core";
 import { pathKeyOf } from "./tree-recipe-v1";

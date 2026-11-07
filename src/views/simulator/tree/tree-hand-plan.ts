@@ -5,7 +5,7 @@
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
-import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
@@ -187,8 +187,9 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   const items = [1, 2, 3, 4].map((seed) => (seed === 1 ? item : sampleOf(data, doc, boxId, seed).item));
   let reach = reachableAims(data, items, h.currency, engineOmens(h), open, { sameText: true });
   // 触媒の高貴のお告げは品質の無い見本では打てず、表が無い (null) になって狙いが全部並び、左側の高貴なお告げでも付かないサフィが出た
-  // (10-27 夜モンキー 2 回目 4)。触媒のお告げは付く MOD の重みを変えるだけで付きうる範囲は変えないので、抜いて聞き直す (スイッチ omenReach)
-  if (!reach && h.omens.includes(CATALYSING)) reach = reachableAims(data, items, h.currency, engineOmens(h).filter((o) => o !== CATALYSING), open, { sameText: true });
+  // (10-27 夜モンキー 2 回目 4)。重みしか変えないお告げ (触媒) を抜いて聞き直す。どれが重みだけかはエンジンの reachOmens (スイッチ omenReach)
+  const reachOm = reachOmens(engineOmens(h));
+  if (!reach && reachOm.length < engineOmens(h).length) reach = reachableAims(data, items, h.currency, reachOm, open, { sameText: true });
   if (reach) return reach;
   // 確率の表が無い時 (null): エンジンの起こりうる結果のどれでも MOD が増えないなら当たりは無し (10-26 モンキー 7 の 4: 不在のアミュレットに変成 = MOD 0 のマジック、
   // 前は狙い全部を当たりにして、何も付かない当たりの箱と「外れ 100%」ができた)。結果は打った後の箱 1 つ
