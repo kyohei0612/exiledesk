@@ -14,7 +14,7 @@ import type { useTree } from "./use-tree";
 const hasHand = (d: TreeDoc): boolean => Object.keys(d.boxes).length > 1 || !!d.boxes.start?.hand;
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 /** 木の前提 (これが変わると木の中の手と見本が合わなくなる物) */
-const premiseOf = (d: TreeDoc): string => JSON.stringify([d.base, d.itemLevel, !!d.ilvlFit, d.memoAims ?? [], d.start ?? null, d.wayMods ?? [], d.goal ?? null]);
+const premiseOf = (d: TreeDoc): string => JSON.stringify([d.base, d.itemLevel, !!d.ilvlFit, d.memoAims ?? [], d.start ?? null, d.goal ?? null]);
 
 /**
  * 開いた時の木 (窓どうしで受け渡す: 始まりの形の窓の「0 完成形の設定で印を変える →」は確かめを通らずに完成形の設定へ移るので、

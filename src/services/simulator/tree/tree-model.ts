@@ -26,7 +26,7 @@ export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" |
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
   /** 付け方の覚え (完成の狙いだけ、S-10b)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated";
-  /** 完成形の品質のために自動で足したブリーチのエッセンスの MOD (品質の欄、TreeGoalQuality。品質を 20% 以下に戻すと外す) */ forQuality?: true;
+  /** 前の作りで完成形の品質のために自動で足したブリーチのエッセンスの MOD の印 (読むだけ。開く時に tree-migrate が狙いから外す、S-31 の撤回 11-07) */ forQuality?: true;
   /** 貼り付けで取り込んだ素の値 (完成の狙いだけ。完成形のカードにそのまま出す、段の中央でなく。段を替えたら外す、10-25 オーナー「コピペした時数値の変更が若干ある」) */ values?: number[] }
 /**
  * 繰り返し (2026-10-22 オーナー「外れ・狙いが消えたの行き先に一番使うのがカオススパム」): 当たりのどれかが付くまで同じ手を打ち続ける。
@@ -188,7 +188,7 @@ export interface TreeDoc {
   memoAims?: Aim[];
   /** 完成形の使用ルーン (英語名、使う順に最大 6。S-31g、スイッチ useRunes)。カードの見た目と枠にだけ効き、完成の判定には入れない (オーナー 11-05) */
   goalRunes?: string[];
-  /** 完成形の品質 % (無ければ決めていない。ベースの最大 (20%) を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、TreeGoalQuality) */
+  /** 完成形の品質 % (無ければ決めていない。ベースの最大 (20%) を 11% 以上超えるには木でブリーチのエッセンスを打つ、TreeGoalQuality) */
   goalQuality?: number;
   /** 品質も狙う (☑、既定はオフ = 品質は見ない。10-27 夕オーナー)。オンの時だけ完成の箱でも品質を見る (足りない人は止まり) */
   goalQualityOn?: true;
@@ -203,7 +203,7 @@ export interface TreeDoc {
   tidyRan?: true;
   /** 開いた時に外した前の版の決めの数 (今の木に札の箱が無い物、S-107b。帯に 1 行出すだけ、保存しない) */
   droppedOld?: number;
-  /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー) */
+  /** 前の版の「途中で消える」にしたクラフト MOD (読むだけ。開く時に tree-migrate が完成形から外す、S-30 撤回 11-07) */
   wayMods?: Aim[];
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
