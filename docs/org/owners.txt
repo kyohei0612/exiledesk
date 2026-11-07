@@ -199,6 +199,10 @@ src/services/simulator/auto/**       解析
 src/services/simulator/auto/auto-order*.ts シミュ
 scripts/analysis/**                  解析
 
+# 11-07 オーナー「カレンシーの挙動とかジンにおかないとダメなんじゃないの」: 画面の部の中にあった計算 (数え上げ・スパムの数え・エミュのスパムのモード) はエンジン部へ
+src/services/simulator/sim-engine/** ジン
+src/services/emulator/emu-engine/**  ジン
+
 # サーバー管理人
 server/live/src/logs.ts              分析
 server/live/src/monitor.ts           分析
