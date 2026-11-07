@@ -4,11 +4,14 @@
  * 打てない時の理由の文は judge.ts (limitBlock・targetBlock)、こちらは打つ前に読む「使える時」の文。並びは定義の順 (レアリティ → limits)。
  * 部位 (target.groups) も「○○だけ」の文で返す (11-07 デザイン部長の頼み)。特殊なエッセンスの部位は鍵の表から essencePartsOf
  */
-import type { StageRarity } from "../types";
+import type { StageItem, StageRarity } from "../types";
 import type { ItemGroup } from "../../mods/item-classes";
 import { ESSENCE_KEYS } from "../../htc/essence-key-table";
 import type { Limit } from "./types";
-import { specOfKey } from "./run-spec";
+import { resolveSpec, specOfKey } from "./run-spec";
+import { BONE_SPECS } from "./desecrate-specs";
+import { parseKey } from "../key";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 
 export interface Words2 { ja: string; en: string }
 
@@ -75,10 +78,15 @@ export function limitWords(l: Limit): Words2 | null {
   }
 }
 /** その鍵のカレンシーを打てる条件の文 (レアリティ → limits の順)。説明文に移していない鍵は [] */
-export function useConditions(key: string): Words2[] {
-  const spec = specOfKey(key);
+export function useConditions(key: string, item?: StageItem | null, data?: PatchData): Words2[] {
+  const r = item ? resolveSpec(key, item, data) : null;
+  const spec = r?.spec ?? specOfKey(key);
   if (!spec) return [];
+  // 骨は同じ鍵で部位ごとに別の骨 (顎の骨・肋骨・鎖骨…)。品が無い・部位に合う骨が無い時は、その鍵の骨が 1 つだけ (変質した鎖骨) でなければ部位の行を出さない
+  // (11-07 jin-base4、前は品を見ず 1 つ目の顎の骨の「武器・矢筒だけ」を全部の部位に出していた)
+  const bonesOfKey = parseKey(key).type === "bone" ? BONE_SPECS.filter((s) => s.stageKey === key).length : 0;
+  const groupsKnown = bonesOfKey <= 1 || (!!r && !r.reason);
   const rs = spec.target?.rarity;
-  const gs = spec.target?.groups;
+  const gs = groupsKnown ? spec.target?.groups : undefined;
   return [...(rs?.length ? [rarityWords(rs)] : []), ...(gs?.length ? [groupWords(gs)] : []), ...(spec.limits ?? []).flatMap((l) => limitWords(l) ?? [])];
 }
