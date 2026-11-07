@@ -9,6 +9,7 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { skip, type Force } from "../stage-core";
 import type { StageApply, StageItem } from "../types";
 import type { Action, CurrencySpec, OmenSpec } from "./types";
+import { specDrawsOtherworldly } from "./parts-unrevealed";
 import { ANNUL_SPEC, BONE_SPECS, REVEAL_SPEC } from "./desecrate-specs";
 import { ORB_SPEC_BY_KEY } from "./orb-specs";
 import { ALLOY_SPEC, ESSENCE_SPEC, isAlloyKey, PERFECT_ESSENCE_SPEC, prepareEssence, resolveEssence } from "./essence-specs";
@@ -160,7 +161,7 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
   const ctx: PartCtx = {
     data, rng, mods, reveal: plan.reveal, removedSoFar: [], essence, before: item,
     catalystTag, oneCatalyst: !!opts.oneCatalyst, runeKey: key,
-    altered: spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly")),
+    altered: specDrawsOtherworldly(spec),
     // カオスは指名の 1 つ目だけ見る (今の関数と同じ。余った指名は無視)
     ...(PICK_KINDS.includes(spec.kind) && opts.pick?.length ? { pick: spec.kind === "chaos" ? opts.pick.slice(0, 1) : opts.pick } : {}),
     ...(spec.kind === "chaos" && opts.remove ? { removeForce: opts.remove } : {}),

@@ -20,7 +20,7 @@ import { revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
 import { REVEAL_SPEC } from "./spec/desecrate-specs";
-import { unrevealedPlan, type AddUnrevealed } from "./spec/parts-unrevealed";
+import { drawsOtherworldly, unrevealedPlan, type AddUnrevealed } from "./spec/parts-unrevealed";
 import { addCands, addOddsBySpec } from "./spec/odds";
 
 export interface HeldOdds {
@@ -167,7 +167,7 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
     for (const r of from) runs.push({ p: w / W / from.length, it: without(item, r), side: s });
   }
   const boss = plan.mods.guaranteeTag ? BOSS_OF_TAG.get(plan.mods.guaranteeTag) : undefined;
-  const opts: BoneOpts = { floor: sp.floor, altered: a.pools.includes("otherworldly"), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };
+  const opts: BoneOpts = { floor: sp.floor, altered: drawsOtherworldly(a), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };
   for (const run of runs) addBoneRun(data, run.it, opts, run.side, run.p, byMod);
   return { byMod, total: 1, bone: true };
 }

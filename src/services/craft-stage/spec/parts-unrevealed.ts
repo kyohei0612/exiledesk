@@ -57,6 +57,10 @@ export const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unreveal
 });
 
 export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
+/** その骨が異界の MOD も出すか (変質した鎖骨、E-10a)。打つ処理・数え上げ・確率の表が同じ物を見る */
+export const drawsOtherworldly = (a: AddUnrevealed): boolean => a.pools.includes("otherworldly");
+/** その手に異界の MOD も出す骨があるか (手の定義の actions から) */
+export const specDrawsOtherworldly = (spec: { actions: readonly Action[] }): boolean => spec.actions.some((a) => "addUnrevealed" in a && drawsOtherworldly(a.addUnrevealed));
 /**
  * 未発現の冒涜 MOD をどの側に付けるか (打つ処理と確率表 held-odds.ts の骨が同じ物を使う)。
  *   - アビサルロードの紋章 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限は消された元の MOD のレベル × 0.4 の四捨五入より上 (markFloorOf、E-65)
@@ -112,7 +116,7 @@ export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): 
     cur = without(cur, gone);
     removed.push(gone);
   }
-  const altered = a.pools.includes("otherworldly");
+  const altered = drawsOtherworldly(a);
   const hidden = unrevealedMod(side, { floor, altered, faction: mods.guaranteeTag, ...(a.exclusiveAnyLevel ? {} : { gnawed: true }) });
   return { applied: true, item: withMod(cur, hidden), added: [hidden], removed };
 }

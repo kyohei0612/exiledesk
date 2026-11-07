@@ -16,7 +16,7 @@ import { addCandidatesOf, boneSlotOf, emotionFitsOf, removalOf, spendCatalysing 
 import type { StageItem, StageMod, StageSide } from "../../craft-stage/types";
 import { planSpec, type SpecPlan } from "../../craft-stage/spec/run-spec";
 import { runPart, type PartCtx } from "../../craft-stage/spec/parts";
-import { unrevealedMod, unrevealedPlan } from "../../craft-stage/spec/parts-unrevealed";
+import { drawsOtherworldly, specDrawsOtherworldly, unrevealedMod, unrevealedPlan } from "../../craft-stage/spec/parts-unrevealed";
 import { prepareEssence } from "../../craft-stage/spec/essence-specs";
 import type { Action } from "../../craft-stage/spec/types";
 
@@ -122,7 +122,7 @@ function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
   const sides = fixed ? [{ s: fixed, w: 1 }] : weights;
   const total = sides.reduce((x, y) => x + y.w, 0);
   if (!(total > 0)) return "skip";
-  const hiddenOf = (side: StageSide): StageMod => unrevealedMod(side, { floor, altered: a.pools.includes("otherworldly"), faction: ctx.mods.guaranteeTag, ...(a.exclusiveAnyLevel ? {} : { gnawed: true }) });
+  const hiddenOf = (side: StageSide): StageMod => unrevealedMod(side, { floor, altered: drawsOtherworldly(a), faction: ctx.mods.guaranteeTag, ...(a.exclusiveAnyLevel ? {} : { gnawed: true }) });
   const out: Exclude<Step, "skip"> = [];
   for (const { s, w } of sides) {
     if (!(w > 0)) continue;
@@ -226,7 +226,7 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
   const needsEssence = plan.spec.actions.some((a) => "addEssence" in a);
   const essence = o.essence ?? (needsEssence ? prepareEssence(data, item, key, MID) : null);
   if (needsEssence && !essence) return "block";
-  const altered = plan.spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly"));
+  const altered = specDrawsOtherworldly(plan.spec);
   let states: State[] = [{ p: 1, item, added: [], removed: [], removedSoFar: [] }];
   const voids: number[] = [];
   try {
