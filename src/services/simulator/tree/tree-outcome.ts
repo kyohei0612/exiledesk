@@ -62,7 +62,7 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
   if (isDivineAim(h)) return divineOutcome(after, h!);
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
-  const am = noStones(doc, h, keptAimedOf(doc, h, aimed));
+  const am = withoutUnaimed(data, doc, before, aimed, noStones(doc, h, keptAimedOf(doc, h, aimed)));
   const aims = countedAims(data, doc, h, before, aims0, aimed);
   const raw = boxOutcomeRaw(data, doc, h, own, before, after, aims);
   // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
@@ -114,8 +114,22 @@ const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed:
  */
 function countedAims(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Aim[] {
   const am = noStones(doc, h, keptAimedOf(doc, h, aimed));
-  return am ? keptPlus(doc, h, mineOf(data, before, aims0, am)) : [...aims0];
+  if (!am) return [...aims0];
+  const counted = keptPlus(doc, h, mineOf(data, before, aims0, am));
+  return counted.filter((a) => !unaimedOn(data, doc, before, aimed, a.modId));
 }
+/**
+ * ☑ の無い完成形の MOD は残したい MOD に選んであってもこの人では外れ (消えたら外れが消えた、S-22・S-27d)。自動で写した消去の残したい MOD を、
+ * 別の枝で ☑ 無しに付き直して ↩ で来た人が持っていて、消えると「狙いが消えた」で行き先が無かった (oWkFcwYX b11 の 11 人、11-07 エミュでの枝の確かめ)
+ */
+function unaimedOn(data: PatchData, doc: TreeDoc, before: StageItem, aimed: ReadonlySet<string> | null | undefined, modId: string): boolean {
+  if (!aimed || aimed.has(modId)) return false;
+  const g = (doc.memoAims ?? []).find((x) => x.modId === modId);
+  return !!g && aimHeldOn(data, before, g, { sameText: true });
+}
+/** 残したい MOD の印から unaimedOn の物を落とす (次の MOD 群の鍵も同じ見方) */
+const withoutUnaimed = (data: PatchData, doc: TreeDoc, before: StageItem, aimed: ReadonlySet<string> | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined =>
+  am && aimed ? new Set([...am].filter((id) => !unaimedOn(data, doc, before, aimed, id))) : am;
 /** 当たりは ☑ の札だけ (付いた狙いが ☑ に無ければ外れ MOD) */
 const ownHits = (oc: Outcome, own: readonly Aim[]): Outcome => {
   if (oc.out !== "hit") return oc;
@@ -148,7 +162,8 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, h: Hand | null | undefined
   // どれが狙いかは打つ前のアイテムの中身 (付いている完成形の狙い、S-60・S-29)。道で持って着く狙いの数え (heldSets) は使わない (大本 1、R5 で消した)
   // 入れ替える・付ける手 (☑ を選ぶ手) は 消す → 付ける の順 (持っていた狙いが消えたら ☑ が付いても狙いが消えた、エッセンス S-29 と同じ順、S-22b)
   const pick = PICK_EFFECTS.includes(effectOf(key));
-  const mine = keep ? keepAims(doc, keep) : pick ? pickedAims(data, before, aims, own) : aims;
+  // 残したい MOD も数える札 (countedAims) にある物だけ = ☑ 無しで付いている完成形の MOD は外れ (unaimedOn)
+  const mine = keep ? keepAims(doc, keep).filter((a) => aims.some((x) => x.modId === a.modId)) : pick ? pickedAims(data, before, aims, own) : aims;
   return ownHits(outcomeOf(data, before, after, mine, key, pick), own);
 }
 /** 結果 → 手を置く時の箱の形 (回す時の outBoxOf の受け方と同じ): 狙い無しの手は狙いが消えた以外を「打った後」、狙いの付かない当たり (エッセンスで外れを置き換える等) も「打った後」 */
