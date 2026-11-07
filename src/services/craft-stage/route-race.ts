@@ -19,6 +19,7 @@
  *   無ければ増強。当たりがプレとサフィの両方にある時は、どれか 1 つの数字に加えて「両方揃うまで (プレ 1 + サフィ 1)」の平均も出す (RaceRow.both。2026-10-22 オーナー)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { hits as aimHits } from "./aim-odds";
 import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
 import { limitOf, sideOfMod } from "./stage-core";
@@ -34,9 +35,14 @@ export const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater",
 export const routeSeed = (seed: number | undefined, r: number, route: RouteKind, grade: Grade): number => (seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length;
 const allMods = (it: StageItem) => [...it.prefixes, ...it.suffixes];
 const sideList = (it: StageItem, side: "prefix" | "suffix") => (side === "prefix" ? it.prefixes : it.suffixes);
-/** 付いている当たりの番号 (targets の何番目か。無ければ -1)。当たりはどれか 1 つ (OR) */
-export const routeHitIndex = (it: StageItem, targets: readonly RaceTarget[]): number => targets.findIndex((t) => allMods(it).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex));
-const routeHit = (it: StageItem, targets: readonly RaceTarget[]): boolean => routeHitIndex(it, targets) >= 0;
+/**
+ * 付いている当たりの番号 (targets の何番目か。無ければ -1)。当たりはどれか 1 つ (OR)。
+ * 当たりの式はエミュの「狙う」・シミュの木と同じエンジンの aimHits (sameText = 同じ系統・同じ文の別 modId も当たり、エッセンスの MOD は別物)。
+ * 前は modId の一致だけの自前の式 (11-07 J-01。寄せても高貴・増強・カオスの道で止まる手は変わらない = 広がる組は冒涜 ⇄ ルーンとハンドラップ専用だけ)。
+ * data を渡さない呼び手 (運試しの画面 StageRouteLuck.vue の当たりの番号、エミュ部長の持ち物) は前の modId の一致のまま。渡すと同じ式になる
+ */
+export const routeHitIndex = (it: StageItem, targets: readonly RaceTarget[], data?: PatchData): number => targets.findIndex((t) => allMods(it).some((m) => aimHits(m, t, data ? { data, sameText: true } : undefined)));
+const routeHit = (data: PatchData, it: StageItem, targets: readonly RaceTarget[]): boolean => routeHitIndex(it, targets, data) >= 0;
 /** 当たりの側 (プレ / サフィ)。2 つ以上なら増強の道は使えない */
 export const targetSides = (data: PatchData, targets: readonly RaceTarget[]) => [...new Set(targets.map((t) => sideOfMod(data, t.modId)))];
 /** 道の主のカレンシーの鍵 (augment_greater など) */
@@ -67,7 +73,7 @@ export function routeOff(data: PatchData, base: string, itemLevel: number, targe
   if (from) {
     if (route !== "chaos") return "今のアイテムから始める時はカオスだけ";
     if (from.rarity !== "rare") return "今のアイテムがレアでない";
-    if (routeHit(from, targets)) return "今のアイテムにもう狙いが付いている";
+    if (routeHit(data, from, targets)) return "今のアイテムにもう狙いが付いている";
     return null;
   }
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)。当たりが両側にあれば両側とも
@@ -84,7 +90,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
   const sides = targetSides(data, targets);
   const onSide = (sd: "prefix" | "suffix") => targets.filter((t) => sideOfMod(data, t.modId) === sd);
   /** その側に当たりが付いている */
-  const sideHit = (it: StageItem, sd: "prefix" | "suffix"): boolean => routeHit({ ...it, prefixes: sd === "prefix" ? it.prefixes : [], suffixes: sd === "suffix" ? it.suffixes : [] }, onSide(sd));
+  const sideHit = (it: StageItem, sd: "prefix" | "suffix"): boolean => routeHit(data, { ...it, prefixes: sd === "prefix" ? it.prefixes : [], suffixes: sd === "suffix" ? it.suffixes : [] }, onSide(sd));
   const g = GRADE_KEY[grade];
   let it: StageItem = from ?? freshItem(data, base, itemLevel);
   if (from) { if (routeOff(data, base, itemLevel, targets, route, undefined, from)) return null; }
@@ -92,13 +98,13 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
   if (route === "chaos" && !from) {
     // MOD 1 つのレア (作る高貴 1 回は数えない)。始めの 1 つが狙いそのものなら作り直す (始めは「狙いでない MOD が 1 つ」)
     const blank: StageItem = { ...it, rarity: "rare" };
-    for (let k = 0; k < 50 && (k === 0 || routeHit(it, targets)); k++) { const first = applyCurrency(data, blank, "exalt", rng, []); if (!first.applied) break; it = first.item; }
-    if (!allMods(it).length || routeHit(it, targets)) return null;
+    for (let k = 0; k < 50 && (k === 0 || routeHit(data, it, targets)); k++) { const first = applyCurrency(data, blank, "exalt", rng, []); if (!first.applied) break; it = first.item; }
+    if (!allMods(it).length || routeHit(data, it, targets)) return null;
   } else if (route === "exalt") it = { ...it, rarity: "rare" }; // MOD 0 のレア
   const run: RouteRun = {
     item: it, n: 0, cost: 0, uses: {}, last: null, chances: new Map(),
-    hit: () => (need === "both" ? sides.every((sd) => sideHit(run.item, sd)) : routeHit(run.item, targets)),
-    hitIndex: () => routeHitIndex(run.item, targets),
+    hit: () => (need === "both" ? sides.every((sd) => sideHit(run.item, sd)) : routeHit(data, run.item, targets)),
+    hitIndex: () => routeHitIndex(run.item, targets, data),
     step: () => {
       const use = (key: string, omens: string[] = []): boolean => {
         const res = applyCurrency(data, run.item, key, rng, omens);
