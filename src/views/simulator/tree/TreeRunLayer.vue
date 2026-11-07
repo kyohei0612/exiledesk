@@ -23,7 +23,12 @@ const props = defineProps<{
   edges: readonly Edge[]; lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>;
   /** 箱の本当の高さ (札・ボタンの行で BOX_H より高くなる。止まりの札を箱の下に置く) */
   heightOf?: (id: string) => number;
+  /** 暗くする・光らせる箱の高さ (既定 BOX_H。スマホの全体図は見込みの EST_H で箱を置く) */
+  boxH?: number;
+  /** スマホの全体図 (S-94e): 字の札 (人数・回数・止まり) は出さず、線は倍率に関わらず画面の上で同じ太さ (lineK)。光る 1 人目・足跡・誰も来ない箱の暗さは PC と同じ */
+  lite?: boolean;
 }>();
+const bh = computed(() => props.boxH ?? BOX_H);
 const emit = defineEmits<{ go: [id: string] }>();
 
 const ON = { fwd: "#f3c26b", back: "#6fe0ee" } as const;
@@ -68,6 +73,8 @@ const lit = computed(() => { const b = props.walk ? props.boxes.find((x) => x.id
 const unwalked = computed(() => (props.walk ? props.boxes.filter((b) => !props.walk!.trail.has(b.id)).map((b) => ({ id: b.id, ...props.posOf(b) })) : []));
 /** 光る枠の太さ・光は倍率に関わらず同じ見た目 (全体表示の 25% でも見える) */
 const kk = computed(() => Math.max(1, props.k ?? 1));
+/** 線の太さの倍率: スマホの全体図 (lite) は倍率で割って画面の上で同じ太さ (層は CSS の scale の中なので vector-effect の non-scaling-stroke が効かない)。PC は今の太さ */
+const lineK = computed(() => (props.lite ? kk.value : 1));
 /** 進む線 (親 → 子)。親の幹は子へ行った回数の合計 */
 const fwd = computed(() => !props.result ? [] : props.edges.flatMap((e) => {
   const kids = e.to.map((o) => ({ ...o, key: `e:${e.id}>${o.id}` }));
@@ -88,17 +95,18 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
 <template>
   <!-- 通った線 (箱の後ろ、組む画面の線の上に重ねる) -->
   <svg data-tree-run-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
-    <path v-for="l in fwd" :key="l.key" :d="l.d" :stroke="ON.fwd" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n)" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-    <path v-for="l in back" :key="l.key" :d="l.d" :stroke="ON.back" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n)" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path v-for="l in fwd" :key="l.key" :d="l.d" :stroke="ON.fwd" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n) * lineK" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path v-for="l in back" :key="l.key" :d="l.d" :stroke="ON.back" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n) * lineK" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   </svg>
   <!-- 1 人目が今いる箱 (光る枠。次の箱へ滑る) -->
-  <div v-for="u in unwalked" :key="`uw-${u.id}`" data-tree-run-unwalked class="pointer-events-none absolute z-[8] rounded-xl bg-black/60" :style="{ left: `${u.x}px`, top: `${u.y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }" />
+  <div v-for="u in unwalked" :key="`uw-${u.id}`" data-tree-run-unwalked class="pointer-events-none absolute z-[8] rounded-xl bg-black/60" :style="{ left: `${u.x}px`, top: `${u.y}px`, width: `${BOX_W}px`, height: `${bh}px` }" />
   <div v-if="lit && walk" data-tree-run-walk :data-box-id="walk.box" class="pointer-events-none absolute z-[9] rounded-xl border-amber-300 bg-amber-300/25 transition-[left,top] ease-out"
     :style="{ transitionDuration: `${Math.round(walk.ms * 0.5)}ms`, borderWidth: `${3 * kk}px`, boxShadow: `0 0 ${18 * kk}px ${6 * kk}px rgba(243,194,107,0.8)`,
-      left: `${lit.x - 4 * kk}px`, top: `${lit.y - 4 * kk}px`, width: `${BOX_W + 8 * kk}px`, height: `${BOX_H + 8 * kk}px` }" />
+      left: `${lit.x - 4 * kk}px`, top: `${lit.y - 4 * kk}px`, width: `${BOX_W + 8 * kk}px`, height: `${bh + 8 * kk}px` }" />
   <template v-for="m in marks" :key="m.b.id">
     <!-- 誰も来ない箱は暗く -->
-    <div v-if="!m.reach" data-tree-run-veil class="pointer-events-none absolute z-[8] rounded-xl bg-black/55" :style="{ left: `${m.x}px`, top: `${m.y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }" />
+    <div v-if="!m.reach" data-tree-run-veil class="pointer-events-none absolute z-[8] rounded-xl bg-black/55" :style="{ left: `${m.x}px`, top: `${m.y}px`, width: `${BOX_W}px`, height: `${bh}px` }" />
+    <template v-if="!lite">
     <span v-if="m.reach" data-tree-run-reach :data-box-id="m.b.id" class="pointer-events-auto absolute z-20 translate-x-[-100%] whitespace-nowrap rounded-full border border-amber-300/50 bg-[#1d160c]/95 px-2 text-[11px] tabular-nums text-amber-100 shadow-[0_2px_8px_rgba(0,0,0,0.6)] -translate-y-full"
       :style="{ left: `${m.x + BOX_W - 6}px`, top: `${m.y - 2}px` }"
       :title="tr(`来た人 ${m.reach} 人 · 着くまで平均 ${div(m.costIn)} 神 · ここから完成まで平均 ${div(m.remain)} 神`, `${m.reach} runs reached · avg ${div(m.costIn)} div to get here · avg ${div(m.remain)} div from here to done`)">{{ tr(`${m.reach} 人`, `${m.reach} runs`) }}</span>
@@ -121,5 +129,6 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <!-- 着いてから形の合う別の箱へ移った人 (tree-run の settle。矢印の先と実際に進む箱が違う時) -->
     <span v-if="m.moved" data-tree-run-moved class="pointer-events-auto absolute z-20 -translate-y-1/2 whitespace-nowrap rounded-full border border-cyan-300/50 bg-[#0d1a1c]/95 px-2 text-[11px] tabular-nums text-cyan-100"
       :style="{ left: `${m.x + 6}px`, top: `${m.y + m.h + 13 + (m.stuck ? 22 : 0)}px` }" :title="tr('着いた後、狙いの組と外れの有無が合う別の箱へ移った人の数 (矢印の先と違う箱へ進んだ)', 'Runs that arrived here and then moved on to another box with the same targets and misses (not the arrow’s box)')">{{ tr(`↪ ${m.moved} 人は別の箱へ`, `↪ ${m.moved} moved on`) }}</span>
+    </template>
   </template>
 </template>

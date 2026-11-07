@@ -14,6 +14,8 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import TreeBox from "../tree/TreeBox.vue";
 import TreeHandChip from "../tree/TreeHandChip.vue";
 import TreeLaneTags from "../tree/TreeLaneTags.vue";
+import TreeRunLayer from "../tree/TreeRunLayer.vue";
+import type { TreeRunWalk } from "../tree/use-tree-run";
 import { LINE } from "../tree/use-tree-edges";
 import { backLabelOf, runText } from "../tree/tree-fail";
 import { handIcon, OUT_LOOK } from "../tree/tree-names";
@@ -22,7 +24,7 @@ import { simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
 import { useMapTouch, type MapBounds } from "./use-map-touch";
 
-const props = defineProps<{ /** 回した結果 (カードの箱に人数を添える) */ result?: TreeRunResult | null }>();
+const props = defineProps<{ /** 回した結果 (カードの箱に人数を添える) */ result?: TreeRunResult | null; /** 回す時の 1 人目 (PC と同じ use-tree-run の walk) */ walk?: TreeRunWalk | null }>();
 const t = useTree();
 const doc = t.doc;
 /** 名前と手の絵を出す倍率 (箱の幅 56px) */
@@ -78,7 +80,7 @@ function goTo(id: string): void {
   const z = Math.max(m.k.value, NEAR_K);
   m.glideTo(b.x + BOX_W / 2, yOf(b) + ((wrap.value?.clientHeight ?? 0) / 2 - NEAR_TOP) / z, z);
 }
-defineExpose({ goTo });
+defineExpose({ goTo, showAll: () => { touched = false; refit(); } });
 /** ボタンは 2 つだけ: 全体が入る倍率と MOD が読めるぎりぎり。細かい調整は指でつまむ (オーナー 11-01「後拡大縮小ボタンでツリー全体表示と拡大でMODが見えるぎりぎりの大きさに調整で２つでいいよ調整は あとはピンチヒットは指でやるだろうしそこ」) */
 function showAll(): void { simOp("view-zoom", "all"); touched = false; refit(); }
 function showNear(): void {
@@ -108,6 +110,14 @@ const paths = computed(() => {
     return [{ id: b.id, d: `M${x0},${y0} V${y1 - BUS_DY} H${x1} V${y1}`, color: ["hit", "any", "pass", "branch"].includes(to.out) ? LINE.fwd : LINE.bad }];
   });
 });
+/** 回す時の重ねる層 (PC の TreeRunLayer) に渡す線: 親ごとに子への線 (幹は分けず、子の線が親から出る) */
+const runEdges = computed(() => {
+  const by = new Map<string, { id: string; d: string }[]>();
+  for (const l of paths.value) { const pid = lastToHead.value.get(l.id) ?? doc.value.boxes[l.id]?.parent; if (pid) by.set(pid, [...(by.get(pid) ?? []), { id: l.id, d: l.d }]); }
+  return [...by].map(([id, to]) => ({ id, stem: "", to }));
+});
+const runPos = (b: Box): { x: number; y: number } => ({ x: b.x, y: yOf(b) });
+const NO_PATHS = new Map<string, string>();
 const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], branch: ["分岐", "Split"] };
 /** 見えている箱 (木の座標の範囲で見る)。送るたびに読むので、変わった時だけ一覧を替える */
 const inView = computed(() => {
@@ -165,6 +175,10 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
           <rect v-for="b in rects" :key="b.id" :data-map-box="b.id" :x="b.x" :y="yOf(b)" :width="BOX_W" :height="EST_H" rx="20" :fill="`rgba(${rgbOf(b)},0.3)`" :stroke="`rgba(${rgbOf(b)},0.7)`" stroke-width="1.5" vector-effect="non-scaling-stroke" :stroke-dasharray="folds.has(b.id) ? '4 3' : undefined" />
         </g>
       </svg>
+      <!-- 回す時: PC と同じ重ねる層 (1 人目の光・足跡・通った線・誰も来ない箱の暗さ)。字の札はカードの runText に任せる (lite) -->
+      <div v-if="props.walk || props.result" data-map-run-layer class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">
+        <TreeRunLayer :result="props.result ?? null" :walk="props.walk ?? null" :k="1 / m.k.value" :boxes="boxes" :pos-of="runPos" :edges="runEdges" :lines="[]" :paths="NO_PATHS" :box-h="EST_H" lite />
+      </div>
       <span v-for="n in names" :key="n.id" data-map-name class="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap text-[10px] text-white/90" :style="{ left: `${n.x}px`, top: `${n.y}px` }">{{ n.text }}<img v-if="n.icon" :src="n.icon" alt="" class="size-4" draggable="false" /></span>
       <!-- カードの層: 押す所が 27 か所ある箱なので層ごと押せなくする。木の座標のまま置いて、層に倍率を掛ける -->
       <div v-if="cards.length || chips.length" data-map-cards class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">

@@ -43,11 +43,18 @@ watch(check.checking, (on, was) => { if (was && !on) doneKey.value = routeKey.va
 const passed = computed(() => !check.checking.value && check.passed.value);
 const locked = computed(() => !check.checking.value && !passed.value && doneKey.value === routeKey.value);
 
-// 100 人回す (PC と同じ人数・回し方で 1 人目の再生は無し、結果のまとめも PC と同じ部品)
+// 100 人回す (PC と同じ人数・回し方。結果のまとめも PC と同じ部品)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目の光と足跡を PC と同じ層で見せる
+// (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」、S-94e)
 const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, () => {}, true);
 const reportOpen = ref(false);
 watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) => { reportOpen.value = on; });
-function go(): void { simOp("view-run"); void run.run(); }
+async function go(): Promise<void> {
+  simOp("view-run");
+  detail.value = true; goalBig.value = false;
+  await nextTick();
+  map.value?.showAll();
+  void run.run();
+}
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 const donePct = computed(() => { const r = run.result.value; return r ? Math.round((r.finished / (r.n || 1)) * 100) : 0; });
 const map = ref<InstanceType<typeof PhoneViewMap> | null>(null);
@@ -134,7 +141,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
             </div>
           </div>
         </div>
-        <PhoneViewMap v-if="detail" ref="map" :result="run.result.value" />
+        <PhoneViewMap v-if="detail" ref="map" :result="run.result.value" :walk="run.walk.value" />
         <PhoneViewRoute v-else :result="run.result.value" />
       </section>
       <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形。PC と同じ 100 人なので「振れる」の一言は出さない、S-94e) -->
