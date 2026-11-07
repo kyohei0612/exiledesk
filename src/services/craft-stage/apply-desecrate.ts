@@ -18,6 +18,8 @@ const OFFERS = REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.off
 
 /** 未発現の枠 */
 export const unrevealedOf = (item: StageItem): StageMod | undefined => allMods(item).find((m) => m.unrevealed);
+/** 未発現の冒涜 MOD の数 (腐食のお告げの後は枠いっぱい) */
+export const unrevealedCount = (item: StageItem): number => allMods(item).filter((m) => m.unrevealed).length;
 
 /**
  * 発現の候補 (と、アビスの反響で引き直した組)。同じ rng から順に引くので、画面で見せる候補と手順の結果 (reveal:N) が一致する。

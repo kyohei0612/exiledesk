@@ -19,12 +19,13 @@
  *   無ければ増強。当たりがプレとサフィの両方にある時は、どれか 1 つの数字に加えて「両方揃うまで (プレ 1 + サフィ 1)」の平均も出す (RaceRow.both。2026-10-22 オーナー)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { hits as aimHits } from "./aim-odds";
+import { hits as aimHits, stepCost } from "./aim-odds";
 import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
 import { limitOf, openSlots, sideOfMod } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { OMEN_KEY } from "./spec/omen-keys";
+import { tr } from "../../i18n/lang";
 
 export type RouteKind = "augment" | "chaos" | "exalt";
 export type Grade = "base" | "greater" | "perfect";
@@ -89,18 +90,26 @@ export interface RouteRun {
 /** prep = 始めのアイテムの下ごしらえ (ルーンを嵌める。route-runes.ts の runePrep) */
 export type RoutePrep = ((it: StageItem) => StageItem) | undefined;
 
+/** 今のアイテムからスパムを始められるか (MOD のあるレアでコラプトしていない、M-63)。始められなければ理由 (日英) */
+export function routeFromBlock(from: StageItem): string | null {
+  if (from.rarity !== "rare") return tr("今のアイテムがレアでない", "The current item isn't rare");
+  if (from.corrupted) return tr("コラプトしたアイテムにはカレンシーが打てない", "Currency can't be used on a Corrupted item");
+  if (!from.prefixes.length && !from.suffixes.length) return tr("今のアイテムに MOD が無い", "The current item has no mods");
+  return null;
+}
 export function routeOff(data: PatchData, base: string, itemLevel: number, targets: readonly RaceTarget[], route: RouteKind, prep?: RoutePrep, from?: StageItem): string | null {
   const sides = targetSides(data, targets);
   if (from) {
-    if (route !== "chaos") return "今のアイテムから始める時はカオスだけ";
-    if (from.rarity !== "rare") return "今のアイテムがレアでない";
-    if (routeHit(data, from, targets)) return "今のアイテムにもう狙いが付いている";
+    if (route !== "chaos") return tr("今のアイテムから始める時はカオスだけ", "Only Chaos when starting from the current item");
+    const why = routeFromBlock(from);
+    if (why) return why;
+    if (routeHit(data, from, targets)) return tr("今のアイテムにもう狙いが付いている", "The current item already has the target");
     return null;
   }
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)。当たりが両側にあれば両側とも
   if (route === "augment") {
     const magic: StageItem = { ...(prep ? prep(freshItem(data, base, itemLevel)) : freshItem(data, base, itemLevel)), rarity: "magic" };
-    if (sides.some((sd) => limitOf(magic, sd) < 1)) return "マジックに狙いの側の枠が無いベース";
+    if (sides.some((sd) => limitOf(magic, sd) < 1)) return tr("マジックに狙いの側の枠が無いベース", "This base has no slot on the target side while magic");
   }
   return null;
 }
@@ -132,7 +141,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
         if (!res.applied) return false;
         run.item = res.item;
         run.n++;
-        run.cost += price(key) + omens.reduce((a, o) => a + price(o), 0);
+        run.cost += stepCost({ currency: key, omens }, price);
         run.uses[key] = (run.uses[key] ?? 0) + 1;
         for (const o of omens) run.uses[o] = (run.uses[o] ?? 0) + 1;
         run.last = { key, omens };

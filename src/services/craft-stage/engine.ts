@@ -21,7 +21,7 @@ export { freshItem, startFrom, playPlan, splitOmens } from "./run-plan";
 // omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
 // useReason = その手が今打てない理由 (打てるなら null。乱数で決まる物は打てる扱い。クラフト台とシミュの棚の同じ判定)
 export { applyCurrency, kindOf, omensFor, omensAllowedFor, qualityCapOf, useReason } from "./apply-currency";
-export { revealOffers, unrevealedOf } from "./apply-desecrate";
+export { revealOffers, unrevealedOf, unrevealedCount } from "./apply-desecrate";
 // revealPool = 今の未発現の枠の発現に出うる MOD と段 (シミュの発現の MOD の窓の灰色、S-38)
 export { revealPool } from "./spec/parts-unrevealed";
 // そのお告げを今掛けられるか (掛けると打てない・意味が無いお告げの理由。棚のお告げの欄の灰色、棚は共通の部品なので核)
@@ -61,6 +61,8 @@ export { addOddsBySpec, addHitOdds, hitShare, fractureHit } from "./spec/odds";
 export type { RouteKind, Grade as RouteGrade, Grade } from "./route-race";
 // スパムの道の打ち手 (増強・カオス・高貴の 1 人分。シミュの spam-counts とエミュのスパムシミュが同じ打ち方)
 export { routeRun, routeKey, GRADE_KEY } from "./route-race";
+// スパムの道を使えない理由 (日英) と、今のアイテムから始められるか (レア・コラプトでない・MOD あり)
+export { routeOff, routeFromBlock } from "./route-race";
 // 解析君の頼み (K4): 系統の塞ぎ・古の骨の段の下限・発現の手 (候補の数は REVEAL_SPEC.actions の reveal.offers)
 export { occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 export { ANCIENT_BONE_FLOOR } from "../../vendor/poe2htc/engine/probability";
@@ -76,6 +78,9 @@ export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 // aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
 export { aimCombos, aimChain, aimDone, hits as aimHits } from "./aim-odds";
+// 1 手の費用 (カレンシー + お告げ、発現は 0) と aimChain の回し方の種類 (画面の「どう回したか」の文を分ける)
+export type { AimChainMode } from "./aim-odds";
+export { stepCost, aimChainMode } from "./aim-odds";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字)
 export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf, isCraftedSource } from "./tier-rank";
 export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
@@ -83,7 +88,7 @@ export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probabi
 // 名簿
 export { OMEN_FOR } from "./omens";
 // 土台とお告げの層・鍵の読み・手の種類 (2026-11-07 ジン jin-base、E-1〜E-5。シミュの木・画面はこれを呼ぶ)
-export { parseKey, type ParsedKey } from "./key";
+export { parseKey, revealKey, type ParsedKey } from "./key";
 export { actionClass, actionClassOf, actionClassOfKey, type ActionClass, type ActionName } from "./spec/action-class";
 export { FACTION_TAG, OMEN_EXCLUSIVE, omenFor, omenRivals, omenSideOf, omensOfKind, toggleOmen } from "./spec/omen-layer";
 export { OMEN_KEY } from "./spec/omen-keys";

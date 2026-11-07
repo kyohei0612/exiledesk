@@ -4,6 +4,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { mulberry32 } from "../../htc/rng";
+import { tr } from "../../../i18n/lang";
 import type { StageItem } from "../../craft-stage/types";
 import { routeOff, routeRun, routeSeed, targetSides, type Grade, type RaceTarget, type RouteKind, type RoutePrep } from "../../craft-stage/route-race";
 
@@ -90,5 +91,5 @@ export async function raceOne(data: PatchData, base: string, itemLevel: number, 
   if (!one) return null;
   const both = route === "augment" && targetSides(data, targets).length > 1 ? await people("both") : undefined;
   if (both === null) return null;
-  return { route, grade, off: one.steps.length === 0 ? "上限の手数までに付かなかった (この等級では付かない段かも)" : null, ...one.stats, uses: one.uses, tries: [...one.steps].sort((a, b) => a - b), people: runs, hitsBy: one.hitsBy, ...(both ? { both: both.stats } : {}) };
+  return { route, grade, off: one.steps.length === 0 ? tr("上限の手数までに付かなかった (この等級では付かない段かも)", "Didn't hit within the use cap (this grade may not roll that tier)") : null, ...one.stats, uses: one.uses, tries: [...one.steps].sort((a, b) => a - b), people: runs, hitsBy: one.hitsBy, ...(both ? { both: both.stats } : {}) };
 }

@@ -122,6 +122,20 @@ export function aimCombos(data: PatchData, item: StageItem, keys: readonly strin
   return out;
 }
 
+/** 1 手の費用 = カレンシー + 掛けたお告げの値段 (発現は 0。狙う・スパムの道の打ち手が同じ物) */
+export const stepCost = (c: { currency: string; omens: readonly string[] }, price: (key: string) => number): number =>
+  (c.currency === REVEAL ? 0 : price(c.currency)) + c.omens.reduce((a, o) => a + price(o), 0);
+/**
+ * aimChain の回し方の種類 (画面の「何をどう回した数字か」の文はこれで分ける)。reveal = 発現を今の状態から / bone = 骨 → 発現の候補、毎回今の状態に戻す /
+ * spam = カオススパム (今の MOD が消えても揃えば当たり、外れはその結果に続ける) / add = 付ける手 (空きがあるうち続ける) / keep = それ以外 (今の MOD が残っていれば続ける)
+ */
+export type AimChainMode = "reveal" | "bone" | "spam" | "add" | "keep";
+export function aimChainMode(c: AimCombo): AimChainMode {
+  if (c.currency === REVEAL) return "reveal";
+  if (addsUnrevealed(c.currency)) return "bone";
+  if (kindOf(c.currency) === "chaos") return "spam";
+  return actionClassOfKey(c.currency).cls === "add" ? "add" : "keep";
+}
 /** 1 つの打ち方で n 回試して、狙いが付いた (冒涜は候補に出た) 割合 */
 /**
  * 1 つの打ち方で n 回試して、狙い (全部。最大 4 つ、錬金術で一度に付く数) が揃った割合。冒涜は発現の候補に残りの 1 つが出れば揃った扱い
@@ -167,8 +181,8 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
   const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!, hit0)));
   const rng = mulberry32(seed);
   const used = c.omens.filter((o) => o !== ECHOES);
-  const spam = c.currency !== REVEAL && kindOf(c.currency) === "chaos";
-  const bone = c.currency !== REVEAL && addsUnrevealed(c.currency);
+  const mode = aimChainMode(c);
+  const spam = mode === "spam", bone = mode === "bone";
   let item = start, tries = 0, hit = 0, stuck = 0;
   while (tries < n) {
     if (c.currency === REVEAL) {
