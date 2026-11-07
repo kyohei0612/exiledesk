@@ -41,6 +41,12 @@ export const STEP_OUTCOMES_MAX = 50_000;
 const TOO_MANY = Symbol("tooMany");
 const capped = <T>(xs: T[]): T[] => { if (xs.length > STEP_OUTCOMES_MAX) throw TOO_MANY; return xs; };
 const SUPPORTED = (a: Action): boolean => "remove" in a || "add" in a || "fracture" in a || "addUnrevealed" in a || "setRarity" in a || "addEssence" in a || "corrupt" in a || "addEmotion" in a;
+/**
+ * all を渡した時だけ枝にする部品 (11-07 jin-base3、engine-gaps ① 3。木の数え上げられない手の別の道 OUTS_OF・tree-uncountable の置き換え先)。
+ * ソケット・ルーン・元素の変換は決まった 1 枝、品質・カタリストは乱数の +1% / +2% を半々の 2 枝 (同じ結果なら 1 つ)。値の手 (神・聖別) と選ぶ手 (発現) は別の数え
+ */
+const FIXED_PARTS = (a: Action): boolean => "addSocket" in a || "socketAugment" in a || "convertElements" in a;
+const ROLL_PARTS = (a: Action): boolean => "quality" in a || "catalyst" in a;
 const ok = (item: StageItem, added: StageMod[] = [], removed: StageMod[] = []): Step => [{ p: 1, item, added, removed }];
 const equally = (item: StageItem, xs: readonly StageMod[]): Step => xs.map((m) => ({ p: 1 / xs.length, item: without(item, m), added: [], removed: [m] }));
 
@@ -151,6 +157,13 @@ function runOnce(ctx: PartCtx, item: StageItem, a: Action): Step {
   const r = runPart(ctx, item, a);
   return r.applied ? ok(r.item, r.added, r.removed) : "skip";
 }
+/** 乱数で 2 通りに分かれる部品 (品質・カタリストの +1% / +2%): 目盛りの前半と後半を半々に打つ。同じ品になれば 1 枝 */
+function rollStep(ctx: PartCtx, item: StageItem, a: Action): Step {
+  const rs = [0.25, 0.75].map((x) => runPart({ ...ctx, rng: () => x }, item, a));
+  if (!rs[0]!.applied) return "skip";
+  const same = JSON.stringify(rs[0]!.item) === JSON.stringify(rs[1]!.item);
+  return same ? ok(rs[0]!.item, rs[0]!.added, rs[0]!.removed) : rs.map((r) => ({ p: 0.5, item: r.item, added: r.added, removed: r.removed }));
+}
 
 function mergeBranches(xs: readonly Branch[], key: (b: Branch) => string): Branch[] {
   const m = new Map<string, Branch>();
@@ -168,12 +181,12 @@ function mergeBranches(xs: readonly Branch[], key: (b: Branch) => string): Branc
  * 打てない時は [] (対象・制約・お告げの前提、全部の枝で付けられない・消せない)。行き先で表せない手 (発現・数値・品質・ルーン・無限のエッセンス …) は null。
  * merge: 行き先の区別の鍵 (同じ鍵の行き先は p を足して 1 つにし、最初のアイテムを代表に残す)。大いなる高貴のお告げなど 2 つ付ける手は渡すと軽い。
  */
-export function stepOutcomes(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string } = {}): StepOutcome[] | null {
+export function stepOutcomes(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string; all?: boolean } = {}): StepOutcome[] | null {
   const r = stepOutcomesOrTooMany(data, item, key, omens, o);
   return r === "tooMany" ? null : r;
 }
 /** stepOutcomes と同じ。枝が上限 (STEP_OUTCOMES_MAX) を超える手 (錬金など 3 つ以上足す) は数え上げずに "tooMany" (stepOutcomes は null) */
-export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string } = {}): StepOutcome[] | null | "tooMany" {
+export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string; all?: boolean } = {}): StepOutcome[] | null | "tooMany" {
   const w = walk(data, item, key, omens, o);
   if (w === null || w === "tooMany" || w === "block") return w === "block" ? [] : w;
   // 全部の枝が弾かれた = 打てない
@@ -186,10 +199,10 @@ export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: str
 
 type State = Branch & { removedSoFar: StageMod[] };
 /** 手の部品を順にたどる */
-function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string; essence?: ReturnType<typeof prepareEssence> }): { states: State[]; vp: number } | null | "tooMany" | "block" {
+function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string; essence?: ReturnType<typeof prepareEssence>; all?: boolean }): { states: State[]; vp: number } | null | "tooMany" | "block" {
   const plan: SpecPlan | null = planSpec(data, item, key, omens);
   if (!plan) return null;
-  if (!plan.actions.every(SUPPORTED)) return null;
+  if (!plan.actions.every((a) => SUPPORTED(a) || (!!o.all && (FIXED_PARTS(a) || ROLL_PARTS(a))))) return null;
   if (plan.block) return "block";
   // 無限のエッセンス: 付く MOD は付きうる物 (infiniteChoices) から等しく 1 つ。選び方ごとに枝を分けて 1/n ずつ (2026-10-24 シミュ部長 20 本目、前は数え上げなかった)
   if (isInfiniteEssence(key) && !o.essence) {
@@ -222,12 +235,13 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
       const next: State[] = [];
       for (const s of states) {
         // 消してから付ける時の枠は打つ前の品の上限 (E-30a、エンジンの parts.ts の ctx.before と同じ)
-        const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered, before: item };
+        const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered, before: item, ...(o.all ? { runeKey: key } : {}) };
         const r: Step = "remove" in a ? removeStep(ctx, s.item, a.remove)
           : "add" in a ? addStep(ctx, s.item, a.add, last, o.merge ? (b) => o.merge!({ ...b, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed] }) : undefined)
           : "fracture" in a ? fractureStep(data, s.item)
           : "addUnrevealed" in a ? unrevealedStep(ctx, s.item, a.addUnrevealed)
           : "addEmotion" in a ? emotionStep(ctx, s.item, key)
+          : ROLL_PARTS(a) ? rollStep(ctx, s.item, a)
           : runOnce(ctx, s.item, a);
         // 弾かれた枝は打つ前のまま (打つ処理は途中で弾かれたら手ごと不成立)。決まって弾かれる部品なら、その枝は不成立として数える
         if (r === "skip") { voids.push(s.p); continue; }
