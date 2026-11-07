@@ -58,7 +58,7 @@ const item = computed(() => sample.value?.item ?? null);
  * (10-27 オーナー「削減やらエッセンスやら、エミュだと消す候補の MOD の色を変えるよね。それをシミュにも同じのを導入しよう」)。打てない時は出さない。
  * 木の箱のカードには出さない (10-27 に箱へも出す書き換えをオーナーが止めた)
  */
-const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
+const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value && !runePick.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it, props.boxId) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return null; const c = cardOf(it); return removeTags(c, boxTagsOf(s.data.value, t.doc.value, props.boxId, c)); };
@@ -244,8 +244,9 @@ const canBlock = computed(() => { const d = s.data.value, it = item.value, h = h
 function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
 watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 /**
- * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (置き換え、エンジンの rune:名前@n)、
- * 本体 (と空き) = 空きへ、空きが無ければ左から置き換えられる物を置き換える (エンジンの applyRune。木でソケットを足す手は無い、11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
+ * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (入れ替え、エンジンの rune:名前@n)、
+ * 本体 (と空き) = 空きへ。木でソケットを足す手は無い (11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
+ * 全部埋まっている時は押したソケットと入れ替えるだけで、本体・「使う」では左から置き換えない (11-07 オーナー「同じ動作で刺す方にクリックしたらつけれるはず」)。
  * 足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
  */
 const runeAt = ref<number | null>(null);
@@ -253,7 +254,10 @@ const runeAt = ref<number | null>(null);
 const socketWhy = ref<string | null>(null);
 watch(held, () => { runeAt.value = null; socketWhy.value = null; });
 const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
-const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${tr("ルーンのソケットを押すと置き換え · カードを押すと空きへ (空きが無ければ左から置き換え) · 右クリック / Esc で手放す", "Click a filled socket to replace its rune · Click the item to use an empty socket (or replace from the left if none) · Right-click / Esc to drop")}` : undefined));
+/** ルーンを持っていてソケットが全部埋まっている (まだソケットを押していない) = 入れ替えるソケットを選ぶ番 */
+const runePick = computed(() => { const it = item.value ?? shelfItem.value, n = it?.sockets ?? 0; return runeHold.value && !runeAt.value && n > 0 && (it?.augments?.length ?? 0) >= n; });
+const RUNE_PICK = (): string => tr("ソケットが埋まっている", "All sockets are filled");
+const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${runePick.value ? tr("入れ替えるルーンのソケットを押す · 右クリック / Esc で手放す", "Click the socket whose rune to swap · Right-click / Esc to drop") : tr("ルーンのソケットを押すと入れ替え · カードを押すと空きへ · 右クリック / Esc で手放す", "Click a filled socket to swap its rune · Click the item to use an empty socket · Right-click / Esc to drop")}` : undefined));
 function onSocket(n: number): void {
   // ルーン以外を持っている時はアイテムを押したのと同じ (StageItemCard の onSocket の決まり。前は何もせず、ルーンの入ったソケットを押しても打てなかった、11-05 動画の木)
   if (!runeHold.value) { ok(); return; }
@@ -310,7 +314,8 @@ const goneNow = computed((): number => {
   return sameHand(props.current, h) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
-const problem = computed((): string | null => (divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
+// 入れ替えるソケットを選ぶ番は、ソケットを押した時にそのソケットで断る (左のソケットの訳を出さない)
+const problem = computed((): string | null => (runePick.value ? null : divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
 const gone = later(handKey, goneNow);
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
@@ -334,6 +339,7 @@ function use(): void {
 }
 function ok(): void {
   simOp("hand-decide");
+  if (runePick.value) { socketWhy.value = RUNE_PICK(); return; }
   if (!hand.value || !kind.value || problem.value) return;
   if (goneNow.value) warnOpen.value = true; else use();
 }
