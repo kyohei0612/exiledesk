@@ -174,6 +174,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "runeSocket", "pasteLoose", "useRunes",
   // 0.1.669 貼り付けの取り込みで付いている MOD を全部・ルーンは使用ルーンへ・聖別・ルーンの池の MOD (S-08e・S-08f・S-08g、オーナー 11-05「不具合系は出して」「不具合はモンキー不要ね」、ブラック 45 の頼み)。閉じたままは daily・simTutorial
   "pasteAll",
+  // 0.1.679 スマホの棚の長押しで説明・棚の札の名前から印と同じ (上級)(完全) を外す (U-13a・U-13b、オーナー 11-07「おけスマホ」、ブラック 59 の頼み)。閉じたままは daily・simTutorial
+  "shelfInfo", "shelfTierName",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
