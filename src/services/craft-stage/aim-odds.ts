@@ -70,7 +70,7 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   return same && tierNoOf(m) <= want.tiers.length - t.minTierIndex;
 };
 const isEssenceSource = isCraftedSource;
-const has = (item: StageItem, t: AimTarget): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t));
+const has = (item: StageItem, t: AimTarget, o?: AimHitOpts): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, o));
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */
 const SAME_SEEDS = 8;
@@ -122,11 +122,12 @@ export function aimCombos(data: PatchData, item: StageItem, keys: readonly strin
 /** 1 つの打ち方で n 回試して、狙いが付いた (冒涜は候補に出た) 割合 */
 /**
  * 1 つの打ち方で n 回試して、狙い (全部。最大 4 つ、錬金術で一度に付く数) が揃った割合。冒涜は発現の候補に残りの 1 つが出れば揃った扱い
+ * hit = 当たりの式の設定 (aimHits と同じ。省略 = 同じ modId だけ、渡すと sameText などがそのまま効く)
  */
-export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readonly AimTarget[], c: AimCombo, n: number, seed: number): number {
+export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readonly AimTarget[], c: AimCombo, n: number, seed: number, hit0?: AimHitOpts): number {
   const list = Array.isArray(ts) ? (ts as readonly AimTarget[]) : [ts as AimTarget];
-  const missing = (it: StageItem): AimTarget[] => list.filter((t) => !has(it, t));
-  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!)));
+  const missing = (it: StageItem): AimTarget[] => list.filter((t) => !has(it, t, hit0));
+  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!, hit0)));
   let hit = 0;
   for (let i = 0; i < n; i++) {
     const rng = mulberry32(seed + i * 7919);
@@ -153,13 +154,13 @@ export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readon
  * - 冒涜は骨 → 発現の候補に出れば当たり、外れたら今の状態から (次の骨はもう打てないため)
  * - カオスはカオススパム: 今の MOD が消えても狙いが揃えば当たり、外れたらその結果に続けて打つ (2026-10-16 要望 63f6d901
  *   「カオススパムも候補に」: MOD が 1 つのレアはカオスで必ずその MOD が消え、消えたら外れの決まりでいつも 0% になって一覧に出なかった)
- * 返すのは 打った回数あたりの当たりの割合 (1 回の費用 ÷ これ = 付くまでの平均費用)
+ * 返すのは 打った回数あたりの当たりの割合 (1 回の費用 ÷ これ = 付くまでの平均費用)。hit = 当たりの式の設定 (aimOdds と同じ)
  */
-export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarget[], c: AimCombo, n: number, seed: number): number {
+export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarget[], c: AimCombo, n: number, seed: number, hit0?: AimHitOpts): number {
   const keepIds = [...start.prefixes, ...start.suffixes].filter((m) => !m.unrevealed).map((m) => m.modId);
   const keeps = (it: StageItem): boolean => !it.corrupted && keepIds.every((id) => [...it.prefixes, ...it.suffixes].some((m) => m.modId === id));
-  const missing = (it: StageItem): AimTarget[] => ts.filter((t) => !has(it, t));
-  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!)));
+  const missing = (it: StageItem): AimTarget[] => ts.filter((t) => !has(it, t, hit0));
+  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!, hit0)));
   const rng = mulberry32(seed);
   const used = c.omens.filter((o) => o !== ECHOES);
   const spam = c.currency !== REVEAL && kindOf(c.currency) === "chaos";
@@ -196,5 +197,5 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
   return tries ? hit / tries : 0;
 }
 
-/** もう付いているか */
-export const aimDone = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.length > 0 && ts.every((t) => has(item, t));
+/** もう付いているか (o = 当たりの式の設定、aimHits と同じ。省略 = 同じ modId だけ) */
+export const aimDone = (item: StageItem, ts: readonly AimTarget[], o?: AimHitOpts): boolean => ts.length > 0 && ts.every((t) => has(item, t, o));
