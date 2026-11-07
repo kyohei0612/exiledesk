@@ -12,6 +12,7 @@
 import { candidates, makeStageMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { effectiveCls, without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
+import { originOf } from "./tree-rolls";
 
 export const WHITTLE = "OmenofWhittling";
 /** 削減のお告げを含む手か ( が閉じていれば false = 今のまま見本の MOD レベルで決まる) */
@@ -71,9 +72,11 @@ export function rankVariants(data: PatchData, item: StageItem, aims: readonly Ai
   if (code !== undefined && junk.length && rankCode(w, Math.min(...junk.map(lv))) === code) return [{ p: 1, item }];
   const free = junk.filter((m) => !m.crafted && !m.unrevealed);
   if (!free.length || free.length > FREE_MAX) return [{ p: 1, item }];
-  let states: Array<{ p: number; item: StageItem }> = [{ p: 1, item }];
+  let states: Array<{ p: number; item: StageItem; fl: Map<string, number> }> = [{ p: 1, item, fl: new Map(floorsOf(item) ?? []) }];
   for (const j of free) {
-    const next: Array<{ p: number; item: StageItem }> = [];
+    const next: typeof states = [];
+    // 前の削減を越えて残った外れは、その時に消えた MOD の MOD レベル以上の段だけ (③)
+    const floor = floorsOf(item)?.get(fKey(j)) ?? 0;
     for (const s of states) {
       const cur = s.item.prefixes.concat(s.item.suffixes).find((m) => sameMod(m, j));
       if (!cur) { next.push(s); continue; }
@@ -90,6 +93,7 @@ export function rankVariants(data: PatchData, item: StageItem, aims: readonly Ai
           if (!(t.w > 0)) continue;
           const sm0 = makeStageMod(c.mod, c.side, t.index, () => 0.5);
           const sm = j.desecrated ? { ...sm0, desecrated: true } : sm0;
+          if (lv(sm) < floor) continue;
           const code = rankCode(w, lv(sm));
           const e = by.get(code);
           total += t.w;
@@ -98,11 +102,36 @@ export function rankVariants(data: PatchData, item: StageItem, aims: readonly Ai
         }
       }
       if (!(total > 0)) { next.push(s); continue; }
-      for (const e of by.values()) next.push({ p: (s.p * e.w) / total, item: withSame(base, e.mod, cur) });
+      for (const e of by.values()) {
+        // 差し替えた外れは元の外れの下限を引き継ぐ
+        const fl = new Map(s.fl);
+        fl.delete(fKey(cur));
+        if (floor) fl.set(fKey(e.mod), floor);
+        next.push({ p: (s.p * e.w) / total, item: withSame(base, e.mod, cur), fl });
+      }
     }
     states = next;
   }
-  return states;
+  return states.map((s) => { if (s.item !== item && s.fl.size) FLOORS.set(s.item, s.fl); return { p: s.p, item: s.item }; });
+}
+
+/**
+ * 削減で残った外れの MOD レベルの下限 (案の ③、11-07 オーナー「ハズレMOD次第で削減の標的が変わるから、そこ深掘りした方がええな」)。
+ * 残った外れは消えた MOD より MOD レベルが低くなかった (同じなら E-33 で等しく消える) ので、下限 = 消えた MOD の MOD レベル。
+ * 品ごとに MOD の鍵 → 下限を持ち (エンジンの StageMod は触らない)、次の削減の差し替え (rankVariants) で候補をその下限以上に絞る。
+ * 下限はほかの手を打った後も残った MOD に持ち回る (carryFloors。配置の代表 = tree-frame、見本 = tree-sample)
+ */
+const FLOORS = new WeakMap<object, ReadonlyMap<string, number>>();
+const fKey = (m: StageMod): string => `${m.side}|${m.modId}|${m.tierIndex}`;
+const floorsOf = (it: StageItem): ReadonlyMap<string, number> | undefined => FLOORS.get(it) ?? FLOORS.get(originOf(it));
+/** before に手を打った after へ下限を持ち回る。wanted = 削減の手の欲しい MOD (削減でなければ null): 消えた MOD の MOD レベルを、残った外れの下限に足す */
+export function carryFloors(before: StageItem, after: StageItem, wanted: readonly AimLike[] | null): void {
+  const was = floorsOf(before), bm = loose(before), am = loose(after), next = new Map<string, number>();
+  const kept = am.filter((m) => bm.some((b) => fKey(b) === fKey(m)));
+  for (const m of kept) { const f = was?.get(fKey(m)); if (f !== undefined) next.set(fKey(m), f); }
+  const gone = wanted ? bm.filter((b) => !am.some((m) => fKey(m) === fKey(b))) : [];
+  if (gone.length) { const low = Math.min(...gone.map(lv)); for (const m of kept) if (!isAim(wanted!, m)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, low)); }
+  if (next.size) FLOORS.set(after, next);
 }
 /** 外れを差し替えたアイテム (元の外れと同じ並びの位置へ) */
 function withSame(base: StageItem, m: StageMod, was: StageMod): StageItem {

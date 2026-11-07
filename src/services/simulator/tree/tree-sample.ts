@@ -20,7 +20,7 @@ import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type 
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf } from "./tree-outcome";
-import { isWhittleHand, rankVariants } from "./tree-whittle";
+import { aimedAims, carryFloors, isWhittleHand, rankVariants } from "./tree-whittle";
 import { sampleAimed } from "./tree-judge";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
@@ -368,7 +368,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   const fk = failKeyOf(doc, boxId, seed, base.item, aimedNow());
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
-  const had = okMemo.get(fk), got = (item: StageItem): Sample => { const c = handOut(item); putCapped(okMemo, fk, c); return { item: c, note: null }; };
+  const had = okMemo.get(fk), got = (item: StageItem): Sample => { carryFloors(base.item, item, isWhittleHand(h) ? aimedAims(aims, aimedNow()) : null); const c = handOut(item); putCapped(okMemo, fk, c); return { item: c, note: null }; }; // 削減で残った外れの下限を持ち回る (S-65b)
   if (had) return { item: had, note: null };
   for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
     const r = roll(from + i);

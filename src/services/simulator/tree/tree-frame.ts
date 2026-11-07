@@ -17,7 +17,7 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { aimedAims, isWhittleHand, rankVariants } from "./tree-whittle";
+import { aimedAims, carryFloors, isWhittleHand, rankVariants } from "./tree-whittle";
 import { keptAimedOf } from "./tree-keep";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
@@ -62,7 +62,8 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
     for (const v of rankVariants(data, item, wanted)) {
       const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
       if (s === "tooMany") return s;
-      if (s) rs.push(...s.filter((r) => !r.void).map((r) => ({ p: v.p * r.p, item: r.item })));
+      // 残った外れに、消えた MOD の MOD レベルを下限として持たせる (次の削減で絞る、S-65b)
+      if (s) rs.push(...s.filter((r) => !r.void).map((r) => { carryFloors(v.item, r.item, wanted); return { p: v.p * r.p, item: r.item }; }));
     }
   } else {
     const s = stepOutcomesOrTooMany(data, item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
@@ -71,6 +72,8 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
     else { const r = applyHand(data, item, key, mulberry32(1), { omens: h.omens }); rs = r.applied ? [{ p: 1, item: r.item }] : []; }
   }
   if (veilPick(h)) rs = rs.flatMap((r) => (unrevealedOf(r.item) ? revealOutcomes(data, r.item).map((x) => ({ p: r.p * x.p, item: x.item })) : [r]));
+  // ほかの手は残った MOD の下限をそのまま持ち回る (削減の手は上で付けた)
+  if (!isWhittleHand(h)) for (const r of rs) if (r.item !== item) carryFloors(item, r.item, null);
   const tot = rs.reduce((n, r) => n + r.p, 0) || 1;
   return rs.map((r) => ({ item: r.item, p: r.p / tot }));
 }
