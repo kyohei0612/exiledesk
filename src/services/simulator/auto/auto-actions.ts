@@ -14,6 +14,9 @@
  *   - 外れが何かは持たない。付いている外れ 1 つごとに、その側の外れの重みから平均 (Σw² ÷ Σw) を引く (系統を塞ぐ分の近似)。狙いと同じ系統の別の MOD は外れに数える (札の系統を塞がない)
  *   - 発現の候補 3 つは置き場から重みで戻しなしに引く (エンジンの drawOffers)。札の候補は引いたら外し、外れは平均の重み (Σw² ÷ Σw) を外す。冒涜専用の数の割合はエンジンと同じ
  *   - 表の代表のアイテムでは外れを代表の MOD で置く (auto-engine.ts)
+ * 付ける部分をエンジンの stepOutcomes の表にするのは見送り (engine-gaps ② 25、11-07 ブラック 58 の決め。使うのはアプリの画面だけで当分触らない G-07):
+ *   11-07 に試した (付ける手も形ごとの代表に stepOutcomes)。最安は手袋 1946.0 → 1941.0 神・靴 74.3 → 73.1 神、安い順の上位 3 は同じ、
+ *   エンジンで打った数とのずれは手袋 −4.7% → −4.3%・靴 −27.6% → −31.4% で近さは変わらず、組み立ては 1 秒 → 6〜9 秒。差分は共有メモ progress/auto-own-25-engine-add.patch
  */
 import { OMEN_KEY, omenFor, type StageSide } from "../../craft-stage/engine";
 import type { AutoModel, Grade, MCand, State } from "./auto-types";
