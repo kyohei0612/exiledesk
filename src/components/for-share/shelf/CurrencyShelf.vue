@@ -8,7 +8,7 @@
   並べる物・名前・値段は [[craft-stage-shelf.ts]]、1 つの見た目は [[ShelfButton.vue]]。
 -->
 <script setup lang="ts">
-import { socketCapOf } from "../../../services/craft-stage/engine";
+import { parseKey, planSpec, socketCapOf } from "../../../services/craft-stage/engine";
 import { emotionKeysFor } from "../../../services/craft-stage/apply-emotion";
 import { scrollBoxOf } from "../../../utils/keep-place";
 import { hoverStack } from "../../../state/hover-stack";
@@ -195,10 +195,11 @@ const shelfWhy = computed(() => {
     for (const r of reasons) count.set(r!, (count.get(r!) ?? 0) + 1);
     return [{ label, reason: [...count].sort((a, b) => b[1] - a[1])[0]![0] }];
   };
-  // レアはパーフェクトだけで見る (パーフェクトの無い種類の「マジックにだけ」を理由にしない)
+  // 対象の合う段だけで見る (レアにパーフェクトの無い種類の「マジックにだけ」を理由にしない)
   const essKeys = essences.value.flatMap((g) => essByRarity(g.keys));
+  const essFit = essKeys.filter(fitsItem);
   return [
-    ...line(tr("エッセンス", "Essences"), essKeys.some((k) => k.startsWith("essence:perfect:")) && craftStage.item.value?.rarity === "rare" ? essKeys.filter((k) => k.startsWith("essence:perfect:")) : essKeys),
+    ...line(tr("エッセンス", "Essences"), essFit.length ? essFit : essKeys),
     ...(hasSockets.value ? line(tr("ルーン", "Runes"), runes.value.flatMap((g) => g.keys)) : []),
   ];
 });
@@ -232,15 +233,20 @@ function groupKeys(id: string): string[] {
   if (id.startsWith("rf:")) return otherRunes.value.flatMap((g) => g.keys).filter((k) => runeFam(k) === id).sort((a, b) => RUNE_ORDER(a) - RUNE_ORDER(b));
   return essByRarity(essences.value.find((g) => g.kind === id)?.keys ?? []);
 }
+/** その鍵の対象 (レアリティ・部位) がこのアイテムに合うか (エンジンの planSpec の offTarget) */
+function fitsItem(k: string): boolean {
+  const d = craftStage.data.value, it = craftStage.item.value;
+  return !!d && !!it && planSpec(d, it, k, [])?.offTarget === false;
+}
 /**
- * エッセンスの段はアイテムのレアリティで絞る: レアはパーフェクトだけ (段が 1 つなので欄を出さず、押したらそのまま持つ)、
- * ノーマル・マジックはパーフェクトを出さない (2026-10-18 オーナー「レアの時のエッセンスはパーフェクトのみだから選ばせる工程なくして」)。絞って空ならそのまま
+ * エッセンスの段はアイテムに対象の合う段だけ: レアはパーフェクトだけ (段が 1 つなので欄を出さず、押したらそのまま持つ)、マジックはパーフェクトを出さない
+ * (2026-10-18 オーナー「レアの時のエッセンスはパーフェクトのみだから選ばせる工程なくして」)。どれも合わなければ普通の段 (groupRep と同じ)、それも無ければそのまま
  */
 function essByRarity(ks: string[]): string[] {
-  const r = craftStage.item.value?.rarity;
-  const perfect = (k: string): boolean => k.startsWith("essence:perfect:");
-  const out = r === "rare" ? ks.filter(perfect) : r === "normal" || r === "magic" ? ks.filter((k) => !perfect(k)) : ks;
-  return out.length ? out : ks;
+  const fit = ks.filter(fitsItem);
+  if (fit.length) return fit;
+  const plain = ks.filter((k) => { const pk = parseKey(k); return !(pk.type === "essence" && pk.tier === "perfect"); });
+  return plain.length ? plain : ks;
 }
 /**
  * まとめたアイコンに使う鍵: 使える段のうち一番上 (レアならパーフェクト)。どれも使えなければ普通の段

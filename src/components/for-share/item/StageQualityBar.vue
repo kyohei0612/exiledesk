@@ -6,7 +6,10 @@
   宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。スキルジェムには出さない (ワンド・スタッフ・セプターは 10-17 から出す)
 -->
 <script setup lang="ts">
-import { CATALYSTS, maxQualityOf, isGem, type StageItem, inAny, qualityCapOf, qualityFieldMax, SANCTIFIED_REASON, hasExtraCatalyst } from "../../../services/craft-stage/engine";
+import { CATALYSTS, maxQualityOf, isGem, type StageItem, parseKey, qualityCapOf, qualityFieldMax, SANCTIFIED_REASON, hasExtraCatalyst } from "../../../services/craft-stage/engine";
+import { CATALYST_SPECS } from "../../../services/craft-stage/spec/other-specs";
+import { targetBlock } from "../../../services/craft-stage/spec/judge";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
@@ -20,10 +23,19 @@ const maxQ = computed(() => qualityCapOf(props.item));
 /** 足し算の上限 (ベース + 品質の最大値の MOD + インフューザー)。プルダウンの「今付けられる最大」 */
 const natural = computed(() => qualityFieldMax(props.item));
 // 種類を選んだら、その時点の上限 (MOD・品質の種類で変わる) まで上げる。そこから − / + で手で変えられる (2026-10-13 オーナー)
-// カタリストの種類を選べるのは指輪・アミュレット (普通の物) とジュエル (精製された物)。ベルトには無い (2026-10-13 総点検: 前はベルトにも出て、打つと弾かれた)
-const jewel = computed(() => inAny(props.item.cls.category, ["ringAmulet", "jewel"]));
 /** ベースの品質とは別にカタリストの品質を持つベース (グラスピングメイル)。種類と % を別の欄で */
 const extraCat = computed(() => hasExtraCatalyst(props.item.base));
+/**
+ * 品質の種類に選べるカタリスト = この品に打てる触媒 (指輪・アミュレットは普通の物、ジュエルは精製された物。ベルトには無い)。
+ * 部位はエンジンの spec の対象 (targetBlock) から引く (2026-11-07 オーナー「品質の設定のとこだけどね出すのカタリスト」、前は部位の名前を画面で決めていた)。
+ * 精製された物は名前で出す (種類の札だけだと指輪の物と見分けがつかない)。グラスピングメイルは下の別の欄
+ */
+const choices = computed(() => (extraCat.value ? [] : CATALYST_SPECS.flatMap((s) => {
+  const p = parseKey(s.stageKey);
+  const c = p.type === "catalyst" && !targetBlock(s.target, props.item) ? CATALYSTS.find((x) => x.tag === p.tag) : undefined;
+  return c && p.type === "catalyst" ? [{ tag: c.tag, label: p.jewel ? nameOfKey(s.stageKey, props.item) : tr(c.label.ja, c.label.en) }] : [];
+})));
+const jewel = computed(() => choices.value.length > 0);
 const catMax = computed(() => maxQualityOf(props.item));
 const catQ = computed(() => props.item.catalystQuality ?? 0);
 // ワンド・スタッフ・セプターにも出す (品質は付与スキルに乗る。2026-10-17 オーナー「品質は等しく上げれるように、カレンシーでも設定でも」)
@@ -78,7 +90,7 @@ const sel = "h-6 cursor-pointer rounded border border-white/15 bg-black/60 px-1 
     </span>
     <select v-if="jewel" :disabled="locked" :class="[sel, 'w-[7rem]']" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
-      <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
+      <option v-for="c in choices" :key="c.tag" :value="c.tag">{{ c.label }}</option>
     </select>
   </div>
 </template>
