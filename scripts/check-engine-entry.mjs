@@ -39,7 +39,8 @@ const args = new Set(process.argv.slice(2));
 const head = args.has("--head");
 
 const sh = (cmd) => execSync(cmd, { windowsHide: true, cwd: ROOT, encoding: "utf8", maxBuffer: 64 << 20 });
-const files = sh(head ? "git ls-tree -r --name-only HEAD src" : "git ls-files src")
+// 作業ツリーはまだ追われていない新しいファイルも数える (フック G-40 は git add の前に回るので、add && commit の新しいファイルが抜けていた。2026-11-07 ブラック 57)
+const files = sh(head ? "git ls-tree -r --name-only HEAD src" : "git ls-files -co --exclude-standard src")
   .split("\n").filter((f) => /\.(ts|vue)$/.test(f) && !f.endsWith(".d.ts"));
 const all = new Set(head ? sh("git ls-tree -r --name-only HEAD src").split("\n") : sh("git ls-files -co --exclude-standard src").split("\n"));
 const read = (f) => (head ? sh(`git show HEAD:"${f}"`) : existsSync(resolve(ROOT, f)) ? readFileSync(resolve(ROOT, f), "utf8") : "");
@@ -147,9 +148,12 @@ const WHY = {
   E: "打つ・読む・MOD の文や値を作る中身は画面に書かず、エンジンの関数を呼ぶ (無ければジン部長に頼む)。見せるために読むだけなら --head --write で控えを取り直す",
   F: "ゲームの仕様はジンだけ。エンジンの関数を呼ぶか、無ければジンに頼む (G-40、オーナー 11-07「ゲームシステムはジンだけ追加修正可能」)",
 };
+// F はファイルごとに増えたら止める (ほかで減った分で増えが隠れないように。合計で見ると、寄せで減った後の新しい自前を通していた。2026-11-07 ブラック 57)。
+// ファイルを割って移しただけの時は --head --write で控えを取り直す
+const grew = (k) => over.includes(k[0]) || k[0] === "F";
 // 止める行 (フック G-40 はファイル名の入った「増えた:」の行だけを見せる) に訳を付ける。何が増えたかは --list で
-for (const [k, n] of worse) console.log(`${over.includes(k[0]) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}${over.includes(k[0]) ? ` (${WHY[k[0]]})` : ""}`);
+for (const [k, n] of worse) console.log(`${grew(k) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}${grew(k) ? ` (${WHY[k[0]]})` : ""}`);
 for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (${WHY[r]})`);
 if (better.length) console.log(`減った ${better.length} ファイル: 良い。\`node scripts/check-engine-entry.mjs --head --write\` で控えを取り直す`);
-if (over.length) process.exit(1);
+if (over.length || worse.some(([k]) => k[0] === "F")) process.exit(1);
 console.log("増えた所なし");
