@@ -28,12 +28,11 @@ function essenceMods(data: PatchData, item: StageItem): Array<{ mod: Mod; side: 
 /** キー → 段の強さと MOD (このクラスで使えない物は null) */
 export function essenceTarget(data: PatchData, item: StageItem, key: string): { level: string; mod: Mod; side: StageSide } | null {
   const list = essenceMods(data, item);
-  if (key === "essence:breach") {
+  const k = parseKey(key); // 鍵の読みは key.ts の parseKey 1 か所
+  if (k.type === "essence" && k.breach) {
     const hit = list.find((x) => hasFamily(x.mod, BREACH_FAMILY));
     return hit ? { level: "perfect", ...hit } : null;
   }
-  // 鍵の読みは key.ts の parseKey 1 か所
-  const k = parseKey(key);
   if (k.type !== "essence" || !k.tier || !k.modId) return null;
   const hit = list.find((x) => x.mod.id === k.modId);
   return hit ? { level: k.tier, ...hit } : null;
@@ -79,10 +78,12 @@ export function pickInfinite(data: PatchData, item: StageItem, key: string, rng:
 }
 
 
+/** アストリッドの創造性 (クラフト MOD の上限を増やすルーン、E-11h) の英名 */
+export const ASTRID_EN = "Astrid's Creativity";
 /** 深淵のエッセンスの MOD の系統 (アビサルロードの紋章) */
 export const ABYSS_FAMILY = "EssenceAbyss";
 /** 持てるクラフト MOD の数 (アストリッドの創造性で +1) */
 /** クラフト MOD の上限: 1 + アストリッドの創造性 (ソケットの効果 100% 以上で +2。stage-core の runeEffectPct・engine の boostedPlus) */
 export const craftedLimitOf = (item: StageItem): number => // E-11h クラフト MOD は 1 つ (アストリッドの創造性で +1)
-  1 + (item.augments ?? []).filter((a) => a.en === "Astrid's Creativity").reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
+  1 + (item.augments ?? []).filter((a) => a.en === ASTRID_EN).reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
 

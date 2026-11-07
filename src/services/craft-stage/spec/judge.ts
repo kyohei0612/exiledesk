@@ -117,7 +117,13 @@ export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly 
   if (item.corrupted && !spec.allowCorrupted) return tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item");
   const gone = removedOmenBlock(omens);
   if (gone) return gone;
-  if (!spec.modless && (isFlask(item.cls.category) || isGem(item.cls.category))) return isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)");
+  if (!spec.modless) return modlessBlock(item);
+  return null;
+}
+/** フラスコ・スキルジェム (このステージは MOD を扱わない) には打てない (E-18)。説明文で打つ手 (stateBlock) と移していない手 (applyCurrency) が同じ物 */
+export function modlessBlock(item: StageItem): string | null {
+  if (isGem(item.cls.category)) return tr("スキルジェムには使えない", "Can't be used on Skill Gems");
+  if (isFlask(item.cls.category)) return tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)");
   return null;
 }
 

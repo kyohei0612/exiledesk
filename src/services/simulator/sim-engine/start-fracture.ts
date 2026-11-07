@@ -4,7 +4,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "../../craft-stage/apply-currency";
-import { craftedLimitOf } from "../../craft-stage/apply-essence";
+import { craftedLimitOf, ASTRID_EN } from "../../craft-stage/apply-essence";
 import { forceKey } from "../../craft-stage/apply-force";
 import { hits } from "../../craft-stage/aim-odds";
 import { isCraftedSource, isDesecratedSource } from "../../craft-stage/tier-rank";
@@ -30,7 +30,7 @@ const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.t
 /** クラフト MOD (エッセンス・完全エッセンス・合金で付く物、✦ で付ける物は数えない) */
 const isCrafted = (data: PatchData, m: TierMod): boolean => isCraftedSource(data.mods.get(m.modId)?.source) && !m.fractured;
 /** クラフト MOD の上限を +1 するルーン (英語名、差す手 rune:<英語名>) */
-const ASTRID = "Astrid's Creativity";
+const ASTRID = ASTRID_EN;
 
 /**
  * フラクチャーの候補から始めのアイテム (J1): 候補のどれか 1 つが ✦ で付いたレア + 外れ junk 個 (既定 3 = フラクチャーのオーブを打てる MOD 4 つのレア)。

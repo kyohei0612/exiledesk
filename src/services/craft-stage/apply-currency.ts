@@ -54,12 +54,12 @@ export function qualityCapOf(item: StageItem): number {
   return item.qualityCap ?? qualityFieldMax(item);
 }
 import { applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
-import { isFlask, isGem, uniqueBaseOf } from "./stage-bases";
+import { uniqueBaseOf } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
 import { jaTypeName } from "../../i18n/item-names-ja";
 import { OMEN_FOR } from "./omens";
 import { omensOfKind } from "./spec/omen-layer";
-import { itemStateBlock, lockedStateBlock, removedOmenBlock, sanctifiedReason } from "./spec/judge";
+import { itemStateBlock, lockedStateBlock, removedOmenBlock, sanctifiedReason, modlessBlock } from "./spec/judge";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, dropForesight, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyDispose, isDispose } from "./apply-dispose";
@@ -214,7 +214,7 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   }
   // 聖別の数値を手で決める (聖別の帯。聖別の後に打つ手、費用 0)
   if (isSanctifySet(currency)) return applySanctifySet(data, item, currency);
-  if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
+  if (item.corrupted && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
   // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」。説明文で打つ手と同じ判定)
   const gone = removedOmenBlock(omens);
   if (gone) return skip(item, gone);
@@ -234,7 +234,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (isExtra(currency)) return toUniqueBase(data, applyExtra(item, currency, rng, hint.outcome));
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
-  if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
+  const modless = modlessBlock(item);
+  if (modless) return skip(item, modless);
   // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーン・感情・フラックス・聖別は説明文の分解 (spec/) で打つ (ADR-004、2026-10-16〜17 に今の関数から外した)
   return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`)); // E-28・E-29 棚に無い手・ヴァールは古い手順の再生だけ
 }
