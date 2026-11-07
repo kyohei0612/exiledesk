@@ -7,7 +7,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { mulberry32 } from "../htc/rng";
 import { tr } from "../../i18n/lang";
 import { applyCurrency } from "./apply-currency";
-import { OMEN_EXCLUSIVE, omenNoteOf } from "./omens";
+import { omenNoteOf, omenRivals } from "./omens";
 import type { StageItem } from "./types";
 
 export function omenBlock(data: PatchData | null | undefined, item: StageItem | null | undefined, held: string | null | undefined, omens: readonly string[], omen: string): string | null {
@@ -15,7 +15,7 @@ export function omenBlock(data: PatchData | null | undefined, item: StageItem | 
   const note = omenNoteOf(omen, item, data);
   if (note?.block) return note.text;
   // 同じ組のお告げ (左右など) は掛け替えになるので、それを抜いた上に足して比べる
-  const rivals = new Set(OMEN_EXCLUSIVE.filter((g) => g.includes(omen)).flat());
+  const rivals = new Set(omenRivals(omen));
   const rest = omens.filter((o) => o !== omen && !rivals.has(o));
   const tryWith = (om: readonly string[]) => applyCurrency(data, item, held, mulberry32(0), om);
   const without = tryWith(rest);

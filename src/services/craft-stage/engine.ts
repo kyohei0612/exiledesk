@@ -105,7 +105,7 @@ export { modBoostsOf } from "./boosts";
 
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
-export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, defaultWeightOf } from "./stage-tuning";
+export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, CATALYSING_OVER_RATIO, defaultWeightOf } from "./stage-tuning";
 // 重みを推定で埋めた MOD の印 (MOD 一覧の重みの札。一覧は共通の部品なので核)
 export { OVERRIDDEN } from "../htc/weight-overrides";
 // 聖別の数値の下限・上限 (棚のお告げの下の設定・聖別の帯)

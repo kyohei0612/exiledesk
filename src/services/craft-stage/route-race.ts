@@ -22,7 +22,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { hits as aimHits } from "./aim-odds";
 import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
-import { limitOf, listOf, sideOfMod, SIDES } from "./stage-core";
+import { limitOf, openSlots, sideOfMod } from "./stage-core";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { OMEN_KEY } from "./spec/omen-keys";
 
@@ -62,8 +62,7 @@ export function routeStep(it: StageItem, route: RouteKind, grade: Grade, isHit: 
   }
   if (route === "chaos") return { key: allMods(it).some((m) => !m.fractured) ? `chaos${g}` : "exalt", omens: [] };
   if (allMods(it).some((m) => !m.fractured && !isHit(m))) return { key: "annul", omens: [] };
-  const free = SIDES.reduce((a, sd) => a + Math.max(0, limitOf(it, sd) - listOf(it, sd).length), 0);
-  return { key: `exalt${g}`, omens: free >= 2 ? [OMEN_KEY.greater] : [] };
+  return { key: `exalt${g}`, omens: openSlots(it) >= 2 ? [OMEN_KEY.greater] : [] };
 }
 /** 当たりの側 (プレ / サフィ)。2 つ以上なら増強の道は使えない */
 export const targetSides = (data: PatchData, targets: readonly RaceTarget[]) => [...new Set(targets.map((t) => sideOfMod(data, t.modId)))];

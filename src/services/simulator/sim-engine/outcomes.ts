@@ -10,17 +10,15 @@
  * 付く MOD の数値は段の下限 (S-202 ②。行き先の区別に数値は使わない)。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, hasExtraCatalyst, makeStageMod, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
+import { allMods, makeStageMod, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
 import { infiniteChoices, isInfiniteEssence } from "../../craft-stage/apply-essence";
-import { addCandidatesOf, boneSlotOf, removalOf } from "../../craft-stage/spec/basis";
+import { addCandidatesOf, boneSlotOf, emotionFitsOf, removalOf, spendCatalysing } from "../../craft-stage/spec/basis";
 import type { StageItem, StageMod, StageSide } from "../../craft-stage/types";
 import { planSpec, type SpecPlan } from "../../craft-stage/spec/run-spec";
 import { runPart, type PartCtx } from "../../craft-stage/spec/parts";
 import { unrevealedMod, unrevealedPlan } from "../../craft-stage/spec/parts-unrevealed";
 import { prepareEssence } from "../../craft-stage/spec/essence-specs";
 import type { Action } from "../../craft-stage/spec/types";
-import { emotionNameOf } from "../../craft-stage/apply-emotion";
-import { jewelEmotionsOf } from "../../htc/patch";
 
 /**
  * 行き先 1 つ。p = この行き先になる割合 (全部の和が 1)。item = 打った後のアイテム。
@@ -49,7 +47,7 @@ const equally = (item: StageItem, xs: readonly StageMod[]): Step => xs.map((m) =
 /** parts.ts の remove と同じ選び方 (土台の removalOf を全部の枝に分ける。指名は無し) */
 function removeStep(ctx: PartCtx, item: StageItem, a: Remove): Step {
   const R = removalOf(item, a, ctx.mods, ctx.essence?.side);
-  if ("all" in R) return ok({ ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }, [], R.all);
+  if ("all" in R) return ok(R.item, [], R.all);
   if ("skip" in R) return "skip";
   if ("none" in R) return ok(item);
   if (R.desecrated) return equally(item, R.pick(item));
@@ -80,7 +78,7 @@ function removeStep(ctx: PartCtx, item: StageItem, a: Remove): Step {
 function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (b: Branch) => string): Step {
   if (a.emptyOk && !SIDES.some((s) => room(item, s, ctx.before))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
-  const finish = (b: Branch): Branch => (ctx.mods.catalysing ? { ...b, item: hasExtraCatalyst(item.base) ? { ...b.item, catalystQuality: 0 } : { ...b.item, quality: 0 } } : b);
+  const finish = (b: Branch): Branch => (ctx.mods.catalysing ? { ...b, item: spendCatalysing(b.item) } : b);
   let states: Branch[] = [{ p: 1, item, added: [], removed: [] }];
   const done: Branch[] = [];
   for (let i = 0; i < n; i++) {
@@ -138,7 +136,7 @@ function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
  * 空きのある版が無ければ当たり所で不成立 (打つ処理の skipRandom)。2026-11-03 シミュ部長 68 (前は行き先で表せない手で null = 木の結果が 1 箱だった)
  */
 function emotionStep(ctx: PartCtx, item: StageItem, key: string): Step {
-  const fits = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key) && room(item, e.side as StageSide, ctx.before));
+  const fits = emotionFitsOf(item, key, ctx.before);
   if (!fits.length) return [{ p: 1, void: true }];
   return fits.flatMap((e) => {
     const mod = ctx.data.mods.get(e.modId);

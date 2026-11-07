@@ -4,7 +4,7 @@
  * 一言は今の関数 (apply-desecrate.ts など) と同じ文にしている (手順の再生の突き合わせで同じ結果になるように)
  */
 import { inAny, inGroup } from "../../mods/item-classes";
-import { allMods, catalystOf, hasExtraCatalyst, limitOf, maxQualityOf, room, SIDES, takenFamilies } from "../stage-core";
+import { allMods, catalystRoom, hasCatalystQuality, hasExtraCatalyst, limitOf, room, SIDES, takenFamilies } from "../stage-core";
 import { craftedLimitOf, essenceTarget, infiniteChoices, isInfiniteEssence } from "../apply-essence";
 import { familyBlocked } from "../../mods/mod-rules";
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
@@ -85,13 +85,13 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return free ? null : tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item");
     }
     case "qualityBelow": {
-      const max = l.max === "catalyst" ? maxQualityOf(item) : l.max;
-      const now = l.max === "catalyst" ? (item.qualityTag === tag ? catalystOf(item).pct : 0) : item.quality;
+      const cat = l.max === "catalyst" ? catalystRoom(item, tag as string) : null;
+      const max = cat ? cat.max : (l.max as number);
+      const now = cat ? cat.now : item.quality;
       return now >= max ? tr(`品質が上限 (${max}%)`, `Quality is maxed (${max}%)`) : null;
     }
     case "hasCatalystQuality": { // グラスピングメイルはベースの品質とは別の欄 (catalystOf、E-71)
-      const c = catalystOf(item);
-      return c.tag && c.pct > 0 ? null : tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality");
+      return hasCatalystQuality(item) ? null : tr("触媒の高貴のお告げは品質 (カタリスト) が要る", "Omen of Catalysing Exaltation needs Catalyst quality");
     }
     case "socketsBelowCap": {
       const max = socketCapOf(item.base, item.cls.category);

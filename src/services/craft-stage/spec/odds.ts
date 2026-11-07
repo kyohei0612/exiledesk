@@ -29,7 +29,7 @@ function removeBranches(item: StageItem, a: Remove, mods: Mods): StageItem[] | n
   // 1 つ以外 (冒涜だけを消す光のお告げ・2 つ以上消す手) は MOD を付ける手に無い
   if (a.n !== "all" && (a.n !== 1 || (mods.pick ?? a.pick) !== "equal")) return null;
   const R = removalOf(item, a, mods);
-  if ("all" in R) return [{ ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }];
+  if ("all" in R) return [R.item];
   if ("none" in R) return [item];
   if ("skip" in R) return [];
   const gone = R.pick(item);

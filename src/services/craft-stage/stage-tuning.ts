@@ -11,7 +11,6 @@
  *   候補を引く candidates (stage-core、打つ処理と確率の表が通る 1 か所) と MOD 一覧 (mod-list.ts) が読む
  */
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
-import { ABSOLUTE_MAX_QUALITY } from "../htc/quality";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { OMEN_KEY } from "./spec/omen-keys";
 
@@ -25,10 +24,8 @@ export interface StageTuning {
   /** MOD の id → 一番重い段の重み (無い MOD は既定のまま) */
   modWeights: Readonly<Record<string, number>>;
 }
-/** 触媒の高貴の既定 (CoE の 1% ごと +0.2) */
-export const CATALYSING_PER_PCT = 0.2;
-const DEFAULT_MAX = 20;
-const OVER_RATIO = 0.6;
+/** 触媒の高貴の既定 (CoE の 1% ごと +0.2) と 20% を超えた分の割合 (式は htc/catalysing-multiplier.ts の 1 本) */
+export { CATALYSING_PER_PCT, CATALYSING_OVER_RATIO } from "../htc/catalysing-multiplier";
 
 let tuning: StageTuning = { catalysingPerPct: null, sanctifyK: null, modWeights: {} };
 
@@ -66,11 +63,7 @@ export function withStepTune<T>(t: StepTune | null | undefined, run: () => T): T
 
 /** 品質 (%) → 対応する MOD の重みに掛かる倍率 (設定が無ければエンジンの既定 catalysingMultiplier) */
 export function tunedCatalysingMultiplier(qualityPct: number): number {
-  const r = tuning.catalysingPerPct;
-  if (r == null) return catalysingMultiplier(qualityPct);
-  if (!(qualityPct > 0)) return 1;
-  const q = Math.min(qualityPct, ABSOLUTE_MAX_QUALITY);
-  return 1 + r * Math.min(q, DEFAULT_MAX) + r * OVER_RATIO * Math.max(0, q - DEFAULT_MAX);
+  return catalysingMultiplier(qualityPct, tuning.catalysingPerPct ?? undefined);
 }
 
 /** その MOD の既定の重み (一番重い段。weight-overrides で埋めた後の値) */

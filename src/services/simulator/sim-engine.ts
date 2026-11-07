@@ -20,9 +20,6 @@ export type { StepOutcome } from "./sim-engine/outcomes";
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./sim-engine/outcomes";
 // 発現の行き先 = 出うる MOD ごとに 1 つ (人が選ぶ手、乱数で候補を引かない。E-99・S-200)
 export { revealOutcomes } from "./sim-engine/reveal-outcomes";
-// 1 手の結果の種類 (当たり・外れ・狙いが消えた・外れが消えた・打った後) ごとの割合と、前後の 2 つのアイテムの分け方 (ツリーの結果の箱の割合、10-25 シミュ部長 29 本目)
-export type { OutcomeKind, OutcomeOdd, TierAimLike } from "./sim-engine/outcome-odds";
-export { outcomeOdds, outcomeKindOf } from "./sim-engine/outcome-odds";
 // エッセンスの見出しの文 (チュートリアルの動画)
 export { essenceNameEn, headingHits } from "./sim-engine/essence-parts";
 

@@ -19,6 +19,7 @@ import type { CurrencySpec, OmenSpec, Source, Words } from "./types";
 import { tr } from "../../../i18n/lang";
 import deliriumNotables from "../../../data/delirium-notables.json";
 import { parseKey } from "../key";
+import { isAlloyName } from "../tier-rank";
 
 const UPGRADE_TEXT = {
   en: ["Upgrades a [ItemRarity|Magic] item to a [ItemRarity|Rare] item, adding a guaranteed modifier"],
@@ -82,7 +83,7 @@ export const ALLOY_SPEC: CurrencySpec = {
   text: { en: PERFECT_TEXT.en, ja: ["ランダムなモッドを1個取り除き、[Rarity|レア]アイテムに確定で新しいモッドを追加する"] },
 };
 /** 合金か (クライアントの名前の「Alloy」。エッセンスの鍵の表に一緒に入っている) */
-export const isAlloyKey = (key: string): boolean => / Alloy$/.test(ESSENCE_KEYS[key]?.en ?? "");
+export const isAlloyKey = (key: string): boolean => isAlloyName(ESSENCE_KEYS[key]?.en ?? "");
 
 /** 手順の鍵 (essence:<段>:<MOD の id> / essence:breach) → 段 (アイテムを見ない) */
 export function essenceLevelOfKey(key: string): string | null {

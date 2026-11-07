@@ -6,13 +6,15 @@
  * 前は同じ選び方を 4〜8 か所に写していて、E-30a (11-06) と E-25 (骨の数え上げ) で直し漏れが 2 回起きた。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, candidates, catalystBoosts, catalystOf, overLimit, room, SIDES, type Candidate } from "../stage-core";
+import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, overLimit, room, SIDES, type Candidate } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
 import { tunedCatalysingMultiplier } from "../stage-tuning";
 import type { StageItem, StageMod, StageSide } from "../types";
 import type { Action } from "./types";
 import type { Mods } from "./parts";
 import { tr } from "../../../i18n/lang";
+import { emotionNameOf } from "../apply-emotion";
+import { jewelEmotionsOf } from "../../htc/patch";
 
 type Remove = Extract<Action, { remove: unknown }>["remove"];
 type Add = Extract<Action, { add: unknown }>["add"];
@@ -33,6 +35,11 @@ export function catalysingBoost(data: PatchData, item: StageItem, mods: Mods): {
  * boostFrom = 触媒の重みを見る品 (1 つの手で幾つも付ける時は付ける前の品のまま)。
  * 打つ処理の addOne (stage-draw.ts) も同じ側・同じ重みで candidates を引く
  */
+/** 液化した感情 (鍵) の作った MOD の版のうち、付ける側に空きのある物 (この中から等しく 1 つ、E-73)。打つ処理 (parts の addEmotion) と数え上げ (outcomes) が同じ物 */
+export const emotionFitsOf = (item: StageItem, key: string, before: StageItem = item) =>
+  jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key) && room(item, e.side as StageSide, before));
+/** 触媒の高貴は品質を使い切る (暗黙でカタリストを許すベース = グラスピングメイルはカタリストの欄だけ)。打つ処理 (parts の add) と数え上げ (outcomes) が同じ物 */
+export const spendCatalysing = (item: StageItem): StageItem => (hasExtraCatalyst(item.base) ? { ...item, catalystQuality: 0 } : { ...item, quality: 0 });
 export function addCandidatesOf(data: PatchData, item: StageItem, a: Add, mods: Mods, before: StageItem = item, boostFrom: StageItem = item): Candidate[] {
   const sides = addSidesOf(mods).filter((s) => room(item, s, before));
   if (a.emptyOk && !SIDES.some((s) => room(item, s, before))) return [];
@@ -42,17 +49,17 @@ export function addCandidatesOf(data: PatchData, item: StageItem, a: Add, mods: 
 
 /**
  * 消す部品 (remove) が何を消すか (乱数の前に決まる事)。
- *   all = 固定以外を全部 (アルケミー・腐食) / none = 消さずに通す (完全エッセンスを MOD 0 のレアに、ifAny) / skip = 打つ前に分かって弾かれる /
+ *   all = 固定以外を全部 (アルケミー・腐食。item = 消した後の品) / none = 消さずに通す (完全エッセンスを MOD 0 のレアに、ifAny) / skip = 打つ前に分かって弾かれる /
  *   pick = 1 回ごとに from(今の品) から等しく 1 つ (光 = 冒涜だけ・削減 = MOD レベルの一番低い物・側)。voids = 当たると手ごと不成立 (E-25 上限を超えた側)
  * essenceSide: 付けるエッセンスの MOD の側 (完全エッセンス・合金は、その側が埋まっていればその側から消す。E-51)
  */
 export type Removal =
-  | { all: StageMod[] }
+  | { all: StageMod[]; item: StageItem }
   | { none: true }
   | { skip: string }
   | { pick: (cur: StageItem) => StageMod[]; side: StageSide | null; desecrated: boolean; voids: (cur: StageItem, m: StageMod) => boolean };
 export function removalOf(item: StageItem, a: Remove, mods: Mods, essenceSide?: StageSide | null): Removal { // E-22a 固定は消えない・E-22 等しく
-  if (a.n === "all") return { all: allMods(item).filter((m) => !m.fractured) };
+  if (a.n === "all") return { all: allMods(item).filter((m) => !m.fractured), item: { ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) } };
   const never = (): boolean => false;
   // 冒涜だけ (光のお告げ、E-68) は側を見ない (左右の消去は光と一緒には効かない、お告げの排他)
   if ((mods.pick ?? a.pick) === "desecrated") {

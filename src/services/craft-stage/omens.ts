@@ -7,9 +7,9 @@
 import type { StageItem, StageSide } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine";
 import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
-import { catalystOf, limitOf, listOf, room } from "./stage-core";
+import { hasCatalystQuality, listOf, openSlots, room } from "./stage-core";
 import { tr } from "../../i18n/lang";
-import { FACTION_TAG, omenSideOf, omenSpecOf } from "./spec/omen-layer";
+import { FACTION_TAG, omenSideOf, omenSpecOf, omensOfKind } from "./spec/omen-layer";
 import { OMEN_KEY } from "./spec/omen-keys";
 export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   exalt: ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofCatalysingExaltation"],
@@ -55,13 +55,16 @@ export function omenNoteOf(omen: string, item: StageItem | null, data?: PatchDat
     const ids = [...item.cls.pools.desecrated.prefixes, ...item.cls.pools.desecrated.suffixes];
     if (data && !ids.some((id) => data.mods.get(id)?.tags.includes(fac))) return no(tr("この部位に勢力の MOD が無い (意味なし)", "No such mods on this item class (no effect)"));
   }
+  // 効かない状態 (紋章のある品の左右のネクロマンシー = 紋章を置き換える、E-67) は今効くお告げの層 (omensOfKind) に聞く。打つ処理と同じ答え
+  const spec = omenSpecOf(omen);
+  if (spec?.idleWhen && !omensOfKind(spec.appliesTo, [omen], item).length) return no(tr("紋章を置き換えるので効かない", "Replaces the Abyssal mark (no effect)"));
   const free = (s: StageSide): boolean => room(item, s);
   const removable = (s: StageSide): number => listOf(item, s).filter((m) => !m.fractured).length;
   const other = (s: StageSide): StageSide => (s === "prefix" ? "suffix" : "prefix");
   // 側は OmenSpec の効き目から (付ける側 = 高貴・骨、消す側 = 消去・カオス・パーフェクトエッセンス)。
   // 骨は側が満杯でもその側の MOD を 1 つ置き換えて打てる (E-61、apply-desecrate.ts、2026-10-14 総点検で一言を直した)
   const { add: a, remove: r } = omenSideOf(omen);
-  const replacesWhenFull = omenSpecOf(omen)?.appliesTo === "desecrate";
+  const replacesWhenFull = spec?.appliesTo === "desecrate";
   if (item.rarity !== "rare") return null;
   if (a) {
     if (!free(a)) return replacesWhenFull ? say(a === "prefix" ? tr("プレフィックス満杯: プレフィックスを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィックス満杯: サフィックスを 1 つ置き換える", "Suffixes full: replaces a suffix")) : no(a === "prefix" ? tr("プレフィックス満杯で打てない", "Prefixes full") : tr("サフィックス満杯で打てない", "Suffixes full"));
@@ -74,10 +77,9 @@ export function omenNoteOf(omen: string, item: StageItem | null, data?: PatchDat
     return null;
   }
   if (omen === OMEN_KEY.greater) {
-    const open = (["prefix", "suffix"] as const).reduce((n, sd) => n + Math.max(0, limitOf(item, sd) - listOf(item, sd).length), 0);
-    return open === 1 ? say(tr("1 つしか付かない", "Only 1 slot open")) : null;
+    return openSlots(item) === 1 ? say(tr("1 つしか付かない", "Only 1 slot open")) : null;
   }
-  if (omen === OMEN_KEY.catalysing) { const c = catalystOf(item); return c.pct > 0 && c.tag ? null : no(tr("品質が要る", "Needs quality")); }
+  if (omen === OMEN_KEY.catalysing) return hasCatalystQuality(item) ? null : no(tr("品質が要る", "Needs quality"));
   return null;
 }
 export function omenNote(omen: string, item: StageItem | null, data?: PatchData | null): string | null {

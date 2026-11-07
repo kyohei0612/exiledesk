@@ -6,14 +6,12 @@
  * 結果は tests/currency-spec-golden.test.ts の控えで見張る。違う引き方にする時は、先にどちらが正しいかを決めてから控えを取り直す
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { addForced, addOne, allMods, catalystRoom, hasExtraCatalyst, removeForced, type Force, makeStageMod, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
-import { addSidesOf, catalysingBoost, nothingToRemove, removalOf } from "./basis";
+import { addForced, addOne, allMods, catalystRoom, rerollableMods, hasExtraCatalyst, removeForced, type Force, makeStageMod, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
+import { addSidesOf, catalysingBoost, emotionFitsOf, nothingToRemove, removalOf, removeSideOf, spendCatalysing } from "./basis";
 import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
 import { hasImplicitRange } from "../roll-text";
 import { applyRune } from "../stage-runes";
-import { emotionNameOf } from "../apply-emotion";
-import { jewelEmotionsOf } from "../../htc/patch";
 import { FLUX } from "../apply-flux";
 import { convertByTable } from "../element-convert";
 import { applySanctify } from "../apply-vaal";
@@ -83,7 +81,7 @@ type Remove = Extract<Action, { remove: unknown }>["remove"]; // E-22 説明文�
 function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   // 何を消すかは土台 (basis.ts の removalOf)。ここは乱数で 1 つ選ぶだけ
   const R = removalOf(item, a, ctx.mods, ctx.essence?.side);
-  if ("all" in R) return { applied: true, item: { ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }, added: [], removed: R.all };
+  if ("all" in R) return { applied: true, item: R.item, added: [], removed: R.all };
   if ("skip" in R) return skip(item, R.skip);
   const nothing: StageApply = { applied: true, item, added: [], removed: [] };
   if ("none" in R) return nothing;
@@ -155,7 +153,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   }
   if (!added.length) return a.optional ? ok(item) : skip(item, tr("付けられる MOD が無い", "No mod can be added"));
   // 触媒の高貴は品質を使い切る (グラスピングメイルはカタリストの欄だけ)
-  if (ctx.mods.catalysing) cur = hasExtraCatalyst(item.base) ? { ...cur, catalystQuality: 0 } : { ...cur, quality: 0 };
+  if (ctx.mods.catalysing) cur = spendCatalysing(cur);
   return { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}), ...(rolled.length ? { rolled } : {}) };
 }
 
@@ -170,7 +168,7 @@ function reroll(ctx: PartCtx, item: StageItem): StageApply {
     return { applied: true, item: { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined }, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した", "Omen of the Blessed: rerolled implicit values only") };
   }
   if (item.rarity === "unique") return { applied: true, item: { ...item, rollSeed: 1 + Math.floor(ctx.rng() * 2 ** 30) }, added: [], removed: [], note: tr("ユニークの数値を振り直し", "Rerolled Unique values") };
-  const mods = allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
+  const mods = rerollableMods(item);
   if (!mods.length && !implicit) return skip(item, tr("転がし直せる MOD が無い", "No mod to reroll"));
   let cur: StageItem = implicit ? { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined } : item;
   const added: StageMod[] = [];
@@ -203,7 +201,7 @@ function addEssence(ctx: PartCtx, item: StageItem, a: AddEssence): StageApply {
   const e = ctx.essence!;
   const gone = ctx.removedSoFar[0];
   if (a.side === "removedSide") {
-    const omen = ctx.mods.removeSide;
+    const omen = removeSideOf(ctx.mods);
     if (omen && !gone && !room(item, omen)) return skip(item, tr("お告げの側に外せる MOD も空きも無い", "No removable mod or open slot on the Omen's side"));
     const side: StageSide | undefined = gone ? gone.side : omen ?? SIDES.find((x) => room(item, x));
     if (!side) return skip(item, tr("外せる MOD も空きも無い", "No removable mod or open slot"));
@@ -244,8 +242,7 @@ const CATALYST_ROLLS = [1, 2] as const;
 
 /** 液化した感情の作った MOD を付ける (消すのは前の部品)。2 つの版がある物は、空きのある側の版から等しく 1 つ */
 function addEmotion(ctx: PartCtx, item: StageItem): StageApply {
-  const entries = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(ctx.runeKey ?? ""));
-  const fits = entries.filter((x) => room(item, x.side as StageSide, ctx.before));
+  const fits = emotionFitsOf(item, ctx.runeKey ?? "", ctx.before);
   if (!fits.length) return skipRandom(item, tr("付ける側に空きが無いので追加できない (もう一度)", "No room on the side this mod goes to, so nothing can be added (try again)"));
   const e = fits.length === 1 ? fits[0]! : fits[Math.floor(ctx.rng() * fits.length)]!;
   const mod = ctx.data.mods.get(e.modId);

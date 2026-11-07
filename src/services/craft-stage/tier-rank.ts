@@ -47,5 +47,7 @@ export function craftedKindOf(data: PatchData, m: Pick<StageMod, "modId">): "ess
   const mod = data.mods.get(m.modId);
   if (mod?.source === "essence") return "essence";
   if (mod?.source !== "perfect_essence") return null;
-  return mod.tiers.some((t) => /Alloy$/.test(String(t.name ?? ""))) ? "alloy" : "essence";
+  return mod.tiers.some((t) => isAlloyName(String(t.name ?? ""))) ? "alloy" : "essence";
 }
+/** 合金の名前か (クライアントの名前の終わりが「Alloy」)。MOD の段の名前 (craftedKindOf) と鍵の英名 (essence-specs の isAlloyKey) が同じ物を見る */
+export const isAlloyName = (name: string): boolean => /\bAlloy$/.test(name);

@@ -280,6 +280,12 @@ export function catalystOf(item: StageItem): { tag: string | null; pct: number }
  * その種類 (tag) のカタリストをこの品に打つ時の品質 (打つ処理の catalyst と同じ数): now = 今の % (違う種類が入っていれば 0 から、「Replaces other quality types」)、
  * max = 入る上限 (maxQualityOf)、full = その種類でもう上限。「この品にこのカタリストで何 % まで入るか」はここ 1 本 (11-07、木の n % の箱・最大まで打つ手も同じ物)
  */
+/** カタリストの品質があるか (種類と 1% 以上。触媒の高貴のお告げに要る、E-32)。打てるかの判定 (judge の hasCatalystQuality) とお告げの一言が同じ物 */
+export const hasCatalystQuality = (item: StageItem): boolean => { const c = catalystOf(item); return !!c.tag && c.pct > 0; };
+/** 両側の空きの数 (スパムの道の偉大な高貴・お告げの一言「1 つしか付かない」が同じ物) */
+export const openSlots = (item: StageItem): number => SIDES.reduce((n, s) => n + Math.max(0, limitOf(item, s) - listOf(item, s).length), 0);
+/** 神のオーブで値が変わる MOD (固定・未発現でなく、値の幅がある物、E-39)。打つ処理 (parts の reroll) と光らせる所 (use-preview) が同じ物 */
+export const rerollableMods = (item: StageItem): StageMod[] => allMods(item).filter((m) => !m.fractured && !m.unrevealed && m.ranges.length);
 export function catalystRoom(item: StageItem, tag: string): { now: number; max: number; full: boolean } {
   const max = maxQualityOf(item);
   const same = item.qualityTag === tag;

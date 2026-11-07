@@ -17,6 +17,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { isCraftedSource, tierNoOf } from "./tier-rank";
 import { FACTION_TAG, omenFor } from "./spec/omen-layer";
 import { OMEN_KEY } from "./spec/omen-keys";
+import { actionClassOfKey } from "./spec/action-class";
 
 export interface AimTarget { modId: string; minTierIndex: number }
 /** 試す打ち方 (カレンシー + お告げ)。reveal = 付いている未発現の MOD を発現させる (反響込み) */
@@ -74,6 +75,8 @@ const has = (item: StageItem, t: AimTarget, o?: AimHitOpts): boolean => [...item
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */
 const SAME_SEEDS = 8;
+/** 骨 (未発現を付ける部品の手、actionClassOfKey) = 発現の候補に出れば当たり。鍵の文字 (kindOf の "desecrate") でなく部品で見る */
+const addsUnrevealed = (key: string): boolean => actionClassOfKey(key).parts.includes("addUnrevealed");
 /** 1 回打った結果の印 (付いた MOD・値・側・レア度・品質。冒涜は発現の候補も) */
 function outcomeOf(data: PatchData, item: StageItem, key: string, omens: string[], seed: number): string {
   const rng = mulberry32(seed);
@@ -81,7 +84,7 @@ function outcomeOf(data: PatchData, item: StageItem, key: string, omens: string[
   if (!r.applied) return `x:${r.reason ?? ""}`;
   const it = r.item;
   const ms = [...it.prefixes, ...it.suffixes].map((m) => `${m.side}:${m.modId}#${m.tierIndex}:${JSON.stringify(m.values ?? null)}${m.fractured ? "f" : ""}${m.desecrated ? "d" : ""}${m.unrevealed ? JSON.stringify(m.unrevealed) : ""}`);
-  const offers = kindOf(key) === "desecrate" && unrevealedOf(it) ? (({ first, reroll }) => [...first, ...reroll].map((m) => `${m.modId}#${m.tierIndex}`))(revealOffers(data, it, rng)) : [];
+  const offers = addsUnrevealed(key) && unrevealedOf(it) ? (({ first, reroll }) => [...first, ...reroll].map((m) => `${m.modId}#${m.tierIndex}`))(revealOffers(data, it, rng)) : [];
   return JSON.stringify([it.rarity, it.quality ?? 0, it.qualityTag ?? null, it.catalystQuality ?? 0, !!it.corrupted, ms, offers]);
 }
 
@@ -128,6 +131,7 @@ export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readon
   const list = Array.isArray(ts) ? (ts as readonly AimTarget[]) : [ts as AimTarget];
   const missing = (it: StageItem): AimTarget[] => list.filter((t) => !has(it, t, hit0));
   const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!, hit0)));
+  const bone = addsUnrevealed(c.currency);
   let hit = 0;
   for (let i = 0; i < n; i++) {
     const rng = mulberry32(seed + i * 7919);
@@ -138,7 +142,7 @@ export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readon
     const used = c.omens.filter((o) => o !== ECHOES);
     const r = applyCurrency(data, item, c.currency, rng, used);
     if (!r.applied) continue;
-    if (kindOf(c.currency) === "desecrate") {
+    if (bone) {
       if (offered(revealOffers(data, r.item, rng), missing(r.item))) hit++;
     } else if (!missing(r.item).length) hit++;
   }
@@ -164,6 +168,7 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
   const rng = mulberry32(seed);
   const used = c.omens.filter((o) => o !== ECHOES);
   const spam = c.currency !== REVEAL && kindOf(c.currency) === "chaos";
+  const bone = c.currency !== REVEAL && addsUnrevealed(c.currency);
   let item = start, tries = 0, hit = 0, stuck = 0;
   while (tries < n) {
     if (c.currency === REVEAL) {
@@ -179,7 +184,7 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
       continue;
     }
     tries++;
-    if (kindOf(c.currency) === "desecrate") {
+    if (bone) {
       if (keeps(r.item) && offered(revealOffers(data, r.item, rng), missing(r.item))) hit++;
       item = start;
       continue;
