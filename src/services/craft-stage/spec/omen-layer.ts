@@ -30,6 +30,10 @@ export function omenSideOf(key: string): { add?: StageSide; remove?: StageSide }
 export function omenFor(kind: string, side: StageSide): string | null {
   return ALL_OMEN_SPECS.find((o) => o.appliesTo === kind && (("side" in o.effect && o.effect.side === side) || ("removeSide" in o.effect && o.effect.removeSide === side)))?.key ?? null;
 }
+/** 付く MOD の重みしか変えないお告げか (触媒の高貴 = 付きうる範囲は変えない、E-32) */
+export const omenWeightOnly = (key: string): boolean => { const e = BY_KEY.get(key)?.effect; return !!e && "catalysing" in e; };
+/** 付きうる範囲 (どの MOD が付きうるか) を変えるお告げだけ (重みだけのお告げを抜く。品質の無い見本で範囲を聞く時など) */
+export const reachOmens = (omens: readonly string[]): string[] => omens.filter((o) => !omenWeightOnly(o));
 /** 勢力のお告げ → 発現で保証する勢力の MOD のタグ (E-66) */
 export const FACTION_TAG: Readonly<Record<string, string>> = Object.fromEntries(ALL_OMEN_SPECS.flatMap((o) => ("guaranteeTag" in o.effect ? [[o.key, o.effect.guaranteeTag]] : [])));
 

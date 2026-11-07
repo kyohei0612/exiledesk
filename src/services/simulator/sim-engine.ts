@@ -9,6 +9,9 @@
 
 // カタリストを品質が最大になるまで打つ (何個打ったかも。核の applyCurrency は 1 回 = 1 個で、最大まで数える手は無い)
 export { catalystTagOf, catalystFull, fillCatalyst } from "./sim-engine/hand-effect";
+// MOD を変えない手か (神・ヒネコラなど、品ごとに聞く) と、神 1 回で目標の値に届く割合
+export type { DivineGoal } from "./sim-engine/hand-effect";
+export { keepsMods, divineChance } from "./sim-engine/hand-effect";
 // MOD の無いマジックに 1 回足す時の候補の組 (どれか 1 つ) の付きやすさと等級の落とし方 (start-cost の式。核の addHitOdds は 1 つの狙いだけ)
 export type { MagicAddOdds, AddGrade } from "./sim-engine/magic-odds";
 export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./sim-engine/magic-odds";

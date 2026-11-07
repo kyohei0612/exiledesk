@@ -120,6 +120,8 @@ export type { StageTuning } from "./stage-tuning";
 export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, CATALYSING_OVER_RATIO, defaultWeightOf } from "./stage-tuning";
 // 触媒の高貴の既定の倍率 (品質 % → 倍率、式は htc/catalysing-multiplier.ts の 1 本)
 export { catalysingMultiplier } from "../htc/catalysing-multiplier";
+// 重みしか変えないお告げか・付きうる範囲を変えるお告げだけ
+export { omenWeightOnly, reachOmens } from "./spec/omen-layer";
 // 説明の文 (日英): お告げの効き方と棚の一言 (spec/omen-words.ts)・カレンシーを打てる条件 (spec/use-words.ts、CurrencySpec の target・limits から)
 export { omenHelp, omenTag } from "./spec/omen-words";
 export type { Words2 } from "./spec/use-words";
