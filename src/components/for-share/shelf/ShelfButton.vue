@@ -6,11 +6,11 @@
   2026-09-28 オーナー:
     「お告げとかオンにした時の挙動とかもゲーム内リスペクトで表示させて」→ 掛けたお告げはゲームの有効化と同じく赤金に脈打って「有効」
     「カレンシー詳細カードは…細かく書いてくれ」→ 0.7 秒乗せると [[StageCurrencyCard.vue]] (公式の説明 + ステージでの動き)
-  2026-11-07 オーナー「スマホってホバーないからさ」: 指の端末はアイコンの右下の ⓘ から同じカードを下の窓で (U-13a)。
-    ⓘ はボタンの入れ子にせず、包みの span (data-shelf-wrap) の中で横に置く。PC は包まない (並びは前のまま)
+  2026-11-07 オーナー「スマホってホバーないからさ」「やっぱ長押しがイイかもね！はいらんな」: 指の端末は札の長押しで同じカードを下の窓で (U-13a)。
+  2026-11-07 オーナー「上級完全とかのカレンシーの名前いらんね　カレンシーの上に完全とか上級とか書いてあるしな」: 札の印と同じ言葉は名前から外す
 -->
 <script setup lang="ts">
-import { computed, h, onBeforeUnmount, ref, type FunctionalComponent } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { isTouchOnly } from "../../../utils/use-phone";
 import { hoverStack } from "../../../state/hover-stack";
 import { afterPointerMoves } from "../../../utils/pointer-moved";
@@ -52,6 +52,18 @@ const badge = computed(() => {
   const id = p.type === "currency" ? p.strength : p.type === "essence" ? (p.breach ? "" : `essence:${p.tier}`) : props.k;
   const b = BADGE[id];
   return b ? ([id, ...b] as const) : null;
+});
+/** 札の印 (上級・完全など) を出しているか */
+const badgeShown = computed(() => !!badge.value && !props.nobadge && !props.corner);
+/**
+ * 札に出す名前。印と同じ言葉は外す (「高貴なオーブ (上級)」→「高貴なオーブ」、英語は「Greater Exalted Orb」→「Exalted Orb」)。
+ * 読み上げ・説明の窓は外さない名前のまま (印は読み上げに入らない)。スイッチ shelfTierName
+ */
+const shownName = computed(() => {
+  const n = props.label ?? nameOf(props.k);
+  if (!badgeShown.value || !flag("shelfTierName")) return n;
+  const [ja, en] = badge.value![1];
+  return n.endsWith(` (${ja})`) ? n.slice(0, -` (${ja})`.length) : n.startsWith(`${en} `) ? n.slice(en.length + 1) : n;
 });
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
 const shelf = useShelf();
@@ -115,14 +127,11 @@ function openCard(el: HTMLElement): void {
 }
 function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);
-/** 指の端末の ⓘ (U-13a)。まとめたアイコン (corner) は押すと段の欄が開くので、ⓘ は欄の中の 1 つずつに付く */
+/** 指の端末の説明 (U-13a)。まとめたアイコン (corner) は押すと段の欄が開くので、欄の中の 1 つずつで出す */
 const infoOn = computed(() => touchOnly && flag("shelfInfo") && !props.corner);
 const infoOpen = ref(false);
-/** ⓘ の時だけ包む (PC は包まず、棚の升目・お告げの欄の差し込みは前のまま) */
-const Wrap: FunctionalComponent<{ on: boolean }> = (p, { slots }) => (p.on ? h("span", { class: "relative inline-flex", "data-shelf-wrap": "" }, slots.default?.()) : slots.default?.());
-Wrap.props = ["on"];
 /**
- * 札の長押しでも同じ窓 (2026-11-07 オーナー「長押しでも説明いいね　どっちもじっそうでいいんじゃね」)。
+ * 札の長押しで説明の窓 (2026-11-07 オーナー「長押しでも説明いいね」、後で「やっぱ長押しがイイかもね！はいらんな」で長押しだけに)。
  * 0.5 秒動かさずに押したら開く。指が 10px 動いた (送り)・ブラウザが送りに取った (pointercancel) なら取り消す。
  * 開いた後に指を離した時の押し (mousedown・click) は捨てる = 持たない・掛けない、窓の後ろを押した扱いにもならない
  */
@@ -154,7 +163,6 @@ onBeforeUnmount(holdCancel);
 </script>
 
 <template>
-  <Wrap :on="infoOn">
   <button
     v-bind="$attrs"
     type="button"
@@ -180,9 +188,9 @@ onBeforeUnmount(holdCancel);
       <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" />
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
-    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(label ?? nameOf(k))" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
+    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(shownName)" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
     <span v-if="corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200 max-md:text-[10px]">{{ corner }}</span>
-    <span v-if="badge && !nobadge && !corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
+    <span v-if="badge && badgeShown" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
     <span v-if="omenWarn" class="block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
@@ -192,22 +200,9 @@ onBeforeUnmount(holdCancel);
     </span>
     <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
-  <!-- 押せる所 32px、見た目の丸 18px は枠の右下の角 (絵・札・名前に掛けない) -->
-  <button
-    v-if="infoOn"
-    type="button"
-    class="g-plain absolute left-[calc(50%+8px)] top-6 grid size-8 place-items-center bg-transparent"
-    :aria-label="tr(`${nameOf(k)} の説明`, `About ${nameOf(k)}`)"
-    aria-haspopup="dialog"
-    data-shelf-info
-    @click.stop="infoOpen = true"
-  >
-    <span class="grid size-[18px] place-items-center rounded-full border border-amber-200/70 bg-black/80 font-serif text-[12px] font-bold italic leading-none text-amber-100 shadow-[0_0_0_1px_rgba(0,0,0,0.8)]" aria-hidden="true">i</span>
-  </button>
   <!-- still は StageCurrencyCard の外の枠 (GameItemCard) へそのまま届く (Vue の attrs の受け渡し) -->
   <ModalShell v-if="infoOn" :open="infoOpen" sheet :label="nameOf(k)" panel-class="border-t border-white/15 bg-[var(--exile-color-card-bg)]" body-class="px-3 pt-2 pb-3" @close="infoOpen = false">
     <StageCurrencyCard v-if="infoOpen" :k="k" :reason="reason" :omen="!!omen" :item="shelf.item.value" :x="0" :y="0" :layer-key="-1" :pinned="false" :z="0" still />
     <template #footer><button type="button" class="g-btn !min-h-11 w-full" @click="infoOpen = false">{{ tr("閉じる", "Close") }}</button></template>
   </ModalShell>
-  </Wrap>
 </template>
