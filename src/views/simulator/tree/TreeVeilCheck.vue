@@ -11,7 +11,7 @@
  * noCheck = 後から打つ発現の手 (☑ は出さず、選ぶボタンだけ)。
  * 「発現させる」の下にアビスの反響のお告げの任意の ☑ (既定は無し。10-28 オーナー「発現させるの下に付ける感じで」)
  */
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import { useHeldShares } from "../../../components/for-share/mod-list/use-held-shares";
@@ -50,9 +50,7 @@ const pool = computed(() => { const d = s.data.value, h = props.hand; return pic
 const poolTier = (r: ListRow, x: ListTier): boolean => { const id = x.modId ?? r.id; return !!pool.value?.get(id)?.has(shares.tierIndexOf(id, x)); };
 const dimRow = (r: ListRow): boolean => (pool.value ? r.blocked || !r.tiers.some((x) => poolTier(r, x)) : shares.rowDim(r));
 const dimTier = (r: ListRow, x: ListTier): boolean => (pool.value ? !poolTier(r, x) : shares.tierDim(r, x));
-/** 開いた時は冒涜専用の節を見せる (発現の当たりを選ぶ所。一般の MOD も出る骨は上へ戻れば見える) */
-const table = ref<InstanceType<typeof ModTable> | null>(null);
-watch(picking, (on) => { if (on) void nextTick(() => { if (table.value?.counts.desecrated) table.value.jump("desecrated"); }); });
+// 開いた時は上 (一般の MOD) から、冒涜専用は下へ送れば見える (11-07 オーナー「開いたモッドが冒涜から始まるから、一般から始めて欲しい」。前は冒涜専用の節へ送っていた)
 /** 「発現で選ぶ」を出す段 = 灰色でない行の灰色でない段 */
 const pickable = (r: ListRow, x: ListTier): boolean => !dimRow(r) && !dimTier(r, x) && (pool.value != null || shares.heldTierShare(r, x) > 0);
 function pick(a: Aim): void { picking.value = false; emit("add", a); }
@@ -86,7 +84,7 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
     <template #header><span class="g-sec-sub max-md:hidden">{{ tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>
     <div data-tree-hand-veil-pick>
       <ModTable
-        ref="table" overlay :data="s.data.value" :item="item"
+        overlay :data="s.data.value" :item="item"
         :share="shares.shareOf" :tier-share="shares.tierShareOf" :row-dim="dimRow" :tier-dim="dimTier" :row-title="shares.rowTitle" :tier-title="shares.tierTitle" :share-title="shares.shareTitle"
         :share-head="shares.shareHead.value" :tone="shares.heldCands.value ? 'sky' : 'amber'" :section-late="shares.sectionLate"
       >
