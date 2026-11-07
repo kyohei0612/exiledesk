@@ -64,6 +64,19 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   return same && tierNoOf(m) <= want.tiers.length - t.minTierIndex;
 };
 const isEssenceSource = isCraftedSource;
+/**
+ * 狙いの札どうしが同じ MOD か (aimHits の sameText と同じ見方: 同じ modId か、同じ系統で効果の文も同じ一般の MOD。エッセンスの MOD は同じ modId だけ)。
+ * tier: true = 段の T も同じ (sameText の段は段の名前の T = その MOD の段の数 − 段の番号)。省略 = 段は見ないが、aimHits と同じく a の T が b の段の数を超える時は別物
+ * (11-07 jin-base4、シミュ部長の頼み: 木の sameAimMod / sameAim が札から部分だけの MOD を組んで aimHits に当てていた)
+ */
+export function sameAimTarget(data: PatchData, a: AimTarget, b: AimTarget, o: { tier?: boolean } = {}): boolean {
+  const ma = data.mods.get(a.modId), mb = data.mods.get(b.modId);
+  const tA = (ma?.tiers.length ?? 0) - a.minTierIndex, tB = (mb?.tiers.length ?? 0) - b.minTierIndex;
+  if (a.modId === b.modId) return !o.tier || a.minTierIndex === b.minTierIndex;
+  if (!ma || !mb || isEssenceSource(ma.source) || isEssenceSource(mb.source)) return false;
+  if (!mb.family || ma.family !== mb.family || ma.text !== mb.text) return false;
+  return o.tier ? tA === tB : tA <= (mb.tiers.length ?? 0);
+}
 const has = (item: StageItem, t: AimTarget, o?: AimHitOpts): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, o));
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */

@@ -66,7 +66,7 @@ export type { OddsTarget } from "./spec/odds";
 export { addOddsBySpec, addHitOdds, hitShare, fractureHit } from "./spec/odds";
 export type { RouteKind, Grade as RouteGrade, Grade } from "./route-race";
 // スパムの道の打ち手 (増強・カオス・高貴の 1 人分。シミュの spam-counts とエミュのスパムシミュが同じ打ち方)
-export { routeRun, routeKey, GRADE_KEY } from "./route-race";
+export { routeRun, routeKey, GRADE_KEY, ROUTE_DEFS, ROUTE_FROM_STEP, ROUTE_ORDER, routeStepKey, type RouteDef, type RouteStepDef, type RouteStepId } from "./route-race";
 // スパムの道を使えない理由 (日英) と、今のアイテムから始められるか (レア・コラプトでない・MOD あり)
 export { routeOff, routeFromBlock, routeOffKey, routeFromBlockKey, routeOffText, type RouteOffKey } from "./route-race";
 // 解析君の頼み (K4): 系統の塞ぎ・古の骨の段の下限・発現の手 (候補の数は REVEAL_SPEC.actions の reveal.offers)
@@ -85,7 +85,7 @@ export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 // aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
-export { aimCombos, aimChain, aimDone, hits as aimHits } from "./aim-odds";
+export { aimCombos, aimChain, aimDone, hits as aimHits, sameAimTarget } from "./aim-odds";
 // 1 手の費用 (カレンシー + お告げ、発現は 0) と aimChain の回し方の種類 (画面の「どう回したか」の文を分ける)
 export type { AimChainMode } from "./aim-odds";
 export { stepCost, aimChainMode } from "./aim-odds";
@@ -120,7 +120,7 @@ export { modBoostsOf } from "./boosts";
 export type { StageTuning } from "./stage-tuning";
 export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, CATALYSING_OVER_RATIO, defaultWeightOf } from "./stage-tuning";
 // 触媒の高貴の既定の倍率 (品質 % → 倍率、式は htc/catalysing-multiplier.ts の 1 本)
-export { catalysingMultiplier } from "../htc/catalysing-multiplier";
+export { catalysingMultiplier, CATALYSING_FULL_PCT } from "../htc/catalysing-multiplier";
 // 重みしか変えないお告げか・付きうる範囲を変えるお告げだけ
 export { omenWeightOnly, reachOmens } from "./spec/omen-layer";
 // 説明の文 (日英): お告げの効き方と棚の一言 (spec/omen-words.ts)・カレンシーを打てる条件 (spec/use-words.ts、CurrencySpec の target・limits から)
