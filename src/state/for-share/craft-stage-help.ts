@@ -53,11 +53,11 @@ const add = (): string => tr(ADD, "New mods are rolled by weight from that side'
 
 export function stageHelp(key: string, data: PatchData | null, item: StageItem | null): string[] {
   const sp = specialEssence(key, item);
-  return [...(sp?.notes ?? []), ...useLine(key), ...stageHelpBase(key, data, item)];
+  return [...(sp?.notes ?? []), ...useLine(key, data, item), ...stageHelpBase(key, data, item)];
 }
-/** 使える時の行 (エンジンの useConditions = spec の対象のレアリティと上限。2026-11-07 オーナー「全て」で説明の条件もエンジンから) */
-function useLine(key: string): string[] {
-  const c = useConditions(key);
+/** 使える時の行 (エンジンの useConditions = spec の対象のレアリティ・部位と上限。骨・エッセンスは品の部位で引くので品とデータを渡す。2026-11-07 オーナー「全て」) */
+function useLine(key: string, data: PatchData | null, item: StageItem | null): string[] {
+  const c = useConditions(key, item, data ?? undefined);
   return c.length ? [tr(`使える時: ${c.map((w) => w.ja).join("・")}`, `Usable: ${c.map((w) => w.en).join(" / ")}`)] : [];
 }
 
