@@ -10,7 +10,7 @@
  *   - 工程は入口の札 (entry) が付いたら切り替わる。どの入口も付いていなければ 1 つ目の工程
  * 打ち方はエミュレーターと同じ applyCurrency。当たり所で弾かれた手 (random) は数えずにもう一度 (書いてある効果どおり)。
  */
-import { type PatchData, type StageItem, type StageMod, type StageSide, applyCurrency, revealOffers, catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
+import { type PatchData, type StageItem, type StageMod, type StageSide, applyCurrency, omenFor, OMEN_KEY, revealOffers, catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
 
 export type SlotKind = "normal" | "desecrated" | "fractured" | "essence" | "crafted";
 /** 完成の札 1 つ。mods のどれか 1 つ (段は minTierIndex 以上) で埋まる。mods が空ならその側のどの MOD でも */
@@ -268,7 +268,7 @@ function buildStart(data: PatchData, recipe: QuizRecipe, rng: () => number): Sta
   // 残りを乱数で埋める (側のお告げ付きの高貴。相場で買えるベースの代わり)
   for (const side of SIDES) {
     const want = st.fill?.[side] ?? 0;
-    const omen = side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation";
+    const omen = omenFor("exalt", side)!;
     for (let k = 0; listOf(it, side).length < want && k < 20; k++) it = applyCurrency(data, it, "exalt", rng, [omen]).item;
   }
   // 作った後に打つ物 (エッセンス → 壁) と、自前のフラクチャーで当たった MOD の固定
@@ -313,7 +313,7 @@ export function applyQuizAction(data: PatchData, route: QuizRoute, it: StageItem
   const rs = Math.floor(g() * 2 ** 31);
   if ("reveal" in a) {
     key = revealKey(data, it, route.goal, a.reveal.echoes, rs);
-    omens = a.reveal.echoes ? ["OmenofAbyssalEchoes"] : [];
+    omens = a.reveal.echoes ? [OMEN_KEY.echoes] : [];
   } else { key = a.use; omens = a.omens ?? []; }
   const x = applyCurrency(data, it, key, "reveal" in a ? mulberry32(rs) : g, omens);
   if (!x.applied) return x.random ? { kind: "random" } : { kind: "blocked", reason: x.reason };
@@ -439,6 +439,6 @@ export function nextMove(data: PatchData, recipe: QuizRecipe, item: StageItem, s
   if (!rule) return { route, rule: null, key: null, omens: [], done: false };
   const a = rule.do;
   if ("restart" in a) return { route, rule, key: "restart", omens: [], done: false };
-  if ("reveal" in a) return { route, rule, key: revealKey(data, item, route.goal, a.reveal.echoes, seed), omens: a.reveal.echoes ? ["OmenofAbyssalEchoes"] : [], done: false };
+  if ("reveal" in a) return { route, rule, key: revealKey(data, item, route.goal, a.reveal.echoes, seed), omens: a.reveal.echoes ? [OMEN_KEY.echoes] : [], done: false };
   return { route, rule, key: a.use, omens: a.omens ?? [], done: false };
 }

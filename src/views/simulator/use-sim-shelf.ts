@@ -7,7 +7,7 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
-import { useReason, type StageItem } from "../../services/craft-stage/engine";
+import { OMEN_KEY, toggleOmen as toggleHeld, useReason, type StageItem } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
 import { flag } from "../../web/release-flags";
@@ -24,7 +24,7 @@ import { FORESEE_ON } from "../../services/simulator/tree/tree-foresee";
  */
 export const TREE_SPAM_ORB = false;
 /** 神のオーブは 11-06 から木の棚に出す (狙いの MOD の数値の目標を決める手、S-202) */
-export const TREE_HIDDEN = new Set(["OmenofSanctification", "OmenoftheBlessed"]);
+export const TREE_HIDDEN = new Set<string>([OMEN_KEY.sanctification, OMEN_KEY.blessed]);
 /** フラックス (耐性の変換) は木の枝の決まりが無いのでツリーの棚に出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す) */
 const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"]);
 /** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */
@@ -41,7 +41,8 @@ export const treeHidden = (key: string, it?: StageItem | null): boolean => !fore
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {
-  function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
+  /** 掛け替えはエンジンのお告げの層 (エミュの棚と同じ toggleOmen = 同じ組の前の方を外す、E-27) */
+  function toggleOmen(id: string): void { omens.value = toggleHeld(omens.value, id); }
   function release(): void { held.value = null; omens.value = []; }
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
   /**

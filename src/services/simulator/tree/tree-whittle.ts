@@ -9,12 +9,12 @@
  * 結果の箱は、打つ前からあって残った外れの順位 (欲しい MOD に対して) を鍵に持つ (④、TreeBox.junkKey の `w:` の部分、側の鍵 `s:` とは `;` で並べる)。
  * 次の削減は鍵の順位に合う外れを差し替えない (見本の MOD レベルがその順位の代わり)
  */
-import { candidates, makeStageMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { candidates, makeStageMod, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { effectiveCls, without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
 import { originOf } from "./tree-rolls";
 
-export const WHITTLE = "OmenofWhittling";
+export const WHITTLE = OMEN_KEY.whittling;
 /** 削減のお告げを含む手か ( が閉じていれば false = 今のまま見本の MOD レベルで決まる) */
 export const isWhittleHand = (h: { omens: readonly string[] } | null | undefined): boolean => !!h && engineOmens(h).includes(WHITTLE);
 

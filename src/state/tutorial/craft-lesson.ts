@@ -14,7 +14,7 @@ import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "../for-share/stage-steps";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
-import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, type StageItem, catalystBoosts, revealOffers, unrevealedOf } from "../../services/craft-stage/engine";
+import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, type StageItem, catalystBoosts, revealOffers, unrevealedOf, OMEN_KEY } from "../../services/craft-stage/engine";
 import { isRareChance } from "../../utils/format-pct";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
@@ -139,7 +139,7 @@ function restore(x: Snap): void {
  */
 const RIG = new Set(["regal_perfect", "exalt_perfect", "chaos_perfect"]);
 /** 触媒の高貴のお告げを掛けた高貴は、足した MOD が全部品質の種類の物 (火の品質なら火の MOD) になる乱数を選ぶ (2026-10-18 オーナー「触媒を使った成功例見せたい」) */
-const CATALYSING = "OmenofCatalysingExaltation";
+const CATALYSING = OMEN_KEY.catalysing;
 export function rigRare(key: string): void {
   const it = s.item.value, d = s.data.value;
   if (!topic.value || !it || !d || s.usable(key)) return;

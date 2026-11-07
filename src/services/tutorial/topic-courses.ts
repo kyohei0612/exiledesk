@@ -7,7 +7,7 @@
  * use の特別なキー: reset = 白に戻す / reveal = 発現 (どれを選んでも良い) / ess:<名前>:<段> = そのアイテムのエッセンス (棚から引く)
  */
 import type { JaEn } from "./quiz-tutorials";
-import { type PatchData, type StageItem, type Force } from "../craft-stage/engine";
+import { OMEN_KEY, type PatchData, type StageItem, type Force } from "../craft-stage/engine";
 import { essenceShelf } from "../../state/for-share/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 import { GUIDE_COURSES } from "./topic-courses-guide";
@@ -434,7 +434,7 @@ export const TOPIC_COURSES: TopicCourse[] = [
  */
 export function topicKey(st: TopicStep, data: PatchData, it: StageItem): string | null {
   if (st.use === "reset") return null;
-  if (st.use === "reveal") return st.omens?.includes("OmenofAbyssalEchoes") ? "reveal:1:reroll" : "reveal:1";
+  if (st.use === "reveal") return st.omens?.includes(OMEN_KEY.echoes) ? "reveal:1:reroll" : "reveal:1";
   if (st.use.startsWith("ess:")) {
     const [, name, lvl] = st.use.split(":");
     const g = essenceShelf(data, it).find((x) => x.kind === name);

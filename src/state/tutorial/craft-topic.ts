@@ -6,7 +6,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "../craft-stage";
 import { logRecord } from "../../utils/log-record";
-import { splitOmens } from "../../services/craft-stage/engine";
+import { OMEN_KEY, splitOmens } from "../../services/craft-stage/engine";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
 
 export const topic = ref<TopicCourse | null>(null);
@@ -83,7 +83,7 @@ watch(() => s.log.value.length, (n, old) => {
   const e = s.log.value[n - 1];
   if (!e) return;
   const want = cur.step.use === "reveal" ? e.out.currency.startsWith("reveal") : e.out.currency === cur.key;
-  const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === "OmenofAbyssalEchoes" && e.out.currency.endsWith(":reroll")));
+  const omensOk = (cur.step.omens ?? []).every((o) => splitOmens(e.out.omen).includes(o) || (o === OMEN_KEY.echoes && e.out.currency.endsWith(":reroll")));
   if (!want || !omensOk || !e.out.applied) return;
   // 発現の手は、未発現の MOD が全部無くなるまで次へ進めない (腐食で最大 6 つ。2026-10-17 オーナー「腐食は全部発現させてから完了に、もったいない体験が」)
   if (cur.step.use === "reveal" && [...e.after.prefixes, ...e.after.suffixes].some((m) => m.unrevealed)) return;

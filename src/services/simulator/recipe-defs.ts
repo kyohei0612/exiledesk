@@ -2,7 +2,7 @@
  * recipe-defs.ts — 決めた順番で作るシミュレーションの型と小さな決まり (recipe-sim.ts から分けた。2026-10-16、500 行の決まり)。
  * 回す側の recipe-sim.ts・recipe-pattern-run.ts は 11-02 に消した (どこからも使っていなかった)。membersOf は keep-compare.ts・quiz-build.ts が読む
  */
-import { type PatchData, type StageItem, type StageMod, type StageSide, ESSENCE_KEYS } from "../craft-stage/engine";
+import { type PatchData, type StageItem, type StageMod, type StageSide, ESSENCE_KEYS, omenFor } from "../craft-stage/engine";
 import type { MissRule, PatternKind } from "./pattern";
 
 export type RecipeMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
@@ -142,10 +142,7 @@ export interface RecipeResult {
 
 export const ESS = ESSENCE_KEYS;
 /** 結晶化のお告げの側 (無ければ両側) */
-export const crystalSides = (omens: readonly string[]): StageSide[] => (omens.some((o) => /SinistralCrystallisation/.test(o)) ? ["prefix"] : omens.some((o) => /DextralCrystallisation/.test(o)) ? ["suffix"] : ["prefix", "suffix"]);
-export const SIDE_OMEN = {
-  exalt: { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" },
-  annul: { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" },
-  necro: { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" },
-  crystal: { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" },
-} as const;
+/** 手の種類の左右のお告げ (名前はエンジンのお告げの層の omenFor、E-27) */
+const sidesOf = (kind: string): Record<StageSide, string> => ({ prefix: omenFor(kind, "prefix")!, suffix: omenFor(kind, "suffix")! });
+export const SIDE_OMEN = { exalt: sidesOf("exalt"), annul: sidesOf("annul"), necro: sidesOf("desecrate"), crystal: sidesOf("essence_perfect") } as const;
+export const crystalSides = (omens: readonly string[]): StageSide[] => (omens.includes(SIDE_OMEN.crystal.prefix) ? ["prefix"] : omens.includes(SIDE_OMEN.crystal.suffix) ? ["suffix"] : ["prefix", "suffix"]);

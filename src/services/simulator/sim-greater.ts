@@ -9,7 +9,7 @@
 import type { PatchData, StageSide } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import type { magicAugOdds } from "./sim-odds";
-import { sideOfMod } from "../craft-stage/engine";
+import { omenFor, sideOfMod } from "../craft-stage/engine";
 
 /** マジックをレアにするエッセンスで付ける狙い (無ければ null) */
 export function magicEssenceTarget(data: PatchData, targets: readonly SimTargetIn[]): SimTargetIn | null {
@@ -117,7 +117,7 @@ export function greaterRouteCost(o: {
   const share = o.odds.share[o.fracSide];
   const { augment, annul } = magicLoopCounts(o.p, q, share);
   const essKey = essenceKeyFor(o.data, ess.modId, ess.minTierIndex);
-  const necro = o.fracSide === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy";
+  const necro = omenFor("desecrate", o.fracSide === "prefix" ? "prefix" : "suffix")!;
   const lines: GreaterLine[] = [
     { name: "白のベース", n: 1, each: o.white },
     ...(o.runeLines ?? []),

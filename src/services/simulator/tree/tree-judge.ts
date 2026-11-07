@@ -8,7 +8,7 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, kindOf, maxQualityOf, occupiedFamiliesOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystOf, kindOf, maxQualityOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
@@ -180,7 +180,7 @@ const keyAt = (k: string, d: boolean, c: boolean): string => k.replace(/#d(\d+\.
 export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (h.omens.includes(LIGHT) || isBone(h.currency)); };
 /** クラフト MOD を付ける手 (エッセンス・液化した感情) の箱か (クラフト MOD は 1 品 1 つ E-11h。クラフト MOD の外れを持つ人は打てないので、その数も合わせる、S-60d) */
 export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
-const LIGHT = "OmenofLight";
+const LIGHT = OMEN_KEY.light;
 
 /** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c) */
 const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };

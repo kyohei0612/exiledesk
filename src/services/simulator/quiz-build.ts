@@ -9,7 +9,7 @@
 import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } from "./quiz-recipe";
 import { runeEnForId } from "./pattern";
 import { sideLimits } from "./sim-methods";
-import { sideOfMod, type PatchData, type StageItem, type StageSide, type Force, CRAFTED_SOURCES } from "../craft-stage/engine";
+import { omenFor, sideOfMod, type PatchData, type StageItem, type StageSide, type Force, CRAFTED_SOURCES } from "../craft-stage/engine";
 import { membersOf } from "./recipe-defs";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
@@ -176,7 +176,7 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
       const keeps = x.greater.keep ? [{ modId: x.greater.keep.modId, minTierIndex: x.greater.keep.minTierIndex }, ...(x.greater.keep.alts ?? [])] : [null];
       const forceOf = (c: { modId: string; minTierIndex: number }) => { const len = x.data.mods.get(c.modId)?.tiers.length ?? 0; return { mod: c.modId, ...(c.minTierIndex > 0 && len ? { tier: `T${len - c.minTierIndex}` } : {}) }; };
       const pick = frac.flatMap((c) => keeps.map((k) => ({ mods: [forceOf(c), ...(k ? [forceOf(k)] : [])], runes: r0, w: (x.fracWeights?.[c.modId] ?? 1) / keeps.length, fracture: c.modId })));
-      const wallOmen = fracSide === "suffix" ? "OmenofDextralNecromancy" : "OmenofSinistralNecromancy";
+      const wallOmen = omenFor("desecrate", fracSide === "suffix" ? "suffix" : "prefix")!;
       start = { kind: "bought", rarity: "magic", mods: pick[0]!.mods, price: x.startPrice, ...(x.sockets ? { sockets: x.sockets } : {}), ...(r0.length ? { runes: r0 } : {}), pick, fracture: pick[0]!.fracture,
         // レアにするのはそのエッセンス、無ければ王者 (反対側の狙いを一緒に揃えた時。2026-10-20)
         steps: [{ use: x.greater.essKey ?? "regal" }, ...(x.greater.keep ? [] : [{ use: "exalt" }]), { use: "desecrate", omens: [wallOmen] }] };
