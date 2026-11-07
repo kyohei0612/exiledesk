@@ -4,7 +4,7 @@
  * ヴァールのインフューザー (品質 50%・+6) の手は外した (2026-10-20 オーナー: 運の手で再現できない、no-vaal-chance と同じ線)。+6 は最後の文で品質の帯を案内する。
  * 聖別と品質の計算式はオーナーと決着済み (メモ poe2-craft-rules-confirmed の 10-21): 聖別は素の値 × 0.78〜1.22 を四捨五入、表示 = 切り捨て(素 × (1 + 品質))
  */
-import { type Force } from "../craft-stage/engine";
+import { OMEN_KEY, type Force } from "../craft-stage/engine";
 import type { TopicCourse } from "./topic-courses";
 import { H } from "./topic-steps";
 
@@ -38,7 +38,7 @@ export const GUIDE_COURSES: TopicCourse[] = [
         ["品質は素の値に掛かる: 素 4 × 1.4 = 5.6 で +5。素 3 なら +4、素 2 なら +2", "Quality applies to the base value: 4 × 1.4 = 5.6 → +5. Base 3 gives +4, base 2 gives +2"],
         ["このコースでは素 4 になる例 (+5) を見せる", "This course shows the base becoming 4 (+5)"],
         ["+6 には品質 50% が要る (ゲームではヴァールカタリストのインフューザーの運次第)。ここでは品質の帯で上限を 50% にすれば +6 を試せる。聖別の数値も、品質の帯の下の「聖別」の帯で決められる (最大を選べば一番良い振れ方を試せる)", "+6 needs 50% quality (in the game it depends on luck with a Vaal Catalysing Infuser). Here, set the max to 50% on the quality bar to try +6. The Sanctified bar under it sets the multiplier too (pick Max for the best roll)"],
-      ], [BREACH, "qset:40:caster"]), omens: ["OmenofSanctification"], startMods: AFTER_BREACH, cont: true, wantValue: { mod: SPELL, value: 4 } },
+      ], [BREACH, "qset:40:caster"]), omens: [OMEN_KEY.sanctification], startMods: AFTER_BREACH, cont: true, wantValue: { mod: SPELL, value: 4 } },
     ],
   },
 ];

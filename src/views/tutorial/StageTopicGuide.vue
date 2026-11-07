@@ -17,7 +17,7 @@ import { flag } from "../../web/release-flags";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
-import { OMEN_KEY, parseKey, sideOfMod, modListFor, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
+import { OMEN_KEY, parseKey, sideOfMod, modListFor, candidates, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
 import { aimNameBare, courseLevel } from "./guide-words";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */
@@ -110,11 +110,16 @@ const example = computed(() => {
   const rows = modListFor(d, it).filter((r) => r.group === "normal" && !r.on && !r.blocked).sort((a, b) => b.weight - a.weight);
   type Tier = (typeof rows)[number]["tiers"][number];
   let best: { ok: Tier; ng: Tier } | null = null;
-  // 行は同じ系統の MOD をまとめているので、MOD (modId) ごとの段で比べる
-  for (const r of rows) for (const id of new Set(r.tiers.map((t) => t.modId))) {
-    const ts = r.tiers.filter((t) => t.modId === id && t.ilvl <= s.itemLevel.value);
-    const above = ts.filter((t) => t.ilvl >= f), below = ts.filter((t) => t.ilvl < f);
-    if (!above.length || !below.length) continue;
+  // 行は同じ系統の MOD をまとめているので、MOD (modId) ごとの段で比べる。
+  // 付く段 = エンジンの candidates (下限・アイテムレベル・重み) で引ける段、付かない段 = 下限なしなら引けて下限ありで引けない段
+  for (const r of rows) for (const id of new Set(r.tiers.map((t) => t.modId ?? r.id))) {
+    const n = d.mods.get(id)?.tiers.length ?? 0;
+    const drawn = (fl: number): Set<number> => new Set(candidates(d, it, [r.side], fl, { pools: () => [id] })[0]?.tiers.filter((t) => t.w > 0).map((t) => t.index) ?? []);
+    const can = drawn(f), any = drawn(0);
+    const ts = r.tiers.filter((t) => (t.modId ?? r.id) === id && any.has(n - t.tier));
+    const above = ts.filter((t) => can.has(n - t.tier)), below = ts.filter((t) => !can.has(n - t.tier));
+    // 例は下限の境目を見せる物なので、下限の例外 (下限に届く段が無い系統は一番上の段が残る) で付く MOD は選ばない (教材の選び)
+    if (!above.length || !below.length || above.some((t) => t.ilvl < f)) continue;
     const ok = above.reduce((a, b) => (b.ilvl < a.ilvl ? b : a)), ng = below.reduce((a, b) => (b.ilvl > a.ilvl ? b : a));
     if (!best || ok.ilvl - ng.ilvl < best.ok.ilvl - best.ng.ilvl) best = { ok, ng };
   }

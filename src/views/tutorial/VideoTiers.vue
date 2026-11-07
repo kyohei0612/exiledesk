@@ -8,27 +8,27 @@
   画面に「アイテムレベル」の文字を出す (POE2Tube の撮影の準備判定)。
   2026-09-29 要望 ⑫「撮影画面いっぱいに大きく (1080p で 32px 以上)」: 行の高さを段の数で決め、文字も行の高さに合わせて大きく。
   2026-10-02 要望 ㉔-1 &floor=N: 上位のオーブの「付く MOD のレベルの下限」。N 未満のティアは灰色・取り消し線で「付かない」、出やすさは付くティアの中で。
-    下限はエンジンの CURRENCY_FLOOR (王者・高貴 35 / 50、変成・増強 55 / 70)。注にどのオーブの下限かを出す
+    下限はエンジンの orbFloor (カオスも入る)。注にどのオーブの下限かを出す
 -->
 <script setup lang="ts">
 import { fmtPct } from "../../utils/format-pct";
 import { computed } from "vue";
 import { craftStage } from "../../state/craft-stage";
-import { freshItem, candidates, modListFor, familiesOf, CURRENCY_FLOOR, shownTags, TAG_STYLE } from "../../services/craft-stage/engine";
+import { freshItem, candidates, modListFor, familiesOf, orbFloor, shownTags, TAG_STYLE } from "../../services/craft-stage/engine";
 import { baseArt } from "../../components/art/base-art";
 
 /** hl = false: 答えの金の段を出さない (POE2Tube 要望 ⑯ &hl=0。質問の行で表だけ見せ、答えの行で金の段を「パッ」と出す) */
 const props = withDefaults(defineProps<{ base: string; mod: string; ilvl: number | null; hl?: boolean; floor?: number | null }>(), { hl: true, floor: null });
 
-/** 下限の数 → そのオーブの名前 (CURRENCY_FLOOR から。公式の日本語) */
-const FLOOR_NAME: Record<string, string> = { transmute: "変成", augment: "増強", regal: "王者", exalt: "高貴" };
+/** 段の下限のあるオーブの名前 (公式の日本語)。下限の数はエンジンの orbFloor から */
+const FLOOR_NAME: Record<string, string> = { transmute: "変成", augment: "増強", regal: "王者", exalt: "高貴", chaos: "カオス" };
 const floorNote = computed(() => {
   const f = props.floor;
   if (!f) return "";
   const names: string[] = [];
-  for (const [cur, tiers] of Object.entries(CURRENCY_FLOOR)) {
-    if (tiers.greater === f) names.push(`上級の${FLOOR_NAME[cur]}`);
-    if (tiers.perfect === f) names.push(`完全の${FLOOR_NAME[cur]}`);
+  for (const [kind, name] of Object.entries(FLOOR_NAME)) {
+    if (orbFloor(kind, "greater") === f) names.push(`上級の${name}`);
+    if (orbFloor(kind, "perfect") === f) names.push(`完全の${name}`);
   }
   return `${names.length ? names.join("・") : "このオーブ"}: MOD レベル ${f} 未満のティアは付かない`;
 });

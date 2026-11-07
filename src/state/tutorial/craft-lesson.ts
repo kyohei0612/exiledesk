@@ -163,9 +163,10 @@ export function rigRare(key: string): void {
       const roll = Math.floor(Math.random() * 2_147_483_647);
       const r = applyCurrency(d, it, key, mulberry32(seedOfRoll(roll, key)), omens);
       if (!r.applied) continue;
-      // 狙いが全部付いたかはエンジンの aimDone (段は問わない)
-      const all = !lu.mods.length || aimDone(r.item, lu.mods.map((modId) => ({ modId, minTierIndex: 0 })));
-      const ok = loopRound.value >= lu.from ? !r.removed.some((m) => lu.mods.includes(m.modId)) : !all;
+      // 狙いが全部付いたか・狙いが消えたかはエンジンの aimDone / aimHits (段は問わない。同じ文の別の MOD も当たり = sameText)
+      const hit = { data: d, sameText: true };
+      const all = !lu.mods.length || aimDone(r.item, lu.mods.map((modId) => ({ modId, minTierIndex: 0 })), hit);
+      const ok = loopRound.value >= lu.from ? !r.removed.some((m) => lu.mods.some((modId) => aimHits(m, { modId, minTierIndex: 0 }, hit))) : !all;
       if (ok) { s.rollSeed.value = roll; return; }
     }
     return;
@@ -243,8 +244,9 @@ watch(() => s.log.value.length, (n, old) => {
   for (let i = 0; i < 20000; i++) {
     const roll = Math.floor(Math.random() * 2_147_483_647);
     const o = revealOffers(d, it, mulberry32(seedOfRoll(roll, "reveal")));
-    const any = o.first.some((m) => aimHits(m, { modId: want.mod, minTierIndex: 0 }));
-    const got = o.first.some((m) => aimHits(m, { modId: want.mod, minTierIndex: 0 }) && (want.value == null || m.values[0] === want.value));
+    const same = { data: d, sameText: true };
+    const any = o.first.some((m) => aimHits(m, { modId: want.mod, minTierIndex: 0 }, same));
+    const got = o.first.some((m) => aimHits(m, { modId: want.mod, minTierIndex: 0 }, same) && (want.value == null || m.values[0] === want.value));
     if (hit ? got : !any) { s.rollSeed.value = roll; return; }
   }
 });

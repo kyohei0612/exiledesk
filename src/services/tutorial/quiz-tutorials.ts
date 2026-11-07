@@ -14,6 +14,7 @@
  * 資料で決まらない所は assumed (画面に「仮」) に書く。値段は使わない (費用は出さず、打った数だけ出す)。
  */
 import { quizSlot, type QuizAction, type QuizRecipe, type QuizRule } from "../simulator/quiz-recipe";
+import { OMEN_KEY } from "../craft-stage/engine";
 
 /** 日本語と英語の組 (画面の言葉。ゲームの言葉はキーからクライアントの名前で出す) */
 export type JaEn = readonly [string, string];
@@ -105,12 +106,12 @@ function wand(): QuizTutorial {
           rule({ "p.hid": 1 }, { reveal: { echoes: false } },
             ["未発現の冒涜 MOD から狙いを取るには?", "Get the target out of the unrevealed desecrated mod?"],
             ["発現して 3 つの中に元素ダメージがあれば取る (動画は反響のお告げを使わない)", "Reveal and take Elemental Damage if it is among the 3 (the video skips Abyssal Echoes)"],
-            [d(use("annul", "OmenofLight"), "光のお告げは冒涜の MOD を消す。まず発現して中身を見る", "Omen of Light removes desecrated mods; reveal it first"), DIVINE_LOCK]),
-          rule({ "p.bad": 1 }, use("annul", "OmenofLight"),
+            [d(use("annul", OMEN_KEY.light), "光のお告げは冒涜の MOD を消す。まず発現して中身を見る", "Omen of Light removes desecrated mods; reveal it first"), DIVINE_LOCK]),
+          rule({ "p.bad": 1 }, use("annul", OMEN_KEY.light),
             ["外れた冒涜 MOD だけを消すには?", "Remove only the wrong desecrated mod?"],
             ["光のお告げ + 消去で冒涜だけ消して、もう一度骨から", "Omen of Light + Annulment removes only the desecrated mod; then desecrate again"],
             [d(use("annul", "OmenofSinistralAnnulment"), "左の消去はプレフィックスのどれか。エッセンスのスペルダメージまで消えることがある", "Sinistral Annulment hits any prefix, the essence mod included"), CHAOS_ANY]),
-          rule({ C: 2, n: 3 }, use("exalt_greater", "OmenofGreaterExaltation"),
+          rule({ C: 2, n: 3 }, use("exalt_greater", OMEN_KEY.greater),
             ["空いた 3 枠のうち 2 つをまとめて埋めるには?", "Fill 2 of the 3 open slots at once?"],
             ["偉大なる高貴なお告げで上級の高貴が 2 つ付ける。段の低い MOD も出ない", "Omen of Greater Exaltation makes the Greater Exalted Orb add 2 mods, and no low tiers"],
             [d(use("exalt"), "普通の高貴は 1 つずつ", "A plain Exalted Orb adds only 1"),
@@ -118,7 +119,7 @@ function wand(): QuizTutorial {
           rule({ C: 2, n: 5 }, use("exalt"),
             ["最後の 1 枠を埋めるには?", "Fill the last slot?"],
             ["最後の 1 枠は普通の高貴で埋める", "Fill the last slot with an Exalted Orb"],
-            [d(use("exalt_greater", "OmenofGreaterExaltation"), "空きが 1 つだと 1 つしか付かない。高くつくだけ", "With one slot it only adds 1; it just costs more"),
+            [d(use("exalt_greater", OMEN_KEY.greater), "空きが 1 つだと 1 つしか付かない。高くつくだけ", "With one slot it only adds 1; it just costs more"),
               d(use("annul"), "消去は MOD を減らす", "Annulment removes a mod")],
             ["動画は 2 つ付けて終わり (始めのマジックにプレフィックスが付いていたため)", "The video stops after 2 mods (its magic base already had a prefix)"]),
         ],
@@ -220,7 +221,7 @@ function gloves(): QuizTutorial {
  */
 function ring(): QuizTutorial {
   const R = "Rings/";
-  const CAT_DEXTRAL = use("exalt", "OmenofCatalysingExaltation", "OmenofDextralExaltation");
+  const CAT_DEXTRAL = use("exalt", OMEN_KEY.catalysing, "OmenofDextralExaltation");
   return {
     id: "ring", level: 2, part: ["指輪", "Ring"],
     learn: ["フラクチャー・触媒で品質を溜めて触媒の高貴・種類を替えると品質は 0 から", "Fracture, build catalyst quality for Catalysing Exaltation, switching catalyst types resets quality"],
@@ -262,7 +263,7 @@ function ring(): QuizTutorial {
           rule({ A: 3, B: 0, "s.junk": 0, cat: "fire" }, CAT_DEXTRAL,
             ["火の品質を使って、サフィックスに火耐性を狙うには?", "Use the fire quality to aim Fire Resistance on a suffix?"],
             ["触媒の高貴のお告げで品質の分だけ火の MOD を重く (品質 45% で 8 倍)、右の高貴のお告げでサフィックスに。品質は使い切る", "Catalysing Exaltation weights fire mods by the quality (8x at 45% quality), Dextral Exaltation puts it on a suffix. The quality is used up"],
-            [d(use("exalt", "OmenofCatalysingExaltation"), "側のお告げが無いとプレフィックスに付くこともある", "Without a side omen it may land on a prefix"),
+            [d(use("exalt", OMEN_KEY.catalysing), "側のお告げが無いとプレフィックスに付くこともある", "Without a side omen it may land on a prefix"),
               d(use("exalt", "OmenofDextralExaltation"), "触媒の高貴のお告げが無いと品質は効かない", "Without Catalysing Exaltation the quality does nothing")]),
           rule({ A: 3, B: 2, C: 0, "s.junk": 0 }, use("catalyst_cold"),
             ["次は冷気耐性。品質をどうする?", "Next is Cold Resistance. What about the quality?"],
@@ -272,7 +273,7 @@ function ring(): QuizTutorial {
           rule({ A: 3, B: 2, C: 0, "s.junk": 0, cat: "cold" }, CAT_DEXTRAL,
             ["冷気の品質で、サフィックスに冷気耐性を狙うには?", "Use the cold quality to aim Cold Resistance on a suffix?"],
             ["火の時と同じく、触媒の高貴 + 右の高貴のお告げ", "Same as before: Catalysing + Dextral Exaltation"],
-            [d(use("exalt", "OmenofCatalysingExaltation"), "側のお告げが無いとプレフィックスに付くこともある", "Without a side omen it may land on a prefix"),
+            [d(use("exalt", OMEN_KEY.catalysing), "側のお告げが無いとプレフィックスに付くこともある", "Without a side omen it may land on a prefix"),
               d(use("chaos"), "カオスは今あるサフィックスを消すことがある", "Chaos may remove a suffix you already have")]),
           rule({ A: 3, B: 2, C: 2, "p.free": [1, 2, 3] }, use("exalt"),
             ["サフィックスが揃った。プレフィックスを埋めるには?", "Suffixes are done. Fill the prefixes?"],
@@ -334,7 +335,7 @@ function amulet(): QuizTutorial {
             ["違う MOD が固定された。どうする?", "The wrong mod got fractured. What now?"],
             ["次のベースを買う", "Buy the next base"],
             [ANNUL_FRACTURED, FRACTURE_TWICE]),
-          rule({ A: 3, S: 0, "s.hid": 1 }, use("annul", "OmenofLight"),
+          rule({ A: 3, S: 0, "s.hid": 1 }, use("annul", OMEN_KEY.light),
             ["壁の役目は終わった。サフィックスをカオスオーブで振り直し続けるために、未発現の冒涜だけ外すには?", "The wall has done its job. Remove only the unrevealed mod so the suffix can be rerolled with Chaos Orbs?"],
             ["光のお告げ + 消去で冒涜の MOD だけ消す。冒涜が残っているとカオスで消えることもあり、狙いの冒涜は後で付け直す", "Omen of Light + Annulment removes only the desecrated mod; the real desecration comes later"],
             [d({ reveal: { echoes: true } }, "発現するとサフィックスが 2 つ埋まり、カオスオーブで振り直すと当たりも消える", "Revealing fills both suffixes, and a Chaos Orb reroll could remove it too"),
@@ -348,8 +349,8 @@ function amulet(): QuizTutorial {
             ["未発現の MOD を、なるべく狙いが出るように発現するには?", "Reveal the unrevealed mod with the best chance at the target?"],
             ["アビスの反響のお告げを掛けて発現。3 つに狙いが無ければもう 3 つ見られる", "Reveal with Omen of Abyssal Echoes: if the 3 options miss, you see 3 more"],
             [d({ reveal: { echoes: false } }, "反響のお告げが無いと、外れた時にもう 3 つ見られない", "Without Abyssal Echoes there's no second set of 3"),
-              d(use("annul", "OmenofLight"), "光のお告げは冒涜を消す。まず中身を見る", "Omen of Light removes the desecrated mod; look inside first")]),
-          rule({ A: 3, "s.bad": 1 }, use("annul", "OmenofLight"),
+              d(use("annul", OMEN_KEY.light), "光のお告げは冒涜を消す。まず中身を見る", "Omen of Light removes the desecrated mod; look inside first")]),
+          rule({ A: 3, "s.bad": 1 }, use("annul", OMEN_KEY.light),
             ["外れた冒涜 MOD だけを消すには?", "Remove only the wrong desecrated mod?"],
             ["光のお告げ + 消去で冒涜の MOD だけ消す。耐性は残る", "Omen of Light + Annulment removes only the desecrated mod; the resistances stay"],
             [d(use("annul", "OmenofDextralAnnulment"), "右の消去は全元素耐性を消すこともある", "Dextral Annulment may remove the resistances instead"), CHAOS_ANY]),
@@ -444,8 +445,8 @@ function jewel(): QuizTutorial {
           rule({ T: 2, "s.hid": 1 }, { reveal: { echoes: true } },
             ["未発現の MOD を、なるべく狙いが出るように発現するには?", "Reveal the unrevealed mod with the best chance at the target?"],
             ["アビスの反響のお告げを掛けて発現。外れたらもう 3 つ見られる", "Reveal with Abyssal Echoes: on a miss you see 3 more"],
-            [d({ reveal: { echoes: false } }, "反響のお告げが無いと、外れた時にもう 3 つ見られない", "Without Abyssal Echoes there is no second set of 3"), d(use("annul", "OmenofLight"), "光のお告げは冒涜を消す。まず中身を見る", "Omen of Light removes it; look inside first")]),
-          rule({ T: 2, "s.bad": 1 }, use("annul", "OmenofLight"),
+            [d({ reveal: { echoes: false } }, "反響のお告げが無いと、外れた時にもう 3 つ見られない", "Without Abyssal Echoes there is no second set of 3"), d(use("annul", OMEN_KEY.light), "光のお告げは冒涜を消す。まず中身を見る", "Omen of Light removes it; look inside first")]),
+          rule({ T: 2, "s.bad": 1 }, use("annul", OMEN_KEY.light),
             ["外れた冒涜 MOD だけを消すには?", "Remove only the wrong desecrated mod?"],
             ["光のお告げ + 消去で冒涜だけ消して、もう一度骨から", "Omen of Light + Annulment removes only the desecrated mod; then desecrate again"],
             [d(use("annul", "OmenofDextralAnnulment"), "右の消去はクリダメが消えることがある", "Dextral Annulment may remove Critical Damage"), CHAOS_ANY]),

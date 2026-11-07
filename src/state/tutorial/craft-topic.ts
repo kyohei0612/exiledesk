@@ -93,11 +93,12 @@ watch(() => s.log.value.length, (n, old) => {
   if (cur.key && keepGoing(cur.step, cur.key)) return;
   // ループの手で狙いの MOD を発現したら、続き (エッセンス) を打たずに手を終える (2026-10-18 オーナー「スピリット 50 を発現させて終了」)
   const wr = topicStep.value?.step.wantReveal;
-  // 狙いが付いたかはエンジンの aimHits (段は問わない。値は教材の決め = 足し)
-  if (wr && cur.step.use === "reveal" && e.added.some((m) => aimHits(m, { modId: wr.mod, minTierIndex: 0 }) && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
+  // 狙いが付いたかはエンジンの aimHits / aimDone (段は問わない。同じ文の別の MOD も当たり = sameText。値は教材の決め = 足し)
+  const d = s.data.value, hit = d ? { data: d, sameText: true } : undefined;
+  if (wr && cur.step.use === "reveal" && e.added.some((m) => aimHits(m, { modId: wr.mod, minTierIndex: 0 }, hit) && (wr.value == null || m.values[0] === wr.value))) { topicUsed.value = true; return; }
   // ループの手で決めた MOD が全部そろったら手を終える
   const lu = topicStep.value?.step.loopUntil;
-  if (lu && (!lu.mods.length || aimDone(e.after, lu.mods.map((modId) => ({ modId, minTierIndex: 0 }))))) { topicUsed.value = true; return; }
+  if (lu && (!lu.mods.length || aimDone(e.after, lu.mods.map((modId) => ({ modId, minTierIndex: 0 })), hit))) { topicUsed.value = true; return; }
   if (topicSub.value < chain.length) topicSub.value++; // 続きの手へ
   // ループの手は、続き (エッセンス) まで打ったら手の最初に戻して次の周へ (狙いを発現するまで手を終えない。2026-10-18 オーナー「エッセンス選んだあとクリア扱いでグレーアウト、復活させて」)
   else if (topicStep.value?.step.loop) {

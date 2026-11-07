@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { modText } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { type PlayedStep } from "../../services/craft-stage/engine";
+import { parseKey, splitOmens, type PlayedStep } from "../../services/craft-stage/engine";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";
@@ -98,10 +98,10 @@ const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", sha
 const planTray = (s.replay.value?.plan as { tray?: string[] } | undefined)?.tray;
 const trayKeys = planTray
   ? planTray.filter((k) => !k.startsWith("Omenof"))
-  : [...new Set(tape.map((st) => st.out.currency).filter((c) => !c.startsWith("reveal:")))];
+  : [...new Set(tape.map((st) => st.out.currency).filter((c) => parseKey(c).type !== "reveal"))];
 const trayOmens = planTray
   ? planTray.filter((k) => k.startsWith("Omenof"))
-  : [...new Set(tape.flatMap((st) => (st.out.omen ? st.out.omen.split("+") : [])))];
+  : [...new Set(tape.flatMap((st) => splitOmens(st.out.omen)))];
 const frameEl = ref<HTMLElement | null>(null);
 const hand = useVideoHand(frameEl, speed);
 /**
