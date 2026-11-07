@@ -15,14 +15,14 @@ import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
-import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, isRuneHand, rerollsValues } from "../../../services/simulator/tree/tree-hands";
 import { RUNE_PREFIX, runeNameOf } from "../../../services/craft-stage/engine";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
-import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { DIVINE, divineStart } from "../../../services/simulator/tree/tree-divine";
+import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
@@ -220,7 +220,7 @@ watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked
 const noMod = computed(() => { const d = s.data.value, it = shelfItem.value, h = held.value; return !!d && !!it && !!h && keepsMods(d, it, h, omens.value); });
 watch(noMod, (v) => { if (v) checked.value = []; }, { immediate: true });
 /** 神のオーブの手 (S-202): ☑ の狙いの MOD の数値の目標を全部決めてから置く (TreeDivinePick)。予見リセットはヒネコラの後の神だけ */
-const divOn = computed(() => held.value === DIVINE);
+const divOn = computed(() => !!held.value && rerollsValues(held.value));
 const divTargets = ref<DivineTarget[]>(props.current?.targets ? props.current.targets.map((x) => ({ ...x })) : []);
 const divReset = ref(!!props.current?.foreReset);
 watch(held, (h) => { divTargets.value = h === props.current?.currency && props.current?.targets ? props.current.targets.map((x) => ({ ...x })) : []; divReset.value = h === props.current?.currency && !!props.current?.foreReset; });

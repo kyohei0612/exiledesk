@@ -9,14 +9,14 @@ import { allMods, type PatchData, type StageItem, type StageMod } from "../../cr
 import { replaced, withValues } from "../../craft-stage/stage-core";
 import { divineChance } from "../sim-engine";
 import type { Hand, DivineTarget, TreeDoc } from "./tree-model";
+import { rerollsValues } from "./tree-hands";
 
-export const DIVINE = "divine";
 /** 神の目標の 2 枝の鍵 (箱の junkKey)。以上 = 打った後 (any)、未満 = 外れ (junk) = 自動の ↩ で神の箱へ (S-202 ④) */
 export const DIVINE_GE = "dv:ge";
 export const DIVINE_LT = "dv:lt";
 
-/** 目標の数値を決めた神の手か */
-export const isDivineAim = (h: Hand | null | undefined): boolean => !!h && h.currency === DIVINE && !!h.targets?.length;
+/** 目標の数値を決めた神の手か (神の手 = 値を振り直す手、エンジンの手の部品 reroll) */
+export const isDivineAim = (h: Hand | null | undefined): boolean => !!h && rerollsValues(h.currency) && !!h.targets?.length;
 const modOf = (item: StageItem, modId: string): StageMod | undefined => allMods(item).find((m) => m.modId === modId && !m.fractured);
 /** 目標に全部届いたか (目標の MOD が無い目標は届かない) */
 export function divineMet(item: StageItem, targets: readonly DivineTarget[]): boolean {
