@@ -118,3 +118,52 @@ it("④ 狙うの「回し方」の文の分け: 前 (kindOf の 4 つ) と後 (
   console.log(`④ 比べた鍵 ${keys.size}、違い ${diff.length}\n${diff.join("\n")}`);
   expect(keys.size).toBeGreaterThan(0);
 });
+
+it("⑤ 始めの状態を組む窓の付け方の可否: 前 (画面の自前 + 打った後は useReason) と後 (forceReason) の違い", async () => {
+  const { forceReason, useReason } = await import("../src/services/craft-stage/apply-currency");
+  const { forceKey } = await import("../src/services/craft-stage/apply-force");
+  const { startFrom } = await import("../src/services/craft-stage/run-plan");
+  type Way = "n" | "d" | "f";
+  const tally = new Map<string, number>();
+  let n = 0;
+  for (const b of names.slice(0, 20)) {
+    const base = freshItem(data, b, ILVL);
+    const pools = base.cls.pools;
+    const normal = [...pools.normal.prefixes, ...pools.normal.suffixes].slice(0, 6), desec = [...(pools.desecrated?.prefixes ?? []), ...(pools.desecrated?.suffixes ?? [])].slice(0, 4);
+    if (!normal.length) continue;
+    const fr = normal[0]!, de = desec[0];
+    // 状態: start = 始めの状態 (打つ前)、after = 打った後
+    const states: Array<{ name: string; start: boolean; item: StageItem }> = [
+      { name: "始め 空", start: true, item: startFrom(data, b, ILVL, { mods: [] }, 1) },
+      { name: "始め フラクチャー 1", start: true, item: startFrom(data, b, ILVL, { mods: [{ mod: fr, tier: null as unknown as string, fractured: true }] }, 1) },
+      ...(de ? [{ name: "始め 冒涜 1", start: true, item: startFrom(data, b, ILVL, { mods: [{ mod: de, tier: null as unknown as string, desecrated: true }] }, 1) }] : []),
+      { name: "打った後 レア", start: false, item: applyCurrency(data, freshItem(data, b, ILVL), "alchemy", mulberry32(4)).item },
+    ];
+    for (const st of states) {
+      const it = st.item;
+      const hasFr = it.prefixes.concat(it.suffixes).some((m) => m.fractured), hasDe = it.prefixes.concat(it.suffixes).some((m) => m.desecrated);
+      for (const [group, ids] of [["normal", normal], ["desecrated", desec]] as const) {
+        for (const id of ids) {
+          const md = data.mods.get(id); if (!md) continue;
+          const rank = `T${md.tiers.length}`;
+          const desecratedPool = group === "desecrated";
+          const plain: Way = desecratedPool ? "n" : "n";
+          const list: Array<{ flag: Way; block: string | null }> = [
+            { flag: plain, block: desecratedPool ? "pool" : null },
+            { flag: "d", block: hasDe ? "1 つまで" : null },
+            { flag: "f", block: desecratedPool ? "固定できない" : hasFr ? "1 つまで" : null },
+          ];
+          for (const w of list) {
+            n++;
+            const key = forceKey(id, rank, w.flag);
+            const before = !!w.block || (!st.start && !!useReason(data, it, key, []));
+            const after = !!forceReason(data, it, key);
+            if (before !== after) { const k = `${st.name} ${group} ${w.flag}: 前 ${before ? "×" : "○"} 後 ${after ? "× " + forceReason(data, it, key)!.text : "○"}${before ? " (前の理由 " + (w.block ?? useReason(data, it, key, [])) + ")" : ""}`; tally.set(k, (tally.get(k) ?? 0) + 1); }
+          }
+        }
+      }
+    }
+  }
+  console.log(`⑤ 比べた付け方 ${n}、違い ${[...tally.values()].reduce((a, x) => a + x, 0)}\n${[...tally].map(([k, c]) => `${c} 件 ${k}`).slice(0, 30).join("\n")}`);
+  expect(n).toBeGreaterThan(0);
+});

@@ -20,7 +20,7 @@ import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage, runesFit } from "./route-place";
-import { GRADE_KEY, OMEN_KEY, routeFromBlock, tierRankLabel, tierRankOf, type Grade } from "../../services/craft-stage/engine";
+import { GRADE_KEY, OMEN_KEY, routeFromBlock, routeOffText, tierRankLabel, tierRankOf, type Grade } from "../../services/craft-stage/engine";
 import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
@@ -95,14 +95,8 @@ function setFrom(on: boolean): void {
 }
 // 開いている間も台は Ctrl+Z・やり直しで変わる。始められなくなったら決まりの形へ戻す
 watch(canFrom, (on) => { if (!on) setFrom(false); });
-/** 使えない理由の英語 (route-race.ts の文)。共有の結果 (packRace) は理由を文のまま持つので、前の日本語の文もここで英語にする。理由の鍵がエンジンに入ったら消す */
-const OFF_EN: Record<string, string> = {
-  "マジックに狙いの側の枠が無いベース": "This base has no slot on the target side while magic",
-  "上限の手数までに付かなかった (この等級では付かない段かも)": "Didn't hit within the use cap (this grade may not roll that tier)",
-  "今のアイテムから始める時はカオスだけ": "Only Chaos when starting from the current item",
-  "今のアイテムがレアでない": "The current item isn't rare",
-  "今のアイテムにもう狙いが付いている": "The current item already has the target",};
-const offText = (x: string): string => tr(x.replace("段かも", `${TIER}かも`), OFF_EN[x] ?? x);
+/** 使えない理由: エンジンの鍵 (前の共有の日本語の文も) を routeOffText で日英の文に。段の言い方だけ画面の言葉に */
+const offText = (x: string): string => routeOffText(x).replace("段かも", `${TIER}かも`);
 /** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりを差し替える) */
 const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま、狙いのルーンが足りなければ嵌める。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", en: "Start from the current craft item (fractures, quality and runes kept, adding the target's rune if missing; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)" };
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
