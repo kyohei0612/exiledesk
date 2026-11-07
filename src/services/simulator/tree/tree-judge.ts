@@ -148,13 +148,14 @@ export function blockMarkOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
 /** 外れの印の覚え (品ごと) */
 const MARKS = new WeakMap<StageItem, Map<string, string>>();
 /**
- * 枠に入れる品質 (値・カタリストの種類)・エンチャント・予見済み。全部同じ時だけ同じ枠 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」)。
- * 品質が 0% (値・カタリストの品質とも 0) の時は種類を見ない (11-06: 触媒の高貴が品質を使い切っても種類は残るが、0% の種類は打つ時に効かない)
+ * 枠に入れるエンチャント・予見済み。全部同じ時だけ同じ枠 (S-60b)。品質 (値・カタリストの種類・カタリストの品質) は 11-08 から入れない (オーナー「品質はやっぱり無視だな。
+ * 同じ箱リストにはいれないでおこう」「カタリストって絶対にしょくばい使うならそのカタリストで上書きする」。前は 11-04「品質も枠に入れて全部同じ時だけで」)。
+ * 品質の欄 ~q0.. は配置の鍵 (tree-frame の frameKeyOf) と理由の文 (contentDiff) の並びのために空で残す
  * 品に刺さっているルーン (augments) は名前の組で入れる (順は見ない、11-05)。刺したルーンで確率・打てる手が変わるので別の状態 (11-07 オーナー「ルーンは手で付けたところとかでおｋ
  * ツリーはあくまでもゲーム仕様にして」= S-60e)。ルーンの MOD の印 (m.rune = コルの狩りを差すと混ざるマークスマンの MOD) は入れない (外れは何の MOD でも外れ。前は入れていて、
  * 外れがマークスマンの MOD の人だけ別の枠になって止まった = 要望 b3956330)。ソケットの数も入れる (ルーンの手は空きがあれば空きへ、無ければ左から置き換える = 空きの有る無しで結果が違う。ソケットを足すのは熟練工のオーブ、エンジンの applyRune)
  */
-const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${(it.quality ?? 0) + (it.catalystQuality ?? 0) > 0 ? it.qualityTag ?? "" : ""}~e${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~r${runesOf(it)}.${it.sockets ?? 0}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
+const frameOf = (it: StageItem): string => `~q0..~e${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~r${runesOf(it)}.${it.sockets ?? 0}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
 /** 刺さっているルーンの名前の組 (順は見ない) */
 const runesOf = (it: StageItem): string => (it.augments ?? []).map((a) => a.en).sort().join("+");
 /**
