@@ -1,4 +1,7 @@
 {
+  "0.1.681": [
+    "Simulator: after a step where you pick which mods to keep (such as Orb of Annulment), Essence mods that aren't in the final item (like Breach) and weren't checked now show as Miss, including when holding Annulment in the hand window"
+  ],
   "0.1.680": [
     "Simulator: the final-item card no longer adds an Essence of the Breach line for quality on its own. For quality well above the cap, use Perfect Essence of the Breach in the tree",
     "Simulator: Done (back to the tree) in the final-item window now sits below the notes instead of floating",

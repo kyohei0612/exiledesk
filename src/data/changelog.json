@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.681",
+  "date": "2026-11-08",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーで消去など残す MOD を選ぶ手を通った後は、☑ しなかった完成形に無いエッセンスの MOD (ブリーチなど) も「外れ MOD」と出すようにしました。手の窓で消去を持った時も同じです",
+    "en": "Simulator: after a step where you pick which mods to keep (such as Orb of Annulment), Essence mods that aren't in the final item (like Breach) and weren't checked now show as Miss, including when holding Annulment in the hand window"
+   }
+  ]
+ },
+ {
   "v": "0.1.680",
   "date": "2026-11-07",
   "items": [
@@ -1089,24 +1101,6 @@
     "area": "",
     "text": "シミュレーター: 画面の幅が 768〜1279 の時もスマホの形に揃えました",
     "en": "Simulator: between 768px and 1279px wide, the simulator now also uses the phone layout"
-   }
-  ]
- },
- {
-  "v": "0.1.641",
-  "date": "2026-10-29",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 別のカレンシーを持ったまま「1 手戻す」と、戻した手のお告げがそのカレンシーの方へ戻るように",
-    "en": "Emulator: undoing a step while holding another currency now returns that step’s omens to the currency it used"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "画面の幅が 768〜1279 の時、エミュレーターの狙い・ベース選び・スパムシミュレーターもスマホの形に揃えました",
-    "en": "Between 768px and 1279px wide, the emulator’s aim panel, base picker and spam simulator now also use the phone layout"
    }
   ]
  }
