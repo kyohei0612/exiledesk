@@ -8,6 +8,7 @@ import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { usePhone } from "../../utils/use-phone";
+import { tierRankLabel } from "../../services/craft-stage/engine";
 import { placeWithSlots } from "../simulator/tree/tree-slot-mods";
 import type { DailyAim } from "./daily-api";
 
@@ -29,7 +30,7 @@ const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.fin
     <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="width ?? (phone ? 340 : 400)" compact tier-at-least />
     <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
     <ul v-if="left.length" data-daily-aim-left class="mt-2 text-[14px]">
-      <li v-for="a in left" :key="a.modId">{{ tr(`カードに乗らない狙い: ${a.ja}`, `Not on the card: ${a.en}`) }} <small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small></li>
+      <li v-for="a in left" :key="a.modId">{{ tr(`カードに乗らない狙い: ${a.ja}`, `Not on the card: ${a.en}`) }} <small>{{ tierRankLabel(a.tier) }}</small></li>
     </ul>
   </div>
 </template>

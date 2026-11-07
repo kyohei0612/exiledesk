@@ -62,6 +62,11 @@ const nameOf = (r: ListRow): string => r.id.slice(r.id.indexOf("/") + 1);
 
 /** 段の下限 (D-04): 元が T1 なら T1、ほかは全部 T2 以上 */
 export const tierFloor = (tier: number): number => (tier <= 1 ? 1 : 2);
+/** 行の段のうちアイテムレベルで出る物から、元の段 tier の下限 (D-04) の段。無ければその上の段の一番近い物。どちらも無ければ undefined */
+const floorTierOf = (r: ListRow | undefined, ilvl: number, tier: number): { able: ListRow["tiers"]; t: ListRow["tiers"][number] | undefined } => {
+  const want = tierFloor(tier), able = (r?.tiers ?? []).filter((x) => x.ilvl <= ilvl).sort((x, y) => x.tier - y.tier);
+  return { able, t: able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want) };
+};
 
 /**
  * 1 人分の並びをそのままお題にする (D-06・D-82)。段は D-04、付かない並び (D-83) は null。
@@ -74,8 +79,7 @@ export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL)
   for (const m of s.mods) {
     const r = rows.find((x) => nameOf(x) === m.name);
     if (!r) return null;
-    const able = r.tiers.filter((t) => t.ilvl <= ilvl).sort((a, b) => a.tier - b.tier);
-    const want = tierFloor(m.tier), t = able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want) ?? able[0];
+    const f = floorTierOf(r, ilvl, m.tier), t = f.t ?? f.able[0];
     if (!t) return null;
     const modId = t.modId ?? r.id;
     if (goalBlock(data, s.base, ilvl, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId, tier: t.tier })) return null;
@@ -90,9 +94,8 @@ export function floorAims(data: PatchData, base: string, ilvl: number, aims: rea
   try { rows = modListFor(data, freshItem(data, base, ilvl)); } catch { /* 表が引けなければそのまま */ }
   return aims.map((a) => {
     const r = rows.find((x) => x.id === a.modId || x.tiers.some((t) => t.modId === a.modId));
-    const want = tierFloor(a.tier), able = (r?.tiers ?? []).filter((x) => x.ilvl <= ilvl).sort((x, y) => x.tier - y.tier);
-    const t = able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want);
-    return r && t ? { ...a, modId: t.modId ?? r.id, tier: t.tier } : { ...a, tier: Math.min(a.tier, want) };
+    const { t } = floorTierOf(r, ilvl, a.tier);
+    return r && t ? { ...a, modId: t.modId ?? r.id, tier: t.tier } : { ...a, tier: Math.min(a.tier, tierFloor(a.tier)) };
   });
 }
 

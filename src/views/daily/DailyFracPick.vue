@@ -10,6 +10,7 @@ import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { startFromWords } from "../simulator/tree/tree-names";
+import { tierRankLabel } from "../../services/craft-stage/engine";
 import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
 
@@ -58,7 +59,7 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
         <ul class="daily-frac-list" :aria-label="tr('フラクチャー予定の MOD', 'Mod to fracture')">
           <li v-for="a in aims" :key="a.modId">
             <button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @mouseenter="hover = a.modId" @mouseleave="hover = null" @focus="hover = a.modId" @blur="hover = null" @click="emit('pick', a.modId, chosen.k)">
-              <span>{{ aimText(a) }}</span><small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small>
+              <span>{{ aimText(a) }}</span><small>{{ tierRankLabel(a.tier) }}</small>
             </button>
           </li>
         </ul>

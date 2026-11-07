@@ -6,7 +6,7 @@
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import { craftStage as s } from "../../state/craft-stage";
-import { freshItem } from "../../services/craft-stage/engine";
+import { freshItem, tierRankLabel } from "../../services/craft-stage/engine";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import ModTable from "../../components/for-share/mod-list/ModTable.vue";
 import { openDailyPage } from "../../web/page";
@@ -29,7 +29,7 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
   <div class="daily-band2" data-daily-band2>
     <span v-if="!side" class="daily-band2-head">{{ tr("狙い", "Targets") }}</span>
     <ul v-if="!side" class="daily-aims" data-daily-play-aims>
-      <li v-for="a in aims" :key="a.modId" :class="a.modId === fractured ? 'frac' : ''">{{ aimText(a) }} <small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}{{ a.modId === fractured ? tr("・フラクチャー", " · fractured") : "" }}</small></li>
+      <li v-for="a in aims" :key="a.modId" :class="a.modId === fractured ? 'frac' : ''">{{ aimText(a) }} <small>{{ tierRankLabel(a.tier) }}{{ a.modId === fractured ? tr("・フラクチャー", " · fractured") : "" }}</small></li>
     </ul>
     <div class="daily-band2-btns">
       <button type="button" class="g-btn sm" data-daily-modlist @click="listOpen = true">{{ tr("MOD 一覧", "Mod list") }}</button>

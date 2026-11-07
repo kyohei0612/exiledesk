@@ -5,7 +5,7 @@
 import { goalBlock } from "../../services/simulator/sim-engine";
 import { parseItemText } from "../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextResult } from "../../services/simulator/paste/item-text-types";
-import { tierRankOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
+import { tierRankLabel, tierRankOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
 import { aimTextsOf } from "./daily-gen";
 import { migrateStart, startRarity, type Aim, type StartFrom, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { tr } from "../../i18n/lang";
@@ -43,8 +43,8 @@ export function itemFromText(data: PatchData, text: string): PostItem | string {
 /** エミュのアイテムを読む (エミュの「シミュレーターへ」と同じ渡し方) */
 export function itemFromEmu(data: PatchData, item: StageItem): PostItem {
   const mods = [...item.prefixes, ...item.suffixes].map((m) => {
-    const of = tierRankOf(data, m.modId, 0), text = tr(m.textJa, m.textEn);
-    return { text, modId: m.unrevealed ? null : m.modId, unrevealed: !!m.unrevealed, tier: of && !m.unrevealed ? { label: `T${of - m.tierIndex}` } : null } as ItemTextMod;
+    const known = data.mods.has(m.modId), text = tr(m.textJa, m.textEn);
+    return { text, modId: m.unrevealed ? null : m.modId, unrevealed: !!m.unrevealed, tier: known && !m.unrevealed ? { label: tierRankLabel(tierRankOf(data, m.modId, m.tierIndex), false) } : null } as ItemTextMod;
   });
   return take(data, { en: item.base, ja: item.baseJa }, item.itemLevel, mods, []);
 }
