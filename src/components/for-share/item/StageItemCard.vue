@@ -9,7 +9,7 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
-import { type StageItem, type StageMod, bondedFor, isGem, allMods, unfracturable, classLabel, tagLabel, cardTierName, craftedKindOf } from "../../../services/craft-stage/engine";
+import { type StageItem, type StageMod, bondedFor, isGem, allMods, unfracturable, classLabel, tagLabel, cardTierName, craftedKindOf, isEmotionMod } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import STAT_ORDER from "../../../data/stat-order.json";
 import { fmtChance, isRareChance } from "../../../utils/format-pct";
@@ -165,7 +165,7 @@ function look(m: StageMod): { cls: string; tag: string } {
   // 札は無し: 行の緑の帯で冒涜と分かる (2026-10-17 オーナー「冒涜って文字はいらん」)
   if (m.desecrated) return { cls: "text-rarity-magic", tag: "" };
   // 液化した感情 (ジュエル) で付いた物はデリリウム (2026-10-11 オーナー「デリリウムに変えて」)
-  if (m.crafted && m.modId.includes("/Emotion_")) return { cls: "text-mod-crafted", tag: tr("デリリウム", "Delirium") };
+  if (isEmotionMod(m)) return { cls: "text-mod-crafted", tag: tr("デリリウム", "Delirium") };
   // エッセンスか合金かはエンジンの craftedKindOf (付け方の印ではなく MOD の出どころ。貼り付けた物も、2026-10-24 オーナー「冒涜よろしく MOD の横にエッセンス」。スイッチ essCard)
   const kind = ESS_CARD && craftStage.data.value ? craftedKindOf(craftStage.data.value, m) : null;
   if (kind) return { cls: "text-mod-crafted", tag: kind === "alloy" ? tr("合金", "Alloy") : tr("エッセンス", "Essence") };

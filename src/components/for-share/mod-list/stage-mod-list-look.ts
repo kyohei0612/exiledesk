@@ -2,7 +2,7 @@
  * stage-mod-list-look.ts — StageModList.vue の見た目の表と名前の小物 (2026-10-22 StageModList が 500 行に届いたので分けた。中身は前のまま)。
  * 節の色 (TONE)・重みの出どころの文 (weightNote)・エッセンスの名前 (essName・tierName)
  */
-import { DESECRATION_EXCLUSIVE_COUNT, ESSENCE_KEYS, type ListRow, type ModGroup, type StageItem } from "../../../services/craft-stage/engine";
+import { DESECRATION_EXCLUSIVE_COUNT, ESSENCE_KEYS, essenceKey, isEssenceGroup, type ListRow, type ModGroup, type StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { jewelEmotionJa } from "../../../services/htc/patch";
@@ -16,17 +16,17 @@ const ESS_JA = new Map(Object.values(ESSENCE_KEYS).map((k) => [k.en, k.ja]));
  * 名前はカレンシーの棚と同じ引き方 (パーフェクトの深淵・ヒステリーなど essence-keys に無い物も出る)
  */
 export function essName(r: ListRow, item: StageItem | null): string | null {
-  if (r.group !== "essence" && r.group !== "perfect_essence") return null;
+  if (!isEssenceGroup(r.group)) return null;
   // 完全エッセンスはエンジンの名前 (ListTier.essence)。棚の名前では深淵の完全エッセンスが日本語の画面でも英語のままだった (2026-10-24、スイッチ essTier)
   const perfect = r.group === "perfect_essence" ? r.tiers[0]?.essence : undefined;
   if (perfect && flag("essTier")) return tr(perfect.ja, perfect.en);
-  const key = `essence:${r.group === "perfect_essence" ? "perfect" : "normal"}:${r.id}`;
+  const key = essenceKey(r.group === "perfect_essence" ? "perfect" : "normal", r.id);
   const n = nameOfKey(key, item);
   if (n && n !== key) return n;
   const top = r.tiers[0]?.name;
   return top ? tr(ESS_JA.get(top) ?? jewelEmotionJa(top) ?? top, top) : null;
 }
-export const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
+export const tierName = (r: ListRow, name: string): string => (isEssenceGroup(r.group) ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
 /** 冒涜専用 MOD が候補 3 つに入る数の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT) */
 const exPct = (unit: string, sep: string): string => DESECRATION_EXCLUSIVE_COUNT.map((c) => `${c.exclusive}${unit} ${Math.round(c.rate * 100)}%`).join(sep);
 /** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */

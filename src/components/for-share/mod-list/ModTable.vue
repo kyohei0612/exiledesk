@@ -7,7 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { modListFor, tagLabel, type ListRow, type ListTier, type ModGroup, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { isEssenceGroup, modListFor, tagLabel, type ListRow, type ListTier, type ModGroup, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { fmtPct } from "../../../utils/format-pct";
 import { tr } from "../../../i18n/lang";
@@ -78,7 +78,7 @@ const pct = (x: number): string => fmtPct(x);
 
 /** 節の並び (既定)。普通 → ルーン → 冒涜 → 創生の樹など → 異界 → エッセンス (2026-10-11 オーナー)。エッセンスはマジック用とレア用を 1 つの節に */
 const GROUPS: ModGroup[] = ["normal", "rune", "desecrated", "special", "otherworldly", "essence"];
-const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
+const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && isEssenceGroup(r.group));
 const useGroups = computed(() => (props.groups ? GROUPS.filter((g) => props.groups!.includes(g)) : GROUPS));
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
 const query = ref("");
@@ -322,7 +322,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナー) -->
                     <template v-if="ESS_CHIP && t.essence" />
                     <td v-else-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" :class="NARROW ? '@max-2xl/tcol:hidden' : ''" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
-                    <td v-else-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
+                    <td v-else-if="isEssenceGroup(r.group)" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[NARROW ? '@max-lg/tcol:shrink-0' : '', props.tierOneLine ? 'max-md:w-11' : '']">Lv {{ t.ilvl }}</td>
                     <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[props.tone === 'sky' ? 'text-sky-200' : '', NARROW ? '@max-lg/tcol:shrink-0' : '', props.tierOneLine ? 'max-md:w-10' : '']" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
                     <!-- スマホは行を折り返し、tier-actions の td (data-tier-end より後ろ) は 2 段目いっぱいに (MOD の文が 1〜3 文字ずつ縦に折れた、シミュ部長 29 10-25) -->
