@@ -335,17 +335,15 @@ function onKey(e: KeyboardEvent): void {
   if ((e.ctrlKey || e.metaKey) && ((e.key.toLowerCase() === "z" && e.shiftKey) || e.key.toLowerCase() === "y")) { e.preventDefault(); t.redo(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
-  // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。何も開いていない時の Esc は何もしない
-  // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)
-  if (e.key === "Escape" && !e.defaultPrevented) {
-    // 乗せた時の印 (合流の線の光) は消す。カードは出さなくなったので、Esc 1 回はほかの物に使う (10-27 オーナー「ホバーのカードも一旦出さなくていい」)
-    cardBox.value = null; hoverBox.value = null;
-    if (plus.value) plus.value = null;
-    else if (picking.value) picking.value = null;
-    else if (panel.value) panel.value = null;
-    else if (full.value) void v.toggleFull();
-  }
+  // 何も開いていない時の Esc は何もしない (前はページを閉じてクラフトステージへ出た。2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)。
+  // 乗せた時の印 (合流の線の光) は消す (10-27 オーナー「ホバーのカードも一旦出さなくていい」)
+  if (e.key === "Escape" && !e.defaultPrevented) { cardBox.value = null; hoverBox.value = null; }
 }
+// ＋の選び・戻り先選び・全画面の Esc は共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。箱の重ね窓 panel は上の useDismiss。前はここで自前に順を決め、足りない所の一覧と一緒に 2 つ閉じていた)
+const escOff = (f: () => void) => (): void => { cardBox.value = null; hoverBox.value = null; f(); };
+useDismiss(() => !!plus.value, [], escOff(() => { plus.value = null; }), { escOnly: true });
+useDismiss(() => !!picking.value, [], escOff(() => { picking.value = null; }), { escOnly: true });
+useDismiss(() => !!full.value, [], escOff(() => void v.toggleFull()), { escOnly: true });
 onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });

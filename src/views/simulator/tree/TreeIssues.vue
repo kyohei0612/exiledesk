@@ -4,30 +4,26 @@
 -->
 <script setup lang="ts">
 import type { CheckIssue } from "../../../services/simulator/tree/tree-check";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { ref } from "vue";
 import { tr } from "../../../i18n/lang";
+import { useDismiss } from "../../../utils/use-dismiss";
+import { holesCount } from "./hole-check";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 
 /** busy = 精査の途中 (見出しに進みの札。穴は辿った人から順に足される) */
 defineProps<{ issues: CheckIssue[]; lower: boolean; boxName: (id: string) => string; busy?: { text: string; n?: number; of?: number } | null }>();
 const emit = defineEmits<{ go: [id: string]; close: [] }>();
 const root = ref<HTMLElement | null>(null);
-// Esc・枠の外で閉じる (10-26 モンキー 7 の 19、メモ feedback-click-outside-cancel)。開く札 (足りない所 n・▾) は札の側で開け閉めする
-const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") emit("close"); };
-const onDown = (e: PointerEvent): void => {
-  const el = e.target as Element | null;
-  if (!el || root.value?.contains(el) || el.closest("[data-tree-test-holes], [data-tree-test-list]")) return;
-  emit("close");
-};
-onMounted(() => { window.addEventListener("keydown", onKey); document.addEventListener("pointerdown", onDown, true); });
-onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", onDown, true); });
+// Esc・枠の外で閉じる (10-26 モンキー 7 の 19、メモ feedback-click-outside-cancel)。開く札 (足りない所 n・▾) は札の側で開け閉めする (keep)。
+// 共通の useDismiss (U-21: Esc は一番後に開いた 1 つだけ。前は自前の Esc で、ページの Esc と一緒に 2 つ閉じていた)。押した物にはそのまま届ける (swallow: false、前と同じ)
+useDismiss(() => true, [root], () => emit("close"), { swallow: false, keep: "[data-tree-test-holes], [data-tree-test-list]" });
 </script>
 
 <template>
   <div ref="root" data-tree-issues role="dialog" :aria-label="tr('足りない所', 'Missing')" class="flex max-h-[min(60vh,520px)] w-[440px] max-w-[calc(100vw-2rem)] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.7)]"
     :class="[issues.length ? 'border-rose-500/40 bg-[#1c0f10]' : busy ? 'border-white/10 bg-[#15110c]' : 'border-emerald-500/40 bg-[#0d1a12]']">
     <div class="flex items-center gap-2">
-      <b :class="issues.length ? 'text-rose-200' : busy ? 'text-[#d8ccb4]' : 'text-emerald-200'">{{ issues.length ? tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) : busy ? tr("精査中", "Checking") : tr("足りない所は無かった (5 人で全部の枝を通した)", "Nothing missing (all branches walked by 5 runs)") }}</b>
+      <b :class="issues.length ? 'text-rose-200' : busy ? 'text-[#d8ccb4]' : 'text-emerald-200'">{{ issues.length ? holesCount(issues.length) : busy ? tr("精査中", "Checking") : tr("足りない所は無かった (5 人で全部の枝を通した)", "Nothing missing (all branches walked by 5 runs)") }}</b>
       <!-- 穴と箱の赤い「!」の意味 (10-24 モンキー初めての人の回 5: 書いていなかった) -->
       <BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
       <button type="button" class="g-btn sm ml-auto" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>

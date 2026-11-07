@@ -2,7 +2,7 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, OMEN_FOR, omenBlock, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, kindOf, OMEN_FOR, omenBlock, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { ECHO as ABYSSAL_ECHO_OMEN } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
@@ -141,9 +141,8 @@ export function startWith(data: PatchData, base: string, itemLevel: number, s: S
     item = r.item;
   }
   for (const m of s.mods) {
-    // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける
-    const src = data.mods.get(m.modId)?.source;
-    const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"), rng);
+    // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける (エッセンスの MOD かはエンジンの isCraftedSource)
+    const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : isCraftedSource(data.mods.get(m.modId)?.source) ? "e" : "n"), rng);
     if (!r.applied) return { item: r.item, note: r.reason ?? null };
     item = r.item;
   }

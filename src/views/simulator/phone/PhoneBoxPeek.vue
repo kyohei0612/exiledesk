@@ -5,13 +5,12 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { treeRowTags } from "../tree/tree-row-tags";
+import { boxCardOf } from "../tree/box-card";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
-import { fixedValues } from "../tree/tree-fixed-values";
 import { stepOf } from "../tree/tree-fail";
 import { usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
@@ -22,11 +21,12 @@ const t = useTree();
 const q = usePhoneQuiz();
 const box = computed(() => t.doc.value.boxes[props.id]);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
-const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.id, 1).item : null));
-const card = computed(() => (s.data.value && item.value ? fixedValues(s.data.value, t.doc.value, item.value) : item.value));
-const tags = computed(() => (s.data.value && card.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], card.value, box.value) : null));
+/** その箱のカード (PC の箱と同じ box-card の 1 本: 見本 → 値を揃える (神の目標値も) → 札) */
+const card = computed(() => (s.data.value && box.value ? boxCardOf(s.data.value, t.doc.value, props.id) : null));
 /** カードの幅 = 窓の中いっぱい (窓の左右 12 + 中の余白 12) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 48;
+// Esc は共通の useDismiss の積み (親の PhoneBoxSheet より後に開くので、この窓だけ先に閉じる。前は親が代わりに閉じていた)。外押しは後ろの @click.self のまま
+useDismiss(() => !!box.value, [], () => emit("close"), { escOnly: true });
 </script>
 
 <template>
@@ -34,7 +34,7 @@ const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 48;
     <div role="dialog" aria-modal="true" class="flex max-h-[86vh] w-full flex-col rounded-xl border-2 border-[#b08a3c] bg-sim-panel shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-2 pt-2 text-center">
         <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }} · {{ q.boxTitle(id) }}</p>
-        <StageItemCard :row-group="null" v-if="card" class="mx-auto mt-2" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+        <StageItemCard :row-group="null" v-if="card" class="mx-auto mt-2" :item="card.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="card.tags" />
         <p data-phone-peek-hand class="mx-1.5 mt-2 break-words rounded-lg border border-amber-300/50 bg-[#2a2014] px-2 py-2 text-[13px] text-amber-50">
           {{ box.hand ? tr(`ここで打つ: ${handLabel(box.hand)}`, `Used here: ${handLabel(box.hand)}`) : tr("ここで打つ手はまだ無い", "No craft here yet") }}
         </p>

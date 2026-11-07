@@ -12,10 +12,8 @@ import Icon from "../../../components/ui/Icon.vue";
 import { mergedAway, mergedInto } from "../../../services/simulator/tree/tree-merge-open";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
-import { fixedValues } from "./tree-fixed-values";
+import { boxCardOf } from "./box-card";
 import { previewUse } from "../../../services/craft-stage/engine";
-import { routeRowTags, treeRowTags } from "./tree-row-tags";
 import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
 import { CHIP_HALF } from "./tree-lines";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
@@ -81,22 +79,18 @@ const unset = computed(() => !!props.issue);
 const cantHand = computed(() => (s.data.value && props.box.hand ? cantHandOf(s.data.value, t.doc.value, props.box.id) : null));
 const parentCant = computed(() => !!s.data.value && !!props.box.parent && !!cantHandOf(s.data.value, t.doc.value, props.box.parent));
 const doneShown = computed(() => !!props.box.done && !(props.box.done === "main" && parentCant.value));
-const sampled = computed(() => (s.data.value ? shapeSampleWithNote(s.data.value, t.doc.value, props.box.id) : null));
-const sample = computed(() => sampled.value?.item ?? null);
+/** 箱のカード (見本 → 値を揃える → 札、box-card の 1 本。スマホの道の画面はエッセンスの行を名前で) */
+const sampled = computed(() => (s.data.value ? boxCardOf(s.data.value, t.doc.value, props.box.id, { box: props.box, routeNames: props.routeNames }) : null));
+const sample = computed(() => sampled.value?.sample ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
-const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value, props.box.id) : null));
+const cardItem = computed(() => sampled.value?.item ?? null);
 /** ヒネコラで持っている所は枠を紫に (S-39、開発版だけ。11-05 オーナー「枠を紫にしようかヒネコラで持ってる挙動」): hold = ヒネコラの結果の箱 (手は「持つ」)、seenOut = そこに持った手の結果の箱 */
 const hold = computed(() => holdsAt(t.doc.value, props.box.id));
 const seenOut = computed(() => foreseenAt(t.doc.value, props.box.id));
 /** 持った手に当たりが無い (狙い無し = 全部ハズレ、S-39。11-05 ブラック「画面で『狙いを ☑ して』と分かるように」) */
 const allMiss = computed(() => noHitHeld(t.doc.value, props.box.id));
-const cardTags = computed(() => {
-  const d = s.data.value, it = cardItem.value;
-  if (!d || !it) return null;
-  const tags = treeRowTags(d, t.doc.value, props.box.unwanted ?? [], it, props.box);
-  return props.routeNames ? routeRowTags(d, t.doc.value, it, tags) : tags;
-});
+const cardTags = computed(() => sampled.value?.tags ?? null);
 /** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
 const CHECK_PART = { out: ["結果の種類", "result kind"], aim: ["狙い", "target"], hand: ["打つ手", "craft"], link: ["矢印の先", "link"] } as const;
 const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PART[k][0], CHECK_PART[k][1])).join(" · "));

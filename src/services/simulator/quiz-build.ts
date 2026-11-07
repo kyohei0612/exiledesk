@@ -8,8 +8,8 @@
  */
 import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } from "./quiz-recipe";
 import { runeEnForId } from "./pattern";
-import { sideLimits } from "./sim-methods";
-import { omenFor, sideOfMod, type PatchData, type StageItem, type StageSide, type Force, CRAFTED_SOURCES } from "../craft-stage/engine";
+import { methodsFor, sideLimits } from "./sim-methods";
+import { omenFor, sideOfMod, type PatchData, type StageItem, type StageSide, type Force } from "../craft-stage/engine";
 import { membersOf } from "./recipe-defs";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
@@ -42,14 +42,8 @@ export interface QuizSimIn {
  */
 export const GATE_CAPS = { spam: 3000, step: 300 } as const;
 
-/** その MOD に使える付け方 (最初が既定)。シミュレーターの 2 狙う MOD と同じ */
-export function methodsFor(data: PatchData, modId: string): SimMethod[] {
-  const m = data.mods.get(modId);
-  if (!m) return ["exalt"];
-  if (m.source === "desecrated") return ["desecrate"];
-  if (CRAFTED_SOURCES.has(m.source)) return ["essence"];
-  return ["exalt", "chaos", "augment", "desecrate"];
-}
+/** その MOD に使える付け方 (最初が既定) は sim-methods の methodsFor 1 本 (シミュの 2 狙う MOD と同じ) */
+export { methodsFor };
 export const methodOfTarget = (data: PatchData, t: { modId: string; method?: SimMethod }): SimMethod =>
   t.method === "fracture" ? "fracture" : t.method && methodsFor(data, t.modId).includes(t.method) ? t.method : methodsFor(data, t.modId)[0]!;
 

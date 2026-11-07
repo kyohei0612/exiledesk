@@ -6,7 +6,7 @@
  * 打てない物を理由つきで選べなくする (オーナー「ルーン嵌めてないのにコルの MOD とか、エッセンス 2 回目とか、選択できずにグレーアウト、理由も」)。
  * 状態は「狙いが当たった」として前の手から積む (外れは見ない。並べる時の目安)。回していた recipe-sim.ts は 11-02 に消した (どこからも使っていなかった)
  */
-import { runeIdByName, RUNES } from "../craft-stage/engine";
+import { FACTION_TAG, runeIdByName, RUNES } from "../craft-stage/engine";
 
 export type PatternKind = "transmute" | "augment" | "regal" | "alchemy" | "exalt" | "chaos" | "desecrate" | "essence" | "essence_perfect" | "annul" | "rune" | "fracture";
 /** 外れた時: そのまま次へ / 同じ手をもう一度 / 外れを消去してもう一度 / 最初から (フラクチャー済みのベースから) */
@@ -97,7 +97,8 @@ export interface Reaction { pre?: string | null; then: "repeat" | "next" | "rest
 /** quiz = クイズのレシピの答え (ADR-003)。前の打って作る (play、ADR-002) は 2026-10-12 に外した */
 export interface Pattern { name: string; steps: PatternStep[]; off?: boolean; quiz?: import("./quiz-build").QuizRules }
 
-export const FACTION_OMEN: Record<string, string> = { OmenoftheSovereign: "ulaman_mod", OmenoftheLiege: "amanamu_mod", OmenoftheBlackblooded: "kurgal_mod" };
+/** 勢力のお告げ → 冒涜 MOD のタグ = エンジンのお告げの層の FACTION_TAG (G-1 V-3 J-33。前はここに同じ表の写し) */
+export const FACTION_OMEN: Readonly<Record<string, string>> = FACTION_TAG;
 /** 「MOD が消えたら」の戻り先: 新しいベースで最初から */
 export const LOST_RESTART = -1;
 /** 打ち直せない手 (マジックにしか打てない・レアリティが変わる)。ここで付けた物が消えたら最初から */

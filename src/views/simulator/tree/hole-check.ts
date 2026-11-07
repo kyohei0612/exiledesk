@@ -19,6 +19,8 @@ export const holeTitle = (): string => tr("穴チェック: 5 人をエンジン
 export const finalName = (): string => tr("最終チェック", "Final check");
 export const finalTitle = (): string => tr("最終チェック: ハズレを整理してから、5 人を辿り 30 人を回して止まる所を探す。止まりが 0 で 100 人回せる", "Final check: sort the misses, then walk 5 runs and run 30 to find where runs stop. Zero stops unlocks the 100-run");
 export const finalLockedWhy = (): string => tr("最終チェックに合格すると回せる", "Pass the final check to run");
+/** 足りない所の件数の見出し (PC の一覧 TreeIssues・スマホの帯と重ね窓 PhoneIssues で同じ文) */
+export const holesCount = (n: number): string => tr(`足りない所 ${n} 件`, `${n} missing`);
 /** 足りない所の札に乗せた時 */
 export const holesShowTitle = (): string => tr("足りない所を見る (箱の ! と一覧を出す、直すと次の穴チェックで消える)", "Show what is missing (box marks and list; they clear on the next gap check once fixed)");
 /** 走行の人数のまとめ (帯) */

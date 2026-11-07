@@ -7,6 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openRecipesPage } from "../../../web/page";
@@ -142,20 +143,21 @@ async function shareX(): Promise<void> {
 }
 /** 小窓 (レシピ・名前・シェア) を全部閉じる */
 function closeAll(): void { pop.value = false; naming.value = false; share.value = false; askDel.value = null; }
-function onDown(e: PointerEvent): void { if ((pop.value || naming.value || share.value) && root.value && !root.value.contains(e.target as Node)) closeAll(); }
+// 小窓の外を押す・Esc で全部閉じる = 共通の useDismiss (U-21: Esc は一番後に開いた 1 つだけ。前は window の捕まえる段で先に取り、後から開いた窓より先に効いていた)。
+// 押した物にはそのまま届ける (swallow: false、前と同じ)
+useDismiss(() => pop.value || naming.value || share.value, [root], closeAll, { swallow: false });
 /**
  * Ctrl+S (Mac は Cmd+S) = 保存 (ブラウザの「ページを保存」は止める。文字の欄に入力中でも効く)。PC のツリーの帯だけ (スマホ・完成形の設定の右端の「レシピ ▾」だけの帯では効かない)。
  * 10-26 オーナー「コントロールSだっけホットキー保存させよう」
  */
 const phone = usePhone();
 function onKey(e: KeyboardEvent): void {
-  if (e.key === "Escape" && (pop.value || naming.value || share.value)) { closeAll(); e.stopImmediatePropagation(); return; }
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !props.view && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
 // 小窓を開いた時に向きと高さを測る (placePop)
 watch([pop, naming, share], ([a, b, c]) => { if (a || b || c) placePop(); });
-onMounted(() => { window.addEventListener("pointerdown", onDown, true); window.addEventListener("keydown", onKey, true); void seedDevRecipes(); });
-onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true); window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
+onMounted(() => { window.addEventListener("keydown", onKey, true); void seedDevRecipes(); });
+onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
 </script>
 
 <template>

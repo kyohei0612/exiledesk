@@ -12,8 +12,8 @@
  */
 import type { JaEn } from "./quiz-tutorials";
 import { amuletCourse, bootsCourse, glovesCourse, spearCourse, wandCourse, type CourseRecipe } from "./course-recipes";
-import { assignSlots, routeOf, ruleFor, situationOf, type QuizAction, type QuizRecipe, type QuizSlot } from "../simulator/quiz-recipe";
-import { type StageItem } from "../craft-stage/engine";
+import { assignSlots, quizHit, routeOf, ruleFor, situationOf, type QuizAction, type QuizRecipe, type QuizSlot } from "../simulator/quiz-recipe";
+import { type PatchData, type StageItem } from "../craft-stage/engine";
 
 export interface CraftCourse {
   id: string;
@@ -52,12 +52,15 @@ export const CRAFT_COURSES: CraftCourse[] = [
 /** 付ける順番の札 (完成の形の並び。途中だけ使う札は外す) */
 export const courseSlots = (c: CraftCourse): QuizSlot[] => c.recipe.routes[0]!.goal.filter((s) => !s.temp);
 /** 札ごとの状態 (0 無い / 1 段が低い / 2 付いている / 3 固定) */
-export function courseState(c: CraftCourse, it: StageItem): Record<string, number> {
-  return assignSlots(it, routeOf(c.recipe, it).goal).state;
+/** data = 当たりの判定をクイズ・エミュの「狙う」と同じ sameText にする (quiz-recipe の quizHit) */
+export function courseState(c: CraftCourse, it: StageItem, data?: PatchData | null): Record<string, number> {
+  const o = quizHit(data);
+  return assignSlots(it, routeOf(c.recipe, it, o).goal, o).state;
 }
 /** 今やる手 (今の状況に当たるレシピの手) と、その手の番号 */
-export function courseMove(c: CraftCourse, it: StageItem): { action: QuizAction; index: number } | null {
-  const route = routeOf(c.recipe, it);
-  const r = ruleFor(route.rules, situationOf(it, route.goal));
+export function courseMove(c: CraftCourse, it: StageItem, data?: PatchData | null): { action: QuizAction; index: number } | null {
+  const o = quizHit(data);
+  const route = routeOf(c.recipe, it, o);
+  const r = ruleFor(route.rules, situationOf(it, route.goal, undefined, o));
   return r ? { action: r.do, index: route.rules.indexOf(r) } : null;
 }

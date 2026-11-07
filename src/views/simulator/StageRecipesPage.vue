@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { useDismiss } from "../../utils/use-dismiss";
 import Icon from "../../components/ui/Icon.vue";
 import { useViewOnlyWidth } from "../../utils/use-phone";
 import { quickSave, unsaved } from "./tree/tree-save";
@@ -131,14 +132,15 @@ async function importFile(e: Event): Promise<void> {
 }
 
 function back(): void { openTreePage(); }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !renaming.value) { back(); } }
+// Esc でツリーへ戻る = 共通の useDismiss の積みの一番下 (U-21: 上に開いた物が先に閉じる。名前の欄の Esc は欄が止める)
+useDismiss(() => true, [], () => { if (!renaming.value) back(); }, { escOnly: true });
 let before = 0;
-onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); void seedDevRecipes(); });
+onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); void seedDevRecipes(); });
 // ツリーから来た作りかけの木を、ここからシミュの外へ出る時も聞く (ツリーのページと同じ。ツリーへ戻る時は聞かない。page.ts の mustAsk がツリーのページの間だけなので、今は効かない)。
 // 外へ出たら木を白紙に戻す (10-24 夜、作業中の木は持ち越さない)。ただし聞けていない間は、未保存の変更がある木は黙って消さない
 onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value, { save: () => void quickSave() }));
 onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value) t.resetAll(); });
-onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
+onBeforeUnmount(() => { clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
 </script>
 
 <template>

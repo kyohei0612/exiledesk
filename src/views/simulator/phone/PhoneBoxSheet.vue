@@ -5,17 +5,15 @@
   動くのは下のボタンだけ: 「この回の質問へ」(答え直す) / 戻り先を選んでいる時は「ここへ戻す」
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import TreeNote from "../tree/TreeNote.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { treeRowTags } from "../tree/tree-row-tags";
+import { boxCardOf } from "../tree/box-card";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { routeText, runText } from "../tree/tree-fail";
 import { useTree } from "../tree/use-tree";
-import { fixedValues } from "../tree/tree-fixed-values";
-import type { StageItem } from "../../../services/craft-stage/types";
 import { mapPick, phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneMap from "./PhoneMap.vue";
 import { tr } from "../../../i18n/lang";
@@ -27,13 +25,11 @@ const q = usePhoneQuiz();
 const id = computed(() => sheet.value?.id ?? "");
 const box = computed(() => t.doc.value.boxes[id.value]);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
-const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, id.value, 1).item : null));
-const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
+/** その箱のカード (PC の箱と同じ box-card の 1 本: 見本 → 値を揃える (神の目標値も) → 札) */
+const card = computed(() => (s.data.value && box.value ? boxCardOf(s.data.value, t.doc.value, id.value) : null));
 /** 箱のメモを書いている (PC の TreeNote をそのまま、文だけ) */
 const noteEdit = ref(false);
 watch(id, () => { noteEdit.value = false; });
-/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
-const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** カードの幅 = 窓の中いっぱい (左右の余白 12 ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 24;
 const name = (x: string): string => q.boxTitle(x);
@@ -65,10 +61,9 @@ function returnHere(): void {
 // 木の中の位置: 今の段を横に書き、小さい箱を押すとその箱のアイテムと打つカレンシーの窓 (10-27 昼オーナー)
 const peek = ref<string | null>(null);
 watch(id, () => { peek.value = null; });
-// Esc は上の窓から 1 つずつ (アイテムの窓が開いていればそれだけ閉じる)
-const onKey = (e: KeyboardEvent): void => { if (e.key !== "Escape") return; if (peek.value) peek.value = null; else sheet.value = null; };
-onMounted(() => window.addEventListener("keydown", onKey));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
+// Esc は上の窓から 1 つずつ (アイテムの窓 PhoneBoxPeek は自分の useDismiss で先に閉じる)。
+// 下から出る窓の形は共通の ModalShell に無いので殻は自前のまま、Esc だけ共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。前は自前の Esc で、重なった窓・中の段の表と一緒に 2 つ閉じていた)。外押しは後ろの @click.self のまま (escOnly)
+useDismiss(() => !!box.value, [], () => { sheet.value = null; }, { escOnly: true });
 </script>
 
 <template>
@@ -85,7 +80,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
           <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(id) }}</span>
         </p>
         <p class="break-words text-[11px] text-sim-dim">{{ q.pathText(id) }}</p>
-        <StageItemCard :row-group="null" v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+        <StageItemCard :row-group="null" v-if="card" class="mt-2" :item="card.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="card.tags" />
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
         <p v-else-if="box.done" class="mt-2 text-[13px]" :class="box.done === 'fail' ? 'text-rose-300' : 'text-emerald-300'">{{ doneWord(box.done) }}</p>
         <p v-if="run" data-phone-sheet-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[id] ? 'text-rose-200' : 'text-amber-100/90'">{{ run }}</p>

@@ -3,15 +3,20 @@
  * 普通の MOD は 高貴ガチャ / カオススパム / 増強スパム / 冒涜 / フラクチャー から選ぶ。冒涜の MOD は冒涜、エッセンス・合金の MOD はエッセンスに決まっている (選ばせない)。
  * 付け方のポップアップ (SimMethodPop・methodsOff) は 2026-10-23 にクラフト台の中の旧シミュと一緒に消えた
  */
-import { type PatchData, freshItem, limitOf } from "../craft-stage/engine";
+import { type PatchData, freshItem, isCraftedSource, limitOf } from "../craft-stage/engine";
 import type { SimMethod } from "./quiz-build";
 
-/** その MOD で選べる付け方 (1 つなら選ばせずにそれで足す) */
+/**
+ * その MOD に使える付け方 (最初が既定、1 つなら選ばせずにそれで足す)。シミュとクイズの組み立て (quiz-build の methodOfTarget) で同じ 1 本
+ * (G-1 V-3 J-30、11-07。前は同じ名前の 2 つで、片方は fracture あり・エッセンスの判定が文字の直書き)。エッセンス・合金の MOD かはエンジンの isCraftedSource。
+ * フラクチャーは付け方の並びに入れない (狙いに ✦ の印で別に持つ、methodOfTarget)。MOD が無ければ高貴だけ
+ */
 export function methodsFor(d: PatchData | null, modId: string): SimMethod[] {
-  const src = d?.mods.get(modId)?.source;
-  if (src === "desecrated") return ["desecrate"];
-  if (src === "essence" || src === "perfect_essence") return ["essence"];
-  return ["exalt", "chaos", "augment", "desecrate", "fracture"];
+  const m = d?.mods.get(modId);
+  if (!m) return ["exalt"];
+  if (m.source === "desecrated") return ["desecrate"];
+  if (isCraftedSource(m.source)) return ["essence"];
+  return ["exalt", "chaos", "augment", "desecrate"];
 }
 
 /** シミュレーターの狙い 1 つ (旧 state/sim-state.ts の simTargets と同じ形) */

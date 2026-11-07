@@ -9,18 +9,16 @@
 import type { PatchData, StageSide } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import type { magicAugOdds } from "./sim-odds";
-import { omenFor, sideOfMod } from "../craft-stage/engine";
+import { essenceLevelOf, omenFor, sideOfMod } from "../craft-stage/engine";
 
 /** マジックをレアにするエッセンスで付ける狙い (無ければ null) */
 export function magicEssenceTarget(data: PatchData, targets: readonly SimTargetIn[]): SimTargetIn | null {
   return targets.find((t) => methodOfTarget(data, t) === "essence" && data.mods.get(t.modId)?.source === "essence") ?? null;
 }
 
-/** その段のエッセンスの棚のキー (段の名前が Lesser / Greater / それ以外 = 無印) */
+/** その段のエッセンスの棚のキー (段の名前から段の強さを読むのはエンジンの essenceLevelOf。前は自前の正規表現) */
 function essenceKeyFor(data: PatchData, modId: string, minTierIndex: number): string {
-  const name = data.mods.get(modId)?.tiers[minTierIndex]?.name ?? "";
-  const grade = /^Lesser/.test(name) ? "lesser" : /^Greater/.test(name) ? "greater" : "normal";
-  return `essence:${grade}:${modId}`;
+  return `essence:${essenceLevelOf(data.mods.get(modId)?.tiers[minTierIndex]?.name)}:${modId}`;
 }
 
 /**

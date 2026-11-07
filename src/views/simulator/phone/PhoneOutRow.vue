@@ -7,8 +7,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useTree } from "../tree/use-tree";
-import { fixedValues } from "../tree/tree-fixed-values";
-import type { StageItem } from "../../../services/craft-stage/types";
+import { boxCardOf } from "../tree/box-card";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK, boxesEn } from "../tree/tree-names";
@@ -18,8 +17,6 @@ import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../
 import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { treeRowTags } from "../tree/tree-row-tags";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -146,12 +143,10 @@ const backKind = computed(() => (state.value !== "back" ? null : box.value?.back
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
 const run = computed(() => runText(phoneRun.value, props.boxId));
 /** この結果のアイテムと、戻り先の箱のアイテム (いつも開いたまま、10-26 オーナー「アイテムは基本展開」) */
-const itemOf = (id: string | null) => (s.data.value && id && t.doc.value.boxes[id] ? sampleOf(s.data.value, t.doc.value, id, 1).item : null);
-const item = computed(() => itemOf(props.boxId));
-const backItem = computed(() => (backTo.value && backTo.value !== "start" ? itemOf(backTo.value) : null));
-const tagsOf = (id: string, it: ReturnType<typeof itemOf>) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[id]?.unwanted ?? [], it, t.doc.value.boxes[id]) : null);
-/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
-const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
+/** 箱のカード (PC の箱と同じ box-card の 1 本: 見本 → 値を揃える (神の目標値も) → 札) */
+const cardOfBox = (id: string | null) => (s.data.value && id ? boxCardOf(s.data.value, t.doc.value, id) : null);
+const item = computed(() => cardOfBox(props.boxId));
+const backItem = computed(() => (backTo.value && backTo.value !== "start" ? cardOfBox(backTo.value) : null));
 /** カードの幅 = 行の中いっぱい (ページの余白 16 + 行の枠 2 + 行の左右の余白 12)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
 /**
@@ -183,7 +178,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       {{ sit[0] }}
     </p>
     <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-sim-body">{{ sit[1] }}</p>
-    <StageItemCard :row-group="null" v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
+    <StageItemCard :row-group="null" v-if="item" data-phone-out-item class="mx-auto mt-2" :item="item.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="item.tags" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
   </div>
@@ -212,7 +207,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
-        <StageItemCard :row-group="null" class="mx-auto" :item="cardOf(backItem)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 14" compact :row-tags="tagsOf(backTo, backItem)" />
+        <StageItemCard :row-group="null" class="mx-auto" :item="backItem.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 14" compact :row-tags="backItem.tags" />
       </div>
       <div class="mt-2 flex flex-wrap justify-center gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>

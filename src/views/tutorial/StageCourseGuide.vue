@@ -10,6 +10,7 @@ defineOptions({ inheritAttrs: false });
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { course, courseBases, courseView, restartCourse } from "../../state/tutorial/craft-course";
 import { aimLabel, OMEN_KEY } from "../../services/craft-stage/engine";
+import { aimNameBare, courseLevel } from "./guide-words";
 import { tr } from "../../i18n/lang";
 import { displayCurrency } from "../../state/display-currency";
 import Icon from "../../components/ui/Icon.vue";
@@ -20,12 +21,7 @@ import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import type { QuizSlot } from "../../services/simulator/quiz-recipe";
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
-const LEVEL: Record<number, { label: JaEn; chip: string }> = {
-  1: { label: ["入門", "Intro"], chip: "bg-emerald-500/25 text-emerald-100" },
-  2: { label: ["初級", "Easy"], chip: "bg-sky-500/25 text-sky-100" },
-  3: { label: ["中級", "Medium"], chip: "bg-amber-500/25 text-amber-100" },
-  4: { label: ["上級", "Hard"], chip: "bg-rose-500/25 text-rose-100" },
-};
+/** 級の名前と色は guide-words の 1 か所 (前は写しで級 4 の英語が Hard、ほかの画面は Advanced) */
 const SIDE: Record<QuizSlot["side"], JaEn> = { prefix: ["プレフィックス", "Prefix"], suffix: ["サフィックス", "Suffix"] };
 const KIND: Partial<Record<QuizSlot["kind"], { label: JaEn; cls: string }>> = {
   fractured: { label: ["固定", "Fractured"], cls: "bg-sky-500/20 text-sky-200" },
@@ -33,7 +29,7 @@ const KIND: Partial<Record<QuizSlot["kind"], { label: JaEn; cls: string }>> = {
   essence: { label: ["エッセンス", "Essence"], cls: "bg-violet-500/20 text-violet-200" },
   crafted: { label: ["作った", "Crafted"], cls: "bg-violet-500/20 text-violet-200" },
 };
-const modName = (m: QuizSlot["mods"][number]): string => (m.minTierIndex === 0 ? aimLabel(s.data.value, { ...m, label: m.modId }).replace(/ \((T\d+ 以上|T\d+\+)\)$/, "") : aimLabel(s.data.value, { ...m, label: m.modId }));
+const modName = (m: QuizSlot["mods"][number]): string => (m.minTierIndex === 0 ? aimNameBare(s.data.value, { ...m, label: m.modId }) : aimLabel(s.data.value, { ...m, label: m.modId }));
 const slotName = (sl: QuizSlot): string => (!sl.mods.length ? tr("何でも", "Anything") : sl.mods.length > 1 ? tr("次のどれか", "Any of these") : modName(sl.mods[0]!));
 
 /** 付ける順番の行: 同じ側の「何でも」はまとめて 1 行 (× N、付いた数) */
@@ -70,7 +66,7 @@ const cost = computed(() => s.log.value[s.log.value.length - 1]?.out.cost.cumula
   <StageTopicGuide v-if="topic" />
   <section v-if="course && courseView" data-course-guide class="g-panel p-3 text-[12px]">
     <header class="flex flex-wrap items-center gap-2">
-      <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[course.level]!.chip">{{ t2(LEVEL[course.level]!.label) }}</span>
+      <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="courseLevel(course.level)!.chip">{{ t2(courseLevel(course.level)!.label) }}</span>
       <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("付ける順番", "Order to add") }}</b>
       <a v-if="course.video.id" :href="`https://www.youtube.com/watch?v=${course.video.id}`" target="_blank" rel="noopener" class="text-[11px] text-[var(--exile-color-text-tertiary)] underline-offset-2 hover:underline">{{ t2(course.video.title) }}</a>
       <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ t2(course.video.title) }}</span>

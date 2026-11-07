@@ -9,7 +9,7 @@ import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { tr } from "../../../i18n/lang";
 import type { Aim } from "../../../services/simulator/tree/tree-model";
 import { toCss } from "../../../utils/zoom";
-import { swallowNextClick } from "../../../utils/swallow-click";
+import { useDismiss } from "../../../utils/use-dismiss";
 import Icon from "../../../components/ui/Icon.vue";
 import { ATTACH_WAYS, attachIn, detachIn, wayBlock, wayName, wayOfAim, type AttachWay } from "./tree-attach";
 import { useTree } from "./use-tree";
@@ -39,7 +39,7 @@ const label = computed(() => {
 
 // ── プルダウン (body に出す固定の小窓。ModAddPicker と同じ置き方・閉じ方) ─────
 const open = ref(false);
-const btn = ref<HTMLButtonElement | null>(null);
+const btn = ref<HTMLButtonElement | null>(null), menu = ref<HTMLElement | null>(null);
 const pos = ref({ left: 0, top: 0, above: false });
 const W = 200;
 function place(): void {
@@ -53,27 +53,16 @@ function place(): void {
 function close(): void {
   open.value = false;
   why.value = null;
-  document.removeEventListener("pointerdown", outside, true);
   window.removeEventListener("scroll", close, true);
-  document.removeEventListener("keydown", onKey);
 }
-function outside(e: PointerEvent): void {
-  const el = e.target as HTMLElement | null;
-  if (btn.value?.contains(el) || el?.closest?.("[data-mod-attach-ways]")) return;
-  close();
-  swallowNextClick();
-}
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape") { e.preventDefault(); close(); } }
+// 枠 (ボタンと小窓) の外を押す・Esc で閉じる = 共通の useDismiss (U-21: Esc は一番後に開いた 1 つだけ。前は自前の Esc で、下の段の表と一緒に 2 つ閉じていた)
+useDismiss(() => open.value, [btn, menu], close, { keep: "[data-mod-attach-ways]" });
 function toggle(): void {
   if (open.value) { close(); return; }
   simOp("attach-open");
   place();
   open.value = true;
-  void nextTick(() => {
-    document.addEventListener("pointerdown", outside, true);
-    window.addEventListener("scroll", close, true);
-    document.addEventListener("keydown", onKey);
-  });
+  void nextTick(() => { window.addEventListener("scroll", close, true); });
 }
 onBeforeUnmount(close);
 const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.top}px`, width: `${W}px`, transform: pos.value.above ? "translateY(-100%)" : undefined }));
@@ -85,7 +74,7 @@ const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.t
       :title="here ? tr('押すと付け方を替える・外す', 'Click to change how it is added, or remove it') : (block ?? tr(`${rank} 以上を完成の狙いにする (付け方を選ぶ)`, `Make ${rank}+ a final target (choose how)`))"
       @click.stop="toggle">{{ label }}<Icon name="chevron-down" class="ml-0.5 size-3" /></button>
     <Teleport to="body">
-      <div v-if="open" data-mod-attach-ways role="menu" class="fixed z-[360] overflow-hidden rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]" :style="style">
+      <div v-if="open" ref="menu" data-mod-attach-ways role="menu" class="fixed z-[360] overflow-hidden rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]" :style="style">
         <p class="px-3 pb-1 pt-0.5 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${rank} 以上の付け方`, `How to add ${rank}+`) }}</p>
         <!-- 付けられない物も残して灰色。disabled にすると乗せても理由が出ないので aria-disabled (エミュと同じ) -->
         <button v-for="w in ATTACH_WAYS" :key="w" type="button" role="menuitem" class="flex w-full items-center px-3 py-1.5 text-left text-[13px] max-md:py-2.5"

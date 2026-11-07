@@ -5,11 +5,12 @@
   窓の行を押すと、その箱の重ね窓 (案 B) か、閉じていればその箱の質問へ
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { computed, ref, watchEffect } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import { useTree } from "../tree/use-tree";
 import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
 import { phoneCheck, sheet, testedKey, usePhoneQuiz } from "./use-phone-quiz";
-import { holeAgain, holeBusy, holeName } from "../tree/hole-check";
+import { holeAgain, holeBusy, holeName, holesCount } from "../tree/hole-check";
 import { tr } from "../../../i18n/lang";
 
 const t = useTree();
@@ -34,9 +35,8 @@ function open(id: string): void {
   listOpen.value = false;
   sheet.value = { id, issue: issues.value.filter((x) => x.boxId === id).map((x) => x.text).join(" / ") };
 }
-const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") listOpen.value = false; };
-onMounted(() => window.addEventListener("keydown", onKey));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
+// 下から出る窓の形は共通の ModalShell に無いので殻は自前のまま、Esc だけ共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。前は自前の Esc で、重なった窓・中の段の表と一緒に 2 つ閉じていた)。外押しは後ろの @click.self のまま (escOnly)
+useDismiss(() => listOpen.value && issues.value.length > 0, [], () => { listOpen.value = false; }, { escOnly: true });
 </script>
 
 <template>
@@ -44,7 +44,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
   <button v-if="!tested" type="button" data-phone-test class="flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-white/[0.06] px-3 text-[13px] text-sim-body hover:bg-white/10" @click="test">{{ holeName() }}</button>
   <p v-else-if="!checking && !issues.length" data-phone-test-ok class="flex min-h-10 flex-wrap items-center justify-center gap-x-2 text-center text-[13px] font-bold" :class="noDoneYet ? 'text-amber-200' : 'text-emerald-300'">{{ q.questions.value.length ? tr(`✓ 止まる所なし · 未定 ${q.questions.value.length}${noDoneYet ? " · 完成の箱がまだ無い" : ""}`, `✓ No dead ends · ${q.questions.value.length} open${noDoneYet ? " · no done box yet" : ""}`) : tr("✓ 合格", "✓ Passed") }} <button type="button" class="min-h-10 px-1 text-[12px] font-normal text-sim-dim underline decoration-white/20" @click="test">{{ holeAgain() }}</button></p>
   <button v-else type="button" data-phone-issues :disabled="checking && !issues.length" class="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl border border-rose-400/40 bg-[#1d0f10] px-3 py-1.5 text-left text-[13px] font-bold text-rose-200" :aria-expanded="listOpen" @click="listOpen = true">
-    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? `${holeBusy()}${progress ? ` ${progress.n}/${progress.of}` : ""}` : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
+    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? `${holeBusy()}${progress ? ` ${progress.n}/${progress.of}` : ""}` : holesCount(issues.length) }}</span>
     <span v-if="issues.length" class="shrink-0 text-[12px] font-normal text-rose-100/80">{{ tr("見る ▾", "View ▾") }}</span>
   </button>
   <!-- 一覧の重ね窓 (閉じれば元の場所・スクロールのまま) -->
@@ -52,7 +52,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
     <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-rose-400/70 bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
         <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
-        <p class="text-[14px] font-bold text-rose-200">{{ tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</p>
+        <p class="text-[14px] font-bold text-rose-200">{{ holesCount(issues.length) }}</p>
         <p class="mb-2 break-words text-[12px] text-sim-dim">{{ tr("直さないと回した人がここで止まる。押すとその箱", "Runs stop here until fixed. Tap to open the box") }}</p>
         <div class="flex flex-col gap-1.5">
           <button v-for="(x, i) in issues" :key="`${x.boxId}-${i}`" type="button" data-phone-issue :data-box-id="x.boxId" class="min-h-11 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" @click="open(x.boxId)">

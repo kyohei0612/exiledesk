@@ -14,6 +14,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf, type CheckRun } from "./use-tree-check";
 import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
+import { runPrice } from "../../../services/simulator/tree/run-price";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -52,13 +53,8 @@ const FAST_MS = 1200;
 const FAST_AGAIN_MS = 400;
 const FRAME_MS = 30;
 
-/** 回す時の値段 (相場は高貴建て → 神に直す。tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た) */
-export function runPrice(priceOf: (key: string) => number): (key: string) => number {
-  const div = priceOf("divine") || 1;
-  // 回す間は相場が変わらないので、同じ物の値段は 1 回だけ引く (1 手ごとに相場の表を引くのが重く、飛ばしても 100 人に 18 秒かかった、10-23 モンキー 7)
-  const memo = new Map<string, number>();
-  return (k) => { let v = memo.get(k); if (v === undefined) { v = priceOf(k) / div; memo.set(k, v); } return v; };
-}
+/** 回す時の値段 (相場は高貴建て → 神に直す) は services の run-price 1 か所 (デイリーの検算と同じ数え方) */
+export { runPrice };
 /**
  * 木を外から持たせる画面 (デイリーの挑戦、D-41 ④) が回す時の種・値段・ベースの値段 (S-70c)。null = 普段 (種 1・木の相場・木のベースの値段)。
  * price は相場のまま (高貴建て、priceOfKey と同じ形)。神に直すのは runPrice。入れた画面が出る時に null に戻す

@@ -27,6 +27,7 @@ import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 import { pageZoom, toCss } from "../../../utils/zoom";
 import { gesture } from "./use-gesture";
+import { useDismiss } from "../../../utils/use-dismiss";
 
 /** avoid: 右の欄が開いている (変わるたびに重なりを見直す。値は欄の種類と箱) */
 const props = defineProps<{ avoid?: string | null }>();
@@ -216,16 +217,14 @@ const onWinResize = (): void => { requestAnimationFrame(() => { view.value = rea
 window.addEventListener("resize", onWinResize);
 window.addEventListener("scroll", measureAvoid, true);
 onBeforeUnmount(() => {
-  stop?.(); saveMemo(); window.removeEventListener("keydown", onWinKey, true);
+  stop?.(); saveMemo();
   window.removeEventListener("resize", onWinResize); window.removeEventListener("scroll", measureAvoid, true); window.removeEventListener("pagehide", saveMemo);
 });
-/** 最大化・半分の時の Esc は、どこを押していても先に窓を元に戻す (ページを閉じない) */
-function onWinKey(e: KeyboardEvent): void {
-  if (e.key !== "Escape" || !open.value || !snap.value || picker.value) return;
-  e.preventDefault(); e.stopImmediatePropagation();
-  snap.value = null; remember();
-}
-window.addEventListener("keydown", onWinKey, true);
+/**
+ * 最大化・半分の時の Esc は、窓の外を押していても窓を元に戻す (ページを閉じない)。共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。
+ * 前は window の捕まえる段で先に取り、後から開いた窓 (ModalShell など) より先に効いていた)。窓の中で押した Esc は下の onKey
+ */
+useDismiss(() => open.value && !!snap.value && !picker.value, [], () => { snap.value = null; remember(); }, { escOnly: true });
 watch(open, async (v) => {
   if (!v) { saveMemo(); picker.value = null; return; }
   await nextTick();

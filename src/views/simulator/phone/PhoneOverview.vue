@@ -4,7 +4,8 @@
   下の帯の 1 行「完成形と全体図 開く ▴」で開く (map-fold)。戻り先を選んでいる間 (mapPick) はいつも開き、全体図の箱を押すと箱の重ね窓 (その上に重なる) で「ここへ戻す」
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
+import { useDismiss } from "../../../utils/use-dismiss";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { useGoalShown } from "../tree/use-goal-shown";
 import { useTree } from "../tree/use-tree";
@@ -26,9 +27,8 @@ const PILL = "shrink-0 rounded-md border border-[#c9a45c]/60 bg-gradient-to-b fr
 const mapEl = ref<HTMLElement | null>(null);
 watch(() => mapPick.value?.from, async (f) => { if (!f) return; await nextTick(); mapEl.value?.scrollIntoView({ block: "start" }); }, { immediate: true });
 function close(): void { mapPick.value = null; setMapFold(true); }
-const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape" && open.value) close(); };
-onMounted(() => window.addEventListener("keydown", onKey));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
+// 下から出る窓の形は共通の ModalShell に無いので殻は自前のまま、Esc だけ共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。前は自前の Esc で、重なった窓・中の段の表と一緒に 2 つ閉じていた)。外押しは後ろの @click.self のまま (escOnly)
+useDismiss(() => open.value, [], close, { escOnly: true });
 </script>
 
 <template>

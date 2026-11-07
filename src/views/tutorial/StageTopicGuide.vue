@@ -17,18 +17,13 @@ import { flag } from "../../web/release-flags";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
-import { OMEN_KEY, sideOfMod, aimLabel, modListFor, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
+import { OMEN_KEY, parseKey, sideOfMod, modListFor, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
+import { aimNameBare, courseLevel } from "./guide-words";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */
 defineProps<{ part?: "now" | "course" }>();
 const t2 = (x: JaEn): string => tr(x[0], x[1]);
-const LEVEL: Record<number, { label: JaEn; chip: string }> = {
-  1: { label: ["入門", "Intro"], chip: "bg-emerald-500/25 text-emerald-100" },
-  2: { label: ["初級", "Easy"], chip: "bg-sky-500/25 text-sky-100" },
-  3: { label: ["中級", "Medium"], chip: "bg-amber-500/25 text-amber-100" },
-  4: { label: ["上級", "Advanced"], chip: "bg-rose-500/25 text-rose-100" },
-  5: { label: ["クラフト手順", "Crafting guide"], chip: "bg-violet-500/25 text-violet-100" },
-};
+/** 級の名前と色は guide-words の 1 か所 (クラフト手順の画面と同じ表) */
 /** エッセンスの手の実際のキー (今のアイテムの棚から。一覧の先の手も日本語の名前で出す) */
 /** エッセンスの名前は、その手のベース (手ごとの base) の棚から引く (別のベースの手が英語の名前のまま出ていた) */
 const essKey = (st: TopicStep): string | null => {
@@ -149,7 +144,7 @@ const targetRow = computed(() => {
 const qualityRows = computed(() => {
   const it = s.item.value, d = s.data.value, st = topicStep.value?.step;
   // カタリストの手と、品質の付いたアイテムを扱う手 (上級の「品質を上げてからカオス」) で出す
-  if (!it || !d || !st || !(st.use.startsWith("catalyst") || (it.qualityTag && it.quality > 0))) return null;
+  if (!it || !d || !st || !(parseKey(st.use).type === "catalyst" || (it.qualityTag && it.quality > 0))) return null;
   const { tag, pct } = catalystOf(it);
   return {
     head: tag && pct > 0 ? `${qualityLabelOf(tag)}: +${pct}%` : tr("品質はまだ 0%", "No quality yet"),
@@ -178,10 +173,11 @@ const last = computed(() => s.log.value[s.log.value.length - 1] ?? null);
 const lastRows = computed(() => {
   const l = last.value;
   if (!l) return null;
-  const divine = l.out.currency.startsWith("divine");
+  // 手の種類は鍵の文字でなくエンジンの鍵の読み (parseKey)
+  const divine = parseKey(l.out.currency).kind === "divine";
   const same = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.side === b.side && (divine || (!!a.fractured && !b.fractured));
   // フラクチャーの手は固定した MOD が「付いた」だけで記録される (消えた側は空)
-  const fracOnly = (a: StageMod): boolean => l.out.currency === "fracture" && !!a.fractured && !l.removed.some((r) => same(r, a));
+  const fracOnly = (a: StageMod): boolean => parseKey(l.out.currency).kind === "fracture" && !!a.fractured && !l.removed.some((r) => same(r, a));
   const changed = [
     ...l.added.flatMap((a) => { const b = l.removed.find((r) => same(r, a)); return b ? [{ before: b, after: a, fractured: !!a.fractured && !b.fractured }] : []; }),
     ...l.added.filter(fracOnly).map((a) => ({ before: a, after: a, fractured: true })),
@@ -203,7 +199,7 @@ const faction = computed(() => {
     const spec = ALL_OMEN_SPECS.find((x) => x.key === o);
     const tag = spec && "guaranteeTag" in spec.effect ? spec.effect.guaranteeTag : null;
     if (!tag) continue;
-    const mods = factionCandidates(d, it, tag).map((c) => ({ side: c.side, text: aimLabel(d, { modId: c.mod.id, minTierIndex: 0, label: c.mod.id }).replace(/ \((T\d+ 以上|T\d+\+)\)$/, "") }));
+    const mods = factionCandidates(d, it, tag).map((c) => ({ side: c.side, text: aimNameBare(d, { modId: c.mod.id, minTierIndex: 0, label: c.mod.id }) }));
     return { name: tr(FACTION[tag]?.[0] ?? nameOf(o), FACTION[tag]?.[1] ?? nameOf(o)), mods };
   }
   return null;
@@ -319,7 +315,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
   <!-- 幅はアイテムのカードまで (長い手の名前で左の列が広がり、右の今の手の枠が押しつぶされていた。2026-10-18) -->
   <section v-if="topic && part !== 'now'" data-topic-guide class="g-panel w-full max-w-[480px] min-w-0 p-3 text-[12px] max-md:max-w-none">
     <header class="flex flex-wrap items-center gap-2">
-      <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="LEVEL[topic.level]!.chip">{{ t2(LEVEL[topic.level]!.label) }}</span>
+      <span class="rounded px-2 py-0.5 text-[11px] font-bold" :class="courseLevel(topic.level)!.chip">{{ t2(courseLevel(topic.level)!.label) }}</span>
       <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ t2(topic.title) }}</b>
       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span>
     </header>

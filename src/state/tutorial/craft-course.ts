@@ -59,9 +59,9 @@ watch(() => s.base.value, (b) => { if (course.value && b !== course.value.recipe
 export const courseView = computed(() => {
   const c = course.value, it = s.item.value;
   if (!c || !it) return null;
-  const st = courseState(c, it);
+  const st = courseState(c, it, s.data.value);
   const slots = courseSlots(c).map((sl) => ({ sl, done: (st[sl.id] ?? 0) >= (sl.kind === "fractured" ? 3 : 2) }));
   const cur = slots.findIndex((x) => !x.done);
   const done = cur < 0;
-  return { slots: slots.map((x, i) => ({ ...x, current: i === cur })), done, move: done ? null : courseMove(c, it) };
+  return { slots: slots.map((x, i) => ({ ...x, current: i === cur })), done, move: done ? null : courseMove(c, it, s.data.value) };
 });
