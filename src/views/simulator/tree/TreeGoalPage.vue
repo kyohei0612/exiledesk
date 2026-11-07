@@ -399,11 +399,11 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
             <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-md:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
           </ul>
         </details>
-        <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。列ごと上に留めるので一覧を送っても見える。スマホは列が上に積まれるので下の帯に出す -->
-        <div class="sticky bottom-0 z-10 bg-[var(--exile-color-bg-elevated)] pt-1 max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+        <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。浮かせずに列の一番下 (S-10d、11-07 オーナー「なんでツリーへボタン浮いてんだ」「説明の下だね」)。スマホは窓の一番下 -->
+        <div class="pt-1 max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
-      <!-- スマホはカードの列が上に積まれるので、「決めた」は一覧の下に貼り付ける (一覧を送っている間は画面の下に見える) -->
-      <div class="sticky bottom-0 z-10 bg-[#120d08]/90 py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+      <!-- スマホはカードの列が上に積まれるので、「決めた」は窓の一番下 (一覧の後) に普通に置く (貼り付けない、S-10d) -->
+      <div class="py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
     </div>
     <!-- 下の帯は 2 完成の MOD の段だけで「← ベース」を控えめに。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」)。
          「決めた」(決める手の赤 g-btn-red、1 画面 1 つ) はカードと説明の下へ移した (10-24 オーナー) -->
