@@ -5,7 +5,7 @@
  * ゲームの公式の説明文 (currency-hover-ja.json、クライアント原本) とは別に、このステージ (= 計算機と同じ規則) で
  * **実際にどう動くか**を書く。規則の本体は services/craft-stage/apply-*.ts。ここを変えたら向こうも見る。
  */
-import { isRune, runeEffectFor, runeOf, socketCapOf, maxQualityOf, isShard, orbFloor, markFloorOf, parseKey, ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT, SANCTIFY_MIN, SANCTIFY_MAX, type PatchData, type StageItem, isEmotion } from "../../services/craft-stage/engine";
+import { isRune, runeEffectFor, runeOf, socketCapOf, maxQualityOf, isShard, orbFloor, markFloorOf, parseKey, omenHelp, useConditions, ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT, SANCTIFY_MIN, SANCTIFY_MAX, type PatchData, type StageItem, isEmotion } from "../../services/craft-stage/engine";
 import { GNAWED_MAX_ILVL } from "../../services/craft-stage/apply-currency";
 import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
 import { hasRawFamily } from "../../services/mods/mod-rules";
@@ -17,7 +17,7 @@ import { JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, S
 import { lang, tr } from "../../i18n/lang";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
 import { jewelEmotionsOf } from "../../services/htc/patch";
-import { EXTRA_HELP, EXTRA_HELP_EN, OMEN, OMEN_EN } from "./craft-stage-help-text";
+import { EXTRA_HELP, EXTRA_HELP_EN } from "./craft-stage-help-text";
 import { essenceTierOf, specialEssence } from "./craft-stage-help-mods";
 export { shelfTag, shortMod, specialEssence, stageAdds } from "./craft-stage-help-mods";
 
@@ -53,7 +53,12 @@ const add = (): string => tr(ADD, "New mods are rolled by weight from that side'
 
 export function stageHelp(key: string, data: PatchData | null, item: StageItem | null): string[] {
   const sp = specialEssence(key, item);
-  return [...(sp?.notes ?? []), ...stageHelpBase(key, data, item)];
+  return [...(sp?.notes ?? []), ...useLine(key), ...stageHelpBase(key, data, item)];
+}
+/** 使える時の行 (エンジンの useConditions = spec の対象のレアリティと上限。2026-11-07 オーナー「全て」で説明の条件もエンジンから) */
+function useLine(key: string): string[] {
+  const c = useConditions(key);
+  return c.length ? [tr(`使える時: ${c.map((w) => w.ja).join("・")}`, `Usable: ${c.map((w) => w.en).join(" / ")}`)] : [];
 }
 
 function stageHelpBase(key: string, data: PatchData | null, item: StageItem | null): string[] {
@@ -75,7 +80,8 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       tr("候補は勢力のお告げを掛けていればその勢力の MOD だけ。アビスの反響のお告げを掛けると、3 つを 1 回だけ引き直せる", "With a faction Omen the options are that faction's mods only. Omen of Abyssal Echoes lets you reroll the 3 once"),
     ];
   }
-  if (OMEN[key]) return [...((isEn() ? OMEN_EN[key] : null) ?? OMEN[key]!), tr("押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる", "Click to apply (stackable). Only consumed by the next currency it affects")];
+  const oh = omenHelp(key);
+  if (oh) return [...(isEn() ? oh.en : oh.ja), tr("押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる", "Click to apply (stackable). Only consumed by the next currency it affects")];
   const s = strengthOf(key);
   switch (parseKey(key).kind) {
     case "transmute":
@@ -97,11 +103,11 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         tr("お告げ: 削減 (一番低い MOD を消す) / 左右の抹消 (消す側)", "Omens: Whittling (removes the lowest mod) / Sinistral / Dextral Erasure (side)"),
       ].filter(Boolean);
     case "annul":
-      return [tr("**マジックかレア** の MOD を 1 つ消す (フラクチャー以外から等しく)", "Removes 1 mod from a **Magic or Rare** item (equally among non-Fractured mods)"), tr("お告げ: 左右の消去 (消す側) / 光 (冒涜の MOD だけ)", "Omens: Sinistral / Dextral Annulment (side) / Light (Desecrated mod only)")];
+      return [tr("MOD を 1 つ消す (フラクチャー以外から等しく)", "Removes 1 mod (equally among non-Fractured mods)"), tr("お告げ: 左右の消去 (消す側) / 光 (冒涜の MOD だけ)", "Omens: Sinistral / Dextral Annulment (side) / Light (Desecrated mod only)")];
     case "divine":
       return [tr("フラクチャー以外の MOD の **数値だけ** を、そのティアの範囲の中で振り直す (ティアは変わらない)", "Rerolls **only the values** of non-Fractured mods within their tier range (tiers don't change)"), tr(`お告げ: 聖別 (${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} 倍にして聖別。以後手を加えられない) / 祝福 (暗黙 MOD だけ振り直す)`, `Omens: Sanctification (x${SANCTIFY_MIN / 100}-${SANCTIFY_MAX / 100} and sanctified; no further changes) / the Blessed (rerolls implicits only)`)];
     case "fracture":
-      return [tr("**レア** で MOD が **4 つ以上**、まだフラクチャーが無い時", "On a **Rare** with **4+ mods** and no Fractured mod yet"), tr("MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (冒涜の MOD は発現済みでも選ばれない。4 つの数には入る)", "**Fractures** 1 random mod (equal chance; Desecrated mods are never picked, revealed or not, but count toward the 4)"), tr("フラクチャーした MOD は、カオス・消去・エッセンスでも消えない", "Fractured mods can't be removed by Chaos, Annulment or Essences")];
+      return [tr("MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (冒涜の MOD は発現済みでも選ばれない。4 つの数には入る)", "**Fractures** 1 random mod (equal chance; Desecrated mods are never picked, revealed or not, but count toward the 4)"), tr("フラクチャーした MOD は、カオス・消去・エッセンスでも消えない", "Fractured mods can't be removed by Chaos, Annulment or Essences")];
     case "artificer": {
       const n = item ? socketCapOf(item.base, item.cls.category) : 1;
       return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)`, `Up to ${n} on this base (Body Armour / Two Handed Weapon 2, others 1; +1 via corruption)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];

@@ -9,7 +9,7 @@ import { computed } from "vue";
 import { tr } from "../../../i18n/lang";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { catalystOf, OMEN_KEY, SANCTIFY_MAX, SANCTIFY_MIN } from "../../../services/craft-stage/engine";
-import { CATALYSING_PER_PCT, sanctifyChanceAtLeast, tunedCatalysingMultiplier } from "../../../services/craft-stage/engine";
+import { CATALYSING_OVER_RATIO, CATALYSING_PER_PCT, sanctifyChanceAtLeast, tunedCatalysingMultiplier } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
 import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../../state/for-share/stage-tuning";
@@ -37,7 +37,7 @@ const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLea
 <template>
   <div v-if="show" class="mt-0.5 flex max-w-[210px] flex-wrap items-center justify-center gap-1 text-[10px] leading-none text-white/60 max-md:text-[11px]" data-omen-tune @click.stop>
     <template v-if="k === CAT">
-      <label class="flex items-center gap-1" :title="tr(`カタリストの品質 1% ごとに、対応する MOD の重みへ足す倍率。既定 ${CATALYSING_PER_PCT} は Craft of Exile の式 (ゲームに数字は無く未確認)。20% を超えた分は 0.6 倍`, `Added to the weight of matching mods per 1% Catalyst quality. Default ${CATALYSING_PER_PCT} is Craft of Exile's formula (no in-game number, unverified). Above 20% counts at 0.6x`)">
+      <label class="flex items-center gap-1" :title="tr(`カタリストの品質 1% ごとに、対応する MOD の重みへ足す倍率。既定 ${CATALYSING_PER_PCT} は Craft of Exile の式 (ゲームに数字は無く未確認)。20% を超えた分は ${CATALYSING_OVER_RATIO} 倍`, `Added to the weight of matching mods per 1% Catalyst quality. Default ${CATALYSING_PER_PCT} is Craft of Exile's formula (no in-game number, unverified). Above 20% counts at ${CATALYSING_OVER_RATIO}x`)">
         <span>{{ tr("1% ごと +", "Per 1% +") }}</span>
         <input type="number" min="0" step="0.05" :value="catalysingPerPct ?? CATALYSING_PER_PCT" class="h-6 w-[4.6em] rounded border border-white/15 bg-black/60 px-1 text-white/80 tabular-nums" @change="onRate" />
       </label>
