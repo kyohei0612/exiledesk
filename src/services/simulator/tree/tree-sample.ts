@@ -18,7 +18,6 @@ import { aimHeldOn } from "./tree-aim";
 import { ECHO, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
-import { withTreeRunes } from "./tree-goal-runes";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf } from "./tree-outcome";
 import { isWhittleHand, rankVariants } from "./tree-whittle";
@@ -180,8 +179,7 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
   const st = startOf(doc), marks = fractureMarks(doc);
   // 作り方 (ルーン → 指名の MOD、マジックはノーマルから) はエンジンの入口の startWith (B10 10-22)
   // フラクチャー前から (印あり・start.from four) は必ず白 (ノーマル)。始まりの MOD も付けない (10-24 夜オーナー)
-  // 完成形のルーン (自動の物と使用ルーン) は最後に完成形のカードと同じ順で嵌める (S-31h)
-  if (!startsFractured(doc)) { const w = startWith(data, doc.base, doc.itemLevel, { rarity: startRarity(doc), mods: marks.length ? [] : st.mods, runes: st.runes }, rng); return w.note ? w : { item: withTreeRunes(data, doc, w.item, rng), note: null }; }
+  if (!startsFractured(doc)) return startWith(data, doc.base, doc.itemLevel, { rarity: startRarity(doc), mods: marks.length ? [] : st.mods, runes: st.runes }, rng);
   // ルーンを先に差したレア (ルーンの MOD の候補・＋の分のソケットも開ける) から
   const pre = startWith(data, doc.base, doc.itemLevel, { rarity: "rare", mods: [], runes: st.runes, socketFor: [...marks, ...st.mods] }, rng);
   if (pre.note) return pre;
@@ -191,7 +189,7 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
   // 外れには完成の狙いを付けない (段は問わず。ライフを持ってスタートした人が外れの箱のカオススパムで当たらず止まった、10-24 モンキー初めての人の回)
   const avoid = (doc.memoAims ?? []).filter((a) => !a.fractured).map((a) => ({ modId: a.modId, tier: a.tier }));
   const r = fractureStart(data, doc.base, doc.itemLevel, cands, rng, { junk: START_JUNK, extra: st.mods, from, avoid });
-  return { item: r.note ? r.item : withTreeRunes(data, doc, r.item, rng), note: r.note };
+  return { item: r.item, note: r.note };
 }
 
 /**

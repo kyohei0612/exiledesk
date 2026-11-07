@@ -16,7 +16,6 @@ import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
-import { dropGoalRuneHands, treeRunesOf } from "../../../services/simulator/tree/tree-goal-runes";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -43,12 +42,10 @@ export async function rebuildInSteps(data: PatchData, src: TreeDoc, paint: (d: T
 }
 /** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで */
 function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
-  const saved = toRecipeV1(src), d = premiseOf(saved, `exiledesk-tree/${TREE_SCHEMA_N}`);
+  const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   // 保存の例のアイテム (v2、S-200 ⑦) は開いた木に持たせ、配置の代表に使う (tree-frame)。打ち方の比べ (toRecipeV1) には入れない
   if (src.examples) d.examples = JSON.parse(JSON.stringify(src.examples)) as NonNullable<TreeDoc["examples"]>;
   migrateStart(d);
-  // 完成形のルーンはスタートから付いているので、その手は無い物として読む (結果の箱の決めをその手の箱へ詰める、S-31h)
-  const rec = { ...saved, picks: dropGoalRuneHands(saved.picks ?? [], d.examples, treeRunesOf(data, d)) };
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
   const onPath = new Set([...picks.keys()].flatMap((k) => k.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));
