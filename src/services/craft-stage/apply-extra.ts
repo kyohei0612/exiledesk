@@ -35,6 +35,12 @@ export const isExtra = (key: string): boolean => (EXTRA_KEYS as readonly string[
 export const FOR_CORRUPTED = ["sacrifice_jewellery", "sacrifice_armour", "sacrifice_weapon", "architect", "cultivation", "siphoner"];
 /** コラプト・聖別・ミラーの後でも打てる物 (アイテムを変えない / 壊すだけ) */
 export const ANY_STATE = ["mirror", "extraction"];
+/**
+ * ヒネコラの予見 (土台に乗らない例外 1、2026-11-07 ジン jin-base): 結果を見てから使うかを選ぶ旗。「アイテムを変えると消える」(説明文) の決まりはここ 1 か所で、
+ * 打った手がヒネコラ自身でなければ旗を下ろす。説明文で打つ手 (spec/run-spec.ts の applyBySpec) と振り分けの手 (apply-currency.ts) が同じ物を呼ぶ
+ */
+export const FORESIGHT_KEY = "hinekora";
+export const dropForesight = (item: StageItem, key: string): StageItem => (key !== FORESIGHT_KEY && item.foreseen ? { ...item, foreseen: false } : item);
 
 /** インフューザーの対象 (説明文の言葉のまとまり、services/mods/item-classes.ts) */
 const INFUSER: Record<string, { groups: ItemGroup[]; ja: string; en: string }> = {

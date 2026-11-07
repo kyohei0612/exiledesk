@@ -14,7 +14,8 @@ import type { PatchData, ItemState } from "../../vendor/poe2htc/engine/types";
 import { DES_BOSS_TAG, desecrationBossOfferProbability, desecrationOfferProbability, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { applyCurrency } from "./apply-currency";
 import { mulberry32 } from "../htc/rng";
-import { allMods, effectiveCls, makeStageMod, overLimit, room, SIDES, withMod, without, type Candidate } from "./stage-core";
+import { effectiveCls, makeStageMod, withMod, without, type Candidate } from "./stage-core";
+import { boneSlotOf } from "./spec/basis";
 import { revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
@@ -152,23 +153,18 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   // 両側が埋まっていれば固定していない MOD を全部から等しく 1 つ消して、その側に付く
   const sp = unrevealedPlan(data, item, a, plan.mods); // E-61 骨の側 (E-11f の例外)
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];
-  const removal = (side: StageSide, p: number): void => {
-    const rem = allMods(item).filter((m) => !m.fractured && m.side === side);
-    for (const r of rem) runs.push({ p: p / rem.length, it: without(item, r), side });
-  };
-  if (sp.mark) runs.push({ p: 1, it: without(item, sp.mark), side: sp.mark.side });
-  // 上限を超えている側は付かない (E-25、打つ処理と同じ)。お告げで決めた側なら全部 0%、当たり所の側は数えない (カオスの不成立の枝と同じ)
-  else if (sp.fixed) { if (overLimit(item, sp.fixed)) return { byMod, total: 1, bone: true }; if (room(item, sp.fixed)) runs.push({ p: 1, it: item, side: sp.fixed }); else removal(sp.fixed, 1); }
-  // 空きがある時は空いた側から等しく (両側なら半々、2026-10-16 Craft of Exile と同じ)
-  else if (SIDES.some((sd) => room(item, sd))) {
-    const W = sp.weights.reduce((x, y) => x + y.w, 0);
-    if (!(W > 0)) return { byMod, total: 1, bone: true };
-    for (const { s, w } of sp.weights) if (w > 0) runs.push({ p: w / W, it: item, side: s });
-  } else {
-    const ws = sp.weights.filter((x) => !overLimit(item, x.s));
-    const W = ws.reduce((x, y) => x + y.w, 0);
-    if (!(W > 0)) return { byMod, total: 1, bone: true };
-    for (const { s, w } of ws) if (w > 0) removal(s, w / W);
+  // 側ごとの枠は打つ処理と同じ土台 (basis.ts の boneSlotOf)。上限を超えている側は付かない (E-25): お告げで決めた側なら全部 0%、
+  // 当たり所の側は数えない (カオスの不成立の枝と同じ)。空きがある時は空いた側から (両側なら半々、2026-10-16 Craft of Exile と同じ)、
+  // 両側が埋まっていれば消せる MOD の数で側を分けて、その側の固定以外から等しく 1 つ消す
+  const sides = sp.mark ? [{ s: sp.mark.side, w: 1 }] : sp.fixed ? [{ s: sp.fixed, w: 1 }] : sp.weights;
+  const slots = sides.map((x) => ({ ...x, slot: boneSlotOf(item, x.s, sp.mark) })).filter((x) => !("over" in x.slot));
+  const W = slots.reduce((x, y) => x + y.w, 0);
+  if (!(W > 0)) return { byMod, total: 1, bone: true };
+  for (const { s, w, slot } of slots) {
+    if (!(w > 0)) continue;
+    if ("open" in slot) runs.push({ p: w / W, it: item, side: s });
+    const from = "mark" in slot ? [slot.mark] : "replace" in slot ? slot.replace : [];
+    for (const r of from) runs.push({ p: w / W / from.length, it: without(item, r), side: s });
   }
   const boss = plan.mods.guaranteeTag ? BOSS_OF_TAG.get(plan.mods.guaranteeTag) : undefined;
   const opts: BoneOpts = { floor: sp.floor, altered: a.pools.includes("otherworldly"), gnawed: !a.exclusiveAnyLevel, boss, rerolls: rerollsOf(omens) };

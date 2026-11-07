@@ -2,18 +2,17 @@
  * 1 手の行き先の一覧 (2026-10-20 ジン部長。解析君の頼み事「手の効果を入口から組む」、docs/org/emulator/todo.md の案)。
  *
  * 打つ処理 (applyBySpec) と同じ planSpec (対象・制約・お告げの効き目) と動作の部品の選び方を、乱数で 1 つ選ぶ代わりに全部の枝に分けてたどる:
- *   remove → 消せる MOD から等しく (お告げの側・削り・光・未発現が先・上限を超えた側に当たると不成立)、
+ *   remove → 消せる MOD から等しく (土台 spec/basis.ts の removalOf: お告げの側・削り・光・上限を超えた側に当たると不成立)、
  *   add → 空きのある側から candidates の重み (段ごと)、fracture → 固定できる MOD から等しく、
- *   addUnrevealed → 側は unrevealedPlan の重み、満杯の側は固定以外から等しく 1 つ消す。
+ *   addUnrevealed → 側は unrevealedPlan の重み、枠は土台の boneSlotOf (満杯の側は固定以外から等しく 1 つ消す・上限を超えた側には付かない E-25)。
  * 乱数を使わない部品 (レアリティ・エッセンスの MOD・コラプト) は打つ処理の部品 (runPart) そのまま。
  * 発現 (候補から選ぶ = 確率ではなく選択)・数値だけ変わる手・品質・ルーンなどは null (revealOffers・applyCurrency を使う)。
  * 付く MOD の数値は段の下限 (S-202 ②。行き先の区別に数値は使わない)。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, makeStageMod, overLimit, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
-import { whittleTargets } from "../../craft-stage/apply-currency";
+import { allMods, hasExtraCatalyst, makeStageMod, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
 import { infiniteChoices, isInfiniteEssence } from "../../craft-stage/apply-essence";
-import { tunedCatalysingMultiplier } from "../../craft-stage/stage-tuning";
+import { addCandidatesOf, boneSlotOf, removalOf } from "../../craft-stage/spec/basis";
 import type { StageItem, StageMod, StageSide } from "../../craft-stage/types";
 import { planSpec, type SpecPlan } from "../../craft-stage/spec/run-spec";
 import { runPart, type PartCtx } from "../../craft-stage/spec/parts";
@@ -47,36 +46,24 @@ const SUPPORTED = (a: Action): boolean => "remove" in a || "add" in a || "fractu
 const ok = (item: StageItem, added: StageMod[] = [], removed: StageMod[] = []): Step => [{ p: 1, item, added, removed }];
 const equally = (item: StageItem, xs: readonly StageMod[]): Step => xs.map((m) => ({ p: 1 / xs.length, item: without(item, m), added: [], removed: [m] }));
 
-/** parts.ts の remove と同じ選び方 (指名は無し) */
+/** parts.ts の remove と同じ選び方 (土台の removalOf を全部の枝に分ける。指名は無し) */
 function removeStep(ctx: PartCtx, item: StageItem, a: Remove): Step {
-  if (a.n === "all") return ok({ ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }, [], allMods(item).filter((m) => !m.fractured));
-  if ((ctx.mods.pick ?? a.pick) === "desecrated") {
-    const ds = allMods(item).filter((m) => m.desecrated && !m.fractured);
-    return ds.length ? equally(item, ds) : "skip";
-  }
-  if (a.ifAny && !allMods(item).length) return ok(item);
-  const side = ctx.mods.removeSide ?? ctx.mods.side;
-  if (a.unrevealedFirst) {
-    const us = allMods(item).filter((m) => m.unrevealed && !m.fractured && (!side || m.side === side));
-    if (us.length) return equally(item, us);
-  }
-  let sides: readonly StageSide[] = side ? [side] : SIDES;
-  const e = ctx.essence;
-  if (a.sideWhenFull && e && !room(item, e.side)) {
-    if (side && side !== e.side) return "skip";
-    sides = [e.side];
-  }
+  const R = removalOf(item, a, ctx.mods, ctx.essence?.side);
+  if ("all" in R) return ok({ ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }, [], R.all);
+  if ("skip" in R) return "skip";
+  if ("none" in R) return ok(item);
+  if (R.desecrated) return equally(item, R.pick(item));
   // n 回消す (今の手は 1 回だけ)。消せる物が尽きたらそこまで
   let states: Branch[] = [{ p: 1, item, added: [], removed: [] }];
   const out: Exclude<Step, "skip"> = [];
-  for (let i = 0; i < a.n; i++) {
+  for (let i = 0; i < (a.n === "all" ? 0 : a.n); i++) {
     const next: Branch[] = [];
     for (const s of states) {
-      const gone = ctx.mods.pickLowest ? whittleTargets(s.item, side) : allMods(s.item).filter((m) => !m.fractured && sides.includes(m.side));
+      const gone = R.pick(s.item);
       if (!gone.length) { next.push(s); continue; }
       for (const m of gone) {
         const p = s.p / gone.length;
-        if (a.overLimitVoids && overLimit(s.item, m.side)) out.push({ p, void: true });
+        if (R.voids(s.item, m)) out.push({ p, void: true });
         else next.push({ p, item: without(s.item, m), added: [], removed: [...s.removed, m] });
       }
     }
@@ -93,16 +80,14 @@ function removeStep(ctx: PartCtx, item: StageItem, a: Remove): Step {
 function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (b: Branch) => string): Step {
   if (a.emptyOk && !SIDES.some((s) => room(item, s, ctx.before))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
-  const omenSides = ctx.mods.side ? [ctx.mods.side] : SIDES;
-  const { tag, pct } = catalystOf(item);
-  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   const finish = (b: Branch): Branch => (ctx.mods.catalysing ? { ...b, item: hasExtraCatalyst(item.base) ? { ...b.item, catalystQuality: 0 } : { ...b.item, quality: 0 } } : b);
   let states: Branch[] = [{ p: 1, item, added: [], removed: [] }];
   const done: Branch[] = [];
   for (let i = 0; i < n; i++) {
     const next: Branch[] = [];
     for (const s of states) {
-      const cs = candidates(ctx.data, s.item, omenSides.filter((x) => room(s.item, x, ctx.before)), a.floor, boost ? { boost } : {});
+      // 触媒の重みは打つ前の品の品質で (打つ処理の parts.ts の add と同じ。付けた後の品の品質は変わらない)
+      const cs = addCandidatesOf(ctx.data, s.item, a, ctx.mods, ctx.before, item);
       const total = cs.reduce((x, c) => x + c.w, 0);
       // 付けられなければここで止まる (打つ処理の addOne が null で break)
       if (!(total > 0)) { done.push(s); continue; }
@@ -125,7 +110,7 @@ function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (
   return out;
 }
 
-/** parts.ts の addUnrevealed と同じ側の選び方 (unrevealedPlan)。満杯の側は固定以外から等しく 1 つ消してから */
+/** parts.ts の addUnrevealed と同じ側の選び方 (unrevealedPlan) と枠 (土台の boneSlotOf: 印の置き換え・空き・満杯の側を固定以外から等しく 1 つ消す・上限超え E-25) */
 function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
   if (a.fill) return runOnce(ctx, item, { addUnrevealed: a });
   const { mark, floor, fixed, weights } = unrevealedPlan(ctx.data, item, a, ctx.mods);
@@ -138,12 +123,12 @@ function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
   for (const { s, w } of sides) {
     if (!(w > 0)) continue;
     const p = w / total;
-    if (mark) { out.push({ p, item: withMod(without(item, mark), hiddenOf(s)), added: [hiddenOf(s)], removed: [mark] }); continue; }
-    if (room(item, s, ctx.before)) { out.push({ p, item: withMod(item, hiddenOf(s)), added: [hiddenOf(s)], removed: [] }); continue; }
-    const rem = allMods(item).filter((m) => !m.fractured && m.side === s);
-    // 側をお告げで決めた時は打つ前に分かる (打てない)、重みで選んだ時は当たり所 (不成立)
-    if (!rem.length) { if (fixed) return "skip"; out.push({ p, void: true }); continue; }
-    for (const m of rem) out.push({ p: p / rem.length, item: withMod(without(item, m), hiddenOf(s)), added: [hiddenOf(s)], removed: [m] });
+    const slot = boneSlotOf(item, s, mark, ctx.before);
+    // 付かない側: お告げで決めた側なら打つ前に分かる (打てない)、重みで選んだ時は当たり所 (不成立)
+    if ("over" in slot || "stuck" in slot) { if (fixed) return "skip"; out.push({ p, void: true }); continue; }
+    if ("open" in slot) { out.push({ p, item: withMod(item, hiddenOf(s)), added: [hiddenOf(s)], removed: [] }); continue; }
+    const from = "mark" in slot ? [slot.mark] : slot.replace;
+    for (const m of from) out.push({ p: p / from.length, item: withMod(without(item, m), hiddenOf(s)), added: [hiddenOf(s)], removed: [m] });
   }
   return out;
 }

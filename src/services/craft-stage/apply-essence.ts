@@ -14,6 +14,7 @@ import { runeEffectPct, SIDES, takenFamilies } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
+import { parseKey } from "./key";
 import type { StageItem, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
@@ -31,10 +32,11 @@ export function essenceTarget(data: PatchData, item: StageItem, key: string): { 
     const hit = list.find((x) => hasFamily(x.mod, BREACH_FAMILY));
     return hit ? { level: "perfect", ...hit } : null;
   }
-  const m = /^essence:(lesser|normal|greater|perfect):(.+)$/.exec(key);
-  if (!m) return null;
-  const hit = list.find((x) => x.mod.id === m[2]);
-  return hit ? { level: m[1]!, ...hit } : null;
+  // 鍵の読みは key.ts の parseKey 1 か所
+  const k = parseKey(key);
+  if (k.type !== "essence" || !k.tier || !k.modId) return null;
+  const hit = list.find((x) => x.mod.id === k.modId);
+  return hit ? { level: k.tier, ...hit } : null;
 }
 
 /**
@@ -55,9 +57,11 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
   return {};
 }
 
+/** 鍵の段 (essence:<段>:<MOD の id> の段。ブリーチ・形の違う鍵は undefined) */
+const essenceTierOf = (key: string): string | undefined => { const k = parseKey(key); return k.type === "essence" && k.modId ? k.tier ?? undefined : undefined; };
 /** 無限のエッセンスで付きうる MOD (付いていない系統のうち、同じ強さで同じ名前のエッセンスの物)。pickInfinite はここから等しく 1 つ (engine-sim の行き先の一覧も同じ一覧で枝を分ける) */
 export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> { // E-50
-  const level = /^essence:([a-z]+):/.exec(key)?.[1];
+  const level = essenceTierOf(key);
   const en = ESSENCE_KEYS[key]?.en;
   const taken = takenFamilies(data, item);
   return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !familyBlocked(x.mod, taken));
@@ -68,7 +72,7 @@ export function infiniteChoices(data: PatchData, item: StageItem, key: string): 
  */
 export const isInfiniteEssence = (key: string): boolean => / of the Infinite$/.test(ESSENCE_KEYS[key]?.en ?? "");
 export function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
-  const level = /^essence:([a-z]+):/.exec(key)?.[1];
+  const level = essenceTierOf(key);
   const list = infiniteChoices(data, item, key);
   if (!level || !list.length) return null;
   return { level, ...list[Math.floor(rng() * list.length)]! };

@@ -8,9 +8,8 @@
  * 枝分かれした時は、枝ごとに付く割合 (重み ÷ 枝の重みの和) を枝の確率で足し合わせる。付けられない枝は数えない (付かなかった分は表に出ない)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, candidates, catalystBoosts, catalystOf, overLimit, room, SIDES, unfracturable, without, type Candidate } from "../stage-core";
-import { whittleTargets } from "../apply-currency";
-import { tunedCatalysingMultiplier } from "../stage-tuning";
+import { allMods, unfracturable, without, type Candidate } from "../stage-core";
+import { addCandidatesOf, removalOf } from "./basis";
 import type { StageItem, StageSide } from "../types";
 import { planSpec, type SpecPlan } from "./run-spec";
 import type { Mods } from "./parts";
@@ -22,24 +21,19 @@ type Remove = Extract<Action, { remove: unknown }>["remove"];
 /** 1 回で付く MOD の候補 (cands) と、この手で付く数 (n: 大いなる高貴なら 2、錬金なら 4) */
 export interface AddOdds { cands: Candidate[]; n: number }
 
-/** その状態で 1 つ付ける時の候補 (parts.ts の add → stage-core の addOne と同じ: お告げの側 ∩ 空きのある側、触媒の高貴の重み) */
-export function addCands(data: PatchData, item: StageItem, a: Add, mods: Mods, before: StageItem = item): Candidate[] {
-  const sides = (mods.side ? [mods.side] : SIDES).filter((s) => room(item, s, before)); // E-30a 枠の上限は打つ前の品
-  if (a.emptyOk && !SIDES.some((s) => room(item, s, before))) return [];
-  const { tag, pct } = catalystOf(item);
-  const boost = mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, data), mult: tunedCatalysingMultiplier(pct) } : undefined;
-  return candidates(data, item, sides, a.floor, boost ? { boost } : {});
-}
+/** その状態で 1 つ付ける時の候補 (土台の addCandidatesOf = parts.ts の add → stage-core の addOne と同じ: お告げの側 ∩ 空きのある側、触媒の高貴の重み)。E-30a 枠の上限は打つ前の品 */
+export const addCands = (data: PatchData, item: StageItem, a: Add, mods: Mods, before: StageItem = item): Candidate[] => addCandidatesOf(data, item, a, mods, before);
 
-/** 消える MOD の候補 (parts.ts の remove と同じ選び方。上限を超えた側に当たると手ごと不成立なので、その枝は数えない) */
+/** 消える MOD の候補 (土台の removalOf = parts.ts の remove と同じ選び方。上限を超えた側に当たると手ごと不成立なので、その枝は数えない) */
 function removeBranches(item: StageItem, a: Remove, mods: Mods): StageItem[] | null {
-  if (a.n === "all") return [{ ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }];
   // 1 つ以外 (冒涜だけを消す光のお告げ・2 つ以上消す手) は MOD を付ける手に無い
-  if (a.n !== 1 || (mods.pick ?? a.pick) !== "equal") return null;
-  if (a.ifAny && !allMods(item).length) return [item];
-  const side: StageSide | null = mods.removeSide ?? mods.side;
-  const gone = mods.pickLowest ? whittleTargets(item, side) : allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
-  const ok = a.overLimitVoids ? gone.filter((m) => !overLimit(item, m.side)) : gone;
+  if (a.n !== "all" && (a.n !== 1 || (mods.pick ?? a.pick) !== "equal")) return null;
+  const R = removalOf(item, a, mods);
+  if ("all" in R) return [{ ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }];
+  if ("none" in R) return [item];
+  if ("skip" in R) return [];
+  const gone = R.pick(item);
+  const ok = gone.filter((m) => !R.voids(item, m));
   if (!ok.length) return a.optional && !gone.length ? [item] : [];
   return ok.map((m) => without(item, m));
 }

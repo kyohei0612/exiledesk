@@ -23,6 +23,7 @@ import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
 import { limitOf, sideOfMod } from "./stage-core";
 import type { StageItem } from "./types";
+import { OMEN_KEY } from "./spec/omen-keys";
 
 export type RouteKind = "augment" | "chaos" | "exalt";
 export type Grade = "base" | "greater" | "perfect";
@@ -120,7 +121,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
       // カオス: 消せる MOD (フラクチャー以外) が無ければ、先に高貴 1 回で 1 つ足す (今のアイテムがフラクチャーだけの時。費用に入れる、オーナー 10-22)
       if (route === "chaos") return allMods(cur).some((m) => !m.fractured) ? use(`chaos${g}`) : use("exalt");
       // 高貴: MOD があれば消去で 0 に戻す、0 なら偉大な高貴のお告げで 2 つ
-      return allMods(cur).length ? use("annul") : use(`exalt${g}`, ["OmenofGreaterExaltation"]);
+      return allMods(cur).length ? use("annul") : use(`exalt${g}`, [OMEN_KEY.greater]);
     },
   };
   return run;
