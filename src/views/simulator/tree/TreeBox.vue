@@ -183,6 +183,8 @@ const startTitle = computed(() => [
 ].join("\n") || tr("白 (ノーマル) から。押すと始まりの形", "From white (normal). Click for the start"));
 /** 押せる物を倍率の逆数で戻す (origin = 大きくする軸。まとまりごとに端を軸にして、隣と重ならないように) */
 const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale: String(k.value), transformOrigin: origin } : {});
+/** 横に字が並ぶボタンは zoom で戻す (scale は場所を取らず、スタートの「ベース」が右の「フラクチャー済みから」に被った。11-07 オーナー「UI崩れてなかったっけスタートフラクチャー枠のとこ」) */
+const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: String(k.value) } : {}));
 
 </script>
 
@@ -242,11 +244,12 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
-    <div v-if="box.out === 'start'" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1" :style="{ minHeight: `${24 * k}px` }">
-      <button type="button" data-tree-base class="nodrag shrink-0 rounded border border-white/15 px-1 text-[11px] leading-6 hover:bg-white/10" :class="quiet ? 'pointer-events-none' : ''" :style="keep('left center')" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">{{ tr("ベース", "Base") }}</button>
-      <p v-if="startRest" data-tree-start-rest class="min-w-0 flex-1 truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest">{{ startRest }}</p>
+    <!-- 読むだけ (スマホの全体図・道、縮めて見ている時) はボタンを出さない (11-07 ux-review 19) -->
+    <div v-if="box.out === 'start'" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1.5" :style="{ minHeight: `${24 * k}px` }">
+      <button v-if="!quiet" type="button" data-tree-base class="nodrag shrink-0 rounded border border-white/15 px-1 text-[11px] leading-6 hover:bg-white/10" :style="keepFlow" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="emit('base')">{{ tr("ベース", "Base") }}</button>
+      <p v-if="startRest" data-tree-start-rest class="min-w-0 flex-1 break-words text-balance text-[11px] leading-4 tracking-tight opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest">{{ startRest }}</p>
       <span v-else class="flex-1" />
-      <button v-if="!quiet" type="button" data-tree-start-plus-btn class="nodrag flex h-6 shrink-0 items-center justify-center whitespace-nowrap rounded border border-white/15 px-1 text-[11px] leading-none hover:bg-white/10" :style="keep('right center')" :title="marks.length ? tr('＋ MOD を足す (外れを差し替える)', '+ Add a mod (replaces a miss mod)') : tr('＋ 始まりに付いている MOD を足す', '+ Add a starting mod')" @click.stop="emit('aim')">{{ tr("＋MOD", "+Mod") }}</button>
+      <button v-if="!quiet" type="button" data-tree-start-plus-btn class="nodrag flex h-6 shrink-0 items-center justify-center whitespace-nowrap rounded border border-white/15 px-1 text-[11px] leading-none hover:bg-white/10" :style="keepFlow" :title="marks.length ? tr('＋ MOD を足す (外れを差し替える)', '+ Add a mod (replaces a miss mod)') : tr('＋ 始まりに付いている MOD を足す', '+ Add a starting mod')" @click.stop="emit('aim')">{{ tr("＋MOD", "+Mod") }}</button>
     </div>
 
 
