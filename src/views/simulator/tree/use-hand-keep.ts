@@ -39,10 +39,12 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     const am = aimedNow(d, o.item.value), mid = choices.value.filter((c) => am.has(c.aim.modId) && midAims(t.doc.value).some((a) => a.modId === c.aim.modId));
     return mid.length && mid.length < choices.value.length ? mid.map((c) => aimKey(c.aim)) : [];
   };
-  /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。✦ は出さない。候補を聞く時だけ) */
+  /** 消去でない消える手で、候補が 1 つ (確定で消える = 聞かない) か (S-27f) */
+  const lone = computed(() => !isRemove.value && !ask.value && choices.value.length === 1);
+  /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。✦ は出さない。候補を聞く時と、候補 1 つの消える手 = S-27f) */
   const fixed = computed((): StageMod[] => {
     const d = s.data.value, it = o.item.value, h = o.held.value;
-    if (!d || !it || !h || !ask.value) return [];
+    if (!d || !it || !h || !(ask.value || lone.value)) return [];
     const am = aimedNow(d, it), stay = new Set(outsideAimed(d, t.doc.value, { currency: h, omens: o.omens.value, catalyst: null, quality: 0 }, am, it));
     const goals = [...(t.doc.value.memoAims ?? []), ...midAims(t.doc.value)].filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
     return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !choices.value.some((c) => c.mod.modId === m.modId) && goals.some((g) => aimOn(d, m, g)));
@@ -72,6 +74,11 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     return !!tag?.replace && tag.tone === "bad";
   };
   const label = (c: { aim: Aim; mod: StageMod }): string => (junk(c) ? tr("外れ MOD", "Miss mod") : text(c.mod));
-  return { isRemove, choices, fixed, ask, checked, aims, toggle, none, label };
+  /**
+   * 聞かないが欄は出す = 候補 1 つの消える手で、消えない狙いがある時 (S-27f、11-07 オーナー「残したいMODってのでまぁデフォでチェック欲しいね 一応ね」)。
+   * ☑ 固定の行だけを見せ、打ち方・保存 (Hand.keep) は変えない
+   */
+  const fixedOnly = computed(() => lone.value && fixed.value.length > 0);
+  return { isRemove, choices, fixed, ask, fixedOnly, checked, aims, toggle, none, label };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;

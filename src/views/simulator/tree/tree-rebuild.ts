@@ -6,7 +6,7 @@
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { autoTarget, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
 import { extendAnnul, trimAnnul } from "./tree-annul-chain";
@@ -104,12 +104,12 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   }
   // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
   for (const id of Object.keys(d.boxes)) foldMisses(d, id);
-  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d);
+  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
   const left = !stepped || [...picks.keys()].some((k) => !used.has(k));
   const added = left ? yield* arrivedSteps(data, d) : [];
   yield* replay(added);
-  if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  if (added.length) { relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); }
   if (added.length) for (const id of Object.keys(d.boxes)) foldMisses(d, id); // ↩ で着く人の結果の箱もハズレへ (S-39)
   // 消去の続き (S-28g): つなぎのそろった木で、同じ枠ができた自動の消去を畳み、空いた消去の結果を続ける (手を決める時と同じ)
   const trimmed = trimAnnul(data, d);
