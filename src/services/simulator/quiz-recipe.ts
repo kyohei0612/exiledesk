@@ -10,7 +10,7 @@
  *   - 工程は入口の札 (entry) が付いたら切り替わる。どの入口も付いていなければ 1 つ目の工程
  * 打ち方はエミュレーターと同じ applyCurrency。当たり所で弾かれた手 (random) は数えずにもう一度 (書いてある効果どおり)。
  */
-import { type PatchData, type StageItem, type StageMod, type StageSide, type AimHitOpts, aimHits, applyCurrency, omenFor, OMEN_KEY, revealOffers, catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
+import { type PatchData, type StageItem, type StageMod, type StageSide, type AimHitOpts, aimHits, applyCurrency, omenFor, OMEN_KEY, revealOffers, catalystOf, catalystRoom, limitOf, listOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
 
 export type SlotKind = "normal" | "desecrated" | "fractured" | "essence" | "crafted";
 /** 完成の札 1 つ。mods のどれか 1 つ (段は minTierIndex 以上) で埋まる。mods が空ならその側のどの MOD でも */
@@ -191,8 +191,8 @@ export function situationOf(item: StageItem, goal: readonly QuizSlot[], order?: 
   // 冒涜の MOD の数 (未発現込み、札の物も込み)。冒涜はアイテムに 1 つまでなので、札に普通の MOD が冒涜で付いた時に骨が打てない (2026-10-16 指輪のチュートリアル)
   sit.des = [...item.prefixes, ...item.suffixes].filter((m) => m.desecrated || m.unrevealed).length;
   // 触媒の品質が上限まで溜まっていればその種類 (fire・cold …)、溜まっていなければ "-" (2026-10-16 指輪のチュートリアル: 触媒の高貴を打つ前に品質を溜める)
-  const c = catalystOf(item);
-  sit.cat = c.tag && c.pct >= maxQualityOf(item) ? c.tag : "-";
+  const tag = catalystOf(item).tag;
+  sit.cat = tag && catalystRoom(item, tag).full ? tag : "-";
   return sit;
 }
 const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");

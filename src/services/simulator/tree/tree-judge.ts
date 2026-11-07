@@ -8,7 +8,7 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, kindOf, maxQualityOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystRoom, kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
@@ -182,16 +182,16 @@ const LIGHT = OMEN_KEY.light;
 
 /**
  * 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c)。
- * rep = 箱 id の代表の品: n はその品で打てる上限 (エンジンの maxQualityOf) まで。手の % は完成形の品質から入るので上限を超えうるが、
+ * rep = 箱 id の代表の品: n はその品にそのカタリストで入る上限 (エンジンの catalystRoom の max) まで。手の % は完成形の品質から入るので上限を超えうるが、
  * エンジンは上限で止めて打てる (fillCatalyst)。前は手の 40 のまま比べ、上限 20 のアミュレットが誰も箱に入れず止まった (goalQ b5、11-07 エミュでの枝の確かめ)
  */
-const catalystTo = (doc: TreeDoc, id: string, rep?: StageItem | null): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? Math.min(h.quality ?? 0, rep ? maxQualityOf(rep) : Number.POSITIVE_INFINITY) : 0; };
-/** このアイテムは箱 id のカタリストの n % に届くか (同じ種類の品質がもう n 以上か、品質の上限が n 以上)。rep は catalystTo と同じ */
+const catalystTo = (doc: TreeDoc, id: string, rep?: StageItem | null): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? Math.min(h.quality ?? 0, rep ? catalystRoom(rep, catalystTagOf(h.currency)).max : Number.POSITIVE_INFINITY) : 0; };
+/** このアイテムは箱 id のカタリストの n % に届くか (エンジンの catalystRoom: 同じ種類の品質がもう n 以上か、入る上限が n 以上)。rep は catalystTo と同じ */
 function reachesCatalyst(doc: TreeDoc, id: string, it: StageItem, rep?: StageItem | null): boolean {
   const n = catalystTo(doc, id, rep), h = doc.boxes[id]?.hand;
   if (!n || !h) return true;
-  const c = catalystOf(it);
-  return maxQualityOf(it) >= n || (c.pct >= n && c.tag === catalystTagOf(h.currency));
+  const room = catalystRoom(it, catalystTagOf(h.currency));
+  return room.max >= n || room.now >= n;
 }
 
 /** 見本の ☑ (見本の item ごと、木を替えて見本が作り直されたら別の物) */
