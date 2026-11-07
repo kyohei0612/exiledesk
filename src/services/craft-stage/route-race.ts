@@ -56,14 +56,45 @@ export const routeHitMod = (data: PatchData, targets: readonly RaceTarget[]) => 
  *   - 高貴: 消せる MOD (固定でない・当たりでない) があれば消去、無ければ高貴。空きが 2 つ以上なら偉大な高貴のお告げで 2 つ
  */
 export function routeStep(it: StageItem, route: RouteKind, grade: Grade, isHit: (m: StageMod) => boolean, open: readonly StageSide[]): { key: string; omens: string[] } {
-  const g = GRADE_KEY[grade];
+  const k = (id: RouteStepId) => routeStepKey(id, grade)!;
   if (route === "augment") {
-    if (it.rarity === "normal") return { key: `transmute${g}`, omens: [] };
-    return { key: open.some((sd) => sideList(it, sd).some((m) => !m.fractured && !isHit(m))) ? "annul" : `augment${g}`, omens: [] };
+    if (it.rarity === "normal") return { key: k("transmute"), omens: [] };
+    return { key: open.some((sd) => sideList(it, sd).some((m) => !m.fractured && !isHit(m))) ? k("annulMiss") : k("augment"), omens: [] };
   }
-  if (route === "chaos") return { key: allMods(it).some((m) => !m.fractured) ? `chaos${g}` : "exalt", omens: [] };
-  if (allMods(it).some((m) => !m.fractured && !isHit(m))) return { key: "annul", omens: [] };
-  return { key: `exalt${g}`, omens: openSlots(it) >= 2 ? [OMEN_KEY.greater] : [] };
+  if (route === "chaos") return { key: allMods(it).some((m) => !m.fractured) ? k("chaos") : k("exaltFirst"), omens: [] };
+  if (allMods(it).some((m) => !m.fractured && !isHit(m))) return { key: k("annulBack"), omens: [] };
+  return { key: k("exaltPair"), omens: openSlots(it) >= 2 ? [OMEN_KEY.greater] : [] };
+}
+
+/**
+ * 道の打ち方の定義 (① 14、11-07 jin-base4。エミュの道のページの手順の札と routeStep が同じ物を見る。文は画面が id ごとに持つ)。
+ * start = 始めの品 (white = 白のベース・rare1 = MOD 1 つのレア・rare0 = MOD 0 のレア)、steps = 打つ順の手 (key = 札の絵のカレンシー / お告げ、無ければ null)。
+ * fromItem = 今のアイテムから始める時に start の手と替わる 1 手 (カオスの道だけ、routeOff の chaosOnly)
+ */
+export type RouteStepId = "start" | "fromItem" | "transmute" | "annulMiss" | "augment" | "repeat" | "exaltFirst" | "chaos" | "exaltPair" | "annulBack";
+export interface RouteStepDef { id: RouteStepId; key: string | null }
+export interface RouteDef { route: RouteKind; main: string; grades: readonly Grade[]; start: "white" | "rare1" | "rare0"; steps: readonly RouteStepDef[] }
+const GRADES: readonly Grade[] = ["base", "greater", "perfect"];
+export const ROUTE_DEFS: readonly RouteDef[] = [
+  { route: "augment", main: "augment", grades: GRADES, start: "white", steps: [{ id: "transmute", key: "transmute" }, { id: "annulMiss", key: "annul" }, { id: "augment", key: "augment" }, { id: "repeat", key: null }] },
+  { route: "chaos", main: "chaos", grades: GRADES, start: "rare1", steps: [{ id: "start", key: "exalt" }, { id: "chaos", key: "chaos" }] },
+  { route: "exalt", main: "exalt", grades: GRADES, start: "rare0", steps: [{ id: "start", key: null }, { id: "exaltPair", key: OMEN_KEY.greater }, { id: "annulBack", key: "annul" }] },
+];
+export const ROUTE_FROM_STEP: RouteStepDef = { id: "fromItem", key: null };
+/** 道と等級の並び (道のページの行の順) */
+export const ROUTE_ORDER: ReadonlyArray<{ route: RouteKind; grade: Grade }> = ROUTE_DEFS.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
+/** その手で打つカレンシーの鍵 (等級つき)。変成・増強・カオス・高貴の 2 つ付けは道の等級、消去と始めの高貴 1 回は無印。打たない手は null */
+export function routeStepKey(id: RouteStepId, grade: Grade): string | null {
+  const g = GRADE_KEY[grade];
+  switch (id) {
+    case "transmute": return `transmute${g}`;
+    case "augment": return `augment${g}`;
+    case "chaos": return `chaos${g}`;
+    case "exaltPair": return `exalt${g}`;
+    case "exaltFirst": return "exalt";
+    case "annulMiss": case "annulBack": return "annul";
+    default: return null;
+  }
 }
 /** 当たりの側 (プレ / サフィ)。2 つ以上なら増強の道は使えない */
 export const targetSides = (data: PatchData, targets: readonly RaceTarget[]) => [...new Set(targets.map((t) => sideOfMod(data, t.modId)))];

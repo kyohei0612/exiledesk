@@ -28,7 +28,9 @@ export const CATALYSING_CAVEAT =
  * Craft of Exile の作り (package_poe2.js の exaltedParams、OmenOnExaltConsumeQuality。2026-10-16 オーナー「CoE に合わせて」):
  * 1 + 0.2 × 品質 (20% で 5 倍)。標準の上限 20% を超えた分は 1% ごとに +0.12 (40% で 7.4 倍)。reddit の実測 2 点 (上の表) の区間の中に入る
  */
-const DEFAULT_MAX = 20;
+/** 標準の品質の上限 (この % までは 1% あたり CATALYSING_PER_PCT、超えた分は × CATALYSING_OVER_RATIO)。説明の文・教材が同じ数を引く (11-07 jin-base4) */
+export const CATALYSING_FULL_PCT = 20;
+const DEFAULT_MAX = CATALYSING_FULL_PCT;
 /** 既定の 1% あたり (CoE) と、20% を超えた分の 1% あたり (= 0.2 × 0.6) */
 export const CATALYSING_PER_PCT = 0.2;
 export const CATALYSING_OVER_RATIO = 0.6;
