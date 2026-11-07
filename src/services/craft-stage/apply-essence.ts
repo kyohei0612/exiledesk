@@ -10,6 +10,7 @@
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { BREACH_FAMILY } from "../htc/omens";
+import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { runeEffectPct, SIDES, takenFamilies } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
@@ -56,6 +57,14 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
   return {};
 }
 
+/** 品質の上限を上げる MOD か (ブリーチのエッセンスの「品質の最大値 +20%」= LocalMaximumQuality の系統、E-71)。木の狙い・品質の上限の見せ方が同じ物 */
+export const isQualityCapMod = (data: PatchData, modId: string): boolean => { const m = data.mods.get(modId); return !!m && hasFamily(m, BREACH_FAMILY); };
+/**
+ * エッセンスの MOD のその段を付けるエッセンスの棚の鍵 (essence:<レッサー / 普通 / グレーター>:<MOD の id>)。段の名前から強さを読むのは essenceLevelOf
+ * (11-07 jin-base4、シミュ部長の頼み: 木の sim-greater.ts の essenceKeyFor の写し)。パーフェクトは段の名前に出ないので返さない (前の写しと同じ)
+ */
+export const essenceKeyForTier = (data: PatchData, modId: string, tierIndex: number): string =>
+  essenceKey(essenceLevelOf(String(data.mods.get(modId)?.tiers[tierIndex]?.name ?? "")) as EssenceTier, modId);
 /** 鍵の段 (essence:<段>:<MOD の id> の段。ブリーチ・形の違う鍵は undefined) */
 const essenceTierOf = (key: string): string | undefined => { const k = parseKey(key); return k.type === "essence" && k.modId ? k.tier ?? undefined : undefined; };
 /** 無限のエッセンスで付きうる MOD (付いていない系統のうち、同じ強さで同じ名前のエッセンスの物)。pickInfinite はここから等しく 1 つ (engine-sim の行き先の一覧も同じ一覧で枝を分ける) */

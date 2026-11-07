@@ -82,11 +82,14 @@ export { parseKey, type ParsedKey } from "./key";
 export function whittleTargets(item: StageItem, side?: StageSide | null): StageMod[] {
   const rem = allMods(item).filter((m) => !m.fractured && (!side || m.side === side));
   if (!rem.length) return [];
-  // 未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。modLevel も 1、要望 ㉟-3)
-  const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
-  const low = Math.min(...rem.map(lv));
-  return rem.filter((m) => lv(m) === low);
+  const low = Math.min(...rem.map(whittleLevel));
+  return rem.filter((m) => whittleLevel(m) === low);
 }
+/**
+ * 削減のお告げで比べる MOD レベル。未発現の冒涜 MOD は MOD レベル 1 として数える (poe2wiki Omen of Whittling・0.3.1、POE2Tube 要望 ㉞-6。modLevel も 1、要望 ㉟-3)。
+ * 打つ処理 (whittleTargets) と木の削減の見方が同じ物 (11-07 jin-base4、シミュ部長の頼み)
+ */
+export const whittleLevel = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);
 /**
  * その手に掛かるお告げ (持っている中から、エンジンが食う物)。打つ処理の planSpec と同じお告げの層 (spec/omen-layer.ts の omensOfKind):
  * 腐食は単体で効く (2026-10-05 オーナー「腐食は単体だよね、属さないはず」)・光を使う時は左右の消去は効かない・一緒に効かない組は先の 1 つ。
