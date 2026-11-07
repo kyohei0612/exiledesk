@@ -40,8 +40,11 @@ export function targetBlock(t: Target, item: StageItem): string | null {
   return null;
 }
 
-/** ジュエルはアイテムレベルを見ない (2026-10-12 オーナー、apply-currency.ts の noIlvl と同じ) */
-const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
+/**
+ * ジュエルはアイテムレベルを見ない (MOD は全部レベル 1・重みは全部同じで、画面にもアイテムレベルを出さない。2026-10-12 オーナー
+ * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
+ */
+export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
 
 /** mods = その手に掛かるお告げの効き目 (空きの判定はお告げの側で見る)。tag = 触媒の品質の種類。ess = エッセンスの手の鍵 (essenceFamilyFree) */
 export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string | null, ess?: { data: PatchData; key: string }): string | null { // E-21 打てるかは乱数に関係ない条件だけ
@@ -109,13 +112,32 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
  * フラスコ・スキルジェムはこのステージが MOD を扱わない (ゲームの決まりではない)
  */
 export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly string[]): string | null { // E-18 フラスコ・E-26 聖別済み (状態の決まり)
-  if (item.destroyed) return tr("壊れたアイテムには何も使えない", "Item is destroyed");
-  if (item.disposed) return tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`);
-  if (item.mirrored && !ANY_STATE.includes(spec.stageKey)) return tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item");
-  if (item.identified === false) return tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)");
-  if (item.sanctified && !spec.allowSanctified) return tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item") // apply-currency の SANCTIFIED_REASON と同じ文;
+  const st = itemStateBlock(item, ANY_STATE.includes(spec.stageKey)) ?? lockedStateBlock(item, { sanctifiedOk: !!spec.allowSanctified, unidentifiedOk: false });
+  if (st) return st;
   if (item.corrupted && !spec.allowCorrupted) return tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item");
-  if (omens.some((o) => REMOVED_OMENS.includes(o))) return tr("今のゲームに無いお告げ", "This Omen is no longer in the game");
+  const gone = removedOmenBlock(omens);
+  if (gone) return gone;
   if (!spec.modless && (isFlask(item.cls.category) || isGem(item.cls.category))) return isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)");
   return null;
 }
+
+/**
+ * どの手にも掛かる品の状態の決まりのうち、壊れた・処分した・ミラー (anyState = 状態を問わない手 = 鏡・抽出は通す)。
+ * 説明文で打つ手 (stateBlock) と、まだ説明文に移していない手を振り分ける applyCurrency の頭が同じ物を呼ぶ (2026-11-07 に写しを 1 本に)
+ */
+export function itemStateBlock(item: StageItem, anyState: boolean): string | null {
+  if (item.destroyed) return tr("壊れたアイテムには何も使えない", "Item is destroyed");
+  if (item.disposed) return tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`);
+  if (item.mirrored && !anyState) return tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item");
+  return null;
+}
+/** 聖別済みの品には何も打てない (E-26)。apply-currency の SANCTIFIED_REASON もこの文 */
+export const sanctifiedReason = (): string => tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item");
+/** 聖別済み (sanctifiedOk の手だけ通す)・未鑑定 (unidentifiedOk = 鑑定の巻物だけ通す) */
+export function lockedStateBlock(item: StageItem, o: { sanctifiedOk: boolean; unidentifiedOk: boolean }): string | null {
+  if (item.sanctified && !o.sanctifiedOk) return sanctifiedReason();
+  if (item.identified === false && !o.unidentifiedOk) return tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)");
+  return null;
+}
+/** 今のゲームに無いお告げ (相場に値段が無い、omens.ts の REMOVED_OMENS) を掛けていたら打てない */
+export const removedOmenBlock = (omens: readonly string[]): string | null => (omens.some((o) => REMOVED_OMENS.includes(o)) ? tr("今のゲームに無いお告げ", "This Omen is no longer in the game") : null);

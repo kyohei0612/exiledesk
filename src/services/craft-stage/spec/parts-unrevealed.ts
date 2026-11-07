@@ -4,13 +4,15 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, effectiveCls, makeStageMod, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { allMods, candidates, effectiveCls, makeStageMod, pickWeighted, replaced, room, SIDES, skip, skipRandom, withMod, without, type Candidate } from "../stage-core";
+import { boneSlotOf, boneSlotReason } from "./basis";
 import type { StageApply, StageItem, StageMod, StageSide } from "../types";
 import type { Action, ModPool } from "./types";
 import type { Mods, PartCtx } from "./parts";
 import { markFloorOf } from "./desecrate-specs";
 import { jaOfOmen } from "../../htc/game-names";
 import { tr } from "../../../i18n/lang";
+import { OMEN_KEY } from "./omen-keys";
 
 const POOL_ORDER: readonly ModPool[] = ["normal", "desecrated", "otherworldly"];
 /** 置き場の MOD の id (同じ MOD を 2 回数えない: 置き場が重なっていると重みが倍になる)。普通の置き場は特殊 MOD のルーン込み (要望 ㉙) */
@@ -98,19 +100,16 @@ export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): 
     side = pick.s;
   }
   if (!(weights.find((x) => x.s === side)!.w > 0)) return skip(item, tr("その側に付けられる冒涜の MOD が無い", "No Desecrated mod can be added on that side"));
-  // 上限を超えている側 (侮蔑・合金が消えた後) には付かない。お告げで決めた側なら打てない、側が当たり所なら手ごと不成立 (E-25。オーナー 11-05 ゲームの事実)
-  if (!mark && overLimit(item, side)) return (fixed ? skip : skipRandom)(item, tr("その側は上限を超えているので冒涜の MOD を付けられない", "That side is over its limit, so no Desecrated mod can be added"));
+  // 選んだ側の枠は土台 (basis.ts の boneSlotOf、確率の表・数え上げ・プレビューと同じ)。上限を超えている側 (侮蔑・合金が消えた後) には付かない (E-25。オーナー 11-05 ゲームの事実)、
+  // 満杯ならその側の固定以外から等しく 1 つ消して付く。付かない時、お告げで決めた側なら打てない、側が当たり所なら手ごと不成立
+  const slot = boneSlotOf(item, side, mark, ctx.before);
+  if ("over" in slot || "stuck" in slot) return (fixed ? skip : skipRandom)(item, boneSlotReason(slot));
   let cur = item;
   const removed: StageMod[] = [];
-  if (mark) {
-    cur = without(cur, mark);
-    removed.push(mark);
-  } else if (!room(cur, side, ctx.before)) {
-    const r = removeOne(cur, rng, [side]);
-    // 側を重みで選んだ時は、選ばれた側が固定の MOD だけかは当たり所 (お告げで決めた側なら打つ前に分かる)
-    if (!r) return (fixed ? skip : skipRandom)(item, tr("その側に空きが無い", "No open slot on that side"));
-    cur = r.item;
-    removed.push(r.mod);
+  const gone = "mark" in slot ? slot.mark : "replace" in slot ? slot.replace[Math.floor(rng() * slot.replace.length)]! : null;
+  if (gone) {
+    cur = without(cur, gone);
+    removed.push(gone);
   }
   const altered = a.pools.includes("otherworldly");
   const hidden = unrevealedMod(side, { floor, altered, faction: mods.guaranteeTag, ...(a.exclusiveAnyLevel ? {} : { gnawed: true }) });
@@ -251,7 +250,7 @@ export function reveal(ctx: PartCtx, item: StageItem, a: { offers: number }): St
   const hidden = allMods(item).find((m) => m.unrevealed)!;
   const r = ctx.reveal;
   if (!r || "invalid" in r) return skip(item, tr(`発現の手の形が違う (${r && "invalid" in r ? r.invalid : ""})`, `Invalid reveal step (${r && "invalid" in r ? r.invalid : ""})`));
-  if (r.reroll && ctx.mods.rerolls < 1) return skip(item, tr(`引き直しには${jaOfOmen("OmenofAbyssalEchoes") ?? "アビスの反響のお告げ"}が要る`, "Rerolling needs Omen of Abyssal Echoes"));
+  if (r.reroll && ctx.mods.rerolls < 1) return skip(item, tr(`引き直しには${jaOfOmen(OMEN_KEY.echoes) ?? "アビスの反響のお告げ"}が要る`, "Rerolling needs Omen of Abyssal Echoes"));
   const { sets, chances } = drawOffers(ctx.data, item, hidden, ctx.rng, a.offers, r.reroll ? 2 : 1);
   const pick = sets[r.reroll ? 1 : 0]![r.index - 1];
   if (!pick) return skipRandom(item, tr("その番号の候補が無い", "No option with that number"));

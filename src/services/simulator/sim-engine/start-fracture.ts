@@ -7,6 +7,7 @@ import { applyCurrency } from "../../craft-stage/apply-currency";
 import { craftedLimitOf } from "../../craft-stage/apply-essence";
 import { forceKey } from "../../craft-stage/apply-force";
 import { hits } from "../../craft-stage/aim-odds";
+import { isCraftedSource } from "../../craft-stage/tier-rank";
 import { freshItem } from "../../craft-stage/run-plan";
 import { baseSocketsOf } from "../../craft-stage/stage-runes";
 import { socketGoalRunes } from "./goal-runes";
@@ -23,11 +24,11 @@ export interface TierMod { modId: string; tier: number; fractured?: boolean }
 const flagOf = (data: PatchData, m: TierMod): "f" | "e" | "n" => {
   if (m.fractured) return "f";
   const src = data.mods.get(m.modId)?.source;
-  return src === "essence" || src === "perfect_essence" ? "e" : "n";
+  return isCraftedSource(src) ? "e" : "n";
 };
 const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.tier}`, flagOf(data, m));
 /** クラフト MOD (エッセンス・完全エッセンス・合金で付く物、✦ で付ける物は数えない) */
-const isCrafted = (data: PatchData, m: TierMod): boolean => /essence/.test(String(data.mods.get(m.modId)?.source ?? "")) && !m.fractured;
+const isCrafted = (data: PatchData, m: TierMod): boolean => isCraftedSource(data.mods.get(m.modId)?.source) && !m.fractured;
 /** クラフト MOD の上限を +1 するルーン (英語名、差す手 rune:<英語名>) */
 const ASTRID = "Astrid's Creativity";
 

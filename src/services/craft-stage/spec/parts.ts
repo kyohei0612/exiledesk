@@ -6,9 +6,8 @@
  * 結果は tests/currency-spec-golden.test.ts の控えで見張る。違う引き方にする時は、先にどちらが正しいかを決めてから控えを取り直す
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { addForced, addOne, allMods, catalystBoosts, catalystOf, hasExtraCatalyst, removeForced, type Force, makeStageMod, maxQualityOf, overLimit, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
-import { whittleTargets } from "../apply-currency";
-import { tunedCatalysingMultiplier } from "../stage-tuning";
+import { addForced, addOne, allMods, catalystOf, hasExtraCatalyst, removeForced, type Force, makeStageMod, maxQualityOf, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
+import { addSidesOf, catalysingBoost, nothingToRemove, removalOf } from "./basis";
 import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
 import { hasImplicitRange } from "../roll-text";
@@ -27,9 +26,9 @@ export { factionCandidates } from "./parts-unrevealed";
 
 /** お告げで変わった分 (掛かっていなければ null / 0 / false) */
 export interface Mods {
-  /** 付ける側 (高貴・骨)。付けない手 (消去) では消す側 */
+  /** 付ける側 (高貴・骨)。消す側は removeSide (消去・抹消・結晶化) */
   side: StageSide | null;
-  /** 消す側だけ (抹消・結晶化) */
+  /** 消す側 (消去・抹消・結晶化) */
   removeSide: StageSide | null;
   guaranteeTag: string | null;
   rerolls: number;
@@ -77,64 +76,45 @@ const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, 
 
 type Remove = Extract<Action, { remove: unknown }>["remove"]; // E-22 説明文に無い選び方は等しく (pick: equal)
 /**
- * 固定以外から消す。冒涜だけ (光のお告げ) は側を見ない (左右の消去は光と一緒には使えない、run-spec.ts の omensOf。2026-10-17 オーナー)。
+ * 固定以外から消す。冒涜だけ (光のお告げ) は側を見ない (左右の消去は光と一緒には使えない、お告げの層 omen-layer.ts。2026-10-17 オーナー)。何を消すかは土台 (basis.ts の removalOf)。
  * 側: お告げ (抹消・結晶化・左右の消去) → それ。付ける側が埋まっている完全エッセンスは、その側から (sideWhenFull)。
  * 削りのお告げは MOD レベルの一番低い物から (未発現の枠は 1 として数える、apply-currency.ts の whittleTargets)
  */
 function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
-  if (a.n === "all") {
-    const removed = allMods(item).filter((m) => !m.fractured);
-    return { applied: true, item: { ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }, added: [], removed };
-  }
-  const pick = ctx.mods.pick ?? a.pick;
-  if (pick === "desecrated") {
-    const ds = allMods(item).filter((m) => m.desecrated && !m.fractured);
-    if (!ds.length) return skip(item, tr("光のお告げ: 冒涜の MOD が無い", "Omen of Light: no Desecrated mod"));
+  // 何を消すかは土台 (basis.ts の removalOf)。ここは乱数で 1 つ選ぶだけ
+  const R = removalOf(item, a, ctx.mods, ctx.essence?.side);
+  if ("all" in R) return { applied: true, item: { ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) }, added: [], removed: R.all };
+  if ("skip" in R) return skip(item, R.skip);
+  const nothing: StageApply = { applied: true, item, added: [], removed: [] };
+  if ("none" in R) return nothing;
+  if (R.desecrated) {
+    const ds = R.pick(item);
     // 冒涜の MOD は 1 つまでなので、ふつうは 1 つから選ぶ (乱数を使わない)
     const d = ds.length === 1 ? ds[0]! : ds[Math.floor(ctx.rng() * ds.length)]!;
     return { applied: true, item: without(item, d), added: [], removed: [d] };
   }
-  const nothing: StageApply = { applied: true, item, added: [], removed: [] };
-  if (a.ifAny && !allMods(item).length) return nothing;
-  const side = ctx.mods.removeSide ?? ctx.mods.side; // E-11g 左右のお告げで消す側を決める
-  // 未発現の冒涜 MOD があればそれを消す (深淵のエッセンスは未発現に入れ替わる、2026-10-16 オーナーがゲームで確認)
-  if (a.unrevealedFirst && !ctx.removeForce) {
-    const us = allMods(item).filter((m) => m.unrevealed && !m.fractured && (!side || m.side === side));
-    if (us.length) {
-      const u = us.length === 1 ? us[0]! : us[Math.floor(ctx.rng() * us.length)]!;
-      return { applied: true, item: without(item, u), added: [], removed: [u] };
-    }
-  }
-  let sides: readonly StageSide[] = side ? [side] : SIDES;
-  const e = ctx.essence;
-  if (a.sideWhenFull && e && !room(item, e.side)) {
-    if (side && side !== e.side) return skip(item, tr("足す側が埋まっているので、お告げの側からは消せない", "The Essence's side is full, so it can't remove from the Omen's side"));
-    sides = [e.side];
-  }
   let cur = item;
   const removed: StageMod[] = [];
-  for (let i = 0; i < a.n; i++) {
+  for (let i = 0; i < (a.n === "all" ? 0 : a.n); i++) {
     let r: { item: StageItem; mod: StageMod } | null;
     if (ctx.removeForce) {
       // 消える MOD の指名 (要望 ⑱-1)。お告げより先
       const f = removeForced(cur, ctx.removeForce);
       if ("error" in f) return pickFail(item, f.error);
       r = f;
-    } else if (ctx.mods.pickLowest) {
-      const lows = whittleTargets(cur, side);
-      const mod = lows[Math.floor(ctx.rng() * lows.length)];
+    } else {
+      const from = R.pick(cur);
+      // 削減は候補が空でも 1 回引く (前の作りと同じ乱数の順)
+      const mod = from.length || ctx.mods.pickLowest ? from[Math.floor(ctx.rng() * from.length)] : undefined;
       r = mod ? { item: without(cur, mod), mod } : null;
-    } else r = removeOne(cur, ctx.rng, sides);
+    }
     if (!r) break;
     // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) に当たると付け直せずに弾かれる (2026-10-14 オーナーがゲームで確認、プレに空きがあっても同じ)
-    if (a.overLimitVoids && overLimit(cur, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)")); // E-25 上限を超えた側に当たったら手ごと不成立
+    if (R.voids(cur, r.mod)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)")); // E-25 上限を超えた側に当たったら手ごと不成立
     cur = r.item;
     removed.push(r.mod);
   }
-  if (!removed.length) {
-    if (a.optional) return nothing;
-    return skip(item, side ? tr("お告げの側に外せる MOD が無い", "No removable mod on the Omen's side") : tr("外せる MOD が無い", "No mod can be removed"));
-  }
+  if (!removed.length) return a.optional ? nothing : skip(item, nothingToRemove(R.side));
   return { applied: true, item: cur, added: [], removed };
 }
 
@@ -148,9 +128,8 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   const ok = (it: StageItem): StageApply => ({ applied: true, item: it, added: [], removed: [] });
   if (a.emptyOk && !SIDES.some((s) => room(item, s, ctx.before))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
-  const sides = ctx.mods.side ? [ctx.mods.side] : SIDES; // E-11f・E-11g
-  const { tag, pct } = catalystOf(item);
-  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
+  const sides = addSidesOf(ctx.mods); // E-11f・E-11g
+  const boost = catalysingBoost(ctx.data, item, ctx.mods);
   const pick = ctx.pick?.slice(ctx.pickUsed ?? 0) ?? [];
   if (pick.length > n) return pickFail(item, tr(`この手で付く MOD は ${n} つまで`, `this adds at most ${n} mod${n === 1 ? "" : "s"}`));
   let cur = item;

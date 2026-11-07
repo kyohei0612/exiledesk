@@ -103,9 +103,9 @@ export type Action =
    * sideWhenFull: 付ける側 (エッセンスの MOD の側) が埋まっている時はその側から消す (2026-10-14 オーナーがゲームで確認)。
    * overLimitVoids: 上限を超えている側の MOD に当たったら手ごと不成立 (カオス、2026-10-14 オーナーがゲームで確認)。
    * optional: 消せる物が無ければ消さずに通す (深淵のエッセンスは空きに印を付ける)
-   * unrevealedFirst: 未発現の冒涜 MOD があればそれを消す (今はどの手も使っていない。深淵のエッセンスは 2026-11-06 に等しく選ぶ形に、E-52)
+   * (unrevealedFirst = 未発現を先に消す、は 2026-11-07 に外した。どの手も使っていなかった。深淵のエッセンスは 11-06 に等しく選ぶ形に、E-52)
    */
-  | { remove: { n: number | "all"; pick: "equal" | "desecrated"; ifAny?: boolean; sideWhenFull?: boolean; overLimitVoids?: boolean; optional?: boolean; unrevealedFirst?: boolean } }
+  | { remove: { n: number | "all"; pick: "equal" | "desecrated"; ifAny?: boolean; sideWhenFull?: boolean; overLimitVoids?: boolean; optional?: boolean } }
   /** コラプトにする (腐食のお告げ) */
   | { corrupt: true }
   /** レアリティを変える (変成・王者・錬金・普通のエッセンス) */
@@ -167,7 +167,7 @@ export interface CurrencySpec { // E-20 説明文の分解・E-04 出どころ (
 
 /**
  * お告げの効き目 = 動作の部品への修飾。
- *   side: 付ける / 消す側 (左右のネクロマンシー・左右の消去)
+ *   side: 付ける側 (左右の高貴・左右のネクロマンシー)。消す側は removeSide (左右の消去・抹消・結晶化)
  *   guaranteeTag: 発現の候補にその勢力の MOD を保証 (支配者・君主・ブラックブラッド)
  *   rerolls: 発現の候補を引き直せる回数 (アビスの反響)
  *   pick: 消す物を絞る (光のお告げ = 冒涜の MOD だけ)
@@ -188,8 +188,8 @@ export type OmenEffect =
   /** 振り直すのを暗黙の MOD だけに (祝福のお告げ「only reroll Implicit Modifiers」) */
   | { implicitOnly: true }
   /**
-   * 消す側だけ (左右の抹消・結晶化)。side は付ける側 (左右の高貴・ネクロマンシー) か、付けない手 (消去) の消す側。
-   * カオスは消して付けるので、抹消のお告げで付ける側まで絞らないように分ける
+   * 消す側 (左右の消去・抹消・結晶化)。side は付ける側 (左右の高貴・ネクロマンシー) だけ。
+   * カオスは消して付けるので、抹消のお告げで付ける側まで絞らないように分ける (2026-11-07 に消去の side もこちらへ寄せた、D19)
    */
   | { removeSide: StageSide };
 
@@ -206,6 +206,15 @@ export interface OmenSpec {
   effect: OmenEffect;
   /** 他のお告げと一緒に効かない (腐食は単体。2026-10-05 オーナー) */
   alone?: boolean;
+  /**
+   * 一緒に効かない組の名前 (E-27: 左と右・勢力 3 つ)。同じ組が両方掛かっていたら、表 (ALL_OMEN_SPECS) の先の物だけが効いて減る。
+   * 画面は同じ組を掛けると前の方を外す (toggleOmen)
+   */
+  exclusive?: string;
+  /** これが効く時は、その組のお告げは効かず減らない (光のお告げ → 左右の消去、2026-10-17 オーナー「使えない、光使ってるから」)。画面の掛け替えも同じ組 */
+  supersedes?: string;
+  /** その状態の品では効かず減らない (abyssMark = 固定していないアビサルロードの紋章がある骨、E-67。2026-10-17 オーナー「使えない」) */
+  idleWhen?: "abyssMark";
   /** お告げを使う前提 (触媒の高貴のお告げは品質が要る)。合わなければ打てない */
   limits?: Limit[];
   source: Source;

@@ -6,19 +6,21 @@
  * まだ移していない手は null を返す (呼ぶ側は今の applyCurrency を使う)。画面はまだ今の関数のまま (切り替えない)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, skip, type Force } from "../stage-core";
+import { skip, type Force } from "../stage-core";
 import type { StageApply, StageItem } from "../types";
 import type { Action, CurrencySpec, OmenSpec } from "./types";
-import { ANNUL_SPEC, BONE_SPECS, OMEN_SPECS, REVEAL_SPEC } from "./desecrate-specs";
-import { ORB_OMEN_SPECS, ORB_SPEC_BY_KEY, UNPORTED_OMENS } from "./orb-specs";
-import { ESSENCE_OMEN_SPECS, prepareEssence, resolveEssence } from "./essence-specs";
+import { ANNUL_SPEC, BONE_SPECS, REVEAL_SPEC } from "./desecrate-specs";
+import { ORB_SPEC_BY_KEY } from "./orb-specs";
+import { prepareEssence, resolveEssence } from "./essence-specs";
+import { ALL_OMEN_SPECS, omensOfKind } from "./omen-layer";
 import { ARTIFICER_SPEC, CATALYST_SPEC_BY_KEY, EMOTION_SPEC, FLUX_SPECS, QUALITY_SPECS, RUNE_SPEC } from "./other-specs";
 import { emotionReason, isEmotion } from "../apply-emotion";
 import { isRune } from "../stage-runes";
 import { groupsFit, limitBlock, stateBlock, targetBlock } from "./judge";
 import { NO_MODS, runPart, type Mods, type PartCtx } from "./parts";
 import { tr } from "../../../i18n/lang";
-import { OMEN_FOR } from "../omens";
+import { parseKey } from "../key";
+import { dropForesight } from "../apply-extra";
 
 type Resolved = { spec: CurrencySpec; reveal: PartCtx["reveal"]; reason?: string };
 
@@ -39,10 +41,8 @@ export function resolveSpec(key: string, item: StageItem, data?: PatchData): Res
   if (flux) return { spec: flux, reveal: null };
   // 感情: その部位で使える物か (古代の版は時を失ったジュエル用)。使えなければ一言
   if (isEmotion(key)) { const why = emotionReason(item, key); return { spec: EMOTION_SPEC, reveal: null, ...(why ? { reason: why } : {}) }; }
-  if (key.startsWith("reveal")) {
-    const m = /^reveal:(\d)(:reroll)?$/.exec(key);
-    return { spec: REVEAL_SPEC, reveal: m ? { index: Number(m[1]), reroll: !!m[2] } : { invalid: key } };
-  }
+  const k = parseKey(key);
+  if (k.type === "reveal") return { spec: REVEAL_SPEC, reveal: k.index != null ? { index: k.index, reroll: k.reroll } : { invalid: key } };
   const bones = BONE_SPECS.filter((s) => s.stageKey === key);
   if (!bones.length) return null;
   const fit = bones.find((s) => groupsFit(s.target, item));
@@ -51,31 +51,16 @@ export function resolveSpec(key: string, item: StageItem, data?: PatchData): Res
   const reason = bones.length === 1 ? targetBlock(bones[0]!.target, item) ?? "" : tr("この部位に使える骨が無い", "No bone of this kind for this item class");
   return { spec: bones[0]!, reveal: null, reason };
 }
-/** そのお告げがその手の種類に掛かるか (今の棚の OMEN_FOR) */
-const OMEN_FOR_KIND = (kind: string, omen: string): boolean => (OMEN_FOR[kind] ?? []).includes(omen);
-/** この鍵を新しい作りで打てるか (移し終えた手) */
-export const specCovers = (key: string): boolean =>
-  key === ANNUL_SPEC.stageKey || /^reveal/.test(key) || BONE_SPECS.some((s) => s.stageKey === key) || ORB_SPEC_BY_KEY.has(key) ||
-  CATALYST_SPEC_BY_KEY.has(key) || QUALITY_SPECS.some((s) => s.stageKey === key) || key === ARTIFICER_SPEC.stageKey || isRune(key) ||
-  FLUX_SPECS.some((s) => s.stageKey === key) || isEmotion(key) ||
-  /^essence:(breach$|(lesser|normal|greater|perfect):)/.test(key);
+// 全部のお告げとお告げの層 (今効くお告げ・排他・側) は omen-layer.ts。シミュ・チュートリアルはここから読む
+export { ALL_OMEN_SPECS } from "./omen-layer";
 
-/** 全部のお告げ (冒涜まわり + オーブ)。並びは左右を両方掛けた時に先に効く方 */
-export const ALL_OMEN_SPECS: readonly OmenSpec[] = [...OMEN_SPECS, ...ORB_OMEN_SPECS, ...ESSENCE_OMEN_SPECS];
-const OMEN_BY_KEY: ReadonlyMap<string, OmenSpec> = new Map(ALL_OMEN_SPECS.map((o) => [o.key, o]));
-
-/** その手に掛かるお告げ (持っている中から)。単体で効く物 (腐食) があればそれだけ */
-export function omensOf(spec: CurrencySpec, held: readonly string[]): OmenSpec[] {
-  const used = held.flatMap((k) => { const o = OMEN_BY_KEY.get(k); return o && o.appliesTo === spec.kind ? [o] : []; });
-  const alone = used.find((o) => o.alone);
-  if (alone) return [alone];
-  // 光のお告げを使う時は、左右の消去のお告げは使わない (効かず、減らない。2026-10-17 オーナー「使えない、光使ってるから」。10-16 に CoE に合わせて両方効く形にしたのを戻す)
-  if (used.some((o) => o.key === "OmenofLight")) return used.filter((o) => o.key !== "OmenofSinistralAnnulment" && o.key !== "OmenofDextralAnnulment");
-  return used;
-}
 /**
- * お告げの効き目をまとめる。左右を両方掛けた時は左 (OMEN_SPECS の順)、勢力を 2 つ掛けた時は先に掛けた方
- * (どちらも画面では一緒に掛けられない: omens.ts の OMEN_EXCLUSIVE。今の関数と同じ選び方)
+ * その手に掛かるお告げ (持っている中から、エンジンが食う物)。単体 (腐食)・上書き (光 → 左右の消去)・一緒に効かない組 (左右・勢力) は
+ * お告げの層 (omen-layer.ts の omensOfKind) の 1 か所。item を渡すと状態で効かない物 (紋章がある骨のネクロマンシー) も落とす
+ */
+export const omensOf = (spec: CurrencySpec, held: readonly string[], item?: StageItem): OmenSpec[] => omensOfKind(spec.kind, held, item);
+/**
+ * お告げの効き目をまとめる (used はお告げの層で一緒に効かない組を落とした後なので、側・勢力は 1 つずつ)
  */
 export function modsOf(used: readonly OmenSpec[]): Mods {
   const m: Mods = { ...NO_MODS };
@@ -121,13 +106,11 @@ export function planSpec(data: PatchData, item: StageItem, key: string, omens: r
   const r = resolveSpec(key, item, data);
   if (!r) return null;
   const { spec } = r;
-  // 移していないお告げ (聖別) が掛かる手は今の関数で
-  if (omens.some((o) => UNPORTED_OMENS.includes(o) && OMEN_FOR_KIND(spec.kind, o))) return null;
-  // アビサルロードの紋章がある時の骨は必ず印と入れ替わるので、左右のネクロマンシーのお告げは使えない (効かず、減らない。2026-10-17 オーナー「使えない」)
-  const mark = spec.kind === "desecrate" && allMods(item).some((m) => m.abyssMark && !m.fractured); // E-67
-  const used = omensOf(spec, omens).filter((o) => !mark || (o.key !== "OmenofSinistralNecromancy" && o.key !== "OmenofDextralNecromancy"));
+  // アビサルロードの紋章がある時の骨は必ず印と入れ替わるので、左右のネクロマンシーのお告げは使えない (効かず、減らない。OmenSpec の idleWhen、E-67)
+  const used = omensOf(spec, omens, item);
   const mods = modsOf(used);
-  const catalystTag = spec.kind === "catalyst" ? key.slice(key.indexOf("_") + 1) : null;
+  const pk = parseKey(key);
+  const catalystTag = spec.kind === "catalyst" && pk.type === "catalyst" ? pk.tag : null;
   const replace = used.map((o) => o.effect).find((e) => "replace" in e);
   const actions = replace && "replace" in replace ? replace.replace : spec.actions;
   const plan = { spec, reveal: r.reveal, used, mods, actions, catalystTag, offTarget: !!r.reason || !!targetBlock(spec.target, item) };
@@ -186,8 +169,8 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
     rolled.push(...(p.rolled ?? []));
     picked.push(...(p.picked ?? []));
   }
-  // ヒネコラの予見は「アイテムを変えると消える」(説明文)
-  if (cur.foreseen) cur = { ...cur, foreseen: false };
+  // ヒネコラの予見は「アイテムを変えると消える」(説明文、決まりは apply-extra.ts の dropForesight 1 か所)
+  cur = dropForesight(cur, key);
   const note = parts.map((p) => p.note).find((x) => x);
   const count = parts.map((p) => p.count).find((x) => x != null);
   const augment = parts.map((p) => p.augment).find((x) => x);

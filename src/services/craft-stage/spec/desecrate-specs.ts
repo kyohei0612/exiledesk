@@ -147,7 +147,7 @@ const faction = (key: string, hover: string, tag: string, name: { en: string; ja
     ja: ["インベントリ内でアクティブな時", "次に行う武器または宝飾品への", `[Abyssalify|冒涜]化の試行は、ランダムな${name.ja}のモッドを1個必ず付与する`],
   },
   target: FACTION_TARGET,
-  effect: { guaranteeTag: tag },
+  effect: { guaranteeTag: tag }, exclusive: "faction",
   source: { client: "currency-hover の説明文、MOD のタグ", owner: "勢力の MOD は等しい確率・足りない分は普通の MOD (2026-10-10・10-11)", coe: "矢筒 (2026-10-14)・お告げに部位の縛り無し・冒涜の MOD の重みは全部 1 = 等しい (data.json 4.5.5.3、2026-10-16)" },
 });
 
@@ -163,13 +163,13 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
   {
     key: "OmenofSinistralNecromancy", hover: "omenofsinistralnecromancy", appliesTo: "desecrate", // E-11g
     text: { en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will add only prefix modifiers"], ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、プレフィックスモッドだけを追加する"] },
-    effect: { side: "prefix" },
+    effect: { side: "prefix" }, exclusive: "necromancySide", idleWhen: "abyssMark",
     source: { client: "currency-hover の説明文", poe2wiki: "満杯ならその側を 1 つ消して付く (2026-10-14)" },
   },
   {
     key: "OmenofDextralNecromancy", hover: "omenofdextralnecromancy", appliesTo: "desecrate", // E-11g
     text: { en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will add only suffix modifiers"], ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、サフィックスモッドだけを追加する"] },
-    effect: { side: "suffix" },
+    effect: { side: "suffix" }, exclusive: "necromancySide", idleWhen: "abyssMark",
     source: { client: "currency-hover の説明文", poe2wiki: "満杯ならその側を 1 つ消して付く (2026-10-14)" },
   },
   faction("OmenoftheSovereign", "omenofthesovereign", "ulaman_mod", { en: "Ulaman", ja: "ウラマン" }),
@@ -194,19 +194,19 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
   {
     key: "OmenofLight", hover: "omenoflight", appliesTo: "annul", // E-68
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only [Abyssalify|Desecrated] modifiers"], ja: ["インベントリ内でアクティブな時", "次に使用する消去のオーブは[Abyssalify|冒涜]モッドのみを取り除く"] },
-    effect: { pick: "desecrated" },
+    effect: { pick: "desecrated" }, supersedes: "annulmentSide",
     source: { client: "currency-hover の説明文", owner: "骨で付いた普通の MOD も消す (2026-10-10)", coe: "冒涜で付いた物 (未発現・発現済み) だけ (package_poe2.js getRemovableModifiers の OmenOnAnnulRemoveAbyssMod、2026-10-16)" },
   },
   {
     key: "OmenofSinistralAnnulment", hover: "omenofsinistralannulment", appliesTo: "annul", // E-11g
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only prefix modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次に使用する消去のオーブはプレフィックスモッドをのみを取り除く。"] },
-    effect: { side: "prefix" },
+    effect: { removeSide: "prefix" }, exclusive: "annulmentSide",
     source: { client: "currency-hover の説明文" },
   },
   {
     key: "OmenofDextralAnnulment", hover: "omenofdextralannulment", appliesTo: "annul", // E-11g
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only suffix modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次に使用する消去のオーブはサフィックスモッドをのみを取り除く。"] },
-    effect: { side: "suffix" },
+    effect: { removeSide: "suffix" }, exclusive: "annulmentSide",
     source: { client: "currency-hover の説明文" },
   },
 ];

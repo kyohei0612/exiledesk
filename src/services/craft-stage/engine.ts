@@ -73,11 +73,17 @@ export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 // aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
 export { aimCombos, aimChain, aimDone, hits as aimHits } from "./aim-odds";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字)
-export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf } from "./tier-rank";
+export { tierIndexOf, tierRankOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf, isCraftedSource } from "./tier-rank";
 export { DESECRATION_EXCLUSIVE_COUNT } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
 export { OMEN_FOR } from "./omens";
+// 土台とお告げの層・鍵の読み・手の種類 (2026-11-07 ジン jin-base、E-1〜E-5。シミュの木・画面はこれを呼ぶ)
+export { parseKey, type ParsedKey } from "./key";
+export { actionClass, actionClassOf, type ActionClass, type ActionName } from "./spec/action-class";
+export { FACTION_TAG, OMEN_EXCLUSIVE, omenFor, omenRivals, omenSideOf, omensOfKind, toggleOmen } from "./spec/omen-layer";
+export { OMEN_KEY } from "./spec/omen-keys";
+export { addCandidatesOf, addSidesOf, boneSlotOf, removalOf, removeSideOf, type BoneSlot, type Removal } from "./spec/basis";
 export { RUNES, runeOf, isRune, runeEffectFor, bondedFor } from "./stage-runes";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";

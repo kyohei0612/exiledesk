@@ -13,6 +13,7 @@
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { ABSOLUTE_MAX_QUALITY } from "../htc/quality";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
+import { OMEN_KEY } from "./spec/omen-keys";
 
 /** 聖別の倍率の幅 (×100。聖別のお告げの 0.78〜1.22。apply-vaal.ts もここから) */
 export const SANCTIFY_MIN = 78;
@@ -51,8 +52,8 @@ export function tuneForStep(omensUsed: readonly string[]): StepTune | null {
   const t: StepTune = {
     // 重みはどの手にも効きうる (乱数で付く・消える) ので、直していれば打てた手全部に書く
     ...(Object.keys(tuning.modWeights).length ? { weights: { ...tuning.modWeights } } : {}),
-    ...(tuning.catalysingPerPct != null && omensUsed.includes("OmenofCatalysingExaltation") ? { catalysing_per_pct: tuning.catalysingPerPct } : {}),
-    ...(tuning.sanctifyK != null && omensUsed.includes("OmenofSanctification") ? { sanctify_k: tuning.sanctifyK } : {}),
+    ...(tuning.catalysingPerPct != null && omensUsed.includes(OMEN_KEY.catalysing) ? { catalysing_per_pct: tuning.catalysingPerPct } : {}),
+    ...(tuning.sanctifyK != null && omensUsed.includes(OMEN_KEY.sanctification) ? { sanctify_k: tuning.sanctifyK } : {}),
   };
   return Object.keys(t).length ? t : null;
 }

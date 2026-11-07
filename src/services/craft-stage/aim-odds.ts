@@ -14,7 +14,9 @@ import { revealOffers, unrevealedOf } from "./apply-desecrate";
 import { mulberry32 } from "../htc/rng";
 import type { StageItem, StageMod } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { tierNoOf } from "./tier-rank";
+import { isCraftedSource, tierNoOf } from "./tier-rank";
+import { FACTION_TAG, omenFor } from "./spec/omen-layer";
+import { OMEN_KEY } from "./spec/omen-keys";
 
 export interface AimTarget { modId: string; minTierIndex: number }
 /** 試す打ち方 (カレンシー + お告げ)。reveal = 付いている未発現の MOD を発現させる (反響込み) */
@@ -22,23 +24,27 @@ export interface AimCombo { currency: string; omens: string[] }
 export interface AimOdd extends AimCombo { p: number; n: number }
 
 export const REVEAL = "reveal";
-const ECHOES = "OmenofAbyssalEchoes";
+const ECHOES = OMEN_KEY.echoes;
 
-/** お告げの組み合わせ (付く MOD の出方が変わる物だけ。片方の側のお告げは 1 つまで) */
+/**
+ * お告げの組み合わせ (付く MOD の出方が変わる物だけ。片方の側のお告げは 1 つまで)。側のお告げ・勢力はお告げの層 (spec/omen-layer.ts) から引く。
+ * 触媒の高貴 (重みが変わる) が高貴の組に無いのは 10-09 に作った時からの漏れ (その時から効いていた、外した理由の記録なし)。足すと「狙う」の行が増える = 振る舞いが変わるので、
+ * 2026-11-07 のまとめ直しでは足さず、ブラックの決めを待つ (jin-base)
+ */
 function omenSets(kind: string): string[][] {
+  const sides = (k: string): string[][] => [[], ...(["prefix", "suffix"] as const).flatMap((s) => { const o = omenFor(k, s); return o ? [[o]] : []; })];
   switch (kind) {
     case "exalt": {
-      const side = [[], ["OmenofSinistralExaltation"], ["OmenofDextralExaltation"]];
-      return [...side, ...side.map((s) => [...s, "OmenofGreaterExaltation"])];
+      const side = sides("exalt");
+      return [...side, ...side.map((s) => [...s, OMEN_KEY.greater])];
     }
     case "chaos":
-      return [[], ["OmenofWhittling"], ["OmenofSinistralErasure"], ["OmenofDextralErasure"]];
+      return [[], [OMEN_KEY.whittling], ...sides("chaos").slice(1)];
     case "essence_perfect":
-      return [[], ["OmenofSinistralCrystallisation"], ["OmenofDextralCrystallisation"]];
+      return sides("essence_perfect");
     case "desecrate": {
-      const side = [[], ["OmenofSinistralNecromancy"], ["OmenofDextralNecromancy"]];
-      const fac = [[], ["OmenoftheSovereign"], ["OmenoftheLiege"], ["OmenoftheBlackblooded"]];
-      return side.flatMap((s) => fac.map((f) => [...s, ...f]));
+      const fac = [[], ...Object.keys(FACTION_TAG).map((o) => [o])];
+      return sides("desecrate").flatMap((s) => fac.map((f) => [...s, ...f]));
     }
     default:
       return [[]];
@@ -63,7 +69,7 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   const same = m.modId === t.modId || (!!want.family && m.family === want.family && o!.data.mods.get(m.modId)?.text === want.text);
   return same && tierNoOf(m) <= want.tiers.length - t.minTierIndex;
 };
-const isEssenceSource = (s: unknown): boolean => s === "essence" || s === "perfect_essence";
+const isEssenceSource = isCraftedSource;
 const has = (item: StageItem, t: AimTarget): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t));
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */

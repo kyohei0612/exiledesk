@@ -14,6 +14,7 @@ import { limitOf, listOf, sideOfMod } from "../../craft-stage/stage-core";
 import { mulberry32 } from "../../htc/rng";
 import { GRADE_KEY, routeSeed, type Grade, type RouteKind } from "../../craft-stage/route-race";
 import type { StageItem, StageMod } from "../../craft-stage/types";
+import { OMEN_KEY } from "../../craft-stage/spec/omen-keys";
 
 export interface SpamTarget { modId: string; minTierIndex: number }
 export interface SpamCounts {
@@ -95,7 +96,7 @@ export function* spamCountsSteps(
       } else if (route === "chaos") ok = use(`chaos${g}`);
       else {
         const removable = mods(it).some((m) => !m.fractured && !isHit(m));
-        ok = removable ? use("annul") : free(it) >= 2 ? use(`exalt${g}`, ["OmenofGreaterExaltation"]) : use(`exalt${g}`);
+        ok = removable ? use("annul") : free(it) >= 2 ? use(`exalt${g}`, [OMEN_KEY.greater]) : use(`exalt${g}`);
       }
       if (!ok) break;
     }

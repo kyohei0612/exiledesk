@@ -9,6 +9,8 @@ import type { PatchData } from "../../vendor/poe2htc/engine";
 import { bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
 import { catalystOf, limitOf, listOf, room } from "./stage-core";
 import { tr } from "../../i18n/lang";
+import { FACTION_TAG, omenSideOf, omenSpecOf } from "./spec/omen-layer";
+import { OMEN_KEY } from "./spec/omen-keys";
 export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   exalt: ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofCatalysingExaltation"],
   chaos: ["OmenofWhittling", "OmenofSinistralErasure", "OmenofDextralErasure"],
@@ -30,25 +32,11 @@ export const REMOVED_OMENS: readonly string[] = [
   "OmenofCorruption",
 ];
 /**
- * 一緒に掛けられないお告げ (2026-10-09 お告げの洗い直し): 片方しか効かないのに両方減っていた (左と右・勢力 2 枚・光と左右の消去)。
- * 同じ組のお告げを掛けると、前に掛けていた方を外す
+ * 一緒に掛けられないお告げ (2026-10-09 お告げの洗い直し: 片方しか効かないのに両方減っていた。左と右・勢力 2 枚・光と左右の消去) と
+ * 掛け替え (同じ組のお告げを掛けると前の方を外す)・勢力のタグは、お告げの層 (spec/omen-layer.ts) が OmenSpec のデータ (exclusive・supersedes・guaranteeTag) から作る。
+ * 削減は左右の抹消と一緒に掛けられる (2026-10-11 要望 aa132a4a)、光を使う時は左右の消去は使えない (2026-10-17 オーナー)
  */
-export const OMEN_EXCLUSIVE: readonly (readonly string[])[] = [ // E-27 お告げは外さない・反対のお告げは掛け替え
-  ["OmenofSinistralExaltation", "OmenofDextralExaltation"],
-  // 削減は左右の抹消と一緒に掛けられる (その側の一番 MOD レベルの低い物を消す。2026-10-11 要望 aa132a4a、timesaver.gg の解説・公式フォーラム 3754679 で併用の例)
-  ["OmenofSinistralErasure", "OmenofDextralErasure"],
-  // 光と左右の消去は一緒に掛けられない (光を使う時は左右は使えない。2026-10-17 オーナーが決めた。10-16 の「CoE に合わせて両方効く」は戻した)
-  ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofLight"],
-  ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
-  ["OmenofSinistralNecromancy", "OmenofDextralNecromancy"],
-  ["OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded"],
-];
-/** 効果の規則をまだ入れていない物 (棚には出すが打つと理由を返す)。2026-09-27 にヴァール・腐食・聖別を入れて空 */
-export const UNMODELLED_OMENS: readonly string[] = [];
-/** 勢力のお告げ → 冒涜の MOD のタグ (エンジンの DES_BOSS_TAG と同じ) */
-export const FACTION_TAG: Readonly<Record<string, string>> = {
-  OmenoftheSovereign: "ulaman_mod", OmenoftheLiege: "amanamu_mod", OmenoftheBlackblooded: "kurgal_mod",
-};
+export { FACTION_TAG, OMEN_EXCLUSIVE, omenRivals, toggleOmen } from "./spec/omen-layer";
 
 /**
  * 今のアイテムでそのお告げを掛けても意味が無い / 掛けると打てなくなる時の一言 (無ければ null)。
@@ -70,36 +58,26 @@ export function omenNoteOf(omen: string, item: StageItem | null, data?: PatchDat
   const free = (s: StageSide): boolean => room(item, s);
   const removable = (s: StageSide): number => listOf(item, s).filter((m) => !m.fractured).length;
   const other = (s: StageSide): StageSide => (s === "prefix" ? "suffix" : "prefix");
-  // 付ける側を決めるお告げ (高貴・骨)。骨は側が満杯でもその側の MOD を 1 つ置き換えて打てる (apply-desecrate.ts、2026-10-14 総点検で一言を直した)
-  const addSide: Record<string, StageSide> = {
-    OmenofSinistralExaltation: "prefix", OmenofDextralExaltation: "suffix",
-    OmenofSinistralNecromancy: "prefix", OmenofDextralNecromancy: "suffix",
-  };
-  const replacesWhenFull = (o: string): boolean => o === "OmenofSinistralNecromancy" || o === "OmenofDextralNecromancy";
-  // 消す側を決めるお告げ (消去・カオス・パーフェクトエッセンス)
-  const removeSide: Record<string, StageSide> = {
-    OmenofSinistralAnnulment: "prefix", OmenofDextralAnnulment: "suffix",
-    OmenofSinistralErasure: "prefix", OmenofDextralErasure: "suffix",
-    OmenofSinistralCrystallisation: "prefix", OmenofDextralCrystallisation: "suffix",
-  };
+  // 側は OmenSpec の効き目から (付ける側 = 高貴・骨、消す側 = 消去・カオス・パーフェクトエッセンス)。
+  // 骨は側が満杯でもその側の MOD を 1 つ置き換えて打てる (E-61、apply-desecrate.ts、2026-10-14 総点検で一言を直した)
+  const { add: a, remove: r } = omenSideOf(omen);
+  const replacesWhenFull = omenSpecOf(omen)?.appliesTo === "desecrate";
   if (item.rarity !== "rare") return null;
-  const a = addSide[omen];
   if (a) {
-    if (!free(a)) return replacesWhenFull(omen) ? say(a === "prefix" ? tr("プレフィックス満杯: プレフィックスを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィックス満杯: サフィックスを 1 つ置き換える", "Suffixes full: replaces a suffix")) : no(a === "prefix" ? tr("プレフィックス満杯で打てない", "Prefixes full") : tr("サフィックス満杯で打てない", "Suffixes full"));
+    if (!free(a)) return replacesWhenFull ? say(a === "prefix" ? tr("プレフィックス満杯: プレフィックスを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィックス満杯: サフィックスを 1 つ置き換える", "Suffixes full: replaces a suffix")) : no(a === "prefix" ? tr("プレフィックス満杯で打てない", "Prefixes full") : tr("サフィックス満杯で打てない", "Suffixes full"));
     if (!free(other(a))) return no(tr("今は意味なし", "No effect now"));
     return null;
   }
-  const r = removeSide[omen];
   if (r) {
     if (!removable(r)) return no(tr("消せる物が無い", "Nothing to remove"));
     if (!removable(other(r))) return no(tr("今は意味なし", "No effect now"));
     return null;
   }
-  if (omen === "OmenofGreaterExaltation") {
+  if (omen === OMEN_KEY.greater) {
     const open = (["prefix", "suffix"] as const).reduce((n, sd) => n + Math.max(0, limitOf(item, sd) - listOf(item, sd).length), 0);
     return open === 1 ? say(tr("1 つしか付かない", "Only 1 slot open")) : null;
   }
-  if (omen === "OmenofCatalysingExaltation") { const c = catalystOf(item); return c.pct > 0 && c.tag ? null : no(tr("品質が要る", "Needs quality")); }
+  if (omen === OMEN_KEY.catalysing) { const c = catalystOf(item); return c.pct > 0 && c.tag ? null : no(tr("品質が要る", "Needs quality")); }
   return null;
 }
 export function omenNote(omen: string, item: StageItem | null, data?: PatchData | null): string | null {

@@ -25,6 +25,7 @@ import { craftedLimitOf, normalTierOf } from "./apply-essence";
 import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, unfracturable, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
+import { isCraftedSource } from "./tier-rank";
 
 export type ForceFlag = "n" | "e" | "d" | "f" | "x" | "u";
 export const isForce = (key: string): boolean => key.startsWith("force:");
@@ -102,7 +103,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   // 冒涜でしか付かない MOD (冒涜専用・異界) をフラクチャーで付ける事はできない (冒涜専用の MOD は固定されない。2026-10-10)
   if (p.flag === "f" && (mod.source === "desecrated" || (otherworldly && !(it.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"] ?? []).includes(p.modId)))) return skip(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
   const asDesecrated = p.flag === "d";
-  const asCrafted = p.flag === "e" || (p.flag === "f" && (mod.source === "essence" || mod.source === "perfect_essence"));
+  const asCrafted = p.flag === "e" || (p.flag === "f" && isCraftedSource(mod.source));
   if (asCrafted) {
     // 上限 (1 つ、アストリッドの創造性で 2 つ) を超える分は入れ替える (固定した物は外さない)。同じ系統の物は上の共通の処理で外してある
     const limit = craftedLimitOf(it);

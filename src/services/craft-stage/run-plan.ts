@@ -26,6 +26,7 @@ import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
 import { parseForce } from "./apply-force";
+import { parseKey } from "./key";
 import { parseSpam, spamName } from "./apply-spam";
 import { applyRune, isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
@@ -133,16 +134,21 @@ export function stepJa(currency: string, item: StageItem): string { // E-90
   if (fc?.flag === "x") return "× で外す";
   if (fc?.flag === "u") return "フラクチャーを外す";
   if (fc) return `指名で付ける (${fc.rank ?? "T1"}${fc.flag === "e" ? "・エッセンス" : fc.flag === "d" ? "・冒涜" : fc.flag === "f" ? "・フラクチャー" : ""})`;
-  const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
-  if (rv) return `発現 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
+  // 鍵の読みは key.ts の parseKey 1 か所
+  const pk = parseKey(currency);
+  if (pk.type === "reveal" && pk.index != null) return `発現 (${pk.reroll ? "引き直して " : ""}${pk.index} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   if (isUnsocket(currency)) return `ルーンを外す (${currency.slice(UNSOCKET_PREFIX.length)} 番目のソケット)`;
-  if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `品質を ${n}% に${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
-  if (currency.startsWith("cqset:")) { const [n, tag] = currency.slice(6).split(":"); return `カタリストの品質を ${n}% に (${qualityLabelOf(tag)})`; }
-  if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
-  if (currency.startsWith("ilvl:")) return `アイテムレベルを ${currency.slice(5)} に`;
-  if (currency.startsWith("iset:")) return `暗黙 MOD の値を ${currency.split(":")[2]} に`;
-  if (currency.startsWith("sset:")) { const k = currency.slice(5); return k === "max" ? "聖別の数値を最大に" : k === "min" ? "聖別の数値を最小に" : `聖別の倍率を ×${Number(k) / 100} に`; }
+  if (pk.type === "set") {
+    const [a0, a1] = pk.args;
+    if (pk.what === "quality") return `品質を ${a0}% に${a1 ? ` (${qualityLabelOf(a1)})` : ""}`;
+    if (pk.what === "catalystQuality") return `カタリストの品質を ${a0}% に (${qualityLabelOf(a1)})`;
+    if (pk.what === "qualityCap") return `品質の上限を ${pk.args.join(":")}% に`;
+    if (pk.what === "itemLevel") return `アイテムレベルを ${pk.args.join(":")} に`;
+    if (pk.what === "implicit") return `暗黙 MOD の値を ${a1} に`;
+    const k = pk.args.join(":");
+    return k === "max" ? "聖別の数値を最大に" : k === "min" ? "聖別の数値を最小に" : `聖別の倍率を ×${Number(k) / 100} に`;
+  }
   if (isEmotion(currency)) return jewelEmotionJa(emotionNameOf(currency)) ?? emotionNameOf(currency);
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
@@ -162,17 +168,21 @@ export function stepEn(currency: string): string | null {
   if (fc?.flag === "x") return "Remove (×)";
   if (fc?.flag === "u") return "Unfracture";
   if (fc) return `Force (${fc.rank ?? "T1"}${fc.flag === "e" ? ", Essence" : fc.flag === "d" ? ", Desecrated" : fc.flag === "f" ? ", Fractured" : ""})`;
-  const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
-  if (rv) return `Reveal (${rv[2] ? "reroll, " : ""}#${rv[1]})`;
+  const pk = parseKey(currency);
+  if (pk.type === "reveal" && pk.index != null) return `Reveal (${pk.reroll ? "reroll, " : ""}#${pk.index})`;
   if (currency === "disenchant") return "Disenchant";
   if (currency === "salvage") return "Salvage";
   if (isUnsocket(currency)) return `Remove rune (socket ${currency.slice(UNSOCKET_PREFIX.length)})`;
-  if (currency.startsWith("qset:")) { const [n, tag] = currency.slice(5).split(":"); return `Set quality to ${n}%${tag ? ` (${qualityLabelOf(tag)})` : ""}`; }
-  if (currency.startsWith("cqset:")) { const [n, tag] = currency.slice(6).split(":"); return `Set Catalyst quality to ${n}% (${qualityLabelOf(tag)})`; }
-  if (currency.startsWith("qcap:")) return `Set max quality to ${currency.slice(5)}%`;
-  if (currency.startsWith("ilvl:")) return `Set item level to ${currency.slice(5)}`;
-  if (currency.startsWith("iset:")) return `Set implicit value to ${currency.split(":")[2]}`;
-  if (currency.startsWith("sset:")) { const k = currency.slice(5); return k === "max" ? "Set Sanctified values to max" : k === "min" ? "Set Sanctified values to min" : `Set Sanctified multiplier to ×${Number(k) / 100}`; }
+  if (pk.type === "set") {
+    const [a0, a1] = pk.args;
+    if (pk.what === "quality") return `Set quality to ${a0}%${a1 ? ` (${qualityLabelOf(a1)})` : ""}`;
+    if (pk.what === "catalystQuality") return `Set Catalyst quality to ${a0}% (${qualityLabelOf(a1)})`;
+    if (pk.what === "qualityCap") return `Set max quality to ${pk.args.join(":")}%`;
+    if (pk.what === "itemLevel") return `Set item level to ${pk.args.join(":")}`;
+    if (pk.what === "implicit") return `Set implicit value to ${a1}`;
+    const k = pk.args.join(":");
+    return k === "max" ? "Set Sanctified values to max" : k === "min" ? "Set Sanctified values to min" : `Set Sanctified multiplier to ×${Number(k) / 100}`;
+  }
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
   return null;
@@ -231,13 +241,13 @@ export function playStep(
 
 /** 発現の手の候補 (結果 JSON の reveal_offers)。発現の手でなければ空 */
 function revealOut(data: PatchData, item: StageItem, currency: string, seed: number, applied: boolean): object {
-  const m = /^reveal:(\d)(:reroll)?$/.exec(currency);
-  if (!m || !applied) return {};
+  const pk = parseKey(currency);
+  if (pk.type !== "reveal" || pk.index == null || !applied) return {};
   const offers = revealOffers(data, item, mulberry32(seed));
-  const rerolled = !!m[2];
+  const rerolled = pk.reroll;
   return {
     reveal_offers: {
-      chosen: Number(m[1]),
+      chosen: pk.index,
       rerolled,
       first: offers.first.map((x) => outModIn(item, x, data)),
       after_reroll: rerolled ? offers.reroll.map((x) => outModIn(item, x, data)) : null,

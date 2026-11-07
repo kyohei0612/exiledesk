@@ -13,6 +13,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import vaal from "../../i18n/vaal-enchants.json";
 import { allMods, replaced, retext, skip, withValues } from "./stage-core";
+import { SET_PREFIX } from "./key";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
@@ -62,7 +63,7 @@ function scaled(vals: readonly number[], k: number): number[] {
 
 /** 聖別の数値を手で決める手 (聖別の帯、2026-10-20 オーナー「聖別の数値も手で決めて使えるといい」)。費用 0
  * `sset:122` = 全部の MOD を ×1.22 (掛ける前の値はそのまま)、`sset:max` = 段の最大 × 1.22、`sset:min` = 段の最小 × 0.78 */
-const SANCTIFY_SET = "sset:";
+const SANCTIFY_SET = SET_PREFIX.sanctify;
 export const sanctifySetKey = (k: number | "max" | "min"): string => `${SANCTIFY_SET}${k}`;
 export const isSanctifySet = (key: string): boolean => key.startsWith(SANCTIFY_SET);
 export function applySanctifySet(data: PatchData, item: StageItem, currency: string): StageApply {
