@@ -16,7 +16,7 @@ import { applyCurrency } from "./apply-currency";
 import { mulberry32 } from "../htc/rng";
 import { effectiveCls, makeStageMod, withMod, without, type Candidate } from "./stage-core";
 import { boneSlotOf } from "./spec/basis";
-import { revealOffers } from "./apply-desecrate";
+import { offeredMods, revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
 import { REVEAL_SPEC } from "./spec/desecrate-specs";
@@ -75,7 +75,7 @@ export function heldAnyOf(data: PatchData, item: StageItem, key: string, omens: 
     let got: readonly StageMod[] = r.added ?? [];
     if (h.bone) {
       const off = revealOffers(data, r.item, mulberry32(104729 * s));
-      got = echoes ? [...off.first, ...off.reroll] : off.first;
+      got = offeredMods(off, echoes);
     }
     if (got.some((m) => keys.has(aimTierKey(m.modId, m.tierIndex)))) hit++;
   }

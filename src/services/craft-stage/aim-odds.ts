@@ -10,12 +10,13 @@
  * 未発現の冒涜 MOD がもう付いている時は「発現」の 1 行 (反響込み)。
  */
 import { applyCurrency, kindOf } from "./apply-currency";
-import { revealOffers, unrevealedOf } from "./apply-desecrate";
+import { offeredMods, revealOffers, unrevealedOf } from "./apply-desecrate";
+import { OMEN_FOR } from "./omens";
 import { mulberry32 } from "../htc/rng";
 import type { StageItem, StageMod } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { isCraftedSource, tierNoOf } from "./tier-rank";
-import { FACTION_TAG, omenFor } from "./spec/omen-layer";
+import { omenRivals } from "./spec/omen-layer";
 import { OMEN_KEY } from "./spec/omen-keys";
 import { actionClassOfKey } from "./spec/action-class";
 
@@ -27,29 +28,21 @@ export interface AimOdd extends AimCombo { p: number; n: number }
 export const REVEAL = "reveal";
 const ECHOES = OMEN_KEY.echoes;
 
+/** 付く MOD の出方が変わる手 (狙うでお告げの組を試す手) */
+const AIM_OMEN_KINDS: ReadonlySet<string> = new Set(["exalt", "chaos", "essence_perfect", "desecrate"]);
 /**
- * お告げの組み合わせ (付く MOD の出方が変わる物だけ。片方の側のお告げは 1 つまで)。側のお告げ・勢力はお告げの層 (spec/omen-layer.ts) から引く。
- * 触媒の高貴 (重みが変わる) が高貴の組に無いのは 10-09 に作った時からの漏れ (その時から効いていた、外した理由の記録なし)。足すと「狙う」の行が増える = 振る舞いが変わるので、
- * 2026-11-07 のまとめ直しでは足さず、ブラックの決めを待つ (jin-base)
+ * お告げの組み合わせ = その手に掛かるお告げ (OMEN_FOR) の組のうち、一緒に掛けられない物 (OMEN_EXCLUSIVE、左と右・勢力 2 枚) を含まない物全部。
+ * 効かない組は aimCombos が結果の比べで外す (腐食と側のお告げ など)。前は手ごとの手書きの組で、触媒の高貴・削減 + 抹消・腐食が抜けていた
+ * (11-07 jin-base4、ブラック 57 の決め A10「お告げの層から組を作り触媒の高貴も入れる」)
  */
 function omenSets(kind: string): string[][] {
-  const sides = (k: string): string[][] => [[], ...(["prefix", "suffix"] as const).flatMap((s) => { const o = omenFor(k, s); return o ? [[o]] : []; })];
-  switch (kind) {
-    case "exalt": {
-      const side = sides("exalt");
-      return [...side, ...side.map((s) => [...s, OMEN_KEY.greater])];
-    }
-    case "chaos":
-      return [[], [OMEN_KEY.whittling], ...sides("chaos").slice(1)];
-    case "essence_perfect":
-      return sides("essence_perfect");
-    case "desecrate": {
-      const fac = [[], ...Object.keys(FACTION_TAG).map((o) => [o])];
-      return sides("desecrate").flatMap((s) => fac.map((f) => [...s, ...f]));
-    }
-    default:
-      return [[]];
+  if (!AIM_OMEN_KINDS.has(kind)) return [[]];
+  let sets: string[][] = [[]];
+  for (const o of OMEN_FOR[kind] ?? []) {
+    const rivals = new Set(omenRivals(o));
+    sets = [...sets, ...sets.filter((s) => !s.some((x) => rivals.has(x))).map((s) => [...s, o])];
   }
+  return sets;
 }
 
 /**
@@ -116,7 +109,9 @@ export function aimCombos(data: PatchData, item: StageItem, keys: readonly strin
       // コラプトさせる物は狙う手にしない。打てばその先クラフトできず、外れも当たりも狙いの役に立たない
       // (2026-10-09 オーナー「ヴァールに関しては意味わからん」: 書き換えの目でまれに付くので 1 位に出ていた)
       if (r.item.corrupted && !item.corrupted) continue;
-      out.push({ currency: k, omens: kind === "desecrate" ? [...om, ECHOES] : om });
+      // 骨は反響のお告げ無し (発現の候補 1 組) と有り (2 組、反響の値段も費用に) の両方 (E-69。確率の表と同じく反響を掛けた時だけ 2 組目を数える、11-07 A27)
+      if (kind === "desecrate") out.push({ currency: k, omens: om }, { currency: k, omens: [...om, ECHOES] });
+      else out.push({ currency: k, omens: om });
     }
   }
   return out;
@@ -145,7 +140,7 @@ export function aimChainMode(c: AimCombo): AimChainMode {
 export function aimOdds(data: PatchData, item: StageItem, ts: AimTarget | readonly AimTarget[], c: AimCombo, n: number, seed: number, hit0?: AimHitOpts): number {
   const list = Array.isArray(ts) ? (ts as readonly AimTarget[]) : [ts as AimTarget];
   const missing = (it: StageItem): AimTarget[] => list.filter((t) => !has(it, t, hit0));
-  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!, hit0)));
+  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && offeredMods(o, c.omens.includes(ECHOES)).some((m) => hits(m, miss[0]!, hit0)));
   const bone = addsUnrevealed(c.currency);
   let hit = 0;
   for (let i = 0; i < n; i++) {
@@ -179,7 +174,7 @@ export function aimChain(data: PatchData, start: StageItem, ts: readonly AimTarg
   const keepIds = [...start.prefixes, ...start.suffixes].filter((m) => !m.unrevealed).map((m) => m.modId);
   const keeps = (it: StageItem): boolean => !it.corrupted && keepIds.every((id) => [...it.prefixes, ...it.suffixes].some((m) => m.modId === id));
   const missing = (it: StageItem): AimTarget[] => ts.filter((t) => !has(it, t, hit0));
-  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && [...o.first, ...o.reroll].some((m) => hits(m, miss[0]!, hit0)));
+  const offered = (o: { first: StageMod[]; reroll: StageMod[] }, miss: AimTarget[]): boolean => miss.length === 0 || (miss.length === 1 && offeredMods(o, c.omens.includes(ECHOES)).some((m) => hits(m, miss[0]!, hit0)));
   const rng = mulberry32(seed);
   const used = c.omens.filter((o) => o !== ECHOES);
   const mode = aimChainMode(c);

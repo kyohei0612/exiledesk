@@ -25,6 +25,8 @@ export const unrevealedCount = (item: StageItem): number => allMods(item).filter
  * 発現の候補 (と、アビスの反響で引き直した組)。同じ rng から順に引くので、画面で見せる候補と手順の結果 (reveal:N) が一致する。
  * chances = 候補に出た瞬間の確率 (その段の重み ÷ 引いた置き場の全部の重み)
  */
+/** 発現の候補で当たりに数える MOD: 反響のお告げを掛けた時だけ引き直した 2 組目も (確率の表・狙うが同じ物、E-69) */
+export const offeredMods = (o: { first: StageMod[]; reroll: StageMod[] }, echoes: boolean): StageMod[] => (echoes ? [...o.first, ...o.reroll] : o.first);
 export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[]; chances: Map<StageMod, number> } {
   const hidden = unrevealedOf(item);
   if (!hidden?.unrevealed) return { first: [], reroll: [], chances: new Map() };
