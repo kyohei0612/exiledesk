@@ -7,6 +7,8 @@
   重なりの段: 窓 z-[300]、確認 (ConfirmDialog / WatchReplaceDialog) は窓の上に出す z-[310] (layer="confirm")。ホバーのカード・HelpTip の説明は 1400 以上 (チュートリアルの幕 1100 の上、U-17 の 4)。
   使い方: <ModalShell :open="x" :title="tr(...)" width="w-full max-w-[26rem]" @close="x = false"> 中身 <template #footer>ボタン</template></ModalShell>
   スロット: 既定 = 中身、#title = 題を差し替え、#header = 題の横 (× の手前)、#subheader = 題の下の行、#footer = 下の帯 (いつも見える所)
+  下から出る形 (sheet、2026-11-07 U-15): スマホの窓。下寄せ・上の角丸・上につまみ・幅いっぱい。題も #title・#header も無ければ見出し (題と ×) を出さない
+  (閉じるのは後ろを押す・Esc・#footer のボタン)。枠の色は panelClass で差し替え (既定 .g-panel)、上に空ける高さは sheetTop (vh で枠の高さを決めると html の拡大 = zoom の分だけはみ出す、普通の窓の max-h-full と同じ訳)。Esc・後ろ・ページを止めるのは普通の窓と同じ
 -->
 <script lang="ts">
 // 開いている窓の積み (上ほど後に開いた物)。Esc は一番上だけ
@@ -18,7 +20,7 @@ let prevHtmlOverflow = "";
 </script>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, useSlots, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, useSlots, watch } from "vue";
 import Icon from "./Icon.vue";
 import { tr } from "../../i18n/lang";
 import { cancelTopIn } from "../../utils/use-dismiss";
@@ -43,9 +45,19 @@ const props = withDefaults(defineProps<{
   fullOnPhone?: boolean;
   /** 重ねずに、置いた場所にそのまま出す (Web の要望・バグを送るのページ。後ろを暗くせず、ページも止めない。2026-10-18) */
   inline?: boolean;
-}>(), { title: "", width: "w-[1000px] max-w-full", bodyClass: "px-3 py-2", closable: true, closeTitle: "", layer: "modal", fullOnPhone: false });
+  /** 下から出る形 (スマホの窓、上の注)。width は使わず幅いっぱい */
+  sheet?: boolean;
+  /** 枠の見た目 (既定 g-panel)。下から出る形でシミュの枠の色にする時など */
+  panelClass?: string;
+  /** 下から出る形の上に空ける高さ (枠はその下いっぱいまで) */
+  sheetTop?: string;
+  /** 題を出さない時の読み上げの名前 (既定は題) */
+  label?: string;
+}>(), { title: "", width: "w-[1000px] max-w-full", bodyClass: "px-3 py-2", closable: true, closeTitle: "", layer: "modal", fullOnPhone: false, sheet: false, panelClass: "g-panel", sheetTop: "pt-[12vh]", label: "" });
 const emit = defineEmits<{ close: [] }>();
 const slots = useSlots();
+/** 見出し (題と ×) を出すか。下から出る形で題が無ければ出さない */
+const showHeader = computed(() => !props.sheet || !!props.title || !!slots.title || !!slots.header);
 
 const id = Symbol("modal");
 const panel = ref<HTMLElement | null>(null);
@@ -115,7 +127,7 @@ onBeforeUnmount(deactivate);
   <Teleport to="body" :disabled="inline">
     <div
       v-if="open"
-      :class="inline ? 'flex justify-center' : ['fixed inset-0 flex items-center justify-center overscroll-contain bg-black/65 p-4', layer === 'confirm' ? 'z-[310]' : 'z-[300]', fullOnPhone ? 'max-md:items-stretch max-md:p-0' : '']"
+      :class="inline ? 'flex justify-center' : sheet ? ['fixed inset-0 flex flex-col justify-end overscroll-contain bg-black/55', sheetTop, layer === 'confirm' ? 'z-[310]' : 'z-[300]'] : ['fixed inset-0 flex items-center justify-center overscroll-contain bg-black/65 p-4', layer === 'confirm' ? 'z-[310]' : 'z-[300]', fullOnPhone ? 'max-md:items-stretch max-md:p-0' : '']"
       @mousedown="onDown"
       @click="onBackdrop"
     >
@@ -127,12 +139,12 @@ onBeforeUnmount(deactivate);
         data-overlay
         :data-rec="rec || undefined"
         aria-modal="true"
-        :aria-label="title || undefined"
-        class="g-panel flex max-h-full min-w-0 flex-col text-[12px] outline-none"
-        :class="[width, fullOnPhone ? 'max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none' : '']"
+        :aria-label="title || label || undefined"
+        class="flex min-w-0 flex-col text-[12px] outline-none"
+        :class="sheet ? [panelClass, 'max-h-full w-full rounded-b-none rounded-t-2xl'] : [panelClass, 'max-h-full', width, fullOnPhone ? 'max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none' : '']"
       >
         <!-- 見出し: 題・× (いつも見える所に) -->
-        <header class="border-b border-white/10 px-3 py-2">
+        <header v-if="showHeader" class="border-b border-white/10 px-3 py-2">
           <div class="flex items-center gap-2">
             <!-- 題と横の物 (横の物に ml-auto を付けると × の隣に寄る) -->
             <div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
@@ -143,7 +155,11 @@ onBeforeUnmount(deactivate);
           </div>
           <slot name="subheader" />
         </header>
-        <div class="min-h-0 flex-1 overflow-auto" :class="bodyClass"><slot /></div>
+        <div class="min-h-0 flex-1 overflow-auto" :class="[bodyClass, sheet ? 'overscroll-contain' : '']">
+          <!-- 下から出る形のつまみ (中身と一緒に送る) -->
+          <div v-if="sheet" class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" aria-hidden="true" />
+          <slot />
+        </div>
         <!-- 決める・閉じる (下に固定) -->
         <footer v-if="slots.footer" class="flex items-center gap-2 border-t border-white/10 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <slot name="footer" />
