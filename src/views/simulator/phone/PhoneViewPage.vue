@@ -85,7 +85,7 @@ const goalBig = ref(true);
 const SHUT_KEY = "exiledesk.phone.goal-shut";
 const goalShut = ref((() => { try { return localStorage.getItem(SHUT_KEY) === "1"; } catch { return false; } })());
 watch(goalShut, (on) => { try { localStorage.setItem(SHUT_KEY, on ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
-/** 題を押した時: 詳細の間は閉じる / 開く、道の画面は今どおり広げる / 縮める */
+/** 題・カードを押した時: 詳細の間は閉じる / 開く (広げるは無い、11-07 オーナー「広げると開く同じやろ広げるを閉じるに変えた方がいいね」)、道の画面は今どおり広げる / 縮める */
 function onGoalHead(): void { if (detail.value) goalShut.value = !goalShut.value; else goalBig.value = !goalBig.value; }
 const goalBox = ref<HTMLElement | null>(null), cardEl = ref<HTMLElement | null>(null);
 const goalW = ref(360), cardH = ref(0);
@@ -128,7 +128,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
           <button type="button" data-phone-view-detail class="g-btn sm !min-h-9 shrink-0" :aria-pressed="detail" @click="toggleDetail">{{ detail ? tr("詳細を閉じる", "Hide details") : tr("詳細", "Details") }}</button>
           </div>
           <!-- 高さは縮めた後の大きさで取る (transform は枠の高さを変えない) -->
-          <div v-show="!(detail && goalShut)" ref="goalBox" data-phone-view-card class="min-w-0 overflow-hidden" :style="{ height: cardH ? `${Math.ceil(cardH * cardScale)}px` : undefined }" @click="goalBig = !goalBig">
+          <div v-show="!(detail && goalShut)" ref="goalBox" data-phone-view-card class="min-w-0 overflow-hidden" :style="{ height: cardH ? `${Math.ceil(cardH * cardScale)}px` : undefined }" @click="onGoalHead">
             <div v-if="t.goalItem.value && t.goals.value.length" ref="cardEl" class="origin-top-left" :style="{ width: `${cardW}px`, transform: `scale(${cardScale})` }">
               <StageItemCard :row-group="shown.groups.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
             </div>
