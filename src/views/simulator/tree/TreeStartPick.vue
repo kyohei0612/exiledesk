@@ -6,7 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { applyCurrency, freshItem, limitOf, mulberry32, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
+import { applyCurrency, baseSocketsOf, freshItem, limitOf, mulberry32, runeIdByName, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, multiFracWhite, START_JUNK, startOf, startRarity, type Aim, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -35,10 +35,16 @@ const junkLeft = computed(() => Math.max(0, START_JUNK - st.value.mods.length));
 
 /** 差せるルーン (今のゲームに有るルーンのうち、このベースのレアに差せる物。ソウルコアなどは出さない) とソケットの上限 */
 const fresh = computed(() => (s.data.value ? freshItem(s.data.value, t.doc.value.base, t.doc.value.itemLevel, "rare") : null));
-const cap = computed(() => (fresh.value ? socketCapOf(fresh.value.base, fresh.value.cls.category) : 0));
+// 上限 = 規格外のソケットの数 − 始まりの MOD が差すルーン (コルの狩りなど)。超えて開けない (11-07 オーナー「入れ替え可能」、もっと差すのは木のルーンの手でソケットを押して入れ替え)
+const cap = computed(() => {
+  const d = s.data.value, it = fresh.value;
+  if (!d || !it || !socketCapOf(it.base, it.cls.category)) return 0;
+  const byMod = new Set([...st.value.mods, ...marks.value].flatMap((m) => { const r = d.mods.get(m.modId)?.rune; return r ? [r] : []; }));
+  return Math.max(0, baseSocketsOf(it.base, it.cls.category) - [...byMod].filter((id) => !runes.value.some((en) => runeIdByName(en) === id)).length);
+});
 const runeChoices = computed(() => {
   const d = s.data.value, it = fresh.value;
-  if (!d || !it || !cap.value) return [];
+  if (!d || !it || !socketCapOf(it.base, it.cls.category)) return [];
   // 差せるかはエンジンの applyCurrency (ソケット 1 つの形で聞く)、効果は runeEffectFor
   return Object.entries(RUNES).filter(([en, r]) => r.kind === "rune" && r.available !== false && applyCurrency(d, { ...it, sockets: 1 }, `rune:${en}`, mulberry32(1)).applied)
     .map(([en, rune]) => { const e = runeEffectFor(rune, it.cls.category); return { en, name: nameOf({ en, ja: rune.ja }), effect: e ? tr(e.ja, e.en) : "" }; });
@@ -88,7 +94,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
       </div>
     </div>
     <!-- ルーン (ソケットの上限まで。セールの凱旋のサフィックス +1・コルの狩りのマークスマン MOD など) -->
-    <div v-if="cap" data-tree-start-runes class="flex flex-col gap-1 text-[13px]">
+    <div v-if="cap || runes.length" data-tree-start-runes class="flex flex-col gap-1 text-[13px]">
       <div class="flex items-center gap-2">
         <span class="flex-1">{{ tr(`ルーン (${runes.length} / ${cap})`, `Runes (${runes.length} / ${cap})`) }}</span>
         <select v-if="runes.length < cap" data-tree-start-rune-add class="h-7 max-w-[60%] rounded-md border border-white/15 bg-black/40 px-1 text-[12px]" :value="''" @change="addRune(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''">

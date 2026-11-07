@@ -4,7 +4,7 @@
 import { computed, ref, triggerRef, watch, type Ref } from "vue";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { markStill } from "../../../services/simulator/tree/tree-sample";
-import { checkTreeAsync, NOTICE_KINDS, unsetIssues, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
+import { blocksRun, checkTreeAsync, unsetIssues, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -88,8 +88,8 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
       const price = priced?.();
       const now = [...(await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; }, price, (run) => { if (price) lastRun = { key, startCost: price.startCost, run }; })), ...orphanIssues(doc.value)];
       issues.value = now;
-      // 合格を止めない知らせ (NOTICE_KINDS) は数えない (S-73)
-      if (!now.filter((x) => !NOTICE_KINDS.includes(x.kind)).length && key === routeKey.value) passedKey.value = key;
+      // 合格 (100 人回せる) を止めるのは未設定だけ (S-205 ③)。ほかの足りない所は一覧に残す知らせ
+      if (!now.some((x) => blocksRun(x.kind)) && key === routeKey.value) passedKey.value = key;
     } finally {
       checking.value = false; progress.value = null;
     }

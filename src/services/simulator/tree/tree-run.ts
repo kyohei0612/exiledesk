@@ -7,7 +7,6 @@
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
-import { qualityOk } from "./tree-unbounded";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
@@ -16,7 +15,7 @@ import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
-import { judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
+import { contentDiff, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
 
@@ -153,14 +152,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail") return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     if (b.done === "main" && j) {
-      // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。品質も狙う ☑ の時だけ品質を見る)
-      if (!qualityOk(doc, item)) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`完成の箱に着いたが、品質が足りない (${item.quality ?? 0}% / 完成形 ${doc.goalQuality}%)`, `Reached a done box without enough quality (${item.quality ?? 0}% / final ${doc.goalQuality}%)`), item } });
+      // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)
       return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
     }
     if (b.done === "main") {
       // 完成のアイテムも残す (台本で完成図を出す。止まりの集計 stuckWhy には入れない)
-      // 品質も狙う (☑) の時は品質の値も見る。足りない人は止まり (10-27 夕オーナー)
-      if (doneOk(data, doc, at, item, aims) && !qualityOk(doc, item)) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`完成の箱に着いたが、品質が足りない (${item.quality ?? 0}% / 完成形 ${doc.goalQuality}%)`, `Reached a done box without enough quality (${item.quality ?? 0}% / final ${doc.goalQuality}%)`), item } });
+      // 完成形の品質は見ない (S-205。前は品質も狙う ☑ の時に足りない人を止まりにした、10-27 夕オーナー)
       if (doneOk(data, doc, at, item, aims)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
       odd.add(at);
       const to = ++hops > 1000 ? null : matchBox(data, shapes, item, aims, doc);
@@ -209,7 +206,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (!b.hand) {
       // 完成 = 完成の狙い (0 完成形の設定) が全部付いた時点。手の無い箱で揃っていれば完成 (狙いを全部付けたスタート、10-22 14 本目)
       const goals = doc.memoAims ?? [];
-      if (goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true })) && qualityOk(doc, item)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
+      if (goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }))) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } });
     }
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
@@ -266,7 +263,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       // 結果の箱の中身と違えば中身の同じ箱へ (S-64)。無ければ結果の箱で止まる (未設定)
       arrive(next, item, before);
       const to = routeOf(data, doc, j, next, item, aimed);
-      if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: otherShapeText(data, doc, at, next, item), item, noBox: true } }); }
+      if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: otherShapeText(data, doc, at, next, item, aimed), item, noBox: true } }); }
       if (to !== next) { visit(next, true); blame = next; }
       at = to;
       continue;
@@ -289,11 +286,15 @@ function boxWord(doc: TreeDoc, id: string): string {
 /**
  * 手の結果が結果の箱の見本と違う形で、同じ形の箱も無くて止まった人の文 (S-64): 元の手の箱を名指しし、次に押す物まで書く
  */
-function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string, item: StageItem): string {
-  const h = doc.boxes[from]?.hand, name = h ? nameOfKey(h.currency, null) : "";
-  const s = sampleOf(data, doc, to, 1), ja = (it: StageItem): string => `プレ ${it.prefixes.length}・サフィ ${it.suffixes.length}`, en = (it: StageItem): string => `${it.prefixes.length} prefix, ${it.suffixes.length} suffix`;
-  return tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本 (${ja(s.item)}) と形の違う人がいる (${ja(item)})。この形の箱が木に無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
-    `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${en(s.item)}): this run has ${en(item)}. No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
+function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string, item: StageItem, aimed: ReadonlySet<string>): string {
+  // 名前は品で引く (骨は部位で名前が変わる。品が無いと鍵「desecrate_ancient」のまま出た、要望 b3956330)
+  const h = doc.boxes[from]?.hand, name = h ? nameOfKey(h.currency, item) : "";
+  // 違う所は判定 (fitsItem) と同じ部品から (tree-judge の contentDiff)。言えない時だけ前の側の数
+  const diff = contentDiff(data, doc, item, aimed, to);
+  const s = diff.length ? null : sampleOf(data, doc, to, 1), ja = (it: StageItem): string => `プレ ${it.prefixes.length}・サフィ ${it.suffixes.length}`, en = (it: StageItem): string => `${it.prefixes.length} prefix, ${it.suffixes.length} suffix`;
+  const whyJa = s ? `見本 ${ja(s.item)}・この人 ${ja(item)}` : `違う所: ${diff.join("・")}`, whyEn = s ? `example ${en(s.item)}, this run ${en(item)}` : `differs: ${diff.join(", ")}`;
+  return tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本と形の違う人がいる (${whyJa})。この形の箱が木に無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
+    `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${whyEn}). No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
 }
 /**
  * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。

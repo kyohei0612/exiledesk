@@ -81,6 +81,12 @@ watch([topEl, () => run.result.value?.n, () => passed.value, locked], () => void
 // 道の画面は下へ送るので最初から広げ、詳細の全体図の時は小さく (オーナー 11-01「これなら完成MODカードでかくていいよ今小さいから　どうせ下にスクロールするだけだしな」「最初から押すと広がるでおｋだったら」)
 const CARD_SMALL = 0.55;
 const goalBig = ref(true);
+/** 詳細 (全体図) の時に完成形を題の 1 行にたたむ (このブラウザに覚える。11-07 オーナー「スマホのレシピ見づら、詳細みたら完成形閉じるかどうか選択できるようにしたいなツリーが見づらい」、S-94h) */
+const SHUT_KEY = "exiledesk.phone.goal-shut";
+const goalShut = ref((() => { try { return localStorage.getItem(SHUT_KEY) === "1"; } catch { return false; } })());
+watch(goalShut, (on) => { try { localStorage.setItem(SHUT_KEY, on ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
+/** 題・カードを押した時: 詳細の間は閉じる / 開く (広げるは無い、11-07 オーナー「広げると開く同じやろ広げるを閉じるに変えた方がいいね」)、道の画面は今どおり広げる / 縮める */
+function onGoalHead(): void { if (detail.value) goalShut.value = !goalShut.value; else goalBig.value = !goalBig.value; }
 const goalBox = ref<HTMLElement | null>(null), cardEl = ref<HTMLElement | null>(null);
 const goalW = ref(360), cardH = ref(0);
 let cardRo: ResizeObserver | null = null;
@@ -115,14 +121,14 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       <section data-phone-view-sheet class="fixed inset-x-0 bottom-0 z-30 flex flex-col overscroll-contain rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel px-3 pb-2 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]" :class="detail ? '' : 'overflow-y-auto'" :style="{ top: `${sheetTop}px` }">
         <div class="mb-1 flex min-h-0 min-w-0 flex-col overflow-y-auto" :class="goalBig && detail ? 'max-h-[60%] shrink-0' : 'shrink-0'">
           <div class="flex min-w-0 items-center gap-2">
-          <button type="button" data-phone-view-goal class="flex min-w-0 flex-1 items-baseline gap-2 text-left text-[13px]" :aria-expanded="goalBig" @click="goalBig = !goalBig">
+          <button type="button" data-phone-view-goal class="flex min-w-0 flex-1 items-baseline gap-2 text-left text-[13px]" :aria-expanded="detail ? !goalShut : goalBig" @click="onGoalHead">
             <b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 flex-1 break-words text-sim-body">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span>
-            <span class="shrink-0 text-[11px] text-sim-dim">{{ goalBig ? tr("縮める ▴", "Tap to shrink ▴") : tr("広げる ▾", "Tap to expand ▾") }}</span>
+            <span class="shrink-0 text-[11px] text-sim-dim">{{ detail ? (goalShut ? tr("開く ▾", "Tap to open ▾") : tr("閉じる ▴", "Tap to close ▴")) : goalBig ? tr("縮める ▴", "Tap to shrink ▴") : tr("広げる ▾", "Tap to expand ▾") }}</span>
           </button>
           <button type="button" data-phone-view-detail class="g-btn sm !min-h-9 shrink-0" :aria-pressed="detail" @click="toggleDetail">{{ detail ? tr("詳細を閉じる", "Hide details") : tr("詳細", "Details") }}</button>
           </div>
           <!-- 高さは縮めた後の大きさで取る (transform は枠の高さを変えない) -->
-          <div ref="goalBox" data-phone-view-card class="min-w-0 overflow-hidden" :style="{ height: cardH ? `${Math.ceil(cardH * cardScale)}px` : undefined }" @click="goalBig = !goalBig">
+          <div v-show="!(detail && goalShut)" ref="goalBox" data-phone-view-card class="min-w-0 overflow-hidden" :style="{ height: cardH ? `${Math.ceil(cardH * cardScale)}px` : undefined }" @click="onGoalHead">
             <div v-if="t.goalItem.value && t.goals.value.length" ref="cardEl" class="origin-top-left" :style="{ width: `${cardW}px`, transform: `scale(${cardScale})` }">
               <StageItemCard :row-group="shown.groups.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
             </div>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 /**
- * TreeVeilCheck.vue — 骨 (冒涜) の手の窓の「発現させる」☑ (10-27 夜オーナー)。既定は無し = 未発現のまま次へ (結果は「未発現の冒涜が付いた」)。
+ * TreeVeilCheck.vue — 骨 (冒涜) の手の窓の 3 択「発現 / 狙い無し / 未発現」(S-32、11-07 オーナー「分かりやすくそこに未発現付与のチェック追加しようか、発現、狙い無し、未発現だね」)。
+ * 既定は未発現 = 未発現のまま次へ (結果は「未発現の冒涜が付いた」の箱)。狙い無し = 打ってすぐ発現させ、出た MOD は外れ (後から打つ発現の手の狙い無しと同じ)。
+ * 発現 = MOD を選ぶ窓を開き、選んだ物を ☑ にする (選ばずに閉じたら前の選びのまま)。前は「発現させる」☑ 1 つで、無しなら未発現 (10-27 夜オーナー)。
  * 高貴・カオスの窓と同じ並び (狙う MOD の ☑ = 完成の狙い → これ → 狙い無し、10-28 オーナー「誰がそこに表示しろって」)。
  * PC: ☑ を付けた時点で「このベースに付く MOD」の窓 (共通の ModTable、完成形の設定と同じ表) を開き、発現で出うる MOD の段から選ばせる
  *     (出ない MOD は灰色で選べない。選んだ物は ☑ の一覧に足して当たり、選ばずに閉じたら ☑ は外れたまま。10-28 オーナー「発現させるチェックで MOD を選ばせよう」)。
@@ -21,9 +23,21 @@ import type { Aim, Hand } from "../../../services/simulator/tree/tree-model";
 import { revealPool, type ListRow, type ListTier, type StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 
-/** echo = アビスの反響のお告げが手に付いているか (任意の ☑、発現させるがオンの時だけ出す。棚のお告げの欄と同じ omens を見る) */
-const props = defineProps<{ modelValue: boolean; big?: boolean; noCheck?: boolean; boxId: string; item: StageItem | null; hand: Hand | null; echo?: boolean }>();
-const emit = defineEmits<{ "update:modelValue": [boolean]; add: [Aim]; echo: [boolean] }>();
+/** 骨の 3 択 (TreeHandShelf の boneMode)。reveal = 発現 (☑ の MOD)、free = 発現させて狙い無し、keep = 未発現のまま */
+export type BoneMode = "reveal" | "free" | "keep";
+/** echo = アビスの反響のお告げが手に付いているか (任意の ☑、発現させる時 (発現・狙い無し) だけ出す。棚のお告げの欄と同じ omens を見る) */
+const props = defineProps<{ modelValue: boolean; mode?: BoneMode; big?: boolean; noCheck?: boolean; boxId: string; item: StageItem | null; hand: Hand | null; echo?: boolean }>();
+const emit = defineEmits<{ "update:modelValue": [boolean]; mode: [BoneMode]; add: [Aim]; echo: [boolean] }>();
+const MODES = computed((): Array<{ k: BoneMode; label: string }> => [
+  { k: "reveal", label: tr("発現 (選んだ MOD が出れば当たり)", "Reveal (a hit if a picked mod shows up)") },
+  { k: "free", label: tr("狙い無し (発現させて、出た MOD は外れ)", "No target (reveal it; the mod counts as a miss)") },
+  { k: "keep", label: tr("未発現 (未発現のまま付ける)", "Unrevealed (leave it unrevealed)") },
+]);
+/** 発現は MOD を選んでから (選ぶまで丸は移さない。10-28 オーナー「発現させるオンで狙い無しは無し」) */
+function onMode(k: BoneMode): void {
+  if (k === "reveal" && props.mode !== "reveal") { picking.value = true; return; }
+  emit("mode", k);
+}
 const picking = ref(false);
 /**
  * (S-38) エミュの MOD 一覧の窓 (StageModList の重ね窓) と同じ枠・同じ % と灰色 (for-share の useHeldShares = エンジンの heldOdds。
@@ -42,26 +56,31 @@ watch(picking, (on) => { if (on) void nextTick(() => { if (table.value?.counts.d
 /** 「発現で選ぶ」を出す段 = 灰色でない行の灰色でない段 */
 const pickable = (r: ListRow, x: ListTier): boolean => !dimRow(r) && !dimTier(r, x) && (pool.value != null || shares.heldTierShare(r, x) > 0);
 function pick(a: Aim): void { picking.value = false; emit("add", a); }
-/** PC は ☑ を付けた時点で窓を開く (選ぶまで ☑ は付けない)。外すのはそのまま */
-function onCheck(e: Event): void {
-  const on = (e.target as HTMLInputElement).checked;
-  // 発現させるなら必ず MOD を選ぶ (スマホも、10-28 オーナー「発現させるオンで狙い無しは無し」)
-  if (on) { (e.target as HTMLInputElement).checked = false; picking.value = true; return; }
-  emit("update:modelValue", on);
-}
 </script>
 
 <template>
-  <!-- 並びと形は隣の狙いの行と同じ (PC は min-h-7 gap-2、スマホは枠付きの min-h-11 gap-3) -->
-  <label v-if="!noCheck" data-tree-hand-veil class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2'">
-    <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="modelValue" @change="onCheck" />
-    <span class="min-w-0 break-words">{{ tr("発現させる (無しなら未発現のまま次へ)", "Reveal it now (off = leave it unrevealed)") }}</span>
-  </label>
-  <label v-if="modelValue || noCheck" data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
+  <!-- 並びと形は隣の狙いの行と同じ (PC は min-h-7 gap-2、スマホは枠付きの min-h-11 gap-3)。発現を選ぶと丸の下に反響と「発現で選ぶ MOD を選ぶ」 -->
+  <!-- 丸は name で束ねない (発現は MOD を選ぶまで移さないので、ブラウザの束ねが今の丸を先に外してしまう)。反響と「選ぶ」は選んだ丸のすぐ下 -->
+  <template v-if="!noCheck">
+    <template v-for="m in MODES" :key="m.k">
+      <label data-tree-hand-veil :data-veil-mode="m.k" class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2'">
+        <input type="radio" class="shrink-0" :class="big ? 'size-5' : ''" :checked="mode === m.k" @change="($event.target as HTMLInputElement).checked = mode === m.k; onMode(m.k)" />
+        <span class="min-w-0 break-words">{{ m.label }}</span>
+      </label>
+      <template v-if="mode === m.k && m.k !== 'keep'">
+        <label data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
+          <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="!!echo" @change="emit('echo', ($event.target as HTMLInputElement).checked)" />
+          <span class="min-w-0 break-words">{{ handName(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
+        </label>
+        <button v-if="m.k === 'reveal'" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : 'ml-5'" @click="picking = true">{{ tr("発現で選ぶ MOD を選ぶ", "Pick the mod to reveal") }}</button>
+      </template>
+    </template>
+  </template>
+  <label v-if="noCheck" data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
     <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="!!echo" @change="emit('echo', ($event.target as HTMLInputElement).checked)" />
     <span class="min-w-0 break-words">{{ handName(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
   </label>
-  <button v-if="modelValue || noCheck" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : noCheck ? '' : 'ml-5'" @click="picking = true">{{ tr("発現で選ぶ MOD を選ぶ", "Pick the mod to reveal") }}</button>
+  <button v-if="noCheck" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : ''" @click="picking = true">{{ tr("発現で選ぶ MOD を選ぶ", "Pick the mod to reveal") }}</button>
   <!-- エミュの「このベースに付く MOD」の重ね窓と同じ枠 (CraftStage.vue の ModalShell と同じ大きさ、スマホは画面いっぱい) と同じ表 (S-38) -->
   <ModalShell :open="picking" rec="tree-veil-mods" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (選ばない)', 'Close (pick nothing)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="picking = false">
     <template #header><span class="g-sec-sub max-md:hidden">{{ tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>

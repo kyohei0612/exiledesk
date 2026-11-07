@@ -3,12 +3,14 @@
  * 見本のアイテムの外れ MOD は 1 つの MOD レベルしか持たないので、そのまま打つと外れの MOD レベルの違いで枝が分かれない (前の作り)。
  * ランダムに付いた外れ MOD を、データ (その部位・アイテムレベル・側で付きうる MOD と重み) の MOD レベルの範囲ごとの代わりに差し替えて打ち直す (①):
  * 範囲 = 消せる欲しい MOD (フラクチャー以外の狙い) の MOD レベルのどれより低い / 同じ / 間 / どれより高い。割合はその範囲の重みの和 ÷ 付きうる外れ全部の重み。
- * エッセンス・冒涜・未発現・ルーンの外れは MOD レベルが決まっているので差し替えない (③)。一番上で並ぶ物の無い MOD は消えないので、その枝はエンジンの枝に出ない (②)。
+ * 消える的は MOD レベルだけで決まる (エンジンの whittleTargets、✦ 以外は何でも。11-07 オーナー「削減はMODレベルだったらなんでも対象よ」)。
+ * 差し替えるのは MOD レベルが乱数の外れ (一般・ルーンの池・狙い無しで発現した冒涜)。エッセンス (段が決まる) と未発現 (MOD レベル 1、E-33) は見本のまま (③)。
+ * 前は冒涜とルーンの池の外れも差し替えず、見本の 1 つの MOD レベルの枝しか出なかった。一番上で並ぶ物の無い MOD は消えないので、その枝はエンジンの枝に出ない (②)。
  * 結果の箱は、打つ前からあって残った外れの順位 (欲しい MOD に対して) を鍵に持つ (④、TreeBox.junkKey の `w:` の部分、側の鍵 `s:` とは `;` で並べる)。
  * 次の削減は鍵の順位に合う外れを差し替えない (見本の MOD レベルがその順位の代わり)
  */
 import { candidates, makeStageMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { without } from "../../craft-stage/stage-core";
+import { effectiveCls, without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
 
 export const WHITTLE = "OmenofWhittling";
@@ -67,7 +69,7 @@ export function rankVariants(data: PatchData, item: StageItem, aims: readonly Ai
   const junk = loose(item).filter((m) => !isAim(aims, m));
   const code = codesOf(boxKey)[0];
   if (code !== undefined && junk.length && rankCode(w, Math.min(...junk.map(lv))) === code) return [{ p: 1, item }];
-  const free = junk.filter((m) => !m.crafted && !m.desecrated && !m.unrevealed && !m.rune);
+  const free = junk.filter((m) => !m.crafted && !m.unrevealed);
   if (!free.length || free.length > FREE_MAX) return [{ p: 1, item }];
   let states: Array<{ p: number; item: StageItem }> = [{ p: 1, item }];
   for (const j of free) {
@@ -79,11 +81,15 @@ export function rankVariants(data: PatchData, item: StageItem, aims: readonly Ai
       // 順位ごとに重みの和と、代わりの MOD (一番重い段)
       const by = new Map<string, { w: number; top: number; mod: StageMod }>();
       let total = 0;
-      for (const c of candidates(data, base, [j.side], 0)) {
+      // 冒涜の外れは発現で出うる池 (冒涜専用 + 一般、E-62 = run-plan の発現と同じ) から、冒涜の印のまま
+      const k = j.side === "prefix" ? "prefixes" : "suffixes";
+      const pool = j.desecrated ? { pools: () => [...(base.cls.pools.desecrated?.[k] ?? []), ...effectiveCls(base).pools.normal[k]] } : {};
+      for (const c of candidates(data, base, [j.side], 0, pool)) {
         if (aims.some((a) => a.modId === c.mod.id)) continue;
         for (const t of c.tiers) {
           if (!(t.w > 0)) continue;
-          const sm = makeStageMod(c.mod, c.side, t.index, () => 0.5);
+          const sm0 = makeStageMod(c.mod, c.side, t.index, () => 0.5);
+          const sm = j.desecrated ? { ...sm0, desecrated: true } : sm0;
           const code = rankCode(w, lv(sm));
           const e = by.get(code);
           total += t.w;

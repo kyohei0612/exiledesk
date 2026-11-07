@@ -15,10 +15,12 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
-import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, midMark, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
+import { modText, tr } from "../../../i18n/lang";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
 
 /** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
 const contentAims = (doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(doc)];
@@ -71,11 +73,52 @@ export const aimedAfterAnnul = (data: PatchData, doc: TreeDoc, h: Hand | null | 
  * 狙いに当たる MOD は文が同じなら別の modId でも当たる (エンジンの sameText) ので、体 (bodyOf) から外すのは実物の MOD の modId (前は完成形の modId で外し、同じ文の別 modId が狙いと外れの両方に数わった)
  */
 export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
+  const c = contentParts(data, doc, it, aimed);
+  return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}`;
+}
+/** 中身の鍵の部分 (keys = ☑ の狙いの札、mods = それに当たる実物の MOD、placed = 置き石の MOD、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
+function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): { keys: Set<string>; mods: Set<string>; placed: Set<string>; body: string } {
   const goals = contentAims(doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), memo = doc.memoAims ?? [];
   const keys = new Set<string>(), mods = new Set<string>(), placed = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) { keys.add(g.modId); mods.add(m.modId); if (!memo.includes(g)) placed.add(m.modId); } }
-  const body = bodyOf(data, doc, it, mods, placed);
-  return `${[...keys].sort().join(",")}${frameOf(it)}#${junkOne(body)}`;
+  return { keys, mods, placed, body: bodyOf(data, doc, it, mods, placed) };
+}
+/**
+ * この人 (item・aimed) が箱 to の代表の品 (配置) と違う所の言葉 (止まりの文、S-64)。判定 (fitsItem) と同じ部品で比べ、違う狙い・外れは MOD の名前で出す。
+ * 前は見本と人の側の数だけを出し、違いが側の数の外にあると「見本 (プレ 2・サフィ 1) と形の違う人 (プレ 2・サフィ 1)」になった (要望 b3956330)
+ */
+export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>, to: string): string[] {
+  const f = frameOfDoc(data, doc).frames.get(to);
+  if (!f || f.note) return [];
+  const a = contentParts(data, doc, it, aimed), b = contentParts(data, doc, f.item, f.aimed), opts = aimOpts(data), out: string[] = [];
+  const aimText = (x: StageItem, id: string): string => { const g = contentAims(doc).find((y) => y.modId === id), m = g && [...x.prefixes, ...x.suffixes].find((y) => isAimMod(y, targetsOf(data, [g]), opts)); return m ? modText(m) : id; };
+  for (const id of [...a.keys].sort()) if (!b.keys.has(id)) out.push(tr(`狙い「${aimText(it, id)}」が付いている`, `has the target "${aimText(it, id)}"`));
+  for (const id of [...b.keys].sort()) if (!a.keys.has(id)) out.push(tr(`狙い「${aimText(f.item, id)}」が無い`, `lacks the target "${aimText(f.item, id)}"`));
+  // 体 (bodyOf の `n.c.x.u|n.c.x.u|✦…|レアリティ`): 外れの数 (種類は見ない = junkOne)・未発現、光のお告げ・骨 / エッセンスの手の箱へは冒涜 / クラフトの外れの数も (keyFor と同じ)
+  const goalIds = new Set((doc.memoAims ?? []).map((g) => g.modId)), pa = a.body.split("|"), pb = b.body.split("|");
+  const isJunk = (m: StageMod): boolean => !m.fractured && !m.unrevealed && !((goalIds.has(m.modId) && a.mods.has(m.modId)) || a.placed.has(m.modId));
+  (["prefix", "suffix"] as const).forEach((side, i) => {
+    const [n = 0, c = 0, x = 0, u = 0] = (pa[i] ?? "").split(".").map(Number), [n2 = 0, c2 = 0, x2 = 0, u2 = 0] = (pb[i] ?? "").split(".").map(Number);
+    const ja = side === "prefix" ? "プレ" : "サフィ";
+    const names = (side === "prefix" ? it.prefixes : it.suffixes).filter(isJunk).map((m) => modText(m)).join(tr("・", ", "));
+    if (n + c + x !== n2 + c2 + x2) out.push(tr(`${ja}の外れ ${n + c + x} (見本 ${n2 + c2 + x2})${names ? `: ${names}` : ""}`, `${n + c + x} ${side} miss (example ${n2 + c2 + x2})${names ? `: ${names}` : ""}`));
+    else if (needsDesecrated(doc, to) && x !== x2) out.push(tr(`${ja}の冒涜の外れ ${x} (見本 ${x2})`, `${x} desecrated ${side} miss (example ${x2})`));
+    else if (needsCrafted(doc, to) && c !== c2) out.push(tr(`${ja}のエッセンスの外れ ${c} (見本 ${c2})`, `${c} essence ${side} miss (example ${c2})`));
+    if (u !== u2) out.push(tr(`${ja}の未発現 ${u} (見本 ${u2})`, `${u} unrevealed ${side} (example ${u2})`));
+  });
+  if (pa[2] !== pb[2]) out.push(tr("フラクチャーの付き方が違う", "different fractured mods"));
+  if (pa[3] !== pb[3]) out.push(tr("レアリティが違う", "different rarity"));
+  // 枠 (frameOf を配置の鍵 frameKeyOf にした物 = 品質は有り / 無しと種類・エンチャント・刺さったルーン・予見済み)
+  const [, qa = "", ea = ""] = frameKeyOf(frameOf(it)).split("~"), [, qb = "", eb = ""] = frameKeyOf(frameOf(f.item)).split("~");
+  if (qa !== qb) out.push(tr(`品質 ${it.quality ?? 0}% (見本 ${f.item.quality ?? 0}%)`, `${it.quality ?? 0}% quality (example ${f.item.quality ?? 0}%)`));
+  if (ea !== eb) out.push(tr("エンチャントが違う", "different enchantment"));
+  const ra = runesOf(it), rb = runesOf(f.item), runeName = (s: string): string => (s ? s.split("+").map((en) => nameOfKey(`${RUNE_PREFIX}${en}`, it)).join(tr("・", ", ")) : tr("なし", "none"));
+  if (ra !== rb) out.push(tr(`刺さったルーンが違う (${runeName(ra)} / 見本 ${runeName(rb)})`, `different runes (${runeName(ra)} / example ${runeName(rb)})`));
+  if ((it.sockets ?? 0) !== (f.item.sockets ?? 0)) out.push(tr(`ソケット ${it.sockets ?? 0} (見本 ${f.item.sockets ?? 0})`, `${it.sockets ?? 0} sockets (example ${f.item.sockets ?? 0})`));
+  if (!!it.foreseen !== !!f.item.foreseen) out.push(tr("予見済みかが違う", "foreseen differs"));
+  // 中身が同じで行けない = カタリストの n % に届かない (fitsItem の残り。完成形の品質は指標なので見ない = S-205)
+  if (!out.length && !reachesCatalyst(doc, to, it)) out.push(tr(`カタリストの品質 ${catalystTo(doc, to)}% に届かない`, `cannot reach ${catalystTo(doc, to)}% catalyst quality`));
+  return out;
 }
 /** 木の族 = 完成形の狙いと、木の手で付けるエッセンスの MOD の系統 (E-11a)。外れの印 (S-200 ② の (g)) で見る */
 const FAMS = new WeakMap<PatchData, Map<string, ReadonlySet<string>>>();
@@ -114,11 +157,15 @@ export function blockMarkOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
 /** 外れの印の覚え (品ごと) */
 const MARKS = new WeakMap<StageItem, Map<string, string>>();
 /**
- * 枠に入れる品質 (値・カタリストの種類)・はまったルーン・ソケットの数。全部同じ時だけ同じ枠、1 つでも違えば別 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」「少しでも違えば別」)。
- * 嵌めたルーン (augments) は名前の組だけで順は見ない (11-05 オーナー「おｋ直して 順は見ないで」。前はルーンの MOD だけを見て、ルーン 0 と 2 の箱が同じ枠になっていた、要望 fd1bed1a)
+ * 枠に入れる品質 (値・カタリストの種類)・エンチャント・予見済み。全部同じ時だけ同じ枠 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」)。
  * 品質が 0% (値・カタリストの品質とも 0) の時は種類を見ない (11-06: 触媒の高貴が品質を使い切っても種類は残るが、0% の種類は打つ時に効かない)
+ * 品に刺さっているルーン (augments) は名前の組で入れる (順は見ない、11-05)。刺したルーンで確率・打てる手が変わるので別の状態 (11-07 オーナー「ルーンは手で付けたところとかでおｋ
+ * ツリーはあくまでもゲーム仕様にして」= S-60e)。ルーンの MOD の印 (m.rune = コルの狩りを差すと混ざるマークスマンの MOD) は入れない (外れは何の MOD でも外れ。前は入れていて、
+ * 外れがマークスマンの MOD の人だけ別の枠になって止まった = 要望 b3956330)。ソケットの数も入れる (ルーンの手は空きがあれば空きへ、無ければ左から置き換える = 空きの有る無しで結果が違う。ソケットを足すのは熟練工のオーブ、エンジンの applyRune)
  */
-const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${(it.quality ?? 0) + (it.catalystQuality ?? 0) > 0 ? it.qualityTag ?? "" : ""}~r${[...it.prefixes, ...it.suffixes].flatMap((m) => (m.rune ? [m.rune] : [])).sort().join("+")}.${(it.augments ?? []).map((a) => a.en).sort().join("+")}.${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~s${it.sockets ?? 0}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
+const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${(it.quality ?? 0) + (it.catalystQuality ?? 0) > 0 ? it.qualityTag ?? "" : ""}~e${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~r${runesOf(it)}.${it.sockets ?? 0}${it.foreseen ? "~f" : ""}`; // 予見済み (ヒネコラ、S-39) も別の枠
+/** 刺さっているルーンの名前の組 (順は見ない) */
+const runesOf = (it: StageItem): string => (it.augments ?? []).map((a) => a.en).sort().join("+");
 /**
  * 外れは種類を見ない (S-60、10-29 深夜オーナー「そもそもハズレMODはどんな形であれハズレMODだからな」): 側ごとの 普通.エッセンス.冒涜の発現済み.未発現 を
  * 外れ.未発現 の 2 つに (「未発現のみ別枠として全然おｋ」)。冒涜の発現済みの数は最後の `#d<プレ>.<サフィ>` に残し、光のお告げの手のある箱と比べる時だけ見る (looseKey で落とす)
@@ -141,8 +188,6 @@ export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h 
 /** クラフト MOD を付ける手 (エッセンス・液化した感情) の箱か (クラフト MOD は 1 品 1 つ E-11h。クラフト MOD の外れを持つ人は打てないので、その数も合わせる、S-60d) */
 export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
 const LIGHT = "OmenofLight";
-/** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
-const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
 
 /** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c) */
 const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };
@@ -280,11 +325,11 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && reachesCatalyst(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
       const k = own(contentOf(data, doc, item, aimed));
-      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
       const k = own(contentOf(data, doc, item, aimed));

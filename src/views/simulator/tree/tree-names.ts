@@ -72,7 +72,17 @@ export const outsName = (b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["o
 
 /** MOD の文から数字・括弧・「が増加する」を除いた短い名前 (枠の札で「キャストスピードが(25-28)%増加するが付いた」と長くなった。全文は乗せた時の文で) */
 // 「(12-19)から(22-32)の物理ダメージを…」の「から…の」は数ごと落とす (前は「からの物理ダメージを…が付いた」と残った、11-05 動画の木)。英語の「Adds (a) to (b) X」も同じ
-export const modShort = (text: string): string => text.replace(/(\([^)]*\)|\d+)から(\([^)]*\)|\d+)の/g, "").replace(/^Adds (\([^)]*\)|\d+) to (\([^)]*\)|\d+) /, "Adds ").replace(/\([^)]*\)/g, "").replace(/[+-]?\d+(\.\d+)?(%|個)?/g, "").replace(/%/g, "").replace(/が(増加|減少)する$/, "").replace(/\s+/g, " ").trim() || text;
+/** 数 1 つ (幅「(9-15)」か数) */
+const VAL = String.raw`(?:\([^)]*\)|[+-]?\d+(?:\.\d+)?)`;
+/** 数の後ろに付く数え方 (この数は MOD の決まった数なので残す。「過去15秒以内」「倒した敵1体ごとに」「2個のエンチャント」「4分の1」) */
+const COUNTER = "秒|体|個|回|つ|ごと|メートル|分の";
+export const modShort = (text: string): string => text
+  .replace(new RegExp(`${VAL}から${VAL}の`, "g"), "").replace(new RegExp(`^Adds ${VAL} to ${VAL} `), "Adds ")
+  // 「受けたダメージの(22-24)%をライフとして」「アーマーの(44-50)%が」は「の 数%」ごと落とす (前は「のを」「のが」とつながった、11-07 ブラック 54)
+  .replace(new RegExp(`の${VAL}%(?=[をがとにで])`, "g"), "")
+  // 「ダメージは(9-15)%の元素耐性」「(20-30)%の確率で」「(32-45)のルーンワード」は「数%の」ごと落とす (前は「ダメージはの元素耐性」と崩れた)
+  .replace(new RegExp(`${VAL}%?の`, "g"), "")
+  .replace(/[+-]?\([^)]*\)/g, "").replace(new RegExp(String.raw`(?<![\d.]|分の)[+-]?\d+(?:\.\d+)?%?(?![\d.]|${COUNTER})`, "g"), "").replace(/%/g, "").replace(/が(増加|減少)する$/, "").replace(/\s+/g, " ").trim() || text;
 /**
  * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
  * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
@@ -139,7 +149,10 @@ export function handLabel(h: Hand): string {
     : "";
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
-  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : veilPick(h) && !isRevealHand(h.currency) ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
+  // 骨は 3 択の名前だけ (S-37、11-07): (発現) / (発現・狙い無し) / (未発現のまま)。前は未発現にも「(狙い無し)」が付いていた
+  const boneVeil = veilKeep(h) ? "keep" : veilPick(h) && !isRevealHand(h.currency) ? (h.free ? "free" : "reveal") : null;
+  const veilTag = boneVeil === "keep" ? tr(" (未発現のまま)", " (left unrevealed)") : boneVeil === "free" ? tr(" (発現・狙い無し)", " (reveal, no target)") : boneVeil === "reveal" ? tr(" (発現)", " (reveal)") : "";
+  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free && !boneVeil ? tr(" (狙い無し)", " (no target)") : "") + veilTag + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」。中は今まで通り当たるまで)
   return label;
 }

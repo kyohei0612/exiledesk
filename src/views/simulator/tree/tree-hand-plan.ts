@@ -19,7 +19,7 @@ import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
-import { depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { depthOf, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -297,6 +297,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (data && isAnnulHand(h)) extendAnnul(data, d, [at]); // 消去は同じ枠か残り 1 MOD まで続ける (S-28g)
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
   pinDivineMisses(d);
+  // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
+  if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
   return at;
 }
 

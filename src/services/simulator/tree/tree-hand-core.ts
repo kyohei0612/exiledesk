@@ -2,7 +2,7 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, OMEN_FOR, omenBlock, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, kindOf, OMEN_FOR, omenBlock, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { ECHO as ABYSSAL_ECHO_OMEN } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
@@ -115,10 +115,8 @@ interface StartWith {
   /** 始まりのレアリティ。マジック・ノーマルはノーマルから付ける (付けるとマジック)。フラクチャーがあればレア (force がレアにする) */
   rarity: StageItem["rarity"];
   mods: readonly StartMod[];
-  /** 先に差すルーン (英語名)。指名の MOD のルーンの分もソケットを開ける */
+  /** 先に差すルーン (英語名)。ソケットは規格外の数のまま (埋まっていれば入れ替わる) */
   runes?: readonly string[];
-  /** ソケットだけ開けておく MOD (ルーンの MOD の分。印のスタートで後から付く ✦ の候補・＋の MOD) */
-  socketFor?: readonly StartMod[];
 }
 
 /** フラクチャー (✦) は 1 つのアイテムに 1 つまで (ゲームのフラクチャーのオーブは 1 つだけ固定する) */
@@ -133,11 +131,10 @@ export function startWith(data: PatchData, base: string, itemLevel: number, s: S
   const full = baseSocketsOf(item.base, item.cls.category);
   if (full > (item.sockets ?? 0)) item = { ...item, sockets: full };
   if (s.mods.filter((m) => m.fractured).length > START_FRACTURE_MAX) return { item, note: tr("フラクチャーは 1 つまで", "Only one mod can be fractured") };
-  // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
+  // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す、手袋の投射物 +2 = コルの狩り、10-22)。
+  // ソケットは規格外の数より開けない: 埋まっていればエンジンの applyRune どおり左から置き換えられる物と入れ替わる
+  // (11-07 オーナー「ソケットバウンドないルーンとかは入れ替え可能」。前は要るルーンの数だけソケットを開けていた)
   const runes = s.runes ?? [];
-  const byMod = new Set([...s.mods, ...(s.socketFor ?? [])].flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
-  const need = runes.length + [...byMod].filter((id) => !runes.some((en) => runeIdByName(en) === id)).length;
-  if (need) item = { ...item, sockets: Math.max(item.sockets ?? 0, need) };
   for (const en of runes) {
     const r = applyCurrency(data, item, `rune:${en}`, rng);
     if (!r.applied) return { item: r.item, note: r.reason ?? null };
