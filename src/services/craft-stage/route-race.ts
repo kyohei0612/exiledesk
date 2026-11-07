@@ -22,8 +22,8 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { hits as aimHits } from "./aim-odds";
 import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
-import { limitOf, sideOfMod } from "./stage-core";
-import type { StageItem } from "./types";
+import { limitOf, listOf, sideOfMod, SIDES } from "./stage-core";
+import type { StageItem, StageMod, StageSide } from "./types";
 import { OMEN_KEY } from "./spec/omen-keys";
 
 export type RouteKind = "augment" | "chaos" | "exalt";
@@ -43,6 +43,28 @@ const sideList = (it: StageItem, side: "prefix" | "suffix") => (side === "prefix
  */
 export const routeHitIndex = (it: StageItem, targets: readonly RaceTarget[], data?: PatchData): number => targets.findIndex((t) => allMods(it).some((m) => aimHits(m, t, data ? { data, sameText: true } : undefined)));
 const routeHit = (data: PatchData, it: StageItem, targets: readonly RaceTarget[]): boolean => routeHitIndex(it, targets, data) >= 0;
+/** その MOD が当たりのどれかに当たるか (aimHits の sameText。spam-counts も同じ物) */
+export const routeHitMod = (data: PatchData, targets: readonly RaceTarget[]) => (m: StageMod): boolean => targets.some((t) => aimHits(m, t, { data, sameText: true }));
+
+/**
+ * スパムの道の 1 手 (どれを打つか)。routeRun (エミュのスパムシミュ・運試し) と spam-counts (シミュの始まりの値段) が同じ物を呼ぶ
+ * (11-07 オーナー「全て」= 2 つの打ち手が固定・消去の対象・偉大の条件・カオスの始めで違っていたのを 1 本に)。
+ *   isHit = 当たりの MOD か (routeHitMod)、open = まだ当たりの要る側 (増強の道だけ見る)
+ *   - 増強: ノーマルなら変成。まだ当たりの要る側に外れ (固定でない・当たりでない) があれば消去、無ければ増強
+ *   - カオス: 消せる MOD (固定でない) があればカオス、無ければ先に高貴 1 回 (無印、費用に入る。オーナー 10-22)
+ *   - 高貴: 消せる MOD (固定でない・当たりでない) があれば消去、無ければ高貴。空きが 2 つ以上なら偉大な高貴のお告げで 2 つ
+ */
+export function routeStep(it: StageItem, route: RouteKind, grade: Grade, isHit: (m: StageMod) => boolean, open: readonly StageSide[]): { key: string; omens: string[] } {
+  const g = GRADE_KEY[grade];
+  if (route === "augment") {
+    if (it.rarity === "normal") return { key: `transmute${g}`, omens: [] };
+    return { key: open.some((sd) => sideList(it, sd).some((m) => !m.fractured && !isHit(m))) ? "annul" : `augment${g}`, omens: [] };
+  }
+  if (route === "chaos") return { key: allMods(it).some((m) => !m.fractured) ? `chaos${g}` : "exalt", omens: [] };
+  if (allMods(it).some((m) => !m.fractured && !isHit(m))) return { key: "annul", omens: [] };
+  const free = SIDES.reduce((a, sd) => a + Math.max(0, limitOf(it, sd) - listOf(it, sd).length), 0);
+  return { key: `exalt${g}`, omens: free >= 2 ? [OMEN_KEY.greater] : [] };
+}
 /** 当たりの側 (プレ / サフィ)。2 つ以上なら増強の道は使えない */
 export const targetSides = (data: PatchData, targets: readonly RaceTarget[]) => [...new Set(targets.map((t) => sideOfMod(data, t.modId)))];
 /** 道の主のカレンシーの鍵 (augment_greater など) */
@@ -91,7 +113,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
   const onSide = (sd: "prefix" | "suffix") => targets.filter((t) => sideOfMod(data, t.modId) === sd);
   /** その側に当たりが付いている */
   const sideHit = (it: StageItem, sd: "prefix" | "suffix"): boolean => routeHit(data, { ...it, prefixes: sd === "prefix" ? it.prefixes : [], suffixes: sd === "suffix" ? it.suffixes : [] }, onSide(sd));
-  const g = GRADE_KEY[grade];
+  const isHit = routeHitMod(data, targets);
   let it: StageItem = from ?? freshItem(data, base, itemLevel);
   if (from) { if (routeOff(data, base, itemLevel, targets, route, undefined, from)) return null; }
   else if (prep) it = prep(it);
@@ -118,16 +140,9 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
         for (const x of res.rolled ?? []) run.chances.set(x.modId, x.chance);
         return true;
       };
-      const cur = run.item;
-      if (route === "augment") {
-        if (cur.rarity === "normal") return use(`transmute${g}`);
-        // 当たりのある側に外れが付いていたら消去 (どれが消えるかは運)、無ければ増強 (空いた側に付く)
-        return sides.some((sd) => sideList(cur, sd).length > 0 && !sideHit(cur, sd)) ? use("annul") : use(`augment${g}`);
-      }
-      // カオス: 消せる MOD (フラクチャー以外) が無ければ、先に高貴 1 回で 1 つ足す (今のアイテムがフラクチャーだけの時。費用に入れる、オーナー 10-22)
-      if (route === "chaos") return allMods(cur).some((m) => !m.fractured) ? use(`chaos${g}`) : use("exalt");
-      // 高貴: MOD があれば消去で 0 に戻す、0 なら偉大な高貴のお告げで 2 つ
-      return allMods(cur).length ? use("annul") : use(`exalt${g}`, [OMEN_KEY.greater]);
+      // 当たりのある側に外れが付いていたら消去 (どれが消えるかは運)、無ければ増強。カオス・高貴の決まりも routeStep
+      const s = routeStep(run.item, route, grade, isHit, sides.filter((sd) => !sideHit(run.item, sd)));
+      return use(s.key, s.omens);
     },
   };
   return run;
