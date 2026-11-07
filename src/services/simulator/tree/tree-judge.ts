@@ -12,6 +12,7 @@ import { catalystRoom, kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, typ
 import { catalystTagOf } from "../sim-engine";
 import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
+import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
 import { isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
@@ -23,8 +24,18 @@ import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
 
-/** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
-const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc)];
+/**
+ * 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) + 木の手で残したい MOD に ☑ した MOD (S-27b・S-33c、11-08)。
+ * ☑ した完成形に無いエッセンスは、その後の箱でも ☑ の印のある人には狙い (消えたら「狙いが消えた」)。前は完成形の札だけで絞り、☑ しても外れに戻って
+ * 「エッセンスが消えて外れが残った」と「外れが消えてエッセンスが残った」が同じ枠で合流した (11-08 オーナー「エッセンスかも扱い　残す方の挙動かなこれ」)
+ */
+const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc), ...keptOfTree(data, doc)];
+/** 木の手の残したい MOD (☑) のうち完成形に無い物 (同じ MOD かはエンジンの当て方 sameAimMod) */
+const keptOfTree = (data: PatchData, doc: TreeDoc): Aim[] => {
+  const out: Aim[] = [];
+  for (const b of Object.values(doc.boxes)) for (const a of [...(b.hand?.keep ?? []), ...(b.handBack?.keep ?? [])]) if (![...(doc.memoAims ?? []), ...out].some((g) => sameAimMod(data, g, a))) out.push(a);
+  return out;
+};
 /** アイテムに付いている完成形の狙い (段は完成形以上) と置き石の MOD */
 const goalsOn = (data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
 /** 始まりの ☑ (始まりの MOD の完成形の狙いと ✦ の印) */

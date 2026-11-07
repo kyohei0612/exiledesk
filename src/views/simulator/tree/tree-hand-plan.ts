@@ -5,11 +5,11 @@
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
-import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
-import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
+import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -70,9 +70,10 @@ export function autoCatOf(data: PatchData, doc: TreeDoc, item: StageItem): strin
 }
 /**
  * 棚に渡すアイテム = 前にカタリストの手を足す時はそれを 1 回打った後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
- * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない
+ * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない。
+ * 打ち方は木を回す時と同じ最大まで (fillCatalyst、S-31b。前は 1 回だけで、手の窓のカードだけ品質 2% と木の箱とずれた、11-08)
  */
-export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? applyCurrency(data, item, autoCat, mulberry32(1)) : null);
+export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? fillCatalyst(data, item, autoCat, mulberry32(1)) : null);
 /**
  * 狙い無し (結果は「打った後」の 1 つ) にできる手 = 付く MOD を選べない手 (足す・カオス。10-25 オーナー「全カレンシーで」。前は足す手だけ)。
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
@@ -93,8 +94,9 @@ export function keepChoicesOf(data: PatchData, item: StageItem, currency?: strin
  * 消せる MOD の無い手 (高貴・ふつうのエッセンス・空きのある側の骨・ルーン・カタリスト・フラクチャー) は候補 0 なので聞かない。
  * 消えうるかはエンジンの stepOutcomes の答え (keepChoicesOf の goneOf) だけで見る (前はルーン・カタリスト・フラクチャーを手の種類で先に外す式があった)
  */
-export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], wanted: readonly Aim[] = []): boolean {
-  return keepChoicesOf(data, item, currency, omens, wanted).length > 1;
+export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], _wanted: readonly Aim[] = []): boolean {
+  // 聞くかはこの品にエンジンで手を当てて消えうる MOD の数 (削減の外れの段の出方は差し替えない、S-27b 11-08 オーナー「カオス削減とかでも１MODしか確定で動かんのに残したいMODなんか選べるし」)
+  return keepChoicesOf(data, item, currency, omens).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
 export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null, stones: readonly Aim[] = []): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId) && !stones.some((a) => a.modId === c.aim.modId)).map((c) => c.aim);

@@ -8,7 +8,7 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
-import { autoTarget, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, autoTargets, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
 import { extendAnnul, trimAnnul } from "./tree-annul-chain";
@@ -262,6 +262,8 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
     // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
     const same = autoTarget(d, b.id, j);
     if (same) { b.back = same; b.autoBack = true; continue; }
+    // 同じ枠の候補が 2 つ以上なら人が選ぶ (S-52b、11-08)。下の見方で 1 つに決めない
+    if (autoTargets(d, b.id, j).length >= 2) continue;
     const cs = j.contents(b.id);
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。

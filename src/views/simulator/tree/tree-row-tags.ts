@@ -68,6 +68,8 @@ export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: Stag
     if (put) { putOn.add(put); continue; }
     if (!isKeepHand(h) || isSwapEssence(h)) continue;
     const gone = [...(goneOf(d, sampleOf(d, doc, p.id, 1).item, h.currency, h.omens) ?? [])];
+    // 消えるのが 1 つに決まる手は残したい MOD を聞かない手 = 名前のまま (S-27b・S-33c、11-08 オーナー「１MODしかならないルートで名前消す理由ないな」)
+    if (gone.length <= 1) continue;
     // 残したい MOD に選んだ物は外れにしない (S-27b、11-08)
     for (const a of on) if (!putOn.has(a) && !h.keep.some((k) => same(a, k.modId)) && gone.some((id) => same(a, id))) cut.add(aimKey(a));
   }
