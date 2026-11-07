@@ -167,3 +167,33 @@ it("⑤ 始めの状態を組む窓の付け方の可否: 前 (画面の自前 +
   console.log(`⑤ 比べた付け方 ${n}、違い ${[...tally.values()].reduce((a, x) => a + x, 0)}\n${[...tally].map(([k, c]) => `${c} 件 ${k}`).slice(0, 30).join("\n")}`);
   expect(n).toBeGreaterThan(0);
 });
+
+it("⑥ 狙うの当たり: modId だけ (前) と sameText (後) の数の違い", async () => {
+  const { aimChain, aimCombos, aimDone } = await import("../src/services/craft-stage/aim-odds");
+  const { ORBS } = await import("../src/state/for-share/craft-stage-shelf");
+  const hit = { data, sameText: true };
+  let combos = 0, moved = 0, maxGap = 0, doneDiff = 0, items = 0;
+  const gaps: string[] = [];
+  // 狙い = 同じ部位に「同じ系統・同じ文の別 modId」がある MOD (違いが出うるのはここだけ。11-07 に全部位を数えて 6 組: ベルト・メイスの冒涜 MOD の 2 つ版とハンドラップ専用)
+  const AIMS: Array<[string, string]> = [
+    ["Belts", "Belts/Desecrated_FlaskChargesUsed"], ["Belts", "Belts/Desecrated_FlaskChargesUsed_2"],
+    ["OneHand_Maces", "OneHand_Maces/Desecrated_ManaCostEfficiency"], ["TwoHand_Maces", "TwoHand_Maces/Desecrated_ManaCostEfficiency_2"],
+    ["Gloves_dex_int", "Gloves_dex_int/LifeLeechPermyriad"],
+  ];
+  for (const [cls, id] of AIMS) {
+    const b = data.bases.get(cls)?.bases?.find((x) => /wrap/i.test(x)) ?? data.bases.get(cls)?.bases?.[0];
+    if (!b) continue;
+    const it = applyCurrency(data, freshItem(data, b, ILVL), "alchemy", mulberry32(7)).item;
+    items++;
+    const ts = [{ modId: id, minTierIndex: 0 }];
+    if (aimDone(it, ts) !== aimDone(it, ts, hit)) doneDiff++;
+    const keys = [...ORBS.flatMap((g) => g.keys), ...bonesFor(it)];
+    for (const c of aimCombos(data, it, keys)) {
+      combos++;
+      const a = aimChain(data, it, ts, c, 400, 17), z = aimChain(data, it, ts, c, 400, 17, hit);
+      if (a !== z) { moved++; const g = Math.abs(z - a); if (g > maxGap) maxGap = g; if (gaps.length < 12) gaps.push(`${b} ${id} ${c.currency}${c.omens.length ? "+" + c.omens.join("+") : ""}: ${(a * 100).toFixed(1)}% → ${(z * 100).toFixed(1)}%`); }
+    }
+  }
+  console.log(`⑥ 品 ${items}・打ち方 ${combos} のうち確率が動いた ${moved} (最大 ${(maxGap * 100).toFixed(1)} 点)・今もう付いているかの違い ${doneDiff}\n${gaps.join("\n")}`);
+  expect(items).toBeGreaterThan(0);
+});

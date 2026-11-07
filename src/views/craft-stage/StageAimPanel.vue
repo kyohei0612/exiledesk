@@ -10,6 +10,7 @@ import { TIER } from "../../state/for-share/tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
 import { OMEN_KEY, aimChainMode, omensAllowedFor, stepCost, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
+import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
@@ -40,7 +41,9 @@ const showAll = ref(false);
 let gen = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 
-const done = computed(() => (s.item.value ? aimDone(s.item.value, s.aims.value) : false));
+/** 当たり方はエンジンの aimHits の sameText (同じ系統・同じ文の別 MOD も当たり。スパムシミュ・木と同じ、11-07 ブラック 57 の決め) */
+const hitOf = (d: PatchData) => ({ data: d, sameText: true });
+const done = computed(() => (s.item.value && s.data.value ? aimDone(s.item.value, s.aims.value, hitOf(s.data.value)) : false));
 
 /** 今のアイテムと狙いで出し直す (少しずつ。画面を止めない) */
 function recompute(): void {
@@ -61,7 +64,7 @@ function recompute(): void {
     const out: AimOdd[] = [];
     while (i < combos.length && performance.now() - t0 < 30) {
       const c = combos[i++]!;
-      out.push({ ...c, p: aimChain(d, it, t, c, TRIALS, 17), n: TRIALS });
+      out.push({ ...c, p: aimChain(d, it, t, c, TRIALS, 17, hitOf(d)), n: TRIALS });
     }
     rows.value = [...rows.value, ...out].sort(byValue);
     if (i < combos.length) timer = setTimeout(step, 0);
@@ -139,7 +142,7 @@ const keyOf = (r: AimOdd): string => r.currency + "|" + r.omens.join("+");
 function roll(r: AimOdd): void {
   const d = s.data.value, it = s.item.value, t = s.aims.value;
   if (!d || !it || !t.length) return;
-  const p = aimChain(d, it, t, r, rollN.value, (recNext() ?? Math.floor(Math.random() * 1e9)));
+  const p = aimChain(d, it, t, r, rollN.value, (recNext() ?? Math.floor(Math.random() * 1e9)), hitOf(d));
   const hit = Math.round(p * rollN.value);
   rolled.value = { key: keyOf(r), n: rollN.value, hit };
   logAim("aim_roll", { combo: keyOf(r), n: rollN.value, hit, odds: r.p });
