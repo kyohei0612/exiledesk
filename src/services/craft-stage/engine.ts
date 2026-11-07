@@ -63,6 +63,8 @@ export { routeRun, routeKey, GRADE_KEY } from "./route-race";
 export { occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 export { ANCIENT_BONE_FLOOR } from "../../vendor/poe2htc/engine/probability";
 export { REVEAL_SPEC } from "./spec/desecrate-specs";
+// 紋章から打つ骨の段の下限 (E-65 = 消された元の MOD のレベル × 0.4 の四捨五入 + 1。説明の文もここから引く)
+export { markFloorOf } from "./spec/desecrate-specs";
 // 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
 export type { ForceFlag } from "./apply-force";
 export { forceKey } from "./apply-force";
