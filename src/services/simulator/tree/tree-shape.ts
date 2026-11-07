@@ -1,9 +1,12 @@
 /**
  * tree-shape.ts — ツリーの形合わせ (形の合う箱・分かれ目・結果の箱)。tree-run.ts から分けた (シミュ部長 25 本目、2026-10-25、1 ファイル 500 行まで)。
- * 回す所 (tree-run)・精査 (tree-check)・画面 (つなぐ・まとめる) が同じ物を読む。中身は前のまま
+ * 回す所 (tree-run)・精査 (tree-check)・画面 (つなぐ・まとめる) が同じ物を読む。中身は前のまま。
+ * 箱の比べ (行き先・つなぎ・まとめ) は tree-judge の judgeMemo 1 本 (S-50b、11-07 に前の世代の判定の届かない枝を消した)。
+ * ここに残る形の鍵の判定 (shapesOf・matchBox・settle・matchItem・matchTargets・linkSameShape と、その下の形の鍵・体の比べ) は
+ * 画面・回し・精査からは呼ばれず、台本 scripts/_tree-patterns-ui.ts・_tree-autolink-probe.test.ts だけが読む
  */
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { backBody, bodyFixed, bodyKinds, bodyOf, boxBody, heldOfKey, sameBody, type BodyOf } from "./tree-box-shape";
+import { backBody, bodyFixed, bodyKinds, bodyOf, boxBody, heldOfKey, type BodyOf } from "./tree-box-shape";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
@@ -316,26 +319,6 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
   }
 }
 
-/** 当たりの箱のアイテムの状態の鍵 = 付いていうる狙いの組 (heldSets) の全部。同じなら同じ MOD が付いた同じ段の箱 (値の差は段の中の差) */
-const hitStateKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
-/**
- * 別の道からできた、付いている MOD が全部同じ当たりの箱 (10-26 夜オーナー「段一緒で形も一緒ならまとめるが出ないと挙動的におかしい」
- * 「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)。同じ親の横の箱 (joinableOf の「どれか」) と、自分の下の箱は除く。
- * 自分の上の箱 (先祖) は入れる = そこへ戻ってやり直す輪 (10-27 オーナーのレシピ: 消去 → カオスでスピリットが付いた箱が、1 段目の同じ形の「スピリットが付いた」と
- * まとまらなかった。前は上の箱も除いていた。まとめで消すのは自分の下だけなので、上の箱は触らない)。
- * 戻りの矢印を持つ箱 (もうどこかへつないだ箱) と分かれ目も除く。並びは先に作った箱から
- */
-/** loose = 箱の体 (tree-box-shape の bodyMemo)。渡すと外れの側・種類・数まで同じ箱だけ (置き石も冒涜の外れ MOD に数える。10-28 オーナー「全く = じゃないのに、なんでつながってる」) */
-export function sameHitsOf(doc: TreeDoc, id: string, loose?: BodyOf): string[] {
-  const b = doc.boxes[id];
-  if (!b || b.out !== "hit" || !b.aim || b.back || b.split) return [];
-  const down = new Set(subtree(doc, id)), k = hitStateKey(doc, id);
-  // 道の途中でフラクチャーを打った箱とそうでない箱は、同じ狙いの組でも ✦ の有無が違うのでまとめない
-  // (印の無い木の乱数のフラクチャーで「キャストスピードが固定された」が上の「キャストスピードが付いた」へ自動で統合された、10-27 夜。スイッチ fracRandom)
-  const fr = (x: string): boolean => { for (let y: string | null = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) { const h = doc.boxes[y]?.hand; if (h && effectOf(h.currency) === "fracture" && h.pick === "random") return true; } return false; };
-  const f0 = fr(id);
-  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && (!!loose || fr(c.id) === f0) && sameBody(loose, id, c.id)).map((c) => c.id);
-}
 /**
  * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。
  * 完成の印はまとめ先へ。auto = 手を足した時に自動でつないだ (印 autoBack)
@@ -354,47 +337,6 @@ export function joinSameHit(doc: TreeDoc, to: string, picks: readonly string[], 
     c.back = to;
     if (auto) c.autoBack = true; else delete c.autoBack;
   }
-}
-/**
- * 手を足してできた当たりの箱 (ids) のうち、別の道に同じ状態の当たりの箱があれば、先にあった箱へ自動でつなぐ (10-26 夜オーナー「組んだ瞬間まとまってくれる」)。
- * 中身 (次の手) がある箱どうしは自動でせず人が「まとめる」(use-tree-join)。× で外した箱 (noAutoBack) はつながない
- */
-/**
- * 来た道で付いている狙いの組が何通りかある当たりの箱 (heldSets が 2 つ以上。消去・狙いが消えたの後のカオスなど) は、同じ状態の箱へまとめられないので、
- * 「形の合う箱へ」を自動で付ける (10-27 オーナーの決め (a)、r/SitMjgNY の「スピリットが付いた」)。回す時は実物の形の箱へ (tree-run の matchBox)、
- * 合う箱が無い組は精査の足りない所。手・戻り・完成を決めていない箱だけ、人が × で外した箱は触らない。自分の下の箱しか合わなければ付けない
- */
-export function linkShapeHit(doc: TreeDoc, ids: readonly string[], loose?: BodyOf): void {
-  for (const id of ids) {
-    const c = doc.boxes[id];
-    if (!c || c.out !== "hit" || !c.aim || c.hand || c.back || c.done || c.split || c.noAutoBack || heldSets(doc, id).length < 2) continue;
-    const down = new Set(subtree(doc, id));
-    if (!matchTargets(doc, id).some((m) => !!m.to && !down.has(m.to) && sameBody(loose, id, m.to))) continue;
-    c.back = MATCH;
-    c.autoBack = true;
-    delete c.merged;
-  }
-}
-export function linkSameHit(doc: TreeDoc, ids: readonly string[], loose?: BodyOf): void {
-  for (const id of ids) {
-    const c = doc.boxes[id];
-    if (!c || c.out !== "hit" || c.hand || c.noAutoBack) continue;
-    const to = sameHitsOf(doc, id, loose)[0];
-    if (to) joinSameHit(doc, to, [id], true);
-  }
-}
-
-/**
- * 同じ形の横の結果の箱 (外れ・狙いが消えた・外れが消えた・打った後。手も分かれ目も完成も無い物) = 「まとめる」の相手 (10-26 オーナー
- * 「同じ形ってのでハズレMODもまとめれるようにしようよ」)。形 = matchTargets の鍵 (付いている狙いの組 + 外れの有無) の一覧がそっくり同じ。既定はまとめない
- */
-export function joinableShapeOf(doc: TreeDoc, id: string): string[] {
-  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
-  const plain = (c: TreeBox | undefined): boolean => !!c && c.out !== "hit" && c.out !== "start" && c.out !== "pass" && c.out !== "branch";
-  if (!b || !p || !plain(b)) return [];
-  const keyOf = (x: string): string => [...new Set(matchTargets(doc, x).map((m) => m.key))].sort().join("|");
-  const k = keyOf(id);
-  return p.outs.filter((o) => { const c = doc.boxes[o]; return o !== id && plain(c) && !c!.hand && !c!.split && !c!.done && keyOf(o) === k; });
 }
 
 /**
@@ -432,31 +374,6 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; 
     // 「どれか」の当たりの箱は、その一覧のどれかが付いたら (anyOf、10-26)
     return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier));
   });
-}
-
-/**
- * 結果の箱 (外れ・狙いが消えた・打った後・当たり) で手 h を選んだ時の戻り先 (当たりも同じ、10-27 夕オーナー「同じ手・同じ狙い・同じ挙動の箱を自動で見つける話」) (シミュのルール = PC・スマホ共通、tree-hand-plan の applyPick が呼ぶ。
- * 10-27 オーナー「ここの挙動はシミュのルールだから共通でしょ」)。新しい段は作らずその箱へ戻る:
- * ① 打つ前の箱 (親) と同じ手 = 再度挑戦 (10-27 オーナー「ハズレでかつ同じ MOD 群で 1 段上に進むことはない」)
- * ② 木の中でこの箱と同じ形 (形の鍵 = 狙いの組 + 外れの有無、shapeFits も合う) で同じ手の箱 (候補が幾つもあれば上の段。r/okPcmPyY: 冒涜の外れで、同じ形の外れのエッセンスと同じ手)。
- * 自分と自分の下は除く。同じ手 = 同じカレンシーとお告げ (狙いの選び方は問わない)。無ければ null = 今までどおり新しい段
- */
-export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: BodyOf): string | null {
-  const b = doc.boxes[id];
-  // 「外れが消えた」の箱も同じ (10-27 夜モンキー 2 回目 2: 「1 段目へ戻る」の外れが消えたの箱でスタートと同じ手を選ぶと、戻りが消えて新しい段ができた。スイッチ backSameHand)
-  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit" || (b.out === "junkGone"))) return null;
-  const same = (x: Hand | null | undefined): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
-  // ⓪ 今の戻り先 (人が選んだ / 自動の) の箱がこの手と同じなら、そのまま戻り先へ (戻り先がスタートの時は、スタートは形の合う箱の候補に入らないので、ここで見る)
-  if (b.back && b.back !== MATCH && b.back !== RESTART && same(doc.boxes[b.back]?.hand)) return b.back;
-  const p = b.parent ? doc.boxes[b.parent] : undefined;
-  const keys = new Set(matchTargets(doc, id).map((m) => m.key));
-  // 打つ前の箱へも、形の鍵 (狙いの組 + 外れの有無) が同じ時だけ (10-27 夕モンキー 8: スタート (外れ 0) で高貴を打った外れ (外れ 1) に同じ高貴を選ぶとスタートへ戻り、
-  // 回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった。カオスのように外れの数が変わらない手は今まで通り戻る)
-  if (p && same(p.hand) && matchTargets(doc, p.id).some((m) => keys.has(m.key)) && returnFits(doc, id, p.id, loose)) return p.id;
-  const under = (x: string): boolean => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
-  const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
-  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => returnFits(doc, id, x, loose));
-  return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
 }
 
 /**

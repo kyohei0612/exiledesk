@@ -11,9 +11,8 @@
 import { allMods, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { TIER } from "../../../state/for-share/tier-word";
-import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
-import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
+import { CATALYSING, effectOf, engineOmens } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
@@ -21,7 +20,7 @@ import { boxOutcomeOf } from "./tree-outcome";
 import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
+import { MATCH, outBoxOf, RESTART, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { frameIssues } from "./tree-frame-check";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
@@ -152,15 +151,14 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     if (split) return split.flatMap((r) => (r.to ? [r.to] : []));
     const back = doc.boxes[id]?.back;
     if (!back) return [];
-    if (back === MATCH && J) return boxes.filter((t) => t.hand && J.fitsBox(id, t.id)).map((t) => t.id);
-    if (back === MATCH) return matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
+    if (back === MATCH) return boxes.filter((t) => t.hand && J.fitsBox(id, t.id)).map((t) => t.id);
     return [back === RESTART ? "start" : back];
   };
 
   // 0) 形の違う箱への戻り (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」): 付いている狙いの組が違う人が行き先の箱に入り、
   // その箱の結果 (狙いが消えた など) が箱の形と合わなくなる。直すのは戻りの箱 (戻り先を同じ形の箱に)
   // 戻り先と中身 (S-60) が違う戻りを「箱どうし」で 1 つに (つなぐ時と同じ規則、S-73)。全部消えてよい消去の直線の止まりも同じ
-  if (J) for (const b of boxes) {
+  for (const b of boxes) {
     if (!b.back || b.back === MATCH || b.back === RESTART || !doc.boxes[b.back] || J.fitsBox(b.id, b.back)) continue;
     // 見本が作れない箱 (誰も着かない) は分からない扱い
     if (!J.contents(b.id) || !J.contents(b.back)) continue;
@@ -205,19 +203,14 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     }
   }
 
-  // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
-  // 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (10-29 オーナー「直して」)。
+  // 1b) 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (10-29 オーナー「直して」)。
   for (const b of boxes) if (b.back === MATCH && !b.autoBack) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
-  if (!J) for (const b of boxes) if (b.back === MATCH) {
-    const miss = matchTargets(doc, b.id).filter((x) => !x.to);
-    if (miss.length) add(b.id, "noMatch", tr(`続きの箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box to continue from (${miss.length} shape(s)); add a box with that shape and a craft`));
-  }
 
   // 2) 完成に着かない道・抜けられない輪 (矢印を逆に辿って、完成の箱へ行ける箱を集める)
   // 失敗 (ここで終わり) の箱も道の終わり (完成の箱が無いかは完成だけで見る)
   const done = boxes.filter((b) => b.done === "main");
   // 完成にしていない完成の箱 (unfinished) があれば、回す時はそこで完成する (S-54) ので「完成の箱が無い」で合格を止めない (⑦12 → ブラック案・オーナー「進めてくれ」10-28)
-  if (!done.length && (J || !out.some((x) => x.kind === "unfinished"))) {
+  if (!done.length) {
     // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
     // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
     for (const x of noDoneMarks(doc)) add(x.boxId, x.kind, x.text);
@@ -246,9 +239,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     const odd = new Map<string, { who: Set<number>; outs: Set<string> }>();
     /** お告げが効かない (無駄になる) 人がいる箱 */
     const waste = new Map<string, { who: Set<number>; reason: string }>();
-    const shapes = shapesOf(doc, data);
     /** この箱の見本のどれかにもう当たりの狙いが付いている (付いていない人だけが着くので数えない) */
-    const held = (id: string, ob: TreeBox): boolean => (J?.aimedOf(id) ?? []).some((am) => boxAims(ob).some((a) => am.has(a.modId)));
+    const held = (id: string, ob: TreeBox): boolean => J.aimedOf(id).some((am) => boxAims(ob).some((a) => am.has(a.modId)));
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
     for (let person = 1; person <= PEOPLE; person++) {
@@ -272,12 +264,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           return;
         }
         if (b.back && !viaBack) {
-          // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
-          const to = J
-            ? (b.back === MATCH ? routeOf(data, doc, J, null, item, aimed) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed))
-            : b.back === MATCH ? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
+          // 形の合う箱へ = 回す時と同じく今のアイテムの中身で行き先を決める (tree-judge-link の routeOf)。作り直し = 始めのアイテムで始まりへ
+          const to = b.back === MATCH ? routeOf(data, doc, J, null, item, aimed) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed);
           if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
-          walk(to, b.back === RESTART ? start : item, true, b.back === RESTART && J ? startAimed(data, doc, start) : aimed);
+          walk(to, b.back === RESTART ? start : item, true, b.back === RESTART ? startAimed(data, doc, start) : aimed);
           return;
         }
         if (!b.hand) return;
@@ -295,18 +285,15 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           const all = stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
           // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る)
           const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);
-          const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, J ? aimed : null));
+          const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, aimed));
           const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
           if (all.length && shown.length === all.length) canBe = shown;
         }
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
         // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
-        // カタリストは手の札 (前の版) か、前の「カタリストの手」の箱 (品質だけ上げた後の通り抜けの親、今の画面。10-22 13 通り組んだ #6 で見ていなかった)
-        const preCat = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
-        const cat = b.hand.catalyst ?? (preCat && isCatalyst(preCat.currency) ? preCat.currency : null);
         // 触媒の品質の種類はこの人のアイテムの品質の種類 (どの手で上げたかは見ない、S-31b)
-        const tag = J ? (b.hand.omens.includes(CATALYSING) && item.qualityTag && (item.catalystQuality ?? item.quality ?? 0) > 0 ? item.qualityTag : null) : cat && b.hand.omens.includes(CATALYSING) ? catalystTagOf(cat) : null;
+        const tag = b.hand.omens.includes(CATALYSING) && item.qualityTag && (item.catalystQuality ?? item.quality ?? 0) > 0 ? item.qualityTag : null;
         let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;
@@ -320,7 +307,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
-            const res = boxOutcomeOf(data, doc, b, item, r.item, aims, J ? aimed : null);
+            const res = boxOutcomeOf(data, doc, b, item, r.item, aims, aimed);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)
             if (b.hand.repeat && res.out !== "hit") break;
             if (fits(res)) got = r.item;
@@ -330,14 +317,13 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got && J) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, got, viaBack, am); }
-          else if (got) walk(settle(data, doc, shapes, o, got, aims), got, viaBack);
-          // もう付いているかもしれない狙い (狙いが消えた後の取り直し、heldSets) は、付いていない人だけが着くので数えない
-          else if (ob.out === "hit" && ob.aim && !viaBack && (J ? !held(id, ob) : !heldSets(doc, id).some((h) => boxAims(ob).some((a) => h.includes(aimKey(a)))))) never.add(o);
+          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, got, viaBack, am); }
+          // もう付いているかもしれない狙い (狙いが消えた後の取り直し) は、付いていない人だけが着くので数えない
+          else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob)) never.add(o);
         }
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };
-      walk("start", start, false, J ? startAimed(data, doc, start) : new Set());
+      walk("start", start, false, startAimed(data, doc, start));
       yield { phase: "walk", n: person, of: PEOPLE, partial: ranked([...out, ...cantIssues(), ...oddIssues()]) };
     }
     for (const x of [...cantIssues(), ...oddIssues()]) add(x.boxId, x.kind, x.text);

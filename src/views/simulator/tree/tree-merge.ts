@@ -4,13 +4,13 @@
  *
  * 戻りの矢印だけの箱 = 次の手が無く、戻りの矢印だけの箱。その先は「今のアイテムの形と同じ箱」= もうある箱なので、箱の下の真ん中から
  * 行き先の箱の打つ手の札へ線を流し込む。行き先が同じ線は途中で 1 本に束ねる (tree-lines の bundle)。
- * 行き先の判定は回す時と同じ tree-shape の matchTargets (同じ形の決まりは docs/spec/sim-tree.md の S-60〜S-64)。
+ * 行き先の判定は回す時と同じ「箱どうし」の判定 (tree-judge の fitsBox、同じ形の決まりは docs/spec/sim-tree.md の S-60〜S-64)。
  * 戻りの線は既定で出さず、乗せた箱の線だけ (帯の「線を全部表示」で全部)。オーナー 10-22 に案 A を選んだ (いつも淡く出す案 B は消した)。
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
+import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { judgeOf } from "./tree-hand-plan";
 import type { BackReq, Pos, Seg } from "./tree-lines";
@@ -19,9 +19,9 @@ import type { BackReq, Pos, Seg } from "./tree-lines";
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b?.back || b.back === RESTART) return [];
-  // 前の版の「形の合う箱へ」の行き先は、中身の同じ手のある箱 (箱どうしの判定)
+  // 前の版の「形の合う箱へ」の行き先は、中身の同じ手のある箱 (箱どうしの判定。データを読み込む前は判定が無いので行き先なし)
   const j = b.back === MATCH ? judgeOf(doc) : null;
-  const to = b.back === MATCH ? (j ? Object.values(doc.boxes).filter((t) => !!t.hand && j.fitsBox(id, t.id)).map((t) => t.id) : matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []))) : [b.back];
+  const to = b.back === MATCH ? (j ? Object.values(doc.boxes).filter((t) => !!t.hand && j.fitsBox(id, t.id)).map((t) => t.id) : []) : [b.back];
   return [...new Set(to)].filter((x) => !!doc.boxes[x]);
 }
 

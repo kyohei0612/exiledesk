@@ -15,12 +15,11 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { depthOf, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
-import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
+import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
@@ -243,11 +242,6 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
  * 手を決めた時の組み替え (SimTreePage の pickHand と猿の口で同じ)。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。
  * 完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape)。前に作ってまだ行き先も手も無い箱も、今手を付けた箱と同じ形ならつなぐ。返すのは手を付けた箱 (前のカタリストがあればその次)
  */
-/** 当たりのまとめ・形の合う箱へで比べる箱の体 (tree-box-shape の bodyMemo、置き石も冒涜の外れ MOD。手で「まとめる」の候補も同じ。スイッチ boxShape) */
-export function hitLoose(d: TreeDoc): BodyOf | undefined {
-  const data = craftStage.data.value;
-  return data ? bodyMemo(data, d) : undefined;
-}
 /** 判定 (tree-judge の時だけ。閉じていれば null) */
 export function judgeOf(d: TreeDoc): Judge | null {
   const data = craftStage.data.value;
@@ -258,10 +252,10 @@ export function holdsAimOf(d: TreeDoc, id: string): boolean | undefined {
   const j = judgeOf(d);
   return j && d.boxes[id] ? j.holdsAim(id) : undefined;
 }
-/** 中身の同じ当たりの箱 (手で「まとめる」の候補。judgeOne の下では箱どうしの判定、閉じていれば前の sameHitsOf) */
-export function sameHitsFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? sameHitsByContent(d, id, j) : sameHitsOf(d, id, hitLoose(d)); }
-/** 同じ親の横の同じ中身の結果の箱 (手で「まとめる」の相手) */
-export function joinableFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? joinableByContent(d, id, j) : joinableShapeOf(d, id); }
+/** 中身の同じ当たりの箱 (手で「まとめる」の候補。箱どうしの判定。データを読み込む前は判定が無いので候補なし) */
+export function sameHitsFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? sameHitsByContent(d, id, j) : []; }
+/** 同じ親の横の同じ中身の結果の箱 (手で「まとめる」の相手。データを読み込む前は候補なし) */
+export function joinableFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? joinableByContent(d, id, j) : []; }
 /** 同じ当たりの箱にまとめる鍵 = 狙いの側 (エンジンの sideOfMod。setHand の groupOf、10-26 オーナーの決め「同じ側の狙いは当たりの箱 1 つ」) */
 export function sideGroup(): ((a: Aim) => string) | undefined {
   const data = craftStage.data.value;
@@ -318,7 +312,7 @@ function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>):
   const loose = Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id);
   // 同じ枠なら手を決めたその場で自動の ↩ とまとめ (組む間も止めない、11-06 オーナー「同じ枠があったらその枠に打つカレンシーって決まってる」。前は整理を押すまで待った = S-193)
   linkByContent(d, loose, j);
-  mergeOpenSame(d, loose, undefined, j);
+  mergeOpenSame(d, loose, j);
   for (const b of Object.values(d.boxes)) {
     if (had.has(b.id) || b.out !== "hit" || b.hand || b.noAutoBack) continue;
     const to = sameHitsByContent(d, b.id, j)[0];
@@ -352,7 +346,7 @@ export function tidyJunk(d: TreeDoc, auto = false): void {
     const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort((a, z) => depth(a) - depth(z) || seq(a) - seq(z));
     const j = judgeMemo(data, d);
     linkByContent(d, ids, j);
-    mergeOpenSame(d, ids, undefined, j);
+    mergeOpenSame(d, ids, j);
     pruneByContent(d, j);
   };
   link();

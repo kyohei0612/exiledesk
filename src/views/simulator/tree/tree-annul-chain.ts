@@ -32,7 +32,7 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
     // 配置は段の頭で 1 回 (つなぎ・まとめは子の代表を変えないので、後の決めにもそのまま使う)
     const frames = frameOfDoc(data, d).frames, j = judgeMemo(data, d);
     linkByContent(d, kids, j);
-    mergeOpenSame(d, kids, undefined, j);
+    mergeOpenSame(d, kids, j);
     const go = kids.flatMap((id) => {
       const b = d.boxes[id], f = frames.get(id), h = b?.parent ? d.boxes[b.parent]?.hand : null;
       if (!open(b) || !f || f.note || !isAnnulHand(h)) return [];

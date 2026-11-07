@@ -1,8 +1,8 @@
 /**
  * tree-box-shape.ts — 箱の形を 1 つに (10-28 オーナー OK の対策 1、スイッチ boxShape)。
  * 形 = 狙いの組 (held、道の当たりの札 = tree-shape の heldSets) + 体 (body: 外れの側・種類・数、✦ の側、レアリティ)。
- * 自動のつなぎ・↩ 戻り (sameHandReturn・形の合う箱へ・消去の直線の止まり)・まとめる (統合・候補)・精査・回す時の行き先・猿の口 (見張り) が全部これを呼ぶ。
- * 前の別々の比べ (junkSig・boxSig・sigKinds・消去の直線の likeKey / frPart・applyPick の loose / mixed・hitLoose) はここへ寄せて消した
+ * 今の箱の判定 (tree-judge の judgeMemo) が使うのは bodyOf だけ。boxBody・bodyMemo・sameBody・backBody・bodyFixed・bodyKinds・heldOn・heldOfKey は
+ * 前の世代の形の鍵の判定 (tree-shape の linkSameShape・matchBox、台本だけが読む) と猿の口 (sim-monkey、データを読む前だけの枝) の boxShape・sameShape が使う
  */
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { sampleOf } from "./tree-sample";
@@ -43,10 +43,6 @@ export const bodyKinds = (body: string): string => {
   // 外れは種類を見ない (普通・エッセンス・冒涜の発現済みは 1 つ)。種類が違う (mixed) のは未発現が混ざる時だけ (S-63、10-29 深夜オーナー「未発現のみ別枠として全然おｋ」)
   return `${k.slice(0, 3).some(Boolean) ? 1 : 0}${k[3] ?? 0}`;
 };
-/** 冒涜 (発現済み・未発現) の外れがあるか (mixed = 見本ごとに種類が違う箱も含める) */
-export const hasDesecrated = (body: string | null): boolean => !!body && (body.startsWith("mixed") || [partsOf(body).p, partsOf(body).s].some((x) => (x[2] ?? 0) > 0 || (x[3] ?? 0) > 0));
-/** 消去の直線の止まる所で比べる部分 (レアリティ (スイッチ stripRarity) と ✦ の側 (スイッチ boxShape)。外れの数は直線の段で数える、tree-outcome の stripStops) */
-export const likeOf = (data: PatchData, d: TreeDoc, it: StageItem): string => `${it.rarity}|${partsOf(bodyOf(data, d, it)).fr}`;
 
 /**
  * one = 見本 1 つだけ (回す時の「形の合う箱へ」の並べ替え。前の boxSig と同じで、見本 4 つの mixed にすると行き先が変わった、10-28 見張り)。
@@ -70,12 +66,6 @@ export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): s
   if (id === "start" || one) return body;
   const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item, held)]; })].map(bodyKinds));
   return kinds.size > 1 ? `mixed:${id}` : body;
-}
-/** 見本 4 つで体が揃わない箱 (外れの付く側・数が乱数で変わる)。精査の戻り先の比べでは分からない扱い (見本 1 つの側で偶然違って見えた、10-28 見本を道だけで決めた後のアミュ B b31・b32) */
-export function bodyVaries(data: PatchData, d: TreeDoc, id: string): boolean {
-  const held = heldOn(d, id);
-  const bs = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item, held)]; }));
-  return bs.size > 1;
 }
 /** 箱の体を引く関数 (1 回の組み替え・精査の中で覚える。木を替えたら作り直す) */
 export type BodyOf = (id: string) => string | null;
