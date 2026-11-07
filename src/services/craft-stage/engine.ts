@@ -106,6 +106,12 @@ export { modBoostsOf } from "./boosts";
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
 export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, CATALYSING_OVER_RATIO, defaultWeightOf } from "./stage-tuning";
+// 触媒の高貴の既定の倍率 (品質 % → 倍率、式は htc/catalysing-multiplier.ts の 1 本)
+export { catalysingMultiplier } from "../htc/catalysing-multiplier";
+// 説明の文 (日英): お告げの効き方と棚の一言 (spec/omen-words.ts)・カレンシーを打てる条件 (spec/use-words.ts、CurrencySpec の target・limits から)
+export { omenHelp, omenTag } from "./spec/omen-words";
+export type { Words2 } from "./spec/use-words";
+export { useConditions, limitWords } from "./spec/use-words";
 // 重みを推定で埋めた MOD の印 (MOD 一覧の重みの札。一覧は共通の部品なので核)
 export { OVERRIDDEN } from "../htc/weight-overrides";
 // 聖別の数値の下限・上限 (棚のお告げの下の設定・聖別の帯)
