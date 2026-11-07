@@ -15,7 +15,7 @@ import { ORB_SPEC_BY_KEY } from "./orb-specs";
 import { ALLOY_SPEC, ESSENCE_SPEC, isAlloyKey, PERFECT_ESSENCE_SPEC, prepareEssence, resolveEssence } from "./essence-specs";
 import { ALL_OMEN_SPECS, omensOfKind } from "./omen-layer";
 import { ARTIFICER_SPEC, CATALYST_SPEC_BY_KEY, EMOTION_SPEC, FLUX_SPECS, QUALITY_SPECS, RUNE_SPEC } from "./other-specs";
-import { emotionReason, isEmotion } from "../apply-emotion";
+import { emotionReason } from "../apply-emotion";
 import { isRune } from "../stage-runes";
 import { groupsFit, limitBlock, stateBlock, targetBlock } from "./judge";
 import { NO_MODS, runPart, type Mods, type PartCtx } from "./parts";
@@ -30,7 +30,9 @@ type Resolved = { spec: CurrencySpec; reveal: PartCtx["reveal"]; reason?: string
  * (例: 古代の頭蓋骨はクライアントに無い)。移していない鍵は null
  */
 export function resolveSpec(key: string, item: StageItem, data?: PatchData): Resolved | null {
-  if (key.startsWith("essence:")) {
+  // 鍵の読みは key.ts の parseKey 1 か所 (E-20a)。ルーンは鍵の形ではなくルーンの表にあるかで決まるので isRune のまま
+  const k = parseKey(key);
+  if (k.type === "essence") {
     const e = data ? resolveEssence(data, item, key) : null;
     return e ? { spec: e.spec, reveal: null, ...(e.reason ? { reason: e.reason } : {}) } : null;
   }
@@ -41,8 +43,7 @@ export function resolveSpec(key: string, item: StageItem, data?: PatchData): Res
   const flux = FLUX_SPECS.find((s) => s.stageKey === key);
   if (flux) return { spec: flux, reveal: null };
   // 感情: その部位で使える物か (古代の版は時を失ったジュエル用)。使えなければ一言
-  if (isEmotion(key)) { const why = emotionReason(item, key); return { spec: EMOTION_SPEC, reveal: null, ...(why ? { reason: why } : {}) }; }
-  const k = parseKey(key);
+  if (k.type === "emotion") { const why = emotionReason(item, key); return { spec: EMOTION_SPEC, reveal: null, ...(why ? { reason: why } : {}) }; }
   if (k.type === "reveal") return { spec: REVEAL_SPEC, reveal: k.index != null ? { index: k.index, reroll: k.reroll } : { invalid: key } };
   const bones = BONE_SPECS.filter((s) => s.stageKey === key);
   if (!bones.length) return null;
@@ -98,8 +99,13 @@ export function modsOf(used: readonly OmenSpec[]): Mods {
   return m;
 }
 
-/** 指名 (付く MOD・消える MOD) が効く手の種類。ほかの手は指名を見ない (今の関数と同じ) */
-const PICK_KINDS: readonly string[] = ["transmute", "augment", "regal", "alchemy", "exalt", "chaos"];
+/**
+ * 付く MOD の指名が効く手 = 部品に「付ける (add)」がある手 (E-20a、手の種類の名前の表は持たない)。指名を食うのは add の部品だけ (parts.ts)。
+ * 2026-11-07 に手の定義の全部 (73 行) で前の表 (変化・増強・リーガル・錬金・エクザルテッド・カオス) と同じ手になるのを確かめた。
+ * カオス (指名は 1 つ目だけ・消える MOD の指名) は種類の名前で見たまま: 部品の種類 (actionClass の replace = 消す + 付ける) では
+ * 錬金 (全部消す + レア + 4 つ付ける)・完全エッセンス・感情・発現も同じ replace になり、錬金の 4 つの指名が 1 つに削られて答えが変わる
+ */
+const takesPick = (spec: CurrencySpec): boolean => spec.actions.some((a) => "add" in a);
 
 /**
  * 打つ前の判定とお告げの効き目 (打つ処理 applyBySpec と確率表 spec/odds.ts が同じ物を使う)。移していない手は null。
@@ -163,7 +169,7 @@ export function applyBySpec(data: PatchData, item: StageItem, key: string, rng: 
     catalystTag, oneCatalyst: !!opts.oneCatalyst, runeKey: key,
     altered: specDrawsOtherworldly(spec),
     // カオスは指名の 1 つ目だけ見る (今の関数と同じ。余った指名は無視)
-    ...(PICK_KINDS.includes(spec.kind) && opts.pick?.length ? { pick: spec.kind === "chaos" ? opts.pick.slice(0, 1) : opts.pick } : {}),
+    ...(takesPick(spec) && opts.pick?.length ? { pick: spec.kind === "chaos" ? opts.pick.slice(0, 1) : opts.pick } : {}),
     ...(spec.kind === "chaos" && opts.remove ? { removeForce: opts.remove } : {}),
   };
   let cur = item;
