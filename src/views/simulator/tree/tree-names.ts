@@ -146,8 +146,8 @@ export function sureFracText(k: number): string {
  * (デイリーの始め方 DailyFracPick も同じ文の写しを持ち、言い回しが食い違っている = デイリー部へ。G-1 V-3 J-41)。k = ✦ の数 (素材の倍、S-43)
  */
 export const startFromWords = (k = 1): Array<{ k: StartFrom; title: [string, string]; sub: [string, string] }> => { const x = sureFracText(k); return [
-  { k: "fractured", title: ["(a) フラクチャー済みから", "(a) From fractured"], sub: ["その MOD が ✦ で付いたレアから始める (フラクチャーの費用は無し)", "Start from a rare with that mod fractured (no fracture cost)"] },
-  { k: "four", title: ["(b) 白から確定フラクチャーのコース", "(b) From white, sure fracture"], sub: [`白 (ノーマル) のベースから始め、木の中でフラクチャー (必ず成功、素材 ${x} の費用込み)`, `Start from a white (normal) base and fracture in the tree (sure success, materials ${x} cost included)`] },
+  { k: "fractured", title: ["(a) フラクチャー済みから", "(a) From fractured"], sub: ["選んだ MOD が ✦ で付いたレアから始める (フラクチャーの費用は無し)", "Start from a rare with the chosen mod fractured (no fracture cost)"] },
+  { k: "four", title: ["(b) 白から確定フラクチャー", "(b) From white, sure fracture"], sub: [`白 (ノーマル) のベースから始め、選んだ MOD を木の中でフラクチャー (必ず成功、素材 ${x} の費用込み)`, `Start from a white (normal) base and fracture the chosen mod in the tree (sure success, materials ${x} cost included)`] },
 ]; };
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);
