@@ -121,6 +121,36 @@ const infoOpen = ref(false);
 /** ⓘ の時だけ包む (PC は包まず、棚の升目・お告げの欄の差し込みは前のまま) */
 const Wrap: FunctionalComponent<{ on: boolean }> = (p, { slots }) => (p.on ? h("span", { class: "relative inline-flex", "data-shelf-wrap": "" }, slots.default?.()) : slots.default?.());
 Wrap.props = ["on"];
+/**
+ * 札の長押しでも同じ窓 (2026-11-07 オーナー「長押しでも説明いいね　どっちもじっそうでいいんじゃね」)。
+ * 0.5 秒動かさずに押したら開く。指が 10px 動いた (送り)・ブラウザが送りに取った (pointercancel) なら取り消す。
+ * 開いた後に指を離した時の押し (mousedown・click) は捨てる = 持たない・掛けない、窓の後ろを押した扱いにもならない
+ */
+const HOLD_MS = 500;
+const HOLD_MOVE = 10;
+let holdTimer: ReturnType<typeof setTimeout> | null = null;
+let holdAt = { x: 0, y: 0 };
+function holdCancel(): void { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; }
+function holdDown(e: PointerEvent): void {
+  if (!infoOn.value || e.pointerType === "mouse") return;
+  holdAt = { x: e.clientX, y: e.clientY };
+  holdCancel();
+  holdTimer = setTimeout(() => { holdTimer = null; swallowRelease(); infoOpen.value = true; }, HOLD_MS);
+}
+function holdMove(e: PointerEvent): void { if (holdTimer && Math.hypot(e.clientX - holdAt.x, e.clientY - holdAt.y) > HOLD_MOVE) holdCancel(); }
+/** 指を離した後の押しを 1 回分捨てる (離してから 0.4 秒、離さないままでも 3 秒で外す) */
+function swallowRelease(): void {
+  const stop = (ev: Event): void => { ev.stopPropagation(); ev.preventDefault(); };
+  const types = ["mousedown", "mouseup", "click"] as const;
+  for (const t of types) document.addEventListener(t, stop, true);
+  let done = false;
+  const off = (): void => { if (done) return; done = true; for (const t of types) document.removeEventListener(t, stop, true); };
+  const up = (): void => { window.removeEventListener("pointerup", up, true); window.removeEventListener("pointercancel", up, true); setTimeout(off, 400); };
+  window.addEventListener("pointerup", up, true);
+  window.addEventListener("pointercancel", up, true);
+  setTimeout(off, 3000);
+}
+onBeforeUnmount(holdCancel);
 </script>
 
 <template>
@@ -129,7 +159,7 @@ Wrap.props = ["on"];
     v-bind="$attrs"
     type="button"
     class="group relative flex w-[74px] md:w-[80px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
-    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '']"
+    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '', infoOn ? 'select-none [-webkit-touch-callout:none]' : '']"
     :aria-disabled="omenNo && !on ? 'true' : undefined"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
@@ -138,6 +168,11 @@ Wrap.props = ["on"];
     @click="leave(); if (!(omenNo && !on)) emit('pick', k)"
     @mouseenter="enter"
     @mouseleave="leave"
+    @pointerdown="holdDown"
+    @pointermove="holdMove"
+    @pointerup="holdCancel"
+    @pointercancel="holdCancel"
+    @contextmenu="infoOn && $event.preventDefault()"
   >
     <!-- 枠はゲームの両替所の枠 (持っている時は光る枠、src/styles/game-ui.css) -->
     <!-- 2026-10-10 オーナー「サイズも小さくしておｋ、ちょっと大きい」: PC は枠 68 → 56px、絵 52 → 42px -->
