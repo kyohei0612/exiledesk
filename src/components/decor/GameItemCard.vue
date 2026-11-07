@@ -34,8 +34,10 @@ const props = withDefaults(
     pinned?: boolean;
     /** 重なり順 (上の段ほど前) */
     z?: number;
+    /** 窓の中に置く (指の端末の棚の説明、U-13a): 浮かせず・幅いっぱい・ピン留めなし */
+    still?: boolean;
   }>(),
-  { sub: null, tone: "unique", width: 380, pinned: false, z: 1400 },
+  { sub: null, tone: "unique", width: 380, pinned: false, z: 1400, still: false },
 );
 provide("hoverLayerKey", props.layerKey);
 
@@ -119,21 +121,20 @@ onBeforeUnmount(onUp);
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport to="body" :disabled="still">
     <div
       v-if="show"
       ref="card"
-      class="fixed"
-      :data-hover-layer="layerKey"
-      :style="{ zIndex: z, left: position.left + 'px', top: position.top + 'px', width: width + 'px', transform: `scale(${scale})`, transformOrigin: 'top left', visibility: height ? 'visible' : 'hidden' }"
-      role="tooltip"
-      :class="passive ? 'pointer-events-none' : ''"
-      @mouseenter="hoverStack.enterLayer(layerKey)"
-      @mouseleave="hoverStack.leaveCard()"
+      :class="still ? 'w-full' : ['fixed', passive ? 'pointer-events-none' : '']"
+      :data-hover-layer="still ? undefined : layerKey"
+      :style="still ? undefined : { zIndex: z, left: position.left + 'px', top: position.top + 'px', width: width + 'px', transform: `scale(${scale})`, transformOrigin: 'top left', visibility: height ? 'visible' : 'hidden' }"
+      :role="still ? undefined : 'tooltip'"
+      @mouseenter="still || hoverStack.enterLayer(layerKey)"
+      @mouseleave="still || hoverStack.leaveCard()"
     >
       <div class="g-card text-center relative" :class="`g-${tone}`">
         <!-- ピン留め (外へ出ても残す) と、留めた時の × -->
-        <div v-if="!passive" class="absolute right-1.5 top-1.5 flex items-center gap-1 z-10">
+        <div v-if="!passive && !still" class="absolute right-1.5 top-1.5 flex items-center gap-1 z-10">
           <button
             type="button"
             class="g-plain grid h-6 w-6 place-items-center bg-transparent text-[13px] leading-none transition"

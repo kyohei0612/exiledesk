@@ -6,9 +6,11 @@
   2026-09-28 オーナー:
     「お告げとかオンにした時の挙動とかもゲーム内リスペクトで表示させて」→ 掛けたお告げはゲームの有効化と同じく赤金に脈打って「有効」
     「カレンシー詳細カードは…細かく書いてくれ」→ 0.7 秒乗せると [[StageCurrencyCard.vue]] (公式の説明 + ステージでの動き)
+  2026-11-07 オーナー「スマホってホバーないからさ」「やっぱ長押しがイイかもね！はいらんな」: 指の端末は札の長押しで同じカードを下の窓で (U-13a)。
+  2026-11-07 オーナー「上級完全とかのカレンシーの名前いらんね　カレンシーの上に完全とか上級とか書いてあるしな」: 札の印と同じ言葉は名前から外す
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { isTouchOnly } from "../../../utils/use-phone";
 import { hoverStack } from "../../../state/hover-stack";
 import { afterPointerMoves } from "../../../utils/pointer-moved";
@@ -21,6 +23,10 @@ import { omenNote } from "../../../services/craft-stage/omens";
 import { omenBlock, omenTag as omenTagOf, parseKey } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
+import ModalShell from "../../ui/ModalShell.vue";
+import StageCurrencyCard from "../../../views/craft-stage/StageCurrencyCard.vue";
+
+defineOptions({ inheritAttrs: false });
 
 /** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
 const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean; corner?: string }>();
@@ -46,6 +52,18 @@ const badge = computed(() => {
   const id = p.type === "currency" ? p.strength : p.type === "essence" ? (p.breach ? "" : `essence:${p.tier}`) : props.k;
   const b = BADGE[id];
   return b ? ([id, ...b] as const) : null;
+});
+/** 札の印 (上級・完全など) を出しているか */
+const badgeShown = computed(() => !!badge.value && !props.nobadge && !props.corner);
+/**
+ * 札に出す名前。印と同じ言葉は外す (「高貴なオーブ (上級)」→「高貴なオーブ」、英語は「Greater Exalted Orb」→「Exalted Orb」)。
+ * 読み上げ・説明の窓は外さない名前のまま (印は読み上げに入らない)。スイッチ shelfTierName
+ */
+const shownName = computed(() => {
+  const n = props.label ?? nameOf(props.k);
+  if (!badgeShown.value || !flag("shelfTierName")) return n;
+  const [ja, en] = badge.value![1];
+  return n.endsWith(` (${ja})`) ? n.slice(0, -` (${ja})`.length) : n.startsWith(`${en} `) ? n.slice(en.length + 1) : n;
 });
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
 const shelf = useShelf();
@@ -109,13 +127,47 @@ function openCard(el: HTMLElement): void {
 }
 function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);
+/** 指の端末の説明 (U-13a)。まとめたアイコン (corner) は押すと段の欄が開くので、欄の中の 1 つずつで出す */
+const infoOn = computed(() => touchOnly && flag("shelfInfo") && !props.corner);
+const infoOpen = ref(false);
+/**
+ * 札の長押しで説明の窓 (2026-11-07 オーナー「長押しでも説明いいね」、後で「やっぱ長押しがイイかもね！はいらんな」で長押しだけに)。
+ * 0.5 秒動かさずに押したら開く。指が 10px 動いた (送り)・ブラウザが送りに取った (pointercancel) なら取り消す。
+ * 開いた後に指を離した時の押し (mousedown・click) は捨てる = 持たない・掛けない、窓の後ろを押した扱いにもならない
+ */
+const HOLD_MS = 500;
+const HOLD_MOVE = 10;
+let holdTimer: ReturnType<typeof setTimeout> | null = null;
+let holdAt = { x: 0, y: 0 };
+function holdCancel(): void { if (holdTimer) clearTimeout(holdTimer); holdTimer = null; }
+function holdDown(e: PointerEvent): void {
+  if (!infoOn.value || e.pointerType === "mouse") return;
+  holdAt = { x: e.clientX, y: e.clientY };
+  holdCancel();
+  holdTimer = setTimeout(() => { holdTimer = null; swallowRelease(); infoOpen.value = true; }, HOLD_MS);
+}
+function holdMove(e: PointerEvent): void { if (holdTimer && Math.hypot(e.clientX - holdAt.x, e.clientY - holdAt.y) > HOLD_MOVE) holdCancel(); }
+/** 指を離した後の押しを 1 回分捨てる (離してから 0.4 秒、離さないままでも 3 秒で外す) */
+function swallowRelease(): void {
+  const stop = (ev: Event): void => { ev.stopPropagation(); ev.preventDefault(); };
+  const types = ["mousedown", "mouseup", "click"] as const;
+  for (const t of types) document.addEventListener(t, stop, true);
+  let done = false;
+  const off = (): void => { if (done) return; done = true; for (const t of types) document.removeEventListener(t, stop, true); };
+  const up = (): void => { window.removeEventListener("pointerup", up, true); window.removeEventListener("pointercancel", up, true); setTimeout(off, 400); };
+  window.addEventListener("pointerup", up, true);
+  window.addEventListener("pointercancel", up, true);
+  setTimeout(off, 3000);
+}
+onBeforeUnmount(holdCancel);
 </script>
 
 <template>
   <button
+    v-bind="$attrs"
     type="button"
     class="group relative flex w-[74px] md:w-[80px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
-    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '']"
+    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '', infoOn ? 'select-none [-webkit-touch-callout:none]' : '']"
     :aria-disabled="omenNo && !on ? 'true' : undefined"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
@@ -124,6 +176,11 @@ onBeforeUnmount(leave);
     @click="leave(); if (!(omenNo && !on)) emit('pick', k)"
     @mouseenter="enter"
     @mouseleave="leave"
+    @pointerdown="holdDown"
+    @pointermove="holdMove"
+    @pointerup="holdCancel"
+    @pointercancel="holdCancel"
+    @contextmenu="infoOn && $event.preventDefault()"
   >
     <!-- 枠はゲームの両替所の枠 (持っている時は光る枠、src/styles/game-ui.css) -->
     <!-- 2026-10-10 オーナー「サイズも小さくしておｋ、ちょっと大きい」: PC は枠 68 → 56px、絵 52 → 42px -->
@@ -131,9 +188,9 @@ onBeforeUnmount(leave);
       <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" />
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
-    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(label ?? nameOf(k))" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
+    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(shownName)" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
     <span v-if="corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200 max-md:text-[10px]">{{ corner }}</span>
-    <span v-if="badge && !nobadge && !corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
+    <span v-if="badge && badgeShown" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
     <span v-if="omenWarn" class="block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
@@ -143,4 +200,9 @@ onBeforeUnmount(leave);
     </span>
     <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>
+  <!-- still は StageCurrencyCard の外の枠 (GameItemCard) へそのまま届く (Vue の attrs の受け渡し) -->
+  <ModalShell v-if="infoOn" :open="infoOpen" sheet :label="nameOf(k)" panel-class="border-t border-white/15 bg-[var(--exile-color-card-bg)]" body-class="px-3 pt-2 pb-3" @close="infoOpen = false">
+    <StageCurrencyCard v-if="infoOpen" :k="k" :reason="reason" :omen="!!omen" :item="shelf.item.value" :x="0" :y="0" :layer-key="-1" :pinned="false" :z="0" still />
+    <template #footer><button type="button" class="g-btn !min-h-11 w-full" @click="infoOpen = false">{{ tr("閉じる", "Close") }}</button></template>
+  </ModalShell>
 </template>
