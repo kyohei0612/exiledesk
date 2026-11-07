@@ -26,7 +26,7 @@ onMounted(() => {
 });
 const card = computed(() => t.goalItem.value?.item ?? null);
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
-/** シミュの始め方の窓 (S-13) の (a) / (b) と同じ文 (1 か所 = tree-names の startFromWords、D-xx)。✦ は 1 つなので確定フラクチャーの素材は ×3 */
+/** シミュの始め方の窓 (S-13) の (a) / (b) と同じ文 (1 か所 = tree-names の startFromWords、D-37j)。✦ は 1 つなので確定フラクチャーの素材は ×3 */
 const FROMS: Array<{ k: StartFrom; title: [string, string]; sub: [string, string] }> = startFromWords(1);
 const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
 </script>
