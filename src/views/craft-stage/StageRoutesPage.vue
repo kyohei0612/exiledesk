@@ -20,7 +20,7 @@ import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage, runesFit } from "./route-place";
-import { GRADE_KEY, OMEN_KEY, type Grade } from "../../services/craft-stage/engine";
+import { GRADE_KEY, OMEN_KEY, routeFromBlock, type Grade } from "../../services/craft-stage/engine";
 import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
@@ -73,8 +73,8 @@ const prep = computed(() => (s.data.value && !fromItem.value ? runePrep(s.data.v
  */
 const FROM_ON = true;
 const fromItem = shallowRef<StageItem | null>(null);
-/** コラプトしたアイテムにはカレンシーが打てないので、今のアイテムからは始められない (M-63、オーナー 10-31「てかコラプトはカレンシーなくね」) */
-const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && !s.item.value.corrupted && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
+/** 今のアイテムから始められるか (MOD のあるレアでコラプトしていない) はエンジンの routeFromBlock (M-63、オーナー 10-31「てかコラプトはカレンシーなくね」) */
+const canFrom = computed(() => FROM_ON && !!s.item.value && !routeFromBlock(s.item.value));
 /** 実際に打ち始める形: 今のアイテムに狙いのルーンが足りなければ嵌めた形 (M-63)。クラフト台は当たった形を置くまで変わらない */
 const fromWorn = computed(() => (fromItem.value && s.data.value ? wearAimRunes(s.data.value, fromItem.value, runeNeed.value) : null));
 const fromStart = computed(() => fromWorn.value?.item ?? null);
@@ -95,7 +95,7 @@ function setFrom(on: boolean): void {
 }
 // 開いている間も台は Ctrl+Z・やり直しで変わる。始められなくなったら決まりの形へ戻す
 watch(canFrom, (on) => { if (!on) setFrom(false); });
-/** 使えない理由の英語 (route-race.ts の文) */
+/** 使えない理由の英語 (route-race.ts の文)。共有の結果 (packRace) は理由を文のまま持つので、前の日本語の文もここで英語にする。理由の鍵がエンジンに入ったら消す */
 const OFF_EN: Record<string, string> = {
   "マジックに狙いの側の枠が無いベース": "This base has no slot on the target side while magic",
   "上限の手数までに付かなかった (この等級では付かない段かも)": "Didn't hit within the use cap (this grade may not roll that tier)",

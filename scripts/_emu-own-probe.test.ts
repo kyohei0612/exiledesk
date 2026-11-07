@@ -102,3 +102,19 @@ it("③ 発現の候補の要求レベル: 前後の違い", () => {
   console.log(`③ 比べた候補 ${n}、違い ${diff.length}\n${diff.slice(0, 20).join("\n")}`);
   expect(n).toBeGreaterThan(0);
 });
+
+it("④ 狙うの「回し方」の文の分け: 前 (kindOf の 4 つ) と後 (aimChainMode) の違い", async () => {
+  const { kindOf } = await import("../src/services/craft-stage/apply-currency");
+  const { aimChainMode } = await import("../src/services/craft-stage/aim-odds");
+  const { ORBS } = await import("../src/state/for-share/craft-stage-shelf");
+  const { REVEAL } = await import("../src/services/emulator/emu-engine");
+  const before = (k: string): string => (k === REVEAL ? "reveal" : ({ desecrate: "bone", chaos: "spam", exalt: "add" } as Record<string, string>)[kindOf(k)] ?? "keep");
+  const keys = new Set<string>([REVEAL, ...ORBS.flatMap((g) => g.keys)]);
+  for (const b of names) {
+    const r = applyCurrency(data, freshItem(data, b, ILVL), "alchemy", mulberry32(9)).item;
+    for (const k of [...bonesFor(r), ...essenceShelf(data, r).flatMap((g) => g.keys)]) keys.add(k);
+  }
+  const diff = [...keys].flatMap((k) => { const a = before(k), z = aimChainMode({ currency: k, omens: [] }); return a === z ? [] : [`${k}: 前 ${a} 後 ${z}`]; });
+  console.log(`④ 比べた鍵 ${keys.size}、違い ${diff.length}\n${diff.join("\n")}`);
+  expect(keys.size).toBeGreaterThan(0);
+});

@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
-import { OMEN_KEY, kindOf, omensAllowedFor, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
+import { OMEN_KEY, kindOf, omensAllowedFor, stepCost, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -99,7 +99,7 @@ const busy = computed(() => rows.value.length < total.value);
  * 2026-10-09 オーナー「消えたら外れで、やり直しは回数で」)。付くまでの平均 = 1 回 ÷ 確率。
  * 前は 1 回だけの確率で、何も消さない高貴がいつも上・ヴァールが 1 位など当てにならなかった
  */
-const costOf = (r: AimCombo): number => (r.currency === REVEAL ? 0 : priceOf(r.currency)) + r.omens.reduce((a, o) => a + priceOf(o), 0);
+const costOf = (r: AimCombo): number => stepCost(r, priceOf);
 const perHit = (r: AimOdd): number => { const c = costOf(r); return r.p > 0 && c > 0 ? c / r.p : Infinity; };
 /**
  * 並びは付きやすい順 (2026-10-09 オーナー「やっぱり付きやすさランキングじゃないとダメ、費用で並べると高貴が絶対上に来る。付きやすさで下に通貨書いてればおｋ」)。

@@ -8,7 +8,7 @@
   候補は縦に 3 つ・文は真ん中、押すと金の枠で選んだ状態、下の「発現」で発現、引き直しは右下の回る矢印。プレ / サフィ・ティアはホバーで
 -->
 <script setup lang="ts">
-import { type StageMod, OMEN_KEY, jaOfOmen, reqOfItem, planSpec } from "../../services/craft-stage/engine";
+import { type StageMod, OMEN_KEY, jaOfOmen, reqOfItem, planSpec, revealKey, unrevealedCount } from "../../services/craft-stage/engine";
 import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
 import { useDismiss } from "../../utils/use-dismiss";
@@ -32,7 +32,7 @@ useDismiss(() => chosen.value != null, [panel], () => { chosen.value = null; });
 // ボタンが出なかった。2026-10-16 要望 eb671189「反響を掛けていても引き直しができない時がある」)
 watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => { rerolled.value = false; chosen.value = null; });
 watch(() => craftStage.offers.value, () => { chosen.value = null; });
-const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
+const left = () => { const it = craftStage.item.value; return it ? unrevealedCount(it) : 0; };
 /** 引き直せるか: エンジンの発現の手に掛かっているお告げの効き目 (rerolls) で決める (spec/run-spec.ts の planSpec) */
 const canReroll = (): boolean => {
   const d = craftStage.data.value, it = craftStage.item.value;
@@ -83,7 +83,7 @@ function confirm(): void {
   lessonErr.value = "";
   const i = chosen.value;
   chosen.value = null;
-  craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
+  craftStage.use(revealKey(i + 1, rerolled.value));
 }
 function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.value = ""; wave.value++; }
 </script>
