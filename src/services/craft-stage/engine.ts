@@ -125,7 +125,7 @@ export { omenWeightOnly, reachOmens } from "./spec/omen-layer";
 // 説明の文 (日英): お告げの効き方と棚の一言 (spec/omen-words.ts)・カレンシーを打てる条件 (spec/use-words.ts、CurrencySpec の target・limits から)
 export { omenHelp, omenTag } from "./spec/omen-words";
 export type { Words2 } from "./spec/use-words";
-export { useConditions, limitWords } from "./spec/use-words";
+export { useConditions, limitWords, groupWords, essencePartsOf } from "./spec/use-words";
 // 重みを推定で埋めた MOD の印 (MOD 一覧の重みの札。一覧は共通の部品なので核)
 export { OVERRIDDEN } from "../htc/weight-overrides";
 // 聖別の数値の下限・上限 (棚のお告げの下の設定・聖別の帯)
