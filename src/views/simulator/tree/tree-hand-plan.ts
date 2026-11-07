@@ -17,7 +17,7 @@ import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../..
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
-import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { depthOf, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
@@ -435,7 +435,9 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const stones = opt.hitAims?.length && veilPick(veilH) ? revealAimsOf(data, doc, id, it, veilH).filter((a) => !choices.some((c) => c.modId === a.modId)) : [];
   const pick = opt.hitAims ? pickedHits([...choices, ...stones], opt.hitAims, key, !!opt.spam) : null;
   // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)。消える手 (S-27d) も同じ口 (渡さなければ既定 = 持っている狙い)
-  const keep = opt.keep && keepAskOf(data, it, key, omens, goals) ? opt.keep : undefined;
+  // 残したい MOD に選べるのは狙い (☑ の印) だけ、外れ MOD は選べない (S-27b、棚の窓 use-hand-keep の picks と同じ)
+  const am = opt.keep ? aimedOfCard(data, doc, id, it) : null;
+  const keep = opt.keep && keepAskOf(data, it, key, omens, goals) ? opt.keep.filter((a) => !am || am.has(a.modId)) : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;

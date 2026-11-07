@@ -244,8 +244,8 @@ watch(held, (k, old) => {
 /** 残したい MOD (消去 S-27 と の消える手 S-27d。use-hand-keep) */
 const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf });
 const keepAsk = k.ask;
-/** 残したい MOD の欄を出すか = 聞く時と、候補 1 つの消える手で消えない狙いを ☑ 固定で見せる時 (S-27f。打ち方の keep は聞く時だけ) */
-const keepShow = computed(() => keepAsk.value || k.fixedOnly.value);
+/** 残したい MOD の欄を出すか = 聞く手で選べる狙いが 1 つ以上ある時 (外れしか消えない時は出さない、S-27b) と、候補 1 つの消える手で消えない狙いを ☑ 固定で見せる時 (S-27f。打ち方の keep は聞く時だけ) */
+const keepShow = computed(() => k.show.value || k.fixedOnly.value);
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
 const addLabels = computed((): string[] => (keepShow.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
 /** エッセンスの「ブロックに使う」☑ (S-33b)。付く MOD が完成形の狙いの手には出さない */

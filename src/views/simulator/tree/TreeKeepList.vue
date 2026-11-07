@@ -26,7 +26,7 @@ defineProps<{ k: HandKeep; big?: boolean; adds?: string[] }>();
     <label v-if="!big && !k.fixedOnly.value" data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
       <input type="checkbox" :checked="!k.aims.value.length" @change="k.none($event)" />{{ k.isRemove.value ? tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) : tr("全部消えてよい (どれが消えても「狙いが消えた」にしない)", "Anything may go (no Target lost box)") }}
     </label>
-    <label v-for="c in k.fixedOnly.value ? [] : k.choices.value" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-w-0 cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 max-md:min-h-11'">
+    <label v-for="c in k.fixedOnly.value ? [] : k.picks.value" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-w-0 cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 max-md:min-h-11'">
       <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" :checked="k.checked.value.includes(aimKey(c.aim))" @change="k.toggle(c.aim)" /><span class="min-w-0" :class="big ? 'break-words' : 'truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words'" :title="modText(c.mod)">{{ k.label(c) }}</span>
     </label>
     <!-- この手で消えない狙いは自動で残したい MOD (S-27e) -->

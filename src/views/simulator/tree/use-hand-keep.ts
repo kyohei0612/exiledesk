@@ -12,11 +12,10 @@ import { fractureMarks } from "../../../services/simulator/tree/tree-model";
 import { midAims, stoneAims } from "../../../services/simulator/tree/tree-veil";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
-import { boxTagsOf, chosenMod } from "./tree-row-tags";
 import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { useTree } from "./use-tree";
-import { modText, tr } from "../../../i18n/lang";
+import { modText } from "../../../i18n/lang";
 
 const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
 export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem }) {
@@ -28,6 +27,13 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value, t.goals.value); });
   /** カードの見本の ☑ の印 (箱のカードと同じ見本、S-82) */
   const aimedNow = (d: PatchData, it: StageItem | null): ReadonlySet<string> => (it && aimedOfCard(d, t.doc.value, o.boxId, it)) || sampleAimed(d, t.doc.value, o.boxId, 1);
+  /**
+   * ☑ で選べる候補 = 消えうる MOD のうち狙い (☑ の印) だけ。外れ MOD は選べない (S-27b、11-07 オーナー「残したいMODにハズレMODは選択できないようにさせてくれ意味わからんから」)。
+   * 聞くか (ask)・全部は残せない (toggle) は外れも含めた choices で数える (削減の「標的 2 つ以上で聞く」も外れを数える)
+   */
+  const picks = computed(() => { const d = s.data.value; if (!d) return []; const am = aimedNow(d, o.item.value); return choices.value.filter((c) => am.has(c.mod.modId)); });
+  /** 残したい MOD の欄を出すか = 聞く手で、選べる狙いが 1 つ以上 (0 なら欄を出さず全部消えてよい) */
+  const show = computed(() => ask.value && picks.value.length > 0);
   /**
    * 消える手の既定 = 持っている狙い (カードの見本の ☑ の印)。消去の既定は全部消えてよいだが、持っている途中の狙いは残す側 (S-33c。全部の候補になる時は全部消えてよいのまま、S-27b。
    * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」)
@@ -54,7 +60,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   let touched = !!o.current?.keep;
   watch(o.held, () => { touched = false; });
   watch(choices, () => { if (!touched) checked.value = defaults(); }, { immediate: true });
-  const aims = computed((): Aim[] => choices.value.filter((c) => checked.value.includes(aimKey(c.aim))).map((c) => c.aim));
+  const aims = computed((): Aim[] => picks.value.filter((c) => checked.value.includes(aimKey(c.aim))).map((c) => c.aim));
   function toggle(a: Aim): void {
     const k = aimKey(a), was = [...checked.value]; touched = true;
     // 消去は全部の候補を残せないので、最後の 1 つを押したら前に ☑ した物から移す (S-27b)
@@ -63,22 +69,13 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   }
   function none(e: Event): void { touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; }
   const text = (m: StageMod): string => { const it = o.item.value ? o.cardOf(o.item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
-  /**
-   * 乱数で付いた外れは「外れ MOD」(カードの札と同じ boxTagsOf で外れの行)。狙い・途中の狙い・選んで付けた MOD (エッセンス・発現済みの冒涜) は名前 (S-83。
-   * 11-02 オーナー「狙ってないMODはカードでもハズレMODやろ…なんで乱数で出たハズレMODも消去持った時に出るんや」)
-   */
-  const junk = (c: { mod: StageMod }): boolean => {
-    const d = s.data.value, it = o.item.value;
-    if (!d || !it || chosenMod(d, c.mod)) return false;
-    const tag = boxTagsOf(d, t.doc.value, o.boxId, o.cardOf(it)).get(c.mod.modId);
-    return !!tag?.replace && tag.tone === "bad";
-  };
-  const label = (c: { aim: Aim; mod: StageMod }): string => (junk(c) ? tr("外れ MOD", "Miss mod") : text(c.mod));
+  /** 選べるのは狙いだけなので一覧の字はいつも MOD の名前 (前は乱数の外れを「外れ MOD」の字で並べた、S-83) */
+  const label = (c: { aim: Aim; mod: StageMod }): string => text(c.mod);
   /**
    * 聞かないが欄は出す = 候補 1 つの消える手で、消えない狙いがある時 (S-27f、11-07 オーナー「残したいMODってのでまぁデフォでチェック欲しいね 一応ね」)。
    * ☑ 固定の行だけを見せ、打ち方・保存 (Hand.keep) は変えない
    */
   const fixedOnly = computed(() => lone.value && fixed.value.length > 0);
-  return { isRemove, choices, fixed, ask, fixedOnly, checked, aims, toggle, none, label };
+  return { isRemove, choices, picks, show, fixed, ask, fixedOnly, checked, aims, toggle, none, label };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;
