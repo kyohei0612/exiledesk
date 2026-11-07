@@ -149,7 +149,10 @@ export function handLabel(h: Hand): string {
     : "";
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
-  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : veilPick(h) && !isRevealHand(h.currency) ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
+  // 骨は 3 択の名前だけ (S-37、11-07): (発現) / (発現・狙い無し) / (未発現のまま)。前は未発現にも「(狙い無し)」が付いていた
+  const boneVeil = veilKeep(h) ? "keep" : veilPick(h) && !isRevealHand(h.currency) ? (h.free ? "free" : "reveal") : null;
+  const veilTag = boneVeil === "keep" ? tr(" (未発現のまま)", " (left unrevealed)") : boneVeil === "free" ? tr(" (発現・狙い無し)", " (reveal, no target)") : boneVeil === "reveal" ? tr(" (発現)", " (reveal)") : "";
+  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free && !boneVeil ? tr(" (狙い無し)", " (no target)") : "") + veilTag + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」。中は今まで通り当たるまで)
   return label;
 }

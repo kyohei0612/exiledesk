@@ -164,7 +164,16 @@ const boneVeil = computed(() => !!held.value && isBone(held.value));
 /** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b) */
 const pagedAims = computed(() => ((boneVeil.value && veilOn.value) || held.value === "reveal" ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : aimChoices.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
-function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); } // 反響は外す時だけ外す (付けるのは任意の ☑)
+function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) { boneFree.value = false; omens.value = om.filter((o) => o !== ECHO); } } // 反響は外す時だけ外す (付けるのは任意の ☑)
+/** 骨の 3 択 (S-32、11-07 オーナー「発現、狙い無し、未発現だね」): 発現 = veil pick + ☑、狙い無し = veil pick + 狙い無し (出た MOD は外れ)、未発現 = veil keep */
+const boneFree = ref(!!props.current && isBone(props.current.currency) && props.current.veil === "pick" && !!props.current.free);
+const boneMode = computed((): "reveal" | "free" | "keep" => (!veilOn.value ? "keep" : boneFree.value ? "free" : "reveal"));
+function setBoneMode(m: "reveal" | "free" | "keep"): void {
+  touched = true;
+  if (m === "keep") { setVeil(false); return; }
+  if (m === "free") { veilOn.value = true; boneFree.value = true; checked.value = []; return; }
+  boneFree.value = false;
+}
 const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
 const revealable = computed(() => !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
 const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
@@ -216,12 +225,13 @@ const noModTitle = (): string => tr("この手は MOD を付けない・消さ�
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = computed(() => !divOn.value && (canFree.value || (isInfinite.value && aimChoices.value.length > 0)));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
-const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length && !(boneVeil.value && veilOn.value)); // 発現させると狙い無しは同時にオンにしない (10-28 オーナー)
+const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length && !(boneVeil.value && boneMode.value === "reveal")); // 骨の発現は狙い無しにしない (10-28 オーナー)。骨の狙い無し・未発現は狙い無しの手
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
 function toggleFree(e: Event): void { const vWas = veilOn.value, om = [...omens.value]; touched = true; checked.value = []; if (boneVeil.value && vWas) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } (e.target as HTMLInputElement).checked = true; } // 骨: 狙い無し = 未発現のまま次へ
 function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey); touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
+  if (boneVeil.value && !cur.includes(k)) boneFree.value = false; // 骨で ☑ = 発現 (狙い無しから移る)
   const vWas = veilOn.value, om = [...omens.value]; if (boneVeil.value && !vWas && !cur.includes(k)) { veilOn.value = true; } else if (boneVeil.value && vWas && !checked.value.length) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } // 骨で ☑ = 発現させる、最後の ☑ を外したら未発現のまま (10-28 オーナー)
  
 }
@@ -301,7 +311,8 @@ const handKey = (): string => JSON.stringify([hand.value, hitAims.value, preCat.
 const only = later(handKey, onlyNow);
 const shownOnly = computed(() => {
   const b = t.doc.value.boxes[props.boxId], h = hand.value;
-  if (!only.value || !b?.hand || !h || b.hand.currency !== h.currency || b.hand.omens.join() !== h.omens.join()) return only.value;
+  // 骨の 3 択 (発現 / 狙い無し / 未発現) を替えるのは別の手 (今ある箱を出さない、S-32)
+  if (!only.value || !b?.hand || !h || b.hand.currency !== h.currency || b.hand.omens.join() !== h.omens.join() || b.hand.veil !== h.veil || !!b.hand.free !== !!h.free) return only.value;
   const l = b.outs.map((o) => t.doc.value.boxes[o]).filter((c): c is NonNullable<typeof c> => !!c);
   return l.length > only.value.length ? l.map((c) => ({ out: c.out, aim: c.aim ?? null })) : only.value;
 });
@@ -386,8 +397,8 @@ function ok(): void {
           <input type="checkbox" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
-        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
-        <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
+        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
+        <label v-if="!spam && !isInfinite && !boneVeil" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
@@ -446,8 +457,8 @@ function ok(): void {
             <label v-for="a in pagedAims" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'">
               <input type="checkbox" class="size-5 shrink-0" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
             </label>
-            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
-            <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
+            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
+            <label v-if="!spam && !isInfinite && !boneVeil" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>
           </div>
