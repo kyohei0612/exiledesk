@@ -32,7 +32,7 @@ const btn = "g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 hov
 
 <template>
   <template v-if="badge">
-    <DataNote v-if="WEIGHTS_ON && edited != null" small :text="tr('重みを直した', 'Weight edited')" :hint="tr(`重み ${base} → ${edited}`, `Weight ${base} → ${edited}`)" />
+    <DataNote v-if="WEIGHTS_ON && edited != null" small :text="tr('重みを直した', 'Weight edited')" :hint="[tr(`重み ${base} → ${edited}`, `Weight ${base} → ${edited}`), tr('使う人が直した値 (ゲームの値ではない)', 'Edited by you (not a game value)')]" />
     <DataNote v-else-if="est" small :text="tr('重みは推定', 'Est. weight')" :hint="weightOverrideNote()" />
   </template>
   <div v-else-if="WEIGHTS_ON && mod && base > 0" class="mt-1 flex flex-wrap items-center gap-1 text-[11px] leading-none text-white/60" data-weight-edit @click.stop>

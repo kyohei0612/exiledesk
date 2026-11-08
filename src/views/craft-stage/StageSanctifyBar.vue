@@ -28,7 +28,7 @@ const wbtn = "g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 ho
 
 <template>
   <div v-if="item.sanctified && mods.length" class="flex w-full flex-wrap items-center justify-end gap-1 text-[11px] leading-none text-white/60" @click.stop>
-    <DataNote mark :hint="tr('倍率の幅は Wiki の値 (ゲームの公表データでない)', 'The multiplier range is from the wiki (not published by the game)')" />
+    <DataNote mark :hint="[tr('ゲームは聖別の倍率の幅を公表していない', 'The game doesn\'t publish the sanctify multiplier range'), tr('幅は Wiki の値を使っている', 'The range comes from the wiki'), tr('最小・最大は目安として見る', 'Treat min / max as estimates')]" />
     <span class="text-amber-200/80">{{ tr("聖別", "Sanctified") }}</span>
     <button type="button" :class="wbtn" :title="tr(`${TIER}の最小 × 0.78`, 'Tier min × 0.78')" @click="emit('set', 'min')">{{ tr("最小", "Min") }}</button>
     <select :class="sel" :value="common ?? ''" :title="tr('全部の MOD の倍率 (聖別のお告げの 0.78〜1.22)', 'Multiplier for all mods (Omen of Sanctification: 0.78-1.22)')" @change="emit('set', Number(($event.target as HTMLSelectElement).value))">
