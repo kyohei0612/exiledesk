@@ -93,7 +93,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
       <ModeTabs class="mb-3" :active="null" @pick="closeDailyPage" />
       <DailyPost v-if="post" />
       <template v-else-if="skins">
-        <p class="daily-clock">{{ tr(`今の皮: ${skin.ja}。押すと替わる。`, `Current skin: ${skin.en}. Click to switch.`) }} <button type="button" class="underline" data-daily-skin-auto @click="picked = null">{{ tr("日替わりに戻す", "Back to daily rotation") }}</button></p>
+        <p class="daily-clock">{{ tr(`今の皮: ${skin.ja}。押すと替わる。`, `Current skin: ${skin.en}. Click to switch.`) }} <button type="button" class="underline inline-block py-1 -my-1" data-daily-skin-auto @click="picked = null">{{ tr("日替わりに戻す", "Back to daily rotation") }}</button></p>
         <DailySkins @pick="(id) => (picked = id)" />
         <button type="button" class="g-btn m-4" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
       </template>
@@ -105,7 +105,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
         <div data-daily-clock class="daily-clock">
           <p><span>{{ tr(`次のお題まで ${hm(left.next)} (16:00)`, `Next challenge in ${hm(left.next)} (16:00 JST)`) }}</span><span data-daily-close>{{ left.close ? tr(`今日のスタートの締め切りまで ${hm(left.close)} (14:50)`, `Start closes in ${hm(left.close)} (14:50 JST)`) : tr("今日のスタートは締めた", "Today's start is closed") }}</span></p>
           <p><span v-if="nick" data-daily-me>{{ tr("名前:", "Name:") }} <DailyName :name="nick.name" :stamp="stamp" /></span>
-            <label v-if="awards.length" data-daily-title-pick>{{ tr("札:", "Title:") }} <select v-model="pick" class="g-input sm"><option value="">{{ tr("一番格上", "Highest") }}</option><option v-for="a in awards" :key="a.id" :value="a.id">{{ tr(a.ja, a.en) }}{{ a.retired ? tr(" (昔の称号)", " (retired)") : "" }}</option></select></label><button type="button" class="underline" data-daily-skins-open @click="openDailyPage({ view: 'detail', q: 'skins' })">{{ tr(`今日の色: ${skin.ja}`, `Today's colors: ${skin.en}`) }}</button></p>
+            <label v-if="awards.length" data-daily-title-pick>{{ tr("札:", "Title:") }} <select v-model="pick" class="g-input sm"><option value="">{{ tr("一番格上", "Highest") }}</option><option v-for="a in awards" :key="a.id" :value="a.id">{{ tr(a.ja, a.en) }}{{ a.retired ? tr(" (昔の称号)", " (retired)") : "" }}</option></select></label><button type="button" class="underline inline-block py-1 -my-1" data-daily-skins-open @click="openDailyPage({ view: 'detail', q: 'skins' })">{{ tr(`今日の色: ${skin.ja}`, `Today's colors: ${skin.en}`) }}</button></p>
         </div>
         <section data-daily-week data-daily-yesterday>
           <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("昨日の上位", "Yesterday's top 3") }}</h3></div>
