@@ -1,4 +1,15 @@
 {
+  "0.1.682": [
+    "Simulator: tree boxes and the finished check no longer look at quality. Returns are picked automatically, and \"↩ Choose return\" only appears when there are 2 or more places to go back to. Only boxes with the same step are merged, and the result that hits your aims is placed on the left",
+    "Simulator: in \"Mods to keep\" (Orb of Annulment and similar), every mod except Miss mods can now be chosen. The minimap is open from the start, and the zoom bar is shorter",
+    "Simulator: box frames now match the name tags on the card. Mods added by an Essence or Alloy become Miss unless you choose them in Mods to keep. The Recipe ▾ window no longer runs off the edge of the screen",
+    "Simulator: the Unset count and wording now match everywhere, and pressing a row in the list moves to that box (the list stays open)",
+    "Simulator: a branch that stops after one Orb of Annulment is shown under that Annulment, and only runs of 2 or more Annulments in a row are grouped. Annulment with an Omen no longer continues on its own",
+    "Simulator: when an Essence or Alloy hits a family that already has a normal mod at a lower tier, it goes to a \"Blocked\" branch; at the same tier or higher it counts as a hit without using the currency",
+    "Shared: Feedback now always includes your in-progress Simulator tree (for 24 hours, even after closing without saving). If there is no saved recipe or share URL when you open the tree, it continues from the in-progress tree",
+    "Simulator: if you add steps to a saved recipe and leave the page without saving, the added steps are still there when you come back (the unsaved mark stays too)",
+    "Simulator: closing the window opened from \"Send feedback / bug\" in the Unset list now returns you to the Unset list, still open"
+  ],
   "0.1.681": [
     "Simulator: after a step where you pick which mods to keep (such as Orb of Annulment), Essence mods that aren't in the final item (like Breach) and weren't checked now show as Miss, including when holding Annulment in the hand window"
   ],
