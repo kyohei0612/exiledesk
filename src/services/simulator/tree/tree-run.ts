@@ -6,7 +6,7 @@
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { aimHeldOn, isAimMod } from "./tree-aim";
+import { isAimMod } from "./tree-aim";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
 import { MATCH, outBoxOf, RESTART, splitTo, type SplitBox } from "./tree-shape";
@@ -14,7 +14,7 @@ import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
-import { contentDiff, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
+import { contentDiff, goalsOn, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
 
@@ -140,8 +140,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
     return blame && p.end === "stuck" ? { ...p, blame } : p;
   };
-  /** 付いている完成形の狙い (段は完成形以上) の MOD */
-  const aimsHeld = (it: StageItem): Set<string> => new Set((doc.memoAims ?? []).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
+  /** 付いている名前の印になりうる MOD (箱の中身の鍵と同じ口 goalsOn。前は完成形の狙いだけで、行き先探しの前にエッセンス / 合金の印が落ちた) */
+  const aimsHeld = (it: StageItem): ReadonlySet<string> => goalsOn(data, doc, it);
   let steps = 0;
   let restarts = 0;
   const odd = new Set<string>();

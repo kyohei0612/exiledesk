@@ -11,13 +11,12 @@ import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../.
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { aimedOfCard } from "../../../services/simulator/tree/tree-judge";
-import { essenceModOf, midAims, placedAims } from "../../../services/simulator/tree/tree-veil";
-import { goneOf, isKeepHand, isSwapEssence } from "../../../services/simulator/tree/tree-keep";
+import { midAims, placedAims } from "../../../services/simulator/tree/tree-veil";
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
-import { aimOpts, aimsOf, sampleOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
+import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -51,28 +50,19 @@ export const missTag = (d: PatchData, doc: TreeDoc, m: StageMod, title: string, 
 /** 行に外れ MOD の札を置く (完成形に無いエッセンスの MOD は置かない = 文のまま) */
 export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): void => { const t = missTag(d, doc, m, title, opts); if (t) out.set(m.modId, t); };
 /**
- * 箱 boxId までの道で、完成形に無いエッセンスの MOD が付いた後に残したい MOD を選ぶ手 (消去・カオス・骨など ☑ のある手) の消えうる候補になった物。
+ * 箱 boxId の見本に付いている完成形に無いエッセンス / 合金の MOD のうち、名前の印の無い物 = 付いた後に残したい MOD を選ぶ手 (消去・カオス・骨など ☑ のある手) で選ばれなかった物。
  * 文のまま出すのは付いてからその手を通るまでで、☑ しなかった物は以降の箱では「外れ MOD」(合金・ほかの MOD と同じ。S-33c・S-82、11-07 夜オーナー
  * 「エッセンスだろうが消去で全て消えてよい選んでんのになぜかブリーチエッセンスだけはMOD名がでる」)。パーフェクトエッセンスの手は ☑ しなかった MOD も外れにしない (S-29) ので数えない
  */
 export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): ReadonlySet<string> {
   const cut = new Set<string>(), on = midAims(d, doc).filter((a) => aimHeldOn(d, it, a, { sameText: true }));
-  // 見本に無ければ見ない (道を辿らない)
+  // 見本に無ければ見ない
   if (!on.length) return cut;
-  // 箱から上へ辿る。付いた所 (そのエッセンスの手) より前の手は数えない (付け直した後は付け直した所から)。MOD の当て方はエンジン (sameAimMod)
-  const putOn = new Set<Aim>(), same = (a: Aim, id: string): boolean => sameAimMod(d, a, { modId: id, tier: 99 });
-  for (let b = doc.boxes[boxId], n = 0; b?.parent && n < 1000; b = doc.boxes[b.parent], n++) {
-    const p = doc.boxes[b.parent], h = p?.hand;
-    if (!p || !h) break;
-    const e = essenceModOf(h.currency), put = e ? on.find((a) => same(a, e)) : undefined;
-    if (put) { putOn.add(put); continue; }
-    if (!isKeepHand(h) || isSwapEssence(h)) continue;
-    const gone = [...(goneOf(d, sampleOf(d, doc, p.id, 1).item, h.currency, h.omens) ?? [])];
-    // 消えるのが 1 つに決まる手は残したい MOD を聞かない手 = 名前のまま (S-27b・S-33c、11-08 オーナー「１MODしかならないルートで名前消す理由ないな」)
-    if (gone.length <= 1) continue;
-    // 残したい MOD に選んだ物は外れにしない (S-27b、11-08)
-    for (const a of on) if (!putOn.has(a) && !h.keep.some((k) => same(a, k.modId)) && gone.some((id) => same(a, id))) cut.add(aimKey(a));
-  }
+  // 箱の中身の鍵と同じ名前の印 (tree-judge の nextAimed: 付いた時に印、残したい MOD の窓で選ばれなければ外れる) で見る = カードの名前と枠が食い違わない (S-60・S-33c、11-08)。
+  // 前は道を辿って「残したい MOD を選ぶ手を通ったか」を別に数えていた。印が引けない箱 (見本の無い箱) は名前のまま
+  const am = aimedOfCard(d, doc, boxId, it);
+  if (!am) return cut;
+  for (const a of on) if (![...am].some((id) => sameAimMod(d, a, { modId: id, tier: 99 }))) cut.add(aimKey(a));
   return cut;
 }
 /**

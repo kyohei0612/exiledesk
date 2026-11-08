@@ -17,7 +17,7 @@ import { isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
-import { essenceModOf, placedAims } from "./tree-veil";
+import { essenceModOf, midAims, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -28,15 +28,15 @@ import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
  * ☑ した完成形に無いエッセンスは、その後の箱でも ☑ の印のある人には狙い (消えたら「狙いが消えた」)。前は完成形の札だけで絞り、☑ しても外れに戻って
  * 「エッセンスが消えて外れが残った」と「外れが消えてエッセンスが残った」が同じ枠で合流した (11-08 オーナー「エッセンスかも扱い　残す方の挙動かなこれ」)
  */
-const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc), ...keptOfTree(data, doc)];
+const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc), ...keptOfTree(data, doc), ...midAims(data, doc)];
 /** 木の手の残したい MOD (☑) のうち完成形に無い物 (同じ MOD かはエンジンの当て方 sameAimMod) */
 const keptOfTree = (data: PatchData, doc: TreeDoc): Aim[] => {
   const out: Aim[] = [];
   for (const b of Object.values(doc.boxes)) for (const a of [...(b.hand?.keep ?? []), ...(b.handBack?.keep ?? [])]) if (![...(doc.memoAims ?? []), ...out].some((g) => sameAimMod(data, g, a))) out.push(a);
   return out;
 };
-/** アイテムに付いている完成形の狙い (段は完成形以上) と置き石の MOD */
-const goalsOn = (data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
+/** アイテムに付いている名前の印になりうる MOD (完成形の狙い (段は完成形以上)・置き石・残したい MOD・木の手のエッセンス / 合金)。回す時の印の絞りも同じ物 (tree-run) */
+export const goalsOn =(data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
 /** 始まりの ☑ (始まりの MOD の完成形の狙いと ✦ の印) */
 export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): ReadonlySet<string> {
   const on = goalsOn(data, doc, it);
@@ -65,18 +65,26 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
   if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
+  // 木の手のエッセンス / 合金で付けた完成形に無い MOD は、付いた時に名前の印 (カードで名前のまま、S-33c)。外れるのは後の残したい MOD の窓で選ばれなかった時だけ (上の keep)。
+  // 11-08 オーナー「エッセンスと合金 一度付けた奴で名前がハズレＭＯＤになるのは残すを選択しなかった場合とかどうかね」
+  const e = essenceModOf(b.parent ? doc.boxes[b.parent]?.hand?.currency : undefined);
+  if (e) for (const a of midAims(data, doc)) if (sameAimMod(data, a, { modId: e, tier: 99 })) base.add(a.modId);
   const on = goalsOn(data, doc, item);
   return new Set([...base].filter((id) => on.has(id)));
 }
 /**
- * アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える。
- * 体 (bodyOf) の外れは ☑ の札での外れの式 1 本 (tree-miss の isMissMod。同じ文の別 modId も当たり = 狙いの札と外れの両方には数えない)
+ * アイテムの中身の鍵 (名前の印の組 # 体 # 品質)。名前の印 (aimed) = 箱のカードで名前で出る MOD: ☑ した完成形の狙い・置き石・木の手で付けたエッセンス / 合金
+ * (付いた時に印が付き、残したい MOD の窓で選ばれなければ外れる。nextAimed)。印の無い MOD は外れで、外れは側ごとの数だけ (種類は見ない)。
+ * カードの札 (tree-row-tags) も同じ印を見るので、カードの名前が同じなら同じ枠 (S-60、11-08 オーナー「名前一致で枠を決めるって感じがまるいか？」
+ * 「名前ありだけどハズレMOD扱いにしようが、途中のエッセンス付与で狙いMODとしてみようが、枠おなじなんだからあわせるべきじゃろ」。前はエッセンスを付けた所では外れ、
+ * 残したい MOD に選んだ後は狙いと数え、同じ MOD の 10 段目と 13 段目が別の枠になった)。
+ * 体 (bodyOf) の外れは印の札での外れの式 1 本 (tree-miss の isMissMod。同じ文の別 modId も当たり = 印の札と外れの両方には数えない)
  */
 export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
   const c = contentParts(data, doc, it, aimed);
   return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}`;
 }
-/** 中身の鍵の部分 (keys = ☑ の狙いの札、miss = ☑ の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
+/** 中身の鍵の部分 (keys = 印の札、miss = 印の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
 function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): { keys: Set<string>; miss: MissAims; body: string } {
   const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
   const keys = new Set<string>();
