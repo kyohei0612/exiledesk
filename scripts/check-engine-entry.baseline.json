@@ -7,6 +7,7 @@
  "E src/services/simulator/sim-greater.ts": 1,
  "E src/services/simulator/tree/tree-aim.ts": 1,
  "E src/services/simulator/tree/tree-divine.ts": 2,
+ "E src/services/simulator/tree/tree-outcome.ts": 9,
  "E src/services/simulator/tree/tree-whittle.ts": 1,
  "E src/state/for-share/craft-stage-help-mods.ts": 12,
  "E src/state/for-share/craft-stage-shelf.ts": 1,
