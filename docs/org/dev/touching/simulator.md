@@ -4,4 +4,3 @@
 
 | 誰 | ファイル |
 |---|---|
-| シミュ；AR0M の係 (11-08 夜) | src/views/simulator/tree/TreeHandShelf.vue・TreeAimLocked.vue (新)・tree-aim-why.ts (新) (狙いを必ず並べてグレー + 訳のホバー) |

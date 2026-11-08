@@ -22,7 +22,7 @@ import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../s
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
-import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine";
+import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine"; import TreeAimLocked from "./TreeAimLocked.vue"; import { lockedAimRows } from "./tree-aim-why";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
@@ -187,6 +187,8 @@ const aimChoices = computed((): Aim[] => {
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
   return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value).concat(boneVeil.value || held.value === "reveal" ? extraAims.value.filter((x) => !t.goals.value.some((g) => g.modId === x.modId)) : []) : []; // 骨・発現: 完成の狙い + 選んだ置き石
 });
+/** 今は付けられない完成形の狙い (グレーで並べ、ホバーで訳。11-08 オーナー「狙いMODは必ず表示で付けれないならグレーアウト」。骨の発現は TreeVeilCheck が持つ) */
+const lockedAims = computed(() => (noMod.value || boneVeil.value || held.value === "reveal" ? [] : lockedAimRows(s.data.value, item.value, t.goals.value, aimChoices.value, hand.value, (a) => t.aimLabel(a))));
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
 /** チェックを自分で触ったか (新しい手の既定 = 狙い無し、を上書きしない)。持ち替えると既定に戻る */
@@ -395,7 +397,7 @@ function ok(): void {
         <span v-else class="opacity-80">{{ tr("狙う MOD (☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (one hit box per ☑ mod; any one landing is a hit)") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 items-center gap-2" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'" :title="noMod ? noModTitle() : undefined">
           <input type="checkbox" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
-        </label>
+        </label><TreeAimLocked :rows="lockedAims" />
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
         <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
         <label v-if="!spam && !isInfinite && !boneVeil" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
@@ -453,7 +455,7 @@ function ok(): void {
           <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
             <label v-for="a in pagedAims" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'">
               <input type="checkbox" class="size-5 shrink-0" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
-            </label>
+            </label><TreeAimLocked big :rows="lockedAims" />
             <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
             <label v-if="!spam && !isInfinite && !boneVeil" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
