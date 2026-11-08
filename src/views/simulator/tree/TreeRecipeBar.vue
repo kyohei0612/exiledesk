@@ -20,6 +20,7 @@ import { recipeSummary } from "./recipe-summary";
 import { track } from "../../../utils/track";
 import { simAct, simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
+import { toCss } from "../../../utils/zoom";
 
 const t = useTree();
 /** opened = 別の木を開いた (ツリーの側で全体に合わせる) */
@@ -38,12 +39,23 @@ const btn = computed(() => props.flat ?? SMALL);
  */
 const popV = ref<{ up: boolean; max: number }>({ up: false, max: 9999 });
 function placePop(): void {
-  const r = root.value?.getBoundingClientRect();
+  // スマホの帯では外枠が display: contents (大きさが 0) なので、押した「レシピ ▾」のボタンで測る (外枠で測ると空きが画面いっぱいになり、窓が画面の下へはみ出した、11-08)
+  const r0 = root.value?.getBoundingClientRect(), menu = root.value?.querySelector("[data-tree-recipe-menu]")?.getBoundingClientRect();
+  const r = r0 && (r0.width || r0.height) ? r0 : menu;
   if (!r) return;
   const box = root.value?.closest("[data-tree-side]")?.getBoundingClientRect();
   const bottom = Math.min(box?.bottom ?? innerHeight, innerHeight), top = Math.max(box?.top ?? 0, 0);
-  const below = bottom - r.bottom - 8, above = r.top - top - 8;
+  // 測った空きは実ピクセル、窓の max-height は拡大前の CSS ピクセル (html の zoom、utils/zoom)。割らずに使うと zoom が 1 より大きい幅で窓が空きより高くなり、
+  // 列 (overflow-hidden) の上で切れて一番上のレシピが上の帯に隠れた (11-08 オーナー「上枠下枠しっかり設定してないからだろうな」)
+  const below = toCss(bottom - r.bottom - 8), above = toCss(r.top - top - 8);
   popV.value = below >= 320 || below >= above ? { up: false, max: Math.max(160, below) } : { up: true, max: Math.max(160, above) };
+  // 窓は外の枠の端から出るので、ボタンで測った空きとずれる (スマホの帯で 21px 画面の下へ出た)。出した後に窓の実際の端から測り直す
+  void nextTick(() => {
+    const el = root.value?.querySelector<HTMLElement>("[data-tree-recipe-pop], [data-tree-recipe-save-pop], [data-tree-recipe-share-pop]");
+    if (!el) return;
+    const p = el.getBoundingClientRect(), room = toCss(popV.value.up ? p.bottom - top - 8 : bottom - p.top - 8);
+    if (room < popV.value.max) popV.value = { ...popV.value, max: Math.max(160, room) };
+  });
 }
 const popPlace = computed(() => `${props.menuOnly ? "right-0 w-[340px] max-w-[calc(100vw-2rem)]" : props.flat || bare.value ? "left-0 w-[340px] max-w-[calc(100vw-2rem)]" : "inset-x-0 min-w-0"} ${popV.value.up ? "bottom-full mb-1" : "top-full mt-1"}`);
 /** 開いている木に保存の手が要らない時 (ベースが無い空の形・完成形の設定の右端) */
@@ -200,8 +212,10 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
         <button type="button" data-tree-recipe-x class="g-btn sm" @click="shareX">{{ tr("X に出す", "Post to X") }}</button>
       </span>
     </div>
-    <div v-if="pop" data-tree-recipe-pop :class="popPlace" :style="{ maxHeight: `${popV.max}px` }" class="absolute z-40 flex flex-col gap-1.5 overflow-y-auto rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
-      <p class="opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>
+    <!-- 窓は 3 段: 題 (止まる)・レシピの一覧 (ここだけ送る)・URL と下のボタン (止まる)。前は窓ごと送り、題と下の欄が流れて上下の枠が無く見えた (11-08 オーナー) -->
+    <div v-if="pop" data-tree-recipe-pop :class="popPlace" :style="{ maxHeight: `${popV.max}px` }" class="absolute z-40 flex flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
+      <p class="shrink-0 border-b border-white/10 pb-1.5 opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>
+      <div data-tree-recipe-list-scroll class="-mx-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain px-1">
       <p v-if="!recent.length" class="py-1 opacity-50">{{ tr("まだありません", "None yet") }}</p>
       <!-- 1 行 = ベースの絵 (空の木は空の印)・名前・ベース · 狙いの数と主な狙い · ✦ の数・日時 (10-23 オーナー「視覚的に管理しやすく」、要約は recipe-summary.ts)。右の × で消す (その行の中で確かめる) -->
       <div v-for="r in recent" :key="r.id" data-tree-recipe-row class="flex min-w-0 flex-wrap items-center gap-1 rounded hover:bg-white/[0.06]">
@@ -223,12 +237,13 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
           <button type="button" data-tree-recipe-del class="flex size-8 shrink-0 items-center justify-center rounded text-white/40 hover:bg-rose-900/40 hover:text-rose-200" :title="tr('このレシピを消す', 'Delete this recipe')" @click="askDel = r.id"><Icon name="x" class="size-3.5" /></button>
         </template>
       </div>
-      <span class="flex items-center gap-1.5">
+      </div>
+      <span class="flex shrink-0 items-center gap-1.5 border-t border-white/10 pt-1.5">
         <input v-model="url" data-tree-recipe-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-8 min-w-0 flex-1 rounded border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60" :placeholder="tr('共有されたレシピの URL を貼る', 'Paste a shared recipe URL')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
         <button type="button" class="g-btn sm" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
       </span>
-      <p v-if="urlNote" class="text-amber-200">{{ urlNote }}</p>
-      <div class="flex flex-wrap gap-1.5 border-t border-white/10 pt-1.5">
+      <p v-if="urlNote" class="shrink-0 text-amber-200">{{ urlNote }}</p>
+      <div class="flex shrink-0 flex-wrap gap-1.5">
         <button v-if="!bare && !view" type="button" data-tree-recipe-save-as class="g-btn sm" @click="saveAs">{{ tr("別名で保存", "Save as") }}</button>
         <button type="button" data-tree-recipe-list class="g-btn sm ml-auto" @click="pop = false; openRecipesPage()">{{ tr("レシピの一覧へ", "All recipes") }}</button>
       </div>
