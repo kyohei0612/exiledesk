@@ -374,19 +374,22 @@ const glowOf = (b: Box): boolean => {
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
       </div>
       <!-- 帯は 1 行 (10-26 夜オーナー「1 行で表示させてくれ」「必要なのは下段」「テストで回すと 100 人で回すは上の枠内上部でおけ」): 穴チェック・足りない所・100 人回す・結果、タブ、道具。
-           狭ければ字を短く・道具は絵だけ (帯の @container、切らない・… にしない)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
-      <div class="@container relative flex min-w-0 flex-nowrap items-center gap-1.5 text-[13px]">
+           幅で形を変えない (字を短くしない・隠さない)。入らない幅は帯の中を横に送る (11-08 夜オーナー「pxみじけーやつは苦労させろ精神」、S-94g)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
+      <div class="relative flex min-w-0 items-center gap-1.5 text-[13px]">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
         <TreeIssues v-if="jt.shownIssues.value?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="jt.shownIssues.value" :doc="doc" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" @report="reportTreeBug(doc)" /><TreeBugReport />
         <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />
-        <template v-else>
+        <!-- 横に送る所 (浮く窓 = 足りない所の一覧・レシピの窓は送りの外に置く。送りの中に置くと切れる) -->
+        <div data-tree-bar-scroll class="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto [scrollbar-width:thin]">
+        <template v-if="!t.needBase.value">
           <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesOpen }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: holeN, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
-          <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
+          <TreeRunSum class="shrink-0" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="flex-1" @switched="v.openView()" />
         <span v-else class="flex-1" />
         <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
+        </div>
       </div>
       <!-- PC の形 (1280 以上、U-53) だけ。1100px 未満で右の列を木の下へ回す分かれ道は消した -->
       <div ref="row" class="flex min-h-0 gap-2 h-[var(--row-h)]" :class="full ? 'flex-1' : ''" :style="full ? {} : { '--row-h': `${rowH}px` }">

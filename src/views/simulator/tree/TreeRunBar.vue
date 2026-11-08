@@ -10,7 +10,7 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { tr } from "../../../i18n/lang";
 import { RUN_N } from "./use-tree-run";
 import { simOp } from "../../../web/track";
-import { finalLockedWhy, finalName, finalTitle, holeBusy, holeName, holeShort, holesCount, holesShowTitle, holeTitle, runLockedWhy } from "./hole-check";
+import { finalLockedWhy, finalName, finalTitle, holeBusy, holeName, holesCount, holesShowTitle, holeTitle, runLockedWhy } from "./hole-check";
 
 /** test = 穴チェック (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は灰色で押せない (S-70)。halted = 止まった人が出て途中で止めた */
 const props = defineProps<{ /** ハズレ整理のボタンの状態 (S-192) */ tidy?: { on: boolean; step: string; unset: number; guide: boolean; busy: boolean; empty?: boolean; finalLit: boolean }; result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
@@ -34,12 +34,12 @@ watch(() => props.running, (on, was) => {
     <template v-if="tidy?.busy">{{ tr("整理中", "Sorting") }}</template>
     <template v-else-if="test.busy">{{ holeBusy() }}</template>
     <template v-else-if="tidy?.on">{{ finalName() }}</template>
-    <template v-else><span class="@max-[899px]:hidden">{{ holeName() }}</span><span class="hidden @max-[899px]:inline">{{ holeShort() }}</span></template>
+    <template v-else>{{ holeName() }}</template>
   </button>
   <span v-if="test.passed && !test.busy" data-tree-test-ok class="shrink-0 whitespace-nowrap rounded-full bg-emerald-700/80 px-2 text-[12px] font-bold text-white">{{ tr("✓ 合格", "✓ Passed") }}</span>
   <!-- 未設定の札 = 一覧の窓の開け閉めだけ (11-08 オーナー「押したら未設定マーク消えるけどツリーの その挙動削除して未設定一覧ってので矢印の挙動に変えてくれ」「未設定もっかい押したら閉じるで」)。
        箱の ! は消さない (前の 10-25 の「押すとオフ」は撤回)。shown = 一覧を開いている -->
-  <button v-else-if="test.holes && !test.busy" type="button" data-tree-test-holes data-tree-test-list :aria-expanded="test.shown" class="shrink-0 whitespace-nowrap rounded-full border border-rose-400 bg-rose-700/90 px-2 text-[12px] font-bold text-white transition-colors hover:bg-rose-600" :class="test.shown ? 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]' : ''" :title="test.shown ? tr('未設定の一覧を閉じる', 'Close the list of unset boxes') : holesShowTitle()" @click="emit('list')"><span class="@max-[759px]:hidden">{{ holesCount(test.holes) }} {{ test.shown ? "▴" : "▾" }}</span><span class="hidden @max-[759px]:inline">! {{ test.holes }}</span></button>
-  <button type="button" data-tree-run class="g-btn sm shrink-0 whitespace-nowrap" :disabled="running || !ready || locked" :data-run-locked="locked && !running ? '' : undefined" :title="locked && !running ? (tidy?.on ? finalLockedWhy() : runLockedWhy(test.busy, test.holes)) : test.passed ? tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`) : tr('未設定を直すと回せる。押すと一覧を開く', 'Fix what is unset to run. Click to open the list')" @click="test.passed ? emit('run') : emit('holesOn')"><span class="@max-[899px]:hidden">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</span><span class="hidden @max-[899px]:inline">{{ tr(`${RUN_N} 人`, `${RUN_N}×`) }}</span></button>
+  <button v-else-if="test.holes && !test.busy" type="button" data-tree-test-holes data-tree-test-list :aria-expanded="test.shown" class="shrink-0 whitespace-nowrap rounded-full border border-rose-400 bg-rose-700/90 px-2 text-[12px] font-bold text-white transition-colors hover:bg-rose-600" :class="test.shown ? 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]' : ''" :title="test.shown ? tr('未設定の一覧を閉じる', 'Close the list of unset boxes') : holesShowTitle()" @click="emit('list')">{{ holesCount(test.holes) }} {{ test.shown ? "▴" : "▾" }}</button>
+  <button type="button" data-tree-run class="g-btn sm shrink-0 whitespace-nowrap" :disabled="running || !ready || locked" :data-run-locked="locked && !running ? '' : undefined" :title="locked && !running ? (tidy?.on ? finalLockedWhy() : runLockedWhy(test.busy, test.holes)) : test.passed ? tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`) : tr('未設定を直すと回せる。押すと一覧を開く', 'Fix what is unset to run. Click to open the list')" @click="test.passed ? emit('run') : emit('holesOn')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
   <Teleport defer to="[data-tree-frame]"><TreeRunReport v-if="report && result && !running" :result="result" :test="drive" @close="report = false" @go="(id) => emit('go', id)" /></Teleport>
 </template>

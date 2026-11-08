@@ -9,7 +9,6 @@ import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 /** ボタンの名前 */
 export const holeName = (): string => tr("穴チェック", "Gap check");
 /** 帯が狭い時の名前 */
-export const holeShort = (): string => tr("穴チェック", "Gap check");
 /** 回している間 */
 export const holeBusy = (): string => tr("穴チェック中…", "Checking…");
 /** スマホの「もう一度」 */
