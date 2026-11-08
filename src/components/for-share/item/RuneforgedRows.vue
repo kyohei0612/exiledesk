@@ -13,8 +13,8 @@ import DataNote from "../../ui/DataNote.vue";
 /** ルーンフォージ版の数値の札の説明 (U-18 の「・」の縦の箇条書き) */
 const WARD_NOTE = (): string[] => [
   tr("版ごとのワード・防御の素の値は poe2db の値", "Base Ward and defences per version are poe2db's values"),
-  tr("品質と MOD での伸びはゲームでも確かめられていない", "How quality and mods scale them is not confirmed in game"),
-  tr("ここではアーマーと同じ掛け方 (平の + を足してから % と品質を掛ける) の目安", "Here they scale like Armour (flat added, then % and quality) as an estimate"),
+  tr("品質はそのまま倍率 (20% で 1.2 倍、最後に四捨五入)", "Quality multiplies directly (20% → ×1.2, rounded at the end)"),
+  tr("平の + と % の MOD はアーマーと同じ形で掛ける", "Flat and % mods scale the same way as Armour"),
 ];
 
 /** カードの数値の行 (stage-props の propRows と同じ形) */
@@ -54,6 +54,6 @@ const shown = computed((): PropRow[] => {
   <p v-for="r in shown" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.key === 'ward' ? 'text-sky-200' : r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
   <!-- 品質での伸びはゲームでも確かでない (U-18 の青の札。11-09 オーナー「ルーンフォージアイテムの品質での伸びがよくわかってないけどね」) -->
   <div v-if="on && forms.length" data-runeforged-note class="flex flex-wrap justify-center py-0.5" @click.stop>
-    <DataNote small tip="center" :text="tr('品質での伸びは目安', 'Quality scaling is an estimate')" :detail="WARD_NOTE()" />
+    <DataNote small tip="center" :text="tr('ワードの出し方', 'How Ward is shown')" :detail="WARD_NOTE()" />
   </div>
 </template>
