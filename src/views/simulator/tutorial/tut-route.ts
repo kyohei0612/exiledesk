@@ -5,7 +5,7 @@
  * (11-08 に「ハズレ整理」のボタンの段を外した。今の木は完成を押すとすぐ帯の「未設定 n つ ▸ 次へ」になる)
  * (11-03 オーナー「今の道だけ先に直す」。前の道は灰色の外れの箱 x1 から組ませて 4 段目で進めなかった)。外れを消して戻すのは自動の ↩ (S-50・S-28e):
  *   0 完成形 (✦ スペル +3・品質は狙わない) → 1 始め方 (フラクチャー済みから)
- *   2 スタート: 高貴 + 左側の高貴のお告げ ☑ スピリット → s1 (スピリット) / x1 (外れ、灰色)
+ *   2 スタート: 高貴 + 左側の高貴のお告げ ☑ スピリット → s1 (スピリット) / x1 (外れ、中身が灰色・未設定)
  *   3 s1: 高貴 + 左側 (狙い無し) → s1a   4 s1a: ルーンの合金 → w (当たり) / wl (スピリットが消えた、灰色)
  *   5 w: 高貴 ☑ キャストスピード → d / dj (外れ、灰色)   6 d: 完成 (x1・wl・dj が未設定になる)
  *   7 x1: 消去 → ↩ スタート   8 wl: 失敗   9 dj: 消去 + 右側の消去のお告げ → ↩ w (未設定の箱は帯の「次へ」が寄る順)
@@ -75,9 +75,9 @@ type Why = (n: TutNames) => [string, string];
 export const DRAFT_WHY: Record<string, Why> = {
   goal: (n) => [`完成形は 4 つ入れてある。${n.mod(SPELL)}はフラクチャー済みのベースを買う前提なので ✦ (固定してよい印) を付ける。アミュレットは品質がカタリストの品質なので、狙うかを必ず決める`, `The four final mods are already in. ${n.mod(SPELL)} comes on a fractured base, so mark it ✦ (may be fixed). Amulet quality is catalyst quality, so you must decide whether to aim for it`],
   start: () => ["✦ が 1 つなので「フラクチャー済みから」始められる。スタートは ✦ の MOD だけのレアになる", "With one ✦ you can start from a fractured item. The start is a rare with only the ✦ mod"],
-  "start-exalt": (n) => [`${n.item(SIN_EXALT)}でプレに 1 つ足す。☑ した${n.mod(SPIRIT)}が付けば当たりの箱、ほかは外れの箱。外れの箱は灰色で、当たりの道を組み終えるまで触らない`, `${n.item(SIN_EXALT)} adds one prefix. The checked ${n.mod(SPIRIT)} goes to a hit box, anything else to a miss box. Miss boxes stay grey until the hit route is built`],
+  "start-exalt": (n) => [`${n.item(SIN_EXALT)}でプレに 1 つ足す。☑ した${n.mod(SPIRIT)}が付けば当たりの箱、ほかは外れの箱。外れの箱は中身が灰色で、赤い「!」(未設定) と「失敗」・＋ が最初から出る (上の帯の「未設定 n つ」も)。外れの箱は当たりの道を組み終えて完成にしてから決める`, `${n.item(SIN_EXALT)} adds one prefix. The checked ${n.mod(SPIRIT)} goes to a hit box, anything else to a miss box. A miss box shows its mods in grey, with a red "!" (unset), "Fail" and + from the start (the bar's "n unset" too). Decide miss boxes after the hit route is built and marked done`],
   "spirit-free": (n) => [`${n.mod(SPIRIT)}が付いた人は、残りのプレを狙い無しで埋める (☑ 無し = 結果は「打った後」1 箱)`, `Runs that got ${n.mod(SPIRIT)} fill the last prefix with no target (no ☑ = one "after" box)`],
-  "free-ward": (n) => [`${n.item(WARD_KEY)}は MOD を 1 つ消して${n.mod(WARD)}を付ける。さっき埋めた外れが消えれば当たり、${n.mod(SPIRIT)}が消えた人は「狙いが消えた」の灰色の箱へ`, `${n.item(WARD_KEY)} removes one mod and adds ${n.mod(WARD)}. If the filler goes it's a hit; runs that lose ${n.mod(SPIRIT)} go to the grey "target lost" box`],
+  "free-ward": (n) => [`${n.item(WARD_KEY)}は MOD を 1 つ消して${n.mod(WARD)}を付ける。さっき埋めた外れが消えれば当たり、${n.mod(SPIRIT)}が消えた人は「狙いが消えた」の箱へ (外れの箱と同じく中身が灰色で、赤い「!」・「失敗」・＋ が出る。決めるのは完成の後)`, `${n.item(WARD_KEY)} removes one mod and adds ${n.mod(WARD)}. If the filler goes it's a hit; runs that lose ${n.mod(SPIRIT)} go to the "target lost" box (like a miss box: mods in grey, a red "!", "Fail" and +; decide it after marking done)`],
   "ward-cast": (n) => [`プレは埋まったので、お告げ無しでもサフィにしか付かない。${n.mod(CAST)}を ☑ して打つ`, `The prefixes are full, so it can only land on a suffix even without an omen. Check ${n.mod(CAST)} and use it`],
   done: () => ["狙いが全部揃った。この箱を完成にする (完成は人が押した箱だけ)", "All targets are in. Mark this box as done (only boxes you mark are done)"],
   "miss-annul": (n) => [`${n.item("annul")}で外れを消す。✦ は消えないので、消えるのは外れ (プレ) だけ。スタートと同じ中身になり、自動でスタートへ戻る (↩ の札)`, `Use ${n.item("annul")} to remove the miss. The ✦ mod can't be removed, so only the miss prefix goes. It matches the start and goes back there by itself (the ↩ tag)`],
