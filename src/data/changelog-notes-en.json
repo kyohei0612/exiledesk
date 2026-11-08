@@ -1,4 +1,9 @@
 {
+  "0.1.686": [
+    "Emulator / Simulator: values the game doesn't publish (mod weights, odds, costs and so on) now have a blue \"i\" note. Hover it (tap on phones) to see where the numbers come from and how to read them",
+    "Item cards now have \"Show as Runeforged (Ward)\". For armour with a Runeforged version, you can see its Runic Ward and remaining defences with quality and mods included",
+    "Emulator: on base selection, \"Runeforged\" at the right end of the attribute tabs lists the Runeforged bases to pick from. Card help texts (which side bones add to, sockets, quality, etc.) are also fixed"
+  ],
   "0.1.685": [
     "Simulator: the tutorial is now available (PC only). Open it from \"Tutorial\" on the base selection page and build a sample tree in 18 steps"
   ],
