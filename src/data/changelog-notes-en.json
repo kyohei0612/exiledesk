@@ -1,4 +1,9 @@
 {
+  "0.1.683": [
+    "Simulator: the Nov 8 tree fixes are in (quality is ignored, returns are picked automatically, the Unset list moves to each box, you can continue an in-progress tree, the side column can be hidden, a box for mods that match an Essence, a \"✓ Saved\" mark, and more)",
+    "Simulator: the tutorial now matches the current tree: the removed \"Sort misses\" step is gone and the steps for deciding unset boxes are updated",
+    "Simulator: the \"Step n\" labels on the left of the tree no longer cover boxes, and currency names on the shelf show \"(Greater)\" / \"(Perfect)\" again"
+  ],
   "0.1.682": [
     "Simulator: tree boxes and the finished check no longer look at quality. Returns are picked automatically, and \"↩ Choose return\" only appears when there are 2 or more places to go back to. Only boxes with the same step are merged, and the result that hits your aims is placed on the left",
     "Simulator: in \"Mods to keep\" (Orb of Annulment and similar), every mod except Miss mods can now be chosen. The minimap is open from the start, and the zoom bar is shorter",

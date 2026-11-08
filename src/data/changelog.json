@@ -1,5 +1,30 @@
 [
  {
+  "v": "0.1.683",
+  "date": "2026-11-08",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 11/8 のツリーの直しをまとめて入れました (品質を見ない・戻り先は自動・未設定の一覧から箱へ移る・作りかけのツリーから続ける・右の列を閉じて広げる・エッセンスと同じ MOD の箱・「✓ 保存しました」など)",
+    "en": "Simulator: the Nov 8 tree fixes are in (quality is ignored, returns are picked automatically, the Unset list moves to each box, you can continue an in-progress tree, the side column can be hidden, a box for mods that match an Essence, a \"✓ Saved\" mark, and more)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: チュートリアルを今のツリーに合わせました (無くなった「ハズレ整理」の手順を外し、未設定の箱の決め方の説明を直しました)",
+    "en": "Simulator: the tutorial now matches the current tree: the removed \"Sort misses\" step is gone and the steps for deciding unset boxes are updated"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの左の「n 段目」の札が箱に重ならないようにしました。棚のカレンシーの名前に「(上級)」「(完全)」を戻しました",
+    "en": "Simulator: the \"Step n\" labels on the left of the tree no longer cover boxes, and currency names on the shelf show \"(Greater)\" / \"(Perfect)\" again"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.682",
   "date": "2026-11-08",
   "items": [
@@ -1060,72 +1085,5 @@
     "en": "Blog: new article \"Do PoE2 Crafting Odds Match Craft of Exile?\""
    }
   ]
- },
- {
-  "v": "0.1.643",
-  "date": "2026-10-29",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の候補を枠 (プレフィックス・サフィックスの数) に縛らず 10 まで選べるように。完成は好きな箱で「完成にする」で決めます",
-    "en": "Simulator: you can now pick up to 10 final targets regardless of prefix / suffix slots, and mark any box as done with \"Mark done\""
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: フラクチャーの ✦ の印を複数付けられるように。フラクチャーから始められるのは ✦ が 1 つの時だけ、✦ の無い木でもフラクチャーで狙う MOD を選べます",
-    "en": "Simulator: you can now set several fracture marks (✦). Starting from a fractured item needs exactly one mark, and trees without marks can choose which mod the Fracturing Orb should hit"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 外れを付いた側 (プレフィックス / サフィックス) ごとに分け、削減のお告げを使う手は外れ MOD の MOD レベルで消える MOD が変わる枝を割合つきで出すように",
-    "en": "Simulator: misses are split by the side they land on (prefix / suffix), and crafts with the Omen of Whittling branch by the level of the miss mod, showing which mod is removed and how likely each case is"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 骨 (冒涜) の手に「発現させる」の ☑、カタリストを「品質を n % まで」打つ手、結果の答えに「失敗 (ここで終わり)」を足しました",
-    "en": "Simulator: added a \"Reveal\" checkbox for Desecration crafts, a Catalyst craft that raises quality up to n%, and a \"Fail (stop here)\" answer for result boxes"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 同じ中身になった箱は自動でつなぎ、1 つにまとめて線が合流するように。人が選ぶ「まとめる」「戻り先を選ぶ」は無くしました",
-    "en": "Simulator: boxes with the same contents are now linked and merged automatically, with their lines joining into one box. The manual \"Merge\" and \"Choose return\" buttons are gone"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの並びを作り直し、段ごとに詰めて同じ段の箱の高さを揃え、線を短くしました。戻りの線は箱や札に乗せた時だけ出し、乗せた箱につながる線を光らせます",
-    "en": "Simulator: the tree layout was rebuilt: rows are packed, boxes in a row share the same height, and lines are shorter. Return lines show only when you hover a box or tag, and the lines of the hovered box light up"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 決める事が残っている箱は赤枠と「!」の印に。木の下の「! 未設定 n つ ▸ 次へ」で順に回れます",
-    "en": "Simulator: boxes that still need a decision get a red frame and a \"!\" mark. \"! Unset n ▸ Next\" under the tree takes you through them"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スタートの箱もアイテムのカードで出し、完成形の設定の窓を大きくしました。ベースや完成形を変えた時は木をスタートに戻します (保存するか聞きます)",
-    "en": "Simulator: the Start box is now an item card, and the final item panel is larger. Changing the base or final item resets the tree to Start (you are asked whether to save first)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: レシピは打ち方だけを保存し、開くたびに今の決まりで組み直すように (前のレシピもそのまま開けます)。スマホで共有の URL を押すと完成形と全体図で開きます",
-    "en": "Simulator: recipes now save only the crafts and are rebuilt with the current rules each time they open (older recipes still open). On phones, a shared recipe link opens straight to the final item and tree map"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: エッセンスを持った時も消える MOD を色で出し、消去が続く途中の箱は 1 枚に畳み、止まりの札はカードに被せないように。行き先の札は前の段なら「↩ n 段目へ戻る」、ほかは「→ n 段目へ進む」",
-    "en": "Simulator: holding an essence now also highlights the mods it can remove, a run of Orb of Annulment boxes folds into one tag, and stuck tags no longer cover the item card. Destination tags say \"↩ Back to step n\" only for earlier steps and \"Go to step n\" otherwise"
-   }
-  ],
-  "pop": true
  }
 ]
