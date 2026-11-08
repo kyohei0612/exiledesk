@@ -10,6 +10,7 @@ import { craftStage } from "../state/craft-stage";
 import { WEB_API_BASE } from "./config";
 import { diagNow, track, trailNow } from "./track";
 import { feedbackSummaryJa } from "./feedback-summary";
+import { treeDraftNow } from "./feedback-tree";
 import { marketStore } from "../state/market-store";
 import { allMods } from "../services/craft-stage/stage-core";
 import { craftedKindOf, tierRankOf } from "../services/craft-stage/tier-rank";
@@ -19,8 +20,12 @@ import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
 import { flag } from "./release-flags";
 
-/** forId: 返事で「画像を下さい」と頼んだ要望の id (その要望に画像を足す。2026-10-14) */
-const props = defineProps<{ open: boolean; forId?: string | null; /** 重ねる窓ではなく、要望・バグを送るのページとして出す (web/page.ts、2026-10-18) */ page?: boolean }>();
+/**
+ * forId: 返事で「画像を下さい」と頼んだ要望の id (その要望に画像を足す。2026-10-14)。
+ * prefill: 開いた時に欄へ最初から入れる文 (シミュの木の未設定一覧の「要望・バグを送る」が木の URL を渡す、11-08 オーナー「おけ　それで進めて」)。
+ * 短い URL を待つ間は Promise のまま渡してよい。欄に人がもう書いていたら上書きせず先頭に足す
+ */
+const props = defineProps<{ open: boolean; forId?: string | null; /** 重ねる窓ではなく、要望・バグを送るのページとして出す (web/page.ts、2026-10-18) */ page?: boolean; prefill?: string | Promise<string> | null }>();
 const emit = defineEmits<{ close: [] }>();
 
 // 要望とバグは分けない、連絡先の欄も無し (2026-10-10 オーナー「要望バグ欄統一、連絡先書かなくていい」)
@@ -54,6 +59,16 @@ function onPick(e: Event): void { const el = e.target as HTMLInputElement; void 
 onBeforeUnmount(clearImages);
 
 watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value = ""; imageNote.value = ""; track("feedback:open"); } });
+const textEl = ref<HTMLTextAreaElement | null>(null);
+watch(() => [props.open, props.prefill] as const, ([v, p]) => {
+  if (!v || !p) return;
+  void Promise.resolve(p).then((t) => {
+    if (!t || props.prefill !== p || text.value.includes(t)) return;
+    text.value = text.value.trim() ? `${t}\n${text.value}` : `${t}\n`;
+    // 続けて書けるよう、カーソルは入れた文の後ろへ
+    requestAnimationFrame(() => { const el = textEl.value; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } });
+  }, () => {});
+}, { immediate: true });
 
 /**
  * 今の画面の状態 (本文が「使いづらい」「バグっぽい」だけでも、受けた側がすぐ再現・解析できる分を自動で付ける。2026-10-07 オーナー):
@@ -93,6 +108,8 @@ function contextNow(): unknown {
     errors: d.errors,
     console: d.console,
     hand,
+    // シミュの作りかけの木 (保存していなくても・別のページからでも。web/feedback-tree.ts、11-08 オーナー「1おけ」)。開くのは web.html?page=sim-tree#recipe=<code>
+    treeDraft: treeDraftNow(),
   };
 }
 
@@ -133,7 +150,7 @@ async function send(): Promise<void> {
   <ModalShell :open="open" :inline="page" :title="forId ? tr('画像を送る', 'Send images') : tr('要望・バグを送る', 'Send feedback')" :width="page ? 'w-full' : 'w-[30rem] max-w-full'" body-class="px-4 py-3" @close="emit('close')">
     <p v-if="state === 'sent'" class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}<span v-if="!forId" class="mt-1 block text-[11px] opacity-60">{{ tr("直した時は、次に開いた時にお知らせします (このブラウザで)", "When it is fixed, you will be told the next time you open this page (in this browser)") }}</span></p>
     <div v-else @dragover.prevent @drop="onDrop">
-      <textarea v-model="text" :rows="forId ? 3 : 6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="forId ? tr('ひとこと (無くてもよい)', 'A note (optional)') : tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus @paste="onPaste"></textarea>
+      <textarea ref="textEl" v-model="text":rows="forId ? 3 : 6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="forId ? tr('ひとこと (無くてもよい)', 'A note (optional)') : tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus @paste="onPaste"></textarea>
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
       <!-- 画像 (選ぶ・貼り付け・落とす。3 枚まで) -->
       <div class="mt-2 flex flex-wrap items-center gap-2">

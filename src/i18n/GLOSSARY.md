@@ -68,6 +68,11 @@
 | カオスオーブで振り直し続ける (前の「カオススパム」、10-27 オーナー「スパムとかっていうけどそういうのいらない」) | reroll with Chaos Orbs (「chaos spam」は使わない) |
 | 触媒のお告げ (= 触媒の高貴のお告げ) | Omen of Catalysing Exaltation (poe2db、items-ja-poe2db.json)。「Catalysing omen」と縮めない |
 | 区切りの「・」 | 英語は ", " |
+| 未設定 (回すのを止める足りない所。前の「穴」「要確認」は使わない、11-08) / 未設定 N つ / 未設定は無かった | Unset / N unset / Nothing unset (「hole」「gap」は箱には使わない。操作の名前の「穴チェック = Gap check」はそのまま) |
+| 止まりの訳の要約 (止まった人の 1 行。tree-run の STOP、11-08) | 文の形をそろえる: 次の手が決まっていません = No next step yet / 打てません = Can't use the craft / N 回打っても当たりません = No hit in N tries / この結果の行き先がありません = No box for this result / 行き先と中身が違います = The next box holds a different item / 戻り先と中身が違います = The return target holds a different item / 戻れる箱がありません = No box to return to / 戻りがぐるぐる回っています = The returns go round in a loop / 分かれ目のどの行にも合いません = No split row matches / 行き先の箱がありません = The next box is missing |
+| 詳しく (要約の下で開く詳しい文) | Details (チュートリアルの開く所だけは More) |
+| サイトの不具合 (人が組んだのに木の途中で出る未設定。要望へ促す) | site bug (「サイトの不具合です」= This is a site bug) |
+| 要望・バグを送る (ボタン) | Send feedback |
 
 ## ゲームの言葉 (2026-10-10 にクライアントで確かめた物。食い違いが見つかったら poe2db に合わせて直す)
 
