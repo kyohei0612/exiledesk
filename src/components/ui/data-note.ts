@@ -10,5 +10,12 @@ const SITE_DATA_RE = /公式の値は出ていない|公開されていない|�
 
 export const isSiteData = (line: string): boolean => SITE_DATA_RE.test(line);
 
-/** 札の既定のホバーの文 */
-export const SITE_DATA_HINT = (): string => tr("ゲームが公表していない値。サイトがコミュニティのデータから借りたか、決めた目安", "Not published by the game. Borrowed from community data or chosen by the site as an estimate");
+/** 札の説明: 「・」の縦の箇条書きの行 (1 本の文字列なら 1 行)。出どころ・何が仮か・どう見ればよいか を 1 行ずつ (11-09 オーナー「区切った方が良いね」) */
+export type NoteLines = string | readonly string[];
+
+/** 札の既定の説明 */
+export const SITE_DATA_HINT = (): string[] => [
+  tr("ゲームが公表していない値", "Not published by the game"),
+  tr("サイトがコミュニティのデータから借りたか、決めた値", "Borrowed from community data or chosen by the site"),
+  tr("目安として見る", "Treat it as an estimate"),
+];
