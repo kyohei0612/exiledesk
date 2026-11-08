@@ -342,8 +342,11 @@ export function setSameHiOwn(d: TreeDoc, id: string, own: boolean): void {
   const b = d.boxes[id];
   if (!b || b.out !== "blocked" || b.junkKey !== SAME_HI) return;
   if (own) { b.back = null; delete b.autoBack; b.noAutoBack = true; b.ownTree = true; return; }
+  // 「新しいツリーを作る」の後に足した手は外して統合へ戻す (2 ボタンは手の後も出す、S-33e ⑥。1 つ戻すで戻せる)
   delete b.noAutoBack; delete b.ownTree;
-  if (!b.hand) linkSameHi(d, id);
+  if (b.hand) clearHand(d, id);
+  b.done = null; b.back = null; delete b.autoBack;
+  linkSameHi(d, id);
 }
 
 /**

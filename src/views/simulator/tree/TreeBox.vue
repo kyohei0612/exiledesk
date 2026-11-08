@@ -265,8 +265,8 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
       <span v-if="cantHand" data-tree-cant-hand class="w-full break-words text-rose-300">{{ tr(`この品には打てない手 (${cantHand})`, `Can't be used on this item (${cantHand})`) }}</span>
       <!-- 「エッセンスと同じ MOD (同格以上)」はボタン 2 つでいつも選ぶ: 選んでいる方が点き、選んでいない方はグレー (押すと切り替え)。既定は「エッセンスと同じ枠で扱う」。
            選んだ後も「→ n 段目へ進む」の文に置き換えない。下の行の頭に全幅の 1 行で、ほかの札と同じ高さ (S-33e ⑥、11-08 夜オーナー「ボタンは2つね…選んでないほうグレーアウト」「4段目へ進むとかに切り替えなくておk」「枠の中が整頓してくれ」) -->
-      <span v-if="sameHi && !box.hand" data-tree-same-hi-pick :class="[HI_ROW, quiet ? 'pointer-events-none' : '', box.ownTree ? 'basis-full' : '']">
-        <button type="button" data-tree-same-hi-merge :aria-pressed="!box.ownTree" :class="[HI_BTN, box.ownTree ? HI_OFF : HI_ON_MERGE]" :title="tr('この箱の人はエッセンスを打った当たりの箱と同じに扱う (既定)', 'Treat this box as the essence hit box (default)')" @click.stop="box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, false))">{{ tr("エッセンスと同じ枠で扱う", "Treat as essence") }}</button>
+      <span v-if="sameHi" data-tree-same-hi-pick :class="[HI_ROW, quiet ? 'pointer-events-none' : '', box.ownTree ? 'basis-full' : '']">
+        <button type="button" data-tree-same-hi-merge :aria-pressed="!box.ownTree" :class="[HI_BTN, box.ownTree ? HI_OFF : HI_ON_MERGE]" :title="box.hand ? tr('足した手と下の箱を外し、エッセンスを打った当たりの箱と同じに扱う (1 つ戻すで戻せる)', 'Remove the added craft and the boxes below, and treat this box as the essence hit box (Undo restores)') : tr('この箱の人はエッセンスを打った当たりの箱と同じに扱う (既定)', 'Treat this box as the essence hit box (default)')" @click.stop="box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, false))">{{ tr("エッセンスと同じ枠で扱う", "Treat as essence") }}</button>
         <button type="button" data-tree-same-hi-own :aria-pressed="!!box.ownTree" :class="[HI_BTN, box.ownTree ? HI_ON_OWN : HI_OFF]" :title="tr('エッセンスと同じ枠で扱うのをやめ、この箱から別の道を組む', 'Stop treating it as the essence result and build a separate route from this box')" @click.stop="!box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, true))">{{ tr("新しいツリーを作る", "New tree") }}</button>
       </span>
       <template v-if="box.back && !sameHi">
