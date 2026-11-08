@@ -3,14 +3,14 @@
  * ☑ の無い MOD は外れ MOD (メモ feedback-unchecked-is-junk)、消去の残したい MOD (Hand.keep) もここ。打った前後の比べはエンジンの入口 (outcomeOf の aimDiff)。
  * 分け方は handOutcome の 1 本 (G-1 S-1、11-07): 箱の結果は boxOutcomeOf、手を置く時に起こりうる結果の箱 (possibleOutsOf) は列挙した枝を handOutcome に通して集めるだけ
  */
-import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
 import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
-import { essenceFamilyNormalTiers, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
@@ -28,11 +28,21 @@ export const infiniteAim = (key: string | undefined): boolean => !!key && isInfi
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
 
-/** エッセンス / 合金を打たない時 (前の普通の MOD と段が被る、E-56 をエンジンに聞くだけ = S-33e): 飛ばす / 塞がる。打つ時は null */
+/**
+ * エッセンス / 合金を打たない時 (前の普通の MOD と系統が被る = S-33e): 飛ばす (同格以上) / 塞がる (エッセンスと同じ MOD)。打つ時は null。
+ * 被るかはエンジンの E-56 (essenceTierVerdict) に聞き、同格以上かは木の決まりで値の下限どうしを比べる (11-08 夜オーナー「値で見るしかないよなエッセンスの同じMODファミリーなら」
+ * 「MODの下限が24以下ならかな指標　下限値だけみたらいいよ」「これもツリーruleでしょ」): 付いている普通の MOD の段の値の幅の下限が、エッセンス / 合金で付く値の幅の下限以上なら同格以上。
+ * 値が 2 つ以上ある MOD は全部の値で比べ、1 つでも下回ればエッセンスと同じ MOD。クラフト MOD・タグで被る時は今まで通り塞がる
+ */
 export function essenceHold(data: PatchData, item: StageItem, key: string): "skip" | "blocked" | null {
   if (effectOf(key) !== "essence") return null;
   const v = essenceTierVerdict(data, item, key)?.verdict;
-  return v === "skip" || v === "blocked" ? v : null;
+  if (v !== "skip" && v !== "blocked") return null;
+  const t = isInfiniteEssence(key) ? null : essenceTarget(data, item, key), lows = t?.mod.tiers[essenceTierIndex(t.level, t.mod)]?.ranges.map((r) => r[0] ?? 0);
+  if (!t || !lows) return v;
+  const held = [...item.prefixes, ...item.suffixes];
+  const high = (f: string): boolean => held.some((m) => { const md = data.mods.get(m.modId); return !!md && familiesOf(md).includes(f) && !m.crafted && !isCraftedSource(md.source) && lows.every((lo, i) => (m.ranges[i]?.[0] ?? lo) >= lo); });
+  return familiesOf(t.mod).every(high) ? "skip" : "blocked";
 }
 /** 手を置く時の結果の箱の形 (当たりは札 1 つ) */
 type BoxOut = { out: OutKind; aim: Aim | null; junkKey?: string };
@@ -58,7 +68,66 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   const own = ownOf(doc, b);
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
-  return handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
+  const oc = handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
+  // 次のエッセンス / 合金と同じ系統の MOD が付いた人は「エッセンスと同じ MOD」の箱へ (S-33e ③。その箱がある時だけ)。同格以上は (同格以上) の箱へ (S-33e ⑥)
+  if (oc.out !== "blocked") for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
+    if (b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === key) && sameModKids(doc, b).some((k) => essenceHold(data, after, k) === hold)) return { out: "blocked", hits: [], ...(key ? { junkKey: key } : {}) };
+  }
+  return oc;
+}
+/** 「エッセンスと同じ MOD (同格以上)」の箱の鍵 (S-33e ⑥。前の手でエッセンスと同格以上の同じ系統が付いた人) */
+export const SAME_HI = "hi";
+/**
+ * 箱 from の手の結果の箱 at から to へ進む人の品 (S-33e ⑥ の特例、11-08 オーナー「ツリーの樹で特例お願い」): at が「エッセンスと同じ MOD (同格以上)」で
+ * 既定 (統合) のまま別の箱へ移る人だけ、兄弟のエッセンス / 合金と同じ系統の普通の MOD に crafted (エッセンスで付いた印) を立てる。
+ * 以後の 1 品 1 つ・MOD レベルで切る手の側・カードの札はエンジンがそのまま見る。「新しいツリーを作る」にした箱 (自分の手へ進む) では立てない
+ */
+export function passSameHi(data: PatchData, doc: TreeDoc, from: Pick<TreeBox, "outs">, at: string, to: string, item: StageItem): StageItem {
+  const ab = doc.boxes[at];
+  if (to === at || ab?.out !== "blocked" || ab.junkKey !== SAME_HI) return item;
+  const key = sameModKids(doc, from).find((k) => essenceHold(data, item, k) === "skip");
+  const v = key ? essenceTierVerdict(data, item, key) : null;
+  if (!v) return item; // 同格以上かは木の決まり (essenceHold の値の比べ) で決めた。系統だけエンジンから
+  const mark = (m: StageMod): StageMod => { const md = data.mods.get(m.modId); return md && !m.crafted && !isCraftedSource(md.source) && familiesOf(md).some((f) => v.families.includes(f)) ? { ...m, crafted: true } : m; };
+  return { ...item, prefixes: item.prefixes.map(mark), suffixes: item.suffixes.map(mark) };
+}
+/**
+ * 「エッセンスと同じ MOD」の箱のカードに出す品 (表示だけ。回す時の分け方 essenceHold は変えない): 兄弟のエッセンス / 合金と同じ系統の普通の MOD を、
+ * 乱数の見本の段でなく「エッセンスの値の下限を下回る段のうち一番高い段」(アイテムレベルで付く段) に揃える 。「エッセンスと同じ MOD (同格以上)」の箱は「エッセンスの値の下限以上の段のうち一番低い段」(S-33e、11-08 夜オーナー「エッセンス未満のティアの一番高いティアで表示させてあげて　ここ乱数でしょ。確定MODでいい」「同格以上も揃えて」)
+ */
+export function sameModShown(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem): StageItem {
+  const b = doc.boxes[boxId], p = b?.parent ? doc.boxes[b.parent] : undefined;
+  if (!b || !p || b.out !== "blocked" || (b.junkKey && b.junkKey !== SAME_HI)) return item;
+  const hi = b.junkKey === SAME_HI;
+  const key = sameModKids(doc, p).find((k) => essenceHold(data, item, k) === (hi ? "skip" : "blocked"));
+  const t = key && !isInfiniteEssence(key) ? essenceTarget(data, item, key) : null, lows = t?.mod.tiers[essenceTierIndex(t.level, t.mod)]?.ranges.map((r) => r[0] ?? 0);
+  if (!t || !lows) return item;
+  const fams = familiesOf(t.mod);
+  const fix = (m: StageMod): StageMod => {
+    const md = data.mods.get(m.modId);
+    if (!md || m.crafted || isCraftedSource(md.source) || !familiesOf(md).some((f) => fams.includes(f))) return m;
+    let best = -1;
+    md.tiers.forEach((tr, i) => { if (tr.ilvl <= item.itemLevel && lows.every((lo, k) => (tr.ranges[k]?.[0] ?? lo) >= lo) === hi && (best < 0 || (hi ? tr.ilvl < md.tiers[best]!.ilvl : tr.ilvl > md.tiers[best]!.ilvl))) best = i; });
+    return best < 0 || best === m.tierIndex ? m : { ...m, ...makeStageMod(md, m.side, best, () => 0) };
+  };
+  return { ...item, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) };
+}
+/** 箱 a の結果の箱に置いたエッセンス / 合金の手 (「エッセンスと同じ MOD」の箱を作る相手) */
+const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">): string[] => a.outs.flatMap((id) => { const c = doc.boxes[id]; return c && c.out !== "blocked" && c.hand && effectOf(c.hand.currency) === "essence" ? [c.hand.currency] : []; });
+/**
+ * 箱 a の手の結果に「エッセンスと同じ MOD」の箱が要るか (S-33e ①、11-08 オーナー「エッセンス打つ前の枝だから、枠を増やすのはエッセンスの前に１つ枠を作る形になるよね」):
+ * a の見本に a の手を打った結果のどれかが、結果の箱に置いたエッセンス / 合金と同じ系統の普通の MOD を低い段で持つ (E-56 の塞がる) 時だけ。前の手で付きようが無ければ作らない
+ */
+export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string, hold: "blocked" | "skip" = "blocked"): boolean {
+  const a = doc.boxes[aId], keys = a ? sameModKids(doc, a) : [];
+  if (!a?.hand || !keys.length) return false;
+  for (let i = 1; i <= SINGLE_SEEDS; i++) {
+    const smp = sampleOf(data, doc, aId, i);
+    if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
+    const outs = stepOutcomes(data, smp.item, a.hand.currency, engineOmens(a.hand)) ?? [];
+    if (outs.some((o) => !o.void && keys.some((k) => essenceHold(data, o.item, k) === hold))) return true;
+  }
+  return false;
 }
 /**
  * 手 h の結果の分け (1 本)。own = 当たりの札 (☑。箱なら当たりの箱の札、手を置く時は棚の当たりの候補)、got = 狙いが消えた人に付いたら g: の鍵にする狙い。
@@ -274,8 +343,6 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (veiled) return [...extra.filter(unheldAim).map((a) => ({ out: "hit" as OutKind, aim: a })), ...vs("junk"), ...(veiledLost ? veiledLostOuts() : [])];
   // ✦ の木のフラクチャーも結果は全部箱にする (S-43 の「✦ の当たりだけ箱、外れは費用に足す」は 11-05 撤回。回す時は素のフラクチャーで ✦ の無い MOD も固定されうるのに、
   // 箱が無く行き先無しになっていた = 枝の外れ探しの rowFracStar b9、11-06。S-200 ①)
-  // 同じ系統の普通の MOD が低い段で付きうる手は、見本で塞がらなくても「塞がった」の箱を必ず作る (前の手で付いた人が来うる、S-33e)
-  if (effectOf(h.currency) === "essence" && smps.some((s) => (essenceFamilyNormalTiers(data, s.item, h.currency)?.lower ?? 0) > 0)) found.set("blocked::", { out: "blocked", aim: null });
   const list = [...found.values()];
   // 足す・入れ替える手が外れだけの時も外れ (と消えた) だけ = 箱の下はエンジンの結果と同じ (S-21、11-06 オーナー「直すのはいいけど」。前はまだ付いていない狙いがあると
   // 手の種類の箱へ逃がし、MOD を選ぶ当たりの箱を作ったが、エンジンではどの狙いも付かないので誰も来ない箱だった = 乱数の確かめの高貴のずれ)

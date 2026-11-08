@@ -39,8 +39,8 @@ export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: strin
   pass: { ja: "品質を上げた後", en: "Quality raised", c: "200,184,150", icon: "plus" },
   // 分かれ目の行の箱 (打たずに分けた先。副題は行の条件、splitWhenText)
   branch: { ja: "分かれ目の先", en: "Branch", c: "120,200,190", icon: "arrow-right" },
-  // エッセンス / 合金が前の普通の MOD の低い段で塞がった (手は使わない、S-33e)
-  blocked: { ja: "塞がった", en: "Blocked", c: "196,140,90", icon: "x" },
+  // 次のエッセンス / 合金と同じ系統の MOD が前の手で付いた (エッセンスを打つ前の分かれ、S-33e。合金の時の題は headOf。11-08 オーナー「エッセンスと同じMOD　でいいと思う」)
+  blocked: { ja: "エッセンスと同じ MOD", en: "Same mod as the essence", c: "196,140,90", icon: "x" },
 };
 
 /** 分かれ目の 1 行の条件の文 (画面で選べる 4 つ + 組み合わせ。空 = それ以外) */
@@ -85,13 +85,21 @@ export const modShort = (text: string): string => text
   // 「ダメージは(9-15)%の元素耐性」「(20-30)%の確率で」「(32-45)のルーンワード」は「数%の」ごと落とす (前は「ダメージはの元素耐性」と崩れた)
   .replace(new RegExp(`${VAL}%?の`, "g"), "")
   .replace(/[+-]?\([^)]*\)/g, "").replace(new RegExp(String.raw`(?<![\d.]|分の)[+-]?\d+(?:\.\d+)?%?(?![\d.]|${COUNTER})`, "g"), "").replace(/%/g, "").replace(/が(増加|減少)する$/, "").replace(/\s+/g, " ").trim() || text;
+/** 「エッセンスと同じ MOD」の箱の題。兄弟の箱の手が合金なら「合金と同じ MOD」(S-33e) */
+export function sameModHead(parent: string | null): string {
+  const doc = useTree().doc.value, keys = (doc.boxes[parent ?? ""]?.outs ?? []).flatMap((o) => { const h = doc.boxes[o]?.hand; return h && effectOf(h.currency) === "essence" ? [h.currency] : []; });
+  const alloy = keys.length > 0 && keys.every((k) => /合金|Alloy/i.test(nameOfKey(k, null)));
+  return alloy ? tr("合金と同じ MOD", "Same mod as the alloy") : outName("blocked");
+}
 /**
  * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
  * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
  */
-export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
+export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null; junkKey?: string }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
+  // 同格以上 (鍵 hi) は「(同格以上)」を足す (S-33e ⑥)
+  if (b.out === "blocked") return sameModHead(b.parent ?? null) + (b.junkKey === "hi" ? tr(" (同格以上)", " (same tier or higher)") : "");
   // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(S-42)
   const fixed = ph?.pick === "random" || (!!ph && effectOf(ph.currency) === "fracture");
   const free = fixed && !!ph?.free;

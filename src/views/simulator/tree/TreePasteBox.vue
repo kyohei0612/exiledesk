@@ -7,11 +7,11 @@
 import { ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import HelpTip from "../../../components/ui/HelpTip.vue";
-import { usePhone } from "../../../utils/use-phone";
+import { useViewOnlyWidth } from "../../../utils/use-phone";
 import { tr } from "../../../i18n/lang";
 import { pasteWhy, requestPaste } from "./tree-paste";
 
-const phone = usePhone();
+const phone = useViewOnlyWidth();
 const text = ref("");
 /** スマホでクリップボードが読めなかった時は欄を出す */
 const showArea = ref(false);
@@ -31,11 +31,11 @@ async function fromClipboard(): Promise<void> {
   <!-- PC は 1 行 (題・? の説明・欄・取り込む)。アミュレットの段が 1660×860 で画面の下の外だった、10-26 モンキー 7 の 20。スマホはボタン 1 つで今のまま -->
   <!-- 枠の帯にせず、レアリティ・アイテムレベルと同じ行の右に並ぶ道具 (11-03 オーナー「ここのUIがあまりにも終わってる」、S-08) -->
   <div data-tree-paste class="text-[13px]">
-    <div class="flex min-w-0 items-center gap-2 max-md:flex-wrap">
+    <div class="flex min-w-0 items-center gap-2 max-[48rem]:flex-wrap">
       <p class="flex shrink-0 items-center gap-1.5 text-amber-100/90"><Icon name="copy" class="size-4" />{{ tr("アイテムを貼り付けて取り込む", "Import an item by pasting") }}<HelpTip :text="tr('トレード・poe.ninja・ゲームの Ctrl+C の文を貼ると、ベースと付いている MOD (完成の狙い) が入ります (シミュのどの画面で Ctrl+V しても同じ)', 'Paste text from the trade site, poe.ninja or in-game Ctrl+C: the base and its mods (as final targets) are filled in (Ctrl+V works on any simulator screen)')" /></p>
       <button v-if="phone && !showArea" type="button" data-tree-paste-clip class="g-btn min-h-11 w-full" @click="fromClipboard">{{ tr("コピーした文を貼り付けて取り込む", "Paste the copied text and import") }}</button>
       <template v-else>
-        <textarea v-model="text" data-tree-paste-area rows="1" spellcheck="false" class="h-[30px] min-w-0 flex-1 resize-none overflow-hidden rounded-md border border-white/20 bg-black/40 px-2 py-[5px] text-[12px] leading-[18px] outline-none placeholder:text-white/45 focus:border-amber-400/60 max-md:basis-full" :placeholder="tr('ここに貼る (Ctrl+V) と取り込む', 'Paste here (Ctrl+V) to import')" @paste="onPaste" />
+        <textarea v-model="text" data-tree-paste-area rows="1" spellcheck="false" class="h-[30px] min-w-0 flex-1 resize-none overflow-hidden rounded-md border border-white/20 bg-black/40 px-2 py-[5px] text-[12px] leading-[18px] outline-none placeholder:text-white/45 focus:border-amber-400/60 max-[48rem]:basis-full" :placeholder="tr('ここに貼る (Ctrl+V) と取り込む', 'Paste here (Ctrl+V) to import')" @paste="onPaste" />
         <button type="button" data-tree-paste-go class="g-btn sm shrink-0" :disabled="!text.trim()" @click="run(text)">{{ tr("取り込む", "Import") }}</button>
       </template>
     </div>

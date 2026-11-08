@@ -12,9 +12,9 @@ const emit = defineEmits<{ hold: [] }>();
 </script>
 
 <template>
-  <button type="button" data-tree-reveal-card :aria-pressed="on" class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition md:w-[80px] md:text-[11px]" :class="on ? 'text-[var(--exile-color-text-title)]' : ''"
+  <button type="button" data-tree-reveal-card :aria-pressed="on" class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition min-[48rem]:w-[80px] min-[48rem]:text-[11px]" :class="on ? 'text-[var(--exile-color-text-title)]' : ''"
     :title="tr('発現 (魂の井戸): 未発現の冒涜 MOD を 3 つの候補から選んで付ける', 'Reveal (the Well of Souls): pick one of 3 options for the unrevealed desecrated mod')" @click="emit('hold')">
-    <span class="g-slot grid size-[52px] place-items-center ring-1 ring-violet-400/50 md:size-[56px]" :class="on ? 'on' : ''"><img v-if="iconOf(ECHO)" :src="iconOf(ECHO)" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" /></span>
+    <span class="g-slot grid size-[52px] place-items-center ring-1 ring-violet-400/50 min-[48rem]:size-[56px]" :class="on ? 'on' : ''"><img v-if="iconOf(ECHO)" :src="iconOf(ECHO)" alt="" class="h-9 w-9 object-contain min-[48rem]:h-[42px] min-[48rem]:w-[42px]" draggable="false" /></span>
     <span class="mt-0.5 min-h-[2.5em] text-center leading-tight">{{ tr("発現", "Reveal") }}</span>
   </button>
 </template>

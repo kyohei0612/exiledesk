@@ -154,7 +154,8 @@ function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKi
   if (oc.junkKey) { const k = b.outs.find((id) => doc.boxes[id]?.junkKey === oc.junkKey && (oc.out !== "lost" || doc.boxes[id]?.out === "lost") && (oc.out === "lost" || doc.boxes[id]?.out !== "lost") && (oc.out !== "hit" || !oc.hits.length || (doc.boxes[id]?.out === "hit" && boxAims(doc.boxes[id]!).some((x) => oc.hits.some((a) => sameAim(data, a, x)))))); if (k) return k; }
   // 種類がぴったり合う箱を先に (打った後の箱と狙いが消えたの箱が並ぶ時、狙いが消えた人を打った後へ入れない。10-25 起こりうる結果の箱 possibleOutsOf)
   // まとめた結果の箱 (mergedOuts) はまとめた種類も受ける (10-26)
-  const exact = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && (c.out === oc.out || !!c.mergedOuts?.includes(oc.out)) && c.out !== "hit"; });
+  // 「エッセンスと同じ MOD」の 2 つの箱 (低い段 / 同格以上の鍵 hi、S-33e) は鍵まで合わせる
+  const exact = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && (c.out === oc.out || !!c.mergedOuts?.includes(oc.out)) && c.out !== "hit" && (c.out !== "blocked" || (c.junkKey ?? "") === (oc.junkKey ?? "")); });
   if (exact) return exact;
   return b.outs.find((id) => {
     const c = doc.boxes[id];

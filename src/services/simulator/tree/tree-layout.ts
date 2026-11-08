@@ -6,6 +6,8 @@ import { centerMerged, noteLaid, rowTops, settleRows } from "./tree-row-tops";
 
 /** 兄弟の並び = 狙いどおりが左 (S-142d、11-08 オーナー「狙い通りは基本左」): 当たり・打った後 → 外れが消えた (残したい MOD が残った) → 狙いが消えた → 外れ → 塞がった (S-33e) */
 export const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, junkGone: 1, lost: 2, junk: 3, blocked: 4 };
+/** 兄弟の中の順 (OUT_ORDER)。「エッセンスと同じ MOD (同格以上)」(鍵 hi = tree-outcome の SAME_HI) はエッセンスの当たりと同じ扱いで進むので、狙いどおり (当たり・打った後) のすぐ右隣 (S-33e ⑥、11-08 夜オーナー「打った後の理想形は必ず左ね、そのっ隣に置けって話一緒に進行する奴は」) */
+export const outRank = (b: Pick<TreeBox, "out" | "junkKey">): number => (b.out === "blocked" && b.junkKey === "hi" ? 0.5 : OUT_ORDER[b.out]);
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
 /** 親から 2 行以上下の子へ降りる縦の線の、輪郭に入れる幅 (箱の真ん中から左右) */
@@ -30,7 +32,7 @@ function rowsOf(kids: (id: string) => string[]): Map<string, number> {
 export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, heightOf?: (id: string) => number): void {
   const kids = (id: string): string[] => {
     const b = d.boxes[id]!;
-    b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
+    b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
     // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は場所を取らない
     const dep = (x: string): number => { let n = 0; for (let q = d.boxes[x]; q?.parent; q = d.boxes[q.parent]) n++; return n; };
     return b.outs.filter((o) => { const c = d.boxes[o]!; return !(c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back] && dep(o) === dep(c.back)); });

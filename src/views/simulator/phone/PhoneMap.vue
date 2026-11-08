@@ -73,7 +73,7 @@ function look(id: string): { fill: string; stroke: string; sw: number; op: numbe
   return { fill: `rgba(${c},${me ? 0.85 : out ? 0.55 : 0.3})`, stroke: me ? "rgb(253,230,138)" : back ? "rgb(103,232,249)" : out ? `rgb(${c})` : `rgba(${c},0.55)`, sw: me || back || out ? 2.5 : 1.5, op: 1 };
 }
 /** 箱の短い名前 (図が大きく箱が 28px 以上の時だけ箱の中に出す) */
-const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], pass: ["品質", "Qual"], branch: ["分岐", "Split"], blocked: ["塞がり", "Blocked"] };
+const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], pass: ["品質", "Qual"], branch: ["分岐", "Split"], blocked: ["同じ MOD", "Same mod"] };
 const shortOf = (id: string): string => { const s = SHORT[q.doc.value.boxes[id]?.out ?? ""]; return s ? tr(s[0], s[1]) : ""; };
 /**
  * 色の見方 (大きく開いた時だけ図の下に。木が横に広いと箱が 22px ほどで中の字が出せないので、木にある結果の種類を色と名前で並べる。10-26 夜オーナー OK の 7)

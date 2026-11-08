@@ -63,7 +63,8 @@ export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>): { r
       const to = pos(t);
       const lid = `${id}>${t}`;
       // 統合 (当たり → 当たり) は戻りの線の道でなく、向き合う辺どうしを箱を避けて結ぶ (joinPath を呼ぶ側で)
-      if (b.out === "hit" && doc.boxes[t]?.out === "hit") { lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: "join" }); continue; }
+      // 「エッセンスと同じ MOD (同格以上)」の既定もエッセンスの当たりの箱へ統合 (S-33e ⑥、オーナー 11-08「おなじ枠のマーク」)
+      if ((b.out === "hit" || (b.out === "blocked" && b.junkKey === "hi")) && doc.boxes[t]?.out === "hit") { lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: "join" }); continue; }
       const flip = p.x + p.w / 2 > to.x + to.w / 2;
       // 行き先へは箱の上の、段の間の空いた高さ (箱の上 24) で入る。箱の上の端の高さは同じ段のほかの箱で塞がり、木の外を大回りした (10-28 夜オーナー「水色の…ふるい感じのきょどう」)。前は箱の横の辺の真ん中 = MOD の行に刺さった
       reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w - 24 : to.x + 24, y: to.y - 24 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });

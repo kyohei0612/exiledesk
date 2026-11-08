@@ -55,16 +55,8 @@ const badge = computed(() => {
 });
 /** 札の印 (上級・完全など) を出しているか */
 const badgeShown = computed(() => !!badge.value && !props.nobadge && !props.corner);
-/**
- * 札に出す名前。印と同じ言葉は外す (「高貴なオーブ (上級)」→「高貴なオーブ」、英語は「Greater Exalted Orb」→「Exalted Orb」)。
- * 読み上げ・説明の窓は外さない名前のまま (印は読み上げに入らない)。スイッチ shelfTierName
- */
-const shownName = computed(() => {
-  const n = props.label ?? nameOf(props.k);
-  if (!badgeShown.value || !flag("shelfTierName")) return n;
-  const [ja, en] = badge.value![1];
-  return n.endsWith(` (${ja})`) ? n.slice(0, -` (${ja})`.length) : n.startsWith(`${en} `) ? n.slice(en.length + 1) : n;
-});
+/** 札に出す名前。印があっても「(上級)」「(完全)」は外さない (U-13b の撤回、2026-11-08 オーナー「アイコンに完全上級ついててもやっぱりカレンシー名に上級完全ほしいみたい」) */
+const shownName = computed(() => props.label ?? nameOf(props.k));
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
 const shelf = useShelf();
 // 名前・絵・値段は棚のアイテムで引く (シミュの棚は箱の見本を渡す。今のエミュのアイテムで引くと骨の名前と値段がずれた。2026-10-24 シミュ部長)

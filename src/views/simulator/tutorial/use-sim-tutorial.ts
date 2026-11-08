@@ -13,7 +13,6 @@ import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
-import { tidyStep } from "../../../services/simulator/tree/tree-junk-tidy";
 import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { tutData, type TutStepDef } from "./tut-data";
 import { aimSel, aimsChecked, checked, handOpen, holding, inFrame, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
@@ -61,8 +60,6 @@ export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
   // スマホは完成が自動 (S-91) なので札の「次へ」で済み (P10)、帯の代わりは全体図を開いて閉じる (P11)
   if (st.kind === "done") return tutPhone.value ? notesDone.value.includes(st.id) : !!r[st.box] && d.boxes[r[st.box]!]?.done === "main";
   if (st.kind === "fail") return !!r[st.box] && d.boxes[r[st.box]!]?.done === "fail";
-  // ハズレ整理を押した = 整理の段を過ぎた (S-192。押した後は手を足しても整理の段へ戻らない)
-  if (st.kind === "tidy") return tidyStep(d) !== "tidy";
   if (st.kind === "unset" && tutPhone.value) return mapSeen.value && !overviewOpen();
   // 帯の「次へ」を押した (または押した先の dj にもう手がある = 前に押した)
   if (st.kind === "unset") return barUsed.value || !!(r.dj && d.boxes[r.dj]?.hand);
@@ -138,7 +135,6 @@ function pcNow(c: TutCtx): TutNow {
     return inHand(st, k, names, () => inChecks(st, k, names) ?? { key: k("use"), target: "[data-tree-hand-card]", draft: say("左のアイテムのカードを押して、この手にする", "Click the item card on the left to make it this craft") });
   }
   if (st.kind === "done") return { key: k("main"), target: r[st.box] ? `done:${r[st.box]}` : null, draft: say(`「${c.boxName(st.box)}」の箱の「完成」を押す`, `Click "Done" on the "${c.boxName(st.box, true)}" box`) };
-  if (st.kind === "tidy") return { key: k("main"), target: "[data-tree-tidy]", draft: say("上の帯の「ハズレ整理」を押す", "Click \"Sort misses\" in the bar at the top") };
   if (st.kind === "fail") {
     const id = r[st.box];
     if (!id) return { key: k("missing"), target: null, act: "undo", draft: MISSING };
@@ -229,7 +225,10 @@ export function useSimTutorial() {
     if (!n || !st) return { say: ["", ""], why: ["", ""], written: false };
     const w = tutData.value.texts[n.key];
     if (w && (w.ja || w.en)) return { say: [w.ja, w.en], why: ["", ""], written: true };
-    return { say: n.draft, why: DRAFT_WHY[st.id]?.(names) ?? ["", ""], written: false };
+    const why = DRAFT_WHY[st.id]?.(names) ?? ["", ""];
+    // 帯の「次へ」で寄る場面は、寄った先の手の訳の頭に一言 (見出しと本文が別の事を言わない)
+    if (n.key.endsWith(".bar") && why[0]) return { say: n.draft, why: [`未設定の箱へ寄ってから: ${why[0]}`, `After jumping to the unset box: ${why[1]}`], written: false };
+    return { say: n.draft, why, written: false };
   });
   /** 文だけの手順・スマホの自動の完成 (P10) の「次へ」 */
   function nextNote(): void { const st = step.value; if (st && (st.kind === "note" || st.kind === "done") && !notesDone.value.includes(st.id)) notesDone.value = [...notesDone.value, st.id]; }

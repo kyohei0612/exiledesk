@@ -37,7 +37,7 @@ import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { qualityUndecided } from "./tree-goal-quality";
-import { isPhoneWidth } from "../../../utils/use-phone";
+import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import { useGoalShown } from "./use-goal-shown";
 import { isCraftAim } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
@@ -247,14 +247,14 @@ const HELP: Array<[string, string, boolean?]> = [
   ["印が無ければ「決めた」の後の窓で、フラクチャーにする MOD を選ぶか白ベース (フラクチャー無し) から", "No mark: after Done, pick the mod to fracture or start from a white base (no fracture)"],
 ];
 /** 説明はスマホでは既定で閉じる (カードの下で MOD の行が画面の外へ押し出された、10-26 猿の 10)。PC は開いたまま */
-const helpOpen = ref(!isPhoneWidth());
+const helpOpen = ref(innerWidth >= VIEW_ONLY_MAX);
 // 2 の段に着いたら上から (ベースの一覧を送った位置のまま着き、カードと狙いの行が見えなかった、10-26 猿の 1)
 watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scrollTo(0, 0)); });
 </script>
 
 <template>
   <!-- ページで出している間は高さを決めず、本文の送りの箱も外す (ページごと送る。1 の段 = 10-23 オーナー「エミュと同じ展開時の表示の仕方」、2 の段 = 10-24 オーナー「一覧の中に別のスクロールの箱を作らない」)。窓の時は窓の本文 1 つで送る -->
-  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked) && fracDone" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%] max-md:h-full'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
+  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked) && fracDone" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-[48rem]:!border-0 max-[48rem]:[border-image:none] max-[48rem]:!bg-none max-[48rem]:!p-0' : 'w-full') : 'w-[88%] h-[86%] max-[48rem]:h-full'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-[48rem]:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
     <template #subheader>
       <!-- 流れの 4 段の帯 (ツリーのページの上と同じ部品 TreeFlowSteps、10-24 オーナー)。初手 (ベース未選択) の間は 2 から先は押せない。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
@@ -268,7 +268,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
       <!-- 適正でアイテムレベルを変えた時の一言 (10-24 オーナー: 黙って変わると気づかない、文字は最低限で閉じられる形) -->
       <p v-if="t.ilvlNote.value && t.ilvlNote.value.to === t.doc.value.itemLevel" data-tree-ilvl-note class="flex min-w-0 items-center gap-2 px-3 pb-2 text-[12px] text-amber-200/90">
-        <span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
+        <span class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
       <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67) -->
@@ -284,7 +284,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <span class="min-w-0 flex-1 break-words">{{ tr(`完成の狙いに無い当たりの箱が木に ${orphans.length} 個残っている: ${orphanNames}`, `${boxesEn(orphans.length, "hit ")} in the tree use a target that is no longer final: ${orphanNames}`) }}</span>
         <button type="button" data-tree-goal-undo class="g-btn sm shrink-0" :disabled="!t.canUndo.value" @click="t.undo">{{ tr("1 つ戻す", "Undo") }}</button>
       </p>
-      <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
+      <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
       <!-- 初めての時だけ、何ができるかの 1 行 (前は共通の BasePickBody の枠の箱。枠を重ねず字だけに、11-03 オーナー「ここのUIがあまりにも終わってる」) -->
@@ -293,11 +293,11 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
            チュートリアルは段の札の右のボタン 1 つ (11-03 オーナー、前は金の帯と貼り付けの帯が横に並んでいた) -->
       <div class="flex min-w-0 flex-wrap items-center gap-x-8 gap-y-2 border-b border-white/10 pb-3">
         <TreeBasePick />
-        <TreePasteBox class="min-w-[420px] flex-1 max-md:min-w-0 max-md:basis-full" @done="onPasted" />
+        <TreePasteBox class="min-w-[420px] flex-1 max-[48rem]:min-w-0 max-[48rem]:basis-full" @done="onPasted" />
       </div>
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
-        <p class="min-w-0 flex-1 max-md:basis-full">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
+        <p class="min-w-0 flex-1 max-[48rem]:basis-full">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
         <!-- 保存は名前を聞かずその場で (開いていたレシピなら上書き、tree-save.ts。10-26 オーナー「保存しますかって聞かれたら保存でおｋ」) -->
         <button type="button" data-tree-base-save class="g-btn sm" @click="changeBase(true)">{{ tr("保存して替える", "Save and change") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="changeBase(false)">{{ tr("保存せず替える", "Change without saving") }}</button>
@@ -309,7 +309,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         @pick="pick" />
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
-    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
+    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[48rem]:flex-col max-[48rem]:items-stretch">
       <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="t.goalItem.value?.item ?? null" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)">
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
@@ -334,7 +334,10 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める。上端から 12px = ページの留まる物の top-3 と同じ、11-03) -->
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
-      <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
+      <!-- 右の列は貼り付けない (sticky だと列が画面より高い時に品質・ルーンの下が見切れた。窓全体の 1 つのスクロールで左の一覧と一緒に動く、11-08 夜オーナー「スクロールのセットで動かしちゃっていいよ」) -->
+      <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[48rem]:order-first min-[48rem]:w-[480px]">
+        <!-- 次へ (決めた) は完成形のカードの上 (11-08 夜オーナー「決定ボタン完成形カードの上にしてくれ」。前は説明の下 = S-10d)。スマホは窓の一番下 -->
+        <div class="pb-1 max-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
@@ -345,22 +348,20 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="overLeft.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${overLeft.length} つ (枠の外。どれかが付けば当たり)`, `${overLeft.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
-          <p v-for="a in overLeft" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
+          <p v-for="a in overLeft" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
         </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
         <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」) -->
         <details data-tree-goal-help-wrap :open="helpOpen" @toggle="helpOpen = ($event.target as HTMLDetailsElement).open">
-          <summary class="cursor-pointer text-[12px] opacity-70 md:hidden">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
+          <summary class="cursor-pointer text-[12px] opacity-70 min-[48rem]:hidden">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
           <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
             <li data-tree-goal-attach-help>{{ tr("付ける: 付け方 (ふつう・フラクチャー・冒涜) を選ぶ。その付け方で出ない物は灰色で、押すと訳。冒涜は付け方の覚えだけ (何個でも)。エッセンスの MOD は「ふつう」で付ける", "Add: pick how it is added (Normal / Fracture / Desecrate). Greyed ways can't give that mod; click for why. Desecrate is only a note (any number). Essence mods use Normal") }}</li>
-            <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-md:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
+            <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-[48rem]:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
           </ul>
         </details>
-        <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。浮かせずに列の一番下 (S-10d、11-07 オーナー「なんでツリーへボタン浮いてんだ」「説明の下だね」)。スマホは窓の一番下 -->
-        <div class="pt-1 max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
       <!-- スマホはカードの列が上に積まれるので、「決めた」は窓の一番下 (一覧の後) に普通に置く (貼り付けない、S-10d) -->
-      <div class="py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+      <div class="py-2 min-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
     </div>
     <!-- 下の帯は 2 完成の MOD の段だけで「← ベース」を控えめに。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」)。
          「決めた」(決める手の赤 g-btn-red、1 画面 1 つ) はカードと説明の下へ移した (10-24 オーナー) -->

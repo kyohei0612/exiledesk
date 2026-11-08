@@ -15,13 +15,14 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
+import { needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
-import { depthOf, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { depthOf, shallow, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, drop, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { backChoicesOf } from "./use-tree-link";
 import { revealAimsOf } from "./tree-reveal-aims";
@@ -294,7 +295,58 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   pinDivineMisses(d);
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
+  if (data) syncSameMod(data, d, d.boxes[at]?.parent ?? null);
+  linkAllSameHi(d);
   return at;
+}
+
+/**
+ * 「エッセンスと同じ MOD」の箱 (S-33e ①) を箱 a の手の結果にそろえる: 結果の箱のエッセンス / 合金と同じ系統が前の手で付きうれば 1 つ足し、
+ * 要らなくなった (エッセンスの手を外した・替えた) 手も ↩ も無い箱は消す。足した箱の id (無ければ null)
+ */
+export function syncSameMod(data: PatchData, d: TreeDoc, a: string | null): string | null {
+  const p = a ? d.boxes[a] : undefined;
+  if (!p?.hand) return null;
+  let made: string | null = null;
+  for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
+    const has = p.outs.find((id) => d.boxes[id]?.out === "blocked" && d.boxes[id]?.junkKey === key);
+    if (needsSameMod(data, d, p.id, hold)) {
+      const id = has ?? addOut(d, p.id, "blocked", key);
+      if (!has) made ??= id;
+      if (key) linkSameHi(d, id);
+      continue;
+    }
+    // 要らなくなった (エッセンスの手を外した・替えた) 箱は、人の決め (手・人が付けた ↩・完成 / 失敗) が無ければ消す
+    const c = has ? d.boxes[has] : undefined;
+    if (c && !c.hand && (!c.back || c.autoBack) && !c.done) { drop(d, [c.id]); p.outs = p.outs.filter((o) => o !== c.id); }
+  }
+  return made;
+}
+/**
+ * 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥) の既定 = エッセンスと同じ枠で扱う: 兄弟の箱のエッセンス / 合金の当たりの箱へ統合の ↩ (鎖の印)。
+ * 人が「新しいツリーを作る」を押した箱 (ownTree) と手のある箱はつながない。自動の直し (打てない人の ↩ 外しなど) で立った noAutoBack では外さない
+ * (11-08 夜オーナー「デフォでエッセンスと同じとして扱うにしてくれあとボタン押さんと扱わないからこれだと」= 手元の木で統合が外れて未設定に落ちていた)
+ */
+function linkSameHi(d: TreeDoc, id: string): void {
+  const b = d.boxes[id], p = b ? d.boxes[b.parent ?? ""] : undefined;
+  if (!b || !p || b.hand || b.ownTree || b.done || (b.back && !b.autoBack)) return;
+  const hit = p.outs.flatMap((o) => { const c = d.boxes[o]; return c?.hand && effectOf(c.hand.currency) === "essence" ? c.outs : []; }).find((o) => d.boxes[o]?.out === "hit");
+  if (hit) { b.back = hit; b.autoBack = true; delete b.noAutoBack; }
+}
+/** 木の中の「エッセンスと同じ MOD (同格以上)」の箱を全部、既定の統合にそろえる (手を決めた後・開いた時の組み直しの後) */
+export function linkAllSameHi(d: TreeDoc): void {
+  for (const b of Object.values(d.boxes)) if (b.out === "blocked" && b.junkKey === SAME_HI) linkSameHi(d, b.id);
+}
+/** 「エッセンスと同じ MOD (同格以上)」の箱を 新しいツリーを作る (own = true、↩ を外して ＋ を出す) / エッセンスと同じ枠で扱う (false、既定へ戻す) (S-33e ⑥) */
+export function setSameHiOwn(d: TreeDoc, id: string, own: boolean): void {
+  const b = d.boxes[id];
+  if (!b || b.out !== "blocked" || b.junkKey !== SAME_HI) return;
+  if (own) { b.back = null; delete b.autoBack; b.noAutoBack = true; b.ownTree = true; return; }
+  // 「新しいツリーを作る」の後に足した手は外して統合へ戻す (2 ボタンは手の後も出す、S-33e ⑥。1 つ戻すで戻せる)
+  delete b.noAutoBack; delete b.ownTree;
+  if (b.hand) clearHand(d, id);
+  b.done = null; b.back = null; delete b.autoBack;
+  linkSameHi(d, id);
 }
 
 /**
@@ -370,7 +422,8 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
   // 見るのは木を変えずに 1 回 (見本ごとに配置の鍵の JSON を作り直していた、S-28g の 8 MOD で 0.37 秒)、外すのはその後
   const drop = holdDocSig(d, () => Object.values(d.boxes).filter((b) => {
     const to = b.back && b.autoBack ? d.boxes[b.back]?.hand : null;
-    if (!to) return false;
+    // 「エッセンスと同じ MOD (同格以上)」の統合は特例でエッセンスとして扱うので外さない (S-33e ⑥)
+    if (!to || (b.out === "blocked" && b.junkKey === SAME_HI)) return false;
     for (let seed = 1; seed <= 8; seed++) {
       const s = sampleOf(data, d, b.id, seed);
       if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;
@@ -378,12 +431,12 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
     }
     return false;
   }), true);
-  // ほかに打てる同じ枠の候補が 1 つだけならそこへ自動で付け直す (2 つ以上は人が「↩ 戻り先を選ぶ (n 個)」で選ぶ、S-52b・S-193、11-08。
+  // ほかに打てる同じ枠の候補があれば浅い段・先に作った箱へ自動で付け直す (S-52b・S-193、11-08。戻り先はいつも 1 つ、人が選ぶボタンは無い。
   // 前は次の候補を試さず未設定にした = 0yH8kjGg の b38、浅い方のエッセンスは打てずカオスの箱は打てた)
   for (const b of drop) {
-    const was = b.back, alt = backChoicesOf(data, d, b.id).filter((to) => to !== was);
+    const was = b.back, alt = backChoicesOf(data, d, b.id).filter((to) => to !== was).sort(shallow(d));
     setBack(d, b.id, null); b.noAutoBack = true;
-    if (alt.length === 1) { setBack(d, b.id, alt[0]!); b.autoBack = true; }
+    if (alt.length) { setBack(d, b.id, alt[0]!); b.autoBack = true; }
   }
 }
 /** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */
@@ -408,7 +461,8 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
   const made: string[] = [], seen = new Set<string>();
   for (const m of frameOfDoc(data, d).miss) {
     const k = `${m.box}|${m.oc.out}|${m.oc.junkKey ?? ""}`;
-    if (!m.from || m.oc.out === "hit" || seen.has(k) || !d.boxes[m.box]) continue;
+    // 「エッセンスと同じ MOD」の箱は 1 つ前の手の結果にだけ作る (syncSameMod)。エッセンスの手の下には足さない (S-33e ①)
+    if (!m.from || m.oc.out === "hit" || m.oc.out === "blocked" || seen.has(k) || !d.boxes[m.box]) continue;
     seen.add(k);
     made.push(addOut(d, m.box, m.oc.out, m.oc.junkKey));
   }

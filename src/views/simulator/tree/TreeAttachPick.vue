@@ -77,10 +77,10 @@ const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.t
       <div v-if="open" ref="menu" data-mod-attach-ways role="menu" class="fixed z-[360] overflow-hidden rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]" :style="style">
         <p class="px-3 pb-1 pt-0.5 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${rank} 以上の付け方`, `How to add ${rank}+`) }}</p>
         <!-- 付けられない物も残して灰色。disabled にすると乗せても理由が出ないので aria-disabled (エミュと同じ) -->
-        <button v-for="w in ATTACH_WAYS" :key="w" type="button" role="menuitem" class="flex w-full items-center px-3 py-1.5 text-left text-[13px] max-md:py-2.5"
+        <button v-for="w in ATTACH_WAYS" :key="w" type="button" role="menuitem" class="flex w-full items-center px-3 py-1.5 text-left text-[13px] max-[48rem]:py-2.5"
           :class="blockOf(w) ? 'cursor-not-allowed text-white/30' : here === w ? (w === 'fracture' ? 'text-mod-fractured' : 'text-amber-200') : 'text-[var(--exile-color-text-primary)] hover:bg-amber-500/15 hover:text-[#f3e2b8]'"
           :data-attach-way="w" :aria-disabled="!!blockOf(w)" :title="blockOf(w) ?? undefined" @click.stop="choose(w)">{{ here === w ? "✓ " : w === "fracture" ? "✦ " : "" }}{{ wayName(w) }}</button>
-        <button v-if="aim" type="button" role="menuitem" data-attach-off class="flex w-full items-center border-t border-white/10 px-3 py-1.5 text-left text-[13px] text-rose-200 hover:bg-rose-500/15 max-md:py-2.5" @click.stop="detach">{{ tr("外す", "Remove") }}</button>
+        <button v-if="aim" type="button" role="menuitem" data-attach-off class="flex w-full items-center border-t border-white/10 px-3 py-1.5 text-left text-[13px] text-rose-200 hover:bg-rose-500/15 max-[48rem]:py-2.5" @click.stop="detach">{{ tr("外す", "Remove") }}</button>
         <p v-if="why" data-attach-why class="mx-2 mb-1 mt-1 break-words rounded bg-rose-500/10 px-2 py-1 text-[11px] text-rose-100">{{ why }}</p>
       </div>
     </Teleport>

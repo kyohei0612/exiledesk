@@ -51,10 +51,6 @@
       "box": "d"
     },
     {
-      "id": "tidy",
-      "kind": "tidy"
-    },
-    {
       "id": "miss-annul",
       "kind": "hand",
       "box": "x1",

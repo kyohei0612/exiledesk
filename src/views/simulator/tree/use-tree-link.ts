@@ -46,8 +46,8 @@ export function backLinkOf(d: PatchData, docv: TreeDoc, id: string): Map<string,
   }
 }
 /**
- * 同じ枠で手の打てる戻り先の候補 (始まりの箱も入る、分かれ目は入れない)。2 つ以上の未設定の箱だけ「↩ 戻り先を選ぶ (n 個)」、1 つなら自動でつなぐ
- * (S-52b、11-08 オーナー「戻り先が複数ある場合ライトアップさせてどっちか選択させた方が良いわ…ない場合単独なんだからさ」)
+ * 同じ枠で手の打てる戻り先の候補 (始まりの箱も入る、分かれ目は入れない)。打てない人がいて外した自動の ↩ の付け直しが、浅い 1 つを選ぶのに使う
+ * (S-52b・S-193。人が選ぶ「↩ 戻り先を選ぶ (n 個)」は 11-08 夜に無くした)
  */
 export const backChoicesOf = (d: PatchData, doc: TreeDoc, id: string): string[] => [...backLinkOf(d, doc, id)].filter(([to, why]) => why === null && !doc.boxes[to]?.split).map(([to]) => to);
 

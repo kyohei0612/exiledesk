@@ -11,7 +11,7 @@ import type { StageItem } from "../../craft-stage/types";
 export const RECIPE_V1 = "exiledesk-recipe/1";
 /** 箱 1 つの人の決め。at = 道の札、hand = 打つ手 (☑ は aims、触媒の前のカタリストは pre)、ほかは箱の印 */
 /** back = 前の版で人が選んだ ↩ の行き先 (道の札、または形の合う箱へ match・作り直し restart。S-52b の「読めてそのまま回る」、組み直しで付け直す) */
-export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: string; done?: "main" | "fail"; note?: string; unwanted?: string[]; noAutoBack?: true; back?: string }
+export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: string; done?: "main" | "fail"; note?: string; unwanted?: string[]; noAutoBack?: true; ownTree?: true; back?: string }
 /** 要確認の一覧 (S-107、⑦20 案 A): 組み直した木に札が無い決め (gone)・前の版の人の ↩ (back)・分かれ目 (split)・読めなかった箱 (check)。保存し直しても持ち越す */
 export interface RecipeOrphan { at: string; why: "gone" | "back" | "split" | "check"; raw: unknown }
 
@@ -96,6 +96,7 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
     if (b.note) p.note = b.note;
     if (b.unwanted?.length) p.unwanted = [...b.unwanted];
     if (b.noAutoBack) p.noAutoBack = true;
+    if (b.ownTree) p.ownTree = true;
     if (b.back && !b.autoBack && !b.handBack) { const to = b.back === "match" || b.back === "restart" ? b.back : keys.get(b.back); if (to) p.back = to; else orphans.push({ at, why: "back", raw: { back: b.back } }); }
     if (b.split) orphans.push({ at, why: "split", raw: { split: clone(b.split) } });
     if (b.check) orphans.push({ at, why: "check", raw: clone(b.checkRaw ?? null) });

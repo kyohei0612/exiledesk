@@ -8,7 +8,7 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, catalystOf, hasCatalystQuality, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, catalystOf, hasCatalystQuality, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { TIER } from "../../../state/for-share/tier-word";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
@@ -17,7 +17,7 @@ import { CATALYSING, effectOf, engineOmens } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf } from "./tree-sample";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold, passSameHi } from "./tree-outcome";
 import { runTreeSteps, STOP, stopAimedOf, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
@@ -165,6 +165,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   // 戻り先と中身 (S-60) が違う戻りを「箱どうし」で 1 つに (つなぐ時と同じ規則、S-73)。全部消えてよい消去の直線の止まりも同じ
   for (const b of boxes) {
     if (!b.back || b.back === MATCH || b.back === RESTART || !doc.boxes[b.back] || J.fitsBox(b.id, b.back)) continue;
+    // 「エッセンスと同じ MOD (同格以上)」の統合は特例でエッセンスとして扱う (S-33e ⑥)
+    if (b.out === "blocked" && b.junkKey === "hi" && b.autoBack) continue;
     // 見本が作れない箱 (誰も着かない) は分からない扱い
     if (!J.contents(b.id) || !J.contents(b.back)) continue;
     add(b.id, "shape", tr("戻り先の箱と中身が違う (狙いの組・外れの側と数と種類・✦・レアリティ・品質のどれかが違う人が入る)。直し方: 戻り先を同じ中身の箱にする (↩ で選び直す。選べる箱だけ明るくなる) か、ここに次の手を置く", "The return target holds a different item (targets, misses per side and kind, fractures, rarity or quality differ). Fix: return to a box with the same contents (pick again with ↩; only valid boxes are lit), or add a next craft here"));
@@ -277,8 +279,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         }
         if (!b.hand) return;
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
-        const why = handProblem(data, item, b.hand);
-        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
+        // 同格以上で打たないエッセンス / 合金 (飛ばす、S-33e ③): 回す時と同じく手を使わず品のまま当たりの箱へ (前は「打てない」と数えた)
+        const skip = essenceHold(data, item, b.hand.currency) === "skip";
+        const why = skip ? null : handProblem(data, item, b.hand);
+        const first: StageApply = skip ? { applied: true, item, added: [], removed: [] } : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
@@ -305,7 +309,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           // もう付いている狙いの当たりの箱には着かない (打ち直しても付かないので飛ばす。始めに戻った人で当たるまでを 1200 回打ち直し、精査が 13 秒かかった、10-22 金の指輪)
           if (ob.out === "hit" && ob.aim && boxAims(ob).some((a) => aimHeldOn(data, item, a, { sameText: true }))) continue;
           let got: StageItem | null = null;
-          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || !!ob.mergedOuts?.includes(res.out) || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || boxAims(ob).some((x) => res.hits.some((h) => h.modId === x.modId && h.tier === x.tier)) || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
+          // 打った後・品質の箱は何の結果も受けるが、「エッセンスと同じ MOD」の人は受けない (回す時はその箱へ行く、S-33e ③)
+          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || !!ob.mergedOuts?.includes(res.out) || ((ob.out === "any" || ob.out === "pass") && res.out !== "blocked")) && (ob.out !== "hit" || !ob.aim || boxAims(ob).some((x) => res.hits.some((h) => h.modId === x.modId && h.tier === x.tier)) || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
           // 出ない結果の箱は打ち直さない: 当たるまでの手は当たりしか返さない (外れ・消えたは下の break で必ず着かない)、ほかはエンジンの起こりうる結果に無い物
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
@@ -322,7 +327,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, got, viaBack, am); }
+          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, passSameHi(data, doc, b, o, to, got), viaBack, am); }
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し) は、付いていない人だけが着くので数えない
           else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob)) never.add(o);
         }

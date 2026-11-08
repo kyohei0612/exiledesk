@@ -8,7 +8,7 @@
 import { mulberry32, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { isAimMod } from "./tree-aim";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf, essenceHold } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold, passSameHi } from "./tree-outcome";
 import { MATCH, outBoxOf, RESTART, splitTo, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -249,7 +249,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     arrive(next, item, before);
     const to = routeOf(data, doc, j, next, item, aimed);
     if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { ...otherShapeText(data, doc, at, next, item, aimed), item, noBox: true } }); }
-    if (to !== next) { visit(next, true); blame = next; }
+    if (to !== next) { visit(next, true); blame = next; item = passSameHi(data, doc, b, next, to, item); }
     at = to;
   }
 }

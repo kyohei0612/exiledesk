@@ -8,9 +8,9 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
-import { autoTarget, autoTargets, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
-import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
+import { alignEssenceAims, applyPick, arrivedSteps, kindOf, linkAllSameHi, onlyOf } from "./tree-hand-plan";
 import { extendAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
@@ -90,6 +90,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
         if (p.note) b.note = p.note;
         if (p.unwanted) b.unwanted = [...p.unwanted];
         if (p.noAutoBack) b.noAutoBack = true;
+        if (p.ownTree) b.ownTree = true;
       }
     }
     const kids = childKeysOf(d, id, key), exact = new Set(kids.map(([, ck]) => at + ck.slice(key.length)));
@@ -112,6 +113,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
     if (added.length) { yield* drain(); flushBacks(); }
   }
+  // 打ち直しの間に足した「エッセンスと同じ MOD」の箱 (S-33e ①、親の手を置いた後にエッセンスの手で足す) に保存の決めがあれば打ち直す
+  yield* replay(Object.keys(d.boxes).filter((id) => d.boxes[id]!.out === "blocked" && !placed.has(id)));
   // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
   for (const id of Object.keys(d.boxes)) foldMisses(d, id);
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
@@ -124,6 +127,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 消去の続き (S-28g): つなぎのそろった木で、同じ枠ができた自動の消去を畳み、空いた消去の結果を続ける (手を決める時と同じ)
   const trimmed = trimAnnul(data, d);
   if (extendAnnul(data, d) || trimmed) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  linkAllSameHi(d); // 「エッセンスと同じ MOD (同格以上)」は押していなければ既定の統合 (保存・見直しで外れていても、S-33e ⑥)
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
@@ -262,8 +266,6 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
     // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
     const same = autoTarget(d, b.id, j);
     if (same) { b.back = same; b.autoBack = true; continue; }
-    // 同じ枠の候補が 2 つ以上なら人が選ぶ (S-52b、11-08)。下の見方で 1 つに決めない
-    if (autoTargets(d, b.id, j).length >= 2) continue;
     const cs = j.contents(b.id);
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。

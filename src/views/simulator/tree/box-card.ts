@@ -10,6 +10,7 @@ import type { RowTag } from "../../../components/for-share/item/stage-item-row-t
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { fixedValues } from "./tree-fixed-values";
+import { sameModShown } from "../../../services/simulator/tree/tree-outcome";
 import { routeRowTags, treeRowTags } from "./tree-row-tags";
 
 export interface CardOpts {
@@ -25,7 +26,7 @@ export interface BoxCard extends Card { sample: StageItem; note: string | null }
 
 /** 渡した品 it を箱 boxId のカードにする (手の窓の持った品・戻り先の箱の品など、見本を自分で決める画面) */
 export function cardFor(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem, opts: CardOpts = {}): Card {
-  const item = fixedValues(d, doc, it, boxId);
+  const item = fixedValues(d, doc, sameModShown(d, doc, boxId, it), boxId); // 「エッセンスと同じ MOD」の箱はエッセンス未満の一番高い段で出す (S-33e)
   const b = opts.box ?? doc.boxes[boxId];
   const tags = treeRowTags(d, doc, b?.unwanted ?? [], item, b);
   return { item, tags: opts.routeNames ? routeRowTags(d, doc, item, tags) : tags };

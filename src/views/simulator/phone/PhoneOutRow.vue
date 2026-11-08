@@ -12,7 +12,7 @@ import { useTree } from "../tree/use-tree";
 import { boxCardOf } from "../tree/box-card";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
-import { handLabel, OUT_LOOK, boxesEn } from "../tree/tree-names";
+import { handLabel, OUT_LOOK, boxesEn, sameModHead } from "../tree/tree-names";
 import { answerFor, isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { retryOf, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
@@ -126,8 +126,8 @@ const sit = computed((): [string, string] => {
     if (o === "junkGone") return [tr(`${n}で外れが消えた場合`, `If ${n} removes a miss`), q.boxTitle(props.boxId)];
     if (o === "hit") return [tr(`${n}で当たった場合`, `If ${n} hits`), q.boxTitle(props.boxId)];
     if (o === "any") return [tr(`${n}を打った後`, `After ${n}`), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")];
-    // 前の普通の MOD の低い段で塞がった (手は使わない、S-33e)
-    if (o === "blocked") return [tr(`${n}が塞がった場合`, `If ${n} is blocked`), tr("同じ系統の MOD が低い段で付いていて打てない (手は使わない)", "A lower tier of the same mod group is on the item, so it can't be used (not spent)")];
+    // 次のエッセンス / 合金と同じ系統の MOD が付いた (エッセンスを打つ前の分かれ、S-33e)
+    if (o === "blocked") return [tr(`${n}で${sameModHead(props.boxId ? q.doc.value.boxes[props.boxId]?.parent ?? null : null)}が付いた場合`, `If ${n} adds the ${sameModHead(props.boxId ? q.doc.value.boxes[props.boxId]?.parent ?? null : null).replace(/^Same/, "same")}`), tr("次に打つエッセンス / 合金と同じ系統の MOD が付いた (そのままではエッセンス / 合金を打てない)", "A mod of the same group as the next essence / alloy was added (it can't be used as is)")];
   }
   if (o === "junk") return [tr("外れた場合", "If it misses"), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
   if (o === "lost") return [tr("狙いが消えた場合", "If a target is lost"), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
