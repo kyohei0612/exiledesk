@@ -16,7 +16,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import DataNote from "../../ui/DataNote.vue";
 import { flag } from "../../../web/release-flags";
-import { essName, jewelWeightNote, tierName, toneOf, weightNote } from "./stage-mod-list-look";
+import { essName, jewelWeightNote, tierName, toneOf, weightNote, weightNoteShort } from "./stage-mod-list-look";
 import { blockedTitle, canRollNow, tierFreeShare } from "./use-held-shares";
 import { TIER } from "../../../state/for-share/tier-word";
 import { isPhoneWidth } from "../../../utils/use-phone";
@@ -267,7 +267,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
         <span class="font-normal opacity-50">{{ sec.count }} {{ tr("系統", "groups") }}</span>
         <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? tr("はめている", "Socketed") : tr("差していないので 0% (付ければルーンも差す)", "Not socketed, so 0% (adding one also sockets the rune)") }}</span>
         <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを青の札で。押すと出どころ (2026-10-09 オーナー、11-08「注意書きはE」U-46) -->
-        <DataNote v-if="noteOf(sec)" :text="tr('重みはゲーム非公表。コミュニティのデータの目安', 'Weights aren\'t published. Community estimates')" :detail="noteOf(sec)" />
+        <DataNote v-if="noteOf(sec)" :text="weightNoteShort(!weightNote()[sec.rune ? 'rune' : sec.g])" :detail="noteOf(sec)" />
         <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr(`創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · ${TIER}の表の「付ける」で手で付けるだけ`, "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
         <Disclosure tag="span" kind="section" :open="secShown(sec.sid)" class="ml-auto font-normal md:hidden" />
       </h3>
