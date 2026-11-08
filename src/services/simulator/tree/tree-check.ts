@@ -18,7 +18,7 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名�
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf } from "./tree-sample";
 import { boxOutcomeOf } from "./tree-outcome";
-import { runTreeSteps, stopAimedOf, stuckDetail, type TreeRunResult } from "./tree-run";
+import { runTreeSteps, STOP, stopAimedOf, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
 import { MATCH, outBoxOf, RESTART, splitTo } from "./tree-shape";
@@ -37,7 +37,8 @@ export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished", "f
  * 止まり・輪・打てない手などは一覧に知らせとして残し、回した結果に止まった人の数で出る
  */
 export const blocksRun = (k: CheckKind): boolean => k === "open";
-export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
+/** text = 1 行の要約、detail = 開いた時だけ出す詳しい文 (止まりの訳、11-08) */
+export interface CheckIssue { boxId: string; kind: CheckKind; text: string; detail?: string }
 
 const PEOPLE = 5;
 /** 回して止まる箱を数える人数 (5 人を辿るだけでは、止まる形 (例: 外れを持ったまま戻って満杯) を引かない事がある) */
@@ -51,8 +52,9 @@ const TRIES = 1200;
 /** 精査の進み (walk = 5 人を辿る、run = 30 人回す) */
 export interface CheckProgress { phase: "walk" | "run"; n: number; of: number; /** ここまでに見つかった穴 (辿った人から順に足す、10-22 オーナー「読み込みながら徐々に出す」) */ partial: CheckIssue[] }
 /** 手も戻りも完成も無い箱の文 (holds = 完成の狙いが全部そろっている) */
-const openText = (b: TreeBox, holds: boolean): string => (holds ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
-const noDoneText = (): string => tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
+// 文は「何が起きているか。何をすればよいか」の 2 文 (11-08 オーナー「普通に日本語がいみわからんな要約の」→ 案に「それでおｋ」)
+const openText = (b: TreeBox, holds: boolean): string => (holds ? tr("狙いがそろっていますが、完成にしていません。『完成』を押してください", "All targets are here, but the box isn't finished. Press Finish") : b.out === "start" ? tr("最初の手が決まっていません。＋で手を足してください", "No first craft yet. Add one with ＋") : tr("次の手が決まっていません。＋で手を足すか、『完成』か『失敗』を押してください", "No next step yet. Add a craft with ＋, or press Finish or Fail"));
+const noDoneText = (): string => tr("完成の箱がまだありません。狙いがそろった箱で『完成』を押してください", "No finished box yet. Press Finish on a box that has all targets");
 /**
  * 「完成の箱が無い」の印 (S-89b・S-77・S-89c): 末端の箱 (手・戻り・完成の無い箱、スタートは除く) の当たり → ほかの末端に「完成の箱が無い」。
  * 末端が無い木 (どの箱にも手か ↩ が付いた組み終わった木) は一番深い段の当たりの箱 (当たりが無ければ一番深い段の箱) に未設定 (open)「未設定: 完成にする箱が無い」
@@ -61,7 +63,9 @@ const noDoneText = (): string => tr("完成の箱が無い (当たりの箱で�
  */
 function noDoneMarks(doc: TreeDoc): CheckIssue[] {
   const tips = noDoneTips(doc);
-  if (tips.box.length) return tips.box.map((b) => (tips.end ? { boxId: b.id, kind: "noDone", text: noDoneText() } : { boxId: b.id, kind: "open", text: tr("未設定: 完成にする箱が無い", "Unset: no box is marked as done") }));
+  // 木に 1 つだけ (一番上・左の箱。11-08 オーナー OK の案「完成の箱が無い → 木に 1 つだけ」。ほかの末端は「次の手が決まっていません」が出ている)
+  const b = [...tips.box].sort((a, z) => a.y - z.y || a.x - z.x)[0];
+  if (b) return [tips.end ? { boxId: b.id, kind: "noDone", text: noDoneText() } : { boxId: b.id, kind: "open", text: noDoneText() }];
   return [{ boxId: "start", kind: "noDone", text: noDoneText() }];
 }
 /** 印を付ける箱 (end = 末端の箱) */
@@ -139,7 +143,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   const { doc, capped, dead } = capSpam(data, doc0);
   const out: CheckIssue[] = [];
   for (const id of dead) out.push({ boxId: id, kind: "cantUse", text: tr("この手で付く狙いが無い (当たりの狙いはこのカレンシーでは付かない。当たるまで繰り返すと終わらないので、精査はここで止まる扱い)", "No target this craft can add (this currency can't add the hit's target; repeating would never end, so the check treats this box as a stop)") });
-  const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
+  const add = (boxId: string, kind: CheckKind, text: string, detail?: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text, ...(detail ? { detail } : {}) }); };
   // 木のチェック (S-201 ②): 打たずに配置の木を辿り、行き先の無い結果・代表で打てない手・完成の条件に届かない完成の箱
   for (const x of frameIssues(data, doc0)) add(x.boxId, x.kind, x.text);
   const boxes = Object.values(doc.boxes);
@@ -349,10 +353,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
       // 手も行き先も決めていない箱は 1) の「決めていない」だけ (何もしないスタートで「30 人中 27 人が止まる」が重なり、残りの人が何か分からなかった。10-24 初めての人の回 5)
       if (dead.has(id) || out.some((x) => x.boxId === id && x.kind === "open")) continue;
       const w = run.stuckWhy[id];
-      if (w?.spam) { add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
+      if (w?.spam) { add(id, "stuck", stopLine(STOP.spam(w.spam), n), tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
-      add(id, "stuck", stuckText(data, doc, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (w?.item ? ` (${stuckDetail(doc, w)})` : ""));
+      add(id, "stuck", stopLine(w?.short ?? STOP.open(), n), stuckText(data, doc, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (w?.item ? ` (${stuckDetail(doc, w)})` : ""));
       // 10-26: 前は「戻り先を分かれ目の箱に」と勧めていたが、分かれ目を作るボタンは 10-25 に外した (画面でできない直し方だった)
       for (const x of carry) add(x, "carry", tr(`ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻りをやめて外れを消す手 (${nameOfKey("annul", null)} + 満杯の側のお告げなど) を次の手にし、その結果から戻す。PC は × で外して＋、スマホは「次の手を決める」)`, `Returning here keeps the misses, so a later box runs out of room and stops (fix this return: replace it with a craft that removes the misses (e.g. ${nameOfKey("annul", null)} with the omen for the full side) and return from its result. On PC remove it with × and use +; on a phone choose "Next craft")`));
     }
@@ -367,6 +371,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   return ranked(out);
 }
 
+/** 止まりの 1 行 (要約 + 人数。詳しい文は detail) */
+const stopLine = (short: string, n: number): string => tr(`${short} (${RUN_PEOPLE} 人中 ${n} 人がここで止まる)`, `${short} (${n} of ${RUN_PEOPLE} runs stop here)`);
 /** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
 function stuckText(data: PatchData, doc: TreeDoc, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem; noBox?: boolean } | undefined, carry: boolean, hand: Hand | null): string {
   const head = tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる`, `${n} of ${RUN_PEOPLE} runs stop here`);

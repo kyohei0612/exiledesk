@@ -5,11 +5,11 @@
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
-import { applyCurrency, catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
-import { catalystFull, catalystTagOf, stepOutcomes } from "../../../services/simulator/sim-engine";
+import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -23,6 +23,7 @@ import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
+import { backChoicesOf } from "./use-tree-link";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
@@ -30,6 +31,7 @@ import { tr } from "../../../i18n/lang";
 import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
 import { DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
+import { keepablesOf } from "./tree-row-tags";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -68,9 +70,10 @@ export function autoCatOf(data: PatchData, doc: TreeDoc, item: StageItem): strin
 }
 /**
  * 棚に渡すアイテム = 前にカタリストの手を足す時はそれを 1 回打った後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
- * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない
+ * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない。
+ * 打ち方は木を回す時と同じ最大まで (fillCatalyst、S-31b。前は 1 回だけで、手の窓のカードだけ品質 2% と木の箱とずれた、11-08)
  */
-export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? applyCurrency(data, item, autoCat, mulberry32(1)) : null);
+export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? fillCatalyst(data, item, autoCat, mulberry32(1)) : null);
 /**
  * 狙い無し (結果は「打った後」の 1 つ) にできる手 = 付く MOD を選べない手 (足す・カオス。10-25 オーナー「全カレンシーで」。前は足す手だけ)。
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
@@ -91,8 +94,9 @@ export function keepChoicesOf(data: PatchData, item: StageItem, currency?: strin
  * 消せる MOD の無い手 (高貴・ふつうのエッセンス・空きのある側の骨・ルーン・カタリスト・フラクチャー) は候補 0 なので聞かない。
  * 消えうるかはエンジンの stepOutcomes の答え (keepChoicesOf の goneOf) だけで見る (前はルーン・カタリスト・フラクチャーを手の種類で先に外す式があった)
  */
-export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], wanted: readonly Aim[] = []): boolean {
-  return keepChoicesOf(data, item, currency, omens, wanted).length > 1;
+export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], _wanted: readonly Aim[] = []): boolean {
+  // 聞くかはこの品にエンジンで手を当てて消えうる MOD の数 (削減の外れの段の出方は差し替えない、S-27b 11-08 オーナー「カオス削減とかでも１MODしか確定で動かんのに残したいMODなんか選べるし」)
+  return keepChoicesOf(data, item, currency, omens).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
 export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null, stones: readonly Aim[] = []): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId) && !stones.some((a) => a.modId === c.aim.modId)).map((c) => c.aim);
@@ -374,7 +378,13 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
     }
     return false;
   }), true);
-  for (const b of drop) { setBack(d, b.id, null); b.noAutoBack = true; }
+  // ほかに打てる同じ枠の候補が 1 つだけならそこへ自動で付け直す (2 つ以上は人が「↩ 戻り先を選ぶ (n 個)」で選ぶ、S-52b・S-193、11-08。
+  // 前は次の候補を試さず未設定にした = 0yH8kjGg の b38、浅い方のエッセンスは打てずカオスの箱は打てた)
+  for (const b of drop) {
+    const was = b.back, alt = backChoicesOf(data, d, b.id).filter((to) => to !== was);
+    setBack(d, b.id, null); b.noAutoBack = true;
+    if (alt.length === 1) { setBack(d, b.id, alt[0]!); b.autoBack = true; }
+  }
 }
 /** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */
 export const drawnBelow = (d: TreeDoc, id: string): string[] => subtree(d, id).slice(1).filter((x) => { const b = d.boxes[x]; return !!b && b.out !== "pass" && !mergedAway(d, b); });
@@ -426,8 +436,8 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const stones = opt.hitAims?.length && veilPick(veilH) ? revealAimsOf(data, doc, id, it, veilH).filter((a) => !choices.some((c) => c.modId === a.modId)) : [];
   const pick = opt.hitAims ? pickedHits([...choices, ...stones], opt.hitAims, key, !!opt.spam) : null;
   // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)。消える手 (S-27d) も同じ口 (渡さなければ既定 = 持っている狙い)
-  // 残したい MOD に選べるのは狙い (☑ の印) だけ、外れ MOD は選べない (S-27b、棚の窓 use-hand-keep の picks と同じ)
-  const am = opt.keep ? aimedOfCard(data, doc, id, it) : null;
+  // 残したい MOD に選べるのは外れ MOD 以外 (☑ の印 + まだ外れでない付けたエッセンス、S-27b、棚の窓 use-hand-keep の picks と同じ)
+  const am = opt.keep ? new Set([...(aimedOfCard(data, doc, id, it) ?? []), ...keepablesOf(data, doc, id, it)]) : null;
   const keep = opt.keep && keepAskOf(data, it, key, omens, goals) ? opt.keep.filter((a) => !am || am.has(a.modId)) : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);

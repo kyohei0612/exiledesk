@@ -25,6 +25,7 @@ import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
 import { foreseenAt, holdsAt, noHitHeld } from "../../../services/simulator/tree/tree-foresee";
 import { cantHandOf } from "../../../services/simulator/tree/tree-frame-check";
+import { backChoicesOf } from "./use-tree-link";
 
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -47,6 +48,11 @@ const emit = defineEmits<{
   checked: [];
 }>();
 const t = useTree();
+/**
+ * 同じ枠で手の打てる戻り先の候補の数。人が戻り先を選ぶのは候補が 2 つ以上の未設定の箱だけ (押すと候補が光る、1 つなら自動でつなぐ。S-52b、
+ * 11-08 オーナー「自分で戻り先決める奴…消していいよ」「戻り先が複数ある場合ライトアップさせてどっちか選択させた方が良いわ」)
+ */
+const backChoices = computed(() => { const d = s.data.value, b = props.box; return d && !b.hand && !b.back && !b.split && !b.done && b.out !== "hit" && b.out !== "start" && !props.viewOnly ? backChoicesOf(d, t.doc.value, b.id).length : 0; });
 /**
  * × = この箱を作った手を消す (その手の結果の箱すべてと、その下も。親の箱は手が無い形に戻り、手を選び直せる)。1 回目で赤く「下の n 箱ごと消す」、
  * 3 秒のうちにもう一度で消す (1 つ戻すで戻せる)。どの箱にも (スタートは除く)。前の「この当たりを消す」(当たりの箱 1 つだけ) はこれにまとめた
@@ -194,7 +200,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。割合 % は出さない (S-76 撤回) -->
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
-    <button v-if="unset" type="button" data-tree-unset data-tree-issue class="nodrag absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)] hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">!</button>
+    <button v-if="unset" type="button" data-tree-unset data-tree-issue class="nodrag absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)] hover:bg-rose-500" :title="tr(`${issue} (押すと未設定の一覧)`, `${issue} (click for the list of unset boxes)`)" @click.stop="emit('issue')">!</button>
     <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">
     <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <!-- 開いた時の組み直しで増えた箱 (前の形の木に無かった札、S-107・⑦19 案 A。保存しない) -->
@@ -268,7 +274,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <!-- 当たりの箱は「↩ 戻る」を出さない (次の手は＋、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」) -->
         <!-- 戻り先がまだ無い箱: 押すと戻り先を選ぶ (再度挑戦・n 段目へ戻る・始めに戻るなどは選ぶ帯で)。短い「↩ 戻る」・縮めた時の「↩」だけはやめた (10-27 オーナー「本番でまだ『戻る』になっている」、決まった言い方は選んだ後の札の「↩ n 段目へ戻る」) -->
-        <button v-if="!box.done && box.out !== 'hit'" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
+        <button v-if="!box.done && box.out !== 'hit' && backChoices >= 2" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr(`↩ 戻り先を選ぶ (${backChoices} 個)`, `↩ Choose return (${backChoices})`) }}</button>
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="(box.out === 'hit' || box.out === 'branch' || box.out === 'any')" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー) -->

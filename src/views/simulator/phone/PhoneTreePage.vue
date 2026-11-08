@@ -204,7 +204,7 @@ function goBox(id: string): void {
         </button>
         <button v-if="run.halted.value" type="button" data-phone-run-halt class="rounded-xl border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-left text-[13px] text-rose-100" @click="goBox(haltWhy?.backs?.[0] ?? run.halted.value.box)">
           {{ tr(`途中で止まった人がいる: ${q.boxTitle(run.halted.value.box)} ›`, `Some runs got stuck: ${q.boxTitle(run.halted.value.box)} ›`) }}
-          <span v-if="haltWhy?.reason" class="block text-[12px] text-rose-200/80">{{ haltWhy.reason }}{{ haltWhy.backs?.length ? tr(` (戻ってきた箱: ${q.boxTitle(haltWhy.backs[0]!)})`, ` (came back from: ${q.boxTitle(haltWhy.backs[0]!)})`) : "" }}</span>
+          <span v-if="haltWhy?.reason" class="block text-[12px] text-rose-200/80">{{ haltWhy.short ?? haltWhy.reason }}{{ haltWhy.backs?.length ? tr(` (戻ってきた箱: ${q.boxTitle(haltWhy.backs[0]!)})`, ` (came back from: ${q.boxTitle(haltWhy.backs[0]!)})`) : "" }}</span>
         </button>
       </template>
       <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->

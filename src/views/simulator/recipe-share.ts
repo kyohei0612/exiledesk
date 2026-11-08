@@ -28,10 +28,11 @@ const RECIPE_SHARE_PREFIX = "#recipe=";
 /** ツリーのレシピ (2026-10-21、クラフトの道): v = 2、n = 名前、t = 木 (TreeDoc) */
 type PackedTree = { v: 2; n: string; t: TreeDoc };
 
+/** ツリーのレシピの code (#recipe= の後ろ)。打ち方 (v1、S-104) + 例のアイテム (v2、S-200 ⑦)。開く側は v1・v2 も前の木も migrateTreeDoc で読む */
+export const treeCodeOf = (r: { name: string; tree: TreeDoc }): Promise<string> => packJson({ v: 2, n: r.name, t: recipeOf(craftStage.data.value, r.tree) } satisfies PackedTree);
 /** ツリーのレシピの URL (#recipe= の頭は同じ。開くと読む側が v で見分ける) */
 export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
-  // 打ち方 (v1、S-104) + 例のアイテム (v2、S-200 ⑦)。開く側は v1・v2 も前の木も migrateTreeDoc で読む
-  const code = await packJson({ v: 2, n: r.name, t: recipeOf(craftStage.data.value, r.tree) } satisfies PackedTree);
+  const code = await treeCodeOf(r);
   const base = isTauriRuntime() ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }

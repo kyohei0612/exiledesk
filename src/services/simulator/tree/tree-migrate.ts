@@ -17,7 +17,7 @@ const MIGRATIONS: Record<number, (d: Record<string, unknown>) => void> = {
 
 /** 箱の id ではない戻り先 (形の合う箱へ・作り直し、tree-shape の MATCH / RESTART)。これも捨てずに読む */
 const BACK_WORDS: ReadonlySet<string> = new Set([MATCH_BACK, "restart"]);
-const OUTS: ReadonlySet<string> = new Set<OutKind | "start">(["hit", "junk", "junkGone", "lost", "any", "pass", "branch", "start"]);
+const OUTS: ReadonlySet<string> = new Set<OutKind | "start">(["hit", "junk", "junkGone", "lost", "any", "pass", "branch", "blocked", "start"]);
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const str = (v: unknown): v is string => typeof v === "string" && !!v;
 const num = (v: unknown, d: number): number => (typeof v === "number" && Number.isFinite(v) ? v : d);

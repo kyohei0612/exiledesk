@@ -9,10 +9,9 @@
  * 深淵のエッセンスだけ、付くのが「アビサルロードの紋章」(消した側に付く、次の骨が置き換える)。説明文は同じ。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { essenceLevelOf } from "../../../vendor/poe2htc/optimizer/cost";
 import { familyBlocked, hasFamily } from "../../mods/mod-rules";
 import { ESSENCE_KEYS } from "../../htc/essence-key-table";
-import { ABYSS_FAMILY, essenceTarget, isInfiniteEssence, normalTierOf, pickInfinite } from "../apply-essence";
+import { ABYSS_FAMILY, essenceTarget, essenceTierIndex as tierIndexOf, isInfiniteEssence, normalTierOf, pickInfinite } from "../apply-essence";
 import { makeStageMod, takenFamilies } from "../stage-core";
 import type { StageItem, StageMod, StageSide } from "../types";
 import type { CurrencySpec, OmenSpec, Source, Words } from "./types";
@@ -105,9 +104,6 @@ export function resolveEssence(data: PatchData, item: StageItem, key: string): E
   if (tierIndexOf(t.level, t.mod) < 0) return { spec, reason: tr("このエッセンスのティアが無い", "No tier for this Essence") };
   return { spec: hasFamily(t.mod, ABYSS_FAMILY) ? ABYSS_ESSENCE_SPEC : spec };
 }
-/** 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段 */
-const tierIndexOf = (level: string, mod: { tiers: ReadonlyArray<{ name?: unknown }> }): number =>
-  level === "perfect" ? 0 : mod.tiers.findIndex((x) => essenceLevelOf(String(x.name ?? "")) === level);
 
 /**
  * 付く MOD を作る (打つ直前。乱数は今の関数と同じ順: 無限のエッセンスの能力値 → 値)。

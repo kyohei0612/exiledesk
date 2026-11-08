@@ -11,7 +11,9 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { BREACH_FAMILY } from "../htc/omens";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
-import { runeEffectPct, SIDES, takenFamilies } from "./stage-core";
+import { allMods, runeEffectPct, SIDES, takenFamilies } from "./stage-core";
+import { familiesOf } from "../../vendor/poe2htc/engine/pool";
+import { isCraftedSource } from "./tier-rank";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
@@ -84,6 +86,54 @@ export function pickInfinite(data: PatchData, item: StageItem, key: string, rng:
   const list = infiniteChoices(data, item, key);
   if (!level || !list.length) return null;
   return { level, ...list[Math.floor(rng() * list.length)]! };
+}
+
+/** エッセンスの段の番号: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクト・合金は 1 段 (prepareEssence・resolveEssence も同じ物) */
+export const essenceTierIndex = (level: string, mod: { tiers: ReadonlyArray<{ name?: unknown }> }): number =>
+  level === "perfect" ? 0 : mod.tiers.findIndex((x) => essenceLevelOf(String(x.name ?? "")) === level);
+/** 鍵のエッセンス / 合金で付く MOD とその段の MOD レベル (このベースに無い・段が無い時は null) */
+function essenceAim(data: PatchData, item: StageItem, key: string): { mod: Mod; level: number } | null {
+  const t = essenceTarget(data, item, key);
+  const tier = t ? t.mod.tiers[essenceTierIndex(t.level, t.mod)] : undefined;
+  return t && tier ? { mod: t.mod, level: tier.ilvl } : null;
+}
+/** 段の比べ (E-56): 付く = 同じ系統が無い、飛ばす = 系統が全部、同格以上 (MOD レベルが同じか上) の普通の MOD で埋まっている、塞がる = それ以外で被る */
+export type EssenceTierVerdict = "lands" | "skip" | "blocked";
+/**
+ * この品にこのエッセンス / 合金を打つと、前の手で付いた同じ系統の普通の MOD の段から「付く / 飛ばす / 塞がる」(E-56、11-08 オーナー「他OK」)。
+ * 普通の MOD = クラフト MOD (エッセンス・合金) 以外。2 系統の MOD は片方でも低い段・クラフト MOD・タグ (E-11i) で被れば塞がる、片方だけ被っても塞がる。
+ * 無限のエッセンスは付いていない能力値が残れば付く、無ければ塞がる (段は比べない、E-50)。このベースに無い・段が無い鍵は null (打てるかは useReason)。
+ * 打てるか (クラフト MOD の数・結晶化のお告げの側など) はここで見ない。「付く」でも打てない事はある。
+ * families = 付いている MOD と当たった系統 (付く時は空。11-08 シミュ部長 back7 の頼み)
+ */
+export function essenceTierVerdict(data: PatchData, item: StageItem, key: string): { verdict: EssenceTierVerdict; families: string[] } | null {
+  if (isInfiniteEssence(key)) return essenceTarget(data, item, key) ? { verdict: infiniteChoices(data, item, key).length ? "lands" : "blocked", families: [] } : null;
+  const aim = essenceAim(data, item, key);
+  if (!aim) return null;
+  if (!familyBlocked(aim.mod, takenFamilies(data, item))) return { verdict: "lands", families: [] };
+  // 系統は 1 品に 1 つ (E-11a) なので、系統ごとに埋めている MOD は多くて 1 つ。全部が同格以上の普通の MOD なら飛ばす
+  const held = allMods(item).flatMap((m) => { const md = data.mods.get(m.modId); return md ? [{ m, md }] : []; });
+  const hit = familiesOf(aim.mod).filter((f) => held.some(({ md }) => familiesOf(md).includes(f)));
+  const high = (f: string) => held.some(({ m, md }) => familiesOf(md).includes(f) && !isCraftedSource(md.source) && m.modLevel >= aim.level);
+  return { verdict: familiesOf(aim.mod).every(high) ? "skip" : "blocked", families: hit };
+}
+/**
+ * このアイテムクラス・アイテムレベルで、エッセンス / 合金の系統が普通の MOD (一般 MOD の置き場、E-10a) に付きうる段の数 (E-56)。
+ * lower = エッセンスの段より MOD レベルが低い段 (付いていれば塞がる)、atOrAbove = 同格以上 (付いていれば飛ばす)。アイテムレベルを超える段は数えない (E-11b)。
+ * シミュが塞がる枝を作るかは lower > 0 で見る。このベースに無い・段が無い鍵・無限のエッセンスは null
+ */
+export function essenceFamilyNormalTiers(data: PatchData, item: StageItem, key: string): { lower: number; atOrAbove: number } | null {
+  if (isInfiniteEssence(key)) return null;
+  const aim = essenceAim(data, item, key);
+  if (!aim) return null;
+  const pool = item.cls.pools.normal;
+  const out = { lower: 0, atOrAbove: 0 };
+  for (const id of [...pool.prefixes, ...pool.suffixes]) {
+    const m = data.mods.get(id);
+    if (!m || isCraftedSource(m.source) || !sharesFamily(m, aim.mod)) continue;
+    for (const t of m.tiers) if (t.ilvl <= item.itemLevel) out[t.ilvl >= aim.level ? "atOrAbove" : "lower"]++;
+  }
+  return out;
 }
 
 

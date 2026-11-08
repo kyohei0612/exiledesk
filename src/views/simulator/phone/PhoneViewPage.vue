@@ -119,7 +119,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       </div>
       <!-- 穴チェックの帯の所に 100 人回す。穴があれば短い文だけ (S-94e) -->
       <div data-phone-view-run class="flex min-w-0 flex-col gap-1">
-        <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ tr("足りない所があるので回せない。PC で直す", "Can't run: this tree has gaps. Fix it on a PC") }}</p>
+        <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ tr("未設定があるので回せない。PC で直す", "Can't run: this tree has unset boxes. Fix it on a PC") }}</p>
         <button v-else type="button" data-phone-view-go class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="!passed || !s.data.value || run.running.value" @click="go">{{ !passed ? holeBusy() : run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
         <!-- 結果の行は PC と同じ部品 (1 人目が進んでいる n/m 箱・早送り・飛ばす・止まり・沼った場所・結果のまとめ・結果を隠す)。390 では折り返す -->
         <TreeRunSum v-if="!locked" v-model:shown="run.shown.value" v-model:report="reportOpen" data-phone-view-sum class="flex-wrap text-[13px] text-amber-100" :result="run.result.value" :running="run.running.value" :stuck="run.stuckBoxes.value" :halted="run.halted.value" :walk="run.walk.value" :test="run.test.value" @go="goBox" @skip="run.skipWalk()" />

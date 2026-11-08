@@ -9,12 +9,14 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { track } from "../../../utils/track";
-import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
-import { handName } from "./tree-names";
+import { pathKeysOf } from "../../../services/simulator/tree/tree-recipe-v1";
 import { tr } from "../../../i18n/lang";
 
 /** 精査で回した 30 人 (key = その時の道の形) */
 export type CheckRun = { key: string; startCost: number; run: TreeRunResult };
+
+/** 木の側の不具合の文 (要確認の全部) */
+export const orphanText = (): string => tr("サイトの不具合です。お手数ですが『要望・バグを送る』から送ってください", "This is a site bug. Please report it with \"Send feedback\"");
 
 /**
  * 要確認の一覧 (S-107・⑦20 案 A): 組み直した木に札の無い決め・前の版の人の ↩・分かれ目・読めなかった所。
@@ -24,17 +26,32 @@ export function orphanIssues(d: TreeDoc): CheckIssue[] {
   if (!d.orphans?.length) return [];
   const idOf = new Map([...pathKeysOf(d)].map(([id, k]) => [k, id]));
   // 札の箱が今の木にある「gone」は手を足し直した古い一覧 (S-107)
-  return d.orphans.filter((o) => o.why !== "gone" || !idOf.has(o.at)).map((o) => {
-    let k = o.at;
-    while (k.includes("/") && !idOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
-    const step = o.at.split("/").length - 1, h = (o.raw as RecipePick | null)?.hand;
-    const text = o.why === "gone" ? tr(`要確認: ${step} 段目の決め${h ? ` (${handName(h.currency)})` : ""}の箱が今の木に無い (決まりが変わって結果の箱が替わった。この箱で決め直す)`, `Check: the decision at step ${step}${h ? ` (${handName(h.currency)})` : ""} has no box in the rebuilt tree (the rules changed the results; decide again here)`)
-      : o.why === "back" ? tr(`要確認: ${step} 段目に前の版で人が選んだ戻り先がある (今は自動の ↩ だけ。行き先を決め直す)`, `Check: step ${step} had a hand-picked return from an older version (returns are automatic now; decide again)`)
-      : o.why === "split" ? tr(`要確認: ${step} 段目に前の版の分かれ目がある (今は作れない。手を決め直す)`, `Check: step ${step} had a split from an older version (no longer available; pick a craft again)`)
-      : tr("要確認: 読めなかった所がある (元の値は保存に残っている)", "Check: part of the saved recipe could not be read (the raw value is kept)");
-    // 札の残る上の箱がスタートしか無い時は、スタート自身の決めでなければ箱に付けず一覧と帯の数だけ (S-89c ③。保存を開き直すとスタートに落ちた)
-    return { boxId: k === "s" && o.at !== "s" ? "" : idOf.get(k) ?? "", kind: "orphan" as const, text };
-  });
+  // 人が組んだのに木の途中で出る物 = サイトの不具合。要望へ促す (11-08 オーナー「ツリー途中に未設定が出るのは本体バグとして要望へって促してくれ」)。
+  // 中身の訳は送る時の木の URL から読む (一覧の行の「要望・バグを送る」が URL を写して要望の窓を開く、kind orphan)。
+  // 札の残る上の箱がスタートしか無い時は、スタート自身の決めでなければ箱に付けず一覧と帯の数だけ (S-89c ③。保存を開き直すとスタートに落ちた)
+  return d.orphans.filter((o) => o.why !== "gone" || !idOf.has(o.at)).map((o) => ({ boxId: orphanBoxOf(idOf, o.at), kind: "orphan" as const, text: orphanText() }));
+}
+
+/** 要確認の札の箱 (orphanIssues と同じ: 札の残っている一番近い上の箱。無ければ "") */
+function orphanBoxOf(idOf: ReadonlyMap<string, string>, at: string): string {
+  let k = at;
+  while (k.includes("/") && !idOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
+  return k === "s" && at !== "s" ? "" : idOf.get(k) ?? "";
+}
+/**
+ * 人が要確認の印の箱の決め (手・↩・完成 / 失敗) を置き直したら、その箱の要確認を木から外す (11-08 ブラック 61「オーナーが手を置き直したり矢印を付け直したら、印が消えるように」。
+ * 前は一度付くと外す所が無く、保存のたびに要確認へ書き写されて残った)。edit (use-tree) が人の組み替えのたびに呼ぶ。開いただけ・ほかの箱の決めでは外さない
+ */
+export function dropTouchedOrphans(before: TreeDoc, d: TreeDoc): void {
+  if (!d.orphans?.length) return;
+  const idOf = new Map([...pathKeysOf(d)].map(([id, k]) => [k, id]));
+  const decision = (x: TreeDoc, id: string): string => { const b = x.boxes[id]; return JSON.stringify(b ? [b.hand ?? null, b.autoBack ? null : b.back ?? null, b.done ?? null] : null); };
+  const touched = new Set<string>();
+  const left = d.orphans.filter((o) => { const id = orphanBoxOf(idOf, o.at); if (!id || decision(before, id) === decision(d, id)) return true; touched.add(id); return false; });
+  if (!touched.size) return;
+  if (left.length) d.orphans = left; else delete d.orphans;
+  // 箱の読めなかった印 (tree-migrate の healBox) も外す (残すと保存の時にまた要確認へ書き写される、tree-recipe-v1)
+  for (const id of touched) { const b = d.boxes[id]; if (b) { delete b.check; delete b.checkRaw; } }
 }
 
 /**

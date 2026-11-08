@@ -17,6 +17,7 @@ import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { useTree } from "./use-tree";
 import { modText } from "../../../i18n/lang";
+import { keepablesOf } from "./tree-row-tags";
 
 const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
 export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem }) {
@@ -31,10 +32,16 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   /** カードの見本の ☑ の印 (箱のカードと同じ見本、S-82) */
   const aimedNow = (d: PatchData, it: StageItem | null): ReadonlySet<string> => (it && aimedOfCard(d, t.doc.value, o.boxId, it)) || sampleAimed(d, t.doc.value, o.boxId, 1);
   /**
-   * ☑ で選べる候補 = 消えうる MOD のうち狙い (☑ の印) だけ。外れ MOD は選べない (S-27b、11-07 オーナー「残したいMODにハズレMODは選択できないようにさせてくれ意味わからんから」)。
+   * ☑ で選べる候補 = 消えうる MOD のうち外れ MOD 以外 (☑ の印 + 付けた完成形に無いエッセンスでまだ外れでない物、keepablesOf)。外れ MOD は選べない
+   * (S-27b、11-07 オーナー「残したいMODにハズレMODは選択できないようにさせてくれ意味わからんから」、11-08「ハズレMOD以外は…選択できるように」)。
    * 聞くか (ask)・全部は残せない (toggle) は外れも含めた choices で数える (削減の「標的 2 つ以上で聞く」も外れを数える)
    */
-  const picks = computed(() => { const d = s.data.value; if (!d) return []; const am = aimedNow(d, o.item.value); return choices.value.filter((c) => am.has(c.mod.modId)); });
+  const picks = computed(() => {
+    const d = s.data.value, it = o.item.value;
+    if (!d || !it) return [];
+    const am = new Set([...aimedNow(d, it), ...keepablesOf(d, t.doc.value, o.boxId, it)]);
+    return choices.value.filter((c) => am.has(c.mod.modId));
+  });
   /** 残したい MOD の欄を出すか = 聞く手で、選べる狙いが 1 つ以上 (0 なら欄を出さず全部消えてよい) */
   const show = computed(() => ask.value && picks.value.length > 0);
   /** 消える手の既定 = 持っている狙い (カードの見本の ☑ の印)。消去の既定は全部消えてよい (S-27。完成形に無いエッセンスの MOD は外れなので残す側に入れない = S-33c、11-07) */

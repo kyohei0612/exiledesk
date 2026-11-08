@@ -6,21 +6,24 @@
 import { computed, type Ref } from "vue";
 import { handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import type { PatchData } from "../../../services/craft-stage/engine";
 import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
 import { craftStage as s } from "../../../state/craft-stage";
 import { tr } from "../../../i18n/lang";
 
 /** 箱ごとの答え: null = つなげる、文字 = つなげない理由。選んでいない時は空 */
 export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
-  return computed((): Map<string, string | null> => {
-    const out = new Map<string, string | null>();
-    const id = from.value, d = s.data.value;
-    if (!id || !d) return out;
+  return computed((): Map<string, string | null> => { const d = s.data.value; return from.value && d ? backLinkOf(d, doc.value, from.value) : new Map(); });
+}
+/** 箱 id から戻せるか (useTreeLink の中身。戻り先の候補 backChoicesOf と自動の付け直しも同じ判定) */
+export function backLinkOf(d: PatchData, docv: TreeDoc, id: string): Map<string, string | null> {
+  {
+    const out = new Map<string, string | null>(), doc = { value: docv };
     const item = sampleOf(d, doc.value, id, 1).item;
     // 戻せるかは「箱どうし」の判定 (中身が同じ箱だけ、S-50b・S-62)
     const j = judgeMemo(d, doc.value);
     const fits = (to: string): boolean => j.fitsBox(id, to);
-    const diff = tr("中身が違う: この箱の見本と、ここから来る人の狙いの組・外れ・✦・レアリティ・品質のどれかが違う (同じ中身の箱だけ選べる)", "Different contents: the targets, misses, fractures, rarity or quality differ from the runs coming in (only boxes with the same contents can be picked)");
+    const diff = tr("中身が違う: この箱の見本と、ここから来る人の狙いの組・外れ・✦・レアリティ・ルーン・ソケットのどれかが違う (同じ中身の箱だけ選べる)", "Different contents: the targets, misses, fractures, rarity, runes or sockets differ from the runs coming in (only boxes with the same contents can be picked)");
     for (const b of Object.values(doc.value.boxes)) {
       if (b.id === id) { out.set(b.id, tr("自分の箱", "This box itself")); continue; }
       // 分かれ目 (打たずに分ける) は手が無くてもつなげる (どの形でも行の箱へ分かれる、10-22)
@@ -34,17 +37,19 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
-      // 品質の上限が足りない人はカタリストの n % の箱へ行かない (S-60c)
-      const cap = j.capShort(id, b.id);
-      if (cap) { out.set(b.id, tr(`品質の上限が ${cap}% に届かない`, `Max quality can't reach ${cap}%`)); continue; }
       // 中身が違う箱へは戻せない (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」、箱どうしの判定 fitsBox)
       if (!fits(b.id)) { out.set(b.id, diff); continue; }
       const why = handProblem(d, item, b.hand);
       out.set(b.id, why ? tr(`この箱の手が打てない: ${why}`, `Its craft can't be used here: ${why}`) : null);
     }
     return out;
-  });
+  }
 }
+/**
+ * 同じ枠で手の打てる戻り先の候補 (始まりの箱も入る、分かれ目は入れない)。2 つ以上の未設定の箱だけ「↩ 戻り先を選ぶ (n 個)」、1 つなら自動でつなぐ
+ * (S-52b、11-08 オーナー「戻り先が複数ある場合ライトアップさせてどっちか選択させた方が良いわ…ない場合単独なんだからさ」)
+ */
+export const backChoicesOf = (d: PatchData, doc: TreeDoc, id: string): string[] => [...backLinkOf(d, doc, id)].filter(([to, why]) => why === null && !doc.boxes[to]?.split).map(([to]) => to);
 
 /**
  * 戻せる箱が 1 つも無い時の理由 (10-27 モンキー 9 の 4: 白 → 変成の外れの ↩ で全部灰色なのに理由が出ず、帯は「戻り先の箱を押す」のままだった)。

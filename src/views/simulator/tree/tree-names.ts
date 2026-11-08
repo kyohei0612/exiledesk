@@ -39,6 +39,8 @@ export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: strin
   pass: { ja: "品質を上げた後", en: "Quality raised", c: "200,184,150", icon: "plus" },
   // 分かれ目の行の箱 (打たずに分けた先。副題は行の条件、splitWhenText)
   branch: { ja: "分かれ目の先", en: "Branch", c: "120,200,190", icon: "arrow-right" },
+  // エッセンス / 合金が前の普通の MOD の低い段で塞がった (手は使わない、S-33e)
+  blocked: { ja: "塞がった", en: "Blocked", c: "196,140,90", icon: "x" },
 };
 
 /** 分かれ目の 1 行の条件の文 (画面で選べる 4 つ + 組み合わせ。空 = それ以外) */

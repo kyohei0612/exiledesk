@@ -5,16 +5,16 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { aimHeldOn, isAimMod } from "./tree-aim";
+import { mulberry32, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { isAimMod } from "./tree-aim";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold } from "./tree-outcome";
 import { MATCH, outBoxOf, RESTART, splitTo, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
-import { contentDiff, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
+import { contentDiff, goalsOn, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
 
@@ -75,7 +75,7 @@ export interface TreeRunResult {
   failed: number;
   failAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
+  stuckWhy: Record<string, { reason: string; /** 止まり方の 1 行の要約 (10 種、11-08。詳しい文は reason) */ short?: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。穴チェックの走行の「どこでループしたか」、10-27 オーナー) */
   loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
@@ -102,7 +102,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -140,8 +140,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
     return blame && p.end === "stuck" ? { ...p, blame } : p;
   };
-  /** 付いている完成形の狙い (段は完成形以上) の MOD */
-  const aimsHeld = (it: StageItem): Set<string> => new Set((doc.memoAims ?? []).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
+  /** 付いている名前の印になりうる MOD (箱の中身の鍵と同じ口 goalsOn。前は完成形の狙いだけで、行き先探しの前にエッセンス / 合金の印が落ちた) */
+  const aimsHeld = (it: StageItem): ReadonlySet<string> => goalsOn(data, doc, it);
   let steps = 0;
   let restarts = 0;
   const odd = new Set<string>();
@@ -149,7 +149,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
   let hops = 0;
   for (;;) {
     const b = doc.boxes[at];
-    if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
+    if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.noBox(), short: STOP.noBox(), item } });
     visit(at);
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
@@ -161,14 +161,14 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     }
     const sb = b as SplitBox;
     if (sb.split) {
-      if (++hops > 1000) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
+      if (++hops > 1000) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.loop(), short: STOP.loop(), item } });
       const to = splitTo(data, sb.split, item, aims);
-      if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
+      if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.split(), short: STOP.split(), item } });
       at = to;
       continue;
     }
     if (b.back) {
-      if (++hops > 1000) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
+      if (++hops > 1000) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.loop(), short: STOP.loop(), item } });
       if (b.back === RESTART) {
         item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
         aimed = startAimed(data, doc, item);
@@ -181,8 +181,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
       // 全部消えてよい消去の直線は、止まる所 (同じレアリティ・同じ外れの数の箱) が無ければ形の合う箱を探さない = 行き先未定 (スイッチ stripRarity)
       const to = routeOf(data, doc, j, b.back === MATCH ? null : b.back, item, aimed);
       // 戻り先と中身が違い、中身の同じ箱も無い (S-64、人と箱): この箱で止まる (未設定)
-      if (!to && b.back !== MATCH) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`戻り先の箱と中身が違い、中身の同じ箱も無い`, `The return target holds a different item, and no box matches it`), item, noBox: true } });
-      if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } });
+      if (!to && b.back !== MATCH) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`戻り先の箱と中身が違い、中身の同じ箱も無い`, `The return target holds a different item, and no box matches it`), short: STOP.backDiff(), item, noBox: true } });
+      if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), short: STOP.noBack(), item, noBox: true } });
       // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
       if (b.back !== MATCH && to !== b.back) visit(b.back, true);
       if (to !== b.back) blame = at;
@@ -192,7 +192,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     if (!b.hand) {
       // 決めていない箱で止まった人の原因はその箱 (決めれば進む。前に移った箱を原因にしない、S-72)
       blame = null;
-      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } });
+      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), short: STOP.open(), item, noBox: true } });
     }
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
     if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } });
@@ -218,9 +218,10 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     o.onHand?.(at, item);
     // 使った物は結果の箱を見てから数える (ヒネコラのハズレの箱 = 手を使わない、S-39)
     const spent: Array<[string, number]> = [];
-    const r = playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
+    // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e): 手を使わず品のまま、boxOutcomeOf が当たり / 塞がったの箱へ分ける。前は「打てません」で止まった
+    const r: StageApply = essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
     if (!r.applied) {
-      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } });
+      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, aimed);
     const next = oc ? outBoxOf(data, doc, b, oc, r.item) : null;
@@ -229,7 +230,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     for (const [k, n] of spent) use(k, n);
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
-      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } });
+      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), short: STOP.spam(cap), item: r.item, spam: cap } });
     }
     if (sb.next || !oc) { item = r.item; arrive(sb.next!, item, before); at = sb.next!; continue; } // oc は sb.next の無い時だけある
     if (!next) {
@@ -237,7 +238,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
       odd.add(at);
       aimed = new Set([...aimed].filter((id) => aimsHeld(r.item).has(id)));
       const to = routeOf(data, doc, j, null, r.item, aimed);
-      if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`この手の結果「${outcomeText(data, r.item, oc)}」の箱が無く、形の合う箱も無い`, `No box for this craft's result "${outcomeText(data, r.item, oc)}", and no box matches the shape`), item: r.item, noBox: true } });
+      if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`この手の結果「${outcomeText(data, r.item, oc)}」の箱が無く、形の合う箱も無い`, `No box for this craft's result "${outcomeText(data, r.item, oc)}", and no box matches the shape`), short: STOP.noOut(outcomeText(data, r.item, oc)), item: r.item, noBox: true } });
       item = r.item;
       at = to;
       continue;
@@ -247,7 +248,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     // 結果の箱の中身と違えば中身の同じ箱へ (S-64)。無ければ結果の箱で止まる (未設定)
     arrive(next, item, before);
     const to = routeOf(data, doc, j, next, item, aimed);
-    if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: otherShapeText(data, doc, at, next, item, aimed), item, noBox: true } }); }
+    if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { ...otherShapeText(data, doc, at, next, item, aimed), item, noBox: true } }); }
     if (to !== next) { visit(next, true); blame = next; }
     at = to;
   }
@@ -265,16 +266,33 @@ function boxWord(doc: TreeDoc, id: string): string {
 /**
  * 手の結果が結果の箱の見本と違う形で、同じ形の箱も無くて止まった人の文 (S-64): 元の手の箱を名指しし、次に押す物まで書く
  */
-function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string, item: StageItem, aimed: ReadonlySet<string>): string {
+function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string, item: StageItem, aimed: ReadonlySet<string>): { reason: string; short: string } {
   // 名前は品で引く (骨は部位で名前が変わる。品が無いと鍵「desecrate_ancient」のまま出た、要望 b3956330)
   const h = doc.boxes[from]?.hand, name = h ? nameOfKey(h.currency, item) : "";
   // 違う所は判定 (fitsItem) と同じ部品から (tree-judge の contentDiff)。言えない時だけ前の側の数
   const diff = contentDiff(data, doc, item, aimed, to);
   const s = diff.length ? null : sampleOf(data, doc, to, 1), ja = (it: StageItem): string => `プレ ${it.prefixes.length}・サフィ ${it.suffixes.length}`, en = (it: StageItem): string => `${it.prefixes.length} prefix, ${it.suffixes.length} suffix`;
   const whyJa = s ? `見本 ${ja(s.item)}・この人 ${ja(item)}` : `違う所: ${diff.join("・")}`, whyEn = s ? `example ${en(s.item)}, this run ${en(item)}` : `differs: ${diff.join(", ")}`;
-  return tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本と形の違う人がいる (${whyJa})。この形の箱が木に無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
+  const reason = tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本と形の違う人がいる (${whyJa})。この形の箱が木に無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
     `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${whyEn}). No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
+  return { reason, short: STOP.shape(diff[0] ?? (s ? tr(`見本 ${ja(s.item)}・この人 ${ja(item)}`, `example ${en(s.item)}, this run ${en(item)}`) : "")) };
 }
+/**
+ * 止まり方の 1 行の要約 (10 種、11-08 オーナー「普通に日本語がいみわからんな要約の」→ 前の部長の案に「それでおｋ」)。
+ * 何が起きたかだけを短く。詳しい文 (reason) は開いた時に出す。中身の違いは 1 つ目だけ
+ */
+export const STOP = {
+  open: (): string => tr("次の手が決まっていません", "No next step yet"),
+  cantUse: (why: string): string => (why ? tr(`打てません: ${why}`, `Can't use the craft: ${why}`) : tr("打てません", "Can't use the craft")),
+  spam: (n: number): string => tr(`${n} 回打っても当たりません`, `No hit in ${n} tries`),
+  noOut: (out: string): string => tr(`この結果 (${out}) の行き先がありません`, `No box for this result (${out})`),
+  shape: (first: string): string => (first ? tr(`行き先と中身が違います (${first})`, `The next box holds a different item (${first})`) : tr("行き先と中身が違います", "The next box holds a different item")),
+  backDiff: (): string => tr("戻り先と中身が違います", "The return target holds a different item"),
+  noBack: (): string => tr("戻れる箱がありません", "No box to return to"),
+  loop: (): string => tr("戻りがぐるぐる回っています", "The returns go round in a loop"),
+  split: (): string => tr("分かれ目のどの行にも合いません", "No split row matches"),
+  noBox: (): string => tr("行き先の箱がありません", "The next box is missing"),
+};
 /**
  * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
  * 精査の一覧と止まりの札の乗せた時の文が使う

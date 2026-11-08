@@ -9,7 +9,7 @@
 import { mulberry32, occupiedFamiliesOf, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold } from "./tree-outcome";
 import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
@@ -52,6 +52,8 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
   const h = b.hand!, key = h.currency;
   let rs: Br[];
   if (isRevealHand(key)) rs = [{ p: 1, item }];
+  // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝 (boxOutcomeOf が塞がった / 当たりへ分ける)
+  else if (essenceHold(data, item, key)) return [{ p: 1, item }];
   // 目標の数値を決めた神 (S-202): 目標の以上 / 未満の 2 枝 (予見リセットは以上の 1 枝)
   else if (isDivineAim(h)) rs = divineBranches(data, item, h, (it) => { const r = applyHand(data, it, key, mulberry32(1), { omens: h.omens }); return r.applied ? r.item : null; });
   else if (isCatalyst(key)) { const r = playHand(data, item, h, mulberry32(1)); rs = r.applied ? [{ p: 1, item: r.item }] : []; }

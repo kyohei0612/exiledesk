@@ -126,6 +126,8 @@ const sit = computed((): [string, string] => {
     if (o === "junkGone") return [tr(`${n}で外れが消えた場合`, `If ${n} removes a miss`), q.boxTitle(props.boxId)];
     if (o === "hit") return [tr(`${n}で当たった場合`, `If ${n} hits`), q.boxTitle(props.boxId)];
     if (o === "any") return [tr(`${n}を打った後`, `After ${n}`), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")];
+    // 前の普通の MOD の低い段で塞がった (手は使わない、S-33e)
+    if (o === "blocked") return [tr(`${n}が塞がった場合`, `If ${n} is blocked`), tr("同じ系統の MOD が低い段で付いていて打てない (手は使わない)", "A lower tier of the same mod group is on the item, so it can't be used (not spent)")];
   }
   if (o === "junk") return [tr("外れた場合", "If it misses"), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
   if (o === "lost") return [tr("狙いが消えた場合", "If a target is lost"), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];

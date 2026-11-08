@@ -3,6 +3,7 @@
  * オーナー 10-31「テストボタンやけど次から穴チェックボタンに変えるか」「100人はそれまで灰色やね　ホバー時にテスト合格後みたいな感じでやればええやろ」。
  */
 import { tr } from "../../../i18n/lang";
+import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 
 
 /** ボタンの名前 */
@@ -19,10 +20,24 @@ export const holeTitle = (): string => tr("穴チェック: 5 人をエンジン
 export const finalName = (): string => tr("最終チェック", "Final check");
 export const finalTitle = (): string => tr("最終チェック: ハズレを整理してから、5 人を辿り 30 人を回して止まる所を探す。止まりが 0 で 100 人回せる", "Final check: sort the misses, then walk 5 runs and run 30 to find where runs stop. Zero stops unlocks the 100-run");
 export const finalLockedWhy = (): string => tr("最終チェックに合格すると回せる", "Pass the final check to run");
-/** 足りない所の件数の見出し (PC の一覧 TreeIssues・スマホの帯と重ね窓 PhoneIssues で同じ文) */
-export const holesCount = (n: number): string => tr(`足りない所 ${n} 件`, `${n} missing`);
+/**
+ * 未設定の数 (左上の札・赤い札・一覧の見出し・下の帯・スマホで同じ文と同じ数、11-08 オーナー「足りない所と下の未設定の数字が合わない。未設定に合わせて」)。
+ * 数は困り事の出た箱の数 (1 つの箱に 2 行あっても 1)。数えは issueGroups の長さ
+ */
+export const holesCount = (n: number): string => tr(`未設定 ${n} つ`, `${n} unset`);
+/** 一覧の上の説明 (11-08 オーナー OK の文) */
+export const holesWhat = (): string => tr("!の付いた箱です。全部直すと100人回せます。行を押すとその箱へ移ります", "Boxes marked !. Fix them all to run 100. Click a row to go to the box");
+/** 箱ごとにまとめた困り事 (boxId "" = 箱の無い物、木の側の不具合など。1 つにまとめて最後に置く) */
+export type IssueGroup<T extends { boxId: string }> = { boxId: string; rows: T[] };
+/** 困り事を箱ごとにまとめる (上の段から、同じ段は左から)。今の木に無い箱の物は箱の無い組へ */
+export function issueGroups<T extends { boxId: string }>(issues: readonly T[] | null | undefined, doc: TreeDoc): IssueGroup<T>[] {
+  const by = new Map<string, T[]>();
+  for (const x of issues ?? []) { const k = doc.boxes[x.boxId] ? x.boxId : ""; by.set(k, [...(by.get(k) ?? []), x]); }
+  const at = (id: string): [number, number] => { const b = doc.boxes[id]; return b ? [b.y, b.x] : [Infinity, Infinity]; };
+  return [...by].map(([boxId, rows]) => ({ boxId, rows })).sort((a, z) => at(a.boxId)[0] - at(z.boxId)[0] || at(a.boxId)[1] - at(z.boxId)[1]);
+}
 /** 足りない所の札に乗せた時 */
-export const holesShowTitle = (): string => tr("足りない所を見る (箱の ! と一覧を出す、直すと次の穴チェックで消える)", "Show what is missing (box marks and list; they clear on the next gap check once fixed)");
+export const holesShowTitle = (): string => tr("未設定の一覧を開く (行を押すとその箱へ移る。直すと次の穴チェックで消える)", "Open the list of unset boxes (click a row to go there; fixed ones clear on the next gap check)");
 /** 走行の人数のまとめ (帯) */
 export const driveSum = (n: number, done: number): string => tr(`穴チェック ${n} 人: 完成 ${done} 人`, `Gap check ${n} runs: ${done} finished`);
 /** 走行の結果のまとめの見出し */
@@ -30,5 +45,5 @@ export const driveHead = (n: number): string => tr(`穴チェック ${n} 人の�
 /** 「100 人回す」を押せない理由 (PC は乗せた時、スマホは下の帯の上に文) */
 export const runLockedWhy = (busy: boolean, holes: number): string => (busy
   ? tr("穴チェック中。合格すると回せる", "Gap check running. You can run once it passes")
-  : holes ? tr(`穴チェックに合格すると回せる。足りない所 ${holes} を直す`, `Pass the gap check to run. Fix the ${holes} missing`)
+  : holes ? tr(`穴チェックに合格すると回せる。未設定 ${holes} つを直す`, `Pass the gap check to run. Fix the ${holes} unset`)
   : tr("穴チェックに合格すると回せる", "Pass the gap check to run"));
