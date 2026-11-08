@@ -37,8 +37,16 @@ export const weightNote = (): Partial<Record<string, string>> => ({
 });
 /** ジュエルの MOD の重みの出どころ (ゲームは公表していない。poe2db も Craft of Exile も全部 1 なので、サイトが全部同じ重み = 均一にした。冒涜は仮の 2500。11-09 オーナー) */
 export const jewelWeightNote = (): string => tr("ジュエルの MOD の重みはゲームが公表していない (poe2db・Craft of Exile も全部同じ値)。ここでは全部同じ重み (均一) で引いている。冒涜の MOD は仮の重み", "Jewel mod weights are not published by the game (poe2db and Craft of Exile list them all the same). Here every mod rolls with the same weight (uniform); desecrated mods use a placeholder weight");
-/** 見出しの札の短い文 (ジュエルは均一、ほかはコミュニティのデータ) */
-export const weightNoteShort = (jewel: boolean): string => (jewel ? tr("重みはゲーム非公表。全部同じ重みの仮", "Weights aren't published. All equal (placeholder)") : tr("重みはゲーム非公表。コミュニティのデータの目安", "Weights aren't published. Community estimates"));
+/** 一般の MOD の重みの出どころ (poe2db の値 = PoE1 の同じ系統の重みを当てた推定。11-09 オーナー「全部それで」= 一般の節にも札) */
+const normalWeightNote = (): string => tr("一般の MOD の重みはゲームが公表していない。poe2db の値 (PoE1 の同じ系統の重みを当てた推定) を使っている。poe2db に無い物 (キャストスピードなど) は Craft of Exile の値や同じ系統から借りた値で、行に「重みは推定」の札", "Regular mod weights are not published by the game. These are poe2db's values (estimated from the matching PoE1 mod groups). Mods poe2db lacks (e.g. Cast Speed) use Craft of Exile's value or one borrowed from a matching group, marked \"Est. weight\" on the row");
+/** 節の見出しの青の札 (U-18): 短い文と出どころの文。札の無い節は null (エッセンス・創生の樹など重みで引かない節) */
+export function sectionNote(g: string, rune: boolean, jewel: boolean): { short: string; detail: string } | null {
+  const own = weightNote()[rune ? "rune" : g];
+  if (own) return { short: tr("重みはゲーム非公表。コミュニティのデータの目安", "Weights aren't published. Community estimates"), detail: own };
+  if (jewel) return { short: tr("重みはゲーム非公表。全部同じ重みの仮", "Weights aren't published. All equal (placeholder)"), detail: jewelWeightNote() };
+  if (g === "normal") return { short: tr("重みはゲーム非公表。poe2db の推定", "Weights aren't published. poe2db estimates"), detail: normalWeightNote() };
+  return null;
+}
 /**
  * 種類の色 (普通 = 青、エッセンス = 水色、冒涜 = 淀んだ深緑のグラデーション、異界 = 緑がかった青。
  * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)

@@ -16,7 +16,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import DataNote from "../../ui/DataNote.vue";
 import { flag } from "../../../web/release-flags";
-import { essName, jewelWeightNote, tierName, toneOf, weightNote, weightNoteShort } from "./stage-mod-list-look";
+import { essName, sectionNote, tierName, toneOf } from "./stage-mod-list-look";
 import { blockedTitle, canRollNow, tierFreeShare } from "./use-held-shares";
 import { TIER } from "../../../state/for-share/tier-word";
 import { isPhoneWidth } from "../../../utils/use-phone";
@@ -167,8 +167,8 @@ function jump(g: string): void {
 }
 /** スマホ: 種類の節は見出しを押して畳める。全部開いた状態が既定 (2026-10-26 オーナー「基本スマホは省略したらダメ」。前は普通だけ開いていた)、検索中は全部開く */
 const phone = isPhoneWidth();
-/** 節の見出しの青の札の出どころの文 (U-18)。ジュエルは MOD の重みをゲームが公表していないので全部の節に (11-09 オーナー「ジュエルに関しては注意書きないし一般に」) */
-const noteOf = (sec: ModSection): string | undefined => weightNote()[sec.rune ? "rune" : sec.g] ?? (props.item?.cls.category === "Jewels" ? jewelWeightNote() : undefined);
+/** 節の見出しの青の札 (U-18)。ジュエルは全部の節、ほかは一般・ルーン・冒涜専用・異界 (11-09 オーナー「ジュエルに関しては注意書きないし一般に」「全部それで」) */
+const noteOf = (sec: ModSection) => sectionNote(sec.g, !!sec.rune, props.item?.cls.category === "Jewels");
 const secClosed = ref(new Set<string>());
 function toggleSec(sid: string): void {
   const n = new Set(secClosed.value);
@@ -267,7 +267,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
         <span class="font-normal opacity-50">{{ sec.count }} {{ tr("系統", "groups") }}</span>
         <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? tr("はめている", "Socketed") : tr("差していないので 0% (付ければルーンも差す)", "Not socketed, so 0% (adding one also sockets the rune)") }}</span>
         <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを青の札で。押すと出どころ (2026-10-09 オーナー、11-08「注意書きはE」U-46) -->
-        <DataNote v-if="noteOf(sec)" :text="weightNoteShort(!weightNote()[sec.rune ? 'rune' : sec.g])" :detail="noteOf(sec)" />
+        <DataNote v-if="noteOf(sec)" :text="noteOf(sec)!.short" :detail="noteOf(sec)!.detail" />
         <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr(`創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · ${TIER}の表の「付ける」で手で付けるだけ`, "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
         <Disclosure tag="span" kind="section" :open="secShown(sec.sid)" class="ml-auto font-normal md:hidden" />
       </h3>
