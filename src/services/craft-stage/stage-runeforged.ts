@@ -1,8 +1,9 @@
 /**
  * stage-runeforged.ts — ベースのルーンフォージ版 (Runeforged ○○) とワードの値 (E-78、2026-11-08 深夜)
  *
- * ルーンワードは元の防御から換算する式が無く、ルーンフォージ版ごとに決まった値 (正は poe2db の防具の部位ページ、PoB の Data/Bases とも 469 件全部同じ)。
- * 同じ名前で値の違う版がある (Runeforged Grasping Mail は 4 つ、6 ベース) ので全部を返し、どれを出すかは画面が選ぶ (既定は 1 つ目)。
+ * ルーンワードは元の防御から換算する式が無く、ルーンフォージ版ごとに決まった値 (正は poe2db の防具の部位ページ、元のベースは poe2db の Runeforging のレシピの Cost、11-09)。
+ * 同じ元から値の違う版が作れる物がある (Grasping Mail・Sacrificial Regalia は 4 つずつ) ので全部を返し、どれを出すかは画面が選ぶ (既定は 1 つ目)。
+ * 版の名前は元と違う事がある (Cassis Helm → Runeforged Gladiatorial Helm)。ユニークからだけ作れる版は入れない
  * 表は scripts/build-runeforged.mjs が作る stage-runeforged.json
  */
 import raw from "./stage-runeforged.json";
