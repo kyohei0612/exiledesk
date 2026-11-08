@@ -1,4 +1,7 @@
 {
+  "0.1.685": [
+    "Simulator: the tutorial is now available (PC only). Open it from \"Tutorial\" on the base selection page and build a sample tree in 18 steps"
+  ],
   "0.1.684": [
     "Simulator: the tutorial has been rebuilt. You pick 4 mods from the final item's mod list by how they are added (Normal / Fracture / Desecrate) and build a sample tree in 18 steps",
     "Simulator: the next-step window now lists all your target mods; ones that can't be added to that box right now are greyed out, and hovering shows why",

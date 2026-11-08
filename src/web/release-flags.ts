@@ -175,6 +175,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "pasteAll",
   // 0.1.679 スマホの棚の長押しで説明 (U-13a、オーナー 11-07「おけスマホ」、ブラック 59 の頼み)。閉じたままは daily・simTutorial。一緒に出した shelfTierName (U-13b) は 11-08 に撤回して外した
   "shelfInfo",
+  // 0.1.685 シミュのチュートリアルの入口 (T-09・T-23、オーナー 11-09「おけ　だして」、0.1.684 で中身だけ出て入口が出ていなかった、ブラック 66 の頼み)。閉じたままは daily
+  "simTutorial",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
