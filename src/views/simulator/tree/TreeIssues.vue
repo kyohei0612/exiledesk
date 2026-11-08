@@ -45,7 +45,7 @@ function go(id: string): void { if (id) emit("go", id); }
       </button>
       <!-- 詳しい文は開いた時だけ (止まりの訳、11-08) -->
       <details v-for="(x, i) in g.rows.filter((r) => r.detail)" :key="`d${i}`" data-tree-issue-detail class="ml-7 opacity-70"><summary class="cursor-pointer select-none">{{ tr("詳しく", "Details") }}</summary><p class="break-words">{{ x.detail }}</p></details>
-      <button v-if="g.rows.some((x) => x.kind === 'orphan')" type="button" data-tree-issue-report class="g-btn sm ml-7 mt-0.5 self-start" @click="emit('report'); emit('close')">{{ tr("要望・バグを送る", "Send feedback") }}</button>
+      <button v-if="g.rows.some((x) => x.kind === 'orphan')" type="button" data-tree-issue-report class="g-btn sm ml-7 mt-0.5 self-start" @click="emit('report')">{{ tr("要望・バグを送る", "Send feedback") }}</button><!-- 一覧は閉じない: 要望の窓を閉じると一覧が開いたまま戻る (11-08 オーナー「なこして」) -->
     </div>
   </div>
 </template>

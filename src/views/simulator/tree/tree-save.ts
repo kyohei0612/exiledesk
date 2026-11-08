@@ -11,6 +11,7 @@ import { tr } from "../../../i18n/lang";
 import { fmtDate } from "../recipe-share";
 import { track } from "../../../utils/track";
 import { useTree } from "./use-tree";
+import { draftCode, openDraftTree } from "./tree-draft-open";
 
 /**
  * 作りかけ (失うと困る物がある) か。開いているレシピがあればそれと違う時、無ければ完成の狙いか手 (箱 2 つ以上) がある時。
@@ -60,8 +61,10 @@ export function resumeTree(): boolean {
   } else {
     const r = takeResume();
     if (!r) return false;
-    setCurrentTreeRecipe(r.id);
-    t.open(r.tree, true);
+    // 端末の作りかけの木がこのレシピの最後の保存より新しければ作りかけの木を、このレシピのまま開く (保存せず進んだ後も足した手が残る、S-02 ①、11-08 オーナー「なこして」)
+    const code = draftCode(r.updatedAt);
+    if (code) void openDraftTree(code, r).then((ok) => { if (!ok) { setCurrentTreeRecipe(r.id); t.open(r.tree, true); } });
+    else { setCurrentTreeRecipe(r.id); t.open(r.tree, true); }
   }
   try { const u = new URL(location.href); u.searchParams.set("page", "sim-tree"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch { /* 置き換えられなくても開く */ }
   openTreePage("tree");
