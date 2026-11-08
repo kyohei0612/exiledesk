@@ -1,4 +1,9 @@
 {
+  "0.1.684": [
+    "Simulator: the tutorial has been rebuilt. You pick 4 mods from the final item's mod list by how they are added (Normal / Fracture / Desecrate) and build a sample tree in 18 steps",
+    "Simulator: the next-step window now lists all your target mods; ones that can't be added to that box right now are greyed out, and hovering shows why",
+    "Simulator: \"Done (back to the tree)\" in the final item setup now sits above the help, which starts folded. Runes brought in by a start mod stay in the rune list, and the step labels on the left of the tree no longer drift"
+  ],
   "0.1.683": [
     "Simulator: the Nov 8 tree fixes are in (quality is ignored, returns are picked automatically, the Unset list moves to each box, you can continue an in-progress tree, the side column can be hidden, a box for mods that match an Essence, a \"✓ Saved\" mark, and more)",
     "Simulator: the tutorial now matches the current tree: the removed \"Sort misses\" step is gone and the steps for deciding unset boxes are updated",

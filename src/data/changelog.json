@@ -1,5 +1,30 @@
 [
  {
+  "v": "0.1.684",
+  "date": "2026-11-09",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: チュートリアルを作り直しました。完成形の MOD 一覧から 4 つを付け方 (ふつう・フラクチャー・冒涜) ごとに選び、見本のツリーを 18 の手順で組みます",
+    "en": "Simulator: the tutorial has been rebuilt. You pick 4 mods from the final item's mod list by how they are added (Normal / Fracture / Desecrate) and build a sample tree in 18 steps"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓に完成形の狙いを全部並べ、今その箱で付けられない物はグレーにして、乗せると理由を出すようにしました",
+    "en": "Simulator: the next-step window now lists all your target mods; ones that can't be added to that box right now are greyed out, and hovering shows why"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の設定の「決めた (ツリーへ)」を説明の上に移し、説明は畳みました。スタートの ＋MOD で付いたルーンはルーンの欄に残り、ツリーの左の段の札がずれないようにしました",
+    "en": "Simulator: \"Done (back to the tree)\" in the final item setup now sits above the help, which starts folded. Runes brought in by a start mod stay in the rune list, and the step labels on the left of the tree no longer drift"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.683",
   "date": "2026-11-08",
   "items": [
@@ -1059,30 +1084,6 @@
     "area": "",
     "text": "シミュレーター: 手を足した後や「! 未設定 ▸ 次へ」で寄る時、箱の下の ＋ まで画面に入れるように (下の帯に隠れて押せない時がありました)",
     "en": "Simulator: after adding a craft or jumping with \"! Unset ▸ Next\", the view now also brings the + under the box into view (it could be hidden under the bottom bar)"
-   }
-  ]
- },
- {
-  "v": "0.1.644",
-  "date": "2026-10-30",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "サイト: 自動で作っていたベースの一覧のページ (/bases/) を閉じ、ヘッダー・フッターの「ベース一覧」を外しました。ベースはエミュレーターで選べます",
-    "en": "Site: the auto-generated base list pages (/bases/) are closed and the \"Bases\" link is gone from the header and footer. Bases can still be picked in the Emulator"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "サイト: About に運営者 (チョコバナナ、個人) と X・YouTube のリンクを載せました",
-    "en": "Site: the About page now shows the operator (chocobanana, an individual) with links to X and YouTube"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ブログ: 記事「PoE2 クラフトの確率は CoE と合う？」を載せました",
-    "en": "Blog: new article \"Do PoE2 Crafting Odds Match Craft of Exile?\""
    }
   ]
  }
