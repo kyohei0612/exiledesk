@@ -296,6 +296,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
   if (data) syncSameMod(data, d, d.boxes[at]?.parent ?? null);
+  linkAllSameHi(d);
   return at;
 }
 
@@ -323,20 +324,25 @@ export function syncSameMod(data: PatchData, d: TreeDoc, a: string | null): stri
 }
 /**
  * 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥) の既定 = エッセンスと同じ枠で扱う: 兄弟の箱のエッセンス / 合金の当たりの箱へ統合の ↩ (鎖の印)。
- * 人が「新しいツリーを作る」を押した箱 (noAutoBack) と手のある箱はつながない
+ * 人が「新しいツリーを作る」を押した箱 (ownTree) と手のある箱はつながない。自動の直し (打てない人の ↩ 外しなど) で立った noAutoBack では外さない
+ * (11-08 夜オーナー「デフォでエッセンスと同じとして扱うにしてくれあとボタン押さんと扱わないからこれだと」= 手元の木で統合が外れて未設定に落ちていた)
  */
 function linkSameHi(d: TreeDoc, id: string): void {
   const b = d.boxes[id], p = b ? d.boxes[b.parent ?? ""] : undefined;
-  if (!b || !p || b.hand || b.noAutoBack || b.done || (b.back && !b.autoBack)) return;
+  if (!b || !p || b.hand || b.ownTree || b.done || (b.back && !b.autoBack)) return;
   const hit = p.outs.flatMap((o) => { const c = d.boxes[o]; return c?.hand && effectOf(c.hand.currency) === "essence" ? c.outs : []; }).find((o) => d.boxes[o]?.out === "hit");
-  if (hit) { b.back = hit; b.autoBack = true; }
+  if (hit) { b.back = hit; b.autoBack = true; delete b.noAutoBack; }
+}
+/** 木の中の「エッセンスと同じ MOD (同格以上)」の箱を全部、既定の統合にそろえる (手を決めた後・開いた時の組み直しの後) */
+export function linkAllSameHi(d: TreeDoc): void {
+  for (const b of Object.values(d.boxes)) if (b.out === "blocked" && b.junkKey === SAME_HI) linkSameHi(d, b.id);
 }
 /** 「エッセンスと同じ MOD (同格以上)」の箱を 新しいツリーを作る (own = true、↩ を外して ＋ を出す) / エッセンスと同じ枠で扱う (false、既定へ戻す) (S-33e ⑥) */
 export function setSameHiOwn(d: TreeDoc, id: string, own: boolean): void {
   const b = d.boxes[id];
   if (!b || b.out !== "blocked" || b.junkKey !== SAME_HI) return;
-  if (own) { b.back = null; delete b.autoBack; b.noAutoBack = true; return; }
-  delete b.noAutoBack;
+  if (own) { b.back = null; delete b.autoBack; b.noAutoBack = true; b.ownTree = true; return; }
+  delete b.noAutoBack; delete b.ownTree;
   if (!b.hand) linkSameHi(d, id);
 }
 
@@ -413,7 +419,8 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
   // 見るのは木を変えずに 1 回 (見本ごとに配置の鍵の JSON を作り直していた、S-28g の 8 MOD で 0.37 秒)、外すのはその後
   const drop = holdDocSig(d, () => Object.values(d.boxes).filter((b) => {
     const to = b.back && b.autoBack ? d.boxes[b.back]?.hand : null;
-    if (!to) return false;
+    // 「エッセンスと同じ MOD (同格以上)」の統合は特例でエッセンスとして扱うので外さない (S-33e ⑥)
+    if (!to || (b.out === "blocked" && b.junkKey === SAME_HI)) return false;
     for (let seed = 1; seed <= 8; seed++) {
       const s = sampleOf(data, d, b.id, seed);
       if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;

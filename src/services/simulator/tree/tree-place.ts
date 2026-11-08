@@ -10,7 +10,7 @@
  */
 import { BOX_W, type TreeDoc } from "./tree-model";
 import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-tops";
-import { OUT_ORDER } from "./tree-layout";
+import { outRank } from "./tree-layout";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -20,7 +20,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   if (!start) return false;
   const before = new Map(Object.values(d.boxes).map((b) => [b.id, `${b.x},${b.y}`]));
   // 描く子を結果の順に (当たり → 狙いが消えた → 外れが消えた → 外れ、同じ順は作った順)
-  const kidsOf = (id: string): string[] => drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
+  const kidsOf = (id: string): string[] => drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
   /** 子の箱の x (親の箱の x からの差) */
   const rel = new Map<string, number>();
   /**

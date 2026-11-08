@@ -32,7 +32,7 @@ import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { useTreePop } from "./use-tree-pop";
 import { openTreeFirst } from "./tree-open-first";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, clearHand, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, clearHand, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
@@ -56,7 +56,7 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
-import { applyPick, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
+import { applyPick, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -78,6 +78,8 @@ const MEMO_KEY = "exiledesk.tree.memo-open";
 const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
 watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 /** 右の列 (完成形・保存・ミニマップ・倍率) を閉じて木を右端まで広げる (S-94h、このブラウザに覚える) */
+/** ↩ の札の × (同格以上の箱は「新しいツリーを作る」と同じ = 押した印を残す、S-33e ⑥。ほかは ↩ を外すだけ) */
+const clearBack = (d: TreeDoc, id: string): void => { const b = d.boxes[id]; if (b?.out === "blocked" && b.junkKey === "hi") setSameHiOwn(d, id, true); else setBack(d, id, null); };
 const SIDE_KEY = "exiledesk.tree.side-closed";
 const sideClosed = ref((() => { try { return localStorage.getItem(SIDE_KEY) === "1"; } catch { return false; } })());
 /** 閉じる / 完成形の小さなボタン (上の帯の道具と同じ平たい形。border-white の枠はサイトの絵の枠が掛かるので ring) */
@@ -412,7 +414,7 @@ const glowOf = (b: Box): boolean => {
             <template #node-box="{ id }">
               <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
               <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
-                @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
+                @clear-back="t.edit((d) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
@@ -451,7 +453,7 @@ const glowOf = (b: Box): boolean => {
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
-              @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
+              @clear-back="t.edit((d) => clearBack(d, pop!))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>

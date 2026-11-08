@@ -10,7 +10,7 @@ import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./t
 import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
-import { essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
@@ -28,11 +28,21 @@ export const infiniteAim = (key: string | undefined): boolean => !!key && isInfi
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
 
-/** エッセンス / 合金を打たない時 (前の普通の MOD と段が被る、E-56 をエンジンに聞くだけ = S-33e): 飛ばす / 塞がる。打つ時は null */
+/**
+ * エッセンス / 合金を打たない時 (前の普通の MOD と系統が被る = S-33e): 飛ばす (同格以上) / 塞がる (エッセンスと同じ MOD)。打つ時は null。
+ * 被るかはエンジンの E-56 (essenceTierVerdict) に聞き、同格以上かは木の決まりで値の下限どうしを比べる (11-08 夜オーナー「値で見るしかないよなエッセンスの同じMODファミリーなら」
+ * 「MODの下限が24以下ならかな指標　下限値だけみたらいいよ」「これもツリーruleでしょ」): 付いている普通の MOD の段の値の幅の下限が、エッセンス / 合金で付く値の幅の下限以上なら同格以上。
+ * 値が 2 つ以上ある MOD は全部の値で比べ、1 つでも下回ればエッセンスと同じ MOD。クラフト MOD・タグで被る時は今まで通り塞がる
+ */
 export function essenceHold(data: PatchData, item: StageItem, key: string): "skip" | "blocked" | null {
   if (effectOf(key) !== "essence") return null;
   const v = essenceTierVerdict(data, item, key)?.verdict;
-  return v === "skip" || v === "blocked" ? v : null;
+  if (v !== "skip" && v !== "blocked") return null;
+  const t = isInfiniteEssence(key) ? null : essenceTarget(data, item, key), lows = t?.mod.tiers[essenceTierIndex(t.level, t.mod)]?.ranges.map((r) => r[0] ?? 0);
+  if (!t || !lows) return v;
+  const held = [...item.prefixes, ...item.suffixes];
+  const high = (f: string): boolean => held.some((m) => { const md = data.mods.get(m.modId); return !!md && familiesOf(md).includes(f) && !m.crafted && !isCraftedSource(md.source) && lows.every((lo, i) => (m.ranges[i]?.[0] ?? lo) >= lo); });
+  return familiesOf(t.mod).every(high) ? "skip" : "blocked";
 }
 /** 手を置く時の結果の箱の形 (当たりは札 1 つ) */
 type BoxOut = { out: OutKind; aim: Aim | null; junkKey?: string };
@@ -77,7 +87,7 @@ export function passSameHi(data: PatchData, doc: TreeDoc, from: Pick<TreeBox, "o
   if (to === at || ab?.out !== "blocked" || ab.junkKey !== SAME_HI) return item;
   const key = sameModKids(doc, from).find((k) => essenceHold(data, item, k) === "skip");
   const v = key ? essenceTierVerdict(data, item, key) : null;
-  if (v?.verdict !== "skip") return item;
+  if (!v) return item; // 同格以上かは木の決まり (essenceHold の値の比べ) で決めた。系統だけエンジンから
   const mark = (m: StageMod): StageMod => { const md = data.mods.get(m.modId); return md && !m.crafted && !isCraftedSource(md.source) && familiesOf(md).some((f) => v.families.includes(f)) ? { ...m, crafted: true } : m; };
   return { ...item, prefixes: item.prefixes.map(mark), suffixes: item.suffixes.map(mark) };
 }

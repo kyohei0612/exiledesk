@@ -102,6 +102,8 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 const kind = computed(() => OUT_LOOK[props.box.out]);
 /** 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥、ボタンで 統合 / 新しいツリー を切り替える) */
 const sameHi = computed(() => props.box.out === "blocked" && props.box.junkKey === SAME_HI);
+/** 同格以上の箱の 2 つのボタン (点いている方 = 今の選び、HI_OFF = 選んでいない方のグレー、S-33e ⑥) */
+const HI_BTN = "nodrag h-6 shrink-0 whitespace-nowrap rounded border px-1.5", HI_OFF = "border-white/15 text-sim-body opacity-45 hover:opacity-80";
 /** 枠の上の線に乗る題 (tree-names の headOf) */
 /** ヒネコラのハズレ (当たり以外をまとめた箱、S-39) は「ハズレ (打たない)」 */
 // 同じ枠をまとめた箱は、まとめた箱の題も「 / 」で並べる (訳が違う時だけ。11-06 オーナー「同じ枠あるなら統合しちゃっていい」の札は両方の訳が分かる形で、S-66)
@@ -261,21 +263,31 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
       <span v-if="allMiss" data-tree-foresee-nohit class="w-full text-amber-200" :title="tr('ヒネコラの後は狙いの結果だけ使い、ほかはハズレ (打たない)。手の札を押して狙いの MOD に ☑ する', 'After Hinekora only the targeted result is used; everything else is a miss. Click the craft and tick the target mods')">{{ tr("狙いを ☑ して (今は全部ハズレ)", "Tick a target (all results are misses now)") }}</span>
       <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
       <span v-if="cantHand" data-tree-cant-hand class="w-full break-words text-rose-300">{{ tr(`この品には打てない手 (${cantHand})`, `Can't be used on this item (${cantHand})`) }}</span>
-      <template v-if="box.back">
+      <template v-if="box.back && sameHi">
+        <!-- 「エッセンスと同じ MOD (同格以上)」はボタン 2 つでいつも選ぶ: 選んでいる方が点き、選んでいない方はグレー (押すと切り替え)。既定は「エッセンスと同じ枠で扱う」。
+             選んだ後も「→ n 段目へ進む」の文に置き換えない (S-33e ⑥、11-08 夜オーナー「ボタンは2つね…選んでないほうグレーアウト」「4段目へ進むとかに切り替えなくておk」) -->
+        <span v-if="sameHi" data-tree-same-hi-pick class="flex min-w-0 flex-wrap gap-1" :class="quiet ? 'pointer-events-none' : ''">
+          <button type="button" data-tree-same-hi-merge :aria-pressed="!box.ownTree" :class="[HI_BTN, box.ownTree ? HI_OFF : 'border-cyan-300/80 bg-cyan-400/20 text-cyan-100']" :title="tr('この箱の人はエッセンスを打った当たりの箱と同じに扱う (既定)', 'Treat this box as the essence hit box (default)')" @click.stop="box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, false))">{{ tr("エッセンスと同じ枠で扱う", "Treat as essence") }}</button>
+          <button type="button" data-tree-same-hi-own :aria-pressed="!!box.ownTree" :class="[HI_BTN, box.ownTree ? 'border-amber-300/80 bg-amber-400/20 text-amber-100' : HI_OFF]" :title="tr('エッセンスと同じ枠で扱うのをやめ、この箱から別の道を組む', 'Stop treating it as the essence result and build a separate route from this box')" @click.stop="!box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, true))">{{ tr("新しいツリーを作る", "New tree") }}</button>
+        </span>
+      </template>
+      <template v-else-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
         <!-- × (戻りを外す) は文のすぐ右隣 (10-26 夜オーナー「バツはその行動のすぐ隣が良いな」。前は札が伸びて × は右端だった) -->
         <button type="button" data-tree-back-tag class="nodrag flex min-h-6 min-w-0 items-center rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="tr(`${backLabel} (押すとそこへ寄る)`, `${backLabel} (click to go there)`)"
           @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 break-words">{{ boxArrow(t.doc.value, box.id) }} {{ backLabel }}</span></button>
-        <!-- 「エッセンスと同じ MOD (同格以上)」の既定は統合。× の代わりに「新しいツリーを作る」= 統合を外して ＋ で別の道を組む (S-33e ⑥、11-08 オーナー「分かりやすいボタン２つ」) -->
-        <button v-if="!quiet && sameHi" type="button" data-tree-same-hi-own class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" :title="tr('エッセンスと同じ枠で扱うのをやめ、この箱から別の道を組む', 'Stop treating it as the essence result and build a separate route from this box')" @click.stop="t.edit((d) => setSameHiOwn(d, box.id, true))">{{ tr("新しいツリーを作る", "New tree") }}</button>
-        <button v-else-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
+        <button v-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <!-- 当たりの箱は「↩ 戻る」を出さない (次の手は＋、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」) -->
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="(box.out === 'hit' || box.out === 'branch' || box.out === 'any')" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
-        <!-- 「新しいツリーを作る」にした同格以上の箱は、押すと既定 (エッセンスと同じ枠で扱う = 統合) へ戻す (S-33e ⑥) -->
-        <button v-if="sameHi" type="button" data-tree-same-hi-merge class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :title="tr('この箱の人はエッセンスを打った当たりの箱と同じに扱う (既定)', 'Treat this box as the essence hit box (default)')" @click.stop="t.edit((d) => setSameHiOwn(d, box.id, false))">{{ tr("エッセンスと同じ枠で扱う", "Treat as essence") }}</button>
+        <!-- 「エッセンスと同じ MOD (同格以上)」はボタン 2 つでいつも選ぶ: 選んでいる方が点き、選んでいない方はグレー (押すと切り替え)。既定は「エッセンスと同じ枠で扱う」。
+             選んだ後も「→ n 段目へ進む」の文に置き換えない (S-33e ⑥、11-08 夜オーナー「ボタンは2つね…選んでないほうグレーアウト」「4段目へ進むとかに切り替えなくておk」) -->
+        <span v-if="sameHi" data-tree-same-hi-pick class="flex min-w-0 flex-wrap gap-1" :class="quiet ? 'pointer-events-none' : ''">
+          <button type="button" data-tree-same-hi-merge :aria-pressed="!box.ownTree" :class="[HI_BTN, box.ownTree ? HI_OFF : 'border-cyan-300/80 bg-cyan-400/20 text-cyan-100']" :title="tr('この箱の人はエッセンスを打った当たりの箱と同じに扱う (既定)', 'Treat this box as the essence hit box (default)')" @click.stop="box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, false))">{{ tr("エッセンスと同じ枠で扱う", "Treat as essence") }}</button>
+          <button type="button" data-tree-same-hi-own :aria-pressed="!!box.ownTree" :class="[HI_BTN, box.ownTree ? 'border-amber-300/80 bg-amber-400/20 text-amber-100' : HI_OFF]" :title="tr('エッセンスと同じ枠で扱うのをやめ、この箱から別の道を組む', 'Stop treating it as the essence result and build a separate route from this box')" @click.stop="!box.ownTree && t.edit((d) => setSameHiOwn(d, box.id, true))">{{ tr("新しいツリーを作る", "New tree") }}</button>
+        </span>
         <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー) -->
         <button v-if="box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->

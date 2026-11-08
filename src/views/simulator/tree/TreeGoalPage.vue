@@ -334,7 +334,10 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める。上端から 12px = ページの留まる物の top-3 と同じ、11-03) -->
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
-      <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-[48rem]:static max-[48rem]:order-first min-[48rem]:w-[480px]">
+      <!-- 右の列は貼り付けない (sticky だと列が画面より高い時に品質・ルーンの下が見切れた。窓全体の 1 つのスクロールで左の一覧と一緒に動く、11-08 夜オーナー「スクロールのセットで動かしちゃっていいよ」) -->
+      <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[48rem]:order-first min-[48rem]:w-[480px]">
+        <!-- 次へ (決めた) は完成形のカードの上 (11-08 夜オーナー「決定ボタン完成形カードの上にしてくれ」。前は説明の下 = S-10d)。スマホは窓の一番下 -->
+        <div class="pb-1 max-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
@@ -356,8 +359,6 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
             <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-[48rem]:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
           </ul>
         </details>
-        <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。浮かせずに列の一番下 (S-10d、11-07 オーナー「なんでツリーへボタン浮いてんだ」「説明の下だね」)。スマホは窓の一番下 -->
-        <div class="pt-1 max-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
       <!-- スマホはカードの列が上に積まれるので、「決めた」は窓の一番下 (一覧の後) に普通に置く (貼り付けない、S-10d) -->
       <div class="py-2 min-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
