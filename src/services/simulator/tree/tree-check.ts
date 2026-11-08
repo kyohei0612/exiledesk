@@ -17,7 +17,7 @@ import { CATALYSING, effectOf, engineOmens } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimsOf, handAims, handProblem, playHand, sampleOf, startItemOf } from "./tree-sample";
-import { boxOutcomeOf, essenceHold } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold, passSameHi } from "./tree-outcome";
 import { runTreeSteps, STOP, stopAimedOf, stuckDetail, type TreeRunResult } from "./tree-run";
 import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
@@ -327,7 +327,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, got, viaBack, am); }
+          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, passSameHi(data, doc, b, o, to, got), viaBack, am); }
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し) は、付いていない人だけが着くので数えない
           else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob)) never.add(o);
         }

@@ -3,7 +3,7 @@
  * ☑ の無い MOD は外れ MOD (メモ feedback-unchecked-is-junk)、消去の残したい MOD (Hand.keep) もここ。打った前後の比べはエンジンの入口 (outcomeOf の aimDiff)。
  * 分け方は handOutcome の 1 本 (G-1 S-1、11-07): 箱の結果は boxOutcomeOf、手を置く時に起こりうる結果の箱 (possibleOutsOf) は列挙した枝を handOutcome に通して集めるだけ
  */
-import { applyCurrency, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { applyCurrency, familiesOf, isCraftedSource, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
@@ -67,6 +67,20 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
 }
 /** 「エッセンスと同じ MOD (同格以上)」の箱の鍵 (S-33e ⑥。前の手でエッセンスと同格以上の同じ系統が付いた人) */
 export const SAME_HI = "hi";
+/**
+ * 箱 from の手の結果の箱 at から to へ進む人の品 (S-33e ⑥ の特例、11-08 オーナー「ツリーの樹で特例お願い」): at が「エッセンスと同じ MOD (同格以上)」で
+ * 既定 (統合) のまま別の箱へ移る人だけ、兄弟のエッセンス / 合金と同じ系統の普通の MOD に crafted (エッセンスで付いた印) を立てる。
+ * 以後の 1 品 1 つ・MOD レベルで切る手の側・カードの札はエンジンがそのまま見る。「新しいツリーを作る」にした箱 (自分の手へ進む) では立てない
+ */
+export function passSameHi(data: PatchData, doc: TreeDoc, from: Pick<TreeBox, "outs">, at: string, to: string, item: StageItem): StageItem {
+  const ab = doc.boxes[at];
+  if (to === at || ab?.out !== "blocked" || ab.junkKey !== SAME_HI) return item;
+  const key = sameModKids(doc, from).find((k) => essenceHold(data, item, k) === "skip");
+  const v = key ? essenceTierVerdict(data, item, key) : null;
+  if (v?.verdict !== "skip") return item;
+  const mark = (m: StageMod): StageMod => { const md = data.mods.get(m.modId); return md && !m.crafted && !isCraftedSource(md.source) && familiesOf(md).some((f) => v.families.includes(f)) ? { ...m, crafted: true } : m; };
+  return { ...item, prefixes: item.prefixes.map(mark), suffixes: item.suffixes.map(mark) };
+}
 /** 箱 a の結果の箱に置いたエッセンス / 合金の手 (「エッセンスと同じ MOD」の箱を作る相手) */
 const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">): string[] => a.outs.flatMap((id) => { const c = doc.boxes[id]; return c && c.out !== "blocked" && c.hand && effectOf(c.hand.currency) === "essence" ? [c.hand.currency] : []; });
 /**
