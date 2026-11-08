@@ -10,7 +10,7 @@
  * 足し方の細かい丸め (ゲームは切り捨てか四捨五入か) は出典が無いので四捨五入。数値の正は PoB (要望 ⑰-3 の DPS は PoB で計算する)。
  */
 import { baseStatsOf } from "./stage-bases";
-import { runeforgedOf } from "./stage-runeforged";
+import { runeforgedOf, type Runeforged } from "./stage-runeforged";
 import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
 import { catalystOf, hasExtraCatalyst, scaledAugment } from "./stage-core";
@@ -174,9 +174,24 @@ export function numbersOf(item: StageItem): ItemNumbers | null {
  * (品質はオーナー 11-08「品質で上がるよ」)。variant = 版の番号 (runeforgedOf の並び、既定は 1 つ目)。ルーンフォージ版の無いベースは null。四捨五入は propRows と同じ
  */
 export function runicWardOf(item: StageItem, variant = 0): number | null {
+  return runeforgedStatsOf(item, variant)?.ward ?? null;
+}
+
+/**
+ * その品をルーンフォージ版にした時の値 (E-78): ワードと版に残るアーマー・回避力・ES を、今の MOD・品質で伸ばした値。
+ * 残る防御は propRows のアーマー・回避力・ES と同じ式 (版の素の値 + 平) × (1 + 増加 % の和) × (1 + 品質%)。版に無い防御は持たない。版の無いベースは null
+ */
+export function runeforgedStatsOf(item: StageItem, variant = 0): Runeforged | null {
   const v = runeforgedOf(item.base)[variant];
   if (!v) return null;
   const s = sums(item);
   const g = (id: string): number => s.get(id) ?? 0;
-  return Math.round((v.ward + g("local_ward")) * (1 + g("local_ward_+%") / 100) * (1 + item.quality / 100));
+  const q = 1 + item.quality / 100;
+  const out: Runeforged = { name: v.name, ward: Math.round((v.ward + g("local_ward")) * (1 + g("local_ward_+%") / 100) * q) };
+  for (const d of DEF) {
+    const base = v[d.key];
+    if (base == null) continue;
+    out[d.key] = Math.round((base + g(d.flat)) * (1 + d.inc.reduce((a, id) => a + g(id), 0) / 100) * q);
+  }
+  return out;
 }
