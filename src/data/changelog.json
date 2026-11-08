@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.687",
+  "date": "2026-11-09",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 最終チェックで、付く形があるのに『付かない』と出て未設定に数えられていたのを直しました",
+    "en": "Simulator: the final check no longer flags a step as \"never hits\" (and counts it as unset) when the hit is actually reachable"
+   }
+  ]
+ },
+ {
   "v": "0.1.686",
   "date": "2026-11-09",
   "items": [
@@ -1030,18 +1042,6 @@
     "area": "",
     "text": "シミュレーター: 手のある箱の手の窓で Esc を押すと、案内どおり持っている物を手放すようにしました (窓ごと閉じていました)。もう一度 Esc で窓を閉じます",
     "en": "Simulator: Esc in the craft window of a box that already has a craft now releases the held item as the hint says, instead of closing the window. Press Esc again to close it"
-   }
-  ]
- },
- {
-  "v": "0.1.647",
-  "date": "2026-10-30",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定で「付ける」から付け方 (ふつう・フラクチャー・冒涜) を選んでも MOD が付かなかったのを直しました",
-    "en": "Simulator: fixed choosing how to add a mod (Normal, Fracture, Desecrate) from \"Add\" in the final item settings not adding the mod"
    }
   ]
  }

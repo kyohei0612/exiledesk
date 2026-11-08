@@ -1,4 +1,7 @@
 {
+  "0.1.687": [
+    "Simulator: the final check no longer flags a step as \"never hits\" (and counts it as unset) when the hit is actually reachable"
+  ],
   "0.1.686": [
     "Emulator / Simulator: values the game doesn't publish (mod weights, odds, costs and so on) now have a blue \"i\" note. Hover it (tap on phones) to see where the numbers come from and how to read them",
     "Item cards now have \"Show as Runeforged (Ward)\". For armour with a Runeforged version, you can see its Runic Ward and remaining defences with quality and mods included",
