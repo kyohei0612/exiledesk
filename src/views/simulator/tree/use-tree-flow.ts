@@ -309,15 +309,19 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   };
   window.addEventListener("resize", onResize);
   f.onPaneReady(() => { void openView(); });
+  /** 段の札の帯 (枠の外の左の列、S-147f) の幅の増えた分。枠の左の端がその分右へ動くので、次の幅の変わりで箱が画面の同じ所に残るように送る */
+  let laneD = 0;
+  const laneShift = (d: number): void => { laneD += d; };
   // 右の欄を開いた時など、枠の幅が変わっても見ている真ん中は動かさない (Vue Flow は左上を軸にするので、何もしなければ左上が残る)
   watch(() => f.dimensions.value.width, (w, old) => {
     // 幅 0 (木の枠が隠れていた) から幅が出た = 開いた時の寄せをやり直す。隠れたまま組まれると寄せが効かず、スタートが枠の左上に出た
     // (10-27 夜オーナー r/C6YHoWk2、本番 v0.1.634。エミュの「シミュレーターへ」→ 完成形のページ → 決めた で同じ形を作れた。スイッチ viewFromZero)
     if (!old && w) { void nextTick(() => openView()); return; }
-    if (!old || !w) return;
-    const vp = f.viewport.value;
-    void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
+    if (!old || !w) { laneD = 0; return; }
+    const vp = f.viewport.value, d = laneD;
+    laneD = 0;
+    void f.setViewport({ x: vp.x + (w - old) / 2 - d / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, revealSpot, backSpot, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, revealSpot, backSpot, toggleFull, centerOn, rectOf, laneShift, dispose: () => window.removeEventListener("resize", onResize) };
 }

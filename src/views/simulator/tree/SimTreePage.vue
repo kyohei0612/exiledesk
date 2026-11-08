@@ -23,7 +23,7 @@ import { isPhoneWidth, usePhone, useViewOnlyWidth } from "../../../utils/use-pho
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
-import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
+import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue"; import { laneBandW } from "./tree-lane-band";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue";
@@ -313,6 +313,8 @@ useRowSettle(doc, measureBox, chipNatural);
 /** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ、S-85b) */
 const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
 const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
+// 段の札の帯は木の枠の外の左の列 (S-147f、11-08)。帯の幅が変わった分は木の送りで打ち消す (倍率を変えても木が横に跳ねない)
+const lanes = computed(() => laneMarks(doc.value, rowL.value)); watch(() => (t.needBase.value ? 0 : laneBandW(lanes.value.map((l) => l.text), v.flow.viewport.value.zoom)), (w, old) => v.laneShift(w - old));
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
@@ -405,6 +407,7 @@ const phone = usePhone();
       <div ref="row" class="flex min-h-0 gap-2 h-[var(--row-h)]" :class="full ? 'flex-1' : ''" :style="full ? {} : { '--row-h': `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
         <!-- overflow-clip: hidden だと枠の外の箱にフォーカス・寄せが来た時にブラウザが枠ごとスクロールし、枠が上へずれて下が描かれなかった (11-06、未設定の「次へ」の後) -->
+        <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
@@ -450,7 +453,6 @@ const phone = usePhone();
               </svg>
             </template>
           </VueFlow>
-          <TreeLaneTags v-if="!t.needBase.value" :lanes="laneMarks(doc, rowL)" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。戻り先を選ぶ・手の時だけ -->
