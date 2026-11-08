@@ -32,7 +32,7 @@ const HELP_JA: Readonly<Record<string, readonly string[]>> = {
   OmenofDextralExaltation: ["次の高貴なオーブは **サフィックスだけ** に足す", "サフィックスが埋まっていると打てない"],
   OmenofGreaterExaltation: ["次の高貴なオーブは MOD を **2 つ** 足す (空きが 1 つなら 1 つ)", "左右の高貴のお告げと重ねられる"],
   // 大いなる高貴と重ねた時は 2 つとも重く引く (クラフト配信者 (やマン先生) の説明、2026-10-09 オーナーが確認済みの決まり)
-  OmenofCatalysingExaltation: [`次の高貴なオーブは、品質 (カタリスト) の種類に合う MOD を **重く** 引く。倍率は 1 + ${CAT.per} × 品質 (**${CAT.at20} で ${CAT.x20} 倍**)、${CAT.at20} を超えた分は 1% ごとに +${CAT.over} (45% で ${CAT.x45} 倍。Craft of Exile の式)`, "**大いなる高貴のお告げと重ねると、足す 2 つとも重く引く**", "打つと品質を全部使い切って 0 に戻る", "品質が無いと打てない (指輪・アミュレットだけ)"],
+  OmenofCatalysingExaltation: [`次の高貴なオーブは、品質 (カタリスト) の種類に合う MOD を **重く** 引く。倍率は 1 + ${CAT.per} × 品質 (**${CAT.at20} で ${CAT.x20} 倍**)、${CAT.at20} を超えた分は 1% ごとに +${CAT.over} (45% で ${CAT.x45} 倍。Craft of Exile の式)`, "**大いなる高貴のお告げと重ねると、足す 2 つとも重く引く** (クラフト配信者の説明。公式の値は出ていない)", "打つと品質を全部使い切って 0 に戻る", "品質が無いと打てない (指輪・アミュレットだけ)"],
   OmenofSinistralCoronation: ["次の王者のオーブは **プレフィックスだけ** に足す"],
   OmenofDextralCoronation: ["次の王者のオーブは **サフィックスだけ** に足す"],
   OmenofSinistralAlchemy: ["次の錬金術のオーブは **プレフィックスを上限まで** (3 つ) 付け、残りをサフィックスに"],
@@ -61,7 +61,7 @@ const HELP_EN: Readonly<Record<string, readonly string[]>> = {
   OmenofSinistralExaltation: ["The next Exalted Orb adds **only a prefix**", "Can't be used when prefixes are full"],
   OmenofDextralExaltation: ["The next Exalted Orb adds **only a suffix**", "Can't be used when suffixes are full"],
   OmenofGreaterExaltation: ["The next Exalted Orb adds **2 mods** (1 if only 1 slot is open)", "Stacks with Sinistral / Dextral Exaltation"],
-  OmenofCatalysingExaltation: [`The next Exalted Orb rolls mods matching the Catalyst quality type **with higher weight**: 1 + ${CAT.per} × quality (**${CAT.x20}x at ${CAT.at20}**), +${CAT.over} per 1% above ${CAT.at20} (${CAT.x45}x at 45%; the Craft of Exile formula)`, "**Stacked with Greater Exaltation, both added mods are weighted**", "Consumes all quality (back to 0)", "Needs quality (Rings and Amulets only)"],
+  OmenofCatalysingExaltation: [`The next Exalted Orb rolls mods matching the Catalyst quality type **with higher weight**: 1 + ${CAT.per} × quality (**${CAT.x20}x at ${CAT.at20}**), +${CAT.over} per 1% above ${CAT.at20} (${CAT.x45}x at 45%; the Craft of Exile formula)`, "**Stacked with Greater Exaltation, both added mods are weighted** (from a crafting streamer; no official value)", "Consumes all quality (back to 0)", "Needs quality (Rings and Amulets only)"],
   OmenofSinistralCoronation: ["The next Regal Orb adds **only a prefix**"],
   OmenofDextralCoronation: ["The next Regal Orb adds **only a suffix**"],
   OmenofSinistralAlchemy: ["The next Orb of Alchemy fills **prefixes to the max** (3), the rest as suffixes"],
