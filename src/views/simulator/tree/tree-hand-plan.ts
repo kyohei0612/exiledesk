@@ -19,7 +19,7 @@ import { needsSameMod } from "../../../services/simulator/tree/tree-outcome";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
-import { depthOf, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { depthOf, shallow, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, drop, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -394,12 +394,12 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
     }
     return false;
   }), true);
-  // ほかに打てる同じ枠の候補が 1 つだけならそこへ自動で付け直す (2 つ以上は人が「↩ 戻り先を選ぶ (n 個)」で選ぶ、S-52b・S-193、11-08。
+  // ほかに打てる同じ枠の候補があれば浅い段・先に作った箱へ自動で付け直す (S-52b・S-193、11-08。戻り先はいつも 1 つ、人が選ぶボタンは無い。
   // 前は次の候補を試さず未設定にした = 0yH8kjGg の b38、浅い方のエッセンスは打てずカオスの箱は打てた)
   for (const b of drop) {
-    const was = b.back, alt = backChoicesOf(data, d, b.id).filter((to) => to !== was);
+    const was = b.back, alt = backChoicesOf(data, d, b.id).filter((to) => to !== was).sort(shallow(d));
     setBack(d, b.id, null); b.noAutoBack = true;
-    if (alt.length === 1) { setBack(d, b.id, alt[0]!); b.autoBack = true; }
+    if (alt.length) { setBack(d, b.id, alt[0]!); b.autoBack = true; }
   }
 }
 /** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */

@@ -45,8 +45,7 @@ import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
-import { noTargetText, useTreeLink } from "./use-tree-link";
-import { backLabelOf, retryOf, stepBackText } from "./tree-fail";
+import { backLabelOf } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue"; import TreeBugReport, { reportTreeBug } from "./TreeBugReport.vue"; import { issueGroups } from "./hole-check";
@@ -74,8 +73,6 @@ useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */
 /** add = 横の ＋ で開いた選ぶ窓 (id は押した横の箱。選んで決めた時に初めて箱を足す、at = 引っ張って置いた所) */
 const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; id: string; add?: { at?: { x: number; y: number } } } | null>(null);
-/** 戻りの矢印の先を選んでいる箱 */
-const picking = ref<string | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
 const MEMO_KEY = "exiledesk.tree.memo-open";
 const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
@@ -157,7 +154,6 @@ const backLabel = (b: Box): string => backLabelOf(doc.value, b);
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
   const id = panel.value!.id;
   simAct("hand", kind);
-  if (picking.value === id) picking.value = null;
   // 外れの箱で打つ前の箱・同じ形の箱と同じ手は applyPick (tree-shape の sameHandReturn) が戻す (S-51。前の sameHandRetry は本番の goalShape で使われなくなったので消した)
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
@@ -168,7 +164,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
- * 箱を押す = 戻り先を選んでいる時はそこへつなぐ / 縮めて見ている時は編集のポップアップ / ふつうは開いている欄を閉じるだけ
+ * 箱を押す = 縮めて見ている時は編集のポップアップ / ふつうは開いている欄を閉じるだけ (人が戻り先を選ぶ形は 11-08 夜に無くした = 戻り先はいつも自動の 1 つ、S-52b)
  * (試し打ちの欄は 10-22 に消した、オーナー「試し打ちマジ意味わからんから消して」。箱の時点のアイテムは乗せた時のカード)。
  * 箱を引っ張る = 動かす (startDrag。Vue Flow の引っ張りは使わない)
  */
@@ -179,7 +175,6 @@ function onNodeClick(e: NodeMouseEvent): void {
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
   if (sf.folds.value.has(b.id)) { sf.toggle(b.id); return; }
-  if (picking.value) { if (picking.value !== b.id) onTarget(b); return; }
   // 縮めて見ている時は、その箱の編集を等倍のポップアップで (オーナー 10-22「75% 未満の見るだけをやめる」)
   if (viewOnly.value) { pop.value = b.id; return; }
   if (panel.value) closeHand();
@@ -193,13 +188,11 @@ function startDrag(b: Box, e: PointerEvent): void {
     onCancel: () => { drag.value = null; },
   });
 }
-function closeHand(): void { simOp("cancel", "hand-pick"); if (picking.value && picking.value === panel.value?.id) picking.value = null; panel.value = null; }
+function closeHand(): void { simOp("cancel", "hand-pick"); panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
 /** 箱の × = この箱を作った手 (親の手) を消す。結果の箱すべてとその下も消え、親は手を選び直せる形に (10-27 オーナー、TreeBox の rm) */
 function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; simOp("remove-hand"); t.edit((d) => clearHand(d, p)); }
 function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
-const link = useTreeLink(doc, picking);
-const noTarget = computed(() => noTargetText(link.value, picking.value));
 /** 縮めて見ている時に押した箱の編集のポップアップ (use-tree-pop.ts) */
 const { pop, popEl, popStyle, popDo } = useTreePop(doc, v);
 // シミュの操作の流れ (オーナー「シミュは全部監視」、web/sim-trail): 手の窓を開いた (下の ＋・打つ手の札のどちらからでも)
@@ -239,16 +232,6 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
 /** 失敗 (ここで終わり) の印を付ける・外す  */
 function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
-/** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
-function pickBack(to: string): void { const from = picking.value; if (!from) return; simOp("set-back"); picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
-function onTarget(b: Box): void {
-  const from = picking.value;
-  // つなげない箱 (灰色、use-tree-link.ts) は押しても何もしない (理由は箱に乗せると出る)
-  if (from && link.value.get(b.id)) return;
-  picking.value = null;
-  if (panel.value?.kind === "hand" && panel.value.id === from) panel.value = null;
-  if (from && from !== b.id) { simOp("set-back"); t.edit((d) => setBack(d, from, b.id)); }
-}
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, checkRun } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value && !t.loading.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
@@ -319,8 +302,8 @@ const lanes = computed(() => laneMarks(doc.value, rowL.value)); watch(() => (t.n
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
 watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.revealSpot(id), 0); } });
-// 手の窓を選ばずに閉じたら開く前の視点へ (S-147e)。手を決めた時は holdBox が先に場所を使い切る、戻り先を選びに行く時は戻さない
-watch(panel, (p, was) => { if (!p && was?.kind === "hand" && !picking.value) void v.backSpot(); });
+// 手の窓を選ばずに閉じたら開く前の視点へ (S-147e)。手を決めた時は holdBox が先に場所を使い切る
+watch(panel, (p, was) => { if (!p && was?.kind === "hand") void v.backSpot(); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
 const flowNodes = computed(() => [...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
@@ -345,7 +328,6 @@ function onKey(e: KeyboardEvent): void {
 // ＋の選び・戻り先選び・全画面の Esc は共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。箱の重ね窓 panel は上の useDismiss。前はここで自前に順を決め、足りない所の一覧と一緒に 2 つ閉じていた)
 const escOff = (f: () => void) => (): void => { cardBox.value = null; hoverBox.value = null; f(); };
 useDismiss(() => !!plus.value, [], escOff(() => { plus.value = null; }), { escOnly: true });
-useDismiss(() => !!picking.value, [], escOff(() => { picking.value = null; }), { escOnly: true });
 useDismiss(() => !!full.value, [], escOff(() => void v.toggleFull()), { escOnly: true });
 onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
@@ -422,10 +404,8 @@ const phone = usePhone();
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
               <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
-              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent" :picking="!!picking && picking !== id"
-                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !picking && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
-                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
-                @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
+              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
+                @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
@@ -455,22 +435,16 @@ const phone = usePhone();
           </VueFlow>
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
-        <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。戻り先を選ぶ・手の時だけ -->
-        <p v-if="picking || hand" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
-          :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
-          {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") }}
-          <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
-          <b v-if="noTarget" data-tree-pick-none class="max-w-[640px] whitespace-normal break-words text-rose-200">{{ noTarget }}</b>
-          <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>
-          <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('再度挑戦: 打つ前の箱へ戻って、同じ手をもう一度打つ', 'Retry: go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">↩ {{ tr("再度挑戦", "Retry") }} · {{ stepBackText(doc, retryOf(doc, picking, link)!) }}</button>
-          <button v-if="picking && picking !== 'start' && !(noTarget && link.get('start'))" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">↩ {{ stepBackText(doc, "start") }}</button>
+        <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。手の時だけ (戻り先を選ぶ形は 11-08 夜に無くした、S-52b) -->
+        <p v-if="hand" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border border-white/10 bg-[#15110c]/95 px-3 py-1 text-[12px] text-[#d8ccb4] shadow-[0_4px_14px_rgba(0,0,0,0.6)]">
+          {{ tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") }}
         </p>
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
-            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
+            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
-              @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
+              @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>

@@ -8,12 +8,13 @@ import { type Judge } from "./tree-judge";
 import { playHand } from "./tree-sample";
 import { clearHand, MATCH_BACK, setBack, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { DIVINE_LT, isDivineAim } from "./tree-divine";
+import { effectOf, isRuneHand } from "./tree-hands";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
 const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
 export const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
-const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
+export const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
 const keepSig = (h: Hand): string => (h.keep ?`k:${h.keep.map((a) => a.modId).sort().join()}` : "");
 const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency &&[...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);
 
@@ -29,6 +30,20 @@ export function offByParent(doc: TreeDoc, id: string, j: Judge): boolean {
 /** t が id の上で、間の手の結果が全部 1 通りの箱か (自動の ↩ を付けると打っても変わらない手の輪になる、S-50・S-50d が閉じていれば親だけ) */
 export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
   for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p && p.outs.length <= 1; p = doc.boxes[p.parent ?? ""]) { if (p.id === t) return true; }
+  return false;
+}
+
+/**
+ * t が id の上 (先祖) で、t から id までの手に品質・ルーンだけを変える手 (カタリスト・ルーン) があるか (S-51d の例外)。品質を枠に入れないので (S-60b)
+ * その前後は同じ中身に見えるが、人の品は品質・ルーンが違う。戻すと上の手 (カタリストなど) を打ち直す輪になり、後の箱の人の決めた手が消える
+ * (11-08 夜、消去の木 ownerAnnul1: カタリストの後のカオス + 削減の結果を 2 つ上のエッセンスの箱へまとめ、38 → 16 箱・100 人が上限まで回った)
+ */
+export function qualityBetween(doc: TreeDoc, id: string, t: string): boolean {
+  let q = false;
+  for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p; p = doc.boxes[p.parent ?? ""]) {
+    if (p.hand && (effectOf(p.hand.currency) === "quality" || isRuneHand(p.hand.currency))) q = true;
+    if (p.id === t) return q;
+  }
   return false;
 }
 
@@ -49,9 +64,9 @@ export function idleLoop(doc: TreeDoc, id: string, t: string, j: Judge): boolean
  * 自分と下、打っても変わらない手の輪になる箱 (idleLoop) は入れない
  */
 export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
-  const ts = autoTargets(doc, id, j);
-  // 候補が 2 つ以上なら自動でつながず、人が「↩ 戻り先を選ぶ (n 個)」で選ぶ (S-52b、11-08 オーナー「おけ　それで進めて」。前は浅い方へ黙ってつないだ)
-  return ts.length === 1 ? ts[0]! : null;
+  // 候補が 2 つ以上でも親 → 浅い段・先に作った箱の 1 つへ (S-52b・S-51d、11-08 夜オーナー「2つ目でたら即もどるような気がするけど」「だったら複数ボタンはいらん気がする」。
+  // 同じ中身の手のある箱は木に 1 つにまとまるので、候補が 2 つ以上になるのはまとめの前だけ。前は人が「↩ 戻り先を選ぶ (n 個)」で選んだ)
+  return autoTargets(doc, id, j)[0] ?? null;
 }
 /** 自動の ↩ の候補 (親 → 浅い段・先に作った箱の順) */
 export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
@@ -59,7 +74,7 @@ export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
   const rank = (t: string): number => (t === p ? 0 : 1);
   const cmp = shallow(doc);
   // 品質はどこでも見ない (S-60b・S-60c、11-08 オーナー「いやだから品質みないっての」): カタリストの n % に届くかで候補を外さない
-  const ts = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
+  const ts = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
   // 結果が 1 通りの手 (カタリストなど) で上の候補から続くだけの候補は、上の 1 つと数える (S-52b、11-08 オーナーの木の 13 段目 → 10 段目。11 段目はカタリストを打った後)
   return ts.filter((t) => !ts.some((u) => u !== t && straightUp(doc, t, u))).sort((x, y) => rank(x) - rank(y) || cmp(x, y));
 }
@@ -108,15 +123,16 @@ export function sameHandByContent(doc: TreeDoc, id: string, h: Hand, j: Judge): 
 }
 
 /**
- * 同じ中身・同じ手は木に 1 箱 (S-51d): 手のある箱 id と中身も手も同じ箱のうち、id より浅い (同じ段は先に作った) 箱 = 幹。
- * 手が違えば両方残す (11-08、品質を枠に入れないのでカタリストの前後が同じ中身になり、後の箱の消去などが消えた。戻る人は S-52b で選ぶ)。
- * 自分の下・打っても変わらない手の輪 (straightUp・idleLoop。ルーンの手の前後) は入れない。人の × (noAutoBack)・分かれ目・ヒネコラのハズレの箱は幹を探さない
+ * 同じ中身は木に 1 箱 (S-51d): 手のある箱 id と中身が同じ手のある箱のうち、id より浅い (同じ段は先に作った) 箱 = 幹。来た手・置いた手が違っても幹へ
+ * (11-08 夜オーナー「同じ枠って２つ以上なることあるの？2つ目でたら即もどるような気がするけど」。前の 11-08 の「手が違えば両方残す」は撤回)。
+ * 自分の下・打っても変わらない手の輪 (straightUp・idleLoop。カタリスト・ルーンの手の前後 = 品質を枠に入れないので前後が同じ中身になる所) は入れない。
+ * 人の × (noAutoBack)・分かれ目・ヒネコラのハズレの箱は幹を探さない
  */
 export function trunkOf(doc: TreeDoc, id: string, j: Judge): string | null {
   const b = doc.boxes[id];
   if (!b?.hand || b.out === "start" || b.split || b.noAutoBack || b.seen) return null;
   const below = new Set(subtree(doc, id)), cmp = shallow(doc);
-  return Object.values(doc.boxes).filter((t) => t.id !== id && sameHand(t.hand, b.hand!) && !t.split && !t.seen && !below.has(t.id) && cmp(t.id, id) < 0 && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
+  return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && !below.has(t.id) && cmp(t.id, id) < 0 && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
 }
 /** 箱 x の手と下を消して自動の ↩ to (同じ手なら選んだ手を handBack に持つ = S-51) */
 function foldInto(doc: TreeDoc, x: string, to: string): void {
@@ -158,10 +174,8 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
   for (const b of Object.values(doc.boxes)) {
     // ヒネコラのハズレのまとめ (S-39、tree-foresee の foldMisses) は中身で見直さない
     if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
-    // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない
-    // 同じ枠の候補が 2 つ以上になった自動の ↩ (横まとめ・同じ手の戻りは除く) は外して人が選ぶ (S-52b、11-08)
-    const many = !b.handBack && !b.merged && autoTargets(doc, b.id, j).length >= 2;
-    if (!many && j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
+    // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない。同じ枠の候補が 2 つ以上でも外さない (戻り先はいつも 1 つ、S-52b 11-08 夜)
+    if (j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }
