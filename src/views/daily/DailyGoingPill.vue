@@ -1,6 +1,7 @@
 <!--
   DailyGoingPill.vue — 挑戦中にエミュ・シミュへ移った先の札「挑戦中 残り xx:xx・挑戦へ戻る」(D-37g)。1 回押せば挑戦の木へ戻る。
-  時間は止まらない (D-32)。今日の挑戦が時間内で諦めていない時だけ、デイリーのページの外で出す。差し込みは WebApp (デザイン部長、D-91)
+  時間は止まらない (D-32)。今日の挑戦が時間内で諦めていない時だけ、デイリーのページの外で出す。
+  中身の上に細い帯で置く (浮かせるとエミュのベースの名前などに重なった、11-09)。差し込みは WebApp の <main> の上
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from "vue";
@@ -20,19 +21,26 @@ const clock = computed(() => { const s = Math.ceil(left.value / 1000); return `$
 </script>
 
 <template>
-  <button v-if="shown" type="button" class="g-btn-red daily-going-pill" data-daily-going @click="openDailyPage({ view: 'start', q: id })">
-    {{ tr(`挑戦中 残り ${clock}・挑戦へ戻る`, `Challenge on, ${clock} left · Back to it`) }}
-  </button>
+  <div v-if="shown" data-daily-going class="daily-going" role="status">
+    <span>{{ tr("デイリーの挑戦中", "Daily challenge on") }} <b class="daily-going-clock">{{ tr(`残り ${clock}`, `${clock} left`) }}</b></span>
+    <button type="button" class="g-btn-red sm" data-daily-going-back @click="openDailyPage({ view: 'start', q: id })">{{ tr("挑戦へ戻る", "Back to the challenge") }}</button>
+  </div>
 </template>
 
 <style scoped>
-.daily-going-pill {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  z-index: 60;
-  min-height: 44px;
-  padding: 0 18px;
+.daily-going {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--exile-color-border-subtle);
+  font-size: 14px;
+}
+.daily-going-clock {
   font-variant-numeric: tabular-nums;
+}
+.daily-going button {
+  min-height: 36px;
 }
 </style>
