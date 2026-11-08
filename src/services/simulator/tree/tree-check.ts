@@ -8,11 +8,12 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, catalystOf, hasCatalystQuality, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { allMods, catalystOf, hasCatalystQuality, limitOf, modBoostsOf, mulberry32, omenFor, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { TIER } from "../../../state/for-share/tier-word";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
-import { aimedMiss, isMissMod, missAims } from "./tree-miss";
+import { aimedMiss, isMissMod, missAims, type MissAims } from "./tree-miss";
+import { applyHand } from "./tree-hand-core";
 import { CATALYSING, effectOf, engineOmens } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
@@ -48,6 +49,31 @@ const OUT_NAME: Partial<Record<OutKind, [string, string]>> = { hit: ["当たり"
 const outName = (o: OutKind): string => { const n = OUT_NAME[o]; return n ? tr(n[0], n[1]) : o; };
 /** 1 つの結果が出るまで打ち直す上限 (精査は数秒で終わるよう、見本の 3000 より少なく) */
 const TRIES = 1200;
+/** 着く品の幅 (S-71h): 外れを付け直す品の数と、1 品に打つ回数 */
+const WIDE_ITEMS = 24;
+const WIDE_TRIES = 60;
+/**
+ * 着く品の幅 (S-71h、11-09 オーナー「はずれがプレフィックスのエッセンスのアイテムレベル以下の場合とかでもこの形になる可能性あるんじゃないん」):
+ * 見本の外れ (フラクチャー以外の狙いでない MOD) を外し、同じ側に高貴 (左右のお告げ、エンジン) で付け直した品。外れの MOD レベル・系統は人ごとに違うので、
+ * 外れ次第で行き先が変わる手 (削減のお告げ・エッセンスの飛ばす / 塞がる) を見本 1 つで「付かない」と決めない。狙いが付いた品は着く形でないので入れない
+ */
+function wideItems(data: PatchData, item: StageItem, miss: MissAims, rng: () => number): StageItem[] {
+  const j = junkOf(item, miss), gone = [...j.prefix, ...j.suffix];
+  if (!gone.length) return [];
+  const bare: StageItem = { ...item, prefixes: item.prefixes.filter((m) => !gone.includes(m)), suffixes: item.suffixes.filter((m) => !gone.includes(m)) };
+  const out: StageItem[] = [];
+  for (let i = 0; i < WIDE_ITEMS; i++) {
+    let it: StageItem | null = bare;
+    for (const m of gone) {
+      const omen = omenFor("exalt", m.side);
+      const r: StageApply = applyHand(data, it, "exalt", rng, { omens: omen ? [omen] : [] });
+      if (!r.applied) { it = null; break; }
+      it = r.item;
+    }
+    if (it) { const k = junkOf(it, miss); if (k.prefix.length + k.suffix.length === gone.length) out.push(it); }
+  }
+  return out;
+}
 
 /** 精査の進み (walk = 5 人を辿る、run = 30 人回す) */
 export interface CheckProgress { phase: "walk" | "run"; n: number; of: number; /** ここまでに見つかった穴 (辿った人から順に足す、10-22 オーナー「読み込みながら徐々に出す」) */ partial: CheckIssue[] }
@@ -248,6 +274,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     const waste = new Map<string, { who: Set<number>; reason: string }>();
     /** この箱の見本のどれかにもう当たりの狙いが付いている (付いていない人だけが着くので数えない) */
     const held = (id: string, ob: TreeBox): boolean => J.aimedOf(id).some((am) => boxAims(ob).some((a) => am.has(a.modId)));
+    /** 外れの見分け (着く品の幅を作る時に外れを付け直す、wideItems) */
+    const wideMiss = missAims(data, [...aims, ...fractureMarks(doc)]);
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
     for (let person = 1; person <= PEOPLE; person++) {
@@ -329,7 +357,16 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           }
           if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, passSameHi(data, doc, b, o, to, got), viaBack, am); }
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し) は、付いていない人だけが着くので数えない
-          else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob)) never.add(o);
+          // 見本 1 つで付かなくても、外れを付け直した品 (着く品の幅) のどれかで付けば数えない (S-71h。削減は一番低い MOD レベルを消す・エッセンスは同じ系統の MOD レベルと比べるので、外れ次第で行き先が変わる)
+          else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob) && !wideItems(data, item, wideMiss, rng).some((v) => wideHit(v))) never.add(o);
+          function wideHit(v: StageItem): boolean {
+            for (let i = 0; i < WIDE_TRIES; i++) {
+              const r = playHand(data, v, { ...b.hand!, repeat: null }, rng, handAims(doc, b.id, aims));
+              if (!r.applied) return false;
+              if (fits(boxOutcomeOf(data, doc, b, v, r.item, aims, aimed))) return true;
+            }
+            return false;
+          }
         }
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };
