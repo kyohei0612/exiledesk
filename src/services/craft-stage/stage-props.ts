@@ -10,6 +10,7 @@
  * 足し方の細かい丸め (ゲームは切り捨てか四捨五入か) は出典が無いので四捨五入。数値の正は PoB (要望 ⑰-3 の DPS は PoB で計算する)。
  */
 import { baseStatsOf } from "./stage-bases";
+import { runeforgedOf } from "./stage-runeforged";
 import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
 import { catalystOf, hasExtraCatalyst, scaledAugment } from "./stage-core";
@@ -166,4 +167,16 @@ export function numbersOf(item: StageItem): ItemNumbers | null {
     physDps, eleDps, aps, crit: b.crit ? b.crit + g("local_critical_strike_chance") : null,
     armour: def(DEF[0]), evasion: def(DEF[1]), es: def(DEF[2]),
   };
+}
+
+/**
+ * その品をルーンフォージ版にした時のルーンワード (E-78)。式はアーマー・回避力と同じ: (版のワード + 平の + local_ward) × (1 + local_ward_+%) × (1 + 品質%)
+ * (品質はオーナー 11-08「品質で上がるよ」)。variant = 版の番号 (runeforgedOf の並び、既定は 1 つ目)。ルーンフォージ版の無いベースは null。四捨五入は propRows と同じ
+ */
+export function runicWardOf(item: StageItem, variant = 0): number | null {
+  const v = runeforgedOf(item.base)[variant];
+  if (!v) return null;
+  const s = sums(item);
+  const g = (id: string): number => s.get(id) ?? 0;
+  return Math.round((v.ward + g("local_ward")) * (1 + g("local_ward_+%") / 100) * (1 + item.quality / 100));
 }

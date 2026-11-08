@@ -112,6 +112,10 @@ export { CATALYSTS } from "../htc/quality";
 export { isEmotion } from "./apply-emotion";
 export { isShard } from "./apply-act";
 export { isGem } from "./stage-bases";
+// ルーンフォージ版とルーンワード (E-78、11-08 深夜): 版の一覧 (同じ名前の版が幾つもあれば全部、画面の既定は 1 つ目) とその品のワード (品質・MOD 込み)
+export type { Runeforged } from "./stage-runeforged";
+export { runeforgedOf } from "./stage-runeforged";
+export { runicWardOf } from "./stage-props";
 
 // MOD の値の上乗せ (品質・側の効果・聖別) の一覧 (J8、MOD の数字は素の値で出す。画面はこれを呼ぶだけ)
 export { modBoostsOf } from "./boosts";

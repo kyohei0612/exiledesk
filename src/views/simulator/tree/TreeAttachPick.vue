@@ -69,7 +69,8 @@ const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.t
 </script>
 
 <template>
-  <span class="inline-flex items-center" data-mod-attach-wrap>
+  <!-- data-attach-mod = その段 (MOD|段)。チュートリアルが光らせる目印 (T-13) -->
+  <span class="inline-flex items-center" data-mod-attach-wrap :data-attach-mod="`${modId}|${tier}`">
     <button ref="btn" type="button" data-mod-attach class="tbtn" :class="here ? (here === 'fracture' ? 'on !text-mod-fractured' : 'on') : ''" :aria-expanded="open"
       :title="here ? tr('押すと付け方を替える・外す', 'Click to change how it is added, or remove it') : (block ?? tr(`${rank} 以上を完成の狙いにする (付け方を選ぶ)`, `Make ${rank}+ a final target (choose how)`))"
       @click.stop="toggle">{{ label }}<Icon name="chevron-down" class="ml-0.5 size-3" /></button>

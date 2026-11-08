@@ -29,7 +29,11 @@ const plusMax = computed(() => {
 });
 /** ＋で足せる狙い (完成の狙いのうち、印でも＋済みでもない物) */
 const addable = computed(() => t.goals.value.filter((a) => !a.fractured && !st.value.mods.some((m) => m.modId === a.modId)));
-const add = (a: Aim): void => change((x) => { x.mods.push({ modId: a.modId, tier: a.tier }); });
+/** ルーンの池の MOD (コルの狩りのマークスマン MOD など) が連れてくるルーンの英語名 (無ければ null) */
+const runeEnOfMod = (modId: string): string | null => { const id = s.data.value?.mods.get(modId)?.rune; return id ? Object.keys(RUNES).find((en) => runeIdByName(en) === id) ?? null : null; };
+// ＋ で足すと連れてきたルーンもルーンの欄の行に入れる。MOD を × で外してもルーンは残り、ルーンの行の × で抜ける
+// (11-08 オーナー「Aで」。前は MOD の裏で黙って差して MOD と一緒に抜け、高貴などで狙いのマークスマン MOD が付かなくなった、AR0Mgff7)
+const add = (a: Aim): void => change((x) => { x.mods.push({ modId: a.modId, tier: a.tier }); const en = runeEnOfMod(a.modId); if (en && !(x.runes ?? []).includes(en)) x.runes = [...(x.runes ?? []), en]; });
 const remove = (i: number): void => change((x) => { x.mods.splice(i, 1); });
 const junkLeft = computed(() => Math.max(0, START_JUNK - st.value.mods.length));
 

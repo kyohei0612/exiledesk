@@ -1,7 +1,7 @@
 /**
  * tut-data.ts — シミュのチュートリアルの手順と文 (src/data/sim-tutorial.json) の読み込みと、手元の dev だけの保存
  * (2026-10-26 夜オーナー「開発版で文字を俺が打つから保存と修正が開発版でできるような構造」)。
- *   steps   = 手順 (tutorial.md T-21 の 12 段。種類 goal / start / hand / done / fail / unset / test / run / note、hand は箱の役・打つ物・お告げ・狙い・残したい MOD。
+ *   steps   = 手順 (tutorial.md T-21 の 18 段。種類 pick / goal / start / hand / done / fail / unset / test / run / note、pick は完成形の MOD と付け方、hand は箱の役・打つ物・お告げ・狙い・発現・残したい MOD。
  *             進む条件は木の中身を見る use-sim-tutorial)。スマホの順は持たず、役ごとの手から画面で求める (T-26、use-sim-tutorial-phone)
  *   texts   = 札の文 { 鍵: { ja, en } }。鍵は「手順の id.場面」(hand は plus / bar / hold / omen-off / omen / aim / aim-off / free / keep / use / wrong / missing、
  *             スマホだけの場面は p- を頭に付ける。ほかは main ほか)。空なら下書き (tut-route の既定の文)
@@ -19,10 +19,14 @@ export type TutStepDef =
     /** 窓の「狙う MOD」でチェックする MOD */ aim?: string;
     /** 狙い無し (☑ 無し、結果は「打った後」1 箱、S-23) */ free?: boolean;
     /** 消去の「残したい MOD」で ☑ する MOD (S-27) */ keep?: string;
+    /** 残したい MOD は ☑ 無し = どれが消えてもよい (S-27) */ keepNone?: boolean;
+    /** 骨の手を発現させる (☑ の狙いは発現で選ぶ MOD、S-32) */ veil?: boolean;
   }
+  /** pick = 完成形の設定の MOD 一覧で、その MOD の段を「付ける」でその付け方にする (S-10b) */
+  | { id: string; kind: "pick"; mod: string; tier: number; way: "normal" | "fracture" | "desecrated" }
   /** done = 箱の「完成にする」、fail = 光った箱の「失敗」(S-53) */
   | { id: string; kind: "done" | "fail"; box: Role }
-  /** goal = 完成形の設定 (✦ と品質の決め)、start = 始め方の窓、unset = 帯「! 未設定 ▸ 次へ」、test = 最終チェックの ✓、run = 100 人 → 結果 → 終わる */
+  /** goal = 完成形の設定 (品質の決めと「決めた」)、start = 始め方の窓、unset = 帯「! 未設定 ▸ 次へ」、test = 最終チェックの ✓、run = 100 人 → 結果 → 終わる */
   | { id: string; kind: "goal" | "start" | "unset" | "test" | "run" | "end" | "note" };
 export type TutData = { v: 1; course: string; steps: TutStepDef[]; texts: Record<string, TutText>; targets: Record<string, string> };
 

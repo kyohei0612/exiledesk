@@ -37,7 +37,6 @@ import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { qualityUndecided } from "./tree-goal-quality";
-import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import { useGoalShown } from "./use-goal-shown";
 import { isCraftAim } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
@@ -246,8 +245,8 @@ const HELP: Array<[string, string, boolean?]> = [
   ["カードの行を押しても印を付け外し (右クリックでも)", "Click a row on the card to toggle the mark too (right-click works too)"],
   ["印が無ければ「決めた」の後の窓で、フラクチャーにする MOD を選ぶか白ベース (フラクチャー無し) から", "No mark: after Done, pick the mod to fracture or start from a white base (no fracture)"],
 ];
-/** 説明はスマホでは既定で閉じる (カードの下で MOD の行が画面の外へ押し出された、10-26 猿の 10)。PC は開いたまま */
-const helpOpen = ref(innerWidth >= VIEW_ONLY_MAX);
+/** 説明は既定で閉じる (スマホ = カードの下で MOD の行が画面の外へ押し出された、10-26 猿の 10。PC も 11-08 夜オーナー「畳んでくれ説明文」) */
+const helpOpen = ref(false);
 // 2 の段に着いたら上から (ベースの一覧を送った位置のまま着き、カードと狙いの行が見えなかった、10-26 猿の 1)
 watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scrollTo(0, 0)); });
 </script>
@@ -336,8 +335,6 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <!-- 右の列は貼り付けない (sticky だと列が画面より高い時に品質・ルーンの下が見切れた。窓全体の 1 つのスクロールで左の一覧と一緒に動く、11-08 夜オーナー「スクロールのセットで動かしちゃっていいよ」) -->
       <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[48rem]:order-first min-[48rem]:w-[480px]">
-        <!-- 次へ (決めた) は完成形のカードの上 (11-08 夜オーナー「決定ボタン完成形カードの上にしてくれ」。前は説明の下 = S-10d)。スマホは窓の一番下 -->
-        <div class="pb-1 max-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
@@ -351,9 +348,11 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
           <p v-for="a in overLeft" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
         </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
-        <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」) -->
+        <!-- 次へ (決めた) は使用ルーンの下 = 長い説明の上 (11-08 夜オーナー「このUIならこの長ったらしい説明の上でいいな」。前はカードの上 = S-10d)。スマホは窓の一番下 -->
+        <div class="py-1 max-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+        <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」)。PC も既定で畳む (11-08 夜オーナー「畳んでくれ説明文」) -->
         <details data-tree-goal-help-wrap :open="helpOpen" @toggle="helpOpen = ($event.target as HTMLDetailsElement).open">
-          <summary class="cursor-pointer text-[12px] opacity-70 min-[48rem]:hidden">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
+          <summary class="cursor-pointer text-[12px] opacity-70">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
           <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
             <li data-tree-goal-attach-help>{{ tr("付ける: 付け方 (ふつう・フラクチャー・冒涜) を選ぶ。その付け方で出ない物は灰色で、押すと訳。冒涜は付け方の覚えだけ (何個でも)。エッセンスの MOD は「ふつう」で付ける", "Add: pick how it is added (Normal / Fracture / Desecrate). Greyed ways can't give that mod; click for why. Desecrate is only a note (any number). Essence mods use Normal") }}</li>
             <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-[48rem]:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
