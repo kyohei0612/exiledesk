@@ -33,10 +33,10 @@ import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 /** 画面に出す断り書き (英語は weightOverrideNote()) */
 export const WEIGHT_OVERRIDE_NOTE =
   "重みはコミュニティのデータから参照しています (この MOD の重みはゲームのデータに無い)。他の部位に同じ MOD がある物はそこの重みを借り、"
-  + "無い物 (キャストスピードなど) は Craft of Exile の値を使っています。";
+  + "無い物 (キャストスピードなど) は Craft of Exile の値を使っています。どこにも重みの無い部位の MOD は、このサイトが仮に 1000 と置いています。";
 
 /** 断り書きを今の言語で (2026-10-10 英語版) */
-export const weightOverrideNote = (): string => tr(WEIGHT_OVERRIDE_NOTE, "This mod's weight isn't in the game data, so it comes from community data: borrowed from the same mod on other item types, or Craft of Exile's value where none exists (e.g. Cast Speed).");
+export const weightOverrideNote = (): string => tr(WEIGHT_OVERRIDE_NOTE, "This mod's weight isn't in the game data, so it comes from community data: borrowed from the same mod on other item types, or Craft of Exile's value where none exists (e.g. Cast Speed). Mods on item types with no weight anywhere use this site's placeholder of 1000.");
 
 /** MOD id → 段の出始め ilvl ごとの重み */
 const OVERRIDES: Record<string, { source: string; byIlvl: Record<number, number> }> = {
@@ -110,6 +110,10 @@ export function applyWeightOverrides(data: PatchData): { data: PatchData; applie
     applied.push(id);
   }
   const all = [...mods.values()];
+  // 自前で作った部位の MOD (extra-bases、weightSource "client-placeholder") の重み 1000 は仮の値。1 ではないので上書きはしないが、
+  // 「推定」には入れる (2026-11-09、洗い直しの一覧 #5。extra-bases の 488 個のうち同梱の重みが勝たずに残る普通の MOD 63 個)。重みは変えない (借りる先の候補にも今までどおり入る)。
+  // 冒涜 (仮 2500) とルーンの特殊 MOD は節の札で断っているので入れない
+  for (const m of all) if (m.source === "normal" && (m as { weightSource?: string }).weightSource === "client-placeholder") overridden.add(m.id);
   // 借りる先の候補 (本物の重みの普通 MOD) を系統ごとに 1 回だけ並べる。MOD ごとに全部を見直すと、
   // クライアント由来の MOD が増えて 0.8 秒かかり、計算機を開くたびに画面が止まっていた (2026-10-07)
   const byFam = new Map<string, Mod[]>();
