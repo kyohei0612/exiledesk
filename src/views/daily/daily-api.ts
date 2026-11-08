@@ -137,15 +137,23 @@ export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" 
   const t = daily.local.tries[id];
   if (t) { Object.assign(t, patch); save(); }
 }
-/** POST /daily/giveup (D-37b)。提出なしで終える。始め直しはできない (D-33)。終えられたら true */
+/** POST /daily/giveup (D-37b)。提出なしで終える。始め直しはできない (D-33)。始めていない時も諦めの印を置く (今日の順位のレシピを見る前、D-50c)。終えられたら true */
 export async function giveUpTry(id: string): Promise<boolean> {
-  const a = auth(), t = daily.local.tries[id];
-  if (!a || !t) return false;
-  const r = await call<{ ended?: boolean; error?: string }>("/daily/giveup", { ...a, id });
+  const a = auth();
+  if (!a) return false;
+  const r = await call<(DailyTry & { error?: undefined }) | { ended?: undefined; error: string }>("/daily/giveup", { ...a, id });
   if (!r?.ended) return false;
-  t.ended = true;
+  const t = daily.local.tries[id];
+  if (t) t.ended = true;
+  else daily.local.tries[id] = r;
   save();
   return true;
+}
+/** 今日のお題にまだ挑戦できるか (始めていない・14:50 まで、または時間が残り諦めていない)。今日の順位のレシピを見る前の窓を出すか (D-50c) */
+export function canStillTry(id: string, now = Date.now()): boolean {
+  if (id !== todayId(now)) return false;
+  const t = daily.local.tries[id];
+  return t ? !t.ended && leftMs(t, now) > 0 : canStartAt(now);
 }
 /** 残り時間 (実際の時計、ページを閉じても進む) */
 export const leftMs = (t: DailyTry, now = Date.now()): number => t.startedAt + TIME_LIMIT_MS - now;
