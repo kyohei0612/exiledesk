@@ -156,5 +156,5 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
 /** 「エッセンスと同じ MOD」の箱 id の品で、兄弟の箱のエッセンス / 合金を塞ぐ系統 (エンジンの E-56) */
 function sameModFamilies(d: PatchData, doc: TreeDoc, id: string, it: StageItem): string[] {
   const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
-  return (p?.outs ?? []).flatMap((o) => { const h = doc.boxes[o]?.hand; if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" ? v.families : []; });
+  return (p?.outs ?? []).flatMap((o) => { const h = doc.boxes[o]?.hand; if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" || v?.verdict === "skip" ? v.families : []; });
 }

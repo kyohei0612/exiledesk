@@ -59,24 +59,28 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
   const oc = handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
-  // 次のエッセンス / 合金と同じ系統の MOD が付いた人は「エッセンスと同じ MOD」の箱へ (S-33e ③。その箱がある時だけ)
-  if (oc.out !== "blocked" && b.outs.some((id) => doc.boxes[id]?.out === "blocked") && sameModKids(doc, b).some((k) => essenceHold(data, after, k) === "blocked")) return { out: "blocked", hits: [] };
+  // 次のエッセンス / 合金と同じ系統の MOD が付いた人は「エッセンスと同じ MOD」の箱へ (S-33e ③。その箱がある時だけ)。同格以上は (同格以上) の箱へ (S-33e ⑥)
+  if (oc.out !== "blocked") for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
+    if (b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === key) && sameModKids(doc, b).some((k) => essenceHold(data, after, k) === hold)) return { out: "blocked", hits: [], ...(key ? { junkKey: key } : {}) };
+  }
   return oc;
 }
+/** 「エッセンスと同じ MOD (同格以上)」の箱の鍵 (S-33e ⑥。前の手でエッセンスと同格以上の同じ系統が付いた人) */
+export const SAME_HI = "hi";
 /** 箱 a の結果の箱に置いたエッセンス / 合金の手 (「エッセンスと同じ MOD」の箱を作る相手) */
 const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">): string[] => a.outs.flatMap((id) => { const c = doc.boxes[id]; return c && c.out !== "blocked" && c.hand && effectOf(c.hand.currency) === "essence" ? [c.hand.currency] : []; });
 /**
  * 箱 a の手の結果に「エッセンスと同じ MOD」の箱が要るか (S-33e ①、11-08 オーナー「エッセンス打つ前の枝だから、枠を増やすのはエッセンスの前に１つ枠を作る形になるよね」):
  * a の見本に a の手を打った結果のどれかが、結果の箱に置いたエッセンス / 合金と同じ系統の普通の MOD を低い段で持つ (E-56 の塞がる) 時だけ。前の手で付きようが無ければ作らない
  */
-export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string): boolean {
+export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string, hold: "blocked" | "skip" = "blocked"): boolean {
   const a = doc.boxes[aId], keys = a ? sameModKids(doc, a) : [];
   if (!a?.hand || !keys.length) return false;
   for (let i = 1; i <= SINGLE_SEEDS; i++) {
     const smp = sampleOf(data, doc, aId, i);
     if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
     const outs = stepOutcomes(data, smp.item, a.hand.currency, engineOmens(a.hand)) ?? [];
-    if (outs.some((o) => !o.void && keys.some((k) => essenceHold(data, o.item, k) === "blocked"))) return true;
+    if (outs.some((o) => !o.void && keys.some((k) => essenceHold(data, o.item, k) === hold))) return true;
   }
   return false;
 }

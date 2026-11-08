@@ -20,6 +20,8 @@ import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
+import { setSameHiOwn } from "./tree-hand-plan";
+import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
@@ -98,6 +100,8 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 
 /** 結果ごとの名前・色・印 (tree-names.ts の OUT_LOOK、まとめた札と同じ) */
 const kind = computed(() => OUT_LOOK[props.box.out]);
+/** 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥、ボタンで 統合 / 新しいツリー を切り替える) */
+const sameHi = computed(() => props.box.out === "blocked" && props.box.junkKey === SAME_HI);
 /** 枠の上の線に乗る題 (tree-names の headOf) */
 /** ヒネコラのハズレ (当たり以外をまとめた箱、S-39) は「ハズレ (打たない)」 */
 // 同じ枠をまとめた箱は、まとめた箱の題も「 / 」で並べる (訳が違う時だけ。11-06 オーナー「同じ枠あるなら統合しちゃっていい」の札は両方の訳が分かる形で、S-66)
@@ -262,12 +266,16 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
         <!-- × (戻りを外す) は文のすぐ右隣 (10-26 夜オーナー「バツはその行動のすぐ隣が良いな」。前は札が伸びて × は右端だった) -->
         <button type="button" data-tree-back-tag class="nodrag flex min-h-6 min-w-0 items-center rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="tr(`${backLabel} (押すとそこへ寄る)`, `${backLabel} (click to go there)`)"
           @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 break-words">{{ boxArrow(t.doc.value, box.id) }} {{ backLabel }}</span></button>
-        <button v-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
+        <!-- 「エッセンスと同じ MOD (同格以上)」の既定は統合。× の代わりに「新しいツリーを作る」= 統合を外して ＋ で別の道を組む (S-33e ⑥、11-08 オーナー「分かりやすいボタン２つ」) -->
+        <button v-if="!quiet && sameHi" type="button" data-tree-same-hi-own class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" :title="tr('エッセンスと同じ枠で扱うのをやめ、この箱から別の道を組む', 'Stop treating it as the essence result and build a separate route from this box')" @click.stop="t.edit((d) => setSameHiOwn(d, box.id, true))">{{ tr("新しいツリーを作る", "New tree") }}</button>
+        <button v-else-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <!-- 当たりの箱は「↩ 戻る」を出さない (次の手は＋、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」) -->
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="(box.out === 'hit' || box.out === 'branch' || box.out === 'any')" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <!-- 「新しいツリーを作る」にした同格以上の箱は、押すと既定 (エッセンスと同じ枠で扱う = 統合) へ戻す (S-33e ⑥) -->
+        <button v-if="sameHi" type="button" data-tree-same-hi-merge class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :title="tr('この箱の人はエッセンスを打った当たりの箱と同じに扱う (既定)', 'Treat this box as the essence hit box (default)')" @click.stop="t.edit((d) => setSameHiOwn(d, box.id, false))">{{ tr("エッセンスと同じ枠で扱う", "Treat as essence") }}</button>
         <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー) -->
         <button v-if="box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->

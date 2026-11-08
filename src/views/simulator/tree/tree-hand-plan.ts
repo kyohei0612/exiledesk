@@ -15,7 +15,7 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { needsSameMod } from "../../../services/simulator/tree/tree-outcome";
+import { needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
@@ -306,11 +306,38 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 export function syncSameMod(data: PatchData, d: TreeDoc, a: string | null): string | null {
   const p = a ? d.boxes[a] : undefined;
   if (!p?.hand) return null;
-  const has = p.outs.find((id) => d.boxes[id]?.out === "blocked");
-  if (needsSameMod(data, d, p.id)) return has ? null : addOut(d, p.id, "blocked", undefined);
-  const c = has ? d.boxes[has] : undefined;
-  if (c && !c.hand && !c.back && !c.done) { drop(d, [c.id]); p.outs = p.outs.filter((o) => o !== c.id); }
-  return null;
+  let made: string | null = null;
+  for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
+    const has = p.outs.find((id) => d.boxes[id]?.out === "blocked" && d.boxes[id]?.junkKey === key);
+    if (needsSameMod(data, d, p.id, hold)) {
+      const id = has ?? addOut(d, p.id, "blocked", key);
+      if (!has) made ??= id;
+      if (key) linkSameHi(d, id);
+      continue;
+    }
+    // 要らなくなった (エッセンスの手を外した・替えた) 箱は、人の決め (手・人が付けた ↩・完成 / 失敗) が無ければ消す
+    const c = has ? d.boxes[has] : undefined;
+    if (c && !c.hand && (!c.back || c.autoBack) && !c.done) { drop(d, [c.id]); p.outs = p.outs.filter((o) => o !== c.id); }
+  }
+  return made;
+}
+/**
+ * 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥) の既定 = エッセンスと同じ枠で扱う: 兄弟の箱のエッセンス / 合金の当たりの箱へ統合の ↩ (鎖の印)。
+ * 人が「新しいツリーを作る」を押した箱 (noAutoBack) と手のある箱はつながない
+ */
+function linkSameHi(d: TreeDoc, id: string): void {
+  const b = d.boxes[id], p = b ? d.boxes[b.parent ?? ""] : undefined;
+  if (!b || !p || b.hand || b.noAutoBack || b.done || (b.back && !b.autoBack)) return;
+  const hit = p.outs.flatMap((o) => { const c = d.boxes[o]; return c?.hand && effectOf(c.hand.currency) === "essence" ? c.outs : []; }).find((o) => d.boxes[o]?.out === "hit");
+  if (hit) { b.back = hit; b.autoBack = true; }
+}
+/** 「エッセンスと同じ MOD (同格以上)」の箱を 新しいツリーを作る (own = true、↩ を外して ＋ を出す) / エッセンスと同じ枠で扱う (false、既定へ戻す) (S-33e ⑥) */
+export function setSameHiOwn(d: TreeDoc, id: string, own: boolean): void {
+  const b = d.boxes[id];
+  if (!b || b.out !== "blocked" || b.junkKey !== SAME_HI) return;
+  if (own) { b.back = null; delete b.autoBack; b.noAutoBack = true; return; }
+  delete b.noAutoBack;
+  if (!b.hand) linkSameHi(d, id);
 }
 
 /**
