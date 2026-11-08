@@ -127,7 +127,7 @@ const runPos = (b: Box): { x: number; y: number } => ({ x: b.x, y: yOf(b) });
 /** 沼った人が回っていた箱 (PC の木の青枠 = TreeBox の swamp と同じ、回した結果を出している間だけ) */
 const swampOf = (id: string): boolean => !!props.result?.loopAt?.[id];
 const NO_PATHS = new Map<string, string>();
-const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], branch: ["分岐", "Split"], blocked: ["塞がり", "Blocked"] };
+const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], branch: ["分岐", "Split"], blocked: ["同じ MOD", "Same mod"] };
 /** 見えている箱 (木の座標の範囲で見る)。送るたびに読むので、変わった時だけ一覧を替える */
 const inView = computed(() => {
   const z = m.k.value, x0 = -m.tx.value / z, y0 = -m.ty.value / z, w = (wrap.value?.clientWidth ?? 0) / z, h = (wrap.value?.clientHeight ?? 0) / z;

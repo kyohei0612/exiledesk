@@ -15,13 +15,14 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
+import { needsSameMod } from "../../../services/simulator/tree/tree-outcome";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { depthOf, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, drop, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { backChoicesOf } from "./use-tree-link";
 import { revealAimsOf } from "./tree-reveal-aims";
@@ -294,7 +295,22 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   pinDivineMisses(d);
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
+  if (data) syncSameMod(data, d, d.boxes[at]?.parent ?? null);
   return at;
+}
+
+/**
+ * 「エッセンスと同じ MOD」の箱 (S-33e ①) を箱 a の手の結果にそろえる: 結果の箱のエッセンス / 合金と同じ系統が前の手で付きうれば 1 つ足し、
+ * 要らなくなった (エッセンスの手を外した・替えた) 手も ↩ も無い箱は消す。足した箱の id (無ければ null)
+ */
+export function syncSameMod(data: PatchData, d: TreeDoc, a: string | null): string | null {
+  const p = a ? d.boxes[a] : undefined;
+  if (!p?.hand) return null;
+  const has = p.outs.find((id) => d.boxes[id]?.out === "blocked");
+  if (needsSameMod(data, d, p.id)) return has ? null : addOut(d, p.id, "blocked", undefined);
+  const c = has ? d.boxes[has] : undefined;
+  if (c && !c.hand && !c.back && !c.done) { drop(d, [c.id]); p.outs = p.outs.filter((o) => o !== c.id); }
+  return null;
 }
 
 /**
@@ -408,7 +424,8 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
   const made: string[] = [], seen = new Set<string>();
   for (const m of frameOfDoc(data, d).miss) {
     const k = `${m.box}|${m.oc.out}|${m.oc.junkKey ?? ""}`;
-    if (!m.from || m.oc.out === "hit" || seen.has(k) || !d.boxes[m.box]) continue;
+    // 「エッセンスと同じ MOD」の箱は 1 つ前の手の結果にだけ作る (syncSameMod)。エッセンスの手の下には足さない (S-33e ①)
+    if (!m.from || m.oc.out === "hit" || m.oc.out === "blocked" || seen.has(k) || !d.boxes[m.box]) continue;
     seen.add(k);
     made.push(addOut(d, m.box, m.oc.out, m.oc.junkKey));
   }

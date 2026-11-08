@@ -5,6 +5,7 @@
  * box = その見本の箱。同じ側の「どれか」の当たりの箱 (anyOf) なら、一覧に当たる MOD の行を「A か B」で出す (10-26 オーナー「アイテム枠の中には狙いモッド2種を１MODの中においてどっちかみたいな話でいいんじゃない前みたく」)
  */
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { essenceTierVerdict } from "../../../services/craft-stage/apply-essence";
 import { aimHeldOn, isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { aimedMiss, isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
 import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -148,5 +149,12 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
     else if (isMissMod(m, miss)) putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
   }
+  // 「エッセンスと同じ MOD」の箱は、次のエッセンス / 合金と同じ系統の MOD を名前で出す (S-33e ②、11-08 オーナー「それ名前出していいよ」)
+  if (box?.id && box.out === "blocked") for (const f of sameModFamilies(d, doc, box.id, it)) for (const m of [...it.prefixes, ...it.suffixes]) if (m.family === f) out.delete(m.modId);
   return out;
+}
+/** 「エッセンスと同じ MOD」の箱 id の品で、兄弟の箱のエッセンス / 合金を塞ぐ系統 (エンジンの E-56) */
+function sameModFamilies(d: PatchData, doc: TreeDoc, id: string, it: StageItem): string[] {
+  const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
+  return (p?.outs ?? []).flatMap((o) => { const h = doc.boxes[o]?.hand; if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" ? v.families : []; });
 }

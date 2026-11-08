@@ -112,6 +112,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
     if (added.length) { yield* drain(); flushBacks(); }
   }
+  // 打ち直しの間に足した「エッセンスと同じ MOD」の箱 (S-33e ①、親の手を置いた後にエッセンスの手で足す) に保存の決めがあれば打ち直す
+  yield* replay(Object.keys(d.boxes).filter((id) => d.boxes[id]!.out === "blocked" && !placed.has(id)));
   // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
   for (const id of Object.keys(d.boxes)) foldMisses(d, id);
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
