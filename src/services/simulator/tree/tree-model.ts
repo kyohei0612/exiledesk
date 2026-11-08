@@ -20,7 +20,8 @@ import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
  * pass = 品質だけ上げる手 (カタリスト) の後の通り抜け。画面には箱を描かず、打つ手の札の下に次の手の札 (か＋) をつなぐ
  * (オーナー 10-22「品質だけ上げるくだりがあるでしょ、オーブを打つだけの表示でいいから下に＋」)
  */
-export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch";
+/** blocked = エッセンス / 合金が前の普通の MOD の低い段で塞がった (手は使わない・アイテムはそのまま、S-33e) */
+export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch" | "blocked";
 /** fracture = フラクチャーのオーブ (10-22 オーナー「フラクチャーする所から回す」。結果 = 狙いが ✦ になった / 外れが ✦ になった) */
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
@@ -334,7 +335,7 @@ export function drop(d: TreeDoc, ids: readonly string[]): void {
 }
 
 /** 結果の箱の並び (起こりうる結果の一覧から作る時) */
-const OUT_ORDER: OutKind[] = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk"];
+const OUT_ORDER: OutKind[] = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk", "blocked"];
 /** 手の種類 (繰り返しの手は spam) */
 export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base);
 

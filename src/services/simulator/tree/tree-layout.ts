@@ -4,8 +4,8 @@
 import { aimKey, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
 import { centerMerged, noteLaid, rowTops, settleRows } from "./tree-row-tops";
 
-/** 兄弟の並び = 狙いどおりが左 (S-142d、11-08 オーナー「狙い通りは基本左」): 当たり・打った後 → 外れが消えた (残したい MOD が残った) → 狙いが消えた → 外れ */
-export const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, junkGone: 1, lost: 2, junk: 3 };
+/** 兄弟の並び = 狙いどおりが左 (S-142d、11-08 オーナー「狙い通りは基本左」): 当たり・打った後 → 外れが消えた (残したい MOD が残った) → 狙いが消えた → 外れ → 塞がった (S-33e) */
+export const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, junkGone: 1, lost: 2, junk: 3, blocked: 4 };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
 /** 親から 2 行以上下の子へ降りる縦の線の、輪郭に入れる幅 (箱の真ん中から左右) */

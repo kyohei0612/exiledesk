@@ -10,7 +10,7 @@ import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./t
 import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
-import { isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { essenceFamilyNormalTiers, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
@@ -27,6 +27,13 @@ import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
 export const infiniteAim = (key: string | undefined): boolean => !!key && isInfiniteEssence(key);
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
+
+/** エッセンス / 合金を打たない時 (前の普通の MOD と段が被る、E-56 をエンジンに聞くだけ = S-33e): 飛ばす / 塞がる。打つ時は null */
+export function essenceHold(data: PatchData, item: StageItem, key: string): "skip" | "blocked" | null {
+  if (effectOf(key) !== "essence") return null;
+  const v = essenceTierVerdict(data, item, key)?.verdict;
+  return v === "skip" || v === "blocked" ? v : null;
+}
 /** 手を置く時の結果の箱の形 (当たりは札 1 つ) */
 type BoxOut = { out: OutKind; aim: Aim | null; junkKey?: string };
 /** 箱の当たりの札 = この手の当たりの箱の ☑ */
@@ -61,6 +68,8 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   const key = h?.currency;
   // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
   if (isDivineAim(h)) return divineOutcome(after, h!);
+  // 打たなかったエッセンス / 合金 (品が変わらない): 塞がる = 塞がったの箱、飛ばす = 当たりの箱 (付く MOD は狙いに数えない = 打った後の形も受ける、S-33e)
+  if (key && after === before) { const hold = essenceHold(data, before, key); if (hold) return { out: hold === "blocked" ? "blocked" : "hit", hits: [] }; }
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = withoutUnaimed(data, doc, before, aimed, noStones(data, doc, h, keptAimedOf(data, doc, h, aimed)));
   const aims = countedAims(data, doc, h, before, aims0, aimed);
@@ -223,6 +232,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
     const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(data, doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item) : [item];
     for (const it of all) {
+      // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝
+      if (essenceHold(data, it, h.currency)) { const e = boxOutOf(handOutcome(data, doc, h, extra, extra, it, it, aims, aimed), freeSide); found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e); continue; }
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64)。全部打てなければ下の list が空で null
       if (!outs?.length) continue;
@@ -263,6 +274,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (veiled) return [...extra.filter(unheldAim).map((a) => ({ out: "hit" as OutKind, aim: a })), ...vs("junk"), ...(veiledLost ? veiledLostOuts() : [])];
   // ✦ の木のフラクチャーも結果は全部箱にする (S-43 の「✦ の当たりだけ箱、外れは費用に足す」は 11-05 撤回。回す時は素のフラクチャーで ✦ の無い MOD も固定されうるのに、
   // 箱が無く行き先無しになっていた = 枝の外れ探しの rowFracStar b9、11-06。S-200 ①)
+  // 同じ系統の普通の MOD が低い段で付きうる手は、見本で塞がらなくても「塞がった」の箱を必ず作る (前の手で付いた人が来うる、S-33e)
+  if (effectOf(h.currency) === "essence" && smps.some((s) => (essenceFamilyNormalTiers(data, s.item, h.currency)?.lower ?? 0) > 0)) found.set("blocked::", { out: "blocked", aim: null });
   const list = [...found.values()];
   // 足す・入れ替える手が外れだけの時も外れ (と消えた) だけ = 箱の下はエンジンの結果と同じ (S-21、11-06 オーナー「直すのはいいけど」。前はまだ付いていない狙いがあると
   // 手の種類の箱へ逃がし、MOD を選ぶ当たりの箱を作ったが、エンジンではどの狙いも付かないので誰も来ない箱だった = 乱数の確かめの高貴のずれ)

@@ -5,10 +5,10 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { mulberry32, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { isAimMod } from "./tree-aim";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold } from "./tree-outcome";
 import { MATCH, outBoxOf, RESTART, splitTo, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -218,7 +218,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     o.onHand?.(at, item);
     // 使った物は結果の箱を見てから数える (ヒネコラのハズレの箱 = 手を使わない、S-39)
     const spent: Array<[string, number]> = [];
-    const r = playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
+    // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e): 手を使わず品のまま、boxOutcomeOf が当たり / 塞がったの箱へ分ける。前は「打てません」で止まった
+    const r: StageApply = essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
