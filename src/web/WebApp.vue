@@ -48,6 +48,9 @@ const SimTreePage = defineAsyncComponent(loadTree); // クラフトの道 (ツ�
  */
 const dailyFile = Object.values(import.meta.glob<{ default: Component }>("../views/daily/DailyPage.vue"))[0];
 const DailyPage = dailyFile ? defineAsyncComponent(dailyFile) : null;
+/** デイリーの挑戦中にエミュ・シミュへ移った先の「挑戦へ戻る」帯 (D-37g)。スイッチ daily の下 */
+const goingFile = Object.values(import.meta.glob<{ default: Component }>("../views/daily/DailyGoingPill.vue"))[0];
+const DailyGoingPill = flag("daily") && goingFile ? defineAsyncComponent(goingFile) : null;
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/tutorial/craft-lesson";
 import { isPhoneWidth } from "../utils/use-phone";
@@ -215,6 +218,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <ToTop /><!-- スマホの「上へ戻る」(全部の画面の右下) -->
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
     <div v-if="phone && textPage" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
+    <component :is="DailyGoingPill" v-if="DailyGoingPill" />
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない)。中身の入れ物は <main> (画面の main の印、見た目は変えない。10-26 夜 AdSense の点検) -->
     <main class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <!-- クラフト画面以外のページ: 両脇に縦長の枠 (ページを移るたびに出し直す、60 秒に 1 回まで) -->

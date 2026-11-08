@@ -31,6 +31,8 @@ const go =(): void => openDailyPage({ view: "start", q: props.topic.id });
 const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
 /** 押せる物: 始める (今日・14:50 まで) / 続ける (残りがある) / 木を見る (自分の挑戦がある) / 無し */
 const action = computed(() => {
+  // 木を開く前に諦めた (今日の順位のレシピを見た、D-50c) 時は見る木が無い
+  if (t.value?.ended && !t.value.fractured) return null;
   if (t.value) return left.value > 0 && !t.value.ended ? tr(`続ける (残り ${clock(left.value)})`, `Continue (${clock(left.value)} left)`) : tr("自分の木を見る", "View your tree");
   return props.today && !closed.value && canStartAt(props.now) ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : null;
 });
@@ -63,6 +65,7 @@ const action = computed(() => {
         <p v-if="!t && closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else-if="!t && today && !action" data-daily-closed class="daily-sub">{{ tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") }}</p>
         <p v-else-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、1 時間が動き出す。ページを閉じても止まらない。挑戦は 1 日 1 回。", "Pressing reveals the target mods and starts 1 hour. Closing the page doesn't stop it. One try per day.") }}</p>
+        <p v-else-if="t.ended && !t.fractured && !t.last" data-daily-gave-up class="daily-sub">{{ tr("今日の挑戦は諦めた。次のお題は 16:00。", "You gave up today's challenge. The next one opens at 16:00.") }}</p>
         <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`解決済み: ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Solved: ${t.best.cost} div (${t.best.rate}% finished)`) }}</p>
         <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`未解決: 完成率 ${t.last.rate}% (${SOLVE_RATE}% で解決)`, `Unsolved: ${t.last.rate}% finished (${SOLVE_RATE}% solves it)`) }}</p>
       </template>

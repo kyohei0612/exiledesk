@@ -9,6 +9,7 @@ import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
 import { openDailyPage, treeStep } from "../../web/page";
+import { usePhone } from "../../utils/use-phone";
 import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
@@ -54,7 +55,9 @@ async function begin(): Promise<void> {
   tryOf.value = r;
   if (r.fractured && !treeOn.value) openTree();
 }
-watch(() => s.data.value, () => void begin(), { immediate: true });
+/** スマホの幅では挑戦しない (D-70)。URL を開いても始めず (時計を動かさない)、一覧へ戻る口だけ出す。幅が広がれば始める */
+const phone = usePhone();
+watch([() => s.data.value, phone], () => { if (!phone.value) void begin(); }, { immediate: true });
 
 /** 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j、DailyFracPick)。諦めた後は選ばない */
 const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended);
@@ -114,7 +117,11 @@ const REFUSED: Record<StartError, () => string> = {
 </script>
 
 <template>
-  <div data-daily-play :data-daily-heat="heat || undefined" :data-daily-tree="treeOn || undefined">
+  <div v-if="phone" data-daily-play data-daily-pc-only class="daily-note">
+    <p>{{ tr("挑戦は幅の広い画面 (PC) で。始めた挑戦の時間は止まらない。", "Open on a wider screen (PC) to take the challenge. A started challenge keeps its clock running.") }}</p>
+    <button type="button" class="g-btn sm mt-2" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+  </div>
+  <div v-else data-daily-play :data-daily-heat="heat || undefined" :data-daily-tree="treeOn || undefined">
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
