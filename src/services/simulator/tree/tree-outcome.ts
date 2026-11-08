@@ -3,7 +3,7 @@
  * ☑ の無い MOD は外れ MOD (メモ feedback-unchecked-is-junk)、消去の残したい MOD (Hand.keep) もここ。打った前後の比べはエンジンの入口 (outcomeOf の aimDiff)。
  * 分け方は handOutcome の 1 本 (G-1 S-1、11-07): 箱の結果は boxOutcomeOf、手を置く時に起こりうる結果の箱 (possibleOutsOf) は列挙した枝を handOutcome に通して集めるだけ
  */
-import { applyCurrency, familiesOf, isCraftedSource, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
@@ -90,6 +90,27 @@ export function passSameHi(data: PatchData, doc: TreeDoc, from: Pick<TreeBox, "o
   if (!v) return item; // 同格以上かは木の決まり (essenceHold の値の比べ) で決めた。系統だけエンジンから
   const mark = (m: StageMod): StageMod => { const md = data.mods.get(m.modId); return md && !m.crafted && !isCraftedSource(md.source) && familiesOf(md).some((f) => v.families.includes(f)) ? { ...m, crafted: true } : m; };
   return { ...item, prefixes: item.prefixes.map(mark), suffixes: item.suffixes.map(mark) };
+}
+/**
+ * 「エッセンスと同じ MOD」の箱のカードに出す品 (表示だけ。回す時の分け方 essenceHold は変えない): 兄弟のエッセンス / 合金と同じ系統の普通の MOD を、
+ * 乱数の見本の段でなく「エッセンスの値の下限を下回る段のうち一番高い段」(アイテムレベルで付く段) に揃える 。「エッセンスと同じ MOD (同格以上)」の箱は「エッセンスの値の下限以上の段のうち一番低い段」(S-33e、11-08 夜オーナー「エッセンス未満のティアの一番高いティアで表示させてあげて　ここ乱数でしょ。確定MODでいい」「同格以上も揃えて」)
+ */
+export function sameModShown(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem): StageItem {
+  const b = doc.boxes[boxId], p = b?.parent ? doc.boxes[b.parent] : undefined;
+  if (!b || !p || b.out !== "blocked" || (b.junkKey && b.junkKey !== SAME_HI)) return item;
+  const hi = b.junkKey === SAME_HI;
+  const key = sameModKids(doc, p).find((k) => essenceHold(data, item, k) === (hi ? "skip" : "blocked"));
+  const t = key && !isInfiniteEssence(key) ? essenceTarget(data, item, key) : null, lows = t?.mod.tiers[essenceTierIndex(t.level, t.mod)]?.ranges.map((r) => r[0] ?? 0);
+  if (!t || !lows) return item;
+  const fams = familiesOf(t.mod);
+  const fix = (m: StageMod): StageMod => {
+    const md = data.mods.get(m.modId);
+    if (!md || m.crafted || isCraftedSource(md.source) || !familiesOf(md).some((f) => fams.includes(f))) return m;
+    let best = -1;
+    md.tiers.forEach((tr, i) => { if (tr.ilvl <= item.itemLevel && lows.every((lo, k) => (tr.ranges[k]?.[0] ?? lo) >= lo) === hi && (best < 0 || (hi ? tr.ilvl < md.tiers[best]!.ilvl : tr.ilvl > md.tiers[best]!.ilvl))) best = i; });
+    return best < 0 || best === m.tierIndex ? m : { ...m, ...makeStageMod(md, m.side, best, () => 0) };
+  };
+  return { ...item, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) };
 }
 /** 箱 a の結果の箱に置いたエッセンス / 合金の手 (「エッセンスと同じ MOD」の箱を作る相手) */
 const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">): string[] => a.outs.flatMap((id) => { const c = doc.boxes[id]; return c && c.out !== "blocked" && c.hand && effectOf(c.hand.currency) === "essence" ? [c.hand.currency] : []; });
