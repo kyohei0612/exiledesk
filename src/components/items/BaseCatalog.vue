@@ -428,7 +428,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <!-- PC: 押したタイルの行のすぐ下 (行いっぱい) -->
           <div v-if="!phone && family && insertAfter === r.ja" data-base-panel class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
             <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
-              <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
+              <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button><div v-if="$slots['attr-end']" data-base-attr-end class="ml-auto flex items-center"><slot name="attr-end" /></div>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
             <!-- 開き直す・部位を選び直すたびに畳んだ状態 (2 行 + もっと見る) から (2026-10-13 オーナー「もっと見るは一番下に来るでしょ」: 前に広げたまま開いていた) -->
@@ -443,7 +443,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <b class="text-[15px] text-amber-100">{{ famLabel(family) }}</b>
         </div>
         <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
-          <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
+          <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button><div v-if="$slots['attr-end']" data-base-attr-end class="ml-auto flex items-center"><slot name="attr-end" /></div>
         </div>
         <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
       </div>

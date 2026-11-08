@@ -2,6 +2,7 @@
   BasePickBody.vue — ベースのページの中身 (初めての人への帯 + ベース選びの枠)。エミュのベースのページ (StageBasePage) とシミュの初手のベース選び
   (TreeGoalPage) で同じ作り・同じ並び (部位のタイル・節の見出し・装備とエフェクトの切り替え・人気を上)。2026-10-23 オーナー、シミュ部長の頼み。
   違うのは上の帯 (data-base-intro) だけ: 題・一言は props、「すぐ試す」のボタン (金の指輪) は quick で出し分け、押すと @quick。既定はエミュの文
+  差し込み口 attr-end: 属性の札の列 (筋力 / 器用 …) の右端 (中身が無ければ何も出ない。エミュのルーンフォージ版の切り替え、11-09 オーナー「ここでオンオフチェックボックスのイメージ」)
   使い方: <BasePickBody :selected="unpicked ? '' : base" :popular="unpicked" :intro="unpicked" :title="tr(…)" :lead="tr(…)" :quick="false" @pick="pick" />
 -->
 <script setup lang="ts">
@@ -45,6 +46,6 @@ const emit = defineEmits<{ pick: [en: string]; quick: [] }>();
       <button v-if="quick" type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="emit('quick')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
     </div>
     <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に -->
-    <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog :data="s.data.value" :selected="selected" :popular="popular" :not-chosen="notChosen" @pick="(en) => emit('pick', en)" /></div>
+    <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog :data="s.data.value" :selected="selected" :popular="popular" :not-chosen="notChosen" @pick="(en) => emit('pick', en)"><template v-if="$slots['attr-end']" #attr-end><slot name="attr-end" /></template></BaseCatalog></div>
   </div>
 </template>
