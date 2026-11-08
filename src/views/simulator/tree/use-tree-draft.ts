@@ -21,5 +21,6 @@ export function useTreeDraft(doc: Ref<TreeDoc>): void {
     void treeCodeOf({ name: "", tree: d }).then((code) => { if (n === seq) noteTreeDraft(code); }, () => { /* 詰められなくても要望は送れる */ });
   };
   watch(doc, () => { if (timer) clearTimeout(timer); timer = setTimeout(write, WAIT_MS); }, { deep: true, immediate: true });
-  onBeforeUnmount(() => { if (timer) clearTimeout(timer); seq++; });
+  // 離れる時は待たずに最後の形を書く (ページの onBeforeUnmount の白紙化より先に呼ばれる = 登録の順。間を置く前に離れても手が残る、S-02)
+  onBeforeUnmount(() => { if (timer) { clearTimeout(timer); write(); } });
 }
