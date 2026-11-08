@@ -4,7 +4,7 @@
  *
  * 正は poe2db (E-01、オーナー 11-08「dbで」): 防具の部位ページ (https://poe2db.tw/us/Body_Armours など) に並ぶ Runeforged ○○ の
  * 性質の行 (Armour / Evasion Rating / Energy Shield / Runic Ward) をそのまま取る。元のベースはレシピのページ (https://poe2db.tw/us/Runeforging) の Cost で決め、
- * ユニークから作る物は入れない (11-09)。同じ元から作る版が幾つもある物は poe2db に並ぶ数だけ版として持つ。
+ * ユニークから作る物・レシピの載っていない物は入れない (11-09、オーナー「B」)。同じ元から作る版が幾つもある物は poe2db に並ぶ数だけ版として持つ。
  * PoB の Data/Bases/*.lua は食い違いを数えるだけ (POB_BASES があれば)。ルーンマスター版は入れない (11-08 ブラック 65)。ワードの無い版は入れない。
  *
  *   取った写し: data-cache/poe2db-runeforged-<日付>/<部位>.html・Runeforging.html (--cache で替える。あれば取り直さない)
@@ -40,14 +40,13 @@ async function page(p) {
 // 元のベースは名前でなくレシピの Cost で決める (11-09): https://poe2db.tw/us/Runeforging の「結果 ← Cost: 元の品」。
 // 名前が同じでも元が別 (Runeforged Gladiatorial Helm の 1 つは Cassis Helm から) や、ユニークから作る物 (Blackbraid Fur Plate → Runeforged Fur Plate、
 // Cost の頭が UniqueItems の <span>・<a>) がある。Cost の頭が普通のベース (whiteitem) の物はその元へ、ユニークからだけの物は入れない。
-// poe2db にレシピの載っていない版 (88 件、Runeforged Glorious Plate など) は今までどおり名前で元を決める。ただし同じ元にレシピのある版があればそちらだけ
+// poe2db にレシピの載っていない版 (86 件、Runeforged Glorious Plate など。53 件は今のゲームに無いベースの物) は入れない (オーナー 11-09「B」)
 const from = new Map();
 const uniqueOnly = new Set();
 for (const m of (await page("Runeforging")).matchAll(/BaseItemTypes_hover\/([0-9a-f]+)" href="Runeforged_[^"]*">Runeforged [^<]*<\/a><\/div><div>Cost: (<(?:span|a) class="UniqueItems|<a class="whiteitem[^"]*" data-hover="[^"]*" href="[^"]*">([^<]+)<\/a>)/g)) {
   if (m[3] && !/^Rune(forged|mastered) /.test(m[3])) from.set(m[1], m[3]);
   else uniqueOnly.add(m[1]);
 }
-const byName = {};
 const bases = {};
 const seen = new Set();
 const noRecipe = new Set();
@@ -69,7 +68,7 @@ for (const p of PAGES) {
     const base = from.get(id);
     if (!base) {
       if (uniqueOnly.has(id)) skipped.add(name);
-      else { noRecipe.add(name); const l = (byName[name.slice("Runeforged ".length)] ??= []); if (!l.some((x) => JSON.stringify(x) === JSON.stringify(o))) l.push(o); }
+      else noRecipe.add(name);
       continue;
     }
     // 値が全部同じ別の項目 (Runeforged Shrouded Mail・Tournament Mail は 3 つずつ) は画面で見分けが付かないので 1 つに
@@ -77,7 +76,6 @@ for (const p of PAGES) {
     if (!list.some((x) => JSON.stringify(x) === JSON.stringify(o))) list.push(o);
   }
 }
-for (const [b, list] of Object.entries(byName)) if (!bases[b]) bases[b] = list; else for (const o of list) skipped.add(`${o.name} (${b} はレシピのある版だけ)`);
 const names = Object.keys(bases).sort();
 writeFileSync(OUT, [
   "{",
@@ -89,8 +87,8 @@ writeFileSync(OUT, [
   "",
 ].join("\n"));
 const many = names.filter((n) => bases[n].length > 1);
-console.log(`入れない (ユニークからだけ・同じ元にレシピのある版がある) ${skipped.size}: ${[...skipped].join(", ")}`);
-console.log(`poe2db にレシピが無く名前で元を決めた ${noRecipe.size}`);
+console.log(`入れない (ユニークからだけ) ${skipped.size}: ${[...skipped].join(", ")}`);
+console.log(`入れない (poe2db にレシピが無い) ${noRecipe.size}`);
 console.log(`poe2db: ベース ${names.length} / 版 ${names.reduce((a, n) => a + bases[n].length, 0)} / 版が 2 つ以上 ${many.length}: ${many.map((n) => `${n} (${bases[n].map((x) => x.ward).join("/")})`).join(", ")}`);
 
 // PoB との食い違い (参考。正は poe2db)
