@@ -103,17 +103,19 @@ export type EssenceTierVerdict = "lands" | "skip" | "blocked";
  * この品にこのエッセンス / 合金を打つと、前の手で付いた同じ系統の普通の MOD の段から「付く / 飛ばす / 塞がる」(E-56、11-08 オーナー「他OK」)。
  * 普通の MOD = クラフト MOD (エッセンス・合金) 以外。2 系統の MOD は片方でも低い段・クラフト MOD・タグ (E-11i) で被れば塞がる、片方だけ被っても塞がる。
  * 無限のエッセンスは付いていない能力値が残れば付く、無ければ塞がる (段は比べない、E-50)。このベースに無い・段が無い鍵は null (打てるかは useReason)。
- * 打てるか (クラフト MOD の数・結晶化のお告げの側など) はここで見ない。「付く」でも打てない事はある
+ * 打てるか (クラフト MOD の数・結晶化のお告げの側など) はここで見ない。「付く」でも打てない事はある。
+ * families = 付いている MOD と当たった系統 (付く時は空。11-08 シミュ部長 back7 の頼み)
  */
-export function essenceTierVerdict(data: PatchData, item: StageItem, key: string): EssenceTierVerdict | null {
-  if (isInfiniteEssence(key)) return essenceTarget(data, item, key) ? (infiniteChoices(data, item, key).length ? "lands" : "blocked") : null;
+export function essenceTierVerdict(data: PatchData, item: StageItem, key: string): { verdict: EssenceTierVerdict; families: string[] } | null {
+  if (isInfiniteEssence(key)) return essenceTarget(data, item, key) ? { verdict: infiniteChoices(data, item, key).length ? "lands" : "blocked", families: [] } : null;
   const aim = essenceAim(data, item, key);
   if (!aim) return null;
-  if (!familyBlocked(aim.mod, takenFamilies(data, item))) return "lands";
+  if (!familyBlocked(aim.mod, takenFamilies(data, item))) return { verdict: "lands", families: [] };
   // 系統は 1 品に 1 つ (E-11a) なので、系統ごとに埋めている MOD は多くて 1 つ。全部が同格以上の普通の MOD なら飛ばす
   const held = allMods(item).flatMap((m) => { const md = data.mods.get(m.modId); return md ? [{ m, md }] : []; });
+  const hit = familiesOf(aim.mod).filter((f) => held.some(({ md }) => familiesOf(md).includes(f)));
   const high = (f: string) => held.some(({ m, md }) => familiesOf(md).includes(f) && !isCraftedSource(md.source) && m.modLevel >= aim.level);
-  return familiesOf(aim.mod).every(high) ? "skip" : "blocked";
+  return { verdict: familiesOf(aim.mod).every(high) ? "skip" : "blocked", families: hit };
 }
 /**
  * このアイテムクラス・アイテムレベルで、エッセンス / 合金の系統が普通の MOD (一般 MOD の置き場、E-10a) に付きうる段の数 (E-56)。
