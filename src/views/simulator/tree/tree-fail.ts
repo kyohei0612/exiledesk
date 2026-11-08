@@ -117,7 +117,7 @@ export function runText(r: TreeRunResult | null | undefined, id: string): string
   const mv = r.moved[id] ?? 0;
   if (mv) parts.push(tr(`${mv} 人は形の合う別の箱へ移った`, `${mv} moved on to a box of the same shape`));
   const s = r.stuckAt[id] ?? 0;
-  if (s) parts.push(tr(`${s} 人がここで止まった: ${r.stuckWhy[id]?.reason ?? ""}`, `${s} stopped here: ${r.stuckWhy[id]?.reason ?? ""}`));
+  if (s) { const w = r.stuckWhy[id], why = w?.short ?? w?.reason ?? ""; parts.push(tr(`${s} 人がここで止まった: ${why}`, `${s} stopped here: ${why}`)); }
   return parts.join(tr(" · ", " · "));
 }
 

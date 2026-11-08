@@ -49,7 +49,7 @@ import { noTargetText, useTreeLink } from "./use-tree-link";
 import { backLabelOf, retryOf, stepBackText } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
-import TreeIssues from "./TreeIssues.vue";
+import TreeIssues from "./TreeIssues.vue"; import TreeBugReport, { reportTreeBug } from "./TreeBugReport.vue"; import { issueGroups } from "./hole-check";
 import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
@@ -257,8 +257,8 @@ function openIssues(): void { simOp("open-missing"); issuesShown.value = true; i
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
-/** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b) */
-const holeN = computed(() => new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size);
+/** 未設定の数 = 困り事の出た箱の数。左上の札・赤い札・一覧の見出し・下の帯で同じ (S-89b、11-08 オーナー「足りない所と下の未設定の数字が合わない」) */
+const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).length);
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 穴チェックのボタン: 精査と 30 人の走行 (精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {
@@ -389,10 +389,10 @@ const phone = usePhone();
            狭ければ字を短く・道具は絵だけ (帯の @container、切らない・… にしない)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
       <div class="@container relative flex min-w-0 flex-nowrap items-center gap-1.5 text-[13px]">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
-        <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
+        <TreeIssues v-if="jt.shownIssues.value?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="jt.shownIssues.value" :doc="doc" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" @report="reportTreeBug(doc)" /><TreeBugReport />
         <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />
         <template v-else>
-          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesShown }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: jt.unset.value.length, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesOpen }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: holeN, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
           <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
@@ -408,7 +408,7 @@ const phone = usePhone();
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
+        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(issuesShown && issues?.length ? { bottom: `${44 * pageZ}px` } : {}) }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"

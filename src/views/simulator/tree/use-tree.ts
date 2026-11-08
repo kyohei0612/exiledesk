@@ -17,7 +17,7 @@ import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy"; import { tidyJunk } from "./tree-hand-plan";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
-import { simOp } from "../../../web/track";
+import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 
@@ -193,7 +193,7 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   if (loading.value) return; // 開いている間は木を変えない (S-196)
   const before = JSON.stringify(doc.value);
   const d = JSON.parse(before) as TreeDoc;
-  fn(d);
+  fn(d); if (!open) dropTouchedOrphans(doc.value, d); // 置き直した箱の要確認は外す (11-08)
   // 整理は木を変えるたびにその場で (S-201 ①、ハズレ整理のボタンは無い)。同じ組み替えの中なので 1 つ戻すで一緒に戻る
   if (tidyOn() && d.boxes.start) tidyJunk(d, true);
   const after = JSON.stringify(d);

@@ -8,8 +8,10 @@ import { computed, ref } from "vue";
 import { tr } from "../../../i18n/lang";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { CheckIssue } from "../../../services/simulator/tree/tree-check";
+import { holesCount } from "./hole-check";
 
-const props = defineProps<{ issues: readonly CheckIssue[] | null; doc: TreeDoc }>();
+/** n = 未設定の数 (困り事の出た箱の数、箱の無い木の不具合も 1 つ。上の札・一覧の見出しと同じ数、11-08) */
+const props = defineProps<{ issues: readonly CheckIssue[] | null; n: number; doc: TreeDoc }>();
 const emit = defineEmits<{ go: [id: string] }>();
 /** 未設定の箱 (上の段から、同じ段は左から) */
 const ids = computed(() => {
@@ -27,11 +29,11 @@ function next(): void {
 
 <template>
   <!-- 木の枠の一番下の帯 (木の面はこの上で終わる = 箱の MOD に被らない。⑦11 → ブラック案・オーナー「進めてくれ」10-28) -->
-  <div v-if="ids.length" class="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center justify-center border-t border-white/[0.06] bg-[#0c0a08]">
+  <div v-if="n" class="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center justify-center border-t border-white/[0.06] bg-[#0c0a08]">
   <button type="button" data-tree-unset-bar class="flex items-center gap-2 whitespace-nowrap rounded-full border-2 border-rose-500 bg-[#1a0f10]/95 py-1 pl-1.5 pr-3 text-[13px] font-bold text-rose-100 shadow-[0_0_16px_rgba(244,63,94,0.45)] hover:bg-[#2a1416]"
     :title="tr('手も戻りも完成も決めていない箱 (＋ が出ている箱)。押すと順にその箱へ寄る', 'Boxes with no next step, return or finish yet (the ones showing ＋). Click to jump to each in turn')" @click="next">
     <span class="flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] text-white">!</span>
-    <span>{{ tr(`未設定 ${ids.length} つ`, `${ids.length} unset`) }}</span>
+    <span>{{ holesCount(n) }}</span>
     <span class="text-rose-300">{{ tr("▸ 次へ", "▸ Next") }}</span>
   </button>
   </div>

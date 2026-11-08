@@ -40,6 +40,8 @@ const stuck = computed(() => Object.entries(props.result.stuckAt).sort((a, z) =>
 const loops = computed(() => Object.entries(props.result.loopAt ?? {}).sort((a, z) => z[1] - a[1]));
 /** 止まった理由 (最初の 1 人、tree-run の stuckWhy) */
 const whyOf = (id: string): string => props.result.stuckWhy[id]?.reason ?? "";
+/** 止まり方の 1 行の要約 (無い古い結果は詳しい文) */
+const shortOf = (id: string): string => props.result.stuckWhy[id]?.short ?? whyOf(id);
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
 simOp("report-open");
@@ -67,7 +69,11 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
         <p v-if="!result.stuck && !result.capped" class="text-emerald-300">{{ tr("止まった人・ループした人はいない", "No run got stuck or looped") }}</p>
         <div v-if="stuck.length" class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
           <h4 class="mb-1 text-[12px] text-rose-200">{{ tr("止まった箱 (直すと先へ進む)", "Where runs got stuck (fix these)") }}</h4>
-          <button v-for="[id, n] in stuck" :key="id" type="button" data-tree-test-drive-stuck class="block w-full break-words py-0.5 text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="whyOf(id)" class="block text-[11px] text-rose-200/70">{{ whyOf(id) }}</span></button>
+          <!-- 1 行の要約 + 人数、詳しい文は開いた時だけ (11-08、止まりの訳 10 種) -->
+          <div v-for="[id, n] in stuck" :key="id" class="py-0.5">
+            <button type="button" data-tree-test-drive-stuck class="block w-full break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="shortOf(id)" class="block text-[11px] text-rose-200/85">{{ shortOf(id) }}</span></button>
+            <details v-if="whyOf(id) && whyOf(id) !== shortOf(id)" class="text-[11px] text-rose-200/70"><summary class="cursor-pointer select-none">{{ tr("詳しく", "Details") }}</summary><p class="break-words">{{ whyOf(id) }}</p></details>
+          </div>
         </div>
         <div v-if="loops.length" class="rounded-md border border-amber-400/40 bg-amber-900/20 px-2 py-1.5">
           <h4 class="mb-1 text-[12px] text-amber-200">{{ tr("沼った場所 (青枠の箱)", "Swamps (blue boxes)") }}</h4>
