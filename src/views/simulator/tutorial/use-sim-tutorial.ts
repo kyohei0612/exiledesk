@@ -13,7 +13,8 @@ import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
-import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
+import { DRAFT_WHY, ECHO_OMEN, SPELL, TUT_GOALS, goalMatches, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
+import { wayName } from "../tree/tree-attach";
 import { tutData, type TutStepDef } from "./tut-data";
 import { aimSel, aimsChecked, checked, handOpen, holding, inFrame, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
 import { overviewOpen, phoneIndex, phoneNow } from "./use-sim-tutorial-phone";
@@ -43,9 +44,17 @@ export function handMatches(d: TreeDoc, id: string, st: HandStep): boolean {
   if (st.free && !h.free) return false;
   if (st.aim && (h.free || !(b.outs ?? []).some((k) => d.boxes[k]?.out === "hit" && d.boxes[k]?.aim?.modId === st.aim))) return false;
   if (st.keep && !(h.keep ?? []).some((a) => a.modId === st.keep)) return false;
+  if (st.keepNone && (h.keep ?? []).length) return false;
+  if (st.veil && h.veil !== "pick") return false;
   return true;
 }
-const goalOk = (d: TreeDoc): boolean => (d.memoAims ?? []).every((a) => !!a.fractured === (a.modId === SPELL)) && !!d.goalQualityNo && !d.goalQualityOn;
+/** 完成形の MOD がその手順の付け方で入っている */
+const pickOk = (d: TreeDoc, st: Extract<TutStepDef, { kind: "pick" }>): boolean => goalMatches((d.memoAims ?? []).find((a) => a.modId === st.mod), { modId: st.mod, tier: st.tier, way: st.way });
+/** 完成形 = 4 つが付け方どおり、ほかは無し、品質は狙わない */
+const goalOk = (d: TreeDoc): boolean => {
+  const aims = d.memoAims ?? [];
+  return aims.length === TUT_GOALS.length && TUT_GOALS.every((g) => goalMatches(aims.find((a) => a.modId === g.modId), g)) && !!d.goalQualityNo && !d.goalQualityOn;
+};
 /** 始め方: フラクチャー済みから (✦ の MOD は start.mods でなく完成形の印から読む = tree-start-choice) */
 const startOk = (d: TreeDoc): boolean => !!d.fracAsked && d.start?.from === "fractured" && (d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL);
 /** 完成形の設定がページで開いている (?page=sim-mods。ツリーの上の窓の形は「決めた」が下の帯に隠れるので数えない) */
@@ -54,6 +63,7 @@ export const goalPageShown = (): boolean => !!shown("[data-tree-goal-mods]") && 
 export const startAskOpen = (): boolean => !!document.querySelector("[data-tree-start-ask]");
 /** その一手が済んだか (木の中身で決める。帯・テスト・100 人・文だけの手順は押したか) */
 export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
+  if (st.kind === "pick") return pickOk(d, st);
   if (st.kind === "goal") return goalOk(d) && (!!d.fracAsked || startAskOpen());
   if (st.kind === "start") return startOk(d);
   if (st.kind === "hand") return !!r[st.box] && handMatches(d, r[st.box]!, st);
@@ -61,8 +71,8 @@ export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
   if (st.kind === "done") return tutPhone.value ? notesDone.value.includes(st.id) : !!r[st.box] && d.boxes[r[st.box]!]?.done === "main";
   if (st.kind === "fail") return !!r[st.box] && d.boxes[r[st.box]!]?.done === "fail";
   if (st.kind === "unset" && tutPhone.value) return mapSeen.value && !overviewOpen();
-  // 帯の「次へ」を押した (または押した先の dj にもう手がある = 前に押した)
-  if (st.kind === "unset") return barUsed.value || !!(r.dj && d.boxes[r.dj]?.hand);
+  // 帯の「次へ」を押した (または未設定だった cj にもう手がある = 前に押した)
+  if (st.kind === "unset") return barUsed.value || !!(r.cj && d.boxes[r.cj]?.hand);
   if (st.kind === "test") return (testPressed.value && !!document.querySelector("[data-tree-test-ok], [data-phone-test-ok]")) || ran.value;
   if (st.kind === "note") return notesDone.value.includes(st.id);
   return false;
@@ -95,7 +105,8 @@ export function inHand(st: HandStep, k: (s: string) => string, names: TutNames, 
   if (!holding(st.key)) return { key: k("hold"), target: shelfSel(st.key), draft: say(`棚の「${names.item(st.key)}」を押して持つ`, `Click "${names.item(st.key)}" on the shelf to hold it`) };
   const extra = omensOnNow().find((o) => !st.omens.includes(o));
   if (extra) return { key: k("omen-off"), target: `[data-held-omens] [data-key="${extra}"]`, draft: say(`「${names.item(extra)}」は使わないので押して外す`, `"${names.item(extra)}" isn't used here; click it to turn it off`) };
-  const need = st.omens.find((o) => !omenOn(o));
+  // アビスの反響は発現を選んでから掛ける (骨の窓の「発現」の下にも ☑ がある、inChecks)
+  const need = st.omens.find((o) => o !== ECHO_OMEN && !omenOn(o));
   if (need) return { key: k("omen"), target: `[data-held-omens] [data-key="${need}"]`, draft: say(`お告げ「${names.item(need)}」を押して掛ける`, `Click "${names.item(need)}" to apply it`) };
   return use();
 }
@@ -105,6 +116,14 @@ export function inChecks(st: HandStep, k: (s: string) => string, names: TutNames
   if (off) return { key: k("aim-off"), target: aimSel(off), draft: say(`「${names.mod(off)}」の ☑ を外す`, `Uncheck "${names.mod(off)}"`) };
   if (st.aim && shown(aimSel(st.aim)) && !checked(aimSel(st.aim))) return { key: k("aim"), target: aimSel(st.aim), draft: say(`狙う MOD の「${names.mod(st.aim)}」に ☑ を入れる`, `Check "${names.mod(st.aim)}" under target mods`) };
   if (st.free && shown("[data-tree-hand-free]") && !checked("[data-tree-hand-free]")) return { key: k("free"), target: "[data-tree-hand-free]", draft: say("「狙い無し」に ☑ を入れる (何が付いても次へ)", "Check \"No target\" (anything counts)") };
+  if (st.omens.includes(ECHO_OMEN) && !omenOn(ECHO_OMEN) && !checked("[data-tree-hand-veil-echo]")) {
+    const sel = shown(`[data-held-omens] [data-key="${ECHO_OMEN}"]`) ? `[data-held-omens] [data-key="${ECHO_OMEN}"]` : "[data-tree-hand-veil-echo]";
+    return { key: k("echo"), target: sel, draft: say(`お告げ「${names.item(ECHO_OMEN)}」を掛ける (発現の候補を 1 回引き直す)`, `Apply "${names.item(ECHO_OMEN)}" (rerolls the reveal options once)`) };
+  }
+  if (st.keepNone) {
+    const on = [...document.querySelectorAll<HTMLElement>("[data-tree-hand-keep-mod]")].find((l) => !!l.querySelector("input:checked") && (l.offsetParent || l.getClientRects().length));
+    if (on) return { key: k("keep-off"), target: `[data-tree-hand-keep-mod][data-mod="${CSS.escape(on.dataset.mod ?? "")}"]`, draft: say("残したい MOD の ☑ を外す (どれが消えてもよい)", "Uncheck the mods to keep (anything may go)") };
+  }
   if (st.keep && shown(keepSel(st.keep)) && !checked(keepSel(st.keep))) return { key: k("keep"), target: keepSel(st.keep), draft: say(`残したい MOD の「${names.mod(st.keep)}」に ☑ を入れる`, `Check "${names.mod(st.keep)}" under mods to keep`) };
   return null;
 }
@@ -113,11 +132,24 @@ export function inChecks(st: HandStep, k: (s: string) => string, names: TutNames
 function pcNow(c: TutCtx): TutNow {
   const { st, d, r, names } = c;
   const k = (scene: string): string => `${st.id}.${scene}`;
-  if (st.kind === "goal") {
+  if (st.kind === "pick" || st.kind === "goal") {
     if (!goalPageShown()) return { key: k("open"), target: null, act: "goal", draft: say("下の「完成形の設定へ」で完成形の MOD を開く", "Open the final mods with \"Final item\" below") };
-    const extra = (d.memoAims ?? []).find((a) => a.fractured && a.modId !== SPELL);
-    if (extra) return { key: k("frac-off"), target: `[data-tree-goal-card] [data-card-mod="${extra.modId}"]`, draft: say(`「${names.mod(extra.modId)}」の ✦ は外す (もう一度押す)`, `Remove the ✦ from "${names.mod(extra.modId)}" (click it again)`) };
-    if (!(d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL)) return { key: k("frac"), target: `[data-tree-goal-card] [data-card-mod="${SPELL}"]`, draft: say(`カードの「${names.mod(SPELL)}」の行を押して ✦ を付ける`, `Click the "${names.mod(SPELL)}" row on the card to mark it ✦`) };
+    // 4 つ以外の MOD・付け方の違う MOD は「付ける」から外す (手順の MOD は付け方を選び直す)
+    for (const a of d.memoAims ?? []) {
+      const g = TUT_GOALS.find((x) => x.modId === a.modId);
+      if (g && goalMatches(a, g)) continue;
+      // 段が違う・4 つの外 = 外す、付け方だけ違う = 付け方を選び直す
+      const way = g && a.tier === g.tier ? g.way : "off";
+      return attachScene(k, a.modId, a.tier, way, true, way === "off"
+        ? say(`「${names.mod(a.modId)}」は使わない。「付ける」の「外す」で外す`, `"${names.mod(a.modId)}" isn't used. Remove it from its "Add" menu`)
+        : say(`「${names.mod(a.modId)}」の付け方が違う。「付ける」から「${wayName(way)}」を選び直す`, `"${names.mod(a.modId)}" is added the wrong way. Pick "${wayName(way)}" from "Add"`));
+    }
+  }
+  if (st.kind === "pick") {
+    const w = wayName(st.way);
+    return attachScene(k, st.mod, st.tier, st.way, false, say(`「${names.mod(st.mod)}」の T${st.tier} の「付ける」→「${w}」`, `"${names.mod(st.mod)}" T${st.tier}: "Add" → "${w}"`));
+  }
+  if (st.kind === "goal") {
     if (!d.goalQualityNo || d.goalQualityOn) return { key: k("quality"), target: "[data-tree-goal-quality-no]", draft: say("「品質は狙わない」に ☑ を入れる", "Check \"No quality\"") };
     return { key: k("main"), target: "[data-tree-goal-done]", draft: say("「決めた (ツリーへ)」を押す", "Click \"Done (back to the tree)\"") };
   }
@@ -147,6 +179,17 @@ function pcNow(c: TutCtx): TutNow {
   if (st.kind === "run") return runScene(c, k, "[data-tree-run]");
   if (st.kind === "note") return { key: k("main"), target: null, draft: ["", ""] };
   return { key: k("main"), target: null, draft: say("お疲れさまでした。完成まで組めました", "Well done. The route is complete") };
+}
+/**
+ * 完成形の MOD 一覧の 1 つの段の「付ける」(S-10b): 行を開く → 段の「付ける」→ 付け方 (way = "off" は「外す」)。
+ * 段の「付ける」は行を開くと出る (一覧の行の目印 [data-row-key] = 節:MOD、段の目印 [data-attach-mod] = MOD|段)
+ */
+function attachScene(k: (s: string) => string, mod: string, tier: number, way: "normal" | "fracture" | "desecrated" | "off", wrong: boolean, draft: [string, string]): TutNow {
+  const wrap = `[data-attach-mod="${CSS.escape(`${mod}|${tier}`)}"]`;
+  const pre = wrong ? "fix-" : "";
+  if (shown(`${wrap} [data-mod-attach][aria-expanded="true"]`)) return { key: k(`${pre}way`), target: way === "off" ? "[data-mod-attach-ways] [data-attach-off]" : `[data-mod-attach-ways] [data-attach-way="${way}"]`, wrong, draft };
+  if (shown(wrap)) return { key: k(`${pre}attach`), target: `${wrap} [data-mod-attach]`, wrong, draft };
+  return { key: k(`${pre}row`), target: `[data-row-key$=":${CSS.escape(mod)}"] [data-rec="mod:${CSS.escape(mod)}"]`, wrong, draft };
 }
 /** 始め方の窓 (PC・スマホ共通の窓 TreeStartAsk) */
 export function startScene(c: TutCtx, k: (s: string) => string): TutNow {

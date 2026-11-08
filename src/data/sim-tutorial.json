@@ -2,83 +2,24 @@
   "v": 1,
   "course": "absent-amulet",
   "steps": [
-    {
-      "id": "goal",
-      "kind": "goal"
-    },
-    {
-      "id": "start",
-      "kind": "start"
-    },
-    {
-      "id": "start-exalt",
-      "kind": "hand",
-      "box": "start",
-      "key": "exalt",
-      "omens": [
-        "OmenofSinistralExaltation"
-      ],
-      "aim": "Amulets/BaseSpirit"
-    },
-    {
-      "id": "spirit-free",
-      "kind": "hand",
-      "box": "s1",
-      "key": "exalt",
-      "omens": [
-        "OmenofSinistralExaltation"
-      ],
-      "free": true
-    },
-    {
-      "id": "free-ward",
-      "kind": "hand",
-      "box": "s1a",
-      "key": "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
-      "omens": []
-    },
-    {
-      "id": "ward-cast",
-      "kind": "hand",
-      "box": "w",
-      "key": "exalt",
-      "omens": [],
-      "aim": "Amulets/IncreasedCastSpeed"
-    },
-    {
-      "id": "done",
-      "kind": "done",
-      "box": "d"
-    },
-    {
-      "id": "miss-annul",
-      "kind": "hand",
-      "box": "x1",
-      "key": "annul",
-      "omens": []
-    },
-    {
-      "id": "lost-fail",
-      "kind": "fail",
-      "box": "wl"
-    },
-    {
-      "id": "cast-annul",
-      "kind": "hand",
-      "box": "dj",
-      "key": "annul",
-      "omens": [
-        "OmenofDextralAnnulment"
-      ]
-    },
-    {
-      "id": "test",
-      "kind": "test"
-    },
-    {
-      "id": "run",
-      "kind": "run"
-    }
+    { "id": "pick-spell", "kind": "pick", "mod": "Amulets/GlobalIncreaseSpellSkillGemLevel", "tier": 1, "way": "fracture" },
+    { "id": "pick-spirit", "kind": "pick", "mod": "Amulets/BaseSpirit", "tier": 1, "way": "normal" },
+    { "id": "pick-cast", "kind": "pick", "mod": "Amulets/IncreasedCastSpeed", "tier": 1, "way": "desecrated" },
+    { "id": "pick-ward", "kind": "pick", "mod": "Amulets/PerfectEssence_RunicWardPercent", "tier": 1, "way": "normal" },
+    { "id": "goal", "kind": "goal" },
+    { "id": "start", "kind": "start" },
+    { "id": "start-exalt", "kind": "hand", "box": "start", "key": "exalt", "omens": [], "free": true },
+    { "id": "p-chaos", "kind": "hand", "box": "p", "key": "chaos", "omens": [], "aim": "Amulets/BaseSpirit" },
+    { "id": "q-chaos", "kind": "hand", "box": "q", "key": "chaos", "omens": [], "aim": "Amulets/BaseSpirit" },
+    { "id": "sp-bone", "kind": "hand", "box": "sp", "key": "desecrate", "omens": ["OmenofDextralNecromancy", "OmenofAbyssalEchoes"], "aim": "Amulets/IncreasedCastSpeed", "veil": true },
+    { "id": "c-exalt", "kind": "hand", "box": "c", "key": "exalt", "omens": [], "free": true },
+    { "id": "f-ward", "kind": "hand", "box": "f", "key": "essence:perfect:Amulets/PerfectEssence_RunicWardPercent", "omens": [], "keep": "Amulets/BaseSpirit" },
+    { "id": "done", "kind": "done", "box": "w" },
+    { "id": "cj-dex", "kind": "hand", "box": "cj", "key": "essence:perfect:Amulets/PerfectEssence_PercentageDexterity", "omens": [] },
+    { "id": "ce-bone", "kind": "hand", "box": "ce", "key": "desecrate", "omens": ["OmenofDextralNecromancy", "OmenofAbyssalEchoes"], "aim": "Amulets/IncreasedCastSpeed", "veil": true },
+    { "id": "wl-annul", "kind": "hand", "box": "wl", "key": "annul", "omens": [], "keepNone": true },
+    { "id": "test", "kind": "test" },
+    { "id": "run", "kind": "run" }
   ],
   "texts": {},
   "targets": {}
