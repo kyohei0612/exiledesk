@@ -1,14 +1,15 @@
 /**
  * tut-route.ts — シミュのチュートリアル「不在のアミュレット (フラクチャー済み) から作る」の道 (2026-10-26 夜オーナー「案内に従ってやってもらって完成まで導く」)。
  * 完成形は見本「不在のアミュレット B」と同じ (✦ T1 全てのスペルスキルのレベル +3・T1 スピリット・T1 キャストスピード・ルーンの合金)。
- * 道は設計図 tutorial.md T-21 (PC、13 段)。ハズレ整理の流れ (S-190) の順 = 当たりの道 → 完成 → ハズレ整理 → 光る外れを決める → 最終チェック → 100 人
+ * 道は設計図 tutorial.md T-21 (PC、12 段)。ハズレ整理の流れ (S-190) の順 = 当たりの道 → 完成 → 未設定の外れを決める → 最終チェック → 100 人
+ * (11-08 に「ハズレ整理」のボタンの段を外した。今の木は完成を押すとすぐ帯の「未設定 n つ ▸ 次へ」になる)
  * (11-03 オーナー「今の道だけ先に直す」。前の道は灰色の外れの箱 x1 から組ませて 4 段目で進めなかった)。外れを消して戻すのは自動の ↩ (S-50・S-28e):
  *   0 完成形 (✦ スペル +3・品質は狙わない) → 1 始め方 (フラクチャー済みから)
  *   2 スタート: 高貴 + 左側の高貴のお告げ ☑ スピリット → s1 (スピリット) / x1 (外れ、灰色)
  *   3 s1: 高貴 + 左側 (狙い無し) → s1a   4 s1a: ルーンの合金 → w (当たり) / wl (スピリットが消えた、灰色)
- *   5 w: 高貴 ☑ キャストスピード → d / dj (外れ、灰色)   6 d: 完成   7 ハズレ整理 (x1・dj・wl が光る)
- *   8 x1: 消去 → ↩ スタート   9 wl: 失敗   10 dj: 消去 + 右側の消去のお告げ → ↩ w (光った箱は帯の「次へ」が寄る順)
- *   11 最終チェック ✓   12 100 人 → 終わる
+ *   5 w: 高貴 ☑ キャストスピード → d / dj (外れ、灰色)   6 d: 完成 (x1・wl・dj が未設定になる)
+ *   7 x1: 消去 → ↩ スタート   8 wl: 失敗   9 dj: 消去 + 右側の消去のお告げ → ↩ w (未設定の箱は帯の「次へ」が寄る順)
+ *   10 最終チェック ✓   11 100 人 → 終わる
  * ここは道の形と箱の見分けだけ。打つ・確率・当たりの判定はツリー (エンジン) の今の作りのまま
  */
 import type { Aim, TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -79,10 +80,9 @@ export const DRAFT_WHY: Record<string, Why> = {
   "free-ward": (n) => [`${n.item(WARD_KEY)}は MOD を 1 つ消して${n.mod(WARD)}を付ける。さっき埋めた外れが消えれば当たり、${n.mod(SPIRIT)}が消えた人は「狙いが消えた」の灰色の箱へ`, `${n.item(WARD_KEY)} removes one mod and adds ${n.mod(WARD)}. If the filler goes it's a hit; runs that lose ${n.mod(SPIRIT)} go to the grey "target lost" box`],
   "ward-cast": (n) => [`プレは埋まったので、お告げ無しでもサフィにしか付かない。${n.mod(CAST)}を ☑ して打つ`, `The prefixes are full, so it can only land on a suffix even without an omen. Check ${n.mod(CAST)} and use it`],
   done: () => ["狙いが全部揃った。この箱を完成にする (完成は人が押した箱だけ)", "All targets are in. Mark this box as done (only boxes you mark are done)"],
-  tidy: () => ["当たりの道ができたら「ハズレ整理」。同じ中身の箱へ自動でつなぎ、決める要る外れの箱だけが光る", "Once the hit route is built, press \"Sort misses\". It links boxes with the same mods by itself and lights only the misses you still need to decide"],
   "miss-annul": (n) => [`${n.item("annul")}で外れを消す。✦ は消えないので、消えるのは外れ (プレ) だけ。スタートと同じ中身になり、自動でスタートへ戻る (↩ の札)`, `Use ${n.item("annul")} to remove the miss. The ✦ mod can't be removed, so only the miss prefix goes. It matches the start and goes back there by itself (the ↩ tag)`],
   "cast-annul": (n) => [`サフィの外れだけ消したいので${n.item(DEX_ANNUL)}を掛ける。消えるのは必ず外れなので結果は 1 箱、${n.mod(CAST)}を狙う箱へ自動で戻る`, `Only the suffix miss should go, so apply ${n.item(DEX_ANNUL)}. It always removes the miss, so there is one box that goes back to the ${n.mod(CAST)} step by itself`],
   "lost-fail": (n) => [`${n.mod(SPIRIT)}が消えた人は作り直すより諦める。箱の「失敗」を押す (失敗に数える)`, `Runs that lost ${n.mod(SPIRIT)} aren't worth fixing here. Click "Fail" on the box (counted as failed)`],
-  test: () => ["光る箱が 0 になったら「最終チェック」。✓ 合格が出るまで「100 人回す」は押せない", "With no lit boxes left, press \"Final check\". \"Run 100\" stays locked until it shows ✓ Passed"],
+  test: () => ["未設定が 0 になったら「最終チェック」。✓ 合格が出るまで「100 人回す」は押せない", "With nothing left unset, press \"Final check\". \"Run 100\" stays locked until it shows ✓ Passed"],
   run: () => ["100 人回すと、結果のまとめで完成の割合と費用が見られる。値段を入れ直すと費用も変わる", "Run it 100 times; the summary shows the finish rate and the cost. Change the prices to update the cost"],
 };
