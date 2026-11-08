@@ -58,9 +58,10 @@ export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
   const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null;
   const rank = (t: string): number => (t === p ? 0 : 1);
   const cmp = shallow(doc);
-  // 品質を枠に入れないので (S-60b、11-08)、カタリストの前後の箱が同じ枠になる。品質の届かない人 (触媒の高貴のお告げで品質を使い切った人など) が
-  // 打てない箱は候補から外す (S-52b・S-60c、11-08 オーナーの木 b39 ↩ b17 で 30 人中 24 人が止まった)
-  return Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !j.capShort(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => rank(x) - rank(y) || cmp(x, y));
+  // 品質はどこでも見ない (S-60b・S-60c、11-08 オーナー「いやだから品質みないっての」): カタリストの n % に届くかで候補を外さない
+  const ts = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
+  // 結果が 1 通りの手 (カタリストなど) で上の候補から続くだけの候補は、上の 1 つと数える (S-52b、11-08 オーナーの木の 13 段目 → 10 段目。11 段目はカタリストを打った後)
+  return ts.filter((t) => !ts.some((u) => u !== t && straightUp(doc, t, u))).sort((x, y) => rank(x) - rank(y) || cmp(x, y));
 }
 
 /**

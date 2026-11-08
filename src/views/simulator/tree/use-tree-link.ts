@@ -37,9 +37,6 @@ export function backLinkOf(d: PatchData, docv: TreeDoc, id: string): Map<string,
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
-      // 品質の上限が足りない人はカタリストの n % の箱へ行かない (S-60c)
-      const cap = j.capShort(id, b.id);
-      if (cap) { out.set(b.id, tr(`品質の上限が ${cap}% に届かない`, `Max quality can't reach ${cap}%`)); continue; }
       // 中身が違う箱へは戻せない (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」、箱どうしの判定 fitsBox)
       if (!fits(b.id)) { out.set(b.id, diff); continue; }
       const why = handProblem(d, item, b.hand);

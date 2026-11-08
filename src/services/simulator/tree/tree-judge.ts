@@ -8,9 +8,8 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystRoom, kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { catalystTagOf } from "../sim-engine";
-import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
+import { kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
@@ -110,16 +109,13 @@ export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   });
   if (pa[2] !== pb[2]) out.push(tr("フラクチャーの付き方が違う", "different fractured mods"));
   if (pa[3] !== pb[3]) out.push(tr("レアリティが違う", "different rarity"));
-  // 枠 (frameOf を配置の鍵 frameKeyOf にした物 = 品質は有り / 無しと種類・エンチャント・刺さったルーン・予見済み)
-  const [, qa = "", ea = ""] = frameKeyOf(frameOf(it)).split("~"), [, qb = "", eb = ""] = frameKeyOf(frameOf(f.item)).split("~");
-  if (qa !== qb) out.push(tr(`品質 ${it.quality ?? 0}% (見本 ${f.item.quality ?? 0}%)`, `${it.quality ?? 0}% quality (example ${f.item.quality ?? 0}%)`));
+  // 枠 (frameOf を配置の鍵 frameKeyOf にした物 = エンチャント・刺さったルーン・予見済み。品質は見ない = S-60b)
+  const [, , ea = ""] = frameKeyOf(frameOf(it)).split("~"), [, , eb = ""] = frameKeyOf(frameOf(f.item)).split("~");
   if (ea !== eb) out.push(tr("エンチャントが違う", "different enchantment"));
   const ra = runesOf(it), rb = runesOf(f.item), runeName = (s: string): string => (s ? s.split("+").map((en) => nameOfKey(`${RUNE_PREFIX}${en}`, it)).join(tr("・", ", ")) : tr("なし", "none"));
   if (ra !== rb) out.push(tr(`刺さったルーンが違う (${runeName(ra)} / 見本 ${runeName(rb)})`, `different runes (${runeName(ra)} / example ${runeName(rb)})`));
   if ((it.sockets ?? 0) !== (f.item.sockets ?? 0)) out.push(tr(`ソケット ${it.sockets ?? 0} (見本 ${f.item.sockets ?? 0})`, `${it.sockets ?? 0} sockets (example ${f.item.sockets ?? 0})`));
   if (!!it.foreseen !== !!f.item.foreseen) out.push(tr("予見済みかが違う", "foreseen differs"));
-  // 中身が同じで行けない = カタリストの n % に届かない (fitsItem の残り。完成形の品質は指標なので見ない = S-205)
-  if (!out.length && !reachesCatalyst(doc, to, it, f.item)) out.push(tr(`カタリストの品質 ${catalystTo(doc, to, f.item)}% に届かない`, `cannot reach ${catalystTo(doc, to, f.item)}% catalyst quality`));
   return out;
 }
 /** 木の族 = 完成形の狙いと、木の手で付けるエッセンスの MOD の系統 (E-11a)。外れの印 (S-200 ② の (g)) で見る */
@@ -192,20 +188,6 @@ export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h 
 export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
 const LIGHT = OMEN_KEY.light;
 
-/**
- * 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c)。
- * rep = 箱 id の代表の品: n はその品にそのカタリストで入る上限 (エンジンの catalystRoom の max) まで。手の % は完成形の品質から入るので上限を超えうるが、
- * エンジンは上限で止めて打てる (fillCatalyst)。前は手の 40 のまま比べ、上限 20 のアミュレットが誰も箱に入れず止まった (goalQ b5、11-07 エミュでの枝の確かめ)
- */
-const catalystTo = (doc: TreeDoc, id: string, rep?: StageItem | null): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? Math.min(h.quality ?? 0, rep ? catalystRoom(rep, catalystTagOf(h.currency)).max : Number.POSITIVE_INFINITY) : 0; };
-/** このアイテムは箱 id のカタリストの n % に届くか (エンジンの catalystRoom: 同じ種類の品質がもう n 以上か、入る上限が n 以上)。rep は catalystTo と同じ */
-function reachesCatalyst(doc: TreeDoc, id: string, it: StageItem, rep?: StageItem | null): boolean {
-  const n = catalystTo(doc, id, rep), h = doc.boxes[id]?.hand;
-  if (!n || !h) return true;
-  const room = catalystRoom(it, catalystTagOf(h.currency));
-  return room.max >= n || room.now >= n;
-}
-
 /** 見本の ☑ (見本の item ごと、木を替えて見本が作り直されたら別の物) */
 const AIMED = new WeakMap<StageItem, Map<string, ReadonlySet<string>>>();
 /** 箱 id の seed 番目の見本の ☑ (始まりから見本の打ち方の順に) */
@@ -264,8 +246,6 @@ export interface Judge {
   holdsAim(id: string): boolean;
   /** 箱の見本が全部、完成の狙いを ☑ で持っているか (スマホの自動の完成 S-91) */
   holdsAll(id: string): boolean;
-  /** from の見本が to のカタリストの n % に届かなければ n (届けば 0、S-60c) */
-  capShort(from: string, to: string): number;
   /** 箱の見本にカタリストの品質が入っているか (品質を上げた後、S-31b) */
   afterQuality(id: string): boolean;
 }
@@ -312,17 +292,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   let order: string[] | null = null;
   const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y)));
-  const capShort = (from: string, to: string): number => {
-    // 触媒のお告げの手は品質が要るので、品質の無い人の箱とは同じ枠にしない (打てずに止まった、S-60c)
-    if (doc.boxes[to]?.hand?.omens.includes(CATALYSING) && samples(from).some((s) => !(s.item.quality ?? 0))) return 1;
-    const rep = frameAt(to)?.item, n = catalystTo(doc, to, rep);
-    return n && samples(from).some((s) => !reachesCatalyst(doc, to, s.item, rep)) ? n : 0;
-  };
   /** 中身の鍵の ☑ の狙いの札 (先頭から最初の枠 ~ まで) を数だけにした物 (狙いが消えた箱、fitsLost) */
   const aimCount = (k: string): string => { const i = k.indexOf("~"), head = i < 0 ? k : k.slice(0, i); return `${head ? head.split(",").length : 0}${i < 0 ? "" : k.slice(i)}`; };
   return {
     contents,
-    capShort,
     fitsBox(from, to) {
       // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
       // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
@@ -336,17 +309,17 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && reachesCatalyst(doc, to, item, frameAt(to)?.item);
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed)))));
     },
     fitsLost(item, aimed, to) {
       const b = setFor(to, to);
       if (!b) return true;
       const k = aimCount(keyFor(to, own(contentOf(data, doc, item, aimed))));
-      return [...b].some((x) => aimCount(x) === k) && reachesCatalyst(doc, to, item, frameAt(to)?.item);
+      return [...b].some((x) => aimCount(x) === k);
     },
     boxesOf(item, aimed, ok) {
       const k = own(contentOf(data, doc, item, aimed));
-      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && reachesCatalyst(doc, id, item, frameAt(id)?.item) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
       const k = own(contentOf(data, doc, item, aimed));
