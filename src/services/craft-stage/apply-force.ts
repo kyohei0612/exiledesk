@@ -113,7 +113,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   if (asCrafted) {
     // 上限 (1 つ、アストリッドの創造性で 2 つ) を超える分は入れ替える (固定した物は外さない)。同じ系統の物は上の共通の処理で外してある
     const limit = craftedLimitOf(it);
-    const crafted = allMods(it).filter((m) => m.crafted || m.asEssence);
+    const crafted = allMods(it).filter((m) => m.crafted);
     if (crafted.length >= limit) {
       const swap = crafted.find((m) => !m.fractured && m.side === side) ?? crafted.find((m) => !m.fractured);
       if (!swap) return skip(item, tr("エッセンスの MOD が固定されていて入れ替えられない", "The Essence mod is fractured and can't be replaced"));

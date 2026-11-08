@@ -18,7 +18,7 @@ import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import { essenceKey, parseKey, type EssenceTier } from "./key";
-import type { StageItem, StageMod, StageSide } from "./types";
+import type { StageItem, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
 function essenceMods(data: PatchData, item: StageItem): Array<{ mod: Mod; side: StageSide }> {
@@ -117,18 +117,6 @@ export function essenceTierVerdict(data: PatchData, item: StageItem, key: string
   const high = (f: string) => held.some(({ m, md }) => familiesOf(md).includes(f) && !isCraftedSource(md.source) && m.modLevel >= aim.level);
   return { verdict: familiesOf(aim.mod).every(high) ? "skip" : "blocked", families: hit };
 }
-/**
- * 特例 (E-56、11-08 オーナー「メインに従うって話でエッセンスとして扱おうか特例で」): エッセンス / 合金 key が「飛ばす」(同格以上の同じ系統の普通の MOD がある) 品なら、
- * その系統を埋めている普通の MOD に asEssence の印を付けた写しを返す (以後 craftedCountOf で 1 つ使った扱い)。飛ばすでなければ品をそのまま返す
- */
-export function markSameAsEssence(data: PatchData, item: StageItem, key: string): StageItem {
-  const v = essenceTierVerdict(data, item, key);
-  if (v?.verdict !== "skip") return item;
-  const mark = (m: StageMod): StageMod => { const md = data.mods.get(m.modId); return md && !m.crafted && !isCraftedSource(md.source) && familiesOf(md).some((f) => v.families.includes(f)) ? { ...m, asEssence: true } : m; };
-  return { ...item, prefixes: item.prefixes.map(mark), suffixes: item.suffixes.map(mark) };
-}
-/** 付いているクラフト MOD の数 (E-11h)。特例でエッセンスとして数える MOD (asEssence) も入れる */
-export const craftedCountOf = (item: StageItem): number => allMods(item).filter((m) => m.crafted || m.asEssence).length;
 /**
  * このアイテムクラス・アイテムレベルで、エッセンス / 合金の系統が普通の MOD (一般 MOD の置き場、E-10a) に付きうる段の数 (E-56)。
  * lower = エッセンスの段より MOD レベルが低い段 (付いていれば塞がる)、atOrAbove = 同格以上 (付いていれば飛ばす)。アイテムレベルを超える段は数えない (E-11b)。

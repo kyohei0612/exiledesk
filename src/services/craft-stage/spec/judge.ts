@@ -5,7 +5,7 @@
  */
 import { inAny, inGroup } from "../../mods/item-classes";
 import { allMods, catalystRoom, hasAbyssMark, hasCatalystQuality, hasExtraCatalyst, limitOf, room, SIDES, takenFamilies } from "../stage-core";
-import { craftedCountOf, craftedLimitOf, essenceTarget, infiniteChoices, isInfiniteEssence } from "../apply-essence";
+import { craftedLimitOf, essenceTarget, infiniteChoices, isInfiniteEssence } from "../apply-essence";
 import { familyBlocked } from "../../mods/mod-rules";
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { socketCapOf } from "../stage-runes";
@@ -75,7 +75,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return hasAbyssMark(item) ? tr("アビサルロードの紋章がもう付いている", "Already has a Mark of the Abyssal Lord") : null;
     case "craftedSlot": { // E-11h
       const limit = craftedLimitOf(item);
-      if (craftedCountOf(item) < limit) return null;
+      if (allMods(item).filter((m) => m.crafted).length < limit) return null;
       return limit > 1 ? tr(`クラフト MOD はアストリッドの創造性込みで ${limit} つまで`, `Max ${limit} crafted mods (with Astrid's Creativity)`) : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で増える)", "Only 1 Essence mod per item (more with Astrid's Creativity)");
     }
     case "essenceFamilyFree": {
