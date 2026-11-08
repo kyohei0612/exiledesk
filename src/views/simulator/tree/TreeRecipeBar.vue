@@ -65,6 +65,10 @@ const sum = (r: { tree: Parameters<typeof recipeSummary>[0] }) => recipeSummary(
 /** 作りかけ (保存していない狙いか手がある、tree-save の unsaved) */
 const dirty = computed(() => !props.view && unsaved(t.doc.value));
 const defaultName = (): string => autoName(t.doc.value);
+/** 保存した印 (名前の横の ● の所に「✓ 保存しました」。次に木を変える・別のレシピを開くまで残す = 消える知らせにしない、11-08 オーナー「保存しましたは必要だね　保存されたか分からん」) */
+const savedNow = ref(false);
+watch(dirty, (d) => { if (d) savedNow.value = false; });
+watch(() => currentTreeRecipe.value?.id, () => { savedNow.value = false; });
 
 const note = ref("");
 let noteT = 0;
@@ -92,6 +96,7 @@ function save(): void {
   if (!currentTreeRecipe.value) { saveName.value = defaultName(); naming.value = true; pop.value = false; share.value = false; void nextTick(() => saveInput.value?.select()); return; }
   simAct("save");
   quickSave();
+  savedNow.value = true;
 }
 /** 名前の窓の「保存」 */
 function saveNamed(): void {
@@ -100,6 +105,7 @@ function saveNamed(): void {
   simAct("save");
   saveTreeRecipe(v, t.doc.value);
   track("tree-recipe:save");
+  void nextTick(() => { savedNow.value = true; });
 }
 /** 名前の押し口: 保存したレシピなら名前を変える、まだなら名前の窓 */
 function onName(): void { if (currentTreeRecipe.value) startRename(); else save(); }
@@ -180,6 +186,7 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
     <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex min-w-0 items-center gap-1.5 rounded px-1 text-left text-[13px] hover:bg-white/[0.06]" :class="flat ? 'h-10 max-w-[240px] max-[359px]:max-w-none max-[359px]:basis-full max-[359px]:justify-center' : 'min-h-8'" :title="currentTreeRecipe ? tr('名前を変える', 'Rename') : tr('名前を付けて保存', 'Save with a name')" @click="onName">
       <b class="min-w-0 break-words" :class="currentTreeRecipe ? '' : 'font-normal opacity-70'">{{ currentTreeRecipe?.name ?? tr("(未保存)", "(Unsaved)") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
+      <span v-else-if="savedNow" data-tree-recipe-saved class="shrink-0 whitespace-nowrap text-[12px] font-bold text-emerald-300">✓ {{ tr("保存しました", "Saved") }}</span>
     </button>
     <!-- 保存・レシピ・シェア (スマホは差し込みのメモ・白紙も) を 1 組にして一緒に折り返す (名前が長い・幅が狭い時は名前だけ 1 行目)。PC の列は平たい小さなボタン (SMALL) で 248px に 1 行 -->
     <span class="flex max-w-full shrink-0 flex-wrap items-center justify-center gap-1">
