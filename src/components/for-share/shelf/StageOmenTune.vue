@@ -6,6 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+import DataNote from "../../ui/DataNote.vue";
 import { tr } from "../../../i18n/lang";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { catalystOf, OMEN_KEY, SANCTIFY_MAX, SANCTIFY_MIN } from "../../../services/craft-stage/engine";
@@ -38,6 +39,7 @@ const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLea
   <div v-if="show" class="mt-0.5 flex max-w-[210px] flex-wrap items-center justify-center gap-1 text-[10px] leading-none text-white/60 max-md:text-[11px]" data-omen-tune @click.stop>
     <template v-if="k === CAT">
       <label class="flex items-center gap-1" :title="tr(`カタリストの品質 1% ごとに、対応する MOD の重みへ足す倍率。既定 ${CATALYSING_PER_PCT} は Craft of Exile の式 (ゲームに数字は無く未確認)。20% を超えた分は ${CATALYSING_OVER_RATIO} 倍`, `Added to the weight of matching mods per 1% Catalyst quality. Default ${CATALYSING_PER_PCT} is Craft of Exile's formula (no in-game number, unverified). Above 20% counts at ${CATALYSING_OVER_RATIO}x`)">
+        <DataNote mark :hint="tr(`既定 ${CATALYSING_PER_PCT} は Craft of Exile の式 (ゲームに数字は無く未確認)`, `Default ${CATALYSING_PER_PCT} is Craft of Exile's formula (no in-game number, unverified)`)" />
         <span>{{ tr("1% ごと +", "Per 1% +") }}</span>
         <input type="number" min="0" step="0.05" :value="catalysingPerPct ?? CATALYSING_PER_PCT" class="h-6 w-[4.6em] rounded border border-white/15 bg-black/60 px-1 text-white/80 tabular-nums" @change="onRate" />
       </label>

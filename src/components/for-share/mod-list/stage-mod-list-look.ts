@@ -35,6 +35,8 @@ export const weightNote = (): Partial<Record<string, string>> => ({
   desecrated: tr(`冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が ${exPct(" 個", " / ")} は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)`, `Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (${exPct(":", " / ")}) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)`),
   otherworldly: tr("異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "Otherworldly mod weights are not published. They are rolled the same way (same weights) as desecrated-only mods"),
 });
+/** ジュエルの MOD の重みの出どころ (ゲームは公表していない、一般に出回っている値。11-09 オーナー) */
+export const jewelWeightNote = (): string => tr("ジュエルの MOD の重みはゲームが公表していない。コミュニティで出回っている値を使っている", "Jewel mod weights are not published by the game. These are values circulating in the community");
 /**
  * 種類の色 (普通 = 青、エッセンス = 水色、冒涜 = 淀んだ深緑のグラデーション、異界 = 緑がかった青。
  * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)
