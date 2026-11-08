@@ -32,7 +32,8 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
       <!-- 止まった人・失敗した人も数で並べる (止まりで回すのをやめない、S-205 ③) -->
       <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}{{ result.stuck ? tr(` · 止まった ${result.stuck} 人`, ` · ${result.stuck} stuck`) : "" }}{{ result.failed ? tr(` · 失敗 ${result.failed} 人`, ` · ${result.failed} failed`) : "" }}</template>
       <!-- 回す前は「—」を並べず言葉で (壊れて見えた、11-03 オーナー「A でおｋ」、S-70b) -->
-      <template v-else>{{ tr(`${RUN_N} 人: まだ回していない`, `${RUN_N} runs: not run yet`) }}</template>
+      <!-- 狭い帯 (768 前後) では出さない (隣の「100 人」のボタンで分かる。タブ・コピーが道具の下に潜った、11-08 夜) -->
+      <span v-else class="@max-[899px]:hidden">{{ tr(`${RUN_N} 人: まだ回していない`, `${RUN_N} runs: not run yet`) }}</span>
     </span>
     <!-- 同じ所に 3 秒とどまって早送りしている間だけ見える (場所は取ったまま、帯が揺れないように) -->
     <span v-if="walk" :data-tree-run-fast="walk.fast ? '' : undefined" class="shrink-0 rounded bg-amber-400/20 px-1.5 text-[11px] font-bold text-amber-200" :class="walk.fast ? '' : 'invisible'" :title="tr('同じ所に 3 秒とどまったので、抜けるまで早送り', 'Stayed in one place for 3 s, fast-forwarding until it moves on')">{{ tr("▶▶ 早送り", "▶▶ Fast") }}</span>

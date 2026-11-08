@@ -67,9 +67,10 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, tru
 <template>
   <div data-tree-tabs class="flex min-w-0 items-center gap-1.5 @max-[899px]:gap-1">
     <!-- タブだけを横に送る (新しいツリー・コピーは送りの外。768 の帯で送りの奥に隠れた、10-26 夜) -->
-    <span class="flex min-w-0 items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
+    <span class="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]" :class="compact ? 'min-w-[66px]' : 'min-w-0'">
     <!-- 文は中の span で右を … で切る (g-tab は真ん中寄せなので、ボタンで切ると頭と終わりが両側から切れた。タブは縮めて「新しいツリー」を押し出さない、10-23 モンキー 6) -->
-    <span v-for="(_, i) in t.tabDocs.value" :key="i" class="flex min-w-[96px] shrink items-center @max-[899px]:min-w-0">
+    <!-- 上の帯 (compact) では名前を折らず縮めすぎない (768 の帯で「ツリー①」が 1 字ずつ縦に折れた、11-08 夜) -->
+    <span v-for="(_, i) in t.tabDocs.value" :key="i" class="flex min-w-[96px] shrink items-center" :class="compact ? '@max-[899px]:min-w-[66px] [&_span]:!whitespace-nowrap [&_span]:!overflow-hidden [&_button]:!whitespace-nowrap @max-[899px]:[&_button]:!px-1.5' : '@max-[899px]:min-w-0'">
       <input v-if="editing === i" ref="input" data-tree-tab-name-input :value="t.tabLabel(i)" class="h-[30px] w-40 rounded border border-amber-400/60 bg-black/50 px-2 text-[13px] outline-none"
         @keydown.enter.prevent="endRename(($event.target as HTMLInputElement).value)" @keydown.esc.stop.prevent="endRename(null)" @blur="endRename(($event.target as HTMLInputElement).value)" />
       <button v-else type="button" data-tree-tab :data-tab-i="i" class="g-tab !min-h-[30px] min-w-0 max-w-[320px] !px-3 !text-[13px] max-md:max-w-full max-md:whitespace-normal" :class="i === t.active.value ? 'on' : ''" :title="tr(`${t.tabLabel(i)} (ダブルクリックで名前を変える)`, `${t.tabLabel(i)} (double-click to rename)`)" @click="go(i)" @dblclick="startRename(i)"><span class="block min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ t.tabLabel(i) }}</span></button>

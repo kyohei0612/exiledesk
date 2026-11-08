@@ -77,6 +77,10 @@ const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; 
 const MEMO_KEY = "exiledesk.tree.memo-open";
 const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
 watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
+/** 右の列 (完成形・保存・ミニマップ・倍率) を閉じて木を右端まで広げる (S-94h、このブラウザに覚える) */
+const SIDE_KEY = "exiledesk.tree.side-closed";
+const sideClosed = ref((() => { try { return localStorage.getItem(SIDE_KEY) === "1"; } catch { return false; } })());
+watch(sideClosed, (v) => { try { localStorage.setItem(SIDE_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 /** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
 const v = useTreeFlow(doc);
@@ -449,7 +453,12 @@ const glowOf = (b: Box): boolean => {
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」) -->
-        <aside v-if="!t.needBase.value" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
+        <!-- 右の列を閉じる / 開く縦の帯 (閉じても帯は残る。スマホの完成形を畳むのと同じ ▸ / ◂、S-94h) -->
+        <button v-if="!t.needBase.value" type="button" data-tree-side-toggle :aria-expanded="!sideClosed" class="flex w-6 shrink-0 flex-col items-center justify-center gap-2 rounded-md bg-[#15110c]/95 ring-1 ring-white/10 text-sim-body hover:bg-white/10 hover:text-white"
+          :title="sideClosed ? tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)') : tr('右の列を閉じて木を広げる', 'Hide the side column to widen the tree')" @click="sideClosed = !sideClosed">
+          <Icon name="chevron-right" class="size-4" :class="sideClosed ? '-scale-x-100' : ''" /><span class="text-[11px] [writing-mode:vertical-rl] tracking-[0.2em]">{{ sideClosed ? tr("完成形", "Final") : tr("閉じる", "Hide") }}</span>
+        </button>
+        <aside v-if="!t.needBase.value" v-show="!sideClosed" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
             <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」) -->
