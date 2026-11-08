@@ -20,7 +20,7 @@ import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import { flag } from "../../../web/release-flags";
 import PhoneTreePage from "../phone/PhoneTreePage.vue"; import PhoneViewPage from "../phone/PhoneViewPage.vue";
 import { isPhoneWidth, usePhone, useViewOnlyWidth } from "../../../utils/use-phone";
-import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold";
+import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
@@ -100,6 +100,7 @@ const boxes = computed(() => Object.values(doc.value.boxes));
 /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
 // 消去の続きを畳む (S-28g ③、use-strip-fold.ts): 隠した箱は描かず、根の最初の自動の消去の箱は札 (TreeStripFold)、止まった箱は札の下
 const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => x.boxId) ?? [], () => tr100.result.value?.stuckAt ?? null);
+useTreeDraft(doc); // 要望に添える作りかけの木 (11-08 オーナー「1おけ」、web/feedback-tree.ts)
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
