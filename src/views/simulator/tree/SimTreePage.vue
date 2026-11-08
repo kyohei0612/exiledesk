@@ -80,6 +80,8 @@ watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } 
 /** 右の列 (完成形・保存・ミニマップ・倍率) を閉じて木を右端まで広げる (S-94h、このブラウザに覚える) */
 const SIDE_KEY = "exiledesk.tree.side-closed";
 const sideClosed = ref((() => { try { return localStorage.getItem(SIDE_KEY) === "1"; } catch { return false; } })());
+/** 閉じる / 完成形の小さなボタン (上の帯の道具と同じ平たい形。border-white の枠はサイトの絵の枠が掛かるので ring) */
+const SIDE_BTN = "flex h-6 shrink-0 items-center gap-0.5 whitespace-nowrap rounded-md bg-[#15110c]/95 px-1.5 text-[12px] text-sim-body ring-1 ring-white/10 hover:bg-white/10 hover:text-white";
 watch(sideClosed, (v) => { try { localStorage.setItem(SIDE_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 /** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
@@ -392,6 +394,7 @@ const glowOf = (b: Box): boolean => {
         <!-- overflow-clip: hidden だと枠の外の箱にフォーカス・寄せが来た時にブラウザが枠ごとスクロールし、枠が上へずれて下が描かれなかった (11-06、未設定の「次へ」の後) -->
         <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
+        <button v-if="!t.needBase.value && sideClosed" type="button" data-tree-side-toggle aria-expanded="false" :class="[SIDE_BTN, 'absolute right-2 top-2 z-20']" :title="tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)')" @click="sideClosed = false"><Icon name="chevron-right" class="size-3.5 -scale-x-100" />{{ tr("完成形", "Final item") }}</button>
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
@@ -453,12 +456,9 @@ const glowOf = (b: Box): boolean => {
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」) -->
-        <!-- 右の列を閉じる / 開く縦の帯 (閉じても帯は残る。スマホの完成形を畳むのと同じ ▸ / ◂、S-94h) -->
-        <button v-if="!t.needBase.value" type="button" data-tree-side-toggle :aria-expanded="!sideClosed" class="flex w-6 shrink-0 flex-col items-center justify-center gap-2 rounded-md bg-[#15110c]/95 ring-1 ring-white/10 text-sim-body hover:bg-white/10 hover:text-white"
-          :title="sideClosed ? tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)') : tr('右の列を閉じて木を広げる', 'Hide the side column to widen the tree')" @click="sideClosed = !sideClosed">
-          <Icon name="chevron-right" class="size-4" :class="sideClosed ? '-scale-x-100' : ''" /><span class="text-[11px] [writing-mode:vertical-rl] tracking-[0.2em]">{{ sideClosed ? tr("完成形", "Final") : tr("閉じる", "Hide") }}</span>
-        </button>
         <aside v-if="!t.needBase.value" v-show="!sideClosed" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
+          <!-- 右の列を閉じる小さなボタン (列の上の端。閉じると木の枠の右上に「◂ 完成形」、S-94h。11-08 オーナー「とじるボタン上にちょびっと表示でいいんじゃね」) -->
+          <button type="button" data-tree-side-toggle aria-expanded="true" :class="[SIDE_BTN, 'self-end']" :title="tr('右の列を閉じて木を広げる', 'Hide the side column to widen the tree')" @click="sideClosed = true"><Icon name="chevron-right" class="size-3.5" />{{ tr("閉じる", "Hide") }}</button>
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
             <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」) -->
