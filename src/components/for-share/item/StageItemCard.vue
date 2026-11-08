@@ -28,6 +28,7 @@ import { craftStage } from "../../../state/craft-stage";
 import { skillQualityOf } from "../../../services/craft-stage/skill-quality";
 import { useDismiss } from "../../../utils/use-dismiss";
 import RichText from "../../decor/RichText.vue";
+import RuneforgedRows from "./RuneforgedRows.vue";
 import { vFitText } from "../../../utils/fit-text";
 import type { RowTag, RowToggle } from "./stage-item-row-tag";
 import { TIER } from "../../../state/for-share/tier-word";
@@ -278,8 +279,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <p v-if="extraCat && (item.catalystQuality ?? 0) > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.catalystQuality }}%</span></p>
       <!-- ワンド・スタッフの品質は付与スキルの品質 (上がる物はスキルごと、skill-quality.ts。2026-10-17 オーナー) -->
       <p v-for="sq in skillQ" :key="sq.name" class="text-[12px] text-white/50">{{ tr(`${sq.name} の品質`, `${sq.name} quality`) }}: <span v-for="(l, i) in sq.lines" :key="i" class="text-rarity-magic"><RichText :text="l" /></span></p>
-      <!-- ベースの数値 (品質で増えた値は青) -->
-      <p v-for="r in baseRows" :key="r.key" class="text-[12px] text-white/50">{{ r.label ? `${r.label}: ` : "" }}<span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
+      <!-- ベースの数値 (品質で増えた値は青)。ルーンフォージ版のあるベースはワードで出す切り替え付き (RuneforgedRows) -->
+      <RuneforgedRows :item="item" :rows="baseRows" />
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
