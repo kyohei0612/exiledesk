@@ -25,7 +25,9 @@ const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back
  * 止まり = 同じ枠の手のある箱へ自動の ↩・同じ段の同じ枠はまとめ (S-66)・アイテムの MOD が 1 つ・消せる MOD が無い (側のお告げならその側)・決まりで配置の出せない箱
  */
 export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string[]): number {
-  let front = (roots ?? Object.values(d.boxes).filter((b) => isAnnulHand(b.hand)).map((b) => b.id)).filter((id) => isAnnulHand(d.boxes[id]?.hand));
+  // お告げ付きの消去は続けない (人が置いた分だけ。11-08 オーナー「お告げありの消去は自動でやらない」)
+  const plain = (id: string): boolean => { const h = d.boxes[id]?.hand; return isAnnulHand(h) && !h.omens.length; };
+  let front = (roots ?? Object.values(d.boxes).filter((b) => isAnnulHand(b.hand)).map((b) => b.id)).filter(plain);
   let made = 0;
   for (let depth = 0; depth < DEPTH_MAX && front.length; depth++) {
     const kids = front.flatMap((id) => d.boxes[id]!.outs).filter((id) => open(d.boxes[id]));
