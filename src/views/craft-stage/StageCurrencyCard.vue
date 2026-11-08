@@ -11,6 +11,8 @@ import type { StageItem } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import GameItemCard from "../../components/decor/GameItemCard.vue";
 import RichText from "../../components/decor/RichText.vue";
+import DataNote from "../../components/ui/DataNote.vue";
+import { isSiteData } from "../../components/ui/data-note";
 import { craftStage, priceOf } from "../../state/craft-stage";
 import { enOf, iconOfKey, nameOfKey } from "../../state/for-share/craft-stage-shelf";
 import { specialEssence, stageAdds, stageFloor, stageHelp } from "../../state/for-share/craft-stage-help";
@@ -75,7 +77,8 @@ const parts = (line: string): Array<{ t: string; b: boolean }> => line.split("**
         <div class="g-sep" />
         <p class="g-head2 mb-1">{{ tr("このステージでの動き", "Behavior in this emulator") }}</p>
         <p v-for="(l, i) in help" :key="'h' + i" class="flex gap-1.5 text-[#cfc6ae]">
-          <span class="text-amber-300/60">{{ tr("・", "•") }}</span>
+          <DataNote v-if="isSiteData(l)" mark class="mt-[3px]" />
+          <span v-else class="text-amber-300/60">{{ tr("・", "•") }}</span>
           <span><template v-for="(p, j) in parts(l)" :key="j"><b v-if="p.b" class="text-white">{{ p.t }}</b><template v-else>{{ p.t }}</template></template></span>
         </p>
       </template>

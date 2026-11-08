@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import NumStep from "../../../components/NumStep.vue";
+import DataNote from "../../../components/ui/DataNote.vue"; import { ODDS_NOTE } from "./use-tree-run";
 import { startOf, startRarity, startsFractured } from "../../../services/simulator/tree/tree-model";
 import { useTreeSearch, type TreeSearchKind } from "./use-tree-search";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
@@ -53,6 +54,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
   <section data-tree-run-report class="nodrag nopan pointer-events-auto absolute right-3 top-3 z-40 flex max-h-[calc(100%-24px)] w-[360px] flex-col overflow-hidden rounded-xl border border-amber-400/40 bg-[#14100b]/[0.97] text-[13px] text-[#e6dcc6] shadow-[0_10px_30px_rgba(0,0,0,0.7)] max-[48rem]:inset-x-2 max-[48rem]:bottom-2 max-[48rem]:top-auto max-[48rem]:max-h-[72%] max-[48rem]:w-auto">
     <header class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
       <b class="text-[14px] text-amber-200">{{ test ? driveHead(result.n) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
+      <DataNote v-if="!test" small :text="tr('目安', 'Estimate')" :hint="ODDS_NOTE()" />
       <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("木に戻る", "Back to tree") }}</button>
     </header>
     <p v-if="note" data-tree-run-report-note class="border-b border-white/10 px-3 py-1 text-[12px] text-amber-100/80">{{ note }}</p>

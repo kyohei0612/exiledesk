@@ -6,6 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+import DataNote from "../../ui/DataNote.vue";
 import { tr } from "../../../i18n/lang";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { catalystOf, OMEN_KEY, SANCTIFY_MAX, SANCTIFY_MIN } from "../../../services/craft-stage/engine";
@@ -38,6 +39,7 @@ const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLea
   <div v-if="show" class="mt-0.5 flex max-w-[210px] flex-wrap items-center justify-center gap-1 text-[10px] leading-none text-white/60 max-md:text-[11px]" data-omen-tune @click.stop>
     <template v-if="k === CAT">
       <label class="flex items-center gap-1" :title="tr(`カタリストの品質 1% ごとに、対応する MOD の重みへ足す倍率。既定 ${CATALYSING_PER_PCT} は Craft of Exile の式 (ゲームに数字は無く未確認)。20% を超えた分は ${CATALYSING_OVER_RATIO} 倍`, `Added to the weight of matching mods per 1% Catalyst quality. Default ${CATALYSING_PER_PCT} is Craft of Exile's formula (no in-game number, unverified). Above 20% counts at ${CATALYSING_OVER_RATIO}x`)">
+        <DataNote mark :hint="[tr('ゲームは触媒の高貴の倍率を公表していない', 'The game does not publish the Catalysing Exaltation multiplier'), tr(`既定 ${CATALYSING_PER_PCT} は Craft of Exile の式 (ゲームで未確認)`, `Default ${CATALYSING_PER_PCT} is Craft of Exile's formula (unverified in game)`), tr('ここで自分の値に変えられる', 'You can change it here')]" />
         <span>{{ tr("1% ごと +", "Per 1% +") }}</span>
         <input type="number" min="0" step="0.05" :value="catalysingPerPct ?? CATALYSING_PER_PCT" class="h-6 w-[4.6em] rounded border border-white/15 bg-black/60 px-1 text-white/80 tabular-nums" @change="onRate" />
       </label>
@@ -52,7 +54,7 @@ const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLea
       <select v-if="sanctifyK != null" :class="sel" :value="sanctifyK" @change="setSanctifyK(Number(($event.target as HTMLSelectElement).value))">
         <option v-for="n in steps" :key="n" :value="n">{{ label(n) }}</option>
       </select>
-      <span v-if="HINT && sanctifyK != null" data-sanctify-chance class="tabular-nums text-amber-200/80" :title="tr('1 MOD がこの倍率以上になる確率', 'Chance that one mod gets at least this multiplier')">／ {{ chance }}</span>
+      <span v-if="HINT && sanctifyK != null" data-sanctify-chance class="inline-flex items-center gap-1 tabular-nums text-amber-200/80" :title="tr('1 MOD がこの倍率以上になる確率', 'Chance that one mod gets at least this multiplier')">／ {{ chance }}<DataNote mark :hint="[tr('ゲームは聖別の倍率の出方を公表していない', 'The game does not publish how the Sanctify multiplier rolls'), tr(`範囲 ${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100} は Wiki の値`, `The range ${SANCTIFY_MIN / 100}-${SANCTIFY_MAX / 100} is from the wiki`), tr('範囲の中で一様 (0.01 刻み) はサイトの決め', 'Uniform within it (0.01 steps) is the site\'s assumption'), tr('% は目安として見る', 'Treat the % as an estimate')]" /></span>
     </template>
   </div>
 </template>

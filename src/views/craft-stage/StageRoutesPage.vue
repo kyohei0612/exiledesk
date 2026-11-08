@@ -28,6 +28,7 @@ import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import BusyTag from "../../components/ui/BusyTag.vue";
+import DataNote from "../../components/ui/DataNote.vue";
 import { flag } from "../../web/release-flags";
 import { isPhoneWidth } from "../../utils/use-phone";
 
@@ -347,7 +348,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <template v-if="best">
             <img :src="iconOf(mainKey(best))" alt="" class="size-16 shrink-0 object-contain drop-shadow-[0_0_12px_rgba(110,231,183,0.35)] max-md:size-12" />
             <div class="min-w-0 flex-1">
-              <p class="text-[11px] tracking-[0.2em] text-emerald-200/80">{{ busy ? tr("今のところ一番安い", "CHEAPEST SO FAR") : tr("一番安い", "CHEAPEST") }}</p>
+              <p class="flex flex-wrap items-center gap-2 text-[11px] text-emerald-200/80"><span class="tracking-[0.2em]">{{ busy ? tr("今のところ一番安い", "CHEAPEST SO FAR") : tr("一番安い", "CHEAPEST") }}</span><DataNote small :text="tr('目安', 'Estimate')" :hint="[tr('ゲームは MOD の重みを公表していない', 'The game doesn\'t publish mod weights'), tr(`費用と手数はサイトの重みで、道ごとに ${RUNS} 人ずつ打って数えた`, `Cost and uses are counted from ${RUNS} simulated people per route with the site's weights`), tr('値段は今の相場。目安として見る', 'Prices are current market. Treat it as an estimate')]" /></p>
               <p class="g-brush truncate text-[20px] text-[var(--exile-color-text-title)] max-md:text-[16px]">{{ routeName(best) }}</p>
               <p class="tabular-nums"><b class="text-[26px] text-emerald-300 max-md:text-[20px]">{{ money(best.avgCost) }}</b> <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(`平均 · ${fmtN(best.avgSteps)} 手`, `avg · ${fmtN(best.avgSteps)} uses`) }}</span></p>
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>

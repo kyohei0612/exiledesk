@@ -13,6 +13,7 @@ import type { ListRow } from "../../services/craft-stage/engine";
 import { defaultWeightOf, OVERRIDDEN } from "../../services/craft-stage/engine";
 import { weightOverrideNote } from "../../services/emulator/emu-engine";
 import { modWeights, resetModWeights, setModWeight, WEIGHTS_ON } from "../../state/for-share/stage-tuning";
+import DataNote from "../../components/ui/DataNote.vue";
 
 const props = defineProps<{ row: ListRow; badge?: boolean }>();
 const est = computed(() => props.row.tiers.some((t) => OVERRIDDEN.has(t.modId ?? props.row.id)));
@@ -31,8 +32,8 @@ const btn = "g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 hov
 
 <template>
   <template v-if="badge">
-    <span v-if="WEIGHTS_ON && edited != null" class="whitespace-nowrap rounded-sm border border-amber-300/50 bg-amber-500/15 px-1 py-px text-[10px] leading-none text-amber-200" :title="tr(`重み ${base} → ${edited}`, `Weight ${base} → ${edited}`)">{{ tr("重みを直した", "Weight edited") }}</span>
-    <span v-else-if="est" class="whitespace-nowrap rounded-sm border border-white/20 px-1 py-px text-[10px] leading-none text-[var(--exile-color-text-tertiary)]" :title="weightOverrideNote()">{{ tr("重みは推定", "Est. weight") }}</span>
+    <DataNote v-if="WEIGHTS_ON && edited != null" small :text="tr('重みを直した', 'Weight edited')" :hint="[tr(`重み ${base} → ${edited}`, `Weight ${base} → ${edited}`), tr('使う人が直した値 (ゲームの値ではない)', 'Edited by you (not a game value)')]" />
+    <DataNote v-else-if="est" small :text="tr('重みは推定', 'Est. weight')" :hint="weightOverrideNote()" />
   </template>
   <div v-else-if="WEIGHTS_ON && mod && base > 0" class="mt-1 flex flex-wrap items-center gap-1 text-[11px] leading-none text-white/60" data-weight-edit @click.stop>
     <label class="flex items-center gap-1" :title="tr(`一番重い${TIER}の重み (ほかの${TIER}は同じ比で動く)。打つ結果と付く確率の両方に効く`, 'Weight of the heaviest tier (other tiers scale with it). Affects both rolls and chances')">

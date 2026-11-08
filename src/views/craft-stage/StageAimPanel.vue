@@ -19,6 +19,7 @@ import { bonesFor, essenceShelf, ORBS } from "../../state/for-share/craft-stage-
 import Icon from "../../components/ui/Icon.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
+import DataNote from "../../components/ui/DataNote.vue";
 import { logRecord } from "../../utils/log-record";
 import { keepPlace, keepTopOf, scrollToTop } from "../../utils/keep-place";
 import { tr } from "../../i18n/lang";
@@ -33,6 +34,12 @@ function logAim(kind: string, extra: Record<string, unknown>): void {
 
 /** 打ち方ごとに続けて打つ回数 (当たったら今の状態に戻って続ける。aim-odds.ts の aimChain) */
 const TRIALS = 2000;
+/** 確率の青の札の説明 (U-18、行ごとに: 出どころ・何が仮か・どう見るか) */
+const oddsNote = (): string[] => [
+  tr("ゲームは MOD の重みを公表していない", "The game doesn't publish mod weights"),
+  tr(`確率はサイトの重み (poe2db・コミュニティの推定を含む) で、打ち方ごとに ${TRIALS.toLocaleString()} 回打って数えた`, `Chances use the site's weights (including poe2db and community estimates), counted from ${TRIALS.toLocaleString()} simulated uses per method`),
+  tr("% は目安として見る", "Treat the % as an estimate"),
+];
 const rows = ref<AimOdd[]>([]);
 const total = ref(0);
 /** 既定で出すのは上位 5 件 (残りは畳む。2026-10-09 オーナー「上位 5 個でいい、あとは畳んどけばええよデフォルトで」) */
@@ -184,7 +191,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
         <button v-for="n in ROLLS" :key="n" type="button" :data-rec="`aim-n:${n}`" class="g-tab !min-h-[26px] !px-2 !text-[11px]" :class="rollN === n ? 'on' : ''" @click="rollN = n">{{ n.toLocaleString() }}</button>
       </span>
       <HelpTip :title="tr('次の手で狙う', 'Target next move')" :width="320">
-        <p>{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その${TIER}以上。最大 6 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 6, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
+        <p><DataNote mark :hint="oddsNote()" class="mr-1" />{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その${TIER}以上。最大 6 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 6, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
         <p class="mt-1">{{ tr("今付いている MOD が消えたら外れで、今の状態からやり直します。外れても続けられる時 (空きがまだある など) はそのまま続けます。", "If a mod currently on the item is removed, it counts as a miss and restarts from the current state. If a miss still allows continuing (e.g. there is still an open slot), it keeps going.") }}</p>
         <p class="mt-1">{{ tr("冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。", "Desecrated mods count as a hit if they appear among the reveal options after an Abyssal Bone (including Omen of Abyssal Echoes rerolls).") }}</p>
         <p class="mt-1">{{ tr("並びは付きやすい順。行の下に 1 回の費用と付くまでの平均 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) を出します。", "Sorted by chance. Each row shows the cost per use and the average cost to hit (cost per use ÷ chance, at currency and omen market prices).") }}</p>
@@ -194,7 +201,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
     </header>
     <p v-if="done" class="text-emerald-300">{{ tr("もう全部付いています", "All targets are already on the item") }}</p>
     <template v-if="!done">
-      <p class="mb-0.5 pr-[108px] text-right text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付きやすい順", "By chance") }}</p>
+      <p class="mb-0.5 flex items-center justify-end gap-2 pr-[108px] text-[10px] text-[var(--exile-color-text-tertiary)]"><DataNote small :text="tr('確率は目安', 'Estimated odds')" :hint="oddsNote()" />{{ tr("付きやすい順", "By chance") }}</p>
       <ol class="flex flex-col gap-1">
         <!-- 「回す」は行のボタンの中に入れられない (ボタンの入れ子) ので、行の右端に重ねる (2026-10-10 動きの揃え 6: span role=button をやめた) -->
         <li v-for="(r, i) in shown" :key="r.currency + r.omens.join('+')" class="group">

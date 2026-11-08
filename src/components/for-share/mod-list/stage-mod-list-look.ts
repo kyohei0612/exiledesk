@@ -29,12 +29,48 @@ export function essName(r: ListRow, item: StageItem | null): string | null {
 export const tierName = (r: ListRow, name: string): string => (isEssenceGroup(r.group) ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
 /** 冒涜専用 MOD が候補 3 つに入る数の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT) */
 const exPct = (unit: string, sep: string): string => DESECRATION_EXCLUSIVE_COUNT.map((c) => `${c.exclusive}${unit} ${Math.round(c.rate * 100)}%`).join(sep);
-/** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
-export const weightNote = (): Partial<Record<string, string>> => ({
-  rune: tr("ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。ゲームは公開していない", "Rune special mod weights are community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09). The game does not publish them"),
-  desecrated: tr(`冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が ${exPct(" 個", " / ")} は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)`, `Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (${exPct(":", " / ")}) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)`),
-  otherworldly: tr("異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "Otherworldly mod weights are not published. They are rolled the same way (same weights) as desecrated-only mods"),
+/** 重みの出どころ (札を乗せた・押した時に「・」の縦の箇条書きで出す、U-18)。ゲームは公開していないので、こちらが入れた重み */
+export const weightNote = (): Partial<Record<string, string[]>> => ({
+  rune: [
+    tr("ゲームはルーンの特殊 MOD の重みを公表していない", "The game does not publish rune special mod weights"),
+    tr("Craft of Exile (beta) が載せている実測を使っている (Krakenbul / Prohibited Library、2026-09 更新)", "Uses the community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09)"),
+    tr("Craft of Exile に無い物 (約 30 件) は仮の 1000", "The ~30 mods Craft of Exile lacks use a placeholder 1000"),
+    tr("% は目安として見る", "Treat the % as estimates"),
+  ],
+  desecrated: [
+    tr("ゲームは冒涜専用 MOD どうしの重みを公表していない", "The game does not publish weights among desecrated-only mods"),
+    tr("ここでは全部等しく (均一) で引いている", "Here they are all rolled equally (uniform)"),
+    tr(`候補 3 つのうち専用が ${exPct(" 個", " / ")} は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)`, `The share of desecrated-only mods among the 3 options (${exPct(":", " / ")}) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)`),
+    tr("% は目安として見る", "Treat the % as estimates"),
+  ],
+  otherworldly: [
+    tr("ゲームは異界の MOD の重みを公表していない", "The game does not publish otherworldly mod weights"),
+    tr("冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "They are rolled the same way (same weights) as desecrated-only mods"),
+    tr("% は目安として見る", "Treat the % as estimates"),
+  ],
 });
+/** ジュエルの MOD の重みの出どころ (ゲームは公表していない。poe2db も Craft of Exile も全部 1 なので、サイトが全部同じ重み = 均一にした。冒涜は仮の 2500。11-09 オーナー) */
+export const jewelWeightNote = (): string[] => [
+  tr("ゲームはジュエルの MOD の重みを公表していない", "The game does not publish jewel mod weights"),
+  tr("poe2db・Craft of Exile も全部同じ値", "poe2db and Craft of Exile list them all the same"),
+  tr("ここでは全部同じ重み (均一) で引いている。冒涜の MOD は仮の重み", "Here every mod rolls with the same weight (uniform); desecrated mods use a placeholder weight"),
+  tr("% は目安として見る", "Treat the % as estimates"),
+];
+/** 一般の MOD の重みの出どころ (poe2db の値 = PoE1 の同じ系統の重みを当てた推定。11-09 オーナー「全部それで」= 一般の節にも札) */
+const normalWeightNote = (): string[] => [
+  tr("ゲームは一般の MOD の重みを公表していない", "The game does not publish regular mod weights"),
+  tr("poe2db の値を使っている (PoE1 の同じ系統の重みを当てた推定)", "Uses poe2db's values (estimated from the matching PoE1 mod groups)"),
+  tr("poe2db に無い物 (キャストスピードなど) は Craft of Exile の値や同じ系統から借りた値で、行に「重みは推定」の札", "Mods poe2db lacks (e.g. Cast Speed) use Craft of Exile's value or one borrowed from a matching group, marked \"Est. weight\" on the row"),
+  tr("% は目安として見る", "Treat the % as estimates"),
+];
+/** 節の見出しの青の札 (U-18): 短い文と出どころの行。札の無い節は null (エッセンス・創生の樹など重みで引かない節) */
+export function sectionNote(g: string, rune: boolean, jewel: boolean): { short: string; detail: string[] } | null {
+  const own = weightNote()[rune ? "rune" : g];
+  if (own) return { short: tr("重みはゲーム非公表。コミュニティのデータの目安", "Weights aren't published. Community estimates"), detail: own };
+  if (jewel) return { short: tr("重みはゲーム非公表。全部同じ重みの仮", "Weights aren't published. All equal (placeholder)"), detail: jewelWeightNote() };
+  if (g === "normal") return { short: tr("重みはゲーム非公表。poe2db の推定", "Weights aren't published. poe2db estimates"), detail: normalWeightNote() };
+  return null;
+}
 /**
  * 種類の色 (普通 = 青、エッセンス = 水色、冒涜 = 淀んだ深緑のグラデーション、異界 = 緑がかった青。
  * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)

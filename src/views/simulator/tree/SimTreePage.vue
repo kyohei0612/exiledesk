@@ -53,9 +53,9 @@ import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
-import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
+import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
-import TreeFlowSteps from "./TreeFlowSteps.vue";
+import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
 import { applyPick, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
@@ -374,6 +374,8 @@ const glowOf = (b: Box): boolean => {
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
+        <!-- 箱の割合・100 人回しの費用はゲームが公表していない重みの目安 (U-46 の青の札、11-09 オーナー「全て洗って注意喚起」。箱ごとには付けず帯に 1 つ) -->
+        <DataNote v-if="!t.needBase.value" small :text="tr('割合・費用は目安', 'Odds & costs are estimates')" :hint="ODDS_NOTE()" />
       </div>
       <!-- 帯は 1 行 (10-26 夜オーナー「1 行で表示させてくれ」「必要なのは下段」「テストで回すと 100 人で回すは上の枠内上部でおけ」): 穴チェック・足りない所・100 人回す・結果、タブ、道具。
            幅で形を変えない (字を短くしない・隠さない)。入らない幅は帯の中を横に送る (11-08 夜オーナー「pxみじけーやつは苦労させろ精神」、S-94g)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->

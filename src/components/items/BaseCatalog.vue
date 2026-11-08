@@ -428,11 +428,11 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <!-- PC: 押したタイルの行のすぐ下 (行いっぱい) -->
           <div v-if="!phone && family && insertAfter === r.ja" data-base-panel class="basis-full rounded-md bg-black/25 p-2 ring-1 ring-white/10">
             <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
-              <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
+              <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[14px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button><div v-if="$slots['attr-end']" data-base-attr-end class="ml-auto flex items-center"><slot name="attr-end" :cls="cls" /></div>
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
             <!-- 開き直す・部位を選び直すたびに畳んだ状態 (2 行 + もっと見る) から (2026-10-13 オーナー「もっと見るは一番下に来るでしょ」: 前に広げたまま開いていた) -->
-            <BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="onPick" @expand="revealMore" @collapse="foldMore" />
+            <div v-else-if="$slots.list" data-base-list-slot><slot name="list" :cls="cls" :pick="onPick" /></div><BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="onPick" @expand="revealMore" @collapse="foldMore" />
           </div>
         </template>
       </div>
@@ -443,14 +443,14 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <b class="text-[15px] text-amber-100">{{ famLabel(family) }}</b>
         </div>
         <div v-if="family.variants.length > 1 && !joined" class="mb-2 flex flex-wrap gap-2">
-          <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button>
+          <button v-for="v in family.variants" :key="v.cls" type="button" :data-rec="`variant:${v.cls}`" class="g-tab !min-h-10 !px-4 !text-[13px]" :class="cls === v.cls ? 'on' : ''" @click="cls = v.cls">{{ famLabelOf(v) }}</button><div v-if="$slots['attr-end']" data-base-attr-end class="ml-auto flex items-center"><slot name="attr-end" :cls="cls" /></div>
         </div>
         <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
       </div>
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
     <!-- スマホの一覧も PC と同じに、出た時・「もっと見る」で広げた時は下が切れていれば送り、「たたむ」で元の位置へ (2026-10-25 オーナー「スマホ版って展開したらスクロール追従無かったよね」) -->
-    <BaseCardGrid v-if="query.trim() || (phone && cls)" :data-base-phone-list="phone && !query.trim() ? '' : undefined" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="onPick" @expand="revealMore" @collapse="foldMore" />
+    <div v-if="!query.trim() && phone && cls && $slots.list" data-base-phone-list data-base-list-slot><slot name="list" :cls="cls" :pick="onPick" /></div><BaseCardGrid v-else-if="query.trim() || (phone && cls)" :data-base-phone-list="phone && !query.trim() ? '' : undefined" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="onPick" @expand="revealMore" @collapse="foldMore" />
     <!-- 名前で探す欄は外した (2026-10-18 オーナー「ここで探すことは無い」)。装備 (ユニークの絵)・エフェクトを切るチェックは一番下 (同)。
          タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
     <label class="mt-3 flex w-fit cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">

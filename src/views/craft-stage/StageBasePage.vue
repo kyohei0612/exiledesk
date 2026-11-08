@@ -5,8 +5,9 @@
   選ぶとクラフトへ戻る。まだ選んでいない時 (初めて・白に戻した後) は戻るボタンを出さない
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import BasePickBody from "../../components/for-share/BasePickBody.vue";
+import StageRuneforgedBases from "./StageRuneforgedBases.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
@@ -18,6 +19,8 @@ defineProps<{ phone: boolean }>();
 const { chosenBase, markChosen, pickSimBase } = useStageBase();
 
 function back(): void { basePage.value = false; }
+/** ルーンフォージ版で選ぶ (オン = フォージ品の一覧) */
+const runeOn = ref(false);
 function pick(en: string): void {
   const first = baseUnpicked.value;
   picked = true;
@@ -71,7 +74,17 @@ onBeforeUnmount(() => {
       </div>
       <ModeTabs v-else class="mb-3" @pick="(m) => m === 'sim' && back()" />
       <!-- 初めての人への帯 + ベース選びの枠は共通の部品 (BasePickBody、シミュの初手のベース選びと同じ作り。2026-10-23)。帯は人がまだベースを選んだ事の無い時のエミュレーターだけ -->
-      <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="intro" @pick="pick" @quick="pick('Gold Ring')" />
+      <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="intro" @pick="pick" @quick="pick('Gold Ring')">
+        <!-- ルーンフォージ版で選ぶ: 属性の札の列の右端にチェックボックス、オンの時は並びをフォージ品に (StageRuneforgedBases。オーナー 11-09「ここでオンオフチェックボックス」) -->
+        <template #attr-end>
+          <label data-base-runeforged-toggle class="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]">
+            <input v-model="runeOn" type="checkbox" class="size-4 accent-sky-400" />{{ tr("ルーンフォージ版", "Runeforged") }}
+          </label>
+        </template>
+        <template v-if="runeOn" #list="{ cls, pick: choose }">
+          <StageRuneforgedBases :data="s.data.value" :selected="shown" :cls="cls" @pick="choose" />
+        </template>
+      </BasePickBody>
     </div>
   </section>
 </template>
