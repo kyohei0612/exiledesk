@@ -31,7 +31,7 @@ export const tierName = (r: ListRow, name: string): string => (isEssenceGroup(r.
 const exPct = (unit: string, sep: string): string => DESECRATION_EXCLUSIVE_COUNT.map((c) => `${c.exclusive}${unit} ${Math.round(c.rate * 100)}%`).join(sep);
 /** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
 export const weightNote = (): Partial<Record<string, string>> => ({
-  rune: tr("ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。ゲームは公開していない", "Rune special mod weights are community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09). The game does not publish them"),
+  rune: tr("ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。Craft of Exile に無い物 (約 30 件) は仮の 1000。ゲームは公開していない", "Rune special mod weights are community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09). The ~30 mods Craft of Exile lacks use a placeholder 1000. The game does not publish them"),
   desecrated: tr(`冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が ${exPct(" 個", " / ")} は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)`, `Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (${exPct(":", " / ")}) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)`),
   otherworldly: tr("異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "Otherworldly mod weights are not published. They are rolled the same way (same weights) as desecrated-only mods"),
 });

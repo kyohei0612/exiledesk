@@ -54,7 +54,7 @@ const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLea
       <select v-if="sanctifyK != null" :class="sel" :value="sanctifyK" @change="setSanctifyK(Number(($event.target as HTMLSelectElement).value))">
         <option v-for="n in steps" :key="n" :value="n">{{ label(n) }}</option>
       </select>
-      <span v-if="HINT && sanctifyK != null" data-sanctify-chance class="tabular-nums text-amber-200/80" :title="tr('1 MOD がこの倍率以上になる確率', 'Chance that one mod gets at least this multiplier')">／ {{ chance }}</span>
+      <span v-if="HINT && sanctifyK != null" data-sanctify-chance class="inline-flex items-center gap-1 tabular-nums text-amber-200/80" :title="tr('1 MOD がこの倍率以上になる確率', 'Chance that one mod gets at least this multiplier')">／ {{ chance }}<DataNote mark :hint="tr(`聖別の倍率の範囲 (${SANCTIFY_MIN / 100}〜${SANCTIFY_MAX / 100}) は Wiki の値、範囲の中で一様 (0.01 刻み) はサイトの決め。ゲームは公表していない (U-18)`, `The multiplier range (${SANCTIFY_MIN / 100}-${SANCTIFY_MAX / 100}) is from the wiki and uniform (0.01 steps) within it is the site's assumption. Not published by the game`)" /></span>
     </template>
   </div>
 </template>
