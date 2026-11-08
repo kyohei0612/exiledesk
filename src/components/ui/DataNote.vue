@@ -9,7 +9,9 @@ import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import { SITE_DATA_HINT, type NoteLines } from "./data-note";
 
-const props = defineProps<{ text?: string; detail?: NoteLines; hint?: NoteLines; mark?: boolean; small?: boolean }>();
+/** tip = 乗せた時の小窓の寄せ (既定は札の左端から。真ん中に置いた札は center、右寄せの札は right) */
+const props = defineProps<{ text?: string; detail?: NoteLines; hint?: NoteLines; mark?: boolean; small?: boolean; tip?: "left" | "center" | "right" }>();
+const TIP_AT = { left: "left-0", center: "left-1/2 -translate-x-1/2", right: "right-0" } as const;
 const open = ref(false);
 const lines = computed((): readonly string[] => {
   const v = props.detail ?? props.hint ?? SITE_DATA_HINT();
@@ -36,7 +38,7 @@ const title = computed(() => lines.value.map((l) => `・${l}`).join("\n"));
       <span class="grid shrink-0 place-items-center rounded-full bg-sky-300 font-bold leading-none text-black" :class="small ? 'size-3 text-[9px]' : 'size-4 text-[11px]'">i</span>{{ text }}
     </component>
     <!-- PC: 乗せると「・」の縦の小窓 (押して開いている時は出さない) -->
-    <ul v-if="!open" data-site-note-tip class="pointer-events-none absolute left-0 top-full z-40 mt-1 hidden w-max max-w-[22rem] rounded-md bg-sky-950 px-3 py-2 text-left text-[12px] font-normal leading-relaxed text-sky-50 shadow-lg ring-1 ring-sky-300/50 md:group-hover/note:block">
+    <ul v-if="!open" data-site-note-tip :class="TIP_AT[tip ?? 'left']" class="pointer-events-none absolute top-full z-40 mt-1 hidden w-max max-w-[22rem] rounded-md bg-sky-950 px-3 py-2 text-left text-[12px] font-normal leading-relaxed text-sky-50 shadow-lg ring-1 ring-sky-300/50 md:group-hover/note:block">
       <li v-for="(l, i) in lines" :key="i" class="flex gap-1"><span class="text-sky-300">・</span><span>{{ l }}</span></li>
     </ul>
   </span>
