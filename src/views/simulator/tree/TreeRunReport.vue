@@ -50,7 +50,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
 </script>
 
 <template>
-  <section data-tree-run-report class="nodrag nopan pointer-events-auto absolute right-3 top-3 z-40 flex max-h-[calc(100%-24px)] w-[360px] flex-col overflow-hidden rounded-xl border border-amber-400/40 bg-[#14100b]/[0.97] text-[13px] text-[#e6dcc6] shadow-[0_10px_30px_rgba(0,0,0,0.7)] max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:max-h-[72%] max-md:w-auto">
+  <section data-tree-run-report class="nodrag nopan pointer-events-auto absolute right-3 top-3 z-40 flex max-h-[calc(100%-24px)] w-[360px] flex-col overflow-hidden rounded-xl border border-amber-400/40 bg-[#14100b]/[0.97] text-[13px] text-[#e6dcc6] shadow-[0_10px_30px_rgba(0,0,0,0.7)] max-[48rem]:inset-x-2 max-[48rem]:bottom-2 max-[48rem]:top-auto max-[48rem]:max-h-[72%] max-[48rem]:w-auto">
     <header class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
       <b class="text-[14px] text-amber-200">{{ test ? driveHead(result.n) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
       <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("木に戻る", "Back to tree") }}</button>
@@ -88,7 +88,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
       </div>
       <!-- この始め方のベースの値段 (取引所の値段を手で入れる。入れると回し直さずに 1 個の神へ足し直す = use-tree-run の withStartCost、10-25 オーナー) -->
       <div data-tree-run-report-start class="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5">
-        <h4 class="mb-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[12px] text-[#a99d86]">{{ tr(`ベースの値段 · ${startName(t.doc.value)}`, `Base price · ${startName(t.doc.value)}`) }}</h4>
+        <h4 class="mb-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-[12px] text-[#a99d86]">{{ tr(`ベースの値段 · ${startName(t.doc.value)}`, `Base price · ${startName(t.doc.value)}`) }}</h4>
         <div class="flex items-center gap-2">
           <NumStep data-tree-run-report-price :model-value="priceIn" width="w-24" placeholder-text="—" @update:model-value="t.setStartPrice" /><span>{{ tr("神", "div") }}</span>
           <button type="button" data-tree-run-report-search class="g-btn sm ml-auto" :disabled="!searchKind || !ts.can(searchKind)" :title="searchKind ? tr('取引所で探す (開くだけ。値段は手で入れる)', 'Search the trade site (opens it; type the price yourself)') : tr('ノーマル・フラクチャー済みの始め方で探せる', 'Available for normal and fractured starts')" @click="searchKind && ts.search(searchKind)">{{ tr("取引所で探す", "Search trade") }}</button>
@@ -106,22 +106,22 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
       <!-- 止まり・沼った場所 -->
       <div v-if="result.stuck || result.capped" data-tree-run-report-stuck class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
         <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 沼った場所 ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} swamped`) }}</div>
-        <button v-for="[id, n] in stuck" :key="id" type="button" class="block w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}</button>
-        <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
+        <button v-for="[id, n] in stuck" :key="id" type="button" class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}</button>
+        <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
       </div>
       </template>
       <!-- 一番お金を使った箱 -->
       <div v-if="spend.length && !test">
         <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ tr("一番お金を使った箱 (1 人あたり)", "Most expensive boxes (per run)") }}</h4>
         <button v-for="([id, b], i) in spend" :key="id" type="button" data-tree-run-report-spend class="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-white/[0.06]" @click="emit('go', id)">
-          <span class="w-4 shrink-0 text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ boxName(id) }}</span><span class="shrink-0 tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
+          <span class="w-4 shrink-0 text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ boxName(id) }}</span><span class="shrink-0 tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
         </button>
       </div>
       <!-- カレンシー別 -->
       <div v-if="!test">
         <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ tr("使った物 (1 人あたり)", "Used (per run)") }}</h4>
         <div v-for="u in uses.slice(0, SHOW)" :key="u.k" class="flex items-center gap-2 py-0.5">
-          <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ u.name }}</span>
+          <span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ u.name }}</span>
           <span class="shrink-0 tabular-nums text-[#a99d86]">{{ tr(`${div(u.n)} 個`, `×${div(u.n)}`) }}</span>
           <span class="w-16 shrink-0 text-right tabular-nums">{{ div(u.div) }} {{ tr("神", "div") }}</span>
         </div>

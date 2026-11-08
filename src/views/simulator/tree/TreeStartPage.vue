@@ -32,10 +32,10 @@ const item = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.valu
       <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>
       <button type="button" data-tree-edit-reset-cancel class="g-btn sm" @click="edits.answer('cancel')">{{ tr("やめる (変更を戻す)", "Cancel (undo the change)") }}</button>
     </div>
-    <div data-tree-start-page class="flex min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
+    <div data-tree-start-page class="flex min-w-0 items-start gap-4 max-[48rem]:flex-col max-[48rem]:items-stretch">
       <div class="min-w-0 flex-1"><TreeStartPick /></div>
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
-      <div class="flex shrink-0 flex-col gap-1 md:w-[480px]">
+      <div class="flex shrink-0 flex-col gap-1 min-[48rem]:w-[480px]">
         <p class="text-[12px] opacity-70">{{ tr("始まりのアイテム (外れの MOD・✦ の候補は 1 例)", "Starting item (miss mods and the ✦ pick are one example)") }}</p>
         <StageItemCard :row-group="null" v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" />
       </div>

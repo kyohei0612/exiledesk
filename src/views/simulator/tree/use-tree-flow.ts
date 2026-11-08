@@ -12,7 +12,7 @@ import { computed, ref, watch, type Ref, nextTick } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pageZoom } from "../../../utils/zoom";
-import { isPhoneWidth } from "../../../utils/use-phone";
+import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -68,7 +68,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 今の木で使える段。20% でも全体が入らない PC の木だけ、全体が入る倍率まで下に足す (S-147d、10-26 夜の 10% の点は開いた時の話で、開いた時は 75% のまま)
    */
   function levels(): readonly number[] {
-    if (isPhoneWidth()) return ZOOM_LEVELS;
+    if (innerWidth < VIEW_ONLY_MAX) return ZOOM_LEVELS;
     const fit = wholeZoom();
     if (fit == null || fit >= ZOOM_MIN) return ZOOM_LEVELS;
     return [fit, ...WHOLE_STEPS.filter((l) => l > fit * 1.1), ...ZOOM_LEVELS].sort((a, b) => a - b);
@@ -103,7 +103,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void stepZoom(dir, { x: e.clientX, y: e.clientY });
   }
   /** 一番上の箱を置く高さ (0 完成形の設定は枠の左上の札、10-23。スマホは札 (高さ約 110px) の下へ) */
-  const topY = (): number => (isPhoneWidth() ? 130 : 40);
+  const topY = (): number => (innerWidth < VIEW_ONLY_MAX ? 130 : 40);
   /**
    * 始まりの箱を枠の横の真ん中に置いた時、木全体が収まる一番大きい段 (上は topY、下は余白だけ。100% まで)。
    * 左右は始まりの箱の真ん中から遠い方の端まで (始まりを真ん中に置くので、片側に伸びた木はその側の分を両側に取る)
@@ -141,7 +141,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   async function startTop(lv: number, fitAll = false): Promise<void> {
     let p = placeOf(lv);
     const h = f.dimensions.value.height;
-    const ls = levels(), low = isPhoneWidth() ? FIT_MIN : 0;
+    const ls = levels(), low = innerWidth < VIEW_ONLY_MAX ? FIT_MIN : 0;
     for (let i = ls.indexOf(lv); fitAll && i > 0 && ls[i - 1]! >= low && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ls[i - 1]!);
     await f.setViewport({ x: p.x, y: p.y, zoom: p.z });
   }
@@ -150,7 +150,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const lv = fitLevel();
     if (lv == null) return;
     // スマホの形 (U-53) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
-    if (!whole && isPhoneWidth()) await startTop(Math.max(lv, PHONE_MIN));
+    if (!whole && (innerWidth < VIEW_ONLY_MAX)) await startTop(Math.max(lv, PHONE_MIN));
     else await startTop(lv, true);
   }
   /**

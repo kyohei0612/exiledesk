@@ -33,7 +33,7 @@ import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
 import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
-import { usePhone } from "../../../utils/use-phone";
+import { useViewOnlyWidth } from "../../../utils/use-phone";
 import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
@@ -333,7 +333,7 @@ const gone = later(handKey, goneNow);
  * 2 段目 = 「どれが付いたら当たり?」(付きうる狙い aimChoices だけ、既定は狙い無し)。狙い無しのままなら 1 段目の帯の「狙い無しで決める」ですぐ決める。
  * 当たるまで繰り返す手は狙い無しが無いので 2 段目だけ。PC は今のまま (チェックの欄は持った物の欄の中)
  */
-const phone = usePhone();
+const phone = useViewOnlyWidth();
 const aimStep = ref(false);
 /**
  * スマホの 10-27 昼の直し : 持った物の説明は既定で閉じる (開くのは任意)。
@@ -362,10 +362,10 @@ function ok(): void {
     <p>{{ tr("この当たりの箱は、まだ当たりの MOD が決まっていません。先に MOD を選ぶと、この箱のアイテムができて次の手を選べます", "This hit box has no target mod yet. Pick the mod first; then the item at this box exists and you can choose the next craft") }}</p>
     <button type="button" data-tree-hand-pick-aim class="g-btn-red min-h-10 px-4" @click="emit('aim')">{{ tr("当たりの MOD を選ぶ", "Pick the hit mod") }}</button>
   </div>
-  <div v-else data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] max-md:grid-cols-[minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
+  <div v-else data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] max-[48rem]:grid-cols-[minmax(0,1fr)] min-[48rem]:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
-    <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
+    <div class="flex min-w-0 flex-col gap-8 min-[48rem]:w-[480px]">
       <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard :row-group="null" v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :note="runeNote" @socket="onSocket" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
@@ -377,7 +377,7 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ [handName(held), ...used.map(handName), ...(echo && isBone(held) ? [handName(ECHO)] : [])].join(" + ") }}</b>
+        <b class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="hand ? handLabel(hand) : ''">{{ [handName(held), ...used.map(handName), ...(echo && isBone(held) ? [handName(ECHO)] : [])].join(" + ") }}</b>
       </div>
       <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
       <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
@@ -394,7 +394,7 @@ function ok(): void {
         <span v-else-if="noMod" data-tree-hand-nomod class="opacity-80">{{ noModTitle() }}</span>
         <span v-else class="opacity-80">{{ tr("狙う MOD (☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (one hit box per ☑ mod; any one landing is a hit)") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 items-center gap-2" :class="noMod ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'" :title="noMod ? noModTitle() : undefined">
-          <input type="checkbox" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
+          <input type="checkbox" :disabled="noMod" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
         <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
@@ -427,7 +427,7 @@ function ok(): void {
     </div>
     <!-- スマホだけ: 持っている間は下に「使う」の帯 (カードの「下の帯の『使う』でも」の帯。カードまで戻らず親指で決められる、10-25 シミュ 29 の点検) -->
     <!-- 320 で帯の右が切れた (棚の並びの最小の幅で枠ごと広がった) ので、スマホの並びの列は最小 0。帯は窓の下の余白 (12px) まで下げて、下に棚が覗かないように -->
-    <div v-if="held" data-tree-hand-use-bar class="sticky -bottom-3 z-10 -mx-3 -mb-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 pb-5 pt-2 md:hidden">
+    <div v-if="held" data-tree-hand-use-bar class="sticky -bottom-3 z-10 -mx-3 -mb-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 pb-5 pt-2 min-[48rem]:hidden">
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${handName(held)} を持っている`, `Holding ${handName(held)}`) }}</p>
       <button v-if="heldHelp.length && P27" type="button" data-tree-hand-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">{{ helpOpen ? tr("説明を閉じる ▴", "Hide details ▴") : tr("説明 ▾", "Details ▾") }}</button>
       <p v-if="heldHelp.length && (!P27 || helpOpen)" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-sim-body">{{ heldHelp.join(" ") }}</p>

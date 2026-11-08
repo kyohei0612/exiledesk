@@ -55,12 +55,12 @@ const move = (i: number, by: -1 | 1): void => { const n = [...list.value], j = i
     </div>
     <!-- 完成の狙いに要るルーン (自動、外せない) -->
     <p v-for="r in required" :key="`auto-${r.en}`" data-tree-goal-rune-auto class="flex min-w-0 items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 text-[#9fd3ff]/80" :title="tr('完成の狙いに要るので自動で嵌めた扱い (外せない)', 'Socketed automatically because a target needs it (cannot be removed)')">
-      <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ nameFor(r.en) }}</span><span class="shrink-0 opacity-70">{{ tr("自動", "Auto") }}</span>
+      <span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ nameFor(r.en) }}</span><span class="shrink-0 opacity-70">{{ tr("自動", "Auto") }}</span>
     </p>
     <ol v-if="list.length" class="flex flex-col gap-1">
       <li v-for="(en, i) in list" :key="`${en}-${i}`" data-tree-goal-rune class="flex min-w-0 items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1">
         <span class="shrink-0 opacity-60">{{ i + 1 }}.</span>
-        <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-violet-200" :title="effectFor(en) || en">{{ nameFor(en) }}</span>
+        <span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-violet-200" :title="effectFor(en) || en">{{ nameFor(en) }}</span>
         <button type="button" data-tree-goal-rune-up class="shrink-0 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === 0" :aria-label="tr(`${nameFor(en)} を前へ`, `Move ${nameFor(en)} up`)" :title="tr('前へ', 'Move up')" @click="move(i, -1)">↑</button>
         <button type="button" data-tree-goal-rune-down class="shrink-0 px-1 opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="i === list.length - 1" :aria-label="tr(`${nameFor(en)} を後へ`, `Move ${nameFor(en)} down`)" :title="tr('後へ', 'Move down')" @click="move(i, 1)">↓</button>
         <button type="button" data-tree-goal-rune-remove class="shrink-0 px-1 opacity-60 hover:opacity-100" :aria-label="tr(`${nameFor(en)} を外す`, `Remove ${nameFor(en)}`)" :title="tr('外す', 'Remove')" @click="remove(i)">×</button>

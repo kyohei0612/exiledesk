@@ -80,8 +80,8 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
   </label>
   <button v-if="noCheck" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : ''" @click="picking = true">{{ tr("発現で選ぶ MOD を選ぶ", "Pick the mod to reveal") }}</button>
   <!-- エミュの「このベースに付く MOD」の重ね窓と同じ枠 (CraftStage.vue の ModalShell と同じ大きさ、スマホは画面いっぱい) と同じ表 (S-38) -->
-  <ModalShell :open="picking" rec="tree-veil-mods" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (選ばない)', 'Close (pick nothing)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="picking = false">
-    <template #header><span class="g-sec-sub max-md:hidden">{{ tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>
+  <ModalShell :open="picking" rec="tree-veil-mods" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (選ばない)', 'Close (pick nothing)')" width="w-[75%] h-[75%] max-[48rem]:h-auto" full-on-phone body-class="px-3 pb-3" @close="picking = false">
+    <template #header><span class="g-sec-sub max-[48rem]:hidden">{{ tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>
     <div data-tree-hand-veil-pick>
       <ModTable
         overlay :data="s.data.value" :item="item"

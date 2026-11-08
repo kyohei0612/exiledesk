@@ -15,7 +15,7 @@ import { copyRecipeUrl, fmtDate, seedDevRecipes, closeNewer, sharedNewer, treeSh
 import { xIntentUrl } from "../../../services/craft-stage/share";
 import { useTree } from "./use-tree";
 import { autoName, quickSave, unsaved } from "./tree-save";
-import { usePhone } from "../../../utils/use-phone";
+import { useViewOnlyWidth } from "../../../utils/use-phone";
 import { recipeSummary } from "./recipe-summary";
 import { track } from "../../../utils/track";
 import { simAct, simOp } from "../../../web/track";
@@ -168,7 +168,7 @@ useDismiss(() => pop.value || naming.value || share.value, [root], closeAll, { s
  * Ctrl+S (Mac は Cmd+S) = 保存 (ブラウザの「ページを保存」は止める。文字の欄に入力中でも効く)。PC のツリーの帯だけ (スマホ・完成形の設定の右端の「レシピ ▾」だけの帯では効かない)。
  * 10-26 オーナー「コントロールSだっけホットキー保存させよう」
  */
-const phone = usePhone();
+const phone = useViewOnlyWidth();
 function onKey(e: KeyboardEvent): void {
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !props.view && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
@@ -180,7 +180,7 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
 
 <template>
   <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 flex-wrap items-center gap-1.5">
-    <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-md:order-last max-md:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
+    <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-[48rem]:order-last max-[48rem]:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
     <!-- 名前 (保存前は「(未保存)」、押すと保存したレシピは名前を変える・まだなら名前を付けて保存)。… で切らず折り返す -->
     <b v-else-if="view" data-tree-recipe-name class="flex h-10 min-w-0 flex-1 items-center break-words px-1 text-[13px] text-amber-200">{{ currentTreeRecipe?.name ?? defaultName() }}</b>
     <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex min-w-0 items-center gap-1.5 rounded px-1 text-left text-[13px] hover:bg-white/[0.06]" :class="flat ? 'h-10 max-w-[240px] max-[359px]:max-w-none max-[359px]:basis-full max-[359px]:justify-center' : 'min-h-8'" :title="currentTreeRecipe ? tr('名前を変える', 'Rename') : tr('名前を付けて保存', 'Save with a name')" @click="onName">
