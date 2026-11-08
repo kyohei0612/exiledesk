@@ -182,7 +182,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <p class="break-words px-10 text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       {{ sit[0] }}
     </p>
-    <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-sim-body"><DataNote v-if="isSiteData(sit[1])" mark class="mr-1" />{{ sit[1] }}</p>
+    <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-sim-body"><DataNote v-if="isSiteData(sit[1])" mark class="mr-1" :hint="[tr('ゲームはどの MOD が固定されるかの割合を公表していない', 'The game does not publish which mod is more likely to be fractured'), tr('サイトは全部の MOD を等しい割合としている', 'The site treats every mod as equally likely'), tr('目安として見る', 'Treat it as an estimate')]" />{{ sit[1] }}</p>
     <StageItemCard :row-group="null" v-if="item" data-phone-out-item class="mx-auto mt-2" :item="item.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="item.tags" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>

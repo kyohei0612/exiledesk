@@ -15,6 +15,7 @@ import { routeKeyOf, type CheckRun } from "./use-tree-check";
 import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
 import { runPrice } from "../../../services/simulator/tree/run-price";
+import { tr } from "../../../i18n/lang";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -28,6 +29,13 @@ export const TEST_N = 30;
  * 11-07 に 100 人 (オーナー「後スマホ版でも軽くなったよねレシピ なら100人でいいんじゃね10人より」)
  */
 export const VIEW_N = RUN_N;
+/** 割合・費用の青の札の説明 (S-75b・U-18)。木の上の帯と結果のまとめの見出しで同じ。「・」の縦の箇条書きで出る (11-09 オーナー「区切った方が良いね　・　で縦にホバー時の説明」) */
+export const ODDS_NOTE = (): string[] => [
+  tr("ゲームは MOD の付きやすさ (重み) を公表していない", "The game does not publish how likely each mod is (its weight)"),
+  tr(`割合・費用は、サイトの重みの目安 (MOD 表の札のとおり) で ${RUN_N} 人を回して数えた物`, `Odds and costs come from ${RUN_N} runs using the site's estimated weights (see the notes on the mod table)`),
+  tr("費用はベースの値段 (結果のまとめで入れる) と今の相場から", "Costs use the base price (entered in the summary) and current market prices"),
+  tr("割合・費用は目安として見る", "Treat the odds and costs as estimates"),
+];
 /** 途中の結果を出す間隔 (人) と、その間の最低の間 (ms)。速い木でも 3 秒ほどかけて数字が増えていくのが見える (オーナー「ヌルヌルとカウントアップ」) */
 const EVERY = 2;
 /** 1 人の打ち止めの費用 (tree-run の既定と同じ) */
