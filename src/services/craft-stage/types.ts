@@ -41,6 +41,8 @@ export interface StageMod {
   convertedBy?: "flux";
   /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで、アストリッドの創造性で 2 つ) */
   crafted?: boolean;
+  /** 前の手で付いた普通の MOD を特例でエッセンスの MOD として 1 品 1 つに数える印 (シミュの木の「エッセンスと同じ MOD (同格以上)」を既定で通った人、E-56。付けるのは markSameAsEssence) */
+  asEssence?: boolean;
   /** アビサルロードの紋章 (深淵のエッセンス、crafted も立つ)。次の骨はこれを置き換え、段の下限は markFrom から (E-65、markFloorOf) */
   abyssMark?: boolean;
   /** 紋章が消した元の MOD の段のレベル (E-65)。無ければ (空きに付いた紋章・前の保存) 下限なし */
