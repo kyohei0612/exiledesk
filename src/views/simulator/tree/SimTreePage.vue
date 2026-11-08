@@ -18,8 +18,8 @@ import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from ".
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import { flag } from "../../../web/release-flags";
-import PhoneTreePage from "../phone/PhoneTreePage.vue"; import PhoneViewPage from "../phone/PhoneViewPage.vue";
-import { isPhoneWidth, usePhone, useViewOnlyWidth } from "../../../utils/use-phone";
+import PhoneViewPage from "../phone/PhoneViewPage.vue";
+import { isPhoneWidth, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
@@ -345,18 +345,15 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
-/** スマホの形 (1280 未満、U-53) は質問で進める形 (phone/PhoneTreePage)。前の「PC で開いてください」(SimPcOnly) は R5 で外した */
-const phone = usePhone();
 </script>
 
 <template>
   <!-- スマホは左右の余白を詰める (ページ 16 + 枠の絵 18 + 中 12 で木の枠が 375 中 281px しかなく、左右の箱が切れ上の帯が 6 段になった、10-24 モンキー初めての人の回 3) -->
   <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
-    <!-- スマホは質問で進める形 (phone/PhoneTreePage、木は同じ TreeDoc) -->
+    <!-- 768 未満は見るだけの 1 画面 (PhoneViewPage)、768 以上は PC の木で組む (S-94g。質問で進める形 PhoneTreePage は 11-08 夜に外した、オーナー「768組めそうならそれ以降はＰＣ表示でいいと思う」) -->
     <!-- チュートリアルの札と光る枠 (PC もスマホも。札は body へ出す) -->
     <SimTutorialGuide v-if="!viewPhone" />
     <PhoneViewPage v-if="viewPhone" />
-    <PhoneTreePage v-else-if="phone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- ベース選びの段だけ、エミュのベース選び (StageBasePage) と同じ「ベースを選ぶ」の銘板の帯 (スイッチ siteLook、U-49。11-03 オーナー「ヘッダー表示してあげていいよシミュも」) -->
