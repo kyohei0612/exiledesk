@@ -8,6 +8,7 @@ import { stepOutcomes } from "../../../services/simulator/sim-engine";
 import { effectOf, engineOmens } from "../../../services/simulator/tree/tree-hands";
 import { holdDocSig, possibleOutsOf } from "../../../services/simulator/tree/tree-sample";
 import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
+import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { autoTarget, linkByContent, pruneByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
@@ -37,9 +38,12 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
       const b = d.boxes[id], f = frames.get(id), h = b?.parent ? d.boxes[b.parent]?.hand : null;
       if (!open(b) || !f || f.note || !isAnnulHand(h)) return [];
       // MOD が 1 つ (✦ も数える) になるまで続ける = 最後はプレ 1 つかサフィ 1 つ (11-06 オーナー「0になるまでじゃなくて１MODになるまでな サフィプレ1つずつになるだろ最終」。
-      // 前は消去の結果が 1 つの所で止め、全部消えてよい消去が [エッセンス / ✦] で止まった)。消せる MOD が無い (結果 0) 時も止める
+      // 前は消去の結果が 1 つの所で止め、全部消えてよい消去が [エッセンス / ✦] で止まった)。消せる MOD が無い (結果 0) 時も止める。
+      // 残したい MOD が消える枝は消せる物に数えない (残したい MOD は木の側の物でエンジンは知らない。同じ MOD かはエンジンの当て方 sameAimMod、✦ はエンジンが消さない)。
+      // 前は残すと決めたエッセンスしか左に残っていない箱にも消去を足し、オーナーの組んでいない「狙いが消えた」の未設定の箱ができた (11-08 オーナー「そもそも残すっていってんのにすすむんだが」)
       const mods = f.item.prefixes.length + f.item.suffixes.length;
-      return mods > 1 && (stepOutcomes(data, f.item, h.currency, engineOmens(h)) ?? []).some((o) => !o.void) ? [{ id, h }] : [];
+      const kept = (m: { modId: string }): boolean => (h.keep ?? []).some((a) => sameAimMod(data, a, { modId: m.modId, tier: 1 }));
+      return mods > 1 && (stepOutcomes(data, f.item, h.currency, engineOmens(h)) ?? []).some((o) => !o.void && !(o.removed ?? []).some(kept)) ? [{ id, h }] : [];
     });
     if (!go.length) break;
     // 結果の箱の一覧は木を変える前に全部出す (段の中で配置を出し直さない)
