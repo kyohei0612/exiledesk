@@ -110,7 +110,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       return [tr("MOD を 1 つ **固定 (フラクチャー)** する。どれになるかは等しく (冒涜の MOD は発現済みでも選ばれない。4 つの数には入る)", "**Fractures** 1 random mod (equal chance; Desecrated mods are never picked, revealed or not, but count toward the 4)"), tr("フラクチャーした MOD は、カオス・消去・エッセンスでも消えない", "Fractured mods can't be removed by Chaos, Annulment or Essences")];
     case "artificer": {
       const n = item ? socketCapOf(item.base, item.cls.category) : 1;
-      return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)`, `Up to ${n} on this base (Body Armour / Two Handed Weapon 2, others 1; +1 via corruption)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];
+      return [tr("マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", "Adds **1 socket** to Martial Weapons, Wands, Staves and Armour"), n ? tr(`このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1。コミュニティ (PoB) の値で、公式の値は出ていない)`, `Up to ${n} on this base (Body Armour / Two Handed Weapon 2, others 1; +1 via corruption; community (PoB) value, no official value)`) : tr("このベース (アクセサリー・矢筒・フラスコ) には付けられない", "Can't be added to this base (jewellery, quivers, flasks)")];
     }
     case "desecrate": {
       // 冒涜専用の MOD が候補に入る数の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT)
@@ -120,7 +120,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         const boneEn = item ? { jawbone: "Jawbone (weapons, quivers)", rib: "Rib (armour)", collarbone: "Collarbone (jewellery)", cranium: "Cranium (jewels)" }[desecrationBoneFor(item.cls.category)] : "";
         return [
           "Adds 1 **Unrevealed Desecrated mod** to a **Rare** (only 1 Desecrated mod per item)",
-          "The side is decided by the total weight of possible mods on each side. If both sides are full, it replaces a mod on that side",
+          "Side: if both sides have room, **50/50**; if only one has room, that side. If both are full, it removes **1 non-fractured mod at random** (equal chance) and adds to that side (Craft of Exile, poe2wiki)",
           `On reveal you **pick 1 of 3 options**. Desecrated-only mods: ${exPct((n) => (n > 1 ? " options" : " option"))} (always at least 1); the rest are normal mods by weight (no duplicate groups)`,
           key === "desecrate_ancient" ? `Ancient Jawbone / Rib / Collarbone: options only from tiers with mod level ${ANCIENT_BONE_FLOOR}+` : "",
           key === "desecrate_gnawed" ? `Gnawed Jawbone / Rib / Collarbone: only for **Item Level ${GNAWED_MAX_ILVL} or lower** (game data). Same options as Preserved ones` : "",
@@ -131,7 +131,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       }
       return [
         "**レア** に **未発現の冒涜 MOD** を 1 つ付ける (冒涜の MOD はアイテムに 1 つまで)",
-        "付く側は、その側で出うる MOD の重みの合計で決まる。両側が埋まっていれば、その側の MOD を 1 つ差し替える",
+        "付く側: 両側が空いていれば **半々**、片側だけ空いていればその側。両側が埋まっていれば、フラクチャー以外の MOD から **等しく 1 つ** 消して、消した側に付ける (Craft of Exile・poe2wiki)",
         `発現で **候補 3 つから 1 つ選ぶ**。冒涜専用の MOD は ${exPct(() => " 個")} (必ず 1 個は入る)、残りは普通の MOD から重みで (系統の被りなし)`,
         key === "desecrate_ancient" ? `古びた骨: 候補は MOD レベル ${ANCIENT_BONE_FLOOR} 以上のティアだけ` : "",
         key === "desecrate_gnawed" ? `噛み切られた骨: **アイテムレベル ${GNAWED_MAX_ILVL} 以下** にだけ使える (クライアントの表)。候補は保存された骨と同じ` : "",
@@ -150,14 +150,14 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (isEn()) {
       return [
         `Raises the quality of **${t.en}** (max ${QUALITY_MAX}%)${key === "etcher" ? ". For wands, staves and sceptres (Blacksmith's Whetstone is for martial weapons)" : ""}${key === "whetstone" ? ". Martial weapons = bows, crossbows, maces, quarterstaves, spears, talismans (not wands, sceptres or staves)" : ""}`,
-        key === "gemcutter" || key === "bauble" ? `+${key === "gemcutter" ? st.gem : st.item}% per use (any rarity; checked in game)` : "**+1% or +2%** per use (random, even odds)",
+        key === "gemcutter" || key === "bauble" ? `+${key === "gemcutter" ? st.gem : st.item}% per use (any rarity; checked in game)` : "**+1% or +2%** per use (random, even odds; no official value)",
         key === "whetstone" ? "Each 1% quality gives 1% more Physical Damage (Quality on poe2db)" : key === "scrap" ? "Each 1% quality gives 1% more Armour / Evasion / Energy Shield" : key === "bauble" ? "Each 1% quality gives 1% more Life / Mana recovery" : key === "etcher" ? "Quality boosts the weapon's granted skill (the bonus differs per skill), not its mods" : "Quality effects differ per gem",
         ...sq.map((l) => `At ${QUALITY_MAX}% quality: ${l}`),
       ];
     }
     return [
       `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "etcher" ? "。ワンド・スタッフ・セプター用 (砥石はマーシャル武器用)" : ""}${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
-      key === "gemcutter" || key === "bauble" ? `1 回で +${key === "gemcutter" ? st.gem : st.item}% (レアリティに関係なし。ゲームで確認)` : "1 回で **+1% か +2%** (ランダム、半々)",
+      key === "gemcutter" || key === "bauble" ? `1 回で +${key === "gemcutter" ? st.gem : st.item}% (レアリティに関係なし。ゲームで確認)` : "1 回で **+1% か +2%** (ランダム、半々。公式の値は出ていない)",
       key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : key === "etcher" ? "品質は武器に付いているスキルを強くする (上がる物はスキルごとに違う)。MOD には効かない" : "品質の効果はジェムごとに違う",
       ...sq.map((l) => `品質 ${QUALITY_MAX}% で ${l}`),
     ];
@@ -189,14 +189,14 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     const max = item ? maxQualityOf(item) : 20;
     if (isEn()) {
       return [
-        `Raises the quality of **${pk.jewel ? "Jewels" : "Rings and Amulets"}** by **+1% or +2%** per Catalyst (random, even odds; up to ${max}% on this item)`,
+        `Raises the quality of **${pk.jewel ? "Jewels" : "Rings and Amulets"}** by **+1% or +2%** per Catalyst (random, even odds; no official value; up to ${max}% on this item)`,
         "The quality type comes from the Catalyst. **Using a different type restarts quality from 0**",
         "With Omen of Catalysing Exaltation, mods of that type become more likely (quality is consumed). Stacked with Greater Exaltation, both mods are weighted",
       ];
     }
     return [
       // 上限はベースの最大品質 + MOD の「品質の最大値 +N%」(ブリーチのエッセンス) なので「このベースで」ではなく「今のアイテムで」
-      `**${pk.jewel ? "ジュエル" : "指輪・アミュレット"}** の品質を 1 個で **+1% か +2%** 上げる (ランダム、半々。上限は今のアイテムで ${max}%)`,
+      `**${pk.jewel ? "ジュエル" : "指輪・アミュレット"}** の品質を 1 個で **+1% か +2%** 上げる (ランダム、半々。公式の値は出ていない。上限は今のアイテムで ${max}%)`,
       "品質の種類はカタリストで決まる。**別の種類を使うと品質は 0 からやり直し**",
       "触媒の高貴のお告げと組むと、その種類の MOD が付きやすくなる (品質は使い切る)。大いなる高貴のお告げも重ねると 2 つとも付きやすくなる",
     ];
@@ -209,7 +209,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (hasRawFamily(t.mod, ABYSS_FAMILY) && isEn()) {
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
-        `The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Its options are only tiers above the removed mod's level × 0.4 (rounded) (e.g. removing a level ${MARK_EXAMPLE_FROM} mod → mod level ${markFloorOf({ markFrom: MARK_EXAMPLE_FROM })}+; the description only says "higher tier")`,
+        `The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Its options are only tiers above the removed mod's level × 0.4 (rounded) (e.g. removing a level ${MARK_EXAMPLE_FROM} mod → mod level ${markFloorOf({ markFrom: MARK_EXAMPLE_FROM })}+; the description only says "higher tier"; the multiplier is a community report, no official value)`,
         "With an **Unrevealed** Desecrated mod it can be used and the Mark **replaces that Unrevealed mod**. Can't be used once the Desecrated mod is revealed. The Mark is a crafted mod too (2 allowed with Astrid's Creativity)",
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
@@ -217,7 +217,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (hasRawFamily(t.mod, ABYSS_FAMILY)) {
       return [
         "**レア** の MOD を 1 つ消して、消した側に **アビサルロードの紋章** を付ける",
-        `次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。候補は、消された元の MOD の MOD レベル × 0.4 (四捨五入) より上のティアだけ (例: MOD レベル ${MARK_EXAMPLE_FROM} を消すと ${markFloorOf({ markFrom: MARK_EXAMPLE_FROM })} 以上。説明文は「より高い段」だけ)`,
+        `次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。候補は、消された元の MOD の MOD レベル × 0.4 (四捨五入) より上のティアだけ (例: MOD レベル ${MARK_EXAMPLE_FROM} を消すと ${markFloorOf({ markFrom: MARK_EXAMPLE_FROM })} 以上。説明文は「より高い段」だけ。掛け率はコミュニティの報告で、公式の値は出ていない)`,
         "**未発現** の冒涜 MOD があれば打てて、印は **その未発現に入れ替わる**。発現済みの冒涜 MOD があると打てない。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
         "お告げ: 左右の結晶化 (消す側 = 印の付く側)",
       ];

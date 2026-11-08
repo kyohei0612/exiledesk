@@ -25,7 +25,7 @@ export const EXTRA_HELP: Record<string, string[]> = {
   sacrifice_weapon: SACRIFICE_LINE("武器・矢筒"),
   architect: [
     "**コラプトした装備** (レアリティは問わない) に **2 つ目のエンチャントを足すか、壊す** (説明文・poe2wiki)",
-    `壊れる ${Math.round(ARCHITECT_DESTROY_P * 100)}%。足すエンチャントは今のと同じグループの物は出ない。手順の outcome "destroyed" / "changed" で指定できる`,
+    `壊れる ${Math.round(ARCHITECT_DESTROY_P * 100)}% (公式の値は出ていない、poe2wiki)。足すエンチャントは今のと同じグループの物は出ない。手順の outcome "destroyed" / "changed" で指定できる`,
   ],
   cultivation: [
     "**コラプトしたユニーク** を、**同じ種類の別のユニーク** に変える (クライアントの説明文)",
@@ -60,7 +60,7 @@ export const EXTRA_HELP_EN: Record<string, string[]> = {
   sacrifice_weapon: SACRIFICE_LINE_EN("Weapons and Quivers"),
   architect: [
     "On **Corrupted equipment** (any rarity): **adds a second enchantment or destroys the item** (game description, poe2wiki)",
-    `Destroy chance ${Math.round(ARCHITECT_DESTROY_P * 100)}%. The new enchantment can't be from the same group as the current one. Set it with the step outcome "destroyed" / "changed"`,
+    `Destroy chance ${Math.round(ARCHITECT_DESTROY_P * 100)}% (no official value; poe2wiki). The new enchantment can't be from the same group as the current one. Set it with the step outcome "destroyed" / "changed"`,
   ],
   cultivation: [
     "Turns a **Corrupted Unique** into **another Unique of the same Item Class** (game description)",
