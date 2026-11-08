@@ -11,3 +11,4 @@
 - 本番前の最終点検 (notes/2026-10-22-adsense-final-check.md) と、本番に出た後の確かめ (notes/2026-10-22-prod-check-and-search-console.md、v0.1.590、全部よし) は済み。ほかのサイトの広告の調べは notes/2026-10-22-ad-sites-survey.md。台本は scratchpad の pf/prod-check.mjs (消えていたら notes の見方の通りに作り直す)。
 
 ## OK 待ち
+- (11-09) ExileCon 2026 1 日目 (8FKW2rKJyxA、基調講演) は字幕なしで未読。字幕が出たら取り直して notes/2026-11-09-yt-exilecon-2026.md に足す (新カレンシー「2 つ消して固定 2 つ」の正式名・説明文)
