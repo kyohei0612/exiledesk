@@ -86,11 +86,15 @@ const mouse = ref({ x: 0, y: 0 });
 // カーソルに付く絵と波紋が右下にずれていた (2026-10-08 POE2Tube 要望 ㊳。clientX は実ピクセル、fixed の left は CSS ピクセル)
 const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
 const self = getCurrentInstance();
+/** 自分が見えているか。ほかのページ (ツリー・スパムシミュ・デイリー・要望・レシピ) の後ろで隠れている時は false (WebApp.vue の v-show) */
+function shown(): boolean {
+  const root = self?.proxy?.$el as HTMLElement | undefined;
+  return !(root instanceof HTMLElement) || root.getClientRects().length > 0;
+}
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape") s.hold(null);
-  // ほかのページ (ツリー・スパムシミュ・デイリー・要望・レシピ) の後ろで隠れている時も動かさない (WebApp.vue の v-show。2026-10-22 ツリーで Tab を押すと MOD 一覧が開いた)
-  const root = self?.proxy?.$el as HTMLElement | undefined;
-  if (root instanceof HTMLElement && root.getClientRects().length === 0) return;
+  // 隠れている時は動かさない (2026-10-22 ツリーで Tab を押すと MOD 一覧が開いた)
+  if (!shown()) return;
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
   const t = e.target as HTMLElement | null;
   const typing = !!t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
@@ -110,8 +114,9 @@ onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.
 function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
 /** カレンシーの枠 (棚)。持っている間に、棚・アイテムのカード・スマホの下の帯・窓・小窓の外を押したら離す (2026-10-22 オーナー「キャンセルは枠の外をクリックで」。押した物には届ける) */
 const shelfEl = ref<HTMLElement | null>(null);
+// 隠れている時は離さない: 持つ物は全部のエミュで共通で、デイリーの投稿の中のエミュ (D-12) の品を押すと、隠れた上のタブのエミュが「外」と数えて打つ前に離していた (2026-11-09)
 // 「1 手戻す」も外に数えない = 持ったまま戻す (M-14、スイッチ undoKeepHeld。オーナー 10-29「どうせもっかい打つ人多いだろうからね」)
-useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => s.hold(null), { swallow: false, keep: `[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]${flag("undoKeepHeld") ? ", [data-rec=undo]" : ""}` });
+useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => { if (shown()) s.hold(null); }, { swallow: false, keep: `[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]${flag("undoKeepHeld") ? ", [data-rec=undo]" : ""}` });
 /** 持っている物に掛けられるお告げ (欄は HeldOmens.vue。ここは slot を出すかだけ) */
 const heldOmens = computed(() => heldOmensOf(s.held.value));
 /** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
