@@ -1,6 +1,6 @@
 <!--
   DailyFracPick.vue — 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j)。
-  1 段目 = どこから始めるか: (a) フラクチャー済みから / (b) 白から確定フラクチャー (文はシミュの始め方の窓 TreeStartAsk と同じ)。
+  1 段目 = どこから始めるか: (a) フラクチャー付きのレアから / (b) ベースから (選んだ MOD は必ず付き、費用は 3 回に 1 回成功として数える、D-03)。
   2 段目 = フラクチャー予定の MOD。どちらの段も左にシミュ / エミュと同じ完成形のカード (StageItemCard、use-tree の goalItem)、右 (狭い幅は下) に選ぶ物 (D-37l)。
   カードや行の強調 (行に乗せるとカードの MOD が光る等) は付けない (11-09 オーナー「ハイライトいらんかもな」)。始めの値段はどちらも数えない (D-03)
 -->
@@ -11,6 +11,8 @@ import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { startFromWords } from "../simulator/tree/tree-names";
 import { tierRankLabel } from "../../services/craft-stage/engine";
+import { craftStage as s } from "../../state/craft-stage";
+import STAT_ORDER from "../../data/stat-order.json";
 import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
 
@@ -28,11 +30,29 @@ const card = computed(() => t.goalItem.value?.item ?? null);
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
 /** シミュの始め方の窓 (S-13) の (a) / (b) と同じ文 (1 か所 = tree-names の startFromWords、D-37j)。✦ は 1 つなので確定フラクチャーの素材は ×3 */
 const FROMS: Array<{ k: StartFrom; title: [string, string]; sub: [string, string] }> = startFromWords(1);
-/** 1 段目の短い文 (D-37l、11-09 オーナー「上に書いてあるの意味わからん」)。細かい文 (FROMS の sub) は押す物の説明に */
+/** 1 段目の文 (D-37l、11-09 夜にオーナーの言葉で言い直した)。細かい文 (FROMS の sub) は押す物の説明に */
 const SHORT: Record<StartFrom, { title: [string, string]; sub: [string, string] }> = {
-  fractured: { title: ["✦ 付きのレアから", "From a fractured rare"], sub: ["選んだ MOD が最初から固定", "The chosen mod is fixed from the start"] },
-  four: { title: ["白いベースから", "From a white base"], sub: ["木の中でフラクチャーを打つ", "Fracture it yourself in the tree"] },
+  fractured: { title: ["フラクチャー付きのレアから", "From a fractured rare"], sub: ["1 MOD をフラクチャーした状態から始める", "Start with one mod already fractured"] },
+  four: { title: ["ベースから", "From the base"], sub: ["MOD の無い品から始める。フラクチャーは選んだ MOD が必ず付き、費用は 3 回に 1 回成功 (33%) として数える", "Start with no mods. Fracturing always fixes the chosen mod; its cost counts as 1 success in 3 tries (33%)"] },
 };
+/**
+ * 2 段目の MOD の行はカードと同じ並び (D-37l、11-09 夜オーナー「完成と並びが一致しない」)。カード (StageItemCard の rowGroup 無し) の並べ方の写し:
+ * 説明文の表の順 (stat-order.json)、表に無い MOD があればプレ → サフィで分ける (お題の狙いに冒涜は無い)。カードに無い狙いは後ろへ
+ */
+const ordered = computed<readonly DailyAim[]>(() => {
+  const c = card.value, d = s.data.value;
+  if (!c) return props.aims;
+  const rows = [...c.prefixes.map((m) => ({ m, suf: 0 })), ...c.suffixes.map((m) => ({ m, suf: 1 }))].map((r, i) => {
+    const em = d?.mods.get(r.m.modId);
+    const st = (r.m as { stats?: string[] }).stats?.[0] ?? (em?.tiers?.[0] as { stats?: string[] } | undefined)?.stats?.[0];
+    return { ...r, i, ord: st != null ? (STAT_ORDER as Record<string, number>)[st] ?? 1e9 : 1e9 };
+  });
+  const bySide = rows.some((r) => r.ord >= 1e9);
+  rows.sort((x, y) => (bySide ? x.suf - y.suf : 0) || x.ord - y.ord || x.i - y.i);
+  const rank = new Map(rows.map((r, k) => [r.m.modId, k] as const));
+  const at = (a: DailyAim): number => rank.get(a.modId) ?? rows.length + props.aims.indexOf(a);
+  return [...props.aims].sort((x, y) => at(x) - at(y));
+});
 const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
 </script>
 
@@ -61,7 +81,7 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
           <button type="button" class="g-btn sm" data-daily-frac-back @click="from = null">{{ tr("始め方を選び直す", "Change how to start") }}</button>
         </p>
         <ul class="daily-frac-list" :aria-label="tr('フラクチャー予定の MOD', 'Mod to fracture')">
-          <li v-for="a in aims" :key="a.modId">
+          <li v-for="a in ordered" :key="a.modId">
             <button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @click="emit('pick', a.modId, chosen.k)">
               <span>{{ aimText(a) }}</span><small>{{ tierRankLabel(a.tier) }}</small>
             </button>
