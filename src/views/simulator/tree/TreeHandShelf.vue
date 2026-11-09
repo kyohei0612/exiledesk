@@ -40,7 +40,7 @@ import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
 import { flag } from "../../../web/release-flags";
-import { foreseeBlock } from "../../../services/simulator/tree/tree-foresee";
+import { foreseeBlock, heldOutNames } from "../../../services/simulator/tree/tree-foresee";
 import { keepsMods } from "../../../services/simulator/sim-engine";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -318,6 +318,9 @@ const shownOnly = computed(() => {
   const l = b.outs.map((o) => t.doc.value.boxes[o]).filter((c): c is NonNullable<typeof c> => !!c);
   return l.length > only.value.length ? l.map((c) => ({ out: c.out, aim: c.aim ?? null })) : only.value;
 });
+/** 窓の「結果の箱」の文 (予見の箱で持つ手は 当たり + ハズレ だけ = tree-foresee の heldOutNames、S-39 ②) */
+const boxesLine = computed((): string => { const l = shownOnly.value, one = (n: string): string => tr(`${n}だけ (結果は 1 通り)`, `${n} only (one possible result)`), n = l && heldOutNames(t.doc.value, props.boxId, l, (o) => outOf(o.out, o.aim)); return !l ? (resultText.value ? tr(resultText.value[0], resultText.value[1]) : "") : n ? (n.length === 1 ? one(n[0]!) : n.join(" + ")) : l.length === 1 ? one(outOf(l[0]!.out, l[0]!.aim)) : [...new Set(l.map((o) => outOf(o.out, o.aim)))].join(" + ");
+});
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
 const goneNow = computed((): number => {
   const h = hand.value, k = kind.value;
@@ -406,7 +409,7 @@ function ok(): void {
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
-      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem && !divOn" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
@@ -462,7 +465,7 @@ function ok(): void {
             </label>
           </div>
           <div v-if="keepShow && !k.isRemove.value" class="mt-3 text-left"><h3 class="mb-1.5 text-[15px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h3><TreeKeepList big :k="k" /></div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">
@@ -477,7 +480,7 @@ function ok(): void {
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>
           <p class="mt-1 break-words text-[12px] text-sim-dim">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
           <div class="mt-3"><TreeKeepList big :k="k" :adds="addLabels" /></div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ shownOnly ? (shownOnly.length === 1 ? tr(`${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(shownOnly[0]!.out, shownOnly[0]!.aim)} only (one possible result)`) : [...new Set(shownOnly.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">

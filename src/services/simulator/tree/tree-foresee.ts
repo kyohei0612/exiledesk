@@ -54,3 +54,9 @@ export function foreseeBlock(doc: TreeDoc, id: string, key: string): string | nu
   const b = doc.boxes[id], h = b?.seen && b.parent ? doc.boxes[b.parent]?.hand : null;
   return h?.currency === key ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシー・神のオーブ・↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency, a Divine Orb, or return to before Hinekora") : null;
 }
+
+/** 持つ手の窓の「結果の箱」の名前: 予見の箱なら 当たりの名前 + 「ハズレ (打たない)」(当たり以外は 1 つのハズレ箱にまとまる、前は 狙いが消えた + 外れ + 当たり と出た)。予見の箱でなければ null */
+export function heldOutNames<O extends { out: string }>(doc: TreeDoc, id: string, l: readonly O[], name: (o: O) => string): string[] | null {
+  if (!holdsAt(doc, id)) return null;
+  return [...new Set(l.filter((o) => o.out === "hit").map(name))].concat(l.some((o) => o.out !== "hit") ? [tr("ハズレ (打たない)", "Miss (not used)")] : []);
+}
