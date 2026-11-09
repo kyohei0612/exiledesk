@@ -7,7 +7,7 @@ import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
-import { openDailyPage } from "../../web/page";
+import { goDaily } from "./daily-open";
 import { canStartAt, getTry, leftMs, myNick, SOLVE_RATE, SLOT_NAMES, type DailyTopic } from "./daily-api";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
@@ -27,7 +27,7 @@ const asking = ref(false);
 /** 続けられる挑戦がある (時間が残り、諦めていない) */
 const going = computed(() => !!t.value && left.value > 0 && !t.value.ended);
 const giving = ref(false);
-const go =(): void => openDailyPage({ view: "start", q: props.topic.id });
+const go =(): void => goDaily({ view: "start", q: props.topic.id });
 const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
 /** 押せる物: 始める (今日・14:50 まで) / 続ける (残りがある) / 木を見る (自分の挑戦がある) / 無し */
 const action = computed(() => {
