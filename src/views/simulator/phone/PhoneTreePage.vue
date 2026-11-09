@@ -231,7 +231,7 @@ function goBox(id: string): void {
     </div>
     <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @aim="aimFor = handFor; handFor = null" />
     <!-- 結果のまとめ (PC と同じ部品。スマホは下から出る形 = TreeRunReport の max-md の置き方) -->
-    <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
+    <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report data-overlay class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
       <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="(id) => { reportOpen = false; goBox(id); }" />
     </div>
     <!-- 箱の重ね窓 (全体図・一覧・戻り先選びで押した箱。移らずに中身を全部、10-26 案 B) -->

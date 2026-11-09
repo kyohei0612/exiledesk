@@ -26,7 +26,7 @@ function go(id: string): void { if (id) emit("go", id); }
 </script>
 
 <template>
-  <div data-tree-issues role="dialog" :aria-label="tr('未設定', 'Unset')" class="flex max-h-[min(60vh,520px)] w-[440px] max-w-[calc(100vw-2rem)] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.7)]"
+  <div data-tree-issues role="dialog" data-overlay :aria-label="tr('未設定', 'Unset')" class="flex max-h-[min(60vh,520px)] w-[440px] max-w-[calc(100vw-2rem)] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.7)]"
     :class="[issues.length ? 'border-rose-500/40 bg-[#1c0f10]' : busy ? 'border-white/10 bg-[#15110c]' : 'border-emerald-500/40 bg-[#0d1a12]']">
     <div class="flex items-center gap-2">
       <b :class="issues.length ? 'text-rose-200' : busy ? 'text-[#d8ccb4]' : 'text-emerald-200'">{{ issues.length ? holesCount(groups.length) : busy ? tr("精査中", "Checking") : tr("未設定は無かった (5 人で全部の枝を通した)", "Nothing unset (all branches walked by 5 runs)") }}</b>
