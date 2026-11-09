@@ -7,7 +7,7 @@ import { applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, u
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
-import { boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
 import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
@@ -18,6 +18,7 @@ import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goalTierOf, gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
+import { sureFracOn } from "./tree-sure-frac";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
 
 /**
@@ -259,6 +260,8 @@ function boxOutOf(oc: Outcome, free: boolean): BoxOut {
  * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」の時も外れだけ (11-06 から。前は null で当たりの箱を作って MOD を選ばせた)
  */
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): BoxOut[] | null {
+  // デイリーの確定フラクチャー (D-03): 箱は「✦ の MOD が固定された」1 つ (外れの枝なし)
+  if (sureFracOn(doc, h)) return [{ out: "hit", aim: fractureMarks(doc)[0]! }];
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 目標の数値を決めた神 (S-202): 目標の以上 / 未満 (届く割合が 0 か 1 の側は無し)

@@ -28,6 +28,7 @@ import { frameIssues } from "./tree-frame-check";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
+import { sureFracOn, sureFracture } from "./tree-sure-frac";
 
 type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMiss" | "frameDone";
 /** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
@@ -315,7 +316,9 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         // 同格以上で打たないエッセンス / 合金 (飛ばす、S-33e ③): 回す時と同じく手を使わず品のまま当たりの箱へ (前は「打てない」と数えた)
         const skip = essenceHold(data, item, b.hand.currency) === "skip";
         const why = skip ? null : handProblem(data, item, b.hand);
-        const first: StageApply = skip ? { applied: true, item, added: [], removed: [] } : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
+        // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品 1 つ (回す時と同じ、tree-sure-frac)
+        const sureOn = sureFracOn(doc, b.hand), sure = sureOn ? sureFracture(data, doc, item, b.hand) : null;
+        const first: StageApply = skip ? { applied: true, item, added: [], removed: [] } : sure ?? playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
@@ -324,7 +327,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         /** 起こりうる結果が全部見えている時の一覧 (無い結果の箱は下で打ち直さない) */
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat) {
-          const all = stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
+          const all: Array<{ item: StageItem; void?: true }> = sure ? [{ item: sure.item }] : stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
           // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る)
           const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);
           const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, aimed));
@@ -348,7 +351,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
           for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
-            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
+            const r = i === 0 ? first : sure ?? playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
             const res = boxOutcomeOf(data, doc, b, item, r.item, aims, aimed);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)
@@ -366,7 +369,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob) && !wideItems(data, item, wideMiss, rng).some((v) => wideHit(v))) never.add(o);
           function wideHit(v: StageItem): boolean {
             for (let i = 0; i < WIDE_TRIES; i++) {
-              const r = playHand(data, v, { ...b.hand!, repeat: null }, rng, handAims(doc, b.id, aims));
+              const r = (sureOn && sureFracture(data, doc, v, b.hand!)) || playHand(data, v, { ...b.hand!, repeat: null }, rng, handAims(doc, b.id, aims));
               if (!r.applied) return false;
               if (fits(boxOutcomeOf(data, doc, b, v, r.item, aims, aimed))) return true;
             }

@@ -158,7 +158,8 @@ export type TreeRarity = "normal" | "magic" | "rare";
 /** フラクチャーの始め方 (10-24 夜オーナー): fractured = フラクチャー済みを買う、four = フラクチャー前 (4 MOD のレア) から。必ず成功として 1/3 で素材とオーブ ×3 (tree-base-cost の four) */
 export type StartFrom = "fractured" | "four";
 export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number; from?: StartFrom;
-  /** ✦ が 2 つ以上で白ベースからに自動で替えた (✦ が 1 つに戻ったらフラクチャー済みからへ戻す) */ autoWhite?: true }
+  /** ✦ が 2 つ以上で白ベースからに自動で替えた (✦ が 1 つに戻ったらフラクチャー済みからへ戻す) */ autoWhite?: true;
+  /** デイリーのお題の木の印: ベースからのフラクチャーは ✦ の MOD が必ず固定・費用は 3 回分 (D-03、tree-sure-frac。シミュの木には付けない) */ sureFrac?: true }
 /** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {

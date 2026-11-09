@@ -21,6 +21,7 @@ import { aimedAims, carryFloors, isWhittleHand, rankVariants } from "./tree-whit
 import { keptAimedOf } from "./tree-keep";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
+import { sureFracOn, sureFracture } from "./tree-sure-frac";
 import { divineBranches, isDivineAim } from "./tree-divine";
 import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1, type RecipeExample } from "./tree-recipe-v1";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
@@ -99,7 +100,9 @@ function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem
 }
 /** 代表の品 f に箱 b の手を当てた枝を、行き先の箱ごとに分ける。当たるまでの手 (repeat) は当たりの枝だけ (当たるまで打ち続ける挙動) */
 function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
-  const rs = outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(data, doc, b.hand, f.aimed)) : []);
+  // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された 1 枝 (印の MOD が固定されえない品はいつもどおり)
+  const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, f.item, b.hand!) : null;
+  const rs = sure ? [{ p: 1, item: sure.item }] : outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(data, doc, b.hand, f.aimed)) : []);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;

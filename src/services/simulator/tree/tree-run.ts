@@ -17,6 +17,7 @@ import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { contentDiff, goalsOn, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
+import { sureFracOn, sureFracture, useSureFrac } from "./tree-sure-frac";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -227,7 +228,10 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // 使った物は結果の箱を見てから数える (ヒネコラのハズレの箱 = 手を使わない、S-39)
     const spent: Array<[string, number]> = [];
     // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e): 手を使わず品のまま、boxOutcomeOf が当たり / 塞がったの箱へ分ける。前は「打てません」で止まった
-    const r: StageApply = essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice);
+    // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品、使う物は 3 回分
+    const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
+    if (sure) useSureFrac(b.hand, (k, n) => { spent.push([k, n]); });
+    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
