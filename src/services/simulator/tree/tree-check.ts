@@ -52,6 +52,8 @@ const TRIES = 1200;
 /** 着く品の幅 (S-71h): 外れを付け直す品の数と、1 品に打つ回数 */
 const WIDE_ITEMS = 24;
 const WIDE_TRIES = 60;
+/** 5 人を辿る間に画面へ返す間 (ms、J 11-09) */
+const SLICE_MS = 30;
 /**
  * 着く品の幅 (S-71h、11-09 オーナー「はずれがプレフィックスのエッセンスのアイテムレベル以下の場合とかでもこの形になる可能性あるんじゃないん」):
  * 見本の外れ (フラクチャー以外の狙いでない MOD) を外し、同じ側に高貴 (左右のお告げ、エンジン) で付け直した品。外れの MOD レベル・系統は人ごとに違うので、
@@ -278,12 +280,15 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     const wideMiss = missAims(data, [...aims, ...fractureMarks(doc)]);
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
+    /** 1 人を辿る間も SLICE_MS ごとに画面へ返す (11-09 デイリー部長: 1 人分を区切らず回し 0.2 秒前後固まった)。辿る順・乱数は変えないので判定は同じ */
+    let partial = ranked([...out]), sliceAt = performance.now();
     for (let person = 1; person <= PEOPLE; person++) {
       const rng = mulberry32(7919 * person);
       const start = sampleOf(data, doc, "start", person).item;
       const seen = new Set<string>();
       /** aimed = この人の ☑ で付いた狙い (回す時と同じ) */
-      const walk = (id: string, item: StageItem, viaBack: boolean, aimed: ReadonlySet<string> = new Set()): void => {
+      function* walk(id: string, item: StageItem, viaBack: boolean, aimed: ReadonlySet<string> = new Set()): Generator<CheckProgress, void> {
+        if (performance.now() - sliceAt > SLICE_MS) { yield { phase: "walk", n: person - 1, of: PEOPLE, partial }; sliceAt = performance.now(); }
         const b = doc.boxes[id];
         if (!b || seen.has(id + (viaBack ? "<" : ""))) return;
         seen.add(id + (viaBack ? "<" : ""));
@@ -295,14 +300,14 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (b.split) {
           const to = splitTo(data, b.split, item, aims);
           if (!to) { add(id, "noMatch", tr("分かれ目のどの行にも合わない形で着く (回すとここで止まる)", "Arrives in a shape no split row matches (runs stop here)")); return; }
-          walk(to, item, viaBack, aimed);
+          yield* walk(to, item, viaBack, aimed);
           return;
         }
         if (b.back && !viaBack) {
           // 形の合う箱へ = 回す時と同じく今のアイテムの中身で行き先を決める (tree-judge-link の routeOf)。作り直し = 始めのアイテムで始まりへ
           const to = b.back === MATCH ? routeOf(data, doc, J, null, item, aimed) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed);
           if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
-          walk(to, b.back === RESTART ? start : item, true, b.back === RESTART ? startAimed(data, doc, start) : aimed);
+          yield* walk(to, b.back === RESTART ? start : item, true, b.back === RESTART ? startAimed(data, doc, start) : aimed);
           return;
         }
         if (!b.hand) return;
@@ -355,7 +360,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, passSameHi(data, doc, b, o, to, got), viaBack, am); }
+          if (got) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) yield* walk(to, passSameHi(data, doc, b, o, to, got), viaBack, am); }
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し) は、付いていない人だけが着くので数えない
           // 見本 1 つで付かなくても、外れを付け直した品 (着く品の幅) のどれかで付けば数えない (S-71h。削減は一番低い MOD レベルを消す・エッセンスは同じ系統の MOD レベルと比べるので、外れ次第で行き先が変わる)
           else if (ob.out === "hit" && ob.aim && !viaBack && !held(id, ob) && !wideItems(data, item, wideMiss, rng).some((v) => wideHit(v))) never.add(o);
@@ -369,9 +374,11 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           }
         }
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
-      };
-      walk("start", start, false, startAimed(data, doc, start));
-      yield { phase: "walk", n: person, of: PEOPLE, partial: ranked([...out, ...cantIssues(), ...oddIssues()]) };
+      }
+      yield* walk("start", start, false, startAimed(data, doc, start));
+      partial = ranked([...out, ...cantIssues(), ...oddIssues()]);
+      yield { phase: "walk", n: person, of: PEOPLE, partial };
+      sliceAt = performance.now();
     }
     for (const x of [...cantIssues(), ...oddIssues()]) add(x.boxId, x.kind, x.text);
     for (const [id, c] of waste) add(id, "omenWaste", tr(`お告げが効かない人がいる (${PEOPLE} 人中 ${c.who.size} 人、手は打てる): ${c.reason}`, `The omen is wasted for some runs (${c.who.size} of ${PEOPLE}; the craft still works): ${c.reason}`));
