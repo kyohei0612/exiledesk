@@ -1,5 +1,5 @@
 // sw.js — Web 版のサービスワーカー (PWA、2026-10-17 オーナー「ホーム画面に追加」「オフラインでも動く」)。
-// - 画面 (HTML) は通信を先に、つながらない時は前に取った物 (オフラインでも開く)。新しい版はつながった時にそのまま入る
+// - 画面 (HTML) は通信を先に、つながらない時・4 秒待っても返らない時は前に取った物 (オフラインでも開く)。新しい版はつながった時にそのまま入る
 // - 作った物 (/assets/ は名前に中身の印が入っていて変わらない)・絵・音・フォントは、一度使った物を取っておく (次からは手元から、オフラインでも動く)
 // - 相場 (/boot.json) は通信を先に、つながらない時は最後に取った値
 // - よそのサーバーへの送り物 (記録・要望) や、シェアのカード・開発版の門 (/s/・/og/・?k=) には触らない
@@ -26,18 +26,32 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname === "/boot.json") { e.respondWith(networkFirst(req, DATA)); return; }
   if (url.origin !== self.location.origin) return;
   if (/^\/(s|og)\//.test(url.pathname) || url.searchParams.has("k")) return;
-  if (req.mode === "navigate") { e.respondWith(page(req)); return; }
+  if (req.mode === "navigate") { e.respondWith(page(req, e)); return; }
   if (FILE_RE.test(url.pathname)) e.respondWith(cacheFirst(req, FILES));
 });
 
-/** 画面: 通信を先に (取れたら "/" として取っておく)。だめなら取っておいた物 */
-async function page(req) {
-  try {
-    const res = await fetch(req);
+/** 画面が返ってこない時に取っておいた物へ切り替えるまでの待ち (11-09 オーナーの Chrome が「読み込んでいます」のまま止まった) */
+const PAGE_WAIT_MS = 4000;
+
+/** 画面: 通信を先に (取れたら "/" として取っておく)。だめなら取っておいた物。
+ *  PAGE_WAIT_MS 待っても返らず取っておいた物があればそれを出し、通信は裏で続けて次の分に取っておく */
+async function page(req, e) {
+  const saved = () => caches.match(req, { ignoreSearch: true }).then((hit) => hit ?? caches.match("/"));
+  const net = fetch(req).then(async (res) => {
     if (res.ok && new URL(req.url).pathname === "/") (await caches.open(PAGES)).put("/", res.clone());
     return res;
+  });
+  e.waitUntil(net.catch(() => undefined));
+  let timer;
+  const slow = new Promise((resolve) => { timer = setTimeout(() => resolve(saved()), PAGE_WAIT_MS); });
+  try {
+    const first = await Promise.race([net, slow]);
+    if (first) return first;
+    return await net;
   } catch {
-    return (await caches.match(req, { ignoreSearch: true })) ?? (await caches.match("/")) ?? Response.error();
+    return (await saved()) ?? Response.error();
+  } finally {
+    clearTimeout(timer);
   }
 }
 async function cacheFirst(req, name) {
