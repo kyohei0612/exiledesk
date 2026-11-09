@@ -11,6 +11,8 @@ import { tr } from "../../i18n/lang";
 import { SITE_DATA_HINT, type NoteLines } from "./data-note";
 
 /** tip = 乗せた時の小窓の寄せ (既定は札の左端から。真ん中に置いた札は center、右寄せの札は right) */
+/** 根が 2 つ (札 + 押して開いた説明) なので外から渡した class などは受けない (受けると開発版で Vue warn。今の見た目はこの class 無しの形、11-09) */
+defineOptions({ inheritAttrs: false });
 const props = defineProps<{ text?: string; detail?: NoteLines; hint?: NoteLines; mark?: boolean; small?: boolean; tip?: "left" | "center" | "right" }>();
 const TIP_AT = { left: "left-0", center: "left-1/2 -translate-x-1/2", right: "right-0" } as const;
 const open = ref(false);
