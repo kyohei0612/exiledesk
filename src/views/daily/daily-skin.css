@@ -167,6 +167,8 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 /* 中のエミュの上のタブはデイリーの上のタブと 2 重になるので隠す (移るのは帯の「投稿へ戻る」と上のタブから) */
 [data-daily-post-emu] [data-mode-tabs] { display: none; }
 /* 遊び方の 1 行 (D-10c): 卓の上に静かに。字は薄い字の色のまま */
+/* 今週のお題の見出しの下の注意書き (投稿の優先、D-84) */
+.daily-week-note { margin: -4px 0 8px; font-size: 12px; line-height: 1.4; color: var(--skin-dim); }
 .daily-how { margin: 0 0 8px; padding: 0 4px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--skin-dim); text-wrap: balance; }
 .daily-frac { padding: 28px 40px 40px; }
 /* フラクチャー選び (D-37c): 左に完成形のカード、右に選ぶ行。狭い幅は縦 */

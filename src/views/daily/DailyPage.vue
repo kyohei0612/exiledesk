@@ -94,7 +94,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
     <template v-else>
       <ModeTabs class="mb-3" :active="null" @pick="closeDailyPage" />
       <!-- 遊び方の 1 行 (D-10c)。告知なしで来た人にも何の所か分かるように、一覧の頭だけ -->
-      <p v-if="view === 'list' && daily.remote" data-daily-how class="daily-how">{{ tr("毎日 16:00 に替わるお題の品を、1 時間でシミュレーターの木に組む挑戦。100 人回して、完成 1 個あたりの費用が安いほど上位 (1 人でも完成すれば順位に載る)", "A new item every day at 16:00 JST: build its craft tree in the Simulator within an hour. Over 100 runs, the lower the cost per finished item, the higher you rank (one finished item gets you ranked)") }}</p>
+      <p v-if="view === 'list' && daily.remote" data-daily-how class="daily-how">{{ tr("毎日 16:00 に替わるお題を、1 時間でシミュレーターの木に組む。完成 1 個あたりの費用が安いほど上位", "A new challenge every day at 16:00 JST: build its tree in the Simulator within an hour. The lower the cost per finished item, the higher you rank") }}</p>
       <DailyPost v-if="post" :in-emu="q === 'post-emu'" />
       <template v-else-if="skins">
         <p class="daily-clock">{{ tr(`今の皮: ${skin.ja}。押すと替わる。`, `Current skin: ${skin.en}. Click to switch.`) }} <button type="button" class="underline inline-block py-1 -my-1" data-daily-skin-auto @click="picked = null">{{ tr("日替わりに戻す", "Back to daily rotation") }}</button></p>
@@ -107,7 +107,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
       <div v-else-if="view === 'list'" ref="board" class="g-panel daily-board" :style="boardH ? { minHeight: `${boardH}px` } : {}">
         <DailyHero v-if="today" :topic="today" today :now="now" />
         <div data-daily-clock class="daily-clock">
-          <p><span>{{ tr(`次のお題まで ${hm(left.next)} (16:00)`, `Next challenge in ${hm(left.next)} (16:00 JST)`) }}</span><span data-daily-close>{{ left.close ? tr(`今日のスタートの締め切りまで ${hm(left.close)} (14:50)`, `Start closes in ${hm(left.close)} (14:50 JST)`) : tr("今日のスタートは締めた", "Today's start is closed") }}</span></p>
+          <p><span :title="tr('毎日 16:00 に替わる', 'Changes daily at 16:00 JST')">{{ tr(`次のお題まで ${hm(left.next)}`, `Next challenge in ${hm(left.next)}`) }}</span><span data-daily-close :title="tr('スタートは毎日 14:50 まで', 'Starts close daily at 14:50 JST')">{{ left.close ? tr(`締め切りまで ${hm(left.close)}`, `Start closes in ${hm(left.close)}`) : tr("今日のスタートは締めた", "Today's start is closed") }}</span></p>
           <p><span v-if="nick" data-daily-me>{{ tr("名前:", "Name:") }} <DailyName :name="nick.name" :stamp="stamp" /></span>
             <label v-if="awards.length" data-daily-title-pick>{{ tr("札:", "Title:") }} <select v-model="pick" class="g-input sm"><option value="">{{ tr("一番格上", "Highest") }}</option><option v-for="a in awards" :key="a.id" :value="a.id">{{ tr(a.ja, a.en) }}{{ a.retired ? tr(" (昔の称号)", " (retired)") : "" }}</option></select></label><button type="button" class="underline inline-block py-1 -my-1" data-daily-skins-open @click="goDaily({ view: 'detail', q: 'skins' })">{{ tr(`今日の色: ${skin.ja}`, `Today's colors: ${skin.en}`) }}</button></p>
         </div>
@@ -132,6 +132,8 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
         <div class="daily-bottom g-section">
           <section class="min-w-0">
             <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("今週のお題", "This week's challenges") }}</h3></div>
+            <!-- 投稿の優先 (D-84、11-09 夜オーナー「投稿のお題を優先いたしますって注意書きがいるね」) -->
+            <p data-daily-week-note class="daily-week-note">{{ tr("投稿されたお題がある日は、そちらを優先します (下の部位と違うこともあります)", "On days with a posted challenge, the post comes first (it may differ from the slot below)") }}</p>
             <ul data-daily-pending class="daily-tiles">
               <li v-for="d in slots" :key="d.id" :data-daily-slot="d.today ? 'today' : d.t ? (solved(d.t) ? 'solved' : 'closed') : 'future'">
                 <button type="button" class="daily-tile" :disabled="!d.t" @click="d.t && goDaily({ view: 'detail', q: d.t.id })">

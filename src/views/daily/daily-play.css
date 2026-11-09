@@ -4,11 +4,11 @@
  * 今は飾りを潰さない高さを保ち、中身を楕円の内側に 1 列で収める: [お題の名前 + ボタン 4 つ] [残り時間] [費用・完成率・これで提出]。
  * 楕円は絵の上 7 割ほど、下は飾りの彫り = 中身は padding-bottom で上へ寄せる。木を開いた後 (data-daily-tree) も同じ形で、少しだけ低く
  */
-.daily-root[data-daily-page] [data-daily-play] .daily-band { grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr); align-items: stretch; gap: 0; min-height: 96px; padding: 0; margin-bottom: 12px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 0; min-height: 96px; padding: 0; margin-bottom: 12px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic,
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score { align-self: stretch; align-items: center; padding-top: 0; padding-bottom: 24px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic { gap: 14px; padding-left: 100px; padding-right: 52px; container-type: inline-size; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-score { padding-left: 60px; padding-right: 108px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score { padding-left: 52px; padding-right: 100px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-time { align-self: stretch; padding: 0 22px 24px; }
 /* お題の絵は帯では出さない (名前で足りる、11-09 オーナー「アイテムのアイコンは不要」) */
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic > img { display: none; }
@@ -25,8 +25,8 @@
 }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 28px; min-height: 0; padding: 0 9px; font-size: 12px; white-space: nowrap; justify-content: center; }
 .daily-root[data-daily-page] [data-daily-play] [data-daily-giveup] { color: #f1a3a3; }
-/* 残り時間: 字と数を 1 行に */
-.daily-root[data-daily-page] [data-daily-play] .daily-time { display: flex; align-items: center; justify-content: center; gap: 10px; }
+/* 残り時間: 字を数の上に積み、数そのものが帯のちょうど真ん中に来るように (11-09 夜オーナー「残り時間は真ん中でシンメトリー」) */
+.daily-root[data-daily-page] [data-daily-play] .daily-time { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-time b { font-size: 44px; line-height: 1; }
 /* 費用・完成率・これで提出: 数の上に名前、3 つとも縦の真ん中 */
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score { gap: 22px; }
