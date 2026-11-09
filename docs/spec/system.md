@@ -115,7 +115,7 @@
   - 有効。出どころ: オーナー 10-11・10-14 (メモ feedback-replies)。確かめ: `https://exiledesk-live.exiledesk.workers.dev/feedback/replies?ids=<id>`。
 - **Y-44 異常は控えるだけ、すぐ Discord に送らない**: 相場の中継が落ちた・サーバーのエラーは KV `alertlog:` に控える (同じ物は 6 時間に 1 回、2 日残す)。毎朝の AI の評価と見解の材料にする。
   - 有効。出どころ: 10-26 (server/live/README.md)。確かめ: `scripts/pull-server-notes.mjs <日>`。
-- **Y-45 #日報 は毎朝の AI の評価と見解の全文だけ**: 毎朝 9 時に予定のタスクが D1 の記録と異常・要望・Discord を読んで `docs/org/analytics/daily/<日>-ai.md` を書き、D1 `ai_review` に置き、Worker が #日報 へ流す (同じ日は 1 回)。数字だけの日報・記録の件数は流さない。
+- **Y-45 #日報 は毎朝の AI の評価と見解の全文だけ**: 毎朝 9 時に予定のタスクが D1 の記録と異常・要望・Discord を読んで `docs/org/analytics/daily/<日>-ai.md` を書き、D1 `ai_review` に置き、Worker が #日報 へ流す (同じ日は 1 回)。数字だけの日報・記録の件数は流さない。md の最後に「## 裏の作業」の節を置き、16:00 の切り替え (D-59 の回し方、昨日のお題の shown_by が roll か)・締め・箱の wait の残り・月曜は週の取得の state・サーバーの異常・wrangler の認証切れを 1 つ 1 行の ○ / × で書く。× は冒頭の 3 行の次に「⚠ 裏の作業」の 1 行で、オーナーがする事を添える。読むだけで直さない (オーナー 11-09「分析君にサーバーとかそこらへん全部管理してもらったら」)。
   - 有効。出どころ: オーナー 10-26「既定の報告はいらなくなった」。確かめ: `node scripts/post-ai-review.mjs <日> --dry`。
 - **Y-46 Discord の Bot は読むだけ**: 毎朝 9:03 にサーバー (DISCORD_GUILD_ID) の見られるチャンネルの前回より後の書き込みを D1 `discord_daily` に 1 日 1 行。Bot は何も書かない。1 回 45 回まで叩く。
   - 有効。出どころ: オーナー 10-24 (10-21 の「作らない」を決め直し)・10-26「全部読んで」。確かめ: D1 の discord_daily。
