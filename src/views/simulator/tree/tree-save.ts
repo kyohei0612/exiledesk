@@ -7,6 +7,7 @@ import { nextTick, watch } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { toRecipeV1 } from "../../../services/simulator/tree/tree-recipe-v1";
 import { treeLoading } from "./use-tree-open";
+import { flag } from "../../../web/release-flags";
 import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openTreePage, treeStep } from "../../../web/page";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -27,6 +28,7 @@ export function unsaved(d: TreeDoc, current = true): boolean {
   // エミュの「シミュレーターへ」で狙いを入れたままなら聞かない (10-26 夜オーナー「狙いを入れただけで戻る時は聞かずに戻す」)
   if (pristine && pristine === JSON.stringify(d)) return false;
   const cur = current ? currentTreeRecipe.value : null;
+  if (!cur && current && challengeTree(d)) return false;
   if (cur) return !(openedAs?.id === cur.id && openedAs.at === cur.updatedAt && openedAs.v1 === v1Of(d)) && !sameTree(d, cur.tree);
   return !!d.memoAims?.length || Object.keys(d.boxes).length > 1;
 }
@@ -37,6 +39,19 @@ export function unsaved(d: TreeDoc, current = true): boolean {
  */
 let openedAs: { id: string; at: number; v1: string } | null = null;
 const v1Of = (d: TreeDoc): string => JSON.stringify(toRecipeV1(d));
+/**
+ * デイリーの挑戦の木をシミュで映している (S-03c ②、D-37g の帯で移った時)。挑戦の木は挑戦の側が持つので、離れる時に保存を聞かない。
+ * 見分けは今日の挑戦の完成形 (デイリーが木に入れる fillTopicDoc で作った狙いの組) が木の完成形と同じか。デイリーの部品は入口から読まないので、デイリーを開いて読み込み済みの時だけ借りる
+ */
+let daily: { api: typeof import("../../daily/daily-api"); aims: typeof import("../../daily/daily-aims") } | null = null;
+if (flag("daily")) void Promise.all([import("../../daily/daily-api"), import("../../daily/daily-aims")]).then(([api, aims]) => { daily = { api, aims }; }, () => { /* 無くても今までどおり聞く */ });
+function challengeTree(d: TreeDoc): boolean {
+  const x = daily?.api.getTry(daily.api.todayId());
+  if (!daily || !x?.fractured || !d.memoAims?.length) return false;
+  const p = JSON.parse(JSON.stringify(d)) as TreeDoc;
+  daily.aims.fillTopicDoc(p, x.aims, x.fractured, x.from);
+  return JSON.stringify(p.memoAims) === JSON.stringify(d.memoAims);
+}
 /** レシピ id を開いた後に呼ぶ: 読み込み (少しずつ描く・データ待ち) が終わったらその時の木を覚える */
 export function markOpened(id: string): void {
   openedAs = null;
