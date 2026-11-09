@@ -88,7 +88,7 @@ async function titlesOf(db: D1Database, names: string[]): Promise<Record<string,
 
 type Body = Record<string, unknown>;
 const tryOut = (t: TryRow, topic: TopicRow) => ({
-  topicId: t.topic_id, startedAt: t.started_at, ...(t.gave_up_at ? { ended: true, gaveUpAt: t.gave_up_at } : {}), aims: JSON.parse(topic.aims) as Aim[], base: topic.base, ilvl: topic.ilvl, seed: topic.seed, prices: topic.prices ? JSON.parse(topic.prices) : null,
+  topicId: t.topic_id, startedAt: t.started_at, ...(t.gave_up_at ? { ended: true, gaveUpAt: t.gave_up_at } : {}), ...(t.submitted_at ? { ended: true, submitted: true } : {}), aims: JSON.parse(topic.aims) as Aim[], base: topic.base, ilvl: topic.ilvl, seed: topic.seed, prices: topic.prices ? JSON.parse(topic.prices) : null,
   ...(t.cost != null ? { best: t.rate! >= SOLVE_RATE ? { cost: t.cost, rate: t.rate, ms: t.submitted_at! - t.started_at, at: t.submitted_at } : undefined, last: { cost: t.cost, rate: t.rate, ms: t.submitted_at! - t.started_at, at: t.submitted_at } } : {}),
 });
 
@@ -112,7 +112,7 @@ export async function dailyStart(db: D1Database, b: Body, now: number, prices: s
   return tryOut(t!, topic);
 }
 
-/** POST /daily/submit: 何回でも出せて、記録は解決の中で一番安い物。サーバーの始めた時刻から 1 時間 + 30 秒を過ぎたら受けない (D-32・D-56) */
+/** POST /daily/submit: 1 回だけ (出したら挑戦は終わり、D-35c。11-09 まで何回でも出せて一番安い解決を残した)。サーバーの始めた時刻から 1 時間 + 30 秒を過ぎたら受けない (D-32・D-56) */
 export async function dailySubmit(db: D1Database, b: Body, now: number): Promise<unknown> {
   const nick = await authNick(db, b.nickId, b.code);
   if (!nick) return { error: "nick" };
@@ -124,13 +124,11 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
   const t = await db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>();
   const best = (r: TryRow | null) => (r && r.cost != null && r.rate! >= SOLVE_RATE ? { cost: r.cost, rate: r.rate, ms: r.submitted_at! - r.started_at, at: r.submitted_at } : null);
   if (!t || t.gave_up_at || now > t.started_at + TIME_LIMIT_MS + SUBMIT_GRACE_MS) return { ok: false, best: best(t) };
-  const hadSolved = t.cost != null && t.rate! >= SOLVE_RATE, solved = rate >= SOLVE_RATE;
-  // 解決があれば、もっと安い解決だけで書き替える。解決が無ければ最後の提出を残す
-  if (!hadSolved || (solved && cost < t.cost!)) {
-    await db.prepare("UPDATE daily_tries SET submitted_at = ?, cost = ?, rate = ?, recipe = ? WHERE topic_id = ? AND nick_id = ?").bind(now, cost, rate, recipe, id, nick.id).run();
-    return { ok: true, best: best({ ...t, submitted_at: now, cost, rate }) };
-  }
-  return { ok: true, best: best(t) };
+  // 出した後は受けない (D-35c)。同時に 2 回押されても 1 回目だけが書く (submitted_at IS NULL の時だけ書き替える)
+  if (t.submitted_at) return { ok: false, done: true, best: best(t) };
+  const w = await db.prepare("UPDATE daily_tries SET submitted_at = ?, cost = ?, rate = ?, recipe = ? WHERE topic_id = ? AND nick_id = ? AND submitted_at IS NULL").bind(now, cost, rate, recipe, id, nick.id).run();
+  if (!w.meta.changes) return { ok: false, done: true, best: best(t) };
+  return { ok: true, best: best({ ...t, submitted_at: now, cost, rate }) };
 }
 
 /**

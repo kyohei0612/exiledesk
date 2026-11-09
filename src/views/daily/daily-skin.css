@@ -180,7 +180,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 /* 始め方の 2 択 (D-37j): 縦に 2 つ、見出しと一言 */
 .daily-frac-from { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
 .daily-frac-opt { display: flex; width: 100%; flex-direction: column; gap: 6px; padding: 14px 16px; text-align: left; background: var(--skin-panel); border: 1px solid var(--skin-line); }
-.daily-frac-opt:hover { background: var(--skin-hover); border-color: var(--skin-title); }
+.daily-frac-opt:hover { background: var(--skin-hover); } /* 枠の色は替えない (強調は付けない、D-37l) */
 .daily-frac-opt:focus-visible { outline: 2px solid var(--skin-title); outline-offset: 2px; }
 .daily-frac-opt b { font-family: var(--skin-font-head); font-size: 20px; font-weight: 400; color: var(--skin-title); }
 .daily-frac-opt span { font-size: 14px; line-height: 1.6; color: var(--skin-text); }
@@ -201,7 +201,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-skin-weak { position: absolute; right: 6px; bottom: 4px; color: var(--exile-color-signal-down); }
 
 /* 挑戦の木: シミュの部品のうち要らない物を隠す (D-40。シミュ部長の TreeStage ができたら消す、D-41) */
-[data-daily-play] [data-mode-tabs],
+[data-daily-play] [data-tree-page] [data-mode-tabs], /* 木の中のタブだけ。挑戦のページの上のタブ (DailyPlay の ModeTabs) は出す (D-37g、11-09) */
 [data-daily-play] [data-tree-flow],
 [data-daily-play] [data-tree-tabs],
 [data-daily-play] [data-tree-own],

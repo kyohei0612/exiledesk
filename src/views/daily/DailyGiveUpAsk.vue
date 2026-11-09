@@ -20,7 +20,7 @@ async function giveUp(): Promise<void> {
 <template>
   <ModalShell :open="open" :title="tr('挑戦を諦める', 'Give up the challenge')" width="w-[420px] max-w-[94vw]" @close="emit('close')">
     <div data-daily-giveup-ask class="flex flex-col gap-3 p-4 text-[14px]">
-      <p>{{ tr("提出なしで終える。今日の挑戦はもう始め直せない。前に出した提出の記録は残る。", "End without submitting. Today's challenge can't be restarted. Earlier submissions stay on record.") }}</p>
+      <p>{{ tr("提出なしで終える。今日の挑戦はもう始め直せない。", "End without submitting. Today's challenge can't be restarted.") }}</p>
       <p v-if="failed" class="text-[var(--exile-color-signal-down)]">{{ tr("終えられなかった (つながらない)。もう一度押す。", "Couldn't end it (connection). Try again.") }}</p>
       <div class="flex justify-end gap-2">
         <button type="button" class="g-btn" @click="emit('close')">{{ tr("続ける", "Keep going") }}</button>

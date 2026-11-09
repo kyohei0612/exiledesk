@@ -4,7 +4,7 @@
   木はこのブラウザに覚え、開き直すと戻る。時間はスタートからの実際の時計で、ページを閉じても進む (D-32)。挑戦は 1 日 1 回で始め直せない (D-33)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
@@ -17,20 +17,25 @@ import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
-import { unmetDone } from "./daily-cost";
+import { metBoxes, markMet, unmetDone } from "./daily-cost";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
+import DailySubmitAsk from "./DailySubmitAsk.vue";
+import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
-import { setLayerLeaveGuard } from "../../web/page";
+import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
+import { DEV_RUN, devState, devTry } from "./daily-dev-states";
 import "./daily-play.css";
-import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
+import { getTry, leftMs, SOLVE_RATE, startTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const t = useTree();
+/** 開発版だけ: 状態ごとに開く見本 (daily-dev-states.ts)。この間はサーバーにも端末の控えにも書かない */
+const dev = devState();
+const devNoAims = ref(false);
 /** サーバーの返りが来るまでは null (端末の写しを先に出すと古い時刻が見える) */
 const tryOf = ref<DailyTry | null>(null);
 const treeOn = ref(false);
-const sent = ref<{ rate: number; cost: number; solved: boolean } | null>(null);
 const art = computed(() => baseArt(props.topic.base));
 
 /** 時計は 1 秒ごとに読み直すだけ (残りはスタートの時刻から数える) */
@@ -51,12 +56,28 @@ let starting = false;
 async function begin(): Promise<void> {
   // 端末の写しがあってもサーバーに聞く (時刻・終わった印の正はサーバー。写しは別の名前・置き場の作り直しで古くなる)。始めていれば同じ挑戦が返る
   if (starting || !s.data.value) return;
+  if (dev) { devOpen(); return; }
   starting = true;
   const r = await startTry(props.topic.id);
   starting = false;
   if (typeof r === "string") { refused.value = r; return; }
   tryOf.value = r;
   if (r.fractured && !treeOn.value) openTree();
+}
+/** 開発版の見本を開く (一度だけ)。窓の状態はここで開く */
+let devDone = false;
+function devOpen(): void {
+  if (devDone || !dev) return;
+  devDone = true;
+  const x = devTry(props.topic, dev);
+  if (!x) { devNoAims.value = true; return; }
+  tryOf.value = x;
+  if (x.fractured) openTree();
+  void nextTick(() => setTimeout(() => {
+    if (dev === "submit") asking.value = { ...DEV_RUN };
+    if (dev === "done") { doneShown.value = { ...DEV_RUN }; asking.value = { ...DEV_RUN }; }
+    if (dev === "leave") askLeave(() => goDaily({ view: "list" }), () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value));
+  }, 300));
 }
 /** スマホの幅では挑戦しない (D-70)。URL を開いても始めず (時計を動かさない)、一覧へ戻る口だけ出す。幅が広がれば始める */
 const phone = usePhone();
@@ -76,11 +97,14 @@ function openTree(): void {
   treeOn.value = true;
 }
 function pick(modId: string, from: StartFrom): void {
+  if (dev && tryOf.value) { tryOf.value = { ...tryOf.value, fractured: modId, from }; openTree(); return; }
   updateTry(props.topic.id, { fractured: modId, from });
   tryOf.value = getTry(props.topic.id);
   openTree();
 }
 
+// 完成形のカードはいつも開く (デイリーでは畳むボタンを隠しているので、畳んだまま開けなくなっていた、11-09)。開く物はシミュのカードの畳みの印 (この端末の覚え) を押すだけ
+watch(treeOn, (on) => { if (on) setTimeout(() => void nextTick(() => document.querySelector<HTMLButtonElement>('[data-daily-play] [data-tree-goal-fold][aria-expanded="false"]')?.click()), 0); }, { immediate: true });
 // 前提は変えられない (D-34): 完成形・始まりの窓を開かせず、1 つ戻すで白紙へ抜けた時は戻す
 watch(() => t.goalPage.value, (p) => { if (treeOn.value && p) t.goalPage.value = 0; });
 watch(() => t.startPage.value, (p) => { if (treeOn.value && p) t.startPage.value = false; });
@@ -88,8 +112,11 @@ let saveT = 0;
 watch(() => t.doc.value, (d) => {
   if (!treeOn.value) return;
   if (d.base !== props.topic.base || !d.memoAims?.length) { openTree(); return; }
+  // 完成形と同じ形の箱は自動で完成 (D-35b ②)。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
+  const data = s.data.value;
+  if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims); }); return; }
   clearTimeout(saveT);
-  saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
+  if (!dev) saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
 });
 // 別の場所の木を持ち込まない (D-36): 貼り付けは入力欄の外では届かせない
 const noPaste = (e: ClipboardEvent): void => { if (!(e.target as HTMLElement | null)?.closest?.("input, textarea")) e.stopPropagation(); };
@@ -107,17 +134,29 @@ onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeE
 const run = computed(() => { if (!treeOn.value) return null; const c = recipeCardOf(t.doc.value); return c.n === 100 && c.p != null && c.c != null ? { rate: c.p, cost: c.c } : null; });
 /** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーの解決は狙いを満たした品だけ) */
 const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims) : []));
-const sendFail = ref(false);
-async function submit(): Promise<void> {
+/** 提出の確かめと結果の窓 (D-35c)。出したら挑戦は終わり */
+const asking = ref<{ cost: number; rate: number } | null>(null);
+/** 開発版の見本の「終わった後の結果」(dev=done) */
+const doneShown = ref<{ cost: number; rate: number } | null>(null);
+function submit(): void {
   const r = run.value;
   if (!r || over.value || unmet.value.length) return;
-  const a = await submitTry(props.topic.id, r.cost, r.rate);
-  sendFail.value = !a.ok;
-  if (!a.ok) return;
-  tryOf.value = getTry(props.topic.id);
-  sent.value = { ...r, solved: r.rate >= SOLVE_RATE };
+  asking.value = { ...r };
 }
-const best = computed(() => tryOf.value?.best ?? null);
+/** 出した: 挑戦は終わり (木は見るだけ・札も窓も出ない)。控えの中身は daily-api が書き替えたので写し直して画面に効かせる */
+function submitted(): void {
+  if (dev && tryOf.value && asking.value) { tryOf.value = { ...tryOf.value, ended: true, submitted: true, last: { ...asking.value, ms: 0, at: Date.now() } }; return; }
+  const x = getTry(props.topic.id);
+  if (x) tryOf.value = { ...x };
+}
+/** 上の切り替えタブ (D-37g、11-09)。エミュは木のページを閉じた後にデイリーのページも閉じる。シミュ β・デイリーはタブが自分で移る (どれも離れる時の窓 D-36c を通る) */
+function onTab(m: "hand" | "sim"): void { if (m === "hand") closeDailyPage(); }
+/** 提出して終わった挑戦の一言 (今の記録は端末の控え = サーバーの返り) */
+function submittedNote(): string {
+  const r = tryOf.value?.last;
+  if (!r) return tr("提出した挑戦。木は見るだけ。", "Submitted. You can view the tree.");
+  return r.rate >= SOLVE_RATE ? tr(`提出した: ${r.cost} 神 (完成率 ${r.rate}%)、解決。今日の挑戦は終わり、木は見るだけ。`, `Submitted: ${r.cost} div (${r.rate}% finished), solved. Today's challenge is over; the tree is view-only.`) : tr(`提出した: 完成率 ${r.rate}% で未解決。今日の挑戦は終わり、木は見るだけ。`, `Submitted: ${r.rate}% finished, unsolved. Today's challenge is over; the tree is view-only.`);
+}
 const REFUSED: Record<StartError, () => string> = {
   closed: () => tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00."),
   notToday: () => tr("このお題は今日の物ではないので挑戦できない。", "This isn't today's challenge, so it can't be taken."),
@@ -132,12 +171,22 @@ const REFUSED: Record<StartError, () => string> = {
     <button type="button" class="g-btn sm mt-2" data-daily-leave @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
   </div>
   <div v-else data-daily-play :data-daily-heat="heat || undefined" :data-daily-tree="treeOn || undefined">
+    <!-- 上の切り替えタブ (D-37g、11-09 オーナー「出るルートが一切ないよね」)。木の中のタブは隠したまま、ここに出す -->
+    <ModeTabs class="daily-play-tabs mb-2" :active="null" @pick="onTab" />
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
-        <div class="min-w-0"><small class="daily-band-what">{{ tr("今日のお題に挑戦中", "Today's challenge") }}</small><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p></div>
+        <div class="daily-band-title"><small class="daily-band-what">{{ tryOf?.ended ? tr("今日のお題 (挑戦は終わり)", "Today's challenge (over)") : tr("今日のお題に挑戦中", "Today's challenge") }}</small><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p></div>
+        <!-- ボタン 4 つはお題の名前の右 (D-37i を 11-09 に替えた。右の欄を閉じても消えない、オーナー「諦めるもない」「MOD一覧が見切れてる」) -->
+        <DailyPlayBar v-if="tryOf" :dev-give-up="dev === 'giveup'" :tree="treeOn" :topic="topic" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="over" />
+        <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
+        <div v-else class="daily-band2" data-daily-band2>
+          <div class="daily-band2-btns">
+            <button type="button" class="g-btn sm" data-daily-leave @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+          </div>
+        </div>
       </div>
-      <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
+      <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b v-if="tryOf?.ended" data-daily-time-ended>{{ tr("終了", "Over") }}</b><b v-else role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
       <div class="daily-band-score">
         <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("1 個の費用", "Cost per item") }}</small></div>
         <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr(`完成率 (${SOLVE_RATE}% で解決)`, `Finished (${SOLVE_RATE}% solves)`) }}</small></div>
@@ -145,26 +194,14 @@ const REFUSED: Record<StartError, () => string> = {
       </div>
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
-    <!-- 木を開いた後は下の段を右の完成形のカードの下へ、狙いの行は出さない (D-37i)。シミュの右の列へ差し込むだけ -->
-    <Teleport v-if="tryOf && treeOn" defer to="[data-tree-side]"><DailyPlayBar side :topic="topic" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" /></Teleport>
-    <DailyPlayBar v-else-if="tryOf" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" />
-    <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
-    <div v-else class="daily-band2" data-daily-band2>
-      <div class="daily-band2-btns ml-auto">
-        <button type="button" class="g-btn sm" data-daily-leave @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
-      </div>
-    </div>
 
     <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
-    <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
+    <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.submitted ? submittedNote() : tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
     <p v-else-if="unmet.length" data-daily-unmet class="daily-note">{{ tr(`「完成」の箱のうち ${unmet.length} つがお題の狙いを全部は持っていない。デイリーでは狙いを全部満たした箱だけを完成にでき、このままでは提出できない。`, `${unmet.length} finished box(es) don't have every target. In the daily challenge only boxes with all targets count as finished, so you can't submit yet.`) }}</p>
-    <p v-else-if="sendFail" data-daily-send-fail class="daily-note">{{ tr("提出が届かなかった。もう一度「これで提出」を押す。", "The submission didn't go through. Press Submit again.") }}</p>
-    <p v-else-if="sent" data-daily-sent class="daily-note">
-      {{ sent.solved ? tr(`提出した: ${sent.cost} 神 (完成率 ${sent.rate}%)。解決。時間内ならもっと安くできる。`, `Submitted: ${sent.cost} div (${sent.rate}% finished). Solved. You can still go cheaper in time.`) : tr(`提出した: 完成率 ${sent.rate}% で未解決。${SOLVE_RATE}% まで上げる。`, `Submitted: ${sent.rate}% finished, unsolved. Reach ${SOLVE_RATE}%.`) }}
-      <span v-if="best">{{ tr(`今の記録 ${best.cost} 神`, `Best ${best.cost} div`) }}</span>
-    </p>
 
-    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" @pick="pick" />
+    <DailySubmitAsk v-if="asking" :id="topic.id" :open="!!asking" :cost="asking.cost" :rate="asking.rate" :shown="doneShown" :dev="!!dev" @close="asking = null" @done="submitted" />
+    <p v-if="devNoAims" class="daily-note">{{ tr("開発の見本: このお題の狙いが見えない (締めた日のお題か、この端末で始めたお題の id を q に)。", "Dev sample: this topic's targets aren't visible (use a closed day's id or one you started here).") }}</p>
+    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
   </div>

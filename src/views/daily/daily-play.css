@@ -1,4 +1,4 @@
-/* 挑戦の木の画面 (D-37i、data-daily-tree = 木を開いた後)。木を広く: 上の段は高さを半分に、下の段は右の完成形のカードの真下へ (DailyPlay の Teleport) */
+/* 挑戦の木の画面 (D-37i、data-daily-tree = 木を開いた後)。木を広く: 上の段は高さを半分に */
 .daily-root[data-daily-page] [data-daily-tree] .daily-band { min-height: 52px; padding-bottom: 4px; margin-bottom: 8px; }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-topic,
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score { padding-bottom: 6px; }
@@ -12,8 +12,17 @@
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score b { font-size: 16px; }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score small { font-size: 11px; }
 
-/* 右の列 (シミュの data-tree-side) の中: 完成形のカード → 下の段 → ミニマップと道具 */
-[data-daily-play] [data-tree-side] > [data-tree-goal-side] { order: -2; }
-[data-daily-play] [data-tree-side] > [data-daily-band2] { order: -1; flex: none; flex-wrap: wrap; justify-content: flex-end; margin: 0; padding: 6px 4px; background: none; border-bottom: 0; }
-/* ボタンが 4 つ (レシピに保存 D-36b を足した) で列の幅を超えるので折り返す (はみ出すと木の下に隠れた) */
-[data-daily-play] [data-tree-side] > [data-daily-band2] .daily-band2-btns { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+/* 帯のボタン 4 つ (レシピに保存・MOD 一覧・諦める・一覧へ戻る) はお題の名前の右に 2×2 の小さい並び (11-09、オーナー「おけ」= 案 B)。右の欄を閉じても消えない */
+.daily-root[data-daily-page] [data-daily-play] .daily-band-title { flex: 0 0 auto; min-width: 0; white-space: nowrap; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic > [data-daily-band2] { flex: none; margin: 0 0 0 auto; padding: 0; background: none; border: 0; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns { display: grid; grid-template-columns: auto auto; gap: 2px 4px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 26px; min-height: 0; padding: 0 10px; font-size: 12px; white-space: nowrap; justify-content: center; }
+.daily-root[data-daily-page] [data-daily-play] [data-daily-giveup] { color: #f1a3a3; }
+
+/* 右の欄: 完成形のカードを大きく (11-09 オーナー「完成品ちっちゃいし」)。幅 298 → 440 (1700 以上) / 360、カードは欄いっぱい (字も比例)、「閉じる」は欄の右上 */
+[data-daily-play] { --daily-side-w: 440px; --daily-card-z: 1.42; }
+@media (max-width: 1699px) { [data-daily-play] { --daily-side-w: 360px; --daily-card-z: 1.16; } }
+[data-daily-play] [data-tree-side] { position: relative; width: var(--daily-side-w) !important; padding-top: 4px; }
+[data-daily-play] [data-tree-side] > [data-tree-goal-side] { order: -2; max-height: none; overflow: visible; }
+[data-daily-play] [data-tree-goal] { zoom: var(--daily-card-z); width: calc(var(--daily-side-w) / var(--daily-card-z) - 6px) !important; }
+[data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { position: absolute; top: 2px; right: 2px; z-index: 6; }

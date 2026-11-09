@@ -31,6 +31,26 @@ export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId:
 }
 
 /**
+ * 完成形と同じ形の箱 (D-35b ②、オーナー 11-09「デイリーだけは完成形と同じ形でおｋにさせよう。提出は」)。
+ * 手も戻りも分かれ目も無く、印がまだ無い (null) 結果の箱のうち、見本の品がお題の狙いを全部持つ物。見方は unmetDone と同じ isAimMod。
+ * 人が「失敗」を付けた箱は触らない
+ */
+export function metBoxes(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
+  const opts = aimOpts(data);
+  return Object.values(doc.boxes).filter((b) => b.out !== "start" && b.done == null && !b.hand && !b.back && !b.split?.length).filter((b) => {
+    let mods;
+    try { const it = sampleOf(data, doc, b.id, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return false; }
+    return aims.every((a) => mods.some((m) => isAimMod(m, targetsOf(data, [a]), opts)));
+  }).map((b) => b.id);
+}
+/** 完成形と同じ形の箱に完成の印を付ける (挑戦の木と 16:00 の検算で同じ)。付けた数 */
+export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): number {
+  const ids = metBoxes(data, doc, aims);
+  for (const id of ids) doc.boxes[id]!.done = "main";
+  return ids.length;
+}
+
+/**
  * 提出の木 (exiledesk-recipe/1 の JSON) をお題の形で組み直して 100 人回す。price は相場のまま (高貴建て、priceOfKey の値) を渡す。神に直すのと見せる数の丸めは画面の木の帯と同じ runPrice・runShown (run-price.ts、写さない)。
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
@@ -42,6 +62,7 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   if (doc.base !== topic.base || !frac || !topic.aims.some((a) => a.modId === frac)) return null;
   doc.itemLevel = topic.ilvl;
   fillTopicDoc(doc, topic.aims, frac, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
+  markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims).length) return null;
   return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0 }), 0));
 }

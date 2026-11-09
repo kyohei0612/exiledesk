@@ -24,7 +24,7 @@ export type DailyAim = GenAim;
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 諦めた (D-37b)。木は見るだけ、提出できない */ ended?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord };
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean };
 export type DailyNick = { id: string; name: string; code: string };
 /** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
@@ -157,12 +157,16 @@ export function canStillTry(id: string, now = Date.now()): boolean {
 }
 /** 残り時間 (実際の時計、ページを閉じても進む) */
 export const leftMs = (t: DailyTry, now = Date.now()): number => t.startedAt + TIME_LIMIT_MS - now;
-/** POST /daily/submit。何回でも出せて、記録は解決の中で一番安い物。木 (recipe) も一緒に送る (D-55、検算 D-58 の材料)。1 時間 + 30 秒を過ぎたらサーバーが断る */
+/** POST /daily/submit。1 回だけで、出したら挑戦は終わり (D-35c)。木 (recipe) も一緒に送る (D-55、検算 D-58 の材料)。1 時間 + 30 秒を過ぎたらサーバーが断る */
 export async function submitTry(id: string, cost: number, rate: number, now = Date.now()): Promise<{ ok: boolean; best: DailyRecord | null }> {
   const a = auth(), t = daily.local.tries[id];
   if (!a || !t) return { ok: false, best: t?.best ?? null };
   const r = await call<{ ok?: boolean; best?: DailyRecord | null; error?: string }>("/daily/submit", { ...a, id, cost, rate, recipe: t.tree ?? null });
+  // 前に出していた (別の画面・別の PC) 時も終わりの印を付ける
+  if (r?.error === undefined && (r as { done?: boolean } | null)?.done) { t.ended = true; t.submitted = true; save(); }
   if (!r?.ok) return { ok: false, best: t.best ?? null };
+  t.ended = true;
+  t.submitted = true;
   t.last = { cost, rate, ms: now - t.startedAt, at: now };
   if (r.best) t.best = r.best; else delete t.best;
   save();

@@ -1,40 +1,33 @@
 <!--
-  DailyPlayBar.vue — 挑戦の帯の下の段 (D-37、オーナー 11-05 の B = 2 段)。狙いを全部並べたまま + MOD 一覧・諦める・一覧へ戻る。
+  DailyPlayBar.vue — 挑戦の帯のボタン (D-37・D-37i、11-09 にお題の名前の右へ移した)。レシピに保存 (木を開いた後)・MOD 一覧・諦める・一覧へ戻る。
   MOD 一覧は共通の表 (ModTable) をお題のベース・アイテムレベルの何も付いていない品で開く (D-37d)。諦めるは確かめの窓から (D-37b)
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import { craftStage as s } from "../../state/craft-stage";
-import { freshItem, tierRankLabel } from "../../services/craft-stage/engine";
+import { freshItem } from "../../services/craft-stage/engine";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import ModTable from "../../components/for-share/mod-list/ModTable.vue";
 import { goDaily } from "./daily-open";
 import type { DailyAim } from "./daily-api";
-import { useTree } from "../simulator/tree/use-tree";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailySaveRecipe from "./DailySaveRecipe.vue";
 import type { DailyTopic } from "./daily-api";
 
-/** side = 木の右の列の中 (D-37i)。狙いの行は出さずボタンだけ */
-const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; side?: boolean; /** 木の右の列の時だけ「レシピに保存」(D-36b) */ topic?: DailyTopic }>();
-/** 狙いの字は木・フラクチャー選びと同じ (段の幅は「以上」の幅) */
-const t = useTree();
-const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
+/** tree = 木を開いた後 (「レシピに保存」を出す、D-36b) */
+const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; tree?: boolean; topic?: DailyTopic; /** 開発版の見本 (dev=giveup): 諦めるの窓を開いて出す */ devGiveUp?: boolean }>();
 const listOpen = ref(false);
-const asking = ref(false);
+const asking = ref(!!props.devGiveUp);
 /** 何も付いていない品 (MOD 一覧の中身、D-37d) */
 const blank = computed(() => { const d = s.data.value; try { return d ? freshItem(d, props.base, props.ilvl, "rare") : null; } catch { return null; } });
 </script>
 
 <template>
   <div class="daily-band2" data-daily-band2>
-    <span v-if="!side" class="daily-band2-head">{{ tr("狙い", "Targets") }}</span>
-    <ul v-if="!side" class="daily-aims" data-daily-play-aims>
-      <li v-for="a in aims" :key="a.modId" :class="a.modId === fractured ? 'frac' : ''">{{ aimText(a) }} <small>{{ tierRankLabel(a.tier) }}{{ a.modId === fractured ? tr("・フラクチャー", " · fractured") : "" }}</small></li>
-    </ul>
+    <!-- 狙いの文の札は出さない (始め方・フラクチャーの画面の完成形のカードで見える、D-37l) -->
     <div class="daily-band2-btns">
-      <DailySaveRecipe v-if="side && topic" :topic="topic" />
+      <DailySaveRecipe v-if="tree && topic" :topic="topic" />
       <button type="button" class="g-btn sm" data-daily-modlist @click="listOpen = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button v-if="!ended" type="button" class="g-btn sm" data-daily-giveup @click="asking = true">{{ tr("諦める", "Give up") }}</button>
       <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
