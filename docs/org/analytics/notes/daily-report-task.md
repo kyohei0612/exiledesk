@@ -8,3 +8,4 @@
 - 集計の道具が要れば `python scripts/analyze-logs.py data-cache/logs/<日>.jsonl` (前の日・前の週と並べる時も)。
 - 消した物 (10-26): 数字だけの日報 (scripts/daily-summary.mjs・server/live の dailyReport と GET /report)、#分析ログファイル管理 への記録の件数 (sendDayLogs・LOGS_WEBHOOK)。
 - 止まった回が「動いている」のまま残ると次の回が始まらない (10-25 の回 local_e1184968 で 10-26 の朝が飛んだ)。朝に <昨日>-ai.md が無ければ list_task_runs で見る。
+- 11-10 から 1 通 1,500 字まで (オーナー「日報長くね？1メッセージでいいし、分かりづらい」)。形 = 数字 1 行・良い 2・気になる 2・次の手 2・要望 / 不具合・裏の作業 1 行。人の ID・1 人ずつの手の数・入口の細かい内訳は書かない (SKILL.md の 3)
