@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.689",
+  "date": "2026-11-09",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 共有されたレシピを開いて見ただけなら、ほかの画面へ移る時に保存するか聞かないようにしました",
+    "en": "Simulator: opening a shared recipe just to look at it no longer asks whether to save when you move to another page"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 最終チェックの途中で画面が固まりにくくしました",
+    "en": "Simulator: the page freezes less while the final check is running"
+   }
+  ]
+ },
+ {
   "v": "0.1.688",
   "date": "2026-11-09",
   "items": [
@@ -1018,18 +1036,6 @@
     "area": "",
     "text": "シミュレーター: スマホで「白紙」を 1 回押すとボタンが画面からはみ出すのを直しました",
     "en": "Simulator: fixed the button running off the screen after the first tap on \"Clear\" on phones"
-   }
-  ]
- },
- {
-  "v": "0.1.649",
-  "date": "2026-10-30",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホで、結果の箱の答え (失敗・次の手) と「既にある箱へ戻す」が選べなかったのを直しました",
-    "en": "Simulator: fixed being unable to choose an answer for a result box (Fail, next craft) or \"Return to a box\" on phones"
    }
   ]
  }

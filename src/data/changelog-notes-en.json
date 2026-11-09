@@ -1,4 +1,8 @@
 {
+  "0.1.689": [
+    "Simulator: opening a shared recipe just to look at it no longer asks whether to save when you move to another page",
+    "Simulator: the page freezes less while the final check is running"
+  ],
   "0.1.688": [
     "Fixed pages sometimes getting stuck while loading. Info badges no longer show a duplicate tooltip on hover"
   ],
