@@ -1,4 +1,8 @@
 {
+  "0.1.692": [
+    "Simulator: it now always opens at base selection (no longer resumes the last unsaved tree)",
+    "Simulator: Hinekora's Lock (foresight) is now available"
+  ],
   "0.1.691": [
     "Simulator: corrected the Fracturing Orb step's description (one fracturable mod is picked at random as in the game, 1 orb per use)"
   ],
