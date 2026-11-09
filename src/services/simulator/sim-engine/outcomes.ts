@@ -12,6 +12,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { allMods, makeStageMod, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
 import { infiniteChoices, isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { dropForesight } from "../../craft-stage/apply-extra";
 import { addCandidatesOf, boneSlotOf, emotionFitsOf, removalOf, spendCatalysing } from "../../craft-stage/spec/basis";
 import type { StageItem, StageMod, StageSide } from "../../craft-stage/types";
 import { planSpec, type SpecPlan } from "../../craft-stage/spec/run-spec";
@@ -191,7 +192,8 @@ export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: str
   if (w === null || w === "tooMany" || w === "block") return w === "block" ? [] : w;
   // 全部の枝が弾かれた = 打てない
   if (!w.states.length) return [];
-  let out: StepOutcome[] = w.states.map((s) => ({ p: s.p, item: s.item, added: s.added, removed: s.removed }));
+  // ヒネコラの予見は「アイテムを変えると消える」: 打てた枝は 1 回打つ入口と同じく消す (決まりは apply-extra.ts の dropForesight 1 か所)。不成立の枝 (void) は打つ前のまま
+  let out: StepOutcome[] = w.states.map((s) => ({ p: s.p, item: dropForesight(s.item, key), added: s.added, removed: s.removed }));
   if (o.merge) out = mergeBranches(out, o.merge);
   if (w.vp > 0) out.push({ p: w.vp, item, added: [], removed: [], void: true });
   return out;
