@@ -43,13 +43,13 @@ const lines = computed((): readonly string[] => {
   const v = props.detail ?? props.hint ?? SITE_DATA_HINT();
   return typeof v === "string" ? [v] : v;
 });
-/** ホバーの小窓が出せない所 (スマホ・読み上げ) 向けの title も縦に */
-const title = computed(() => lines.value.map((l) => `・${l}`).join("\n"));
+/** 読み上げ向けの説明。ブラウザの title は付けない (青の小窓と二重に出る、11-09 オーナー「ホバーで古い詳細がシンプルな枠で出ちゃう」) */
+const said = computed(() => lines.value.join("。"));
 </script>
 
 <template>
   <span class="group/note relative inline-flex" :class="mark ? 'shrink-0' : 'max-w-full'" @mouseenter="placeTip">
-    <span v-if="mark" data-site-note class="inline-grid size-3.5 shrink-0 cursor-help place-items-center rounded-full bg-sky-300 align-[-2px] text-[10px] font-bold not-italic leading-none text-black" :title="title" :aria-label="tr('サイトが決めた値', 'Site-chosen value')">i</span>
+    <span v-if="mark" data-site-note class="inline-grid size-3.5 shrink-0 cursor-help place-items-center rounded-full bg-sky-300 align-[-2px] text-[10px] font-bold not-italic leading-none text-black" role="img" :aria-label="`${tr('サイトが決めた値', 'Site-chosen value')}: ${said}`">i</span>
     <component
       :is="detail ? 'button' : 'span'"
       v-else
@@ -58,10 +58,9 @@ const title = computed(() => lines.value.map((l) => `・${l}`).join("\n"));
       class="inline-flex items-center gap-1.5 rounded-md bg-sky-400/15 text-left font-normal text-sky-100 ring-1 ring-sky-300/60"
       :class="small ? 'gap-1 whitespace-nowrap px-1 py-px text-[10px] leading-none' : 'px-2 py-0.5 text-[12px]'"
       :aria-expanded="detail ? open : undefined"
-      :title="title"
       @click.stop="detail && toggle()"
     >
-      <span class="grid shrink-0 place-items-center rounded-full bg-sky-300 font-bold leading-none text-black" :class="small ? 'size-3 text-[9px]' : 'size-4 text-[11px]'">i</span>{{ text }}
+      <span class="grid shrink-0 place-items-center rounded-full bg-sky-300 font-bold leading-none text-black" :class="small ? 'size-3 text-[9px]' : 'size-4 text-[11px]'" aria-hidden="true">i</span>{{ text }}<span v-if="!detail || !open" class="sr-only">: {{ said }}</span>
     </component>
     <!-- PC: 乗せると「・」の縦の小窓 (押して開いている時は出さない。画面の外にはみ出す時は上・横へ = placeTip) -->
     <ul v-if="!open" ref="tipEl" data-site-note-tip :class="[TIP_AT[tip ?? 'left'], up ? 'bottom-full mb-1' : 'top-full mt-1']" :style="dx ? { transform: `translateX(${dx}px)` } : undefined" class="pointer-events-none absolute z-40 hidden w-max max-w-[22rem] rounded-md bg-sky-950 px-3 py-2 text-left text-[12px] font-normal leading-relaxed text-sky-50 shadow-lg ring-1 ring-sky-300/50 md:group-hover/note:block">
