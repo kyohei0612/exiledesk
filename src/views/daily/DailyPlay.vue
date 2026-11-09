@@ -21,6 +21,7 @@ import { metBoxes, markMet, unmetDone } from "./daily-cost";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
 import DailySubmitAsk from "./DailySubmitAsk.vue";
+import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
 import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
@@ -149,6 +150,25 @@ function submitted(): void {
   const x = getTry(props.topic.id);
   if (x) tryOf.value = { ...x };
 }
+/** 提出・諦めるは木の右の欄の完成形のカードの下 (D-37m、11-10 オーナー「諦めると提出するは完成形カードの下に配置でいいかもね」)。
+ *  右の欄を閉じた時 (シミュの v-show で隠れる) は木の枠の右上の「完成形」の下へ移す。閉じたかは欄の style を見る (シミュの部品は触らない) */
+const sideShut = ref(false);
+const giving = ref(false);
+let sideObs: MutationObserver | null = null;
+watch(treeOn, (on) => {
+  sideObs?.disconnect(); sideObs = null;
+  if (!on) return;
+  void nextTick(() => {
+    const side = document.querySelector<HTMLElement>("[data-daily-play] [data-tree-side]");
+    if (!side) return;
+    const look = (): void => { sideShut.value = side.style.display === "none"; };
+    look();
+    sideObs = new MutationObserver(look);
+    sideObs.observe(side, { attributes: true, attributeFilter: ["style"] });
+  });
+}, { immediate: true, flush: "post" });
+onBeforeUnmount(() => sideObs?.disconnect());
+const actsTo = computed(() => (sideShut.value ? "[data-daily-play] [data-tree-frame]" : "[data-daily-play] [data-tree-side]"));
 /** 上の切り替えタブ (D-37g、11-09)。エミュは木のページを閉じた後にデイリーのページも閉じる。シミュ β・デイリーはタブが自分で移る (どれも離れる時の窓 D-36c を通る) */
 function onTab(m: "hand" | "sim"): void { if (m === "hand") closeDailyPage(); }
 /** 提出して終わった挑戦の一言 (今の記録は端末の控え = サーバーの返り) */
@@ -190,7 +210,6 @@ const REFUSED: Record<StartError, () => string> = {
       <div class="daily-band-score">
         <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("完成 1 個あたりの費用", "Cost per finished item") }}</small></div>
         <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr("完成率", "Finished") }}</small></div>
-        <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
       </div>
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
@@ -204,5 +223,13 @@ const REFUSED: Record<StartError, () => string> = {
     <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
+    <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
+    <Teleport v-if="treeOn && !picking" defer :to="actsTo">
+      <div class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
+        <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
+        <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
+      </div>
+    </Teleport>
+    <DailyGiveUpAsk :id="topic.id" :open="giving" :dev="!!dev" @close="giving = false" @done="giving = false; goDaily({ view: 'list' })" />
   </div>
 </template>

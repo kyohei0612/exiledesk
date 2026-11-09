@@ -29,7 +29,8 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
     <div class="daily-band2-btns">
       <DailySaveRecipe v-if="tree && topic" :topic="topic" />
       <button type="button" class="g-btn sm" data-daily-modlist @click="listOpen = true">{{ tr("MOD 一覧", "Mod list") }}</button>
-      <button v-if="!ended" type="button" class="g-btn sm" data-daily-giveup @click="asking = true">{{ tr("諦める", "Give up") }}</button>
+      <!-- 木を開いた後の「諦める」は完成形のカードの下 (DailyPlay、D-37m 11-10)。帯に残すのはフラクチャーを選ぶ画面だけ (右の欄が無い) -->
+      <button v-if="!ended && !tree" type="button" class="g-btn sm" data-daily-giveup @click="asking = true">{{ tr("諦める", "Give up") }}</button>
       <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     </div>
 

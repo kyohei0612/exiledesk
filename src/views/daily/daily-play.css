@@ -1,7 +1,7 @@
 /*
  * 挑戦の帯 (D-37・D-37i・D-37m、11-09 夜)。飾りは左の彫像 (head-l) と右の端 (head-r) の派手な帯 (オーナー「枠はさっきの方が好きだったな…派手で」)。
  * 前に崩れたのは、帯を低くして飾りが潰れ、ボタン 2×2 と数字が飾りの帯 (横長の楕円) の外へはみ出したから。
- * 今は飾りを潰さない高さを保ち、中身を楕円の内側に 1 列で収める: [お題の名前 + ボタン 4 つ] [残り時間] [費用・完成率・これで提出]。
+ * 今は飾りを潰さない高さを保ち、中身を楕円の内側に 1 列で収める: [お題の名前 + ボタン 3 つ] [残り時間] [費用・完成率] (提出・諦めるは完成形のカードの下、11-10)。
  * 楕円は絵の上 7 割ほど、下は飾りの彫り = 中身は padding-bottom で上へ寄せる。木を開いた後 (data-daily-tree) も同じ形で、少しだけ低く
  */
 .daily-root[data-daily-page] [data-daily-play] .daily-band { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 0; min-height: 96px; padding: 0; margin-bottom: 12px; }
@@ -27,12 +27,11 @@
 /* 残り時間: 字を数の上に積み、数そのものが帯のちょうど真ん中に来るように (11-09 夜オーナー「残り時間は真ん中でシンメトリー」) */
 .daily-root[data-daily-page] [data-daily-play] .daily-time { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-time b { font-size: 44px; line-height: 1; }
-/* 費用・完成率・これで提出: 数の上に名前、3 つとも縦の真ん中 */
+/* 費用・完成率: 数の上に名前、縦の真ん中 (これで提出は完成形のカードの下へ、11-10) */
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score { gap: 22px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score > div { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 2px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score b { font-size: 20px; line-height: 1.1; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score small { font-size: 12px; line-height: 1.2; }
-.daily-root[data-daily-page] [data-daily-play] [data-daily-submit] { height: 38px; padding: 0 18px; }
 
 /* 木を開いた後 (D-37i): 木を広く、帯は低く */
 .daily-root[data-daily-page] [data-daily-tree] .daily-band { min-height: 84px; margin-bottom: 8px; }
@@ -44,7 +43,6 @@
 .daily-root[data-daily-page] [data-daily-tree] .daily-time b { font-size: 34px; text-shadow: 0 2px 0 var(--exile-color-black); }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score b { font-size: 17px; }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score small { font-size: 11px; }
-.daily-root[data-daily-page] [data-daily-tree] [data-daily-submit] { height: 34px; }
 
 
 /* 右の欄: 完成形のカードを大きく (11-09 オーナー「完成品ちっちゃいし」)。幅 298 → 440 (1700 以上) / 360、カードは欄いっぱい (字も比例) */
@@ -55,3 +53,16 @@
 [data-daily-play] [data-tree-goal] { zoom: var(--daily-card-z); width: calc(var(--daily-side-w) / var(--daily-card-z) - 6px) !important; }
 /* 「閉じる」は欄の内側の右上 = カードの上の段 (11-10 オーナー「それそれ　直して」= 前は右上に浮かせて欄の枠の上の縁に乗り出した)。どの幅でも枠から 2px 以上内側 */
 [data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { order: -3; align-self: flex-end; margin: 4px 4px 0 0; }
+
+/* 提出・諦める (D-37m、11-10): 完成形のカードのすぐ下。提出が主 (赤・幅いっぱい)、諦めるは控えめ (字だけの小さな物を右に) */
+[data-daily-play] [data-tree-side] > [data-daily-acts] { order: -1; }
+[data-daily-play] .daily-acts { display: flex; align-items: center; gap: 10px; margin: 2px 0 0; }
+/* 欄の中ではカードの見える枠 (data-stage-card) の左右の端にそろえる = 枠は欄の左から カードの倍率 × 7px、右から × 12.5px 内側 (11-10 に 1280 で測った) */
+[data-daily-play] [data-tree-side] > .daily-acts { margin: 2px calc(var(--daily-card-z) * 12.5px) 0 calc(var(--daily-card-z) * 7px); }
+[data-daily-play] .daily-acts [data-daily-submit] { flex: 1 1 auto; height: 38px; padding: 0 18px; }
+[data-daily-play] .daily-acts-giveup { flex: none; height: 30px; padding: 0 0 0 6px; font-size: 12px; color: #c98a8a; background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgb(201 138 138 / 0.4); cursor: pointer; }
+[data-daily-play] .daily-acts-giveup:hover { color: #f1a3a3; text-decoration-color: currentColor; }
+[data-daily-play] .daily-acts-giveup:focus-visible { outline: 2px solid #f1a3a3; outline-offset: 2px; border-radius: 3px; }
+/* 右の欄を閉じた時は木の枠の右上の「完成形」(top 8px・高さ 24px) の下に浮かせる */
+[data-daily-play] [data-tree-frame] > [data-daily-acts-shut] { position: absolute; top: 40px; right: 8px; z-index: 20; margin: 0; padding: 6px 6px 6px 10px; border-radius: 6px; background: rgb(21 17 12 / 0.92); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1); }
+[data-daily-play] [data-tree-frame] > [data-daily-acts-shut] [data-daily-submit] { height: 34px; }
