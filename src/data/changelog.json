@@ -1020,29 +1020,5 @@
     "en": "Simulator: fixed being unable to choose an answer for a result box (Fail, next craft) or \"Return to a box\" on phones"
    }
   ]
- },
- {
-  "v": "0.1.648",
-  "date": "2026-10-30",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定の「アイテムレベルを n に合わせました」が、ツリーを開き直した後も古い数のまま残るのを直しました",
-    "en": "Simulator: fixed the \"Item level set to n\" message in the final item settings staying on an old number after reopening a tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの上で完成形の設定を開いた時、「決めた」が下へはみ出して下の帯に隠れ、押せないことがあったのを直しました",
-    "en": "Simulator: fixed the \"Done\" button in the final item settings opened over the tree running off the bottom and being hidden by the bottom bar"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 手のある箱の手の窓で Esc を押すと、案内どおり持っている物を手放すようにしました (窓ごと閉じていました)。もう一度 Esc で窓を閉じます",
-    "en": "Simulator: Esc in the craft window of a box that already has a craft now releases the held item as the hint says, instead of closing the window. Press Esc again to close it"
-   }
-  ]
  }
 ]
