@@ -37,6 +37,7 @@ export async function rollJson(db: D1Database, now: number, dayParam: string | n
  *   week   {week, samples: [{id, base, itemClass, mods, n}], plan: [{day, slot, itemClass, base, baseJa, sampleId, ilvl, aims}]} — その週にまだ予定が無い時だけ
  *   box    [{id, status: ok|no, why?, aims?}] — 機械の確かめ (D-20) の結果
  *   close  {day, results: [{nickId, place, cost, rate, usedMs, solvedN, enteredN, slot, itemClass, base, checked, engineVer, facts}], checked: [{nickId, checked}], awards: [{nickId, id, ver, firstDay, count, retired, ja, en, rank}]}
+ *   planFix [{day, slot, itemClass, base, baseJa, sampleId, ilvl, aims}] — 今週の残りの予定でフル MOD でない日の差し替え (D-82)。お題が出た日は変えない
  *   topic  {day, boxId?, sampleId?, slot, itemClass, base, baseJa, ilvl, aims, typeSnap?, engineVer, rulesVer} — 出した後は変えない
  */
 export async function rollPost(db: D1Database, b: Body, prices: string | null): Promise<unknown> {
@@ -90,6 +91,15 @@ export async function rollPost(db: D1Database, b: Body, prices: string | null): 
     }
     done.push("close");
   }
+  // 今週の残りの予定の差し替え (D-82: フル MOD でない並びを台本が直した物)。台本が回らなかった日の控え (settleFromPlan) もフルになる。出たお題の日は触らない
+  const fix = arr(b.planFix).filter((p) => str(p.day) && str(p.base) && Array.isArray(p.aims));
+  for (const p of fix)
+    stmts.push(
+      db
+        .prepare("UPDATE daily_plan SET slot = ?, item_class = ?, base = ?, base_ja = ?, sample_id = ?, ilvl = ?, aims = ? WHERE day = ? AND NOT EXISTS (SELECT 1 FROM daily_topics t WHERE t.day = daily_plan.day)")
+        .bind(num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims), str(p.day)),
+    );
+  if (fix.length) done.push("planFix");
   const t = b.topic as Body | undefined;
   if (t && str(t.day) && str(t.base) && Array.isArray(t.aims)) {
     const day = str(t.day)!, no = Math.round(Date.parse(`${day}T00:00:00Z`) / 86400e3);

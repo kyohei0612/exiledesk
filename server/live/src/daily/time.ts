@@ -7,8 +7,8 @@ const START_CLOSE = 22 * 3600_000 + 50 * 60_000;
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
 /** 提出はサーバーの始めた時刻から 1 時間 + 30 秒まで (D-56) */
 export const SUBMIT_GRACE_MS = 30_000;
-/** 解決の完成率 (%、D-02) */
-export const SOLVE_RATE = 90;
+/** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
+export const SOLVE_RATE = 1;
 
 export const dayNoOf = (now: number): number => Math.floor((now + JST - H16) / DAY);
 export const dayName = (no: number): string => new Date(no * DAY).toISOString().slice(0, 10);

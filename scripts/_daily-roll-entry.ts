@@ -236,19 +236,28 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
     log.push(`締め ${inp.closing}: 挑戦 ${inp.tries.length}・解決 ${(close.results as Array<{ place: number | null }>).filter((r) => r.place).length}`);
   }
 
+  // 予定の 1 人分がフル MOD に届かなければ、同じ部位の次の 1 人へ (D-82、オーナー 11-09「フルMODだけにして」。判定を足す前に組んだ週の予定もここで差し替わる)
+  type PlanDay = (typeof plan)[number];
+  const weekSamples = [...inp.samples, ...inp.prevSamples].map((x) => ({ id: x.id, base: x.base, mods: JSON.parse(x.mods), n: x.n }) as DailySample);
+  const toFull = (day: PlanDay): PlanDay => {
+    if (day.aims && fullMods(data, day.base, day.aims)) return day;
+    const seen = new Set(historyBefore(noOf(day.day)).map((h) => h.base));
+    // 同じ部位 (今週と前の週の型 → 手の辞書の見本) → 部位を問わず (同じ順)。部位を問わず引いた時は出す部位の札も品に合わせる
+    const n = nextFullSample(data, day.day, day.base, weekSamples, seen, day.sampleId) ?? nextFullSample(data, day.day, day.base, devSamples(data), seen, null)
+      ?? nextFullSample(data, day.day, null, weekSamples, seen, day.sampleId) ?? nextFullSample(data, day.day, null, devSamples(data), seen, null);
+    log.push(`予定 ${day.day} ${day.base} はフル MOD でない (${day.aims?.length ?? 0} 個) → ${n ? `${n.s.base} (${n.aims.length} 個)` : "フル MOD の人がどこにもいない、予定のまま"}`);
+    if (!n) return day;
+    const c = classOfBase(n.s.base);
+    return { ...day, base: n.s.base, aims: n.aims, sampleId: n.s.id, ilvl: TOPIC_ILVL, slot: (c && slotOfClass(c)) ?? day.slot };
+  };
+  // 今週の残りの予定 (明日から) も直して Worker の予定を書き換える。台本が回らなかった日の控えもフル MOD になる (お題の出た日は Worker が触らない)
+  const fixes = plan.filter((p) => noOf(p.day) > no && !inp.topics.some((t) => t.day === p.day)).map((p) => [p, toFull(p)] as const).filter(([a, b]) => a !== b).map(([, b]) => b);
+  if (fixes.length) body.planFix = fixes.map((p) => ({ day: p.day, slot: p.slot, itemClass: classOfBase(p.base), base: p.base, baseJa: jaTypeName(p.base), sampleId: p.sampleId, ilvl: p.ilvl, aims: p.aims }));
+
   // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD 以上の物だけ (前に通った物も見直す)
   if (!inp.topics.some((t) => t.day === inp.target)) {
-    let day = plan.find((p) => p.day === inp.target) ?? null;
-    // 予定の 1 人分がフル MOD に届かなければ、同じ部位の次の 1 人へ (D-82、オーナー 11-09「フルMODだけにして」。判定を足す前に組んだ週の予定もここで差し替わる)
-    if (day && !(day.aims && fullMods(data, day.base, day.aims))) {
-      const weekSamples = [...inp.samples, ...inp.prevSamples].map((x) => ({ id: x.id, base: x.base, mods: JSON.parse(x.mods), n: x.n }) as DailySample);
-      const seen = new Set(historyBefore(no).map((h) => h.base));
-      // 同じ部位 (今週と前の週の型 → 手の辞書の見本) → 部位を問わず (同じ順)。部位を問わず引いた時は出す部位の札も品に合わせる
-      const n = nextFullSample(data, day.day, day.base, weekSamples, seen, day.sampleId) ?? nextFullSample(data, day.day, day.base, devSamples(data), seen, null)
-        ?? nextFullSample(data, day.day, null, weekSamples, seen, day.sampleId) ?? nextFullSample(data, day.day, null, devSamples(data), seen, null);
-      log.push(`予定 ${day.base} はフル MOD でない (${day.aims?.length ?? 0} 個) → ${n ? `${n.s.base} (${n.aims.length} 個)` : "フル MOD の人がどこにもいない、予定のまま"}`);
-      if (n) { const c = classOfBase(n.s.base); day = { ...day, base: n.s.base, aims: n.aims, sampleId: n.s.id, ilvl: TOPIC_ILVL, slot: (c && slotOfClass(c)) ?? day.slot }; }
-    }
+    const planned = plan.find((p) => p.day === inp.target);
+    const day = planned ? toFull(planned) : null;
     const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no) && fullMods(data, (JSON.parse(x.b.item) as { base: string }).base, x.aims));
     const pick = box.find((x) => day && JSON.parse(x.b.item).base === day.base) ?? (box.length ? box[Math.abs(Math.imul(no, 2654435761)) % box.length]! : null);
     if (pick) {
