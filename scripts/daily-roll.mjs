@@ -11,19 +11,27 @@
  *     --dry = 組んだ物を出すだけで書かない
  *     --verify = 締めで上位 10 人を検算する (D-58、daily-cost.ts の runCost。画面がお題の種・値段で回すシミュの D-41 ④ の後から付ける)
  *   EXILEDESK_LIVE_BASE で行き先を替える (手元の wrangler dev は http://localhost:8787。本番に書かない Y-71)
+ *
+ *   node scripts/daily-roll.mjs --d1 [--week-only] [--day …] [--dry]   (鍵なし、D-80e、2026-11-09)
+ *     --d1 = 口を通さず、Worker と同じ rollJson・rollPost (server/live/src/daily/roll.ts) を本番の D1 に直に (wrangler d1 execute --remote、オーナーのログイン)。
+ *            お題の相場の写しは KV の market を wrangler で読む。覚えていた GET /daily.json (60 秒) は捨てないので、最大 60 秒は前の形が出る
+ *     --week-only = 週の予定 (①) だけを書く (日曜 16:05 の週の取得の続き、scripts/daily-fetch-home.mjs)。締め・投稿・お題は書かない
  */
 import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { remoteD1, remoteKv } from "./_d1-shim.mjs";
 
 const BASE = process.env.EXILEDESK_LIVE_BASE ?? "https://exiledesk-live.exiledesk.workers.dev";
 const KEY = process.env.EXILEDESK_LIVE_KEY;
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry");
+const D1 = args.includes("--d1");
+const WEEK_ONLY = args.includes("--week-only");
 // 検算 (D-58)。画面がお題の種・値段で回すようになる (シミュの D-41 ④) までは付けない
 const VERIFY = args.includes("--verify");
 const dayArg = args[args.indexOf("--day") + 1];
-if (!KEY) {
-  console.error("EXILEDESK_LIVE_KEY が要る (server/live の REFRESH_KEY)");
+if (!KEY && !D1) {
+  console.error("EXILEDESK_LIVE_KEY が要る (server/live の REFRESH_KEY)。鍵なしは --d1");
   process.exit(1);
 }
 
@@ -35,9 +43,15 @@ const sinceStart = (now + JST - H16) % DAY;
 const target = dayArg && /^\d{4}-\d{2}-\d{2}$/.test(dayArg) ? dayArg : new Date((sinceStart > DAY - 2 * 3600e3 ? curNo + 1 : curNo) * DAY).toISOString().slice(0, 10);
 
 const headers = { "x-exiledesk-key": KEY, "content-type": "application/json" };
-const res = await fetch(`${BASE}/daily/roll.json?day=${target}`, { headers });
-if (!res.ok) throw new Error(`roll.json: ${res.status} ${(await res.text()).slice(0, 200)}`);
-const inp = await res.json();
+const R = D1 ? await bundleEntry("server/live/src/daily/roll.ts") : null;
+const db = D1 ? remoteD1() : null;
+let inp;
+if (D1) inp = await R.rollJson(db, now, target);
+else {
+  const res = await fetch(`${BASE}/daily/roll.json?day=${target}`, { headers });
+  if (!res.ok) throw new Error(`roll.json: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  inp = await res.json();
+}
 
 // 束ねた中に読み込みの時に location を読む画面の部品がある (daily-cost → シミュの木 → web/track → utils/no-log、11-08 から)。
 // 画面の無い台本なので、無い時だけ住所の無い形を置く (no-log は手元の住所でないので「送る」扱いだが、台本は記録を送らない)
@@ -46,6 +60,7 @@ const M = await bundleEntry("scripts/_daily-roll-entry.ts");
 const data = M.loadPatchSync();
 const ver = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 const { body, log } = M.roll(data, inp, ver, VERIFY);
+if (WEEK_ONLY) for (const k of Object.keys(body)) if (k !== "week") delete body[k];
 for (const l of log) console.log(l);
 if (DRY) {
   console.log(JSON.stringify(body, null, 1).slice(0, 4000));
@@ -53,6 +68,11 @@ if (DRY) {
 }
 if (!Object.keys(body).length) {
   console.log("書く物は無い");
+  process.exit(0);
+}
+if (D1) {
+  const out = await R.rollPost(db, body, body.topic ? remoteKv("market") : null);
+  console.log(`topic (d1): ${JSON.stringify(out)}`);
   process.exit(0);
 }
 const w = await fetch(`${BASE}/daily/topic`, { method: "POST", headers, body: JSON.stringify(body) });
