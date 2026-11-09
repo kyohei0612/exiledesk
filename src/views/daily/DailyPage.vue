@@ -16,7 +16,7 @@ import { pageZoom } from "../../utils/zoom";
 import { isPhoneWidth } from "../../utils/use-phone";
 import { daily, dayNoOf, getTry, myAwards, myBox, myNick, myTitlePick, refreshDaily, setTitlePick, SLOT_NAMES, todayId, topicOfId, untilRefresh, weekBoard, yesterdayTop, type DailyBoxItem, type DailyTopic } from "./daily-api";
 import { baseArt } from "../../components/art/base-art";
-import { useRankRecipe } from "./daily-open";
+import { seatListUnder, useRankRecipe } from "./daily-open";
 import { skinById, skinOfDay, skinVars } from "./skin/skin";
 import DailyHero from "./DailyHero.vue";
 import DailyName from "./DailyName.vue";
@@ -28,6 +28,8 @@ const view = computed(() => dailyPage.value?.view ?? "list");
 const q = computed(() => dailyPage.value?.q ?? null);
 const post = computed(() => view.value === "detail" && q.value === "post");
 const skins = computed(() => view.value === "detail" && q.value === "skins");
+// 挑戦の URL を直に開いた時は戻るで一覧へ (D-37k)
+seatListUnder();
 
 /** 一覧の読み直しの合図 (称号を選んだ時) */
 const stamp = ref(0);
@@ -91,6 +93,8 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
     <DailyPlay v-if="view === 'start' && topic" :key="topic.id" :topic="topic" />
     <template v-else>
       <ModeTabs class="mb-3" :active="null" @pick="closeDailyPage" />
+      <!-- 遊び方の 1 行 (D-10c)。告知なしで来た人にも何の所か分かるように、一覧の頭だけ -->
+      <p v-if="view === 'list' && daily.remote" data-daily-how class="daily-how">{{ tr("毎日 16:00 に替わるお題の品を、1 時間でシミュレーターの木に組む挑戦。100 人回した 1 個の費用が安いほど上位 (完成率 90% 以上で解決)", "A new item every day at 16:00 JST: build its craft tree in the Simulator within an hour. The lower the cost per item over 100 runs, the higher you rank (90%+ finished to solve)") }}</p>
       <DailyPost v-if="post" />
       <template v-else-if="skins">
         <p class="daily-clock">{{ tr(`今の皮: ${skin.ja}。押すと替わる。`, `Current skin: ${skin.en}. Click to switch.`) }} <button type="button" class="underline inline-block py-1 -my-1" data-daily-skin-auto @click="picked = null">{{ tr("日替わりに戻す", "Back to daily rotation") }}</button></p>

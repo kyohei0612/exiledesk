@@ -21,6 +21,29 @@ export async function openRankRecipe(id: string, name: string, day: string): Pro
   return true;
 }
 
+/**
+ * 挑戦のページを直に開いた時 (別のタブ・ブックマーク・前の挑戦の URL) に、下へ一覧を敷く = ブラウザの戻るで 挑戦 → 一覧 (D-37k)。
+ * 敷くのはこの読み込みの最初のページが挑戦の時の 1 回だけ (読み直し・戻る / 進むで来た時は前の履歴があるので敷かない)。
+ * 履歴の番号 (edIdx) は page.ts が最初のページに付けた 0 のまま 2 つとも置く (page.ts の番号とずれない。0 どうしの戻るはそのまま移る)
+ */
+let seated = false;
+export function seatListUnder(): void {
+  if (seated) return;
+  seated = true;
+  try {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const st = history.state as { edIdx?: unknown } | null;
+    if (nav?.type !== "navigate" || (st?.edIdx ?? 0) !== 0 || new URLSearchParams(location.search).get("page") !== "daily-start") return;
+    const here = location.href;
+    const list = new URL(here);
+    list.searchParams.delete("q");
+    list.searchParams.set("page", "daily");
+    list.hash = "";
+    history.replaceState(st, "", list);
+    history.pushState(st, "", here);
+  } catch { /* 積めなくても挑戦は開く */ }
+}
+
 /** 順位の表で使う: busy = 開いている途中の名前、failed = 開けなかった名前 (行の下に一言) */
 export function useRankRecipe() {
   const busy = ref<string | null>(null);

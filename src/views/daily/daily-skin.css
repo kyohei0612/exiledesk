@@ -154,6 +154,8 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-heat="last"] .daily-fuse { height: 5px; }
 
 .daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--skin-panel); font-size: 15px; }
+/* 遊び方の 1 行 (D-10c): 卓の上に静かに。字は薄い字の色のまま */
+.daily-how { margin: 0 0 8px; padding: 0 4px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--skin-dim); text-wrap: balance; }
 .daily-frac { padding: 28px 40px 40px; }
 /* フラクチャー選び (D-37c): 左に完成形のカード、右に選ぶ行。狭い幅は縦 */
 .daily-frac-body { display: grid; grid-template-columns: 400px minmax(0, 560px); gap: 32px; align-items: start; }
