@@ -93,7 +93,18 @@ const guardCanSave = ref(false);
 /** askLeave で渡した、その回だけの保存の手 (答えたら消す) */
 let askSave: (() => void) | null = null;
 const askCanSave = ref(false);
-export const leaveCanSave = computed(() => askCanSave.value || guardCanSave.value);
+/**
+ * 外の層 (デイリーの挑戦のページ) の確かめ (2026-11-09 オーナー「ページ離れる時とかも保存促したりしてね」、D-36c・U-28)。
+ * ある間はページの確かめより先に聞く (ツリーのページでなくても)。置くのはデイリーの挑戦のページだけ (DailyPlay が mount で置き unmount で null)。null の間は今までと同じ
+ */
+type LayerGuard = { ask: (to: string) => boolean; save: () => void };
+let layerGuard: LayerGuard | null = null;
+const layerCanSave = ref(false);
+export function setLayerLeaveGuard(g: LayerGuard | null): void {
+  layerGuard = g;
+  layerCanSave.value = !!g;
+}
+export const leaveCanSave = computed(() => askCanSave.value || layerCanSave.value || guardCanSave.value);
 export function setLeaveGuard(fn: ((to: string) => boolean) | null, opts?: { save?: () => void }): void {
   leaveGuard = fn;
   leaveSave = (fn && opts?.save) || null;
@@ -102,6 +113,7 @@ export function setLeaveGuard(fn: ((to: string) => boolean) | null, opts?: { sav
 /** 聞いている間の「保存せずに終了」で移る先 (null = 聞いていない)。LeaveConfirm.vue が出す */
 export const leaveAsk = ref<(() => void) | null>(null);
 function mustAsk(to: string): boolean {
+  if (layerGuard) return layerGuard.ask(to);
   // シミュのレシピのページから外へ出る時も聞く (StageRecipesPage も登録する。10-24 夜 シミュ部長 21 本目)
   return (treePage.value || recipesPage.value) && !(to in TREE_PAGES) && !!leaveGuard?.(to);
 }
@@ -123,7 +135,7 @@ export function askLeave(go: () => void, save?: () => void): void {
 export function answerLeave(ok: boolean | "save"): void {
   const go = leaveAsk.value;
   leaveAsk.value = null;
-  const save = askSave ?? leaveSave;
+  const save = askSave ?? layerGuard?.save ?? leaveSave;
   askSave = null;
   askCanSave.value = false;
   if (ok === "save") save?.();
@@ -192,13 +204,18 @@ export function openRecipesPage(): void {
 /** クラフトの道 (ツリー) のページを開く (開発版だけ)。step = ツリーの中のどの段か (段だけ替えるのも、これ。履歴に積む) */
 export function openTreePage(step: TreeStep = "tree"): void {
   if (!TREE_ON) return;
-  s.hold(null);
-  feedbackPage.value = false;
-  recipesPage.value = false;
-  dailyPage.value = null;
-  skinsPage.value = false;
-  treeStep.value = step;
-  treePage.value = true;
+  const go = (): void => {
+    s.hold(null);
+    feedbackPage.value = false;
+    recipesPage.value = false;
+    dailyPage.value = null;
+    skinsPage.value = false;
+    treeStep.value = step;
+    treePage.value = true;
+  };
+  // デイリーの挑戦のページから上のタブの「シミュ」で来る時だけ聞く (ふだんのシミュの中の段の行き来は今までどおり聞かない)
+  if (dailyPage.value && layerGuard) leaveThen(`page=sim-${step}`, go);
+  else go();
 }
 /** ツリーのページを閉じてクラフトへ (上の切り替えタブの「エミュレーター」)。then = 閉じた後 (やめたら呼ばない) */
 export function closeTreePage(then?: () => void): void {
