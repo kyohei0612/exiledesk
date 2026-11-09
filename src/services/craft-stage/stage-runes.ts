@@ -124,7 +124,8 @@ export function baseSocketsOf(base: string, category: string): number {
 
 /**
  * 熟練工のオーブで付けられるソケットの数 (0 = 付けられない部位)。PoB の socketLimit − 2 (胴・両手 2 / ほか 1)。
- * PoB に無いベースは部位で (胴・両手 4 / ほか 3 の − 2)
+ * PoB に無いベースは部位で (胴・両手 4 / ほか 3 の − 2)。
+ * 正は poe2db のベースのページの Sockets.socket_info (E-76)。2026-11-10 に 1,612 ベース全部で合わない数 0 を照らした
  */
 export function socketCapOf(base: string, category: string): number {
   if (!isEquip(category)) return 0;
