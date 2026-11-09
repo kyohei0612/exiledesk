@@ -20,6 +20,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { BLOG_GONE, BLOG_MOVED } from "../server/web/gone.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, process.argv[2] ?? "dist-web");
@@ -204,3 +205,24 @@ ${fixed.map((u) => { const d = lastmodOf(u); return `  <url><loc>${SITE}${u}</lo
 </urlset>
 `);
 console.log(`sitemap (${fixed.length} URL、${MAKE_BASES ? `ベースのページ ${urls.length} 枚は noindex で入れない` : "ベースのページは作らない (410)"}) → ${OUT}`);
+
+// 消した住所だけの一時サイトマップ (2026-11-09 オーナー「出して」、Y-84 の追記)。Search Console の登録済みに 410 のベースのページが残り続けるので、
+// 消した住所・移した住所を lastmod 付きで並べ、オーナーが Search Console で送って Googlebot に早く見に来させる (robots.txt には書かない。消えた後も読まれ続けるため)。
+// ベースの住所は前に作っていたのと同じ rows・slug から、記事は Worker と同じ一覧 (gone.js) から作る (手で写さない)。
+// 登録済みが今の頁数近くまで減ったら false に戻し、Search Console からも外す (手順は docs/org/blog/notes/2026-11-09-removed-sitemap.md)
+const REMOVED_SITEMAP = true;
+const REMOVED_AT = { bases: "2026-10-31", blog: "2026-11-09", other: "2026-10-21" }; // 410 にした日
+if (REMOVED_SITEMAP) {
+  const gone = [
+    ...["", "/en"].flatMap((p) => [`${p}/bases/`, ...rows.map((b) => `${p}/bases/${slug(b.en)}`)]).map((u) => [u, REMOVED_AT.bases]),
+    ...[...BLOG_GONE, ...Object.keys(BLOG_MOVED)].flatMap((s) => [`/blog/${s}/`, `/en/blog/${s}/`]).map((u) => [u, REMOVED_AT.blog]),
+    // 前に消した読み物 (404): 配信・動画が元の記事 4 本 (10-21)、掲示板の決まり (10-16)
+    ...["ai-crafting-odds-vs-feel", "crafting-questions-from-streams", "essence-of-the-abyss-mark", "gold-ring-video-decoded"].flatMap((s) => [`/blog/${s}/`, `/en/blog/${s}/`]).concat("/board-rules").map((u) => [u, REMOVED_AT.other]),
+  ];
+  writeFileSync(resolve(OUT, "sitemap-removed.xml"), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${[...new Map(gone)].map(([u, d]) => `  <url><loc>${SITE}${u}</loc><lastmod>${d}</lastmod></url>`).join("\n")}
+</urlset>
+`);
+  console.log(`消した住所の一時サイトマップ ${new Map(gone).size} URL → ${OUT}/sitemap-removed.xml`);
+}

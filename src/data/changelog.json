@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.690",
+  "date": "2026-11-09",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "記事を整理しました (重なる記事をまとめ、古い記事を消しました)",
+    "en": "Tidied up the blog (merged overlapping articles and removed outdated ones)"
+   }
+  ]
+ },
+ {
   "v": "0.1.689",
   "date": "2026-11-09",
   "items": [
@@ -1012,30 +1024,6 @@
     "area": "",
     "text": "シミュレーター: ✦ の印のある木のフラクチャーで、✦ の無い狙いまで固定して ✦ が別の側に付いた人が止まるのを直しました (✦ の印の MOD だけを固定します)",
     "en": "Simulator: fixed Fracturing Orbs in trees with fracture marks (✦) also locking targets without a mark, which stopped runs whose fracture landed on the other side. Only mods marked ✦ are locked now"
-   }
-  ]
- },
- {
-  "v": "0.1.650",
-  "date": "2026-10-30",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 狙いの付かない合金を打つと「当たり」の箱になり、付く MOD を選べず 100 人回せなかったのを直しました (「打った後」の箱になります)",
-    "en": "Simulator: fixed an Alloy that can't add the target mod making a \"Hit\" box with nothing to pick, which blocked Run 100. It now makes an \"After the craft\" box"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 手の窓で別の物に持ち替えた時、前の物のお告げが付いたままになるのを直しました (元の手に持ち直すと元のお告げに戻ります)",
-    "en": "Simulator: fixed Omens staying on when switching to another item in the craft window. Going back to the original craft restores its Omens"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホで「白紙」を 1 回押すとボタンが画面からはみ出すのを直しました",
-    "en": "Simulator: fixed the button running off the screen after the first tap on \"Clear\" on phones"
    }
   ]
  }

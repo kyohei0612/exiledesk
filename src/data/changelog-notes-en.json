@@ -1,4 +1,7 @@
 {
+  "0.1.690": [
+    "Tidied up the blog (merged overlapping articles and removed outdated ones)"
+  ],
   "0.1.689": [
     "Simulator: opening a shared recipe just to look at it no longer asks whether to save when you move to another page",
     "Simulator: the page freezes less while the final check is running"

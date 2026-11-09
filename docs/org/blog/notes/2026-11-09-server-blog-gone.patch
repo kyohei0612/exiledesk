@@ -1,0 +1,120 @@
+diff --git a/scripts/build-seo-pages.mjs b/scripts/build-seo-pages.mjs
+index ed92c7946..1435133d6 100644
+--- a/scripts/build-seo-pages.mjs
++++ b/scripts/build-seo-pages.mjs
+@@ -20,6 +20,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+ import { dirname, resolve } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { bundleEntry } from "./_bundle-ts.mjs";
++import { BLOG_GONE, BLOG_MOVED } from "../server/web/gone.js";
+ 
+ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+ const OUT = resolve(ROOT, process.argv[2] ?? "dist-web");
+@@ -204,3 +205,24 @@ ${fixed.map((u) => { const d = lastmodOf(u); return `  <url><loc>${SITE}${u}</lo
+ </urlset>
+ `);
+ console.log(`sitemap (${fixed.length} URL、${MAKE_BASES ? `ベースのページ ${urls.length} 枚は noindex で入れない` : "ベースのページは作らない (410)"}) → ${OUT}`);
++
++// 消した住所だけの一時サイトマップ (2026-11-09 オーナー「出して」、Y-84 の追記)。Search Console の登録済みに 410 のベースのページが残り続けるので、
++// 消した住所・移した住所を lastmod 付きで並べ、オーナーが Search Console で送って Googlebot に早く見に来させる (robots.txt には書かない。消えた後も読まれ続けるため)。
++// ベースの住所は前に作っていたのと同じ rows・slug から、記事は Worker と同じ一覧 (gone.js) から作る (手で写さない)。
++// 登録済みが今の頁数近くまで減ったら false に戻し、Search Console からも外す (手順は docs/org/blog/notes/2026-11-09-removed-sitemap.md)
++const REMOVED_SITEMAP = true;
++const REMOVED_AT = { bases: "2026-10-31", blog: "2026-11-09", other: "2026-10-21" }; // 410 にした日
++if (REMOVED_SITEMAP) {
++  const gone = [
++    ...["", "/en"].flatMap((p) => [`${p}/bases/`, ...rows.map((b) => `${p}/bases/${slug(b.en)}`)]).map((u) => [u, REMOVED_AT.bases]),
++    ...[...BLOG_GONE, ...Object.keys(BLOG_MOVED)].flatMap((s) => [`/blog/${s}/`, `/en/blog/${s}/`]).map((u) => [u, REMOVED_AT.blog]),
++    // 前に消した読み物 (404): 配信・動画が元の記事 4 本 (10-21)、掲示板の決まり (10-16)
++    ...["ai-crafting-odds-vs-feel", "crafting-questions-from-streams", "essence-of-the-abyss-mark", "gold-ring-video-decoded"].flatMap((s) => [`/blog/${s}/`, `/en/blog/${s}/`]).concat("/board-rules").map((u) => [u, REMOVED_AT.other]),
++  ];
++  writeFileSync(resolve(OUT, "sitemap-removed.xml"), `<?xml version="1.0" encoding="UTF-8"?>
++<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
++${[...new Map(gone)].map(([u, d]) => `  <url><loc>${SITE}${u}</loc><lastmod>${d}</lastmod></url>`).join("\n")}
++</urlset>
++`);
++  console.log(`消した住所の一時サイトマップ ${new Map(gone).size} URL → ${OUT}/sitemap-removed.xml`);
++}
+diff --git a/server/web/gone.js b/server/web/gone.js
+index c824c19a7..94fb4d6d7 100644
+--- a/server/web/gone.js
++++ b/server/web/gone.js
+@@ -17,3 +17,36 @@ export function basesGone(request) {
+     headers: { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex", "cache-control": "public, max-age=86400" },
+   });
+ }
++
++// 記事の整理 (2026-11-09 オーナー「出して」、表は docs/org/blog/notes/2026-11-09-article-review.md)。
++// 消した記事は 410、ほかとまとめる記事は受け皿へ 301 (日英とも同じ slug)。一時サイトマップ (build-seo-pages.mjs の sitemap-removed.xml) もこの 2 つを読む。
++// ここに足したら wrangler.jsonc の run_worker_first にも /blog/<slug>・/blog/<slug>/*・/en/blog/<slug>・/en/blog/<slug>/* を足す (静的な置き場は 410・301 を返せない)
++export const BLOG_GONE = ["crafting-calculator-mistakes", "x-share-bug", "desecration-lords-tag-audit", "crafting-simulator-no-exceptions"];
++export const BLOG_MOVED = {
++  "chaos-reroll-vs-restart": "are-omens-worth-it",
++  "crafting-order-cost": "are-omens-worth-it",
++  "optimal-move-vs-intuition": "are-omens-worth-it",
++  "coe-desecrate-no-handler": "desecration-weights",
++  "catalyst-types": "mana-ring-craft", // 指輪の触媒の記事 (ring-catalyst-order) を出したらそちらへ付け替える
++  "quality-rounding-down": "sanctify-quality-order",
++  "kolrs-hunt-gloves": "es-gloves-greater-exalt",
++  "poe2db-cast-speed-weight": "custom-mod-weights",
++};
++const BLOG = /^\/(en\/)?blog\/([a-z0-9-]+)\/?$/;
++
++export function blogGone(request) {
++  const url = new URL(request.url);
++  const m = url.pathname.match(BLOG);
++  if (!m) return null;
++  const en = Boolean(m[1]);
++  const to = BLOG_MOVED[m[2]];
++  if (to) return Response.redirect(`${url.origin}${en ? "/en" : ""}/blog/${to}/`, 301);
++  if (!BLOG_GONE.includes(m[2])) return null;
++  const body = en
++    ? `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Article removed | ExileDesk</title></head><body style="margin:0;padding:40px 16px;background:#fff;color:#2b2b2b;font:16px/1.8 system-ui,sans-serif"><main style="max-width:640px;margin:0 auto"><h1 style="font-size:20px">This article has been removed</h1><p><a href="/en/blog/" style="color:#b5651d">See all articles</a> · <a href="/?lang=en" style="color:#b5651d">Open the crafting bench</a></p></main></body></html>`
++    : `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>この記事は削除しました | ExileDesk</title></head><body style="margin:0;padding:40px 16px;background:#fff;color:#2b2b2b;font:16px/1.8 system-ui,sans-serif"><main style="max-width:640px;margin:0 auto"><h1 style="font-size:20px">この記事は削除しました</h1><p><a href="/blog/" style="color:#b5651d">記事の一覧へ</a> · <a href="/" style="color:#b5651d">クラフト台を開く</a></p></main></body></html>`;
++  return new Response(request.method === "HEAD" ? null : body, {
++    status: 410,
++    headers: { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex", "cache-control": "public, max-age=86400" },
++  });
++}
+diff --git a/server/web/move-gate.js b/server/web/move-gate.js
+index 8fa11f1e1..50046efa0 100644
+--- a/server/web/move-gate.js
++++ b/server/web/move-gate.js
+@@ -1,10 +1,10 @@
+-// Web 版の Worker。ここを通るのはシェアの /s/*・/og/*・レシピの短い URL /r/*・消したベースのページ /bases/* (410) だけ (wrangler.jsonc の run_worker_first)。ページ・絵・JS は静的な置き場から直接
++// Web 版の Worker。ここを通るのはシェアの /s/*・/og/*・レシピの短い URL /r/*・消したベースのページ /bases/* (410)・整理した記事 /blog/<slug> (410・301) だけ (wrangler.jsonc の run_worker_first)。ページ・絵・JS は静的な置き場から直接
+ // 2026-10-25 トップ (/・/index.html・/web.html) を外した (Bot の巡回が 1 日の枠の大半を食っていた。notes/2026-10-25-www-redirect-rule.md)。
+ // 前はここで旧 URL (web.exiledesk.workers.dev)・www のクローラーにだけ 301 を返していた。www の 301 は Cloudflare の Redirect Rules (ダッシュボード) へ、
+ // workers.dev の 301 はやめた (アドレス変更は 10-11 に済み、canonical は exiledesk.com)。人は今までどおり web.html の script でデータごと移る
+ import { ogCard } from "./og-card.js";
+ import { recipeShare } from "./recipe-share.js";
+-import { basesGone } from "./gone.js";
++import { basesGone, blogGone } from "./gone.js";
+ 
+ export default {
+   async fetch(request, env, ctx) {
+@@ -17,6 +17,9 @@ export default {
+     // 消したベースのページ (/bases/・/en/bases/ の下、2026-10-31) は 410 (gone.js)
+     const gone = basesGone(request);
+     if (gone) return gone;
++    // 整理した記事 (2026-11-09): 消した物は 410、まとめた物は受け皿へ 301 (gone.js)
++    const blog = blogGone(request);
++    if (blog) return blog;
+     return env.ASSETS.fetch(request);
+   },
+ };
+diff --git a/server/web/wrangler.jsonc b/server/web/wrangler.jsonc
+index a6a2f3a89..28a0fd488 100644
+--- a/server/web/wrangler.jsonc
++++ b/server/web/wrangler.jsonc
+@@ -22,7 +22,9 @@
+     // 2026-10-25 トップを外した (巡回の Bot が web の Worker の 6〜8 割。docs/org/analytics/notes/2026-10-25-request-inventory.md)
+     // /r/* はシミュのレシピの短い URL (recipe-share.js、表は 0011_recipe_shares.sql。2026-10-26)
+     // /bases・/en/bases は消したベースのページ (Y-84、2026-10-31 オーナー「Aで」)。静的な置き場は 410 を返せないので Worker で返す (gone.js)
+-    "run_worker_first": ["/s/*", "/og/*", "/r/*", "/bases", "/bases/*", "/en/bases", "/en/bases/*"],
++    "run_worker_first": ["/s/*", "/og/*", "/r/*", "/bases", "/bases/*", "/en/bases", "/en/bases/*",
++      // 整理した記事 (2026-11-09、gone.js の BLOG_GONE・BLOG_MOVED と同じ 12 本)
++      "/blog/crafting-calculator-mistakes", "/blog/crafting-calculator-mistakes/*", "/en/blog/crafting-calculator-mistakes", "/en/blog/crafting-calculator-mistakes/*", "/blog/x-share-bug", "/blog/x-share-bug/*", "/en/blog/x-share-bug", "/en/blog/x-share-bug/*", "/blog/desecration-lords-tag-audit", "/blog/desecration-lords-tag-audit/*", "/en/blog/desecration-lords-tag-audit", "/en/blog/desecration-lords-tag-audit/*", "/blog/crafting-simulator-no-exceptions", "/blog/crafting-simulator-no-exceptions/*", "/en/blog/crafting-simulator-no-exceptions", "/en/blog/crafting-simulator-no-exceptions/*", "/blog/chaos-reroll-vs-restart", "/blog/chaos-reroll-vs-restart/*", "/en/blog/chaos-reroll-vs-restart", "/en/blog/chaos-reroll-vs-restart/*", "/blog/crafting-order-cost", "/blog/crafting-order-cost/*", "/en/blog/crafting-order-cost", "/en/blog/crafting-order-cost/*", "/blog/optimal-move-vs-intuition", "/blog/optimal-move-vs-intuition/*", "/en/blog/optimal-move-vs-intuition", "/en/blog/optimal-move-vs-intuition/*", "/blog/coe-desecrate-no-handler", "/blog/coe-desecrate-no-handler/*", "/en/blog/coe-desecrate-no-handler", "/en/blog/coe-desecrate-no-handler/*", "/blog/catalyst-types", "/blog/catalyst-types/*", "/en/blog/catalyst-types", "/en/blog/catalyst-types/*", "/blog/quality-rounding-down", "/blog/quality-rounding-down/*", "/en/blog/quality-rounding-down", "/en/blog/quality-rounding-down/*", "/blog/kolrs-hunt-gloves", "/blog/kolrs-hunt-gloves/*", "/en/blog/kolrs-hunt-gloves", "/en/blog/kolrs-hunt-gloves/*", "/blog/poe2db-cast-speed-weight", "/blog/poe2db-cast-speed-weight/*", "/en/blog/poe2db-cast-speed-weight", "/en/blog/poe2db-cast-speed-weight/*"],
+     "html_handling": "auto-trailing-slash",
+     "not_found_handling": "404-page"
+   }

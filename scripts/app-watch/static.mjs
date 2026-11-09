@@ -78,6 +78,18 @@ const rule = (id, title) => { const r = { rule: id, title, seen: 0, bad: [] }; r
     r.seen++;
     if (!globs.some((x) => toRe(x).test(p))) r.bad.push({ where: "server/web/wrangler.jsonc", what: `${p} が run_worker_first に無い (410 を返せない、Y-84)` });
   }
+  // 整理した記事 (Y-84 の追記、11-09) は gone.js の一覧の全部が Worker を通り、残す記事・一覧は通らない
+  const gone = read("server/web/gone.js");
+  const slugs = [...(gone.match(/BLOG_GONE\s*=\s*\[([^\]]*)\]/)?.[1] ?? "").matchAll(/"([a-z0-9-]+)"/g), ...(gone.match(/BLOG_MOVED\s*=\s*\{([^}]*)\}/)?.[1] ?? "").matchAll(/"([a-z0-9-]+)"\s*:/g)].map((x) => x[1]);
+  for (const p of slugs.flatMap((s) => [`/blog/${s}`, `/blog/${s}/`, `/en/blog/${s}`, `/en/blog/${s}/`])) {
+    r.seen++;
+    if (!globs.some((x) => toRe(x).test(p))) r.bad.push({ where: "server/web/wrangler.jsonc", what: `${p} が run_worker_first に無い (410・301 を返せない、Y-84)` });
+  }
+  for (const p of ["/blog/", "/en/blog/", "/blog/are-omens-worth-it/", "/en/blog/are-omens-worth-it/"]) {
+    r.seen++;
+    const g = globs.find((x) => toRe(x).test(p));
+    if (g) r.bad.push({ where: "server/web/wrangler.jsonc", what: `${p} が run_worker_first の ${g} に当たる` });
+  }
 }
 
 // ---- Y-102 手元の作りは記録を送らない ----
