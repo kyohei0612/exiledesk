@@ -4,7 +4,7 @@
   木はこのブラウザに覚え、開き直すと戻る。時間はスタートからの実際の時計で、ページを閉じても進む (D-32)。挑戦は 1 日 1 回で始め直せない (D-33)
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
@@ -20,7 +20,8 @@ import { fillTopicDoc } from "./daily-aims";
 import { unmetDone } from "./daily-cost";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
-import { dailyRecipeName, dailyUnsaved, dropDailyLeaveGuard, saveDailyCopy, setDailyLeaveGuard, type DailyLeaveGuard } from "./daily-save";
+import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
+import { setLayerLeaveGuard } from "../../web/page";
 import "./daily-play.css";
 import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
@@ -93,17 +94,14 @@ watch(() => t.doc.value, (d) => {
 // 別の場所の木を持ち込まない (D-36): 貼り付けは入力欄の外では届かせない
 const noPaste = (e: ClipboardEvent): void => { if (!(e.target as HTMLElement | null)?.closest?.("input, textarea")) e.stopPropagation(); };
 window.addEventListener("paste", noPaste, true);
-// 離れる時にレシピへの保存をすすめる (D-36c)。聞くのは時間内で諦めていない間に、レシピに保存していない変更がある時だけ。自分のページへの移り (読み込み直し) は聞かない
+// 離れる時にレシピへの保存をすすめる (D-36c)。聞くのは時間内で諦めていない間に、レシピに保存していない変更がある時だけ。自分のページへの移り (読み込み直し) は聞かない。
+// 置き場は web/page.ts の外の層の確かめ (一覧へ戻る・ブラウザの戻る / 進む・上のタブ・閉じる / 読み直す、U-28)。置くのは mount の時 (作り直しの時、古い画面が外した後に置く)
 const here = `page=daily-start&q=${props.topic.id}`;
-const guard: DailyLeaveGuard = {
+onMounted(() => setLayerLeaveGuard({
   ask: (to) => to !== here && treeOn.value && left.value > 0 && !getTry(props.topic.id)?.ended && dailyUnsaved(props.topic.id, t.doc.value),
   save: () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value),
-};
-setDailyLeaveGuard(guard);
-// 閉じる・読み直すはブラウザの確かめ (新しい版の直後の自動の読み直し __staleGo では聞かない、page.ts と同じ)
-const onUnload = (e: BeforeUnloadEvent): void => { if (!(window as { __staleGo?: unknown }).__staleGo && treeOn.value && left.value > 0 && !getTry(props.topic.id)?.ended && dailyUnsaved(props.topic.id, t.doc.value)) e.preventDefault(); };
-window.addEventListener("beforeunload", onUnload);
-onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); window.removeEventListener("beforeunload", onUnload); dropDailyLeaveGuard(guard); });
+}));
+onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); setLayerLeaveGuard(null); });
 
 /** 今の木の 100 人の結果 (recipe-card の控え。組み替えると消える) */
 const run = computed(() => { if (!treeOn.value) return null; const c = recipeCardOf(t.doc.value); return c.n === 100 && c.p != null && c.c != null ? { rate: c.p, cost: c.c } : null; });

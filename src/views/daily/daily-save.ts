@@ -9,7 +9,6 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { currentTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
 import { track } from "../../utils/track";
-import { askLeave } from "../../web/page";
 import { getTry, updateTry, type DailyTopic } from "./daily-api";
 
 const v1Of = (d: TreeDoc): string => JSON.stringify(toRecipeV1(d));
@@ -41,19 +40,3 @@ export function dailyUnsaved(topicId: string, d: TreeDoc): boolean {
   return !!d.memoAims?.length && Object.keys(d.boxes).length > 1;
 }
 
-/**
- * 離れる時の確かめ (D-36c)。挑戦のページ (DailyPlay) が置き、ask(to) が true なら「保存していない変更」の窓 (LeaveConfirm) で聞く。
- * to = 移る先 (page の値、"unload" = 閉じる・読み直す)。今つないでいるのは「一覧へ戻る」と閉じる / 読み直す。
- * ブラウザの戻る・上のタブは web/page.ts の外の層の確かめの口 (デザイン部長に頼み中) へこの guard を渡してつなぐ
- */
-export type DailyLeaveGuard = { ask: (to: string) => boolean; save: () => void };
-let guard: DailyLeaveGuard | null = null;
-export function setDailyLeaveGuard(g: DailyLeaveGuard): void { guard = g; }
-/** 外す (自分の置いた物の時だけ。挑戦の画面が作り直される時、新しい画面が置いた後に古い画面が閉じても消さない) */
-export function dropDailyLeaveGuard(g: DailyLeaveGuard): void { if (guard === g) guard = null; }
-/** 「一覧へ戻る」など、デイリーのボタンで挑戦から離れる時。聞くべきなら窓、「保存して進む」は最初の名前で写しを足してから */
-export function leaveDaily(to: string, go: () => void): void {
-  const g = guard;
-  if (g?.ask(to)) askLeave(go, g.save);
-  else go();
-}
