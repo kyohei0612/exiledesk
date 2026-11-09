@@ -64,7 +64,11 @@
 .daily-aim-card { display: flex; flex-direction: column; align-items: center; margin-bottom: 14px; }
 .daily-veil-name { font-family: var(--skin-font-name); font-size: 20px; line-height: 1.2; color: var(--skin-title); text-align: center; word-break: keep-all; }
 .daily-meta { margin-top: 5px; font-size: 14px; color: var(--skin-dim); }
-.daily-start { min-height: 46px; width: 100%; font-size: 16px; }
+.daily-start { min-height: 46px; width: 100%; font-size: 16px; flex-direction: column; gap: 0; }
+.daily-start-sub { font-size: 12px; font-weight: 400; letter-spacing: 0.04em; opacity: 0.85; }
+/* 一覧・お題のページの枠付きのボタンは、字が枠の内側の幅を越えたら枠の中で折り返す (枠の絵は縦にも伸びる)。列の幅いっぱいに置いたボタンが
+   狭い幅で字を枠の外へ出していた (11-09 オーナー「あとは枠からはみ出たボタンどもだな」)。上の帯 (daily-play.css) は別 */
+.daily-root[data-daily-page] :is(.g-btn, .g-btn-red) { white-space: normal; text-wrap: balance; text-align: center; line-height: 1.25; padding-block: 5px; }
 /* 続けるの横の諦める (D-37f)。続けるが主、諦めるは控えめに右 */
 .daily-start-row { display: flex; gap: 8px; }
 .daily-start-row .daily-start { flex: 1; min-width: 0; }
@@ -257,7 +261,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
   .daily-board, .daily-root[data-daily-page] .daily-board, .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "clock" "hero" "rank" "foot" "week"; padding: 6px 6px 14px; }
   .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-areas: "back" "head" "hero" "rank"; }
   .daily-back { grid-area: back; margin-top: 4px; }
-  .daily-root[data-daily-page] .daily-title { --tp: 0.56; --tp-w: 0.39; font-size: 18px; letter-spacing: 0.03em; }
+  .daily-root[data-daily-page] .daily-title { --tp: 0.56; --tp-w: 0.3; font-size: 18px; letter-spacing: 0.03em; }
   .daily-clock, .daily-root[data-daily-page] .daily-clock { grid-area: clock; padding: 0 4px; flex-wrap: wrap; font-size: 13px; }
   .daily-root[data-daily-page] .daily-clock p, .daily-root[data-daily-page] .daily-clock p:last-child { flex-direction: row; align-items: center; }
   .daily-bottom { grid-template-columns: minmax(0, 1fr); row-gap: 12px; }

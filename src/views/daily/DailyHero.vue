@@ -38,9 +38,10 @@ const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
 /** 押せる物: 始める (今日・14:50 まで) / 続きから始める (残りがある) / 挑戦済み (押せない) / 無し */
 const action = computed(() => {
   // 諦めた後も (木を開く前に諦めた = 今日の順位のレシピを見た D-50c も) 提出の後と同じく「挑戦済み」の灰色 (D-35c、11-09 オーナー「このURLは諦めた後か。ならなってないねボタンが」)
-  if (over.value) return tr("挑戦済み", "Already taken");
-  if (t.value) return tr(`続きから始める (残り ${clock(left.value)})`, `Resume (${clock(left.value)} left)`);
-  return props.today && !closed.value && canStartAt(props.now) ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : null;
+  if (over.value) return { label: tr("挑戦済み", "Already taken") };
+  // 残り時間は 2 行目 (1 行に並べると狭い幅で字がボタンの枠の外に出た、11-09 オーナー「はみ出てるし」)
+  if (t.value) return { label: tr("続きから始める", "Resume"), sub: tr(`残り ${clock(left.value)}`, `${clock(left.value)} left`) };
+  return props.today && !closed.value && canStartAt(props.now) ? { label: tr("1 時間の挑戦を始める", "Start the 1 hour challenge") } : null;
 });
 </script>
 
@@ -64,7 +65,7 @@ const action = computed(() => {
       </template>
       <template v-else>
         <div v-if="action" class="daily-start-row">
-          <button type="button" class="g-btn-red daily-start" data-daily-start :data-daily-done="over || undefined" :disabled="over" @click="start">{{ action }}</button>
+          <button type="button" class="g-btn-red daily-start" data-daily-start :data-daily-done="over || undefined" :disabled="over" @click="start"><span>{{ action.label }}</span><small v-if="action.sub" class="daily-start-sub" data-daily-start-left>{{ action.sub }}</small></button>
           <!-- 続けられる間は横に諦める (D-37f、帯と同じ窓) -->
           <button v-if="going" type="button" class="g-btn daily-start-giveup" data-daily-hero-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
         </div>
