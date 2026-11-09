@@ -26,7 +26,7 @@ import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./Tre
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
-import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
@@ -99,7 +99,7 @@ const checked = ref<string[]>((() => {
   if (!c || c.free) return [];
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
-const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !!fractureMarks(t.doc.value).length); // 印の無い木の乱数は狙いの欄
+const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !!fractureMarks(t.doc.value).length); const sureFrac = computed(() => !!t.doc.value.start?.sureFrac && !startsFractured(t.doc.value)); // 印の無い木の乱数は狙いの欄。sureFrac = デイリーの確定フラクチャー (D-03、tree-sure-frac)
 /**
  * 骨の手のアビスの反響のお告げ (発現の候補を 1 回引き直す) = お告げの並びの「アビスの反響のお告げ」そのもの (omens に ECHO)。骨を持ったら既定で掛ける
  * (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」、10-26 夜「オンは嘘だし、でかいアイコンもある」: 前は並びとは別の印と大きな札で、並びの方は掛かっていなかった)。
@@ -390,8 +390,8 @@ function ok(): void {
         <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :aria-label="handName(c)" :aria-pressed="c === held" @mouseenter="shelfCardOn($event, c, shelfItem)" @mouseleave="shelfCardOff()" @click="held = c">{{ handName(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
-      <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
-      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
+      <!-- フラクチャー: デイリーの印の時は確定・オーブ 3 個分 (D-03)、ほかはエンジンの乱数のまま (S-42、S-43 は 11-05 に撤回) -->
+      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ sureFrac ? tr("選んだ MOD が必ず固定される。費用はフラクチャーのオーブ 3 個分", "The chosen mod is always fractured. Costs 3 Fracturing Orbs") : tr("固定できる MOD のどれか 1 つがゲームと同じ乱数で固定される。印の狙いが ✦ になれば当たり、ほかの MOD なら外れ。オーブは 1 回 1 個", "One of the mods that can be fractured is picked at random, as in the game. The marked mod becomes a hit; any other mod is a miss. 1 orb per use") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" :start="(modId, vi) => (item ? divineStart(t.doc.value, boxId, item, { modId, vi }) : null)" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" @cancel="release()" />
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
