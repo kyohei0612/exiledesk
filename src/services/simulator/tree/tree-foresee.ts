@@ -7,11 +7,10 @@
  */
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
-import { DEV_BUILD } from "../../../web/release-flags";
 // MOD が付かない・消えない・入れ替わらない手か (神・ヒネコラなど) はエンジンの keepsMods (sim-engine、11-07 オーナー「ゲームシステムはジンだけ」。前はここに同じ打ち方の写し)
 
-/** 開発版だけ (オーナーの OK の後に本番へ出す時はデザイン部に release-flags のスイッチを頼む。棚のヒネコラ・予見したアイテムの棚の絞り、紫の枠、ハズレのまとめがこれを見る) */
-export const FORESEE_ON = DEV_BUILD;
+/** 本番でも出す (11-10 オーナー「おｋ」。前は開発版だけ = DEV_BUILD。棚のヒネコラ・予見したアイテムの棚の絞り、紫の枠、ハズレのまとめがこれを見る) */
+export const FORESEE_ON = true;
 
 /** ヒネコラの結果の箱 (予見したアイテム。ここの手は「持つ」) */
 export function holdsAt(doc: TreeDoc, id: string): boolean {
