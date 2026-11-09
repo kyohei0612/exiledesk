@@ -130,6 +130,14 @@ const CATALYST_CAP = 200;
  * use を渡すと使った物 (カレンシー・お告げ) を数える (100 人回し tree-run)
  */
 export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void): StageApply {
+  const g = playHandSteps(data, item, h, rng, aims, use);
+  for (;;) { const s = g.next(); if (s.done) return s.value; }
+}
+/**
+ * playHand と同じ (打つ順・乱数も同じ)。slice (ms) を渡すと、繰り返しの手の途中でその間ごとに 1 回返す (最終チェックの 30 人回しが画面を返す、J 11-09。
+ * 当たらない箱を 1,000 回打つ 1 人分で 3.6 秒固まった)。slice が 0 なら返さない
+ */
+export function* playHandSteps(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, slice = 0): Generator<void, StageApply> {
   if (h.repeat) {
     // カオススパム = その手 (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり (エミュのエンジンと同じ。前の木だけの「空きがあれば先に高貴を 1 回」は 11-05 オーナー「なんでそもそもこれエミュと違うエンジンなの」で外した)。
     // 1 手ずつはエンジンの applyCurrency (applyHand)、当たりはエンジンの aimDone。ツリーの物は繰り返す順番だけ (スパムシミュは使わない、オーナー「あっちはカオスオーブ全部打つ仕組み」)
@@ -138,8 +146,9 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     const open = targetsOf(data, aims).filter((t) => !aimDone(item, [t], aimOpts(data)));
     const done = (x: StageItem): boolean => open.some((t) => aimDone(x, [t], aimOpts(data)));
     let r: StageApply = { applied: false, item, added: [], removed: [] };
-    let it = item;
+    let it = item, t0 = slice ? performance.now() : 0;
     for (let i = 0; i < cap; i++) {
+      if (slice && performance.now() - t0 > slice) { yield; t0 = performance.now(); }
       const c = playHand(data, it, { ...h, repeat: null }, rng, aims, use);
       if (!c.applied) return it !== item ? { ...c, applied: true, item: it } : c;
       r = c; it = c.item;

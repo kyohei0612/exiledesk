@@ -52,7 +52,7 @@ const TRIES = 1200;
 /** 着く品の幅 (S-71h): 外れを付け直す品の数と、1 品に打つ回数 */
 const WIDE_ITEMS = 24;
 const WIDE_TRIES = 60;
-/** 5 人を辿る間に画面へ返す間 (ms、J 11-09) */
+/** 5 人を辿る・30 人回す間に画面へ返す間 (ms、J 11-09) */
 const SLICE_MS = 30;
 /**
  * 着く品の幅 (S-71h、11-09 オーナー「はずれがプレフィックスのエッセンスのアイテムレベル以下の場合とかでもこの形になる可能性あるんじゃないん」):
@@ -385,7 +385,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
     // 手の上限は「回す」と同じ (runTree の既定 20000)。前は 300 で、消去・増強・カオスの輪の長い木 (完成に 1000 手を超える人がいる) で
     // 精査は「1 人も完成せず」、回すと完成 9/30 と食い違った (10-29 合格レシピ pass-weapon、S-73)
-    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: priced?.price ?? (() => 0), startCost: priced?.startCost, capDiv: priced ? Infinity : undefined, untilHit: capped });
+    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: priced?.price ?? (() => 0), startCost: priced?.startCost, capDiv: priced ? Infinity : undefined, untilHit: capped, slice: SLICE_MS });
     let st = steps.next();
     while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE, partial: ranked(out) }; st = steps.next(); }
     const run = st.value;

@@ -7,7 +7,7 @@
  */
 import { mulberry32, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { isAimMod } from "./tree-aim";
-import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHandSteps, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, essenceHold, passSameHi } from "./tree-outcome";
 import { MATCH, outBoxOf, RESTART, splitTo, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
@@ -47,6 +47,11 @@ export interface TreeRunOpts {
   onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number; pass?: true }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
   /** 手を打つ直前の箱とアイテム (照らしの台本が、箱に着いた実物ごとにエンジンの確率を出して比べる。シミュ 25 本目 10-25) */
   onHand?: (box: string, item: StageItem) => void;
+  /**
+   * 1 人の途中でも slice ms ごとに 1 回返す (runTreeSteps は同じ人数をもう一度返す)。最終チェックの 30 人回しだけが使う (J 11-09、当たらない箱を 1,000 回打つ 1 人分で
+   * 3.6 秒固まった)。100 人回しは 1 回目の next() で 1 人目が終わる前提なので渡さない。結果は渡しても同じ
+   */
+  slice?: number;
 }
 interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -113,7 +118,7 @@ export const stopAimedOf = (item: StageItem): ReadonlySet<string> | null => STOP
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
-function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand">): Person {
+function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand">): Generator<void, Person> {
   // 輪の早送り (S-71b): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
   const light = !o.onHand;
   let rolls = 0, seenRolls = -1;
@@ -147,7 +152,10 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
   const odd = new Set<string>();
   // back だけで回り続ける形 (back の輪) の見張り
   let hops = 0;
+  // 細切れ (slice): 1 人の途中でも o.slice ms ごとに画面へ返す (J 11-09)。打つ順・乱数は変えない
+  let t0 = o.slice ? performance.now() : 0;
   for (;;) {
+    if (o.slice && performance.now() - t0 > o.slice) { yield; t0 = performance.now(); }
     const b = doc.boxes[at];
     if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.noBox(), short: STOP.noBox(), item } });
     visit(at);
@@ -219,7 +227,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, r
     // 使った物は結果の箱を見てから数える (ヒネコラのハズレの箱 = 手を使わない、S-39)
     const spent: Array<[string, number]> = [];
     // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e): 手を使わず品のまま、boxOutcomeOf が当たり / 塞がったの箱へ分ける。前は「打てません」で止まった
-    const r: StageApply = essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : playHand(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); });
+    const r: StageApply = essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice);
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
@@ -406,14 +414,18 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
  */
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand };
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, slice: opts.slice ?? 0 };
   const aims = opts.aims ?? aimsOf(data, doc);
   const j = judgeMemo(data, doc);
   const rng = mulberry32(opts.seed);
   const people: Person[] = [];
   const every = Math.max(1, opts.every ?? 10);
   for (let i = 0; i < opts.n; i++) {
-    const p = holdDocSig(doc, () => runOne(data, doc, aims, j, rng, o));
+    // 細切れの時は 1 区切りごとに holdDocSig で包む (覚えは捨てて作り直すだけ = 結果は同じ)。無ければ今までどおり 1 人を一気に
+    const g = runOne(data, doc, aims, j, rng, o);
+    let p: Person;
+    if (!o.slice) p = holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } });
+    else for (;;) { const s = holdDocSig(doc, () => g.next()); if (s.done) { p = s.value; break; } yield i; }
     people.push(p);
     opts.onPerson?.(p, i);
     // 止まった人は間引いても必ず知らせる (画面はその時点の止まりの箱で止める)
