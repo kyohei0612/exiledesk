@@ -20,6 +20,7 @@ import { fillTopicDoc } from "./daily-aims";
 import { unmetDone } from "./daily-cost";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
+import { dailyRecipeName, dailyUnsaved, dropDailyLeaveGuard, saveDailyCopy, setDailyLeaveGuard, type DailyLeaveGuard } from "./daily-save";
 import "./daily-play.css";
 import { getTry, leftMs, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
@@ -92,7 +93,17 @@ watch(() => t.doc.value, (d) => {
 // 別の場所の木を持ち込まない (D-36): 貼り付けは入力欄の外では届かせない
 const noPaste = (e: ClipboardEvent): void => { if (!(e.target as HTMLElement | null)?.closest?.("input, textarea")) e.stopPropagation(); };
 window.addEventListener("paste", noPaste, true);
-onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); });
+// 離れる時にレシピへの保存をすすめる (D-36c)。聞くのは時間内で諦めていない間に、レシピに保存していない変更がある時だけ。自分のページへの移り (読み込み直し) は聞かない
+const here = `page=daily-start&q=${props.topic.id}`;
+const guard: DailyLeaveGuard = {
+  ask: (to) => to !== here && treeOn.value && left.value > 0 && !getTry(props.topic.id)?.ended && dailyUnsaved(props.topic.id, t.doc.value),
+  save: () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value),
+};
+setDailyLeaveGuard(guard);
+// 閉じる・読み直すはブラウザの確かめ (新しい版の直後の自動の読み直し __staleGo では聞かない、page.ts と同じ)
+const onUnload = (e: BeforeUnloadEvent): void => { if (!(window as { __staleGo?: unknown }).__staleGo && treeOn.value && left.value > 0 && !getTry(props.topic.id)?.ended && dailyUnsaved(props.topic.id, t.doc.value)) e.preventDefault(); };
+window.addEventListener("beforeunload", onUnload);
+onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); window.removeEventListener("beforeunload", onUnload); dropDailyLeaveGuard(guard); });
 
 /** 今の木の 100 人の結果 (recipe-card の控え。組み替えると消える) */
 const run = computed(() => { if (!treeOn.value) return null; const c = recipeCardOf(t.doc.value); return c.n === 100 && c.p != null && c.c != null ? { rate: c.p, cost: c.c } : null; });
@@ -137,7 +148,7 @@ const REFUSED: Record<StartError, () => string> = {
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>
     </header>
     <!-- 木を開いた後は下の段を右の完成形のカードの下へ、狙いの行は出さない (D-37i)。シミュの右の列へ差し込むだけ -->
-    <Teleport v-if="tryOf && treeOn" defer to="[data-tree-side]"><DailyPlayBar side :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" /></Teleport>
+    <Teleport v-if="tryOf && treeOn" defer to="[data-tree-side]"><DailyPlayBar side :topic="topic" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" /></Teleport>
     <DailyPlayBar v-else-if="tryOf" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="!!tryOf.ended" />
     <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
     <div v-else class="daily-band2" data-daily-band2>

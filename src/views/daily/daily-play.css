@@ -15,3 +15,5 @@
 /* 右の列 (シミュの data-tree-side) の中: 完成形のカード → 下の段 → ミニマップと道具 */
 [data-daily-play] [data-tree-side] > [data-tree-goal-side] { order: -2; }
 [data-daily-play] [data-tree-side] > [data-daily-band2] { order: -1; flex: none; flex-wrap: wrap; justify-content: flex-end; margin: 0; padding: 6px 4px; background: none; border-bottom: 0; }
+/* ボタンが 4 つ (レシピに保存 D-36b を足した) で列の幅を超えるので折り返す (はみ出すと木の下に隠れた) */
+[data-daily-play] [data-tree-side] > [data-daily-band2] .daily-band2-btns { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; align-items: center; }

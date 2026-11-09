@@ -13,9 +13,12 @@ import { goDaily } from "./daily-open";
 import type { DailyAim } from "./daily-api";
 import { useTree } from "../simulator/tree/use-tree";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
+import DailySaveRecipe from "./DailySaveRecipe.vue";
+import type { DailyTopic } from "./daily-api";
+import { leaveDaily } from "./daily-save";
 
 /** side = 木の右の列の中 (D-37i)。狙いの行は出さずボタンだけ */
-const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; side?: boolean }>();
+const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; side?: boolean; /** 木の右の列の時だけ「レシピに保存」(D-36b) */ topic?: DailyTopic }>();
 /** 狙いの字は木・フラクチャー選びと同じ (段の幅は「以上」の幅) */
 const t = useTree();
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
@@ -32,9 +35,10 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
       <li v-for="a in aims" :key="a.modId" :class="a.modId === fractured ? 'frac' : ''">{{ aimText(a) }} <small>{{ tierRankLabel(a.tier) }}{{ a.modId === fractured ? tr("・フラクチャー", " · fractured") : "" }}</small></li>
     </ul>
     <div class="daily-band2-btns">
+      <DailySaveRecipe v-if="side && topic" :topic="topic" />
       <button type="button" class="g-btn sm" data-daily-modlist @click="listOpen = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button v-if="!ended" type="button" class="g-btn sm" data-daily-giveup @click="asking = true">{{ tr("諦める", "Give up") }}</button>
-      <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+      <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="leaveDaily('page=daily', () => goDaily({ view: 'list' }))">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     </div>
 
     <ModalShell :open="listOpen" :title="tr('このベースに付く MOD (何も付いていない状態)', 'Mods for this base (nothing attached)')" width="w-[1100px] max-w-[96vw]" @close="listOpen = false">
