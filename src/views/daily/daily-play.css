@@ -1,23 +1,45 @@
-/* 挑戦の木の画面 (D-37i、data-daily-tree = 木を開いた後)。木を広く: 上の段は高さを半分に */
-.daily-root[data-daily-page] [data-daily-tree] .daily-band { min-height: 52px; padding-bottom: 4px; margin-bottom: 8px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-topic,
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-score { padding-bottom: 6px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-topic { gap: 8px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-topic img { width: 34px; height: 34px; padding: 3px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-what { font-size: 11px; line-height: 1.2; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-name { font-size: 15px; line-height: 1.2; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-time { display: flex; align-items: baseline; gap: 8px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-time b { font-size: 32px; text-shadow: 0 2px 0 var(--exile-color-black); }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-score { gap: 16px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-score b { font-size: 16px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-score small { font-size: 11px; }
-
-/* 帯のボタン 4 つ (レシピに保存・MOD 一覧・諦める・一覧へ戻る) はお題の名前の右に 2×2 の小さい並び (11-09、オーナー「おけ」= 案 B)。右の欄を閉じても消えない */
-.daily-root[data-daily-page] [data-daily-play] .daily-band-title { flex: 0 0 auto; min-width: 0; white-space: nowrap; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-topic > [data-daily-band2] { flex: none; margin: 0 0 0 auto; padding: 0; background: none; border: 0; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns { display: grid; grid-template-columns: auto auto; gap: 2px 4px; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 26px; min-height: 0; padding: 0 10px; font-size: 12px; white-space: nowrap; justify-content: center; }
+/*
+ * 挑戦の帯 (D-37・D-37i、11-09 夜に組み直し、オーナー「UIのずれ本当にこれでよいと思ったのか…全体的に崩れてる」)。
+ * 左右の彫像の飾り (head-l / head-r) は高さを変えると潰れて中身がはみ出すので、挑戦のページでは 1 本の帯の絵 (title-m) に替え、
+ * 中身は 3 つの欄 = [お題の名前 + ボタン 4 つを 1 列] [残り時間] [費用・完成率・これで提出] を縦の真ん中にそろえる。
+ * 木を開いた後 (data-daily-tree) も同じ形で、高さだけ低くする
+ */
+.daily-root[data-daily-page] [data-daily-play] .daily-band { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 20px; min-height: 76px; padding: 10px 22px 13px; margin-bottom: 12px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band::before { background: url("/ui-art/title-m.webp") left center / auto 100% repeat-x; filter: var(--skin-art) brightness(0.5); border-top: 1px solid var(--skin-line); border-bottom: 1px solid var(--skin-line); }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic::before,
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score::before { display: none; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic,
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score { align-self: center; padding: 0; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic { gap: 16px; }
+/* お題の絵は帯では出さない (名前で足りる、11-09 オーナー「アイテムのアイコンは不要」) */
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic > img { display: none; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-title { flex: 0 1 auto; min-width: 0; white-space: nowrap; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-what { font-size: 12px; line-height: 1.3; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-name { font-size: 18px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; }
+/* ボタン 4 つ (レシピに保存・MOD 一覧・諦める・一覧へ戻る) は名前の右に 1 列、同じ高さ (11-09 オーナー「おけ」= 案 B の置き場のまま、2×2 をやめた) */
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic > [data-daily-band2] { flex: none; margin: 0; padding: 0; background: none; border: 0; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns { display: flex; align-items: center; gap: 6px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 30px; min-height: 0; padding: 0 12px; font-size: 13px; white-space: nowrap; justify-content: center; }
 .daily-root[data-daily-page] [data-daily-play] [data-daily-giveup] { color: #f1a3a3; }
+/* 残り時間: 字と数を 1 行に */
+.daily-root[data-daily-page] [data-daily-play] .daily-time { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-time b { font-size: 44px; line-height: 1; }
+/* 費用・完成率・これで提出: 数の上に名前、3 つとも縦の真ん中 */
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score { gap: 22px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score > div { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 2px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score b { font-size: 20px; line-height: 1.1; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score small { font-size: 12px; line-height: 1.2; }
+.daily-root[data-daily-page] [data-daily-play] [data-daily-submit] { height: 38px; padding: 0 18px; }
+
+/* 木を開いた後 (D-37i): 木を広く、帯は低く */
+.daily-root[data-daily-page] [data-daily-tree] .daily-band { min-height: 56px; padding: 6px 20px 9px; margin-bottom: 8px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-what { font-size: 11px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-name { font-size: 16px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-time b { font-size: 34px; text-shadow: 0 2px 0 var(--exile-color-black); }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-score b { font-size: 17px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-score small { font-size: 11px; }
+.daily-root[data-daily-page] [data-daily-tree] [data-daily-submit] { height: 34px; }
+
 
 /* 右の欄: 完成形のカードを大きく (11-09 オーナー「完成品ちっちゃいし」)。幅 298 → 440 (1700 以上) / 360、カードは欄いっぱい (字も比例)、「閉じる」は欄の右上 */
 [data-daily-play] { --daily-side-w: 440px; --daily-card-z: 1.42; }

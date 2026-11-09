@@ -42,7 +42,7 @@ const action = computed(() => {
   <section data-daily-hero class="daily-hero">
     <h2 class="daily-title">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</h2>
     <div class="daily-hero-main">
-      <div class="daily-veil">
+      <div class="daily-veil" :class="{ 'has-card': !!topic.aims }">
         <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t || closed ? 'open' : ''" /></span>
         <div class="min-w-0">
           <div class="daily-plate"><p class="daily-veil-name">{{ name }}</p></div>

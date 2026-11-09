@@ -9,6 +9,12 @@
 .daily-board.one { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto; grid-template-areas: "head head" "hero rank"; }
 .daily-root[data-daily-page] .daily-board { grid-template-columns: minmax(0, 1fr) 330px minmax(0, 1fr); grid-template-areas: "head head head" "rank hero week" "foot foot foot"; }
 .daily-root[data-daily-page] .daily-board.one { grid-template-columns: 400px minmax(0, 1fr); grid-template-areas: "head head" "hero rank"; }
+/* お題のページで完成形のカードが出る時は、上の絵と名前の札を出さない (カードの頭が名前、11-09 オーナー「アンバランス。アイテムのアイコンは不要」)。左右とも上にそろえる */
+.daily-board.one .daily-veil.has-card .daily-veil-frame,
+.daily-board.one .daily-veil.has-card .daily-plate { display: none; }
+.daily-board.one .daily-veil.has-card { margin-bottom: 8px; }
+.daily-board.one .daily-hero-main,
+.daily-board.one [data-daily-rank] { align-self: start; }
 .daily-bottom { grid-area: foot; display: grid; grid-template-columns: minmax(0, 1fr) 216px; column-gap: 24px; }
 [data-daily-week] { grid-area: week; min-width: 0; }
 [data-daily-rank] { grid-area: rank; }
