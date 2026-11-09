@@ -13,8 +13,8 @@ import { boxCheck } from "./daily-check";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
 
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
-/** 解決の完成率 (%、D-02) */
-export const SOLVE_RATE = 90;
+/** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
+export const SOLVE_RATE = 1;
 export const NICK_MAX = 12;
 /** 曜日の部位の名前 (D-05、0 = 月) */
 export const SLOT_NAMES: readonly { ja: string; en: string }[] = SLOTS.map(({ ja, en }) => ({ ja, en }));

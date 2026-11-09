@@ -18,8 +18,8 @@ import { priceOfKey } from "../src/state/for-share/craft-stage-shelf";
 export { loadPatchSync } from "./_htc-bridge-entry";
 
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
-/** 解決の完成率 (%、D-02) */
-const SOLVE_RATE = 90;
+/** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
+const SOLVE_RATE = 1;
 /** D-05 の部位の表・D-04 の段の決まりの版 (変えたら上げる) */
 export const RULES_VER = "D04-D05-2026-11-05";
 

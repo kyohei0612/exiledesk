@@ -18,7 +18,7 @@ import type { GenAim } from "./daily-gen";
 export const RUN_N = 100;
 
 /**
- * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーの解決は狙いを満たした品だけ。
+ * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。
  * 箱の見本の品 (sampleOf) で見る。当たりの判定はシミュと同じ isAimMod (同じ系統・同じ文も当たり)
  */
 export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {

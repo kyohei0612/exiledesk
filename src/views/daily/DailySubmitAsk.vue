@@ -1,6 +1,6 @@
 <!--
   DailySubmitAsk.vue — 提出の確かめの窓と、出した後の結果の窓 (D-35c)。提出は 1 回だけで、出したら挑戦は終わり。
-  確かめ: 「これで提出しますか?」+ 1 個の費用・完成率 → 「提出する」で POST /daily/submit。結果: 費用・完成率・解決 / 未解決・今の順位 → 「順位を見る」でお題のページへ
+  確かめ: 「これで提出しますか?」+ 完成 1 個あたりの費用・完成率 → 「提出する」で POST /daily/submit。結果: 完成 1 個あたりの費用・完成率・今の順位 (D-02、1 人でも完成すれば順位に載る) → 「順位を見る」でお題のページへ
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -16,7 +16,7 @@ const failed = ref(false);
 /** 出した時の数 (出した後に木を見ても変わらない) */
 const sent = ref<{ cost: number; rate: number } | null>(props.shown ?? null);
 const solved = computed(() => (sent.value?.rate ?? 0) >= SOLVE_RATE);
-/** 今の順位 (解決した時だけ。サーバーの表が古くても自分の記録は端末の物で入る) */
+/** 今の順位 (順位に載る時だけ。サーバーの表が古くても自分の記録は端末の物で入る) */
 const place = computed(() => { if (!solved.value) return null; const i = rankOf(props.id).findIndex((r) => r.me); return i < 0 ? null : i + 1; });
 async function send(): Promise<void> {
   failed.value = false;
@@ -38,8 +38,7 @@ function close(): void {
   <ModalShell :open="open" :title="step === 'done' ? tr('提出した', 'Submitted') : tr('これで提出しますか?', 'Submit this?')" width="w-[440px] max-w-[94vw]" @close="close">
     <div v-if="step !== 'done'" data-daily-submit-ask class="flex flex-col gap-3 p-4 text-[14px]">
       <p>{{ tr("提出すると今日の挑戦は終わり、出し直せません。", "Submitting ends today's challenge. You can't submit again.") }}</p>
-      <p class="daily-submit-nums"><b>{{ cost }} {{ tr("神", "div") }}</b> <small>{{ tr("1 個の費用", "per item") }}</small> <b>{{ rate }}%</b> <small>{{ tr("完成率", "finished") }}</small></p>
-      <p v-if="rate < SOLVE_RATE" class="text-[13px] opacity-80">{{ tr(`完成率が ${SOLVE_RATE}% に届かないので、出すと「未解決」の記録になり順位に載りません。`, `Under ${SOLVE_RATE}% finished, so this counts as unsolved and won't be ranked.`) }}</p>
+      <p class="daily-submit-nums"><b>{{ cost }} {{ tr("神", "div") }}</b> <small>{{ tr("完成 1 個あたりの費用", "per finished item") }}</small> <b>{{ rate }}%</b> <small>{{ tr("完成率", "finished") }}</small></p>
       <p v-if="failed" class="text-[var(--exile-color-signal-down)]">{{ tr("提出が届かなかった (つながらない・時間切れ・もう出した)。", "The submission didn't go through (connection, time is up, or already submitted).") }}</p>
       <div class="flex justify-end gap-2">
         <button type="button" class="g-btn" data-daily-submit-cancel :disabled="step === 'sending'" @click="close">{{ tr("やめる", "Cancel") }}</button>
@@ -47,9 +46,9 @@ function close(): void {
       </div>
     </div>
     <div v-else data-daily-submit-done class="flex flex-col gap-3 p-4 text-[14px]">
-      <p class="daily-submit-nums"><b>{{ sent!.cost }} {{ tr("神", "div") }}</b> <small>{{ tr("1 個の費用", "per item") }}</small> <b>{{ sent!.rate }}%</b> <small>{{ tr("完成率", "finished") }}</small></p>
-      <p v-if="solved">{{ place ? tr(`解決。今の順位は ${place} 位。`, `Solved. You're #${place} right now.`) : tr("解決。順位は少し後に出ます。", "Solved. Your place shows up shortly.") }}</p>
-      <p v-else>{{ tr(`未解決 (完成率 ${SOLVE_RATE}% 未満) の記録。順位には載りません。`, `Recorded as unsolved (under ${SOLVE_RATE}% finished). Not ranked.`) }}</p>
+      <p class="daily-submit-nums"><b>{{ sent!.cost }} {{ tr("神", "div") }}</b> <small>{{ tr("完成 1 個あたりの費用", "per finished item") }}</small> <b>{{ sent!.rate }}%</b> <small>{{ tr("完成率", "finished") }}</small></p>
+      <p v-if="solved">{{ place ? tr(`今の順位は ${place} 位。`, `You're #${place} right now.`) : tr("順位は少し後に出ます。", "Your place shows up shortly.") }}</p>
+      <p v-else>{{ tr("完成 0 の記録。順位には載りません。", "Nothing finished, so this isn't ranked.") }}</p>
       <p class="text-[13px] opacity-80">{{ tr("今日の挑戦はこれで終わり。木は見るだけで開けます。", "Today's challenge is over. You can still view the tree.") }}</p>
       <div class="flex justify-end gap-2">
         <button type="button" class="g-btn" data-daily-submit-close @click="close">{{ tr("木を見る", "View the tree") }}</button>

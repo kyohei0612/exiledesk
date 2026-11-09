@@ -8,7 +8,7 @@ import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import { goDaily } from "./daily-open";
-import { canStartAt, getTry, leftMs, myNick, SOLVE_RATE, SLOT_NAMES, type DailyTopic } from "./daily-api";
+import { canStartAt, getTry, leftMs, myNick, SLOT_NAMES, type DailyTopic } from "./daily-api";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
@@ -66,8 +66,8 @@ const action = computed(() => {
         <p v-else-if="!t && today && !action" data-daily-closed class="daily-sub">{{ tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") }}</p>
         <p v-else-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、1 時間が動き出す。ページを閉じても止まらない。挑戦は 1 日 1 回。", "Pressing reveals the target mods and starts 1 hour. Closing the page doesn't stop it. One try per day.") }}</p>
         <p v-else-if="t.ended && !t.fractured && !t.last" data-daily-gave-up class="daily-sub">{{ tr("今日の挑戦は諦めた。次のお題は 16:00。", "You gave up today's challenge. The next one opens at 16:00.") }}</p>
-        <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`解決済み: ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Solved: ${t.best.cost} div (${t.best.rate}% finished)`) }}</p>
-        <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`未解決: 完成率 ${t.last.rate}% (${SOLVE_RATE}% で解決)`, `Unsolved: ${t.last.rate}% finished (${SOLVE_RATE}% solves it)`) }}</p>
+        <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`提出済み: 完成 1 個あたり ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Submitted: ${t.best.cost} div per finished item (${t.best.rate}% finished)`) }}</p>
+        <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`順位に載らない記録: 完成率 ${t.last.rate}%`, `Not ranked: ${t.last.rate}% finished`) }}</p>
       </template>
     </div>
     <DailyRank :topic="topic" />

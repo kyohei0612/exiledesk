@@ -94,7 +94,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
     <template v-else>
       <ModeTabs class="mb-3" :active="null" @pick="closeDailyPage" />
       <!-- 遊び方の 1 行 (D-10c)。告知なしで来た人にも何の所か分かるように、一覧の頭だけ -->
-      <p v-if="view === 'list' && daily.remote" data-daily-how class="daily-how">{{ tr("毎日 16:00 に替わるお題の品を、1 時間でシミュレーターの木に組む挑戦。100 人回した 1 個の費用が安いほど上位 (完成率 90% 以上で解決)", "A new item every day at 16:00 JST: build its craft tree in the Simulator within an hour. The lower the cost per item over 100 runs, the higher you rank (90%+ finished to solve)") }}</p>
+      <p v-if="view === 'list' && daily.remote" data-daily-how class="daily-how">{{ tr("毎日 16:00 に替わるお題の品を、1 時間でシミュレーターの木に組む挑戦。100 人回して、完成 1 個あたりの費用が安いほど上位 (1 人でも完成すれば順位に載る)", "A new item every day at 16:00 JST: build its craft tree in the Simulator within an hour. Over 100 runs, the lower the cost per finished item, the higher you rank (one finished item gets you ranked)") }}</p>
       <DailyPost v-if="post" :in-emu="q === 'post-emu'" />
       <template v-else-if="skins">
         <p class="daily-clock">{{ tr(`今の皮: ${skin.ja}。押すと替わる。`, `Current skin: ${skin.en}. Click to switch.`) }} <button type="button" class="underline inline-block py-1 -my-1" data-daily-skin-auto @click="picked = null">{{ tr("日替わりに戻す", "Back to daily rotation") }}</button></p>
@@ -125,7 +125,7 @@ const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
               </button>
             </li>
           </ol>
-          <p v-else class="text-[14px] opacity-70">{{ yTopic ? tr("昨日は解決した人がいない", "No one solved yesterday's challenge") : tr("昨日のお題は無い", "There was no challenge yesterday") }}</p>
+          <p v-else class="text-[14px] opacity-70">{{ yTopic ? tr("昨日は順位に載った人がいない", "No one was ranked yesterday") : tr("昨日のお題は無い", "There was no challenge yesterday") }}</p>
           <p v-if="rec.failed.value" data-daily-rank-fail class="mt-1 text-[13px] text-[var(--exile-color-signal-down)]">{{ tr(`${rec.failed.value} のレシピを開けなかった (木が残っていない)`, `Couldn't open ${rec.failed.value}'s recipe (no tree saved)`) }}</p>
           <p v-else-if="top3.length" class="mt-1 text-[13px] opacity-70">{{ tr("名前を押すとその人のレシピをシミュレーターで開く", "Click a name to open that recipe in the Simulator") }}</p>
         </section>

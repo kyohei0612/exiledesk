@@ -132,7 +132,7 @@ onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeE
 
 /** 今の木の 100 人の結果 (recipe-card の控え。組み替えると消える) */
 const run = computed(() => { if (!treeOn.value) return null; const c = recipeCardOf(t.doc.value); return c.n === 100 && c.p != null && c.c != null ? { rate: c.p, cost: c.c } : null; });
-/** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーの解決は狙いを満たした品だけ) */
+/** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーで完成に数えるのは狙いを満たした品だけ) */
 const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims) : []));
 /** 提出の確かめと結果の窓 (D-35c)。出したら挑戦は終わり */
 const asking = ref<{ cost: number; rate: number } | null>(null);
@@ -155,7 +155,7 @@ function onTab(m: "hand" | "sim"): void { if (m === "hand") closeDailyPage(); }
 function submittedNote(): string {
   const r = tryOf.value?.last;
   if (!r) return tr("提出した挑戦。木は見るだけ。", "Submitted. You can view the tree.");
-  return r.rate >= SOLVE_RATE ? tr(`提出した: ${r.cost} 神 (完成率 ${r.rate}%)、解決。今日の挑戦は終わり、木は見るだけ。`, `Submitted: ${r.cost} div (${r.rate}% finished), solved. Today's challenge is over; the tree is view-only.`) : tr(`提出した: 完成率 ${r.rate}% で未解決。今日の挑戦は終わり、木は見るだけ。`, `Submitted: ${r.rate}% finished, unsolved. Today's challenge is over; the tree is view-only.`);
+  return r.rate >= SOLVE_RATE ? tr(`提出した: 完成 1 個あたり ${r.cost} 神 (完成率 ${r.rate}%)。今日の挑戦は終わり、木は見るだけ。`, `Submitted: ${r.cost} div per finished item (${r.rate}% finished). Today's challenge is over; the tree is view-only.`) : tr(`提出した: 完成 0 で順位に載らない記録。今日の挑戦は終わり、木は見るだけ。`, `Submitted: nothing finished, so not ranked. Today's challenge is over; the tree is view-only.`);
 }
 const REFUSED: Record<StartError, () => string> = {
   closed: () => tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00."),
@@ -188,8 +188,8 @@ const REFUSED: Record<StartError, () => string> = {
       </div>
       <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b v-if="tryOf?.ended" data-daily-time-ended>{{ tr("終了", "Over") }}</b><b v-else role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
       <div class="daily-band-score">
-        <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("1 個の費用", "Cost per item") }}</small></div>
-        <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr(`完成率 (${SOLVE_RATE}% で解決)`, `Finished (${SOLVE_RATE}% solves)`) }}</small></div>
+        <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("完成 1 個あたりの費用", "Cost per finished item") }}</small></div>
+        <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr("完成率", "Finished") }}</small></div>
         <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
       </div>
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>

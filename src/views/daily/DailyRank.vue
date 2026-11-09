@@ -33,9 +33,9 @@ function peeked(): void {
 <template>
   <div data-daily-rank class="min-w-0">
     <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("一番安く作った人", "Cheapest crafts") }}</h3></div>
-    <p class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。解決した人を 1 個の費用の安い順`, `Ranking for ${topic.day}: solved crafts, cheapest per item first`) : tr("今日のお題の順位。解決した人を 1 個の費用の安い順", "Today's ranking: solved crafts, cheapest per item first") }}</p>
+    <p class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。完成 1 個あたりの費用の安い順`, `Ranking for ${topic.day}: cheapest per finished item first`) : tr("今日のお題の順位。完成 1 個あたりの費用の安い順", "Today's ranking: cheapest per finished item first") }}</p>
     <template v-if="rows.length">
-      <p class="daily-cols" aria-hidden="true"><span class="flex-1">{{ tr("名前", "Name") }}</span><span class="w-12">{{ tr("時間", "Time") }}</span><span class="w-10">{{ tr("完成率", "Done") }}</span><span class="w-16">{{ tr("1 個の費用", "Cost") }}</span></p>
+      <p class="daily-cols" aria-hidden="true"><span class="flex-1">{{ tr("名前", "Name") }}</span><span class="w-12">{{ tr("時間", "Time") }}</span><span class="w-10">{{ tr("完成率", "Done") }}</span><span class="w-16" :title="tr('完成 1 個あたりの費用', 'Cost per finished item')">{{ tr("1 個あたり", "Per item") }}</span></p>
       <ol>
         <li v-for="(r, i) in rows" :key="r.name" class="daily-rank-row" :class="r.me ? 'me' : ''">
           <component :is="canOpen(r.me) ? 'button' : 'div'" :type="canOpen(r.me) ? 'button' : undefined" class="daily-rank-in" :class="canOpen(r.me) ? 'link' : ''" :disabled="canOpen(r.me) && !!busy" :data-daily-rank-open="canOpen(r.me) ? r.name : undefined"
@@ -51,7 +51,7 @@ function peeked(): void {
       <p v-if="failed" data-daily-rank-fail class="mt-1 text-[13px] text-[var(--exile-color-signal-down)]">{{ tr(`${failed} のレシピを開けなかった (木が残っていない)`, `Couldn't open ${failed}'s recipe (no tree saved)`) }}</p>
       <p class="mt-2 text-[13px] opacity-70">{{ closed ? tr("行を押すと、その人のレシピをシミュレーターで開く (写しなので元は変わらない)", "Click a row to open that recipe in the Simulator (a copy; the original stays)") : tr("行を押すとその人のレシピを開く。今日まだ挑戦できる時は、見ると今日の挑戦は諦めた扱いになる", "Click a row to open that recipe. If you can still take today's challenge, viewing it counts as giving up") }}</p>
     </template>
-    <p v-else class="text-[14px] opacity-70">{{ closed ? tr("この日は解決した人がいない。", "No one solved this day.") : tr("まだ誰も解決していない。最初の 1 人になれる。", "No one has solved this yet.") }}</p>
+    <p v-else class="text-[14px] opacity-70">{{ closed ? tr("この日は順位に載った人がいない。", "No one was ranked this day.") : tr("まだ誰も提出していない。最初の 1 人になれる。", "No one has submitted yet. You can be the first.") }}</p>
     <DailyPeekAsk :id="topic.id" :name="peekName" @close="peekName = null" @done="peeked" />
     <DailyNick v-if="nickFor" @done="peekName = nickFor; nickFor = null" @close="nickFor = null" />
   </div>
