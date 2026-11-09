@@ -43,6 +43,8 @@ const CAP_DIV = 2000;
 /** 途中の結果を作り直す間隔 (人)。1 人ごとに全員分を集計すると 100 人回しの 1 割以上を使った (S-71b) */
 const PROGRESS_EVERY = 5;
 const PACE_MS = 60;
+/** 試しの 30 人 (test) は 1 人の途中でもこの間ごとに画面へ返す (11-09 猿: 見本のアミュで 1 人 0.24 秒ずつ 30 回固まった)。100 人回しは今までどおり 1 人ずつ */
+const SLICE_MS = 30;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
 /** 1 人目の再生の速さ (前の速さの何倍か。10-25 オーナー「今の3倍速がデフォでいいな」)。3 秒とどまったら早送りの決まりは今のまま */
 const WALK_SPEED = 3;
@@ -121,12 +123,14 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {
       // 1 人目: 通った箱を順に光らせる (品質だけ上げた後の箱は絵が無いので飛ばす)
-      const f0 = withTreeTune(d, () => g.next());
+      let f0 = withTreeTune(d, () => g.next());
+      // 細切れの時は 1 回目で 1 人目が終わらないので、終わるまで画面を返しながら進める
+      while (!f0.done && !firstOf.p) { await new Promise((res) => setTimeout(res, 0)); if (my !== token) return; f0 = withTreeTune(d, () => g.next()); }
       if (my !== token) return;
       const p1 = firstOf.p!;
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
