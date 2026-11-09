@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.691",
+  "date": "2026-11-09",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: フラクチャーの手の窓の説明を直しました (固定される MOD はゲームと同じ乱数で 1 つ、オーブは 1 回 1 個)",
+    "en": "Simulator: corrected the Fracturing Orb step's description (one fracturable mod is picked at random as in the game, 1 orb per use)"
+   }
+  ]
+ },
+ {
   "v": "0.1.690",
   "date": "2026-11-09",
   "items": [
@@ -1006,24 +1018,6 @@
     "area": "",
     "text": "シミュレーター: 白紙に戻しても前の木の「要確認」が残り、回せなくなる不具合を直しました",
     "en": "Simulator: fixed leftover \"Check\" notices from the previous tree after Clear, which could block runs"
-   }
-  ]
- },
- {
-  "v": "0.1.651",
-  "date": "2026-10-31",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホで結果の箱を「失敗」にしても結果の画面に何も出なかったのを直しました (「この場合は失敗 (ここで終わり)」と出ます)",
-    "en": "Simulator: fixed nothing showing on the result screen on phones when a result box is set to \"Fail\". It now shows \"Then it fails (ends here)\""
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ✦ の印のある木のフラクチャーで、✦ の無い狙いまで固定して ✦ が別の側に付いた人が止まるのを直しました (✦ の印の MOD だけを固定します)",
-    "en": "Simulator: fixed Fracturing Orbs in trees with fracture marks (✦) also locking targets without a mark, which stopped runs whose fracture landed on the other side. Only mods marked ✦ are locked now"
    }
   ]
  }

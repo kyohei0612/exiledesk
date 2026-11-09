@@ -1,4 +1,7 @@
 {
+  "0.1.691": [
+    "Simulator: corrected the Fracturing Orb step's description (one fracturable mod is picked at random as in the game, 1 orb per use)"
+  ],
   "0.1.690": [
     "Tidied up the blog (merged overlapping articles and removed outdated ones)"
   ],
