@@ -1,5 +1,5 @@
 <!--
-  DailyGoingPill.vue — 挑戦中にエミュ・シミュへ移った先の札「挑戦中 残り xx:xx・挑戦へ戻る」(D-37g)。1 回押せば挑戦の木へ戻る。
+  DailyGoingPill.vue — 挑戦中にエミュ・シミュへ移った先の札「挑戦中 残り xx:xx・挑戦へ戻る」(D-37g)。押すとお題のページ (「続きから始める」) へ戻る (11-09 夜オーナー「即ツリーじゃなくてここのページにこさせる」)。
   時間は止まらない (D-32)。今日の挑戦が時間内で諦めていない時だけ、デイリーのページの外で出す。
   中身の上に細い帯で置く (浮かせるとエミュのベースの名前などに重なった、11-09)。差し込みは WebApp の <main> の上
 -->
@@ -23,7 +23,7 @@ const clock = computed(() => { const s = Math.ceil(left.value / 1000); return `$
 <template>
   <div v-if="shown" data-daily-going class="daily-going" role="status">
     <span>{{ tr("デイリーの挑戦中", "Daily challenge on") }} <b class="daily-going-clock">{{ tr(`残り ${clock}`, `${clock} left`) }}</b></span>
-    <button type="button" class="g-btn-red sm" data-daily-going-back @click="openDailyPage({ view: 'start', q: id })">{{ tr("挑戦へ戻る", "Back to the challenge") }}</button>
+    <button type="button" class="g-btn-red sm" data-daily-going-back @click="openDailyPage({ view: 'detail', q: id })">{{ tr("挑戦へ戻る", "Back to the challenge") }}</button>
   </div>
 </template>
 

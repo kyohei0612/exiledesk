@@ -16,7 +16,7 @@ import DailySaveRecipe from "./DailySaveRecipe.vue";
 import type { DailyTopic } from "./daily-api";
 
 /** tree = 木を開いた後 (「レシピに保存」を出す、D-36b) */
-const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; tree?: boolean; topic?: DailyTopic; /** 開発版の見本 (dev=giveup): 諦めるの窓を開いて出す */ devGiveUp?: boolean }>();
+const props = defineProps<{ id: string; base: string; ilvl: number; aims: readonly DailyAim[]; fractured?: string; ended: boolean; tree?: boolean; topic?: DailyTopic; /** 開発版の見本 (dev=giveup): 諦めるの窓を開いて出す */ devGiveUp?: boolean; /** 開発版の見本 (?dev=): 諦めてもサーバーに送らない */ dev?: boolean }>();
 const listOpen = ref(false);
 const asking = ref(!!props.devGiveUp);
 /** 何も付いていない品 (MOD 一覧の中身、D-37d) */
@@ -36,6 +36,6 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
     <ModalShell :open="listOpen" :title="tr('このベースに付く MOD (何も付いていない状態)', 'Mods for this base (nothing attached)')" width="w-[1100px] max-w-[96vw]" @close="listOpen = false">
       <div data-daily-modlist-body class="p-2"><ModTable v-if="blank" overlay :data="s.data.value" :item="blank" /></div>
     </ModalShell>
-    <DailyGiveUpAsk :id="id" :open="asking" @close="asking = false" @done="asking = false; goDaily({ view: 'list' })" />
+    <DailyGiveUpAsk :id="id" :open="asking" :dev="dev" @close="asking = false" @done="asking = false; goDaily({ view: 'list' })" />
   </div>
 </template>

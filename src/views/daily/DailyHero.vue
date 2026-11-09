@@ -29,11 +29,14 @@ const going = computed(() => !!t.value && left.value > 0 && !t.value.ended);
 const giving = ref(false);
 const go =(): void => goDaily({ view: "start", q: props.topic.id });
 const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
-/** 押せる物: 始める (今日・14:50 まで) / 続ける (残りがある) / 木を見る (自分の挑戦がある) / 無し */
+/** 終わった挑戦 (提出・諦めた・時間切れ)。ボタンは「挑戦済み」で押せない (D-35c、11-09 夜オーナー「提出後は戻ってきた際は挑戦済みにしてグレーアウト」) */
+const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
+/** 押せる物: 始める (今日・14:50 まで) / 続きから始める (残りがある) / 挑戦済み (押せない) / 無し */
 const action = computed(() => {
-  // 木を開く前に諦めた (今日の順位のレシピを見た、D-50c) 時は見る木が無い
+  // 木を開く前に諦めた (今日の順位のレシピを見た、D-50c) 時は出さない
   if (t.value?.ended && !t.value.fractured) return null;
-  if (t.value) return left.value > 0 && !t.value.ended ? tr(`続ける (残り ${clock(left.value)})`, `Continue (${clock(left.value)} left)`) : tr("自分の木を見る", "View your tree");
+  if (over.value) return tr("挑戦済み", "Already taken");
+  if (t.value) return tr(`続きから始める (残り ${clock(left.value)})`, `Resume (${clock(left.value)} left)`);
   return props.today && !closed.value && canStartAt(props.now) ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : null;
 });
 </script>
@@ -58,7 +61,7 @@ const action = computed(() => {
       </template>
       <template v-else>
         <div v-if="action" class="daily-start-row">
-          <button type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ action }}</button>
+          <button type="button" class="g-btn-red daily-start" data-daily-start :data-daily-done="over || undefined" :disabled="over" @click="start">{{ action }}</button>
           <!-- 続けられる間は横に諦める (D-37f、帯と同じ窓) -->
           <button v-if="going" type="button" class="g-btn daily-start-giveup" data-daily-hero-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
         </div>

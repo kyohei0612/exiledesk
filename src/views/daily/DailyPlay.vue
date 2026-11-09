@@ -178,7 +178,7 @@ const REFUSED: Record<StartError, () => string> = {
         <img v-if="art" :src="art" alt="" />
         <div class="daily-band-title"><small class="daily-band-what">{{ tryOf?.ended ? tr("今日のお題 (挑戦は終わり)", "Today's challenge (over)") : tr("今日のお題に挑戦中", "Today's challenge") }}</small><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p></div>
         <!-- ボタン 4 つはお題の名前の右 (D-37i を 11-09 に替えた。右の欄を閉じても消えない、オーナー「諦めるもない」「MOD一覧が見切れてる」) -->
-        <DailyPlayBar v-if="tryOf" :dev-give-up="dev === 'giveup'" :tree="treeOn" :topic="topic" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="over" />
+        <DailyPlayBar v-if="tryOf" :dev-give-up="dev === 'giveup'" :dev="!!dev" :tree="treeOn" :topic="topic" :id="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf.aims" :fractured="tryOf.fractured" :ended="over" />
         <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
         <div v-else class="daily-band2" data-daily-band2>
           <div class="daily-band2-btns">
