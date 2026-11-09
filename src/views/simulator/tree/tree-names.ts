@@ -27,14 +27,14 @@ const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, t.doc.va
 
 /**
  * 結果ごとの名前・色・印 (10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 2: ネオンの縁 + 印 + 題 + 副題)。
- * 色は線の色 (SimTreePage の LINE) と同じ系統: 進む = 金 / 外れ・消えた = 赤・紫・灰 / 始まり = 水色。箱 (TreeBox) とまとめた札 (TreeMergeLayer) で同じ
+ * 色は線の色 (SimTreePage の LINE) と同じ系統: 進む = 金 / 外れ・消えた = 赤・草色・灰 / 始まり = 水色。箱 (TreeBox) とまとめた札 (TreeMergeLayer) で同じ
  */
 export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: string; icon: string }> = {
   start: { ja: "スタート", en: "Start", c: "95,180,224", icon: "sparkles" },
   hit: { ja: "当たり", en: "Hit", c: "224,176,96", icon: "target" },
   junk: { ja: "外れ", en: "Miss", c: "224,112,122", icon: "x" },
   junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },
-  lost: { ja: "狙いが消えた", en: "Target lost", c: "165,139,224", icon: "rotate" },
+  lost: { ja: "狙いが消えた", en: "Target lost", c: "176,190,104", icon: "rotate" }, // 草色 (11-09、前の薄紫はヒネコラの予見の紫 S-39 ⑤ と見分けにくい)
   any: { ja: "打った後", en: "After", c: "200,184,150", icon: "plus" },
   pass: { ja: "品質を上げた後", en: "Quality raised", c: "200,184,150", icon: "plus" },
   // 分かれ目の行の箱 (打たずに分けた先。副題は行の条件、splitWhenText)
