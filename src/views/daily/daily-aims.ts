@@ -67,6 +67,7 @@ export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: s
   migrateStart(d);
   d.start!.from = from;
   d.start!.price = 0;
+  d.start!.sureFrac = true; // デイリーの印: 「ベースから」のフラクチャーは選んだ MOD が必ず付き、費用は 3 回分 (D-03・S-43a)
   d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
   d.start!.rarity = startRarity(d);
 }
