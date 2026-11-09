@@ -47,10 +47,11 @@
 .daily-root[data-daily-page] [data-daily-tree] [data-daily-submit] { height: 34px; }
 
 
-/* 右の欄: 完成形のカードを大きく (11-09 オーナー「完成品ちっちゃいし」)。幅 298 → 440 (1700 以上) / 360、カードは欄いっぱい (字も比例)、「閉じる」は欄の右上 */
+/* 右の欄: 完成形のカードを大きく (11-09 オーナー「完成品ちっちゃいし」)。幅 298 → 440 (1700 以上) / 360、カードは欄いっぱい (字も比例) */
 [data-daily-play] { --daily-side-w: 440px; --daily-card-z: 1.42; }
 @media (max-width: 1699px) { [data-daily-play] { --daily-side-w: 360px; --daily-card-z: 1.16; } }
 [data-daily-play] [data-tree-side] { position: relative; width: var(--daily-side-w) !important; padding-top: 4px; }
 [data-daily-play] [data-tree-side] > [data-tree-goal-side] { order: -2; max-height: none; overflow: visible; }
 [data-daily-play] [data-tree-goal] { zoom: var(--daily-card-z); width: calc(var(--daily-side-w) / var(--daily-card-z) - 6px) !important; }
-[data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { position: absolute; top: 2px; right: 2px; z-index: 6; }
+/* 「閉じる」は欄の内側の右上 = カードの上の段 (11-10 オーナー「それそれ　直して」= 前は右上に浮かせて欄の枠の上の縁に乗り出した)。どの幅でも枠から 2px 以上内側 */
+[data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { order: -3; align-self: flex-end; margin: 4px 4px 0 0; }
