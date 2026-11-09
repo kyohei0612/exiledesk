@@ -3,7 +3,7 @@
 済んだ節・引き継ぎは git の履歴 (10-29 の md の整理で消した): 2026-10-23-todo-archive.md・2026-10-24-todo-archive.md と notes/2026-10-26-design7-handover.md (決め: スマホは省略しない・タップで別のページへ飛ばさない、U-51)。10-23〜28 の記録は 11-10 の棚卸しで下の「閉じた物」に 1 行ずつ (全文は git の履歴)。
 
 ## やる事
-- **重ね窓の共通の印 1 つ (U-15・shared-ui.md ⑦6)**: ModalShell には data-overlay を付けた (1efcc573c)。src/web/ToTop.vue の OVERLAY は今も 4 つの印を並べて拾っている (10-26 夜に [data-phone-issues-sheet] が抜けて最終チェック長が足した)。シミュの窓にも data-overlay を付けて ToTop が 1 つの印で拾う形に寄せる。窓はシミュの持ち物が多いので、シミュ部長の手が空いた時に 1 行ずつ頼む
+- ~~**重ね窓の共通の印 1 つ (U-15・shared-ui.md ⑦6)**~~ 済み 11-10: シミュの重ね窓 5 か所に data-overlay (e28d9f0a4、シミュ部長 3)・ToTop の OVERLAY を `[data-overlay]` 1 つに (ブラック 72)。role=dialog の窓 4 つはどれも data-overlay 付き
 
 ## AdSense の審査の間だけコスメの入口を隠す (10-27、スイッチ adReview) — 戻す段取り
 - 隠したのは上の切り替えタブの「コスメティック」だけ (ModeTabs.vue の SKINS_TAB_HIDDEN)。静的なページ (build-seo・build-blog・public) にコスメへのリンクは元から無く、コスメのページは noindex・sitemap 外。?page=skins と /cosmetics/ は直に開ける。
