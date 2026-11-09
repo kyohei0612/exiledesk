@@ -3,6 +3,10 @@
  * 開いていたレシピなら上書き、無ければ自動の名前 (「<ベース> 10/26 21:30」、後で一覧で直せる) で新しく。名前は聞かない。
  * 帯の「保存」(TreeRecipeBar)・離れる時の「保存して進む」(SimTreePage・StageRecipesPage の setLeaveGuard)・ベースを替える時の「保存して替える」(TreeGoalPage) で同じ
  */
+import { nextTick, watch } from "vue";
+import { craftStage as s } from "../../../state/craft-stage";
+import { toRecipeV1 } from "../../../services/simulator/tree/tree-recipe-v1";
+import { treeLoading } from "./use-tree-open";
 import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openTreePage, treeStep } from "../../../web/page";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -23,8 +27,24 @@ export function unsaved(d: TreeDoc, current = true): boolean {
   // エミュの「シミュレーターへ」で狙いを入れたままなら聞かない (10-26 夜オーナー「狙いを入れただけで戻る時は聞かずに戻す」)
   if (pristine && pristine === JSON.stringify(d)) return false;
   const cur = current ? currentTreeRecipe.value : null;
-  if (cur) return !sameTree(d, cur.tree);
+  if (cur) return !(openedAs?.id === cur.id && openedAs.at === cur.updatedAt && openedAs.v1 === v1Of(d)) && !sameTree(d, cur.tree);
   return !!d.memoAims?.length || Object.keys(d.boxes).length > 1;
+}
+/**
+ * 人のレシピ (共有 URL・デイリーの順位の木) を開いて組み直し終えた時の打ち方の形 (S-03c、11-09 オーナー「おけ」)。
+ * 組み直した木は保存した写しと打ち方の形が字面でずれる事がある (提出の形・古い版の読み替え) ので、開いたままなら作りかけに数えない。触って変われば今までどおり。
+ * at = その時のレシピの最後の保存 (上書きした後は保存した物と比べる)
+ */
+let openedAs: { id: string; at: number; v1: string } | null = null;
+const v1Of = (d: TreeDoc): string => JSON.stringify(toRecipeV1(d));
+/** レシピ id を開いた後に呼ぶ: 読み込み (少しずつ描く・データ待ち) が終わったらその時の木を覚える */
+export function markOpened(id: string): void {
+  openedAs = null;
+  const stop = watch(() => !treeLoading.value && !!s.data.value, (ready) => {
+    if (!ready) return;
+    queueMicrotask(() => stop());
+    void nextTick(() => { const cur = currentTreeRecipe.value; if (cur?.id === id) openedAs = { id, at: cur.updatedAt, v1: v1Of(useTree().doc.value) }; });
+  }, { immediate: true });
 }
 /** エミュから入れた直後の木 (JSON)。そのままなら作りかけに数えない。tree-paste.ts の requestEmuItem が入れる */
 let pristine: string | null = null;

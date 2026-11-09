@@ -17,6 +17,7 @@ import { DEV_BUILD } from "../../web/release-flags";
 import { recipeCardOf } from "./recipe-card";
 import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
+import { markOpened } from "./tree/tree-save";
 import { openTreePage } from "../../web/page";
 import { setMapFold } from "./phone/map-fold";
 import { tr } from "../../i18n/lang";
@@ -149,6 +150,8 @@ async function openRecipeCode(code: string): Promise<boolean> {
       const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
       setCurrentTreeRecipe(tr2.id);
       useTree().open(tr2.tree, true);
+      // 開いて見ただけなら離れる時に保存を聞かない (S-03c)
+      markOpened(tr2.id);
       openTreePage();
       logRecord("tree_recipe_shared", { boxes: Object.keys(t.boxes).length });
       return true;
