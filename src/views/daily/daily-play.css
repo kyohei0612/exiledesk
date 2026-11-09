@@ -7,24 +7,23 @@
 .daily-root[data-daily-page] [data-daily-play] .daily-band { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 0; min-height: 96px; padding: 0; margin-bottom: 12px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic,
 .daily-root[data-daily-page] [data-daily-play] .daily-band-score { align-self: stretch; align-items: center; padding-top: 0; padding-bottom: 24px; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-topic { gap: 14px; padding-left: 100px; padding-right: 52px; container-type: inline-size; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-score { padding-left: 52px; padding-right: 100px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic { gap: 12px; padding-left: 100px; padding-right: 36px; container-type: inline-size; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-score { padding-left: 36px; padding-right: 100px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-time { align-self: stretch; padding: 0 22px 24px; }
 /* お題の絵は帯では出さない (名前で足りる、11-09 オーナー「アイテムのアイコンは不要」) */
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic > img { display: none; }
-.daily-root[data-daily-page] [data-daily-play] .daily-band-title { flex: 0 0 auto; min-width: 0; overflow: hidden; white-space: nowrap; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-title { flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-what { font-size: 12px; line-height: 1.3; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-name { font-size: 18px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; }
 /* ボタン 4 つ (レシピに保存・MOD 一覧・諦める・一覧へ戻る) は名前の右に 1 列、同じ高さ (11-09 オーナー「おけ」= 案 B の置き場のまま、2×2 をやめた) */
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic > [data-daily-band2] { flex: none; margin: 0; padding: 0; background: none; border: 0; }
 .daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns { display: flex; align-items: center; gap: 4px; }
-/* 欄が狭い時 (1366・1280 など) はボタンを 2 段 (2×2、同じ幅) にして名前を切らない。2 段でも飾りの楕円の高さに収まる大きさ (11-09 夜ブラック 70「1280 で名前が切れる」) */
-@container (max-width: 650px) {
-  .daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 4px; }
-  .daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 23px; padding: 0 8px; font-size: 11px; }
-}
-.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 28px; min-height: 0; padding: 0 9px; font-size: 12px; white-space: nowrap; justify-content: center; }
-.daily-root[data-daily-page] [data-daily-play] [data-daily-giveup] { color: #f1a3a3; }
+/* ボタンはいつも 1 段。楕円の内側は欄の高さの 18/140〜82/140 (絵 head-l の上下の明るい縁の内側) = 木の画面で CSS 約 38px しか無く、
+   2 段 (2×2) は上下の縁からはみ出した (11-10 オーナー「時間の左側の4つボタンもはみ出してるだろ」)。
+   名前の幅を残すため、帯の中だけボタンの飾りの縁を細く (17 → 11px)・字を 11px に (4 つで CSS 約 320px、名前に約 250px = 日本語 15 字)。
+   それより長い名前は … で切り、乗せると全部出る (title)。画面は幅に合わせて拡大・縮小するので、1920〜1280 で CSS の幅は同じ */
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns { gap: 3px; }
+.daily-root[data-daily-page] [data-daily-play] .daily-band-topic .daily-band2-btns .g-btn.sm { height: 24px; min-height: 0; padding: 0 3px; font-size: 11px; letter-spacing: 0; border-left-width: 11px; border-right-width: 11px; border-image-width: 0 11px; white-space: nowrap; justify-content: center; }.daily-root[data-daily-page] [data-daily-play] [data-daily-giveup] { color: #f1a3a3; }
 /* 残り時間: 字を数の上に積み、数そのものが帯のちょうど真ん中に来るように (11-09 夜オーナー「残り時間は真ん中でシンメトリー」) */
 .daily-root[data-daily-page] [data-daily-play] .daily-time { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .daily-root[data-daily-page] [data-daily-play] .daily-time b { font-size: 44px; line-height: 1; }
@@ -39,9 +38,9 @@
 .daily-root[data-daily-page] [data-daily-tree] .daily-band { min-height: 84px; margin-bottom: 8px; }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-topic,
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score,
-.daily-root[data-daily-page] [data-daily-tree] .daily-time { padding-bottom: 21px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-time { padding-bottom: 24px; } /* 中身の縦の真ん中 = 楕円の真ん中 (欄の 50/140) */
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-what { font-size: 11px; }
-.daily-root[data-daily-page] [data-daily-tree] .daily-band-name { font-size: 16px; }
+.daily-root[data-daily-page] [data-daily-tree] .daily-band-name { font-size: 15px; }
 .daily-root[data-daily-page] [data-daily-tree] .daily-time b { font-size: 34px; text-shadow: 0 2px 0 var(--exile-color-black); }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score b { font-size: 17px; }
 .daily-root[data-daily-page] [data-daily-tree] .daily-band-score small { font-size: 11px; }
