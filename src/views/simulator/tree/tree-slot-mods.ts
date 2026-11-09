@@ -8,11 +8,10 @@
 import { freshItem, limitOf, mulberry32, SIDES, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { placeMods } from "../../../services/simulator/sim-engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { flag } from "../../../web/release-flags";
 
 type TierMod = { modId: string; tier: number; fractured?: boolean };
-/** 完成形のカードに嵌める使用ルーン (S-31g、スイッチ useRunes。閉じていれば無し) */
-export const goalRunesOf = (d: TreeDoc): readonly string[] => (flag("useRunes") ? d.goalRunes ?? [] : []);
+/** 完成形のカードに嵌める使用ルーン (S-31g) */
+export const goalRunesOf = (d: TreeDoc): readonly string[] => (d.goalRunes ?? []);
 
 const slotMemo = new Map<string, number>();
 /** その MOD を付けると増える枠の数 (プレ・サフィの合計。増えなければ 0) */

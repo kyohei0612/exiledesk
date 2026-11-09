@@ -9,7 +9,6 @@ import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
 import { aimRows, bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim } from "./tree-way-mods";
-import { flag } from "../../../web/release-flags";
 
 export function useGoalShown() {
   const t = useTree();
@@ -27,10 +26,10 @@ export function useGoalShown() {
     // 冒涜専用 MOD の行はエミュと同じ冒涜の枠で出す (S-82 と同じ見た目)
     return aimRows(d, t.doc.value, (t.doc.value.memoAims ?? []).filter((a) => bundled.value.has(a.modId) && !on.has(a.modId))).map((m) => (d.mods.get(m.modId)?.source === "desecrated" ? { ...m, desecrated: true } : m));
   });
-  /** 枠に乗らない狙いもカードの中に、ほかと同じふつうの行で (S-04c、スイッチ goalAllIn。カードの行 = ツリーで選べる狙い)。束の物は bundleRows で出すので除く。木の判定は替えない */
+  /** 枠に乗らない狙いもカードの中に、ほかと同じふつうの行で (S-04c。カードの行 = ツリーで選べる狙い)。束の物は bundleRows で出すので除く。木の判定は替えない */
   const overRows = computed((): StageMod[] => {
     const d = s.data.value, l = t.goalItem.value?.left ?? [];
-    if (!flag("goalAllIn") || !d || !l.length) return [];
+    if (!d || !l.length) return [];
     const over = l.filter((a) => !bundled.value.has(a.modId)), frac = new Set(over.filter((a) => a.fractured).map((a) => a.modId));
     return aimRows(d, t.doc.value, over).map((m) => (frac.has(m.modId) ? { ...m, fractured: true } : m));
   });

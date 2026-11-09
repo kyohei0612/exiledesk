@@ -7,7 +7,6 @@ import { nextTick, watch } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { toRecipeV1 } from "../../../services/simulator/tree/tree-recipe-v1";
 import { treeLoading } from "./use-tree-open";
-import { flag } from "../../../web/release-flags";
 import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openTreePage, treeStep } from "../../../web/page";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -44,7 +43,7 @@ const v1Of = (d: TreeDoc): string => JSON.stringify(toRecipeV1(d));
  * 見分けは今日の挑戦の完成形 (デイリーが木に入れる fillTopicDoc で作った狙いの組) が木の完成形と同じか。デイリーの部品は入口から読まないので、デイリーを開いて読み込み済みの時だけ借りる
  */
 let daily: { api: typeof import("../../daily/daily-api"); aims: typeof import("../../daily/daily-aims") } | null = null;
-if (flag("daily")) void Promise.all([import("../../daily/daily-api"), import("../../daily/daily-aims")]).then(([api, aims]) => { daily = { api, aims }; }, () => { /* 無くても今までどおり聞く */ });
+void Promise.all([import("../../daily/daily-api"), import("../../daily/daily-aims")]).then(([api, aims]) => { daily = { api, aims }; }, () => { /* 無くても今までどおり聞く */ });
 function challengeTree(d: TreeDoc): boolean {
   const x = daily?.api.getTry(daily.api.todayId());
   if (!daily || !x?.fractured || !d.memoAims?.length) return false;

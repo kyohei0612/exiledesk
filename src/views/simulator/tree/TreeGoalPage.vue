@@ -39,7 +39,6 @@ import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { qualityUndecided } from "./tree-goal-quality";
 import { useGoalShown } from "./use-goal-shown";
 import { isCraftAim } from "./tree-way-mods";
-import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
 import { useDismiss } from "../../../utils/use-dismiss";
 import TreeAttachPick from "./TreeAttachPick.vue";
@@ -159,8 +158,6 @@ function apply(en: string): void {
 }
 /** 貼り付けで取り込んだ (ベースと狙いは tree-paste が入れた) = 完成の MOD のページへ */
 function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
-/** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b。スイッチ goalAllIn では全部カードの中 = S-04c) */
-const overLeft = computed(() => { if (flag("goalAllIn")) return []; const l = t.goalItem.value?.left ?? [], b = shown.bundled.value; return b.size ? l.filter((a) => !b.has(a.modId)) : l; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
 /** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
 const orphans = computed(() => orphanHits(t.doc.value));
@@ -340,13 +337,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
-        <TreeGoalRunes v-if="flag('useRunes')" />
-        <p v-else-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
-        <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
-        <div v-if="overLeft.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
-          <p class="opacity-70">{{ tr(`カードに乗らない狙い ${overLeft.length} つ (枠の外。どれかが付けば当たり)`, `${overLeft.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
-          <p v-for="a in overLeft" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
-        </div>
+        <TreeGoalRunes />
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
         <!-- 次へ (決めた) は使用ルーンの下 = 長い説明の上 (11-08 夜オーナー「このUIならこの長ったらしい説明の上でいいな」。前はカードの上 = S-10d)。スマホは窓の一番下 -->
         <div class="py-1 max-[48rem]:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>

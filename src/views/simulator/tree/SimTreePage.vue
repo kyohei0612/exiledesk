@@ -17,7 +17,6 @@ import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue"; import TreeUnsetBar from "./TreeUnsetBar.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
-import { flag } from "../../../web/release-flags";
 import PhoneViewPage from "../phone/PhoneViewPage.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
@@ -364,10 +363,10 @@ const glowOf = (b: Box): boolean => {
     <PhoneViewPage v-if="viewPhone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
-    <!-- ベース選びの段だけ、エミュのベース選び (StageBasePage) と同じ「ベースを選ぶ」の銘板の帯 (スイッチ siteLook、U-49。11-03 オーナー「ヘッダー表示してあげていいよシミュも」) -->
-    <h1 v-if="flag('siteLook') && t.goalInline.value && t.goalPage.value === 1" data-sim-base-band class="g-tabbar g-brush mb-3 flex min-w-0 items-center px-8 text-[22px] max-[48rem]:!min-h-[40px] max-[48rem]:px-6 max-[48rem]:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ tr("ベースを選ぶ", "Choose a base") }}</span></h1>
+    <!-- ベース選びの段だけ、エミュのベース選び (StageBasePage) と同じ「ベースを選ぶ」の銘板の帯 (U-49。11-03 オーナー「ヘッダー表示してあげていいよシミュも」) -->
+    <h1 v-if="t.goalInline.value && t.goalPage.value === 1" data-sim-base-band class="g-tabbar g-brush mb-3 flex min-w-0 items-center px-8 text-[22px] max-[48rem]:!min-h-[40px] max-[48rem]:px-6 max-[48rem]:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ tr("ベースを選ぶ", "Choose a base") }}</span></h1>
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
-    <div class="mb-3 flex flex-wrap items-center gap-2"><ModeTabs /><SiteSkinPicker v-if="flag('siteLook')" class="ml-auto" /></div><!-- 色はタブの行の右端 (スイッチ siteLook、U-49) -->
+    <div class="mb-3 flex flex-wrap items-center gap-2"><ModeTabs /><SiteSkinPicker class="ml-auto" /></div><!-- 色はタブの行の右端 (U-49) -->
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 py-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">

@@ -9,7 +9,6 @@ import { RUNES, runeCategoryOf, runeEffectFor } from "../../craft-stage/stage-ru
 import { limitsWithRunes, runeIdByName } from "../../../vendor/poe2htc/engine/runes";
 import { DEFAULT_LIMITS } from "../../../vendor/poe2htc/engine/item";
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
-import { flag } from "../../../web/release-flags";
 import type { ItemTextImplicit, ItemTextResult } from "./item-text-types";
 
 /** 数字・記号・空白・印を落とした文 (item-text の bare と同じ見方) */
@@ -53,26 +52,25 @@ export function limitsOfRunes(data: PatchData, base: string, names: readonly str
   return { prefix: lim.prefixes, suffix: lim.suffixes };
 }
 
-/** parseItemText の中で、暗黙側を分けた後・MOD を読む前に呼ぶ: ルーンの名前を sockets.names に、枠をその込みに (スイッチ pasteAll) */
+/** parseItemText の中で、暗黙側を分けた後・MOD を読む前に呼ぶ: ルーンの名前を sockets.names に、枠をその込みに */
 export function readRuneSockets(data: PatchData, out: ItemTextResult): void {
-  if (!flag("pasteAll") || !out.base) return;
+  if (!out.base) return;
   out.sockets.names = runeNamesOf(data, out.base.en, out.implicits);
   out.count.limit = limitsOfRunes(data, out.base.en, out.sockets.names, out.count.limit);
 }
 
 /**
  * ルーンの池の MOD (コルの狩りの手袋の投射物の速度など、そのルーンを差すと一般の置き場に入る物 = E-10a)。品にあればそのルーンを差している印なので、
- * 読みの割り当ての候補に入れる (一般の MOD で説明できる時はそちらが先、item-text-solve の sourceCost)。スイッチ pasteAll (S-08g)
+ * 読みの割り当ての候補に入れる (一般の MOD で説明できる時はそちらが先、item-text-solve の sourceCost、S-08g)
  */
 export function runePoolMods(data: PatchData, base: string): Mod[] {
   const cls = classOfBase(data, base);
-  if (!flag("pasteAll") || !cls?.pools.rune) return [];
+  if (!cls?.pools.rune) return [];
   return Object.values(cls.pools.rune).flatMap((p) => [...p.prefixes, ...p.suffixes]).flatMap((id) => { const m = data.mods.get(id); return m ? [m] : []; });
 }
 
 /** 読んだ MOD にルーンの池の物があれば、そのルーンを差していた物の名前に足す (S-08g、行から戻した名前に無い時だけ 1 個) */
 export function addPoolRunes(data: PatchData, out: ItemTextResult): void {
-  if (!flag("pasteAll")) return;
   const names = out.sockets.names ?? [];
   for (const m of out.mods) {
     // 名前は使用ルーンの鍵 (stage-runes の英語名、「Kolr's Hunt」)。エンジンの名前は「’」なので id で引き直す (画面が今の言語の名前に直せるように)

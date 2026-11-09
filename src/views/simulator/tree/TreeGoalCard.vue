@@ -12,7 +12,6 @@ import { useGoalShown } from "./use-goal-shown";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
-import { flag } from "../../../web/release-flags";
 import { rarityName } from "./tree-names";
 
 const t = useTree();
@@ -29,8 +28,6 @@ const FOLD_KEY = "exiledesk.tree.goalFolded";
 const rarity = computed(() => rarityName(t.goalRarity.value));
 const n = computed(() => t.goals.value.length);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
-/** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b。スイッチ goalAllIn では全部カードの中 = S-04c) */
-const left = computed(() => { if (flag("goalAllIn")) return []; const l = t.goalItem.value?.left ?? [], b = shown.bundled.value; return b.size ? l.filter((a) => !b.has(a.modId)) : l; });
 /** 段の「以上」は 2 段目より下の狙いがある時だけ (左の P / S の列が太くなる) */
 const atLeast = computed(() => t.goals.value.some((a) => a.tier > 1));
 const folded = ref(((): boolean => { try { return localStorage.getItem(FOLD_KEY) === "1"; } catch { return false; } })());
@@ -90,7 +87,6 @@ onBeforeUnmount(() => ro?.disconnect());
       <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」) -->
       <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
       <!-- カードの枠に乗らない狙い (TreeGoalPage と同じ。どれかが付けば当たり) -->
-      <p v-for="a in left" :key="a.modId" data-tree-goal-over-row class="mt-0.5 min-w-0 truncate px-1" :class="[a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]', 'text-[13px]']" :title="a.reason">+ {{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
     </div>
   </div>
 </template>

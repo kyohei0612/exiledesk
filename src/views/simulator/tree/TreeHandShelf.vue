@@ -39,7 +39,6 @@ import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later";
-import { flag } from "../../../web/release-flags";
 import { foreseeBlock, heldOutNames } from "../../../services/simulator/tree/tree-foresee";
 import { keepsMods } from "../../../services/simulator/sim-engine";
 
@@ -137,8 +136,8 @@ const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value
 /** 錯乱のエッセンスの鍵 (名前はデータから handName で引く) */
 const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
 const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
-// 完成形の使用ルーンは棚のルーンの節の先頭に (S-31g、スイッチ useRunes、11-05 オーナー「おｋ先頭で」)
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k) ?? foreseeBlock(t.doc.value, props.boxId, k), () => (flag("useRunes") ? (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`) : []));
+// 完成形の使用ルーンは棚のルーンの節の先頭に (S-31g、11-05 オーナー「おｋ先頭で」)
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k) ?? foreseeBlock(t.doc.value, props.boxId, k), () => (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`));
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
   simOp("hold", k);
@@ -265,7 +264,7 @@ const runeAt = ref<number | null>(null);
 /** 置き換えられないソケット (バウンド) を押した訳。その押しだけ断り、持った物はそのまま (猿 release-668 ①: 断った後に別のソケットも押せなくなっていた) */
 const socketWhy = ref<string | null>(null);
 watch(held, () => { runeAt.value = null; socketWhy.value = null; });
-const runeHold = computed(() => flag("runeSocket") && !!held.value && isRuneHand(held.value));
+const runeHold = computed(() => !!held.value && isRuneHand(held.value));
 /** ルーンを持っていてソケットが全部埋まっている (まだソケットを押していない) = 入れ替えるソケットを選ぶ番 */
 const runePick = computed(() => { const it = item.value ?? shelfItem.value, n = it?.sockets ?? 0; return runeHold.value && !runeAt.value && n > 0 && (it?.augments?.length ?? 0) >= n; });
 const RUNE_PICK = (): string => tr("ソケットが埋まっている", "All sockets are filled");

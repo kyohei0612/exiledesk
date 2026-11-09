@@ -8,9 +8,7 @@
  * 貼った時に作りかけ (保存していない手のある木) を置き換えるなら pastePrev に控え、② から木へ戻る時に TreeGoalPage が保存を聞く
  */
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { GOAL_RUNE_MAX, goalBlock } from "../../../services/simulator/sim-engine";
-import { goalBlockLoose } from "./tree-goal-cap";
-import { flag } from "../../../web/release-flags";
+import { GOAL_RUNE_MAX } from "../../../services/simulator/sim-engine";
 import { parseItemText } from "../../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextReading } from "../../../services/simulator/paste/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -100,8 +98,8 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   t.needBase.value = false;
   // 新しく取り込んだ完成形は、フラクチャーの設定をまだ答えていない扱い (スイッチ fracFirst)
   t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; delete d.fracAsked; });
-  // エミュで嵌めていたルーンはソケットの順で使用ルーンへ (S-31g、スイッチ useRunes)。貼り付けは文のルーンの行から戻した名前 (S-08e、スイッチ pasteAll)
-  t.edit((d) => { if (runes.length && flag("useRunes")) d.goalRunes = runes.slice(0, GOAL_RUNE_MAX); else delete d.goalRunes; });
+  // エミュで嵌めていたルーンはソケットの順で使用ルーンへ (S-31g)。貼り付けは文のルーンの行から戻した名前 (S-08e)
+  t.edit((d) => { if (runes.length) d.goalRunes = runes.slice(0, GOAL_RUNE_MAX); else delete d.goalRunes; });
   const g = t.goalItem.value?.item;
   t.edit((d) => {
     delete d.goalQualityOn; delete d.goalQualityNo; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
@@ -119,22 +117,18 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
 
 /** 1 通りの読み方 → 完成形の狙いと、狙いにできなかった行 (読めなかった行も) */
 function aimsOfReading(rd: ItemTextReading): { aims: Aim[]; bad: Array<{ line: string; why: string }> } {
-  const data = s.data.value!, t = useTree();
+  const t = useTree();
   const bad: Array<{ line: string; why: string }> = rd.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en) }));
   // 完成形の窓の表にある MOD と段 (表に無い MOD は狙いにできない)
   const known = new Set(t.rows.value.flatMap((row) => row.tiers.map((x) => `${x.modId ?? row.id}|${x.tier}`)));
-  const lv = t.doc.value.itemLevel, aims: Aim[] = [];
+  const aims: Aim[] = [];
   // フラクチャーの MOD を先に (印の候補)、ほかは貼った順
   for (const m of [...rd.mods.filter((x) => x.fractured), ...rd.mods.filter((x) => !x.fractured)]) {
     if (!m.modId || !m.tier) { bad.push({ line: m.text, why: m.unrevealed ? tr("未発現 (発現するまで MOD が決まらない)", "Unrevealed (the mod isn't known yet)") : tr("MOD が分からない", "Unknown mod") }); continue; }
     const tier = Number(m.tier.label.replace(/^T/, ""));
     if (!known.has(`${m.modId}|${tier}`)) { bad.push({ line: m.text, why: tr("完成の MOD の表に無い", "Not in the final-mod table") }); continue; }
     if (aims.some((a) => a.modId === m.modId)) continue;
-    // スイッチ pasteLoose: 枠 (プレ・サフィの数) では削らず、完成形の表で足す時と同じ断り (S-08d、11-05 オーナー「シミュに入れたら減らされるんだよな」)
-    // スイッチ pasteAll: 付いている MOD はシミュで作れないので断らず全部 (S-08e、11-05 オーナー「ついてるMODそのまま付与しないと」)
-    const have = aims.map((a) => ({ modId: a.modId, tier: a.tier }));
-    const why = flag("pasteAll") ? null : flag("pasteLoose") ? goalBlockLoose(data, t.doc.value.base, lv, have, { modId: m.modId, tier }, false) : goalBlock(data, t.doc.value.base, lv, have, { modId: m.modId, tier });
-    if (why) { bad.push({ line: m.text, why }); continue; }
+    // 枠 (プレ・サフィの数) で削らず、付いている MOD はシミュで作れないので断らず全部 (S-08d・S-08e、11-05 オーナー「シミュに入れたら減らされるんだよな」「ついてるMODそのまま付与しないと」)
     // 冒涜の MOD はフラクチャーできない (完成形の窓と同じ)。印は付けず狙いだけ
     // 貼った素の値も持つ (完成形のカードにそのまま出す、use-tree の goalItem)
     aims.push({ modId: m.modId, tier, ...(m.fractured && !m.desecrated ? { fractured: true as const } : {}), ...(m.values.length ? { values: [...m.values] } : {}) });

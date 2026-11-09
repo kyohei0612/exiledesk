@@ -7,10 +7,8 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
-import { OMEN_KEY, parseRuneKey, toggleOmen as toggleHeld, useReason, type StageItem } from "../../services/craft-stage/engine";
+import { OMEN_KEY, toggleOmen as toggleHeld, useReason, type StageItem } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
-import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
-import { flag } from "../../web/release-flags";
 import { FORESEE_ON } from "../../services/simulator/tree/tree-foresee";
 
 /**
@@ -27,17 +25,14 @@ export const TREE_SPAM_ORB = false;
 export const TREE_HIDDEN = new Set<string>([OMEN_KEY.sanctification, OMEN_KEY.blessed]);
 /** フラックス (耐性の変換) は木の枝の決まりが無いのでツリーの棚に出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す) */
 const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"]);
-/** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */
-const SPECIAL_RUNE_KEYS = new Set(RUNE_GROUPS.find((g) => g.kind === "special")?.keys ?? []);
-/** スイッチ runeSocket ではクラフト以外のルーンも消さず、エミュの棚と同じく畳んだ節に出す (S-20・S-31f、11-05 オーナー「いつでもルーンは展開して使えるように」) */
-const otherRune = (key: string): boolean => !flag("runeSocket") && !!parseRuneKey(key) && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key);
+/** ルーンはクラフト以外も消さず、エミュの棚と同じく畳んだ節に出す (S-20・S-31f、11-05 オーナー「いつでもルーンは展開して使えるように」) */
 /**
  * ヒネコラの髪束 (予見) は木の棚に出す。神のオーブは予見したアイテムの時だけ (予見を消す手、S-39・開発版だけ = FORESEE_ON。
  * 11-05 オーナー「神うって同じようにヒネコラしてどうループするのかって挙動みたら」)。ほかの所の神のオーブは今までどおり出さない (S-20)
  */
 const foreseeShown = (key: string, it: StageItem | null | undefined): boolean => FORESEE_ON && (key === "hinekora" || (key === "divine" && !!it?.foreseen));
 /** it = 棚に渡したアイテム (無ければ予見の例外は神のオーブに効かない) */
-export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || otherRune(key));
+export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {

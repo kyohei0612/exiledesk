@@ -6,7 +6,6 @@
 import { goalBlock, tagClash, TAG_CLASH } from "../../../services/simulator/sim-engine";
 import { craftedKindOf, familiesOf as familiesOfMod, isDesecratedSource, type PatchData } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 /** 完成形の候補の上限 */
 export const GOAL_MAX = 10;
@@ -14,11 +13,9 @@ type TierMod = { modId: string; tier: number };
 
 /** 候補 aims に add を足せない理由 (足せれば null)。same = add と同じ MOD がもう候補にある (段の替えは数に入れない) */
 export function goalBlockLoose(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], add: TierMod, same: boolean): string | null {
-  if (flag("goalAllIn")) {
-    // 上限は付け方ごとに 10 (S-04c、スイッチ goalAllIn)
-    const k = kindOf(data, add);
-    if (!same && aims.filter((a) => kindOf(data, a) === k).length >= GOAL_MAX) return KIND_FULL[k]();
-  } else if (!same && aims.length >= GOAL_MAX) return tr(`完成形の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} final targets`);
+  // 上限は付け方ごとに 10 (S-04c)
+  const k = kindOf(data, add);
+  if (!same && aims.filter((a) => kindOf(data, a) === k).length >= GOAL_MAX) return KIND_FULL[k]();
   const alone = goalBlock(data, base, itemLevel, [], add);
   if (alone) return alone;
   for (const a of aims) {
