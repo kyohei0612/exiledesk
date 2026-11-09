@@ -15,7 +15,7 @@ import { tr } from "../../../i18n/lang";
 
 const t = useTree();
 const list = computed(() => [...treeRecipes.value].sort((a, b) => touchedAtTree(b) - touchedAtTree(a)).slice(0, 8));
-function open(r: TreeRecipe): void { simOp("view-open"); setCurrentTreeRecipe(r.id); t.open(r.tree); openTreePage(); track("tree-recipe:open"); }
+function open(r: TreeRecipe): void { simOp("view-open"); setCurrentTreeRecipe(r.id); t.open(r.tree, true); openTreePage(); track("tree-recipe:open"); }
 const { url, urlNote, openUrl, onPaste } = useRecipeUrl({ notUrl: ["レシピの URL ではありません", "Not a recipe URL"], unreadable: ["このレシピは読めませんでした", "Couldn't read this recipe"] });
 onMounted(() => void seedDevRecipes());
 </script>

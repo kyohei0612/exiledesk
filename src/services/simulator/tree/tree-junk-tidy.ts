@@ -9,11 +9,11 @@ import type { OutKind, TreeBox, TreeDoc } from "./tree-model";
 const JUNK: ReadonlySet<OutKind | "start"> = new Set(["junk", "lost"]);
 /** 外れの道の箱 = 自動の ↩ を付けない箱 (人が手を決める・同じ枠探しでだけつながる、S-190b) */
 export const junkPath = (b: TreeBox): boolean => JUNK.has(b.out);
-/** 見るだけの幅の外 = ツリーを組める幅だけ (S-197・S-94g) */
+/** 見るだけの幅の外 = ツリーを組める幅だけ (S-197・S-94g)。画面の案内 (整理の流れ・光らせ) だけが見る。木の中身 (整理・グレーの判定・開く時の組み直し) は幅を見ない (11-09、同じ木は幅で変わらない。前は 390 で外れの整理が走らず、自動の戻り先が PC と別の段になった) */
 export const tidyOn = (): boolean => !(typeof window !== "undefined" && window.innerWidth < VIEW_ONLY_MAX);
 const open = (b: TreeBox): boolean => !b.hand && !b.back && !b.done && !b.split;
 /** 組む間は触れない外れの箱 (S-191)。人が × で外した箱は決めた箱 */
-export const isGrayBox = (b: TreeBox): boolean => tidyOn() && JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;
+export const isGrayBox = (b: TreeBox): boolean => JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;
 /** 整理の後に残った、人が決める箱 (S-192 ③)。上の段から */
 export const unsetBoxes = (d: TreeDoc): string[] => Object.values(d.boxes).filter((b) => open(b) && !isGrayBox(b)).sort((a, z) => a.y - z.y || a.x - z.x).map((b) => b.id);
 /** ボタンの状態 (S-192): unset = 未設定 n つ (押す物が無い)、check = 最終チェック。整理は木を変えるたびに走るので「ハズレ整理」の状態は無い (S-201 ①) */

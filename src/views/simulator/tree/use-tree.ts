@@ -14,7 +14,7 @@ import { goalRunesOf, placeWithSlots } from "./tree-slot-mods";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
-import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy"; import { tidyJunk } from "./tree-hand-plan";
+import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check";
@@ -195,7 +195,7 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   const d = JSON.parse(before) as TreeDoc;
   fn(d); if (!open) dropTouchedOrphans(doc.value, d); // 置き直した箱の要確認は外す (11-08)
   // 整理は木を変えるたびにその場で (S-201 ①、ハズレ整理のボタンは無い)。同じ組み替えの中なので 1 つ戻すで一緒に戻る
-  if (tidyOn() && d.boxes.start) tidyJunk(d, true);
+  if (d.boxes.start) tidyJunk(d, true); // 幅は見ない (S-197「同じ木は幅で変わらない」)
   const after = JSON.stringify(d);
   if (after === before) return;
   undoStack.push(before);
@@ -237,7 +237,7 @@ const opened = ref(0);
 const putTree = (t: TreeDoc): void => { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(t))); migrateStart(d); }, true); };
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
 function open(tree: TreeDoc, stepped = false): void {
-  if (stepped && s.data.value && tidyOn()) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
+  if (stepped && s.data.value) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
   const f = openForm(tree, s.data.value);
   if (f.wait) { const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree, stepped); } }); }
   putTree(f.doc);
