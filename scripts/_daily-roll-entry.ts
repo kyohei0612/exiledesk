@@ -12,9 +12,7 @@ import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, floorAims, nextFullSample, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
 import { boxCheck, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
-import { runCost } from "../src/views/daily/daily-cost";
-import { marketStore } from "../src/state/market-store";
-import { priceOfKey } from "../src/state/for-share/craft-stage-shelf";
+import { runCost, topicPrice } from "../src/views/daily/daily-cost";
 export { loadPatchSync } from "./_htc-bridge-entry";
 
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
@@ -117,18 +115,16 @@ const VERIFY_TOP = 10;
 /**
  * お題の種と 16:00 の相場の写し (daily_topics.prices = /boot.json の market と同じ JSON) で、提出の木を daily-cost.ts の runCost で回し直す。
  * 費用 (0.1 神) と完成率が提出と同じなら 1。木が読めない・ベースやフラクチャーが違う時も -1。
- * 画面がお題の種・値段で回すのはシミュの D-41 ④ の後なので、それまで台本は --verify を付けない (デイリー部長 2、11-05)
+ * 値段の引き方は挑戦の画面と同じ topicPrice (daily-cost.ts)。11-10 から画面もお題の種・値段で回す。予定のタスクの締めに --verify を付けるのは、その形が本番に出た後に始まった日から
  */
 export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null }): Verify {
-  const snap = topic.prices ? (JSON.parse(topic.prices) as { items?: unknown[] }) : null;
-  if (!snap?.items?.length) return () => null;
-  marketStore.items.value = snap.items as typeof marketStore.items.value;
-  const item = freshItem(data, topic.base, topic.ilvl, "rare");
+  const price = topicPrice(data, topic);
+  if (!price) return () => null;
   return (t) => {
     if (!t.recipe || t.cost == null) return -1;
     let r: { cost: number; rate: number } | null = null;
     try {
-      r = runCost(data, topic, t.recipe, (k) => priceOfKey(k, item));
+      r = runCost(data, topic, t.recipe, price);
     } catch {
       r = null;
     }

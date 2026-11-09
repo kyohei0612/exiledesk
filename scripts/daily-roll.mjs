@@ -9,7 +9,7 @@
  *   EXILEDESK_LIVE_KEY=<server/live の REFRESH_KEY> node scripts/daily-roll.mjs [--day YYYY-MM-DD] [--dry]
  *     --day = 組む日 (16:00 に始まる日)。省くと、16:00 より前なら今日、後なら今の日 (遅れて回した時)
  *     --dry = 組んだ物を出すだけで書かない
- *     --verify = 締めで上位 10 人を検算する (D-58、daily-cost.ts の runCost。画面がお題の種・値段で回すシミュの D-41 ④ の後から付ける)
+ *     --verify = 締めで上位 10 人を検算する (D-58、daily-cost.ts の runCost。画面もお題の種・値段で回す形 (11-10) が本番に出た後に始まった日の締めから付ける)
  *   EXILEDESK_LIVE_BASE で行き先を替える (手元の wrangler dev は http://localhost:8787。本番に書かない Y-71)
  *
  *   node scripts/daily-roll.mjs --d1 [--week-only] [--day …] [--dry]   (鍵なし、D-80e、2026-11-09)
@@ -27,7 +27,7 @@ const args = process.argv.slice(2);
 const DRY = args.includes("--dry");
 const D1 = args.includes("--d1");
 const WEEK_ONLY = args.includes("--week-only");
-// 検算 (D-58)。画面がお題の種・値段で回すようになる (シミュの D-41 ④) までは付けない
+// 検算 (D-58)。画面がお題の種・値段で回す形 (11-10) が本番に出る前の日の締めには付けない (前の版の提出は合わない)
 const VERIFY = args.includes("--verify");
 const dayArg = args[args.indexOf("--day") + 1];
 if (!KEY && !D1) {

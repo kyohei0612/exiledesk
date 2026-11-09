@@ -10,6 +10,7 @@ import { aimTextsOf } from "./daily-gen";
 import { migrateStart, startRarity, type Aim, type StartFrom, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
+import { genesisOver, genesisWhy } from "./daily-check";
 
 export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: Array<{ line: string; why: string }> };
 
@@ -24,6 +25,8 @@ function take(data: PatchData, base: { en: string; ja: string }, ilvl: number, m
     if (m.unrevealed) { bad.push({ line: m.text, why: tr("未発現の MOD はお題にできない", "Unrevealed mods can't be used") }); continue; }
     if (!m.modId || !m.tier) { bad.push({ line: m.text, why: tr("MOD が分からない", "Unknown mod") }); continue; }
     if (aims.some((a) => a.modId === m.modId)) continue;
+    // 創生の樹の MOD は 1 つまで (D-14)。2 つ目からは行に訳を出す (エンジンの goalBlock は創生の樹を数えない)
+    if (genesisOver(data, [...aims, { modId: m.modId }])) { bad.push({ line: m.text, why: genesisWhy() }); continue; }
     const why = goalBlock(data, base.en, ilvl, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId: m.modId, tier: tierOf(m) });
     if (why) { bad.push({ line: m.text, why }); continue; }
     aims.push({ modId: m.modId, tier: tierOf(m), ...(textOf(m.modId, tierOf(m)) ?? { ja: m.text, en: m.text }) });

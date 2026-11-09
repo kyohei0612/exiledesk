@@ -17,7 +17,8 @@ import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
-import { metBoxes, markMet, unmetDone } from "./daily-cost";
+import { metBoxes, markMet, topicPrice, unmetDone } from "./daily-cost";
+import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
 import DailySubmitAsk from "./DailySubmitAsk.vue";
@@ -119,6 +120,18 @@ watch(() => t.doc.value, (d) => {
   clearTimeout(saveT);
   if (!dev) saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
 });
+let rigKey = "";
+// 100 人回す・穴チェックはお題に固定した種と相場の写しで、始めの値段は 0 (D-34・D-58、シミュの S-70c)。16:00 の検算 (runCost) と同じ数になる。写しが無い開発の見本は普段のまま
+watch([treeOn, tryOf, () => s.data.value], ([on, x, data]) => {
+  const price = on && x?.seed != null && data ? topicPrice(data, { base: props.topic.base, ilvl: props.topic.ilvl, prices: x.prices }) : null;
+  if (!price) { if (treeRunRig.value) treeRunRig.value = null; rigKey = ""; return; }
+  // 同じ種・同じ写しなら入れ直さない (挑戦の控えは読み直すたびに別の物になる。入れ直すと回した結果が消える)
+  const key = `${x!.seed}|${JSON.stringify(x!.prices)}`;
+  if (treeRunRig.value && key === rigKey) return;
+  rigKey = key;
+  treeRunRig.value = { seed: x!.seed!, price, startCost: 0 };
+}, { immediate: true });
+onBeforeUnmount(() => { treeRunRig.value = null; });
 // 別の場所の木を持ち込まない (D-36): 貼り付けは入力欄の外では届かせない
 const noPaste = (e: ClipboardEvent): void => { if (!(e.target as HTMLElement | null)?.closest?.("input, textarea")) e.stopPropagation(); };
 window.addEventListener("paste", noPaste, true);

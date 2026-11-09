@@ -1,7 +1,7 @@
 /**
  * daily-cost.ts — 提出の費用と完成率の数え方 (D-34・D-58)。16:00 の検算の台本 (scripts/_daily-roll-entry.ts の Verify) がこれを呼ぶ。
  * 画面の木の帯 (use-tree-run → recipe-card) と同じ数え方 (run-price.ts の runShown): 費用 = runTree の perItem (withStartCost の後) を 0.1 神に丸め、完成率 = round(finished / n × 100)。
- * 種と値段はお題に固定した物 (start の返りの seed・prices)。画面がお題の種・値段で回すのはシミュの D-41 ④ の後で、それまで検算は合わない (checked = null のまま)
+ * 種と値段はお題に固定した物 (start の返りの seed・prices)。挑戦の画面も同じ種と値段の引き方 (topicPrice) で回す (S-70c の treeRunRig、11-10 から)
  */
 import type { PatchData } from "../../services/craft-stage/engine";
 import { healRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
@@ -13,6 +13,9 @@ import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { fillTopicDoc } from "./daily-aims";
 import type { GenAim } from "./daily-gen";
+import { freshItem } from "../../services/craft-stage/engine";
+import { marketStore } from "../../state/market-store";
+import { priceOfKey } from "../../state/for-share/craft-stage-shelf";
 
 /** 回す人数 (S-70 の RUN_N と同じ) */
 export const RUN_N = 100;
@@ -65,4 +68,21 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims).length) return null;
   return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0 }), 0));
+}
+
+/**
+ * お題の相場の写し (daily_topics.prices = /boot.json の market と同じ JSON、start の返りの prices) で 1 個の値段を引く (高貴建て、priceOfKey と同じ形)。
+ * 挑戦の画面 (DailyPlay が treeRunRig に入れる) と 16:00 の検算 (makeVerify) が同じ物を呼ぶ。写しが無ければ null。
+ * 引く間だけ相場の控えを写しに差し替えて priceOfKey を呼び、すぐ戻す (引き方を写さないため。回す側の runPrice が 1 物 1 回に覚えるので差し替えは数回)
+ */
+export function topicPrice(data: PatchData, topic: { base: string; ilvl: number; prices: unknown }): ((key: string) => number) | null {
+  const snap = (typeof topic.prices === "string" ? JSON.parse(topic.prices) : topic.prices) as { items?: unknown[] } | null;
+  if (!snap?.items?.length) return null;
+  const items = snap.items as typeof marketStore.items.value;
+  const item = freshItem(data, topic.base, topic.ilvl, "rare");
+  return (key) => {
+    const was = marketStore.items.value;
+    marketStore.items.value = items;
+    try { return priceOfKey(key, item); } finally { marketStore.items.value = was; }
+  };
 }

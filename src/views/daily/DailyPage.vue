@@ -23,6 +23,7 @@ import DailyName from "./DailyName.vue";
 import DailyPlay from "./DailyPlay.vue";
 import DailyPost from "./DailyPost.vue";
 import DailySkins from "./DailySkins.vue";
+import { genesisWhy } from "./daily-check";
 
 const view = computed(() => dailyPage.value?.view ?? "list");
 const q = computed(() => dailyPage.value?.q ?? null);
@@ -45,7 +46,7 @@ const today = computed(() => week.value.find((x) => x.today)?.t ?? null);
 const topic = computed(() => (q.value ? topicOfId(jaTypeName, q.value) : null));
 const solved = (t: DailyTopic): boolean => !!getTry(t.id)?.best;
 const box = computed(() => myBox().filter((b) => b.status !== "used"));
-const boxWhy = (b: DailyBoxItem): string => (b.why === "no-mods" ? tr("お題にできる MOD が無い", "No usable mods") : b.why === "not-full" ? tr("MOD の数がそのベースの上限の合計に届かない", "Fewer mods than the base allows") : b.why === "bad-word" ? tr("名前か一言に使えない言葉がある", "The name or note has a banned word") : b.why ?? "");
+const boxWhy = (b: DailyBoxItem): string => (b.why === "no-mods" ? tr("お題にできる MOD が無い", "No usable mods") : b.why === "not-full" ? tr("MOD の数がそのベースの上限の合計に届かない", "Fewer mods than the base allows") : b.why === "bad-word" ? tr("名前か一言に使えない言葉がある", "The name or note has a banned word") : b.why === "genesis-2" ? genesisWhy() : b.why ?? "");
 const boxText = (b: DailyBoxItem): string =>
   b.status === "ok" ? tr("箱の中。選ばれた日の 16:00 に出る", "In the box. It goes out at 16:00 on the day it's picked")
   : b.status === "wait" ? tr("箱に入った。16:00 に確かめる", "In the box. Checked at 16:00 JST")
