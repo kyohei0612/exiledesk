@@ -7,7 +7,7 @@
 .daily-board { display: grid; column-gap: 36px; row-gap: 10px; padding: 8px 22px 12px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box; }
 .daily-board { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "head head head" "hero rank week" "foot foot foot"; }
 .daily-board.one { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto; grid-template-areas: "head head" "hero rank"; }
-.daily-root[data-daily-page] .daily-board { grid-template-columns: minmax(0, 1fr) 330px minmax(0, 1fr); grid-template-areas: "head head head" "rank hero week" "foot foot foot"; }
+.daily-root[data-daily-page] .daily-board { grid-template-columns: minmax(0, 1fr) 330px minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "head head head" "clock clock clock" "rank hero week" "foot foot foot"; }
 .daily-root[data-daily-page] .daily-board.one { grid-template-columns: 400px minmax(0, 1fr); grid-template-areas: "head head" "hero rank"; }
 /* お題のページで完成形のカードが出る時は、上の絵と名前の札を出さない (カードの頭が名前、11-09 オーナー「アンバランス。アイテムのアイコンは不要」)。左右とも上にそろえる */
 .daily-board.one .daily-veil.has-card .daily-veil-frame,
@@ -27,13 +27,15 @@
 .daily-root[data-daily-page] .daily-title { min-height: 118px; align-items: flex-end; padding-bottom: 18px; font-size: 25px; color: var(--exile-color-tab-on-ink); text-shadow: 0 1px 0 var(--skin-title); }
 .daily-root[data-daily-page] .daily-title::before { background: url("/ui-art/title-c.webp") center / auto 100% no-repeat; filter: var(--skin-art); }
 
-/* 時計と名前: 題の両脇 */
+/* 時計と名前: 題の両脇 (一覧のページ = data-daily-page は題の下の 1 行、下の左右の列の端にそろえる。11-09 夜オーナー「UIはっただけだけどねここ」= 題の飾りに食い込み、下の見出しと並びが合っていなかった) */
 .daily-clock { grid-area: head; align-self: center; display: flex; justify-content: space-between; gap: 8px 16px; padding: 0 118px; position: relative; font-size: 14px; color: var(--skin-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
 .daily-clock p { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 20px; }
 .daily-clock button { pointer-events: auto; }
-.daily-root[data-daily-page] .daily-clock { padding: 0 6px; }
-.daily-root[data-daily-page] .daily-clock p { flex-direction: column; align-items: flex-start; }
-.daily-root[data-daily-page] .daily-clock p:last-child { align-items: flex-end; }
+.daily-root[data-daily-page] .daily-clock { grid-area: clock; align-self: stretch; align-items: center; padding: 6px 0 8px; border-bottom: 1px solid var(--skin-line); }
+.daily-root[data-daily-page] .daily-clock p { flex-direction: row; align-items: center; gap: 2px 24px; }
+.daily-root[data-daily-page] .daily-clock p:last-child { justify-content: flex-end; }
+/* 真ん中の品も左右の列と同じく上から (縦の真ん中に浮かせない) */
+.daily-root[data-daily-page] .daily-board:not(.one) .daily-hero-main { align-self: start; padding-top: 8px; }
 
 /* 品: 倉庫の枠をアイテムの額で囲む。始める前は影だけ (D-32b) */
 .daily-veil { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
