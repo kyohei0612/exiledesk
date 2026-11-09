@@ -37,8 +37,7 @@ const start = (): void => { if (devT) { location.assign(devTreeUrl(props.topic.i
 const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
 /** 押せる物: 始める (今日・14:50 まで) / 続きから始める (残りがある) / 挑戦済み (押せない) / 無し */
 const action = computed(() => {
-  // 木を開く前に諦めた (今日の順位のレシピを見た、D-50c) 時は出さない
-  if (t.value?.ended && !t.value.fractured) return null;
+  // 諦めた後も (木を開く前に諦めた = 今日の順位のレシピを見た D-50c も) 提出の後と同じく「挑戦済み」の灰色 (D-35c、11-09 オーナー「このURLは諦めた後か。ならなってないねボタンが」)
   if (over.value) return tr("挑戦済み", "Already taken");
   if (t.value) return tr(`続きから始める (残り ${clock(left.value)})`, `Resume (${clock(left.value)} left)`);
   return props.today && !closed.value && canStartAt(props.now) ? tr("1 時間の挑戦を始める", "Start the 1 hour challenge") : null;
@@ -72,7 +71,7 @@ const action = computed(() => {
         <p v-if="!t && closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else-if="!t && today && !action" data-daily-closed class="daily-sub">{{ tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00.") }}</p>
         <p v-else-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、1 時間が動き出す。ページを閉じても止まらない。挑戦は 1 日 1 回。", "Pressing reveals the target mods and starts 1 hour. Closing the page doesn't stop it. One try per day.") }}</p>
-        <p v-else-if="t.ended && !t.fractured && !t.last" data-daily-gave-up class="daily-sub">{{ tr("今日の挑戦は諦めた。次のお題は 16:00。", "You gave up today's challenge. The next one opens at 16:00.") }}</p>
+        <p v-else-if="t.ended && !t.submitted && !t.last" data-daily-gave-up class="daily-sub">{{ tr("今日の挑戦は諦めた。次のお題は 16:00。", "You gave up today's challenge. The next one opens at 16:00.") }}</p>
         <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`提出済み: 完成 1 個あたり ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Submitted: ${t.best.cost} div per finished item (${t.best.rate}% finished)`) }}</p>
         <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`順位に載らない記録: 完成率 ${t.last.rate}%`, `Not ranked: ${t.last.rate}% finished`) }}</p>
       </template>

@@ -36,10 +36,11 @@ export function devTry(topic: DailyTopic, st: DevState, now = Date.now()): Daily
 
 /**
  * 一覧・お題のページの見本 (D-37h2、11-09 オーナー「保存後もっかいデイリーに戻ってきた設定でURLみせてくれよ」)。`?page=daily(&q=<お題の id>)&dev=<状態>`:
- * back = 挑戦の途中で離れて戻ってきた (「続きから始める」と「諦める」) / backdone = 提出して戻ってきた (「挑戦済み」の灰色と提出の記録)。
+ * back = 挑戦の途中で離れて戻ってきた (「続きから始める」と「諦める」) / backdone = 提出して戻ってきた (「挑戦済み」の灰色と提出の記録) /
+ * backgiveup = 諦めて戻ってきた (「挑戦済み」の灰色と「今日の挑戦は諦めた」)。
  * 見本の挑戦は端末の控えにもサーバーにも書かない (諦める・続きからを押しても本物は動かない)
  */
-export const DEV_BACK_STATES = ["back", "backdone"] as const;
+export const DEV_BACK_STATES = ["back", "backdone", "backgiveup"] as const;
 export type DevBackState = (typeof DEV_BACK_STATES)[number];
 export function devBackState(): DevBackState | null {
   if (!import.meta.env.DEV) return null;
@@ -59,6 +60,7 @@ export function devBackTry(topic: DailyTopic, st: DevBackState, now = Date.now()
     fractured: aims[aims.length - 1]?.modId ?? "dev",
     from: "fractured",
     ...(st === "backdone" ? { ended: true, submitted: true, best: rec, last: rec } : {}),
+    ...(st === "backgiveup" ? { ended: true } : {}),
   };
 }
 /** 見本の「続きから始める」の行き先 = 挑戦の画面の見本の木 (dev=tree) */
