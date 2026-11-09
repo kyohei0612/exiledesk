@@ -113,14 +113,10 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
   }
   /** 穴チェックのボタン (記録の印は 1 押し 1 回、10-25 オーナー「回すボタンに記録足して」) */
   async function onCheck(): Promise<void> { if (!checking.value) track("sim:test"); await runCheck(); }
-  /**
-   * 始めたばかり (スタートにまだ手も分かれ目も無い) の木では足りない所を見せない (赤い「!」と数で壊れた・間違えたに見えた、10-26 猿の 3。
-   * まずスタートの ＋ で手を足すだけ)。合格ではないので「100 人回す」は今のまま押せない
-   */
-  const fresh = computed(() => !doc.value.boxes.start?.hand && !doc.value.boxes.start?.split);
   /** 今の穴: 押した時の形のままなら押した結果、それ以外は形だけの未設定 */
   const nowIssues = computed(() => (checkedKey.value !== routeKey.value ? [...unsetIssues(doc.value), ...orphanIssues(doc.value)] : issues.value));
-  const shownIssues = computed(() => (fresh.value ? [] : nowIssues.value));
-  const issueOf = (b: TreeBox): string | null => (!shown.value || fresh.value ? null : nowIssues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
+  // 始めたばかり (スタートしか無い) の木もスタートに印を出す (S-89b・S-89c。前の 10-26 の「見せない」= S-132 は 10-28 深夜に撤回)
+  const shownIssues = computed(() => nowIssues.value);
+  const issueOf = (b: TreeBox): string | null => (!shown.value ? null : nowIssues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
   return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf, checkRun: (): CheckRun | null => lastRun };
 }
