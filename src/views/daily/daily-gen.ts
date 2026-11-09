@@ -10,6 +10,7 @@ import { clientClassOf, ENGINE_CATEGORIES, handsOf, inGroup, kindOf } from "../.
 import { goalBlock } from "../../services/simulator/sim-engine";
 import { lang } from "../../i18n/lang";
 import { DAILY_TYPES } from "./daily-types";
+import { fullMods } from "./daily-check";
 
 export type GenAim = { modId: string; tier: number; ja: string; en: string };
 /** 型の 1 品。mods = 接頭・接尾の行の名前 (エンジンの行の id の / の後ろ) と段。暗黙は持たない (D-06) */
@@ -88,6 +89,12 @@ export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL)
   return aims.length ? aims : null;
 }
 
+/** お題にできる 1 人分か: 並びが付き (D-83)、そのベースのフル MOD 以上 (D-84 と同じ判定 fullMods、オーナー 11-09「フルMODだけにして」)。できれば狙い */
+export function fullAimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL): GenAim[] | null {
+  const aims = aimsOfSample(data, s, ilvl);
+  return aims && fullMods(data, s.base, aims) ? aims : null;
+}
+
 /** 投稿の狙いを D-04 の段に上げる (同じ系統をまとめた行は段ごとに modId が違うので表から引き直す)。行が見つからない狙いはそのまま */
 export function floorAims(data: PatchData, base: string, ilvl: number, aims: readonly GenAim[]): GenAim[] {
   let rows: ListRow[] = [];
@@ -129,7 +136,7 @@ export function planWeek(data: PatchData, days: readonly string[], samples: read
       const pool = (fresh.length ? fresh : inCls).flatMap((s) => Array.from({ length: Math.max(1, s.n) }, () => s));
       while (pool.length) {
         const s = pool.splice(Math.floor(rng() * pool.length), 1)[0]!;
-        if (!aimsOfSample(data, s)) { for (let i = pool.length - 1; i >= 0; i--) if (pool[i]!.id === s.id) pool.splice(i, 1); continue; }
+        if (!fullAimsOfSample(data, s)) { for (let i = pool.length - 1; i >= 0; i--) if (pool[i]!.id === s.id) pool.splice(i, 1); continue; }
         past.push({ slot: wd, cls, base: s.base });
         // slot はその品の部位 (見本で部位を問わず引いた日も、出す名前は品に合わせる)
         return { day, slot: slotOfClass(cls) ?? wd, base: s.base, sampleId: s.id };
@@ -139,10 +146,35 @@ export function planWeek(data: PatchData, days: readonly string[], samples: read
   });
 }
 
-/** 予定の 1 日 → お題 (D-82) */
-export function topicOfPlan(data: PatchData, p: PlanDay, samples: readonly DailySample[]): GenTopic | null {
-  const s = samples.find((x) => x.id === p.sampleId), aims = s ? aimsOfSample(data, s) : null;
-  return s && aims ? { day: p.day, sampleId: s.id, base: s.base, ilvl: TOPIC_ILVL, aims, slot: p.slot } : null;
+/** 予定の 1 日 → お題 (D-82)。予定の 1 人分がフル MOD に届かなければ、同じ部位の次の 1 人へ (nextFullSample) */
+export function topicOfPlan(data: PatchData, p: PlanDay, samples: readonly DailySample[], seen: ReadonlySet<string> = new Set()): GenTopic | null {
+  const s = samples.find((x) => x.id === p.sampleId), aims = s ? fullAimsOfSample(data, s) : null;
+  if (s && aims) return { day: p.day, sampleId: s.id, base: s.base, ilvl: TOPIC_ILVL, aims, slot: p.slot };
+  const n = nextFullSample(data, p.day, p.base, samples, seen, p.sampleId);
+  return n ? { day: p.day, sampleId: n.s.id, base: n.s.base, ilvl: TOPIC_ILVL, aims: n.aims, slot: p.slot } : null;
+}
+
+/**
+ * 予定の 1 人分がお題にできない時の次の 1 人 (D-82)。同じ部位 (base と同じ部位の種別) の型から、まだ出ていないベースを先に、日付の種で無作為に。
+ * 予定を組んだ後にフル MOD の判定を足した週 (11-09 の週) の予定も、出す日にここで差し替わる。見つからなければ null
+ */
+export function nextFullSample(data: PatchData, day: string, base: string | null, samples: readonly DailySample[], seen: ReadonlySet<string>, skipId: string | null): { s: DailySample; aims: GenAim[] } | null {
+  const cls = base ? classOfBase(base) : null;
+  if (base && !cls) return null;
+  const rng = mulberry32(seedOf(`next:${day}`));
+  // base = null は部位を問わない (同じ部位にフル MOD の人が 1 人もいない時の控え、毎日 1 個出す D-01 が先)
+  const inCls = samples.filter((s) => s.id !== skipId && classOfBase(s.base) != null && (!cls || classOfBase(s.base) === cls));
+  const fresh = inCls.filter((s) => !seen.has(s.base));
+  for (const list of fresh.length ? [fresh, inCls.filter((s) => seen.has(s.base))] : [inCls]) {
+    const pool = list.flatMap((s) => Array.from({ length: Math.max(1, s.n) }, () => s));
+    while (pool.length) {
+      const s = pool.splice(Math.floor(rng() * pool.length), 1)[0]!;
+      const aims = fullAimsOfSample(data, s);
+      if (aims) return { s, aims };
+      for (let i = pool.length - 1; i >= 0; i--) if (pool[i]!.id === s.id) pool.splice(i, 1);
+    }
+  }
+  return null;
 }
 
 /** 手の辞書から見本の型を作る (週のファイルが 1 つも無い時、D-80)。付く組だけ残し、段は T3 の見本 */
