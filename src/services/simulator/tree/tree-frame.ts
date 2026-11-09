@@ -252,6 +252,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       q.push(...kids);
       // 手の無い箱の下 (分かれ目の行・ヒネコラのハズレ) は親の代表のまま
       const same = (o: string, note: string | null): void => { frames.set(o, { ...f, note }); };
+      // 代表を出せない箱 (枝の多すぎる手の下・分かれ目の下) の下も全部出せない = 見本の打ち直しのまま (S-200。前は 1 段下だけで、錬金術 → 骨の箱を白の品で数え、ノーマル・MOD なしの見本になった)
+      if (f.note === "tooMany" || f.note === "split") { for (const o of kids) same(o, f.note); continue; }
       if (!b.hand) { for (const o of kids) same(o, b.split ? "split" : null); continue; }
       const s = splitOf(data, doc, b, f, aims, part);
       if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
