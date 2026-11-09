@@ -26,6 +26,7 @@ import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
 import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
 import { DIVINE_LT, divineBranches, divineMet, isDivineAim } from "./tree-divine";
+import { sureFracOn, sureFracture } from "./tree-sure-frac";
 export { fractureChoices } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 
 /** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
@@ -366,6 +367,8 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     const br = brs.find((x) => divineMet(x.item, h.targets ?? []) === (b.junkKey !== DIVINE_LT));
     if (br) return { item: handOut(br.item), note: base.note };
   }
+  // デイリーの確定フラクチャー (D-03): 見本も ✦ の MOD が固定された品 (外れの ✦ にならない)
+  if (sureFracOn(doc, h)) { const r = sureFracture(data, doc, base.item, h); if (r) return { item: handOut(r.item), note: base.note }; }
   if (!h.repeat && keepsMods(data, base.item, h.currency, h.omens)) { const r = roll(0); if (r.applied) return { item: handOut(r.item), note: base.note }; from = 1; }
   let last: Roll | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
