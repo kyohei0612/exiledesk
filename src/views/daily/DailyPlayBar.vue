@@ -9,7 +9,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import { freshItem, tierRankLabel } from "../../services/craft-stage/engine";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import ModTable from "../../components/for-share/mod-list/ModTable.vue";
-import { openDailyPage } from "../../web/page";
+import { goDaily } from "./daily-open";
 import type { DailyAim } from "./daily-api";
 import { useTree } from "../simulator/tree/use-tree";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
@@ -34,12 +34,12 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
     <div class="daily-band2-btns">
       <button type="button" class="g-btn sm" data-daily-modlist @click="listOpen = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <button v-if="!ended" type="button" class="g-btn sm" data-daily-giveup @click="asking = true">{{ tr("諦める", "Give up") }}</button>
-      <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+      <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     </div>
 
     <ModalShell :open="listOpen" :title="tr('このベースに付く MOD (何も付いていない状態)', 'Mods for this base (nothing attached)')" width="w-[1100px] max-w-[96vw]" @close="listOpen = false">
       <div data-daily-modlist-body class="p-2"><ModTable v-if="blank" overlay :data="s.data.value" :item="blank" /></div>
     </ModalShell>
-    <DailyGiveUpAsk :id="id" :open="asking" @close="asking = false" @done="asking = false; openDailyPage({ view: 'list' })" />
+    <DailyGiveUpAsk :id="id" :open="asking" @close="asking = false" @done="asking = false; goDaily({ view: 'list' })" />
   </div>
 </template>

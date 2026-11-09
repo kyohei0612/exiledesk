@@ -8,7 +8,8 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
-import { openDailyPage, treeStep } from "../../web/page";
+import { treeStep } from "../../web/page";
+import { goDaily } from "./daily-open";
 import { usePhone } from "../../utils/use-phone";
 import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
@@ -119,7 +120,7 @@ const REFUSED: Record<StartError, () => string> = {
 <template>
   <div v-if="phone" data-daily-play data-daily-pc-only class="daily-note">
     <p>{{ tr("挑戦は幅の広い画面 (PC) で。始めた挑戦の時間は止まらない。", "Open on a wider screen (PC) to take the challenge. A started challenge keeps its clock running.") }}</p>
-    <button type="button" class="g-btn sm mt-2" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+    <button type="button" class="g-btn sm mt-2" data-daily-leave @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
   </div>
   <div v-else data-daily-play :data-daily-heat="heat || undefined" :data-daily-tree="treeOn || undefined">
     <header class="daily-band">
@@ -141,7 +142,7 @@ const REFUSED: Record<StartError, () => string> = {
     <!-- サーバーの返りの前・断られた時も戻る口は残す (11-05 オーナー「一度続きからにはいったら戻るすべが１つもない」) -->
     <div v-else class="daily-band2" data-daily-band2>
       <div class="daily-band2-btns ml-auto">
-        <button type="button" class="g-btn sm" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+        <button type="button" class="g-btn sm" data-daily-leave @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
       </div>
     </div>
 

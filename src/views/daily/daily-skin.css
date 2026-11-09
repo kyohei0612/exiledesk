@@ -154,6 +154,10 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-heat="last"] .daily-fuse { height: 5px; }
 
 .daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--skin-panel); font-size: 15px; }
+/* 投稿のページの中のエミュ (D-12): 上にデイリーの帯 1 本 (送っても上に残る)、下はいつものエミュ */
+.daily-post-emu-bar { position: sticky; top: 0; z-index: 30; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.7); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; margin-bottom: 12px; background: var(--skin-panel); font-size: 14px; color: var(--skin-dim); }
+/* 中のエミュの上のタブはデイリーの上のタブと 2 重になるので隠す (移るのは帯の「投稿へ戻る」と上のタブから) */
+[data-daily-post-emu] [data-mode-tabs] { display: none; }
 /* 遊び方の 1 行 (D-10c): 卓の上に静かに。字は薄い字の色のまま */
 .daily-how { margin: 0 0 8px; padding: 0 4px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--skin-dim); text-wrap: balance; }
 .daily-frac { padding: 28px 40px 40px; }
@@ -242,6 +246,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
   .daily-post { padding: 16px; }
   .daily-skin-grid { grid-template-columns: minmax(0, 1fr); }
   /* 帯は 2 段: 上に品と時間、下に結果と提出 */
+  .daily-post-emu-bar p { flex-basis: 100%; }
   .daily-band, .daily-root[data-daily-page] .daily-band { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; min-height: 0; padding: 6px 10px 10px; margin-bottom: 8px; }
   .daily-root[data-daily-page] .daily-band::before { background: url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
   .daily-root[data-daily-page] .daily-band-topic, .daily-root[data-daily-page] .daily-band-score { padding: 0; }
