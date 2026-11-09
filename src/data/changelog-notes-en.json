@@ -1,5 +1,7 @@
 {
-  "0.1.688": [],
+  "0.1.688": [
+    "Fixed pages sometimes getting stuck while loading. Info badges no longer show a duplicate tooltip on hover"
+  ],
   "0.1.687": [
     "Simulator: the final check no longer flags a step as \"never hits\" (and counts it as unset) when the hit is actually reachable"
   ],
