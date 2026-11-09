@@ -1,31 +1,29 @@
 #!/usr/bin/env node
 /**
- * daily-fetch-home.mjs — デイリーの週の取得を家の PC で 1 回 (設計図 Y-53・D-80e、2026-11-09)。予定のタスクで日曜 16:05 JST に回す。
+ * daily-fetch-home.mjs — デイリーの週の取得と週の予定を家の PC で 1 回 (設計図 Y-53・D-80e、2026-11-09)。予定のタスクで日曜 16:05 JST に回す。
  *   ① 取る: Worker と同じコード (server/live/src/ninja/ の ninjaTick) を、手元の空の SQLite で最後まで回す (上限 400 本)
- *   ② 写す: 締めた後の ninja_job の行と daily_fetch_items を、本番の D1 へ wrangler d1 execute --remote --file で
- *   ③ 組む: 来週の予定 (daily_plan) を scripts/daily-roll.mjs --d1 --week-only で (締め・お題は書かない)
+ *   ② 組む: 取れた品から来週の予定 (daily_plan、D-06) を手元で組む。daily-roll.mjs の ① と同じ関数 (_daily-roll-entry.ts の roll、材料は rollJson)
+ *   ③ 写す: 品 (daily_fetch_items)・取得の結果の行 (ninja_job)・週の型と予定 (daily_samples・daily_plan) を 1 つのファイルで本番の D1 へ
+ *      (wrangler d1 execute --remote --file、途中で落ちれば全部戻る)。毎日のお題はサーバーが予定から出す (settleFromPlan、今のまま)
  * 鍵は使わない (Y-90)。D1 はオーナーの wrangler のログインで読み書きする。
- * 確認ページ (403・cf-mitigated・HTML) が 1 本でも出たら、以降の問い合わせを 0 にして止め、品 0 の ninja_job だけを写す = その週は前の週の品のまま。
- * 窓 (日 16:00〜月 16:00 JST) の外で回った時は取らず、その週の予定が無ければ ③ だけ (前の週の型で組む)。
+ * 確認ページ (403・cf-mitigated・HTML) が 1 本でも出たら、以降の問い合わせを 0 にして止め、品 0 の ninja_job を写す = その週は前の週の品のまま (予定は前の週の型で組む)。
+ * 窓 (日 16:00〜月 16:00 JST) の外で回った時は取らず、その週の予定が無ければ ② ③ だけ (前の週の型で組む)。
  * その週の ninja_job が本番に 1 行でもあれば取らない (週 1 回)。止めのスイッチは本番の ninja_ctl の home_stop = '1'。
  *
- *   node scripts/daily-fetch-home.mjs [--local] [--no-roll]
- *     --local   = 取るだけで本番に写さない・組まない (取った物の数を出す)。本番の D1 も読まない
- *     --no-roll = ③ を回さない
+ *   node scripts/daily-fetch-home.mjs [--local]
+ *     --local = 取るだけで写さない・組まない (取った物の数を出す)。D1 も読まない
+ *   EXILEDESK_D1_LOCAL=<置き場> を付けると、読む・写すの行き先が本番でなく手元の D1 になる (_d1-shim.mjs、本番に書かずに通しを見る試し用)
  * 1 回ごとに docs/org/daily/notes/fetch-home.log へ 1 行 (git には入らない)。
  */
-import { spawnSync } from "node:child_process";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
-import { inline, localD1, remoteD1, writeSql } from "./_d1-shim.mjs";
+import { inline, localD1, remoteD1, target, writeSql } from "./_d1-shim.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LOG = join(ROOT, "docs/org/daily/notes/fetch-home.log");
-const args = process.argv.slice(2);
-const LOCAL = args.includes("--local");
-const NO_ROLL = args.includes("--no-roll");
+const LOCAL = process.argv.slice(2).includes("--local");
 
 const JST = 9 * 3600e3, H16 = 16 * 3600e3, DAY = 86400e3;
 const jstNow = () => new Date(Date.now() + JST).toISOString().slice(0, 16).replace("T", " ");
@@ -80,23 +78,43 @@ async function fetchLocal(J, week) {
   return { job, items: g.tripped ? [] : items, tripped: g.tripped, sent: g.sent };
 }
 
-/** ② 本番へ写す。確認ページで止めた週は品を写さない */
-function copyRemote(job, items) {
-  const cols = ["week", "state", "league", "version", "snapshot", "ascs", "interval_ms", "not_before", "last_sent", "pending", "requests", "errors", "started_at", "finished_at", "people", "items"];
-  const itemCols = ["week", "slot", "sub", "base", "ilvl", "quality", "quality_kind", "mods", "fractured", "desecrated", "corrupted", "sanctified", "who", "asc", "skill"];
-  const lines = [
+const JOB_COLS = ["week", "state", "league", "version", "snapshot", "ascs", "interval_ms", "not_before", "last_sent", "pending", "requests", "errors", "started_at", "finished_at", "people", "items"];
+const ITEM_COLS = ["week", "slot", "sub", "base", "ilvl", "quality", "quality_kind", "mods", "fractured", "desecrated", "corrupted", "sanctified", "who", "asc", "skill"];
+
+/** ③ の品と結果の行の SQL。確認ページで止めた週は品を写さない */
+function fetchSql(job, items) {
+  return [
     inline("DELETE FROM daily_fetch_items WHERE week = ?", [job.week]),
-    ...items.map((it) => inline(`INSERT INTO daily_fetch_items (${itemCols.join(", ")}) VALUES (${itemCols.map(() => "?").join(", ")})`, itemCols.map((c) => it[c]))),
-    inline(`INSERT OR REPLACE INTO ninja_job (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`, cols.map((c) => (c === "items" ? items.length : c === "pending" ? null : job[c]))),
+    ...items.map((it) => inline(`INSERT INTO daily_fetch_items (${ITEM_COLS.join(", ")}) VALUES (${ITEM_COLS.map(() => "?").join(", ")})`, ITEM_COLS.map((c) => it[c]))),
+    inline(`INSERT OR REPLACE INTO ninja_job (${JOB_COLS.join(", ")}) VALUES (${JOB_COLS.map(() => "?").join(", ")})`, JOB_COLS.map((c) => (c === "items" ? items.length : c === "pending" ? null : job[c]))),
   ];
-  writeSql(lines);
 }
 
-function roll(day) {
-  const r = spawnSync(process.execPath, [join(ROOT, "scripts/daily-roll.mjs"), "--d1", "--week-only", "--day", day], { cwd: ROOT, encoding: "utf8" });
-  const out = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
-  console.log(out);
-  return { ok: r.status === 0, last: out.split("\n").filter(Boolean).slice(-1)[0] ?? "" };
+/**
+ * ② 週の予定を手元で組み、③ の SQL にする。材料は D1 の rollJson (前の週の型・出たお題の履歴) に、手元で取った品と結果の行を差し込んだ物。
+ * 書く所は rollPost を「SQL を集めるだけの D1」に渡して作る (Worker の書き方と同じ文になる)
+ */
+async function planSql(D1, day, fetched) {
+  // 束ねた中に読み込みの時に location を読む画面の部品がある (daily-roll.mjs と同じ守り)
+  globalThis.location ??= { hostname: "", href: "", search: "", hash: "", pathname: "/" };
+  const R = await bundleEntry("server/live/src/daily/roll.ts");
+  const M = await bundleEntry("scripts/_daily-roll-entry.ts");
+  const inp = await R.rollJson(D1, Date.now(), day);
+  if (fetched) {
+    inp.job = { week: fetched.job.week, state: fetched.job.state, people: fetched.job.people, items: fetched.items.length, requests: fetched.job.requests };
+    inp.items = fetched.items.map((it) => Object.fromEntries(ITEM_COLS.filter((c) => c !== "week" && c !== "asc" && c !== "skill").map((c) => [c, it[c]])));
+  }
+  const ver = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version;
+  const { body, log } = M.roll(M.loadPatchSync(), inp, ver, false);
+  for (const l of log) console.log(l);
+  if (!body.week) return { lines: [], log };
+  const lines = [];
+  const rec = {
+    prepare: (sql) => ({ bind: (...a) => ({ first: () => D1.prepare(sql).bind(...a).first(), _sql: () => inline(sql, a) }) }),
+    batch: async (stmts) => void lines.push(...stmts.map((s) => s._sql())),
+  };
+  await R.rollPost(rec, { week: body.week }, null);
+  return { lines, log };
 }
 
 const J = await bundleEntry("server/live/src/ninja/job.ts");
@@ -120,28 +138,25 @@ if (LOCAL) {
 
 const D1 = remoteD1();
 try {
+  let fetched = null, said = "";
   if (win.open) {
     const ctl = await D1.prepare("SELECT v FROM ninja_ctl WHERE k = 'home_stop'").first();
     const had = await D1.prepare("SELECT state, requests, people, items FROM ninja_job WHERE week = ?").bind(week).first();
-    if (ctl?.v === "1") record(`週 ${week}: 止めのスイッチ (ninja_ctl home_stop = 1) なので取らない`);
-    else if (had) record(`週 ${week}: もう取ってある (${had.state}・${had.requests} 本・${had.items ?? 0} 品) ので取らない`);
+    if (ctl?.v === "1") said = "止めのスイッチ (ninja_ctl home_stop = 1) なので取らない";
+    else if (had) said = `もう取ってある (${had.state}・${had.requests} 本・${had.items ?? 0} 品) ので取らない`;
     else {
-      const r = await fetchLocal(J, week);
-      if (!r.job) throw new Error("手元の取得が始まらなかった");
-      copyRemote(r.job, r.items);
-      record(`週 ${week}: ${r.job.state}・${r.sent} 本・${r.job.people ?? 0} 人・${r.items.length} 品を本番へ${r.tripped ? ` ・確認ページで止めた = 前の週の品のまま (${r.tripped})` : ""}`);
+      fetched = await fetchLocal(J, week);
+      if (!fetched.job) throw new Error("手元の取得が始まらなかった");
+      said = `${fetched.job.state}・${fetched.sent} 本・${fetched.job.people ?? 0} 人・${fetched.items.length} 品${fetched.tripped ? ` ・確認ページで止めた = 前の週の品のまま (${fetched.tripped})` : ""}`;
     }
-  } else record(`週 ${week}: 窓 (日 16:00〜月 16:00 JST) の外なので取らない = 前の週の品のまま`);
+  } else said = "窓 (日 16:00〜月 16:00 JST) の外なので取らない = 前の週の品のまま";
 
-  if (!NO_ROLL) {
-    const plan = await D1.prepare("SELECT 1 AS x FROM daily_plan WHERE week = ? LIMIT 1").bind(week).first();
-    if (plan) record(`週 ${week}: 予定はもうある`);
-    else {
-      const r = roll(win.open ? week : dayName(curNo));
-      record(`週 ${week}: 予定を組んだ ${r.ok ? "" : "が落ちた "}(${r.last.slice(0, 160)})`);
-      if (!r.ok) process.exit(1);
-    }
-  }
+  const plan = await D1.prepare("SELECT 1 AS x FROM daily_plan WHERE week = ? LIMIT 1").bind(week).first();
+  const p = plan ? { lines: [], log: ["予定はもうある"] } : await planSql(D1, win.open ? week : dayName(curNo), fetched);
+  const lines = [...(fetched ? fetchSql(fetched.job, fetched.items) : []), ...p.lines];
+  writeSql(lines);
+  const planned = p.log.find((l) => l.startsWith("予定")) ?? "予定は組まなかった";
+  record(`週 ${week}: ${said} / ${planned.slice(0, 200)} → ${lines.length ? `${target()}へ ${lines.length} 文` : "写す物なし"}`);
 } catch (e) {
   record(`週 ${week}: 落ちた ${String(e?.message ?? e).slice(0, 300)}`);
   process.exit(1);

@@ -91,8 +91,16 @@ export function wrangler(args) {
   return r.stdout;
 }
 
+/**
+ * 行き先。EXILEDESK_D1_LOCAL=<置き場> の時だけ本番でなく手元の D1 (wrangler dev --persist-to と同じ置き場、scripts/dev-daily-api.mjs が立てる物) に読み書きする。
+ * 予定の時間どおりの通しを本番に書かずに見る試し用 (11-09)
+ */
+const LOCAL_TO = process.env.EXILEDESK_D1_LOCAL || null;
+const where = () => (LOCAL_TO ? ["--local", "--persist-to", LOCAL_TO] : ["--remote"]);
+export const target = () => (LOCAL_TO ? `手元の D1 (${LOCAL_TO})` : "本番の D1");
+
 function execJson(args) {
-  const out = wrangler(["d1", "execute", DB_NAME, "--remote", "--json", ...args]);
+  const out = wrangler(["d1", "execute", DB_NAME, ...where(), "--json", ...args]);
   const j = JSON.parse(out.slice(out.indexOf("[")));
   if (!Array.isArray(j) || j.some((x) => x.success === false)) throw new Error(`d1: ${out.slice(0, 300)}`);
   return j;
@@ -127,7 +135,7 @@ export function writeSql(lines) {
 /** 本番の KV (LIVE) の 1 キー。無ければ null */
 export function remoteKv(key) {
   try {
-    const out = wrangler(["kv", "key", "get", key, "--binding", "LIVE", "--remote"]);
+    const out = wrangler(["kv", "key", "get", key, "--binding", "LIVE", ...where()]);
     return out.trim() ? out.trim() : null;
   } catch (e) {
     if (/not found|404/i.test(String(e))) return null;
