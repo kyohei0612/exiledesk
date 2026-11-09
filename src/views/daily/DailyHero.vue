@@ -9,6 +9,7 @@ import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import { goDaily } from "./daily-open";
 import { canStartAt, getTry, leftMs, myNick, SLOT_NAMES, type DailyTopic } from "./daily-api";
+import { devBackState, devBackTry, devTreeUrl } from "./daily-dev-states";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
@@ -19,7 +20,10 @@ const phone = usePhone();
 const art = computed(() => baseArt(props.topic.base));
 const name = computed(() => tr(props.topic.baseJa, props.topic.base));
 const slot = computed(() => SLOT_NAMES[props.topic.slot] ?? null);
-const t = computed(() => getTry(props.topic.id));
+/** 開発版の見本 (dev=back / backdone、D-37h2): 開いた時に 1 度だけ作り、端末の控えは見ない・書かない */
+const devBack = devBackState();
+const devT = devBack ? devBackTry(props.topic, devBack) : null;
+const t = computed(() => devT ?? getTry(props.topic.id));
 const left = computed(() => (t.value ? leftMs(t.value, props.now) : 0));
 const closed = computed(() => !!props.topic.aims);
 const clock = (ms: number): string => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
@@ -28,7 +32,7 @@ const asking = ref(false);
 const going = computed(() => !!t.value && left.value > 0 && !t.value.ended);
 const giving = ref(false);
 const go =(): void => goDaily({ view: "start", q: props.topic.id });
-const start = (): void => { if (t.value || myNick()) go(); else asking.value = true; };
+const start = (): void => { if (devT) { location.assign(devTreeUrl(props.topic.id)); return; } if (t.value || myNick()) go(); else asking.value = true; };
 /** 終わった挑戦 (提出・諦めた・時間切れ)。ボタンは「挑戦済み」で押せない (D-35c、11-09 夜オーナー「提出後は戻ってきた際は挑戦済みにしてグレーアウト」) */
 const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
 /** 押せる物: 始める (今日・14:50 まで) / 続きから始める (残りがある) / 挑戦済み (押せない) / 無し */
@@ -75,6 +79,6 @@ const action = computed(() => {
     </div>
     <DailyRank :topic="topic" />
     <DailyNick v-if="asking" @done="asking = false; go()" @close="asking = false" />
-    <DailyGiveUpAsk v-if="going" :id="topic.id" :open="giving" @close="giving = false" @done="giving = false" />
+    <DailyGiveUpAsk v-if="going" :id="topic.id" :open="giving" :dev="!!devT" @close="giving = false" @done="giving = false" />
   </section>
 </template>

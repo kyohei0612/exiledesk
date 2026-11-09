@@ -33,3 +33,33 @@ export function devTry(topic: DailyTopic, st: DevState, now = Date.now()): Daily
     ...(st === "done" ? { ended: true, submitted: true, last: { cost: DEV_RUN.cost, rate: DEV_RUN.rate, ms: 5 * 60_000, at: now } } : {}),
   };
 }
+
+/**
+ * 一覧・お題のページの見本 (D-37h2、11-09 オーナー「保存後もっかいデイリーに戻ってきた設定でURLみせてくれよ」)。`?page=daily(&q=<お題の id>)&dev=<状態>`:
+ * back = 挑戦の途中で離れて戻ってきた (「続きから始める」と「諦める」) / backdone = 提出して戻ってきた (「挑戦済み」の灰色と提出の記録)。
+ * 見本の挑戦は端末の控えにもサーバーにも書かない (諦める・続きからを押しても本物は動かない)
+ */
+export const DEV_BACK_STATES = ["back", "backdone"] as const;
+export type DevBackState = (typeof DEV_BACK_STATES)[number];
+export function devBackState(): DevBackState | null {
+  if (!import.meta.env.DEV) return null;
+  try {
+    const v = new URLSearchParams(location.search).get("dev");
+    return (DEV_BACK_STATES as readonly string[]).includes(v ?? "") ? (v as DevBackState) : null;
+  } catch { return null; }
+}
+/** 戻ってきた時の見本の挑戦 (始めて 20 分。今日のお題は狙いが伏せてあるので、狙いが無くても作る) */
+export function devBackTry(topic: DailyTopic, st: DevBackState, now = Date.now()): DailyTry {
+  const aims = topic.aims?.length ? topic.aims : getTry(topic.id)?.aims ?? [];
+  const rec = { cost: DEV_RUN.cost, rate: DEV_RUN.rate, ms: 20 * 60_000, at: now };
+  return {
+    topicId: topic.id,
+    startedAt: now - 20 * 60_000,
+    aims: aims.map((a) => ({ ...a })),
+    fractured: aims[aims.length - 1]?.modId ?? "dev",
+    from: "fractured",
+    ...(st === "backdone" ? { ended: true, submitted: true, best: rec, last: rec } : {}),
+  };
+}
+/** 見本の「続きから始める」の行き先 = 挑戦の画面の見本の木 (dev=tree) */
+export const devTreeUrl = (id: string): string => `${location.pathname}?page=daily-start&q=${encodeURIComponent(id)}&dev=tree`;
