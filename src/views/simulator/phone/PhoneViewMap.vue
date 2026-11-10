@@ -7,7 +7,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
-import { depthRows, EST_H } from "../../../services/simulator/tree/tree-row-tops";
+import { EST_H, laneTexts, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
+import { laneBandW } from "../tree/tree-lane-band";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { foldOuts, stripFolds, stripHidden, toggleStripFold, stopToHead } from "../../../services/simulator/tree/tree-strip-fold";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
@@ -50,7 +51,8 @@ const wrap = ref<HTMLElement | null>(null);
 const folds = computed(() => stripFolds(doc.value));
 const hidden = computed(() => stripHidden(doc.value, folds.value));
 const lastToHead = computed(() => stopToHead(folds.value));
-const rows = computed(() => depthRows(doc.value));
+/** 描く段 (PC の木と同じ数え = 畳んだ消去の続きの隠した箱は段を取らない。前は深さで数えて、畳みのある木で段の札が重なっていた、11-10 0.1.693 の猿の 3) */
+const rows = computed(() => rowLayout(doc.value, () => EST_H).rows);
 /** 全体図の中の箱の上の辺 */
 const yOf = (b: Box): number => b.y + (rows.value.get(b.id) ?? 0) * ROW_EXTRA;
 /** 描く箱 (PC の木と同じ: 品質だけの箱・まとめた箱・畳んだ箱は描かない) */
@@ -96,7 +98,8 @@ function showNear(): void {
   touched = true;
   m.glideTo((w / 2 - m.tx.value) / z, (h / 2 - m.ty.value) / z, NEAR_K);
 }
-function refit(): void { if (!touched && wrap.value?.clientWidth) m.fit(bounds.value); }
+/** 全体の時は段の札の帯の分だけ左を空ける (横に広い木で左端の箱が札の下に掛かっていた、11-10 朝の問い 7)。全体の倍率では札の字は最小なので、倍率 0 の幅で足りる */
+function refit(): void { if (!touched && wrap.value?.clientWidth) m.fit(bounds.value, laneBandW(lanes.value.map((l) => l.text), 0)); }
 let ro: ResizeObserver | null = null;
 onMounted(() => { if (wrap.value) { ro = new ResizeObserver(refit); ro.observe(wrap.value); } });
 onBeforeUnmount(() => ro?.disconnect());
@@ -160,11 +163,11 @@ const names = computed(() => (m.k.value < NAME_K ? [] : inView.value.filter((b) 
 })));
 /** 色の札 (カードの裏には出さない。カードの高さは札と違うのではみ出す) */
 const rects = computed(() => boxes.value.filter((b) => !cardIds.value.has(b.id)));
-/** 段の番号の札 (S-147f): 段ごとに箱の真ん中の高さ。番号は「n 段目」と同じ深さ + 1 */
+/** 段の番号の札 (S-147f): 描く段ごとに箱の真ん中の高さ。番号は PC の木と同じ laneTexts (「n 段目」、畳みで深さが混ざる段は「小〜大」) */
 const lanes = computed(() => {
-  const by = new Map<number, number>();
-  for (const b of boxes.value) { const n = (rows.value.get(b.id) ?? 0) + 1; by.set(n, Math.min(by.get(n) ?? Infinity, yOf(b) + EST_H / 2)); }
-  return [...by].map(([n, mid]) => ({ mid, text: `${n}` }));
+  const texts = laneTexts(doc.value, rows.value), by = new Map<number, number>();
+  for (const b of boxes.value) { const r = rows.value.get(b.id) ?? 0; by.set(r, Math.min(by.get(r) ?? Infinity, yOf(b) + EST_H / 2)); }
+  return [...by].filter(([r]) => texts[r]).map(([r, mid]) => ({ mid, text: texts[r]! }));
 });
 const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? "242,210,122" : OUT_LOOK[b.out].c);
 </script>

@@ -38,13 +38,13 @@ export function useMapTouch(el: Ref<HTMLElement | null>, onTap: (px: number, py:
     k.value = z;
     clamp();
   }
-  /** 全体を枠に合わせる (b は箱のある範囲) */
-  function fit(b: MapBounds): void {
+  /** 全体を枠に合わせる (b は箱のある範囲。left = 左に空ける画面の幅、段の札の帯の下に箱を入れない、11-10) */
+  function fit(b: MapBounds, left = 0): void {
     box = b;
-    const { w, h } = size(), PAD = 12;
+    const { w: w0, h } = size(), PAD = 12, w = w0 - left;
     const z = Math.min((w - PAD * 2) / Math.max(1, b.w), (h - PAD * 2) / Math.max(1, b.h), FIT_MAX);
     minK = z; k.value = z;
-    tx.value = (w - b.w * z) / 2 - b.x * z;
+    tx.value = left + (w - b.w * z) / 2 - b.x * z;
     ty.value = (h - b.h * z) / 2 - b.y * z;
   }
   /** 木の (x, y) を枠の真ん中へ、倍率 nk まで滑らかに寄る */
