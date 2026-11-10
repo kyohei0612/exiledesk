@@ -105,48 +105,125 @@ function rankVariantsAll(data: PatchData, item: StageItem, aims: readonly AimLik
   const code = codesOf(boxKey)[0];
   if (code !== undefined && junk.length && rankCode(w, Math.min(...junk.map(lv))) === code) return [{ p: 1, item }];
   const free = junk.filter((m) => !m.crafted && !m.unrevealed);
-  if (!free.length || free.length > FREE_MAX) return [{ p: 1, item }];
-  let states: Array<{ p: number; item: StageItem; fl: Map<string, number> }> = [{ p: 1, item, fl: new Map(floorsOf(item) ?? []) }];
+  if (!free.length) return [{ p: 1, item }];
+  // 狙いの MOD レベルも代表の品の段に頼らない (S-65c ②c): 完成形の段以上で付きうる段ごとに差し替える (MOD レベルの同じ段は 1 つ、代表の段を先に)
+  const aimStates = aimVariants(data, item, miss, side);
+  // 外れが上限を超える時は、外れごとに「一番低い外れの MOD レベル」と「その MOD レベルの外れ」だけを持ち回る (掛け算にしない、S-65c ②c)
+  if (free.length > FREE_MAX || aimStates.length > 1) return mergeBySignature(aimStates.flatMap((a, ai) => (free.length > FREE_MAX ? minJunkStates(data, a.item, free, miss, ai, floorsOf(item)) : codeStates(data, a.item, free, miss, side, floorsOf(item))).map((s) => ({ ...s, p: s.p * a.p }))), miss, side);
+  return codeStates(data, item, free, miss, side);
+}
+/** 差し替えた品と割合と下限 */
+type VState = { p: number; item: StageItem; fl: Map<string, number> };
+/** 外れの差し替えの候補 (その外れの池・側の段ごと、外れだけ・下限以上) を、by の鍵ごとに重みの和と代わり (一番重い段) にまとめる */
+function junkSubs(data: PatchData, s: VState, j: StageMod, miss: MissAims, keyOf: (m: StageMod) => string): { cur: StageMod; base: StageItem; floor: number; total: number; by: Map<string, { w: number; top: number; mod: StageMod }> } | null {
+  const cur = s.item.prefixes.concat(s.item.suffixes).find((m) => sameMod(m, j));
+  if (!cur) return null;
+  const floor = s.fl.get(fKey(j)) ?? 0;
+  const base = without(s.item, cur);
+  const by = new Map<string, { w: number; top: number; mod: StageMod }>();
+  let total = 0;
+  // 冒涜の外れは発現で出うる池 (冒涜専用 + 一般、E-62 = run-plan の発現と同じ) から、冒涜の印のまま
+  const k = j.side === "prefix" ? "prefixes" : "suffixes";
+  const pool = j.desecrated ? { pools: () => [...(base.cls.pools.desecrated?.[k] ?? []), ...effectiveCls(base).pools.normal[k]] } : {};
+  for (const c of candidates(data, base, [j.side], 0, pool)) {
+    for (const t of c.tiers) {
+      if (!(t.w > 0)) continue;
+      const sm0 = makeStageMod(c.mod, c.side, t.index, () => 0.5);
+      const sm = j.desecrated ? { ...sm0, desecrated: true } : sm0;
+      // 代わりは外れだけ (狙いに当たる段は入れない)
+      if (!isMissMod(sm, miss) || lv(sm) < floor) continue;
+      const key = keyOf(sm), e = by.get(key);
+      total += t.w;
+      if (!e) by.set(key, { w: t.w, top: t.w, mod: sm });
+      else { e.w += t.w; if (t.w > e.top) { e.top = t.w; e.mod = sm; } }
+    }
+  }
+  return total > 0 ? { cur, base, floor, total, by } : null;
+}
+/** 差し替えた外れの次の状態 (元の外れの下限を引き継ぐ) */
+function nextState(s: VState, sub: NonNullable<ReturnType<typeof junkSubs>>, e: { w: number; mod: StageMod }): VState {
+  const fl = new Map(s.fl);
+  fl.delete(fKey(sub.cur));
+  if (sub.floor) fl.set(fKey(e.mod), sub.floor);
+  return { p: (s.p * e.w) / sub.total, item: withSame(sub.base, e.mod, sub.cur), fl };
+}
+const finish = (states: readonly VState[], item: StageItem): Array<{ p: number; item: StageItem }> =>
+  states.map((s) => { if (s.item !== item && s.fl.size) FLOORS.set(s.item, s.fl); return { p: s.p, item: s.item }; });
+/** 外れが上限まで: 外れごとに欲しい MOD との順位 (rankCode) の出方の掛け算 (前からの作り) */
+function codeStates(data: PatchData, item: StageItem, free: readonly StageMod[], miss: MissAims, side?: StageSide | null, fl0: ReadonlyMap<string, number> | undefined = floorsOf(item)): Array<{ p: number; item: StageItem }> {
+  const w = wantedLevels(item, miss, side);
+  let states: VState[] = [{ p: 1, item, fl: new Map(fl0 ?? []) }];
   for (const j of free) {
-    const next: typeof states = [];
-    // 前の削減を越えて残った外れは、その時に消えた MOD の MOD レベル以上の段だけ (③)
-    const floor = floorsOf(item)?.get(fKey(j)) ?? 0;
+    const next: VState[] = [];
     for (const s of states) {
-      const cur = s.item.prefixes.concat(s.item.suffixes).find((m) => sameMod(m, j));
-      if (!cur) { next.push(s); continue; }
-      const base = without(s.item, cur);
-      // 順位ごとに重みの和と、代わりの MOD (一番重い段)
-      const by = new Map<string, { w: number; top: number; mod: StageMod }>();
-      let total = 0;
-      // 冒涜の外れは発現で出うる池 (冒涜専用 + 一般、E-62 = run-plan の発現と同じ) から、冒涜の印のまま
-      const k = j.side === "prefix" ? "prefixes" : "suffixes";
-      const pool = j.desecrated ? { pools: () => [...(base.cls.pools.desecrated?.[k] ?? []), ...effectiveCls(base).pools.normal[k]] } : {};
-      for (const c of candidates(data, base, [j.side], 0, pool)) {
-        for (const t of c.tiers) {
-          if (!(t.w > 0)) continue;
-          const sm0 = makeStageMod(c.mod, c.side, t.index, () => 0.5);
-          const sm = j.desecrated ? { ...sm0, desecrated: true } : sm0;
-          // 代わりは外れだけ (狙いに当たる段は入れない)
-          if (!isMissMod(sm, miss) || lv(sm) < floor) continue;
-          const code = rankCode(w, lv(sm));
-          const e = by.get(code);
-          total += t.w;
-          if (!e) by.set(code, { w: t.w, top: t.w, mod: sm });
-          else { e.w += t.w; if (t.w > e.top) { e.top = t.w; e.mod = sm; } }
-        }
-      }
-      if (!(total > 0)) { next.push(s); continue; }
-      for (const e of by.values()) {
-        // 差し替えた外れは元の外れの下限を引き継ぐ
-        const fl = new Map(s.fl);
-        fl.delete(fKey(cur));
-        if (floor) fl.set(fKey(e.mod), floor);
-        next.push({ p: (s.p * e.w) / total, item: withSame(base, e.mod, cur), fl });
-      }
+      const sub = junkSubs(data, s, j, miss, (m) => rankCode(w, lv(m)));
+      if (!sub) { next.push(s); continue; }
+      for (const e of sub.by.values()) next.push(nextState(s, sub, e));
     }
     states = next;
   }
-  return states.map((s) => { if (s.item !== item && s.fl.size) FLOORS.set(s.item, s.fl); return { p: s.p, item: s.item }; });
+  return finish(states, item);
+}
+/** 外れが上限を超える: 外れの MOD レベルごとに差し替え、一番低い MOD レベルとその外れの組が同じ状態を 1 つにまとめながら進める (ai = 狙いの差し替えの番号) */
+function minJunkStates(data: PatchData, item: StageItem, free: readonly StageMod[], miss: MissAims, ai: number, fl0: ReadonlyMap<string, number> | undefined = floorsOf(item)): Array<{ p: number; item: StageItem }> {
+  type MS = VState & { lo: number; at: string };
+  let states: MS[] = [{ p: 1, item, fl: new Map(fl0 ?? []), lo: Infinity, at: "" }];
+  free.forEach((j, ji) => {
+    const next = new Map<string, MS>();
+    for (const s of states) {
+      const sub = junkSubs(data, s, j, miss, (m) => String(lv(m)));
+      const opts = sub ? [...sub.by.values()].map((e) => ({ st: nextState(s, sub, e), l: lv(e.mod) })) : [{ st: s as VState, l: lv(j) }];
+      for (const { st, l } of opts) {
+        const lo = Math.min(s.lo, l), at = l < s.lo ? `${ji}` : l === s.lo ? `${s.at},${ji}` : s.at, key = `${ai}|${lo}|${at}`, e = next.get(key);
+        if (!e) next.set(key, { ...st, lo, at });
+        else { const top = st.p > e.p; const p = e.p + st.p; if (top) next.set(key, { ...st, p, lo, at }); else e.p = p; }
+      }
+    }
+    states = [...next.values()];
+  });
+  return finish(states, item);
+}
+/** 狙いの MOD (✦・エッセンス・未発現以外) を、完成形の段以上で付きうる段に差し替えた品 (MOD レベルの組ごとに 1 つ、割合 = 重み)。差し替えが無ければ品のまま 1 つ */
+function aimVariants(data: PatchData, item: StageItem, miss: MissAims, side?: StageSide | null): Array<{ p: number; item: StageItem }> {
+  const aimsOn = loose(item, side).filter((m) => !isMissMod(m, miss) && !m.crafted && !m.unrevealed && !m.desecrated);
+  let states: Array<{ p: number; item: StageItem }> = [{ p: 1, item }];
+  for (const a of aimsOn) {
+    const next: typeof states = [];
+    for (const s of states) {
+      const cur = s.item.prefixes.concat(s.item.suffixes).find((m) => sameMod(m, a));
+      if (!cur) { next.push(s); continue; }
+      const base = without(s.item, cur), by = new Map<number, { w: number; top: number; mod: StageMod }>();
+      let total = 0;
+      for (const c of candidates(data, base, [a.side], 0)) {
+        if (c.mod.id !== a.modId) continue;
+        for (const t of c.tiers) {
+          if (!(t.w > 0)) continue;
+          const sm = makeStageMod(c.mod, c.side, t.index, () => 0.5);
+          if (isMissMod(sm, miss)) continue;
+          const l = lv(sm), e = by.get(l), own = sm.tierIndex === cur.tierIndex;
+          total += t.w;
+          // 代表の段はその MOD レベルの代わりに残す (同じ品のまま = 前と同じ答え)
+          if (!e) by.set(l, { w: t.w, top: own ? Infinity : t.w, mod: own ? cur : sm });
+          else { e.w += t.w; if (own || t.w > e.top) { e.top = own ? Infinity : t.w; e.mod = own ? cur : sm; } }
+        }
+      }
+      if (!(total > 0) || by.size < 2) { next.push(s); continue; }
+      for (const e of by.values()) next.push({ p: (s.p * e.w) / total, item: e.mod === cur ? s.item : withSame(base, e.mod, cur) });
+    }
+    states = next;
+  }
+  return states;
+}
+/** 1 回の削減の答えは「一番低い MOD レベルの MOD の組」だけで決まるので、組と枠 (低い・同じ・高い) が同じ品を 1 つに (割合は足す、代わりは一番多い物) */
+function mergeBySignature(vs: ReadonlyArray<{ p: number; item: StageItem }>, miss: MissAims, side?: StageSide | null): Array<{ p: number; item: StageItem }> {
+  const out = new Map<string, { p: number; item: StageItem; top: number }>();
+  for (const v of vs) {
+    const l = loose(v.item, side), lo = Math.min(...l.map(lv));
+    const key = `${lvClassOf(v.item, miss, side) ?? "-"}|${l.filter((m) => lv(m) === lo).map((m) => `${m.side}:${isMissMod(m, miss) ? "x" : m.modId}`).sort().join(",")}`, e = out.get(key);
+    if (!e) out.set(key, { p: v.p, item: v.item, top: v.p });
+    else { e.p += v.p; if (v.p > e.top) { e.top = v.p; e.item = v.item; } }
+  }
+  return [...out.values()].map(({ p, item }) => ({ p, item }));
 }
 
 /**
