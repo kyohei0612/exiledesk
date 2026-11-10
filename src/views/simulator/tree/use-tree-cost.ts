@@ -9,6 +9,12 @@ import { freshItem } from "../../../services/craft-stage/engine";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { withLoopsSoon } from "../../../services/simulator/start-cost";
 import { fractureMarks, newTree, startOf, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
+
+/** 木を組める幅か (見るだけの幅 = S-94g の外)。窓の大きさが変わったら追う */
+const wideNow = (): boolean => typeof window === "undefined" || window.innerWidth >= VIEW_ONLY_MAX;
+const wide = ref(wideNow());
+if (typeof window !== "undefined") window.addEventListener("resize", () => { wide.value = wideNow(); });
 
 export function makeBaseCost(doc: Ref<TreeDoc>, treePrice: (key: string) => number) {
   // 印 (✦) は memoAims にある (10-23 に start から移した)。前は鍵にも渡す木にも入れず、比べがいつも「✦ が無い」で止まり値段が 0 だった (10-24 夜 21 本目)
@@ -32,7 +38,8 @@ export function makeBaseCost(doc: Ref<TreeDoc>, treePrice: (key: string) => numb
   const costRunning = ref<string | null>(null), costTick = ref(0);
   const pause = (): Promise<void> => new Promise((ok) => { const t = setTimeout(ok, 50); requestAnimationFrame(() => setTimeout(() => { clearTimeout(t); ok(); }, 0)); }); // 隠れたタブでも止まらない
   /** 値段の鍵 (相場 = 神の値段と骨・オーブの値段も入れる。ここで読むので相場が変われば計算し直す) */
-  const costMk = computed(() => (s.data.value && costReady.value ? `${costKey.value}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}` : null));
+  // 見るだけの幅 (S-94g) は値段を画面に出さないので計算しない (11-10、スマホの開きで 0.2〜0.3 秒使っていた。幅が広がったら計算する)
+  const costMk = computed(() => (s.data.value && costReady.value && wide.value ? `${costKey.value}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}` : null));
   // 計算は 1 回 0.5 秒ほど (③ のマジックのループを 300 人打つ)。区切って裏で回す (開いた直後に画面が止まった、11-06 sim-light4)。式と答えは前のまま
   watch(costMk, (mk) => {
     const d = s.data.value;

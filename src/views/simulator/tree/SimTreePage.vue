@@ -18,6 +18,7 @@ import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from ".
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import PhoneViewPage from "../phone/PhoneViewPage.vue";
+import TreeLoadingCover from "./TreeLoadingCover.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
@@ -363,6 +364,7 @@ const glowOf = (b: Box): boolean => {
     <!-- 768 未満は見るだけの 1 画面 (PhoneViewPage)、768 以上は PC の木で組む (S-94g。質問で進める形 PhoneTreePage は 11-08 夜に外した、オーナー「768組めそうならそれ以降はＰＣ表示でいいと思う」) -->
     <!-- チュートリアルの札と光る枠 (PC もスマホも。札は body へ出す) -->
     <SimTutorialGuide v-if="!viewPhone" />
+    <TreeLoadingCover /><!-- 開いて組み直している間の「レシピ読み込み中…」(PC・スマホ共通、S-196) -->
     <PhoneViewPage v-if="viewPhone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
