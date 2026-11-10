@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.702",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 偉大なる高貴なお告げなど 1 手で MOD が 2 つ付く手で、狙い MOD が 2 つとも付く場合の箱 (「2 つとも付いた」) も出すようにしました。結果はエミュと同じ 4 通り (片方ずつ・2 つとも・外れ) に分かれます",
+    "en": "Simulator: crafts that add two mods at once (such as the Omen of Greater Exaltation) now also get a box for when both target mods land. The result splits into the same 4 cases as the emulator (either one, both, or a miss)"
+   }
+  ]
+ },
+ {
   "v": "0.1.701",
   "date": "2026-11-10",
   "items": [
@@ -838,36 +850,6 @@
     "area": "",
     "text": "シミュレーター: 完成形の設定と貼り付けでも、付いている MOD が止めて一緒に付かない組を断るようにしました",
     "en": "Simulator: the final item setup and pasted items now also refuse mods that can't roll together because an existing mod blocks them"
-   }
-  ]
- },
- {
-  "v": "0.1.662",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: ワンド・スタッフで、別の属性のスペルレベルと属性ダメージ増加・可燃性などが一緒に付いていたのを、ゲームどおり付かないように直しました",
-    "en": "Emulator: on Wands and Staves, a spell level mod of one element could roll together with increased damage, Flammability and similar mods of another element. They no longer roll together, matching the game"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの各段の左に「n 段目」の番号をいつも出すようにしました",
-    "en": "Simulator: each row of the tree now always shows its step number (Step n) on the left"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 白紙の後などで大きく変わる 1 つ戻す・やり直しは、箱を上の段から順に出すようにしました",
-    "en": "Simulator: undo and redo that change the tree a lot (such as after clearing it) now reveal the boxes row by row from the top"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 組み終わった木ではスタートに未設定の印を付けないようにしました。完成の箱が無い時は一番深い段の箱に「未設定: 完成にする箱が無い」と出します",
-    "en": "Simulator: a finished tree no longer marks Start as not set. When there is no box to mark as complete, the deepest box shows \"Not set: no box to complete\""
    }
   ]
  }
