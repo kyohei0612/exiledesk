@@ -26,7 +26,7 @@ const anyGo = (): string => { const k = props.k; return k.isRemove.value ? tr(`�
     <span v-if="!big && k.fixedOnly.value" class="opacity-80">{{ tr("残したい MOD (この手では消えない狙い。自動で ☑)", "Mods to keep (targets this craft can't remove; ☑ automatically)") }}</span>
     <span v-else-if="!big" class="opacity-80">{{ k.isRemove.value ? tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") : k.isSwap.value ? tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ が無ければ、どの MOD と入れ替わったかで箱を分ける)", "Mods to keep (a ☑ mod removed = Target lost; with none checked, one box per replaced mod)") : tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は消えても外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods count as misses even if removed)") }}</span>
     <label v-if="!big && !k.fixedOnly.value" data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-[48rem]:min-h-11">
-      <input type="checkbox" :checked="!k.aims.value.length" @change="k.none($event)" />{{ anyGo() }}
+      <input type="checkbox" :checked="!k.chosen.value.length" @change="k.none($event)" />{{ anyGo() }}
     </label>
     <label v-for="c in k.fixedOnly.value ? [] : k.picks.value" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-w-0 cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 max-[48rem]:min-h-11'">
       <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" :checked="k.checked.value.includes(aimKey(c.aim))" @change="k.toggle(c.aim)" /><span class="min-w-0" :class="big ? 'break-words' : 'truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words'" :title="k.label(c)">{{ k.label(c) }}</span>
@@ -36,7 +36,7 @@ const anyGo = (): string => { const k = props.k; return k.isRemove.value ? tr(`�
       <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" checked disabled /><span class="min-w-0 break-words">{{ k.fixedLabel(m) }}</span>
     </label>
     <label v-if="big && !k.fixedOnly.value" data-tree-hand-keep-none class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
-      <input type="checkbox" class="size-5 shrink-0" :checked="!k.aims.value.length" @change="k.none($event)" /><span class="min-w-0 break-words">{{ anyGo() }}</span>
+      <input type="checkbox" class="size-5 shrink-0" :checked="!k.chosen.value.length" @change="k.none($event)" /><span class="min-w-0 break-words">{{ anyGo() }}</span>
     </label>
   </div>
 </template>

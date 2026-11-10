@@ -71,7 +71,20 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   let touched = !!o.current?.keep;
   watch(o.held, () => { touched = false; });
   watch(choices, () => { if (!touched) checked.value = defaults(); }, { immediate: true });
-  const aims = computed((): Aim[] => picks.value.filter((c) => checked.value.includes(aimKey(c.aim))).map((c) => c.aim));
+  /**
+   * 手に残す MOD (Hand.keep) = ☑ した候補 + この手で消えない狙い (☑ 固定の行 fixed。窓が「自動で ☑」と見せる物)。
+   * 前は固定の行を入れず、削減の比べ (whittleAimed) と打った後の印 (nextAimed の keepCut) が固定の狙いを外れに数え、
+   * 外れが増えて枠が割れず (差し替えの上限)、結果の箱の中身も前の箱と合わず輪が伸びた (要望 0b039a19、11-10)
+   */
+  const fixedAims = computed((): Aim[] => {
+    const d = s.data.value;
+    if (!d) return [];
+    const goals = t.doc.value.memoAims ?? [];
+    return fixed.value.flatMap((m) => { const g = goals.find((x) => aimOn(d, m, x)); return g ? [{ modId: m.modId, tier: g.tier }] : []; });
+  });
+  /** 人が ☑ した候補だけ (「全部消えてよい」の欄はこれが空か) */
+  const chosen = computed((): Aim[] => picks.value.filter((c) => checked.value.includes(aimKey(c.aim))).map((c) => c.aim));
+  const aims = computed((): Aim[] => [...chosen.value, ...fixedAims.value.filter((a) => !chosen.value.some((x) => x.modId === a.modId))]);
   function toggle(a: Aim): void {
     const k = aimKey(a), was = [...checked.value]; touched = true;
     // 消去は全部の候補を残せないので、最後の 1 つを押したら前に ☑ した物から移す (S-27b)
@@ -89,6 +102,6 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
    * ☑ 固定の行だけを見せ、打ち方・保存 (Hand.keep) は変えない
    */
   const fixedOnly = computed(() => lone.value && fixed.value.length > 0);
-  return { isRemove, isSwap, choices, picks, show, fixed, ask, fixedOnly, checked, aims, toggle, none, label, fixedLabel };
+  return { isRemove, isSwap, choices, picks, show, fixed, ask, fixedOnly, checked, chosen, aims, toggle, none, label, fixedLabel };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;
