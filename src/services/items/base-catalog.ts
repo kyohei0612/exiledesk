@@ -120,7 +120,16 @@ export interface CatalogRow { en: string; ja: string; cls: string; lvl: number; 
  * 札の上の置き場: グラスピングメイルの行 (Body_Armours_ring_str_dex_int、指輪の MOD も付く) は 3 属性の鎧と同じ札に並べる
  * (スイッチ triAttr、10-28 オーナー案 1)。MOD の置き場は classOfBase の行のまま
  */
-const shelfCls = (row: string): string => (flag("triAttr") ? row.replace(/_ring_str_dex_int$/, "_str_dex_int") : row);
+const shelfCls = (row: string): string => {
+  const r = flag("triAttr") ? row.replace(/_ring_str_dex_int$/, "_str_dex_int") : row;
+  if (CATALOG_CLS_JA.has(r)) return r;
+  // どの札にも無い行 (トラーサスキャノンの Crossbows_cannon など、後ろの付け足しの付いた行) は、付け足しを 1 段ずつ外して札のある親に並べる。
+  // 前は札が無く、検索でしか出なかった (11-10 要望「トラーサスキャノンが無い」、E-98)
+  let k = r;
+  // 能力値の付け足し (_str_dex_int など) は札を分ける物なので畳まない (3 属性の札はスイッチ triAttr の決め)
+  while (k.includes("_")) { k = k.slice(0, k.lastIndexOf("_")); if (CATALOG_CLS_JA.has(k)) return ATTR_JA[r.slice(k.length + 1)] ? r : k; }
+  return r;
+};
 
 /** 全ベース (extras: フラスコ・スキルジェムも) */
 export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] { // E-98
