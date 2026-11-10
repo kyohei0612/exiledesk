@@ -17,7 +17,7 @@ import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
-import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
+import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
@@ -66,6 +66,8 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 前はカオス・骨の後だけ途中の狙いを残した = midKept)。候補の外 (お告げで触らない側) は outsideAimed で残る
   const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
+  // 「2 つとも付いた」の当たりの箱 (鍵 a:、S-22d) は付いた組の狙いを全部 ☑ (前は箱の狙い 1 つだけで、もう 1 つがカードで「外れ MOD」と出た、11-10 猿 /r/bI798yYJ b4)
+  if (b.out === "hit") for (const id of bothOf(b.junkKey)) base.add(id);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
   if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
   // 木の手のエッセンス / 合金で付けた完成形に無い MOD は、付いた時に名前の印 (カードで名前のまま、S-33c)。外れるのは後の残したい MOD の窓で選ばれなかった時だけ (上の keep)。
