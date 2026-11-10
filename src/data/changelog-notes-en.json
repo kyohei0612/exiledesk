@@ -1,4 +1,9 @@
 {
+  "0.1.699": [
+    "Base selection: Trarthan Cannon was missing from the Crossbow shelf; it is now listed",
+    "Simulator: fixed the tree’s + button sometimes hiding behind the “Unset → Next” bar (for example after switching to English)",
+    "Simulator: in the next-craft window, the line about how the result splits into frames now sits right under the craft name, so you can read it without scrolling"
+  ],
   "0.1.698": [
     "Simulator: when a craft with an Omen of Whittling splits into frames, the next-craft window now lets you pick the mods to keep. Unchecked mods count as misses in the Whittling comparison",
     "Simulator: miss mods are now shown in orange and the mods a held currency may remove in red, so they are easier to tell apart (the emulator's removal candidates are red too)"

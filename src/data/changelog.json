@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.699",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベース選び: クロスボウの札にトラーサスキャノンが出ていなかったのを直しました",
+    "en": "Base selection: Trarthan Cannon was missing from the Crossbow shelf; it is now listed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 英語にした時などに、木の＋が下の「未設定 → 次へ」の札の裏に隠れて押せない事があったのを直しました",
+    "en": "Simulator: fixed the tree’s + button sometimes hiding behind the “Unset → Next” bar (for example after switching to English)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓で結果の枠の分かれ方の一行を手の名前のすぐ下に出し、窓を下へ送らずに読めるようにしました",
+    "en": "Simulator: in the next-craft window, the line about how the result splits into frames now sits right under the craft name, so you can read it without scrolling"
+   }
+  ]
+ },
+ {
   "v": "0.1.698",
   "date": "2026-11-10",
   "items": [
@@ -874,18 +898,6 @@
     "area": "",
     "text": "シミュレーター: 引いて見た時の ＋ の大きさ、1 人目の再生の早送りを整えました",
     "en": "Simulator: tuned the size of ＋ when zoomed out and the fast-forward in the first run replay"
-   }
-  ]
- },
- {
-  "v": "0.1.659",
-  "date": "2026-11-03",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 前の版で保存したレシピ・共有 URL を開いた時、今の木に無い決めを外して開くようにしました (スタートに「未設定」が残らなくなりました)。外した数はレシピの帯に 1 行で出ます",
-    "en": "Simulator: opening a recipe or share URL saved in an older version now drops decisions the current tree no longer has (the Start node no longer stays \"not set\"). The recipe bar shows how many were removed"
    }
   ]
  }
