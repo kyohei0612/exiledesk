@@ -33,7 +33,17 @@ export const EMOTION_PREFIX = "emotion:";
 export const essenceKey = (tier: EssenceTier, modId: string): string => `essence:${tier}:${modId}`;
 /** 発現の手の鍵 (parseKey の reveal の逆)。index = 候補の何番目 (1 から)、reroll = アビスの反響で引き直した組から */
 export const revealKey = (index: number, reroll = false): string => `reveal:${index}${reroll ? ":reroll" : ""}`;
+/**
+ * 読んだ結果を鍵の文字ごとに覚える (11-10。シミュの開きと穴チェックで何十万回呼ばれ、スマホの開きで 2.3 秒かかっていた)。
+ * 結果は同じ。呼ぶ側が書き換えないよう凍らせて返す (鍵の種類は数百なので上限は掛けない)
+ */
+const parsed = new Map<string, ParsedKey>();
 export function parseKey(key: string): ParsedKey {
+  let p = parsed.get(key);
+  if (!p) { p = readKey(key); if (p.type === "set") Object.freeze(p.args); parsed.set(key, Object.freeze(p)); }
+  return p;
+}
+function readKey(key: string): ParsedKey {
   if (key.startsWith("essence:")) {
     if (key === "essence:breach") return { type: "essence", kind: "essence_perfect", tier: "perfect", modId: null, breach: true };
     const m = /^essence:(lesser|normal|greater|perfect):(.+)$/.exec(key);
