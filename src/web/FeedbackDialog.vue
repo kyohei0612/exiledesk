@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { rememberSent } from "../state/feedback-replies";
+import { rememberSent, replyTo } from "../state/feedback-replies";
 /**
  * 要望・バグを送る窓 (Web 版、2026-10-07 オーナー「要望バグの送信もできるようにしたい」)。
  * server/live の POST /feedback に送る。「今の画面の状態を添付」で ベース・狙い・パターン (シミュレーションの途中) が一緒に届くので再現できる
@@ -57,6 +57,9 @@ function onPaste(e: ClipboardEvent): void { const fs = imagesFromClipboard(e); i
 function onDrop(e: DragEvent): void { const fs = [...(e.dataTransfer?.files ?? [])].filter((f) => f.type.startsWith("image/")); if (fs.length) { e.preventDefault(); void addFiles(fs); } }
 function onPick(e: Event): void { const el = e.target as HTMLInputElement; void addFiles([...(el.files ?? [])]); el.value = ""; }
 onBeforeUnmount(clearImages);
+// 返事を書く (U-36): 閉じたら返事の形をやめる (次に要望のページを開いた時はふつうの要望)
+onBeforeUnmount(() => { replyTo.value = null; });
+watch(() => props.open, (v) => { if (!v) replyTo.value = null; });
 
 watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value = ""; imageNote.value = ""; track("feedback:open"); } });
 const textEl = ref<HTMLTextAreaElement | null>(null);
@@ -130,7 +133,7 @@ async function send(): Promise<void> {
       : await fetch(`${WEB_API_BASE}/feedback`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: contextNow(), ...(imgs.length ? { images: imgs } : {}) }),
+        body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: contextNow(), ...(imgs.length ? { images: imgs } : {}), ...(replyTo.value ? { replyTo: replyTo.value.id } : {}) }),
       });
     const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string; id?: string };
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
@@ -149,9 +152,14 @@ async function send(): Promise<void> {
 
 <template>
   <!-- 窓の動き・枠は ModalShell (2026-10-10 オーナー「動きが統一されてない所」: Esc は欄の中だけでなくどこでも効く、自前の地 → .g-panel) -->
-  <ModalShell :open="open" :inline="page" :title="forId ? tr('画像を送る', 'Send images') : tr('要望・バグを送る', 'Send feedback')" :width="page ? 'w-full' : 'w-[30rem] max-w-full'" body-class="px-4 py-3" @close="emit('close')">
+  <ModalShell :open="open" :inline="page" :title="forId ? tr('画像を送る', 'Send images') : replyTo ? tr('返事を書く', 'Write a reply') : tr('要望・バグを送る', 'Send feedback')" :width="page ? 'w-full' : 'w-[30rem] max-w-full'" body-class="px-4 py-3" @close="emit('close')">
     <p v-if="state === 'sent'" class="py-6 text-center text-[13px]">{{ tr("届きました。ありがとうございます。", "Received. Thank you!") }}<span v-if="!forId" class="mt-1 block text-[11px] opacity-60">{{ tr("直した時は、次に開いた時にお知らせします (このブラウザで)", "When it is fixed, you will be told the next time you open this page (in this browser)") }}</span></p>
     <div v-else @dragover.prevent @drop="onDrop">
+      <!-- 返事を書く (U-36): 元の要望と届いた返事を小さく。送ると元の要望にぶら下がる -->
+      <div v-if="replyTo && !forId" data-reply-context class="mb-2 rounded border border-white/10 bg-black/30 px-2 py-1.5 text-[11px] leading-relaxed">
+        <p class="truncate text-[var(--exile-color-text-tertiary)]" :title="replyTo.asked">{{ tr("あなたの要望", "Your feedback") }}: {{ replyTo.asked }}</p>
+        <p class="line-clamp-3 whitespace-pre-wrap text-[var(--exile-color-text-secondary)]">{{ tr("返事", "Reply") }}: {{ tr(replyTo.reply, replyTo.en ?? replyTo.reply) }}</p>
+      </div>
       <textarea ref="textEl" v-model="text":rows="forId ? 3 : 6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="forId ? tr('ひとこと (無くてもよい)', 'A note (optional)') : tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus @paste="onPaste"></textarea>
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />
       <!-- 画像 (選ぶ・貼り付け・落とす。3 枚まで) -->

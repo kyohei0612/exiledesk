@@ -64,11 +64,19 @@ function holding(): boolean {
   return forceAsk.value || forceGoing.value || !!leaveAsk.value || !!document.querySelector("[data-busy-tag]") || performance.now() - lastCraftAt < FX_MS;
 }
 
+/**
+ * 押した時に出すポップアップ (強制更新の後ろに並ぶ物。返事のポップアップ U-36 など)。true を返したら出した = その押しではほかを出さない。
+ * 同時に 2 つは出さない (出ている物があれば holding)、強制更新が先
+ */
+const askers: Array<() => boolean> = [];
+/** 押した時の出し物を足す (出している間は open を true に) */
+export function addPressAsker(ask: () => boolean, open: () => boolean): void { askers.push(ask); opens.push(open); }
+const opens: Array<() => boolean> = [];
+
 function maybeAsk(): void {
-  if (!forceReady.value || holding()) return;
-  if (laterAt != null && Date.now() - laterAt < LATER_MS) return;
-  laterAt = null;
-  forceAsk.value = true;
+  if (holding() || opens.some((o) => o())) return;
+  if (forceReady.value && !(laterAt != null && Date.now() - laterAt < LATER_MS)) { laterAt = null; forceAsk.value = true; return; }
+  for (const a of askers) if (a()) return;
 }
 
 function onPress(e: Event): void {
@@ -76,8 +84,8 @@ function onPress(e: Event): void {
     const t = e.target as HTMLElement | null;
     if (t?.closest?.("input, textarea, select, [contenteditable='true']")) return; // 打っている鍵では出さない (欄の外を押した時に)
   }
-  if (forceReady.value) { setTimeout(maybeAsk, 0); return; } // 押した手が効いた後に出す
-  if (performance.now() - lastRead >= READ_GAP) void readSignal().then(() => setTimeout(maybeAsk, 0));
+  if (!forceReady.value && FORCE_ON && performance.now() - lastRead >= READ_GAP) { void readSignal().then(() => setTimeout(maybeAsk, 0)); return; }
+  setTimeout(maybeAsk, 0); // 押した手が効いた後に出す
 }
 
 /** 後で更新する */
@@ -98,9 +106,9 @@ export function forceReload(): void {
   location.reload();
 }
 
-/** Web の入口で 1 回 */
+/** Web の入口で 1 回 (強制更新か返事のポップアップのどちらかが入っている時) */
 export function startForceUpdate(): void {
-  if (!FORCE_ON) return;
+  if (!FORCE_ON && !flag("replyPopup")) return;
   for (const ev of ["pointerdown", "keydown"]) window.addEventListener(ev, onPress, { capture: true, passive: true });
   watch(() => craftStage.log.value.length, () => { lastCraftAt = performance.now(); });
 }
