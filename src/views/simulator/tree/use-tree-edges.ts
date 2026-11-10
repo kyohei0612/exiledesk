@@ -22,6 +22,8 @@ const PASS_R = 16;
  * (10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」→「ここと同じにしようか」= 箱 → 札の縦の線と同じ形。18 → 34 → 40)。棒は札のすぐ下 (段の間 240 で札の下から 8)
  */
 const BUS_DY = HAND_DY - CHIP_HALF;
+/** 横の棒が別の縦の線を跨ぐ橋の半径 */
+const HOP = 6;
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
 const CHIP_MAX = 340;
 
@@ -84,10 +86,13 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {
       const cx = midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 0), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
-      const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
-        : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
+      // hops = 横の棒が通り過ぎる別の札の縦の線の x (そこに半円の橋を掛ける、下の hopped)
+      const mk = (hops: readonly number[]): string => !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
+        : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} `
+          + [...hops].sort((a, z) => s * (a - z)).map((x) => `L ${x - s * HOP} ${busY} A ${HOP} ${HOP} 0 0 ${s > 0 ? 1 : 0} ${x + s * HOP} ${busY} `).join("")
+          + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
-      return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d, bad };
+      return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null };
     }).sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
@@ -106,5 +111,24 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     }
     return out;
   });
-  return { edges, chipRoom };
+  /**
+   * 横の棒が別の札の縦の線を通り過ぎる所に半円の橋 (11-11 オーナー「なんか繋がってないのに別の線で横繋がったり？」「多分通り過ぎてるだけなんだろうが」)。
+   * 並んだ箱の消去の線が段をずらして重なり、ほかの縦の線と交わって合流に見えた (オーナーの 11-08 の木の 8 → 9 段目)。データのつながりは変えない。
+   * 同じ札の組 (帯の線が 1 つの札に入る、札の位置が同じ) どうしはつながっているので橋を掛けない
+   */
+  const hopped = computed(() => {
+    const list = edges.value, keyOf = (e: { jx: number; jy: number }): string => `${Math.round(e.jx)},${Math.round(e.jy)}`;
+    const vert = list.flatMap((e) => e.segs.filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => ({ k: keyOf(e), x: g.x0, y0: Math.min(g.y0, g.y1), y1: Math.max(g.y0, g.y1) })));
+    return list.map((e) => {
+      const k = keyOf(e);
+      const to = e.to.map((o) => {
+        const h = o.h;
+        if (!h) return o;
+        const xs = [...new Set(vert.filter((v) => v.k !== k && v.x > h.x0 + HOP + 1 && v.x < h.x1 - HOP - 1 && v.y0 < h.y - 1 && v.y1 > h.y + 1).map((v) => v.x))];
+        return xs.length ? { ...o, d: o.mk(xs) } : o;
+      });
+      return { ...e, to };
+    });
+  });
+  return { edges: hopped, chipRoom };
 }
