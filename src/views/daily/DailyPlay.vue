@@ -27,7 +27,8 @@ import DailyRestartAsk from "./DailyRestartAsk.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
 import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
-import { DEV_RUN, devState, devTry } from "./daily-dev-states";
+import { DEV_RUN, DEV_RUN0, devState, devTry } from "./daily-dev-states";
+import { flag } from "../../web/release-flags";
 import "./daily-play.css";
 import { getTry, leftMs, SOLVE_RATE, startTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
@@ -79,6 +80,8 @@ function devOpen(): void {
   void nextTick(() => setTimeout(() => {
     if (dev === "submit") asking.value = { ...DEV_RUN };
     if (dev === "done") { doneShown.value = { ...DEV_RUN }; asking.value = { ...DEV_RUN }; }
+    if (dev === "submit0") asking.value = { ...DEV_RUN0 };
+    if (dev === "done0") { doneShown.value = { ...DEV_RUN0 }; asking.value = { ...DEV_RUN0 }; }
     if (dev === "leave") askLeave(() => goDaily({ view: "list" }), () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value));
   }, 300));
 }
@@ -174,13 +177,20 @@ onMounted(() => setLayerLeaveGuard({
 onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); setLayerLeaveGuard(null); });
 
 /** 今の木の 100 人の結果 (recipe-card の控え。組み替えると消える) */
-const run = computed(() => { if (!treeOn.value) return null; const c = recipeCardOf(t.doc.value); return c.n === 100 && c.p != null && c.c != null ? { rate: c.p, cost: c.c } : null; });
+const run = computed((): { rate: number; cost: number | null } | null => {
+  if (!treeOn.value) return null;
+  const c = recipeCardOf(t.doc.value);
+  if (c.n !== 100 || c.p == null) return null;
+  if (c.c != null) return { rate: c.p, cost: c.c };
+  // 完成 0 人は費用が無い (—) が、そのまま提出できる (D-35d、11-10 オーナー「完成率０でも別にいいと思う」)。順位には載らない
+  return flag("dailyZero") && c.p === 0 ? { rate: 0, cost: null } : null;
+});
 /** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーで完成に数えるのは狙いを満たした品だけ) */
 const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims) : []));
 /** 提出の確かめと結果の窓 (D-35c)。出したら挑戦は終わり */
-const asking = ref<{ cost: number; rate: number } | null>(null);
+const asking = ref<{ cost: number | null; rate: number } | null>(null);
 /** 開発版の見本の「終わった後の結果」(dev=done) */
-const doneShown = ref<{ cost: number; rate: number } | null>(null);
+const doneShown = ref<{ cost: number | null; rate: number } | null>(null);
 function submit(): void {
   const r = run.value;
   if (!r || over.value || unmet.value.length) return;
@@ -188,7 +198,7 @@ function submit(): void {
 }
 /** 出した: 挑戦は終わり (木は見るだけ・札も窓も出ない)。控えの中身は daily-api が書き替えたので写し直して画面に効かせる */
 function submitted(): void {
-  if (dev && tryOf.value && asking.value) { tryOf.value = { ...tryOf.value, ended: true, submitted: true, last: { ...asking.value, ms: 0, at: Date.now() } }; return; }
+  if (dev && tryOf.value && asking.value) { tryOf.value = { ...tryOf.value, ended: true, submitted: true, last: { ...asking.value, cost: asking.value.cost ?? 0, ms: 0, at: Date.now() } }; return; }
   const x = getTry(props.topic.id);
   if (x) tryOf.value = { ...x };
 }
@@ -250,7 +260,7 @@ const REFUSED: Record<StartError, () => string> = {
       </div>
       <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b v-if="tryOf?.ended" data-daily-time-ended>{{ tr("終了", "Over") }}</b><b v-else role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
       <div class="daily-band-score">
-        <div><b data-daily-cost>{{ run ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("完成 1 個あたりの費用", "Cost per finished item") }}</small></div>
+        <div><b data-daily-cost>{{ run && run.cost != null ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("完成 1 個あたりの費用", "Cost per finished item") }}</small></div>
         <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr("完成率", "Finished") }}</small></div>
       </div>
       <div class="daily-fuse" :style="{ '--fuse': fuse }"><i /></div>

@@ -5,7 +5,8 @@
  */
 import { TIME_LIMIT_MS, getTry, type DailyTopic, type DailyTry } from "./daily-api";
 
-export const DEV_STATES = ["from", "frac", "tree", "submit", "done", "giveup", "timeout", "leave"] as const;
+/** submit0 / done0 = 完成 0% の提出の確かめ・結果の窓 (D-35d、11-10) */
+export const DEV_STATES = ["from", "frac", "tree", "submit", "done", "submit0", "done0", "giveup", "timeout", "leave"] as const;
 export type DevState = (typeof DEV_STATES)[number];
 
 /** 今の URL の状態 (開発版だけ。無い・知らない名前は null) */
@@ -18,7 +19,9 @@ export function devState(): DevState | null {
 }
 
 /** 見本の提出の数 (提出の確かめ・結果の窓) */
-export const DEV_RUN = { cost: 12.4, rate: 93 };
+export const DEV_RUN: { cost: number | null; rate: number } = { cost: 12.4, rate: 93 };
+/** 見本の完成 0% の数 (費用は無い = —、D-35d) */
+export const DEV_RUN0: { cost: number | null; rate: number } = { cost: null, rate: 0 };
 
 /** 見本の挑戦。狙いが引けなければ null (画面が一言出す) */
 export function devTry(topic: DailyTopic, st: DevState, now = Date.now()): DailyTry | null {
@@ -30,7 +33,8 @@ export function devTry(topic: DailyTopic, st: DevState, now = Date.now()): Daily
     startedAt: st === "timeout" ? now - TIME_LIMIT_MS - 60_000 : now - 5 * 60_000,
     aims: aims.map((a) => ({ ...a })),
     ...(frac ? { fractured: frac, from: "fractured" as const } : {}),
-    ...(st === "done" ? { ended: true, submitted: true, last: { cost: DEV_RUN.cost, rate: DEV_RUN.rate, ms: 5 * 60_000, at: now } } : {}),
+    ...(st === "done" ? { ended: true, submitted: true, last: { cost: DEV_RUN.cost ?? 0, rate: DEV_RUN.rate, ms: 5 * 60_000, at: now } } : {}),
+    ...(st === "done0" ? { ended: true, submitted: true, last: { cost: 0, rate: 0, ms: 5 * 60_000, at: now } } : {}),
   };
 }
 
@@ -52,7 +56,7 @@ export function devBackState(): DevBackState | null {
 /** 戻ってきた時の見本の挑戦 (始めて 20 分。今日のお題は狙いが伏せてあるので、狙いが無くても作る) */
 export function devBackTry(topic: DailyTopic, st: DevBackState, now = Date.now()): DailyTry {
   const aims = topic.aims?.length ? topic.aims : getTry(topic.id)?.aims ?? [];
-  const rec = { cost: DEV_RUN.cost, rate: DEV_RUN.rate, ms: 20 * 60_000, at: now };
+  const rec = { cost: DEV_RUN.cost ?? 0, rate: DEV_RUN.rate, ms: 20 * 60_000, at: now };
   return {
     topicId: topic.id,
     startedAt: now - 20 * 60_000,
