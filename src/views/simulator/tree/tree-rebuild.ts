@@ -195,7 +195,10 @@ function underAutoBack(d: TreeDoc, at: string): boolean {
 function relinkSameHand(data: PatchData, d: TreeDoc): void {
   for (let n = 0; n < 16; n++) {
     const j = judgeMemo(data, d);
-    const hit = Object.values(d.boxes).map((b) => (b.hand && b.out !== "start" && !b.split ? ([b.id, sameHandByContent(d, b.id, b.hand, j)] as const) : null)).find((x) => !!x?.[1]);
+    // 見る順は木の並びの後ろから (S-50f、11-10 オーナー「ツリーでの枠内では変数はなくていいよな」): 同じ中身・同じ手の 2 箱は後ろの方を畳み、前の方が残る。
+    // 前は箱を作った順で先に見た方を畳むので、どちらが残るかが開き方で変わりえた
+    const order = treeOrder(d);
+    const hit = Object.values(d.boxes).sort((x, y) => order(y.id, x.id)).map((b) => (b.hand && b.out !== "start" && !b.split ? ([b.id, sameHandByContent(d, b.id, b.hand, j)] as const) : null)).find((x) => !!x?.[1]);
     if (!hit) return;
     const [id, to] = hit, b = d.boxes[id]!, h = b.hand!;
     // 下の人の決めは戻り先の同じ道へ移す (S-50f、前は消えて手袋 r1 を保存して開き直すと 86 人が止まった)
