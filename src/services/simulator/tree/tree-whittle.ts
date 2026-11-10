@@ -65,7 +65,15 @@ const FREE_MAX = 2;
  * 削減の手で見る見本の差し替え (割合 p 付き、p の和 1)。boxKey = 手の箱の junkKey (前の削減で順位の決まった外れは差し替えない)。
  * 欲しい MOD が無い・差し替える外れが無ければ見本 1 つ (p 1)
  */
-export function rankVariants(data: PatchData, item: StageItem, aims: readonly AimLike[], boxKey?: string): Array<{ p: number; item: StageItem }> {
+export function rankVariants(data: PatchData, item: StageItem, aims: readonly AimLike[], boxKey?: string, lvMiss?: MissAims): Array<{ p: number; item: StageItem }> {
+  const all = rankVariantsAll(data, item, aims, boxKey), want = lvPart(boxKey);
+  if (!want || all.length < 2) return all;
+  // 削減の手前の枠 (S-65c) の箱は、その枠の組の出方だけ (枠に着く人は外れの MOD レベルがその組)。組の合う出方が無ければ今のまま。
+  // 組の比べの相手は lvMiss (外れの式 aimedMiss = 回す時・判定と同じ)、無ければ aims
+  const miss = lvMiss ?? missAims(data, aims), fit = all.filter((v) => lvClassOf(v.item, miss) === want), t = fit.reduce((n, v) => n + v.p, 0);
+  return fit.length && t > 0 ? fit.map((v) => ({ p: v.p / t, item: v.item })) : all;
+}
+function rankVariantsAll(data: PatchData, item: StageItem, aims: readonly AimLike[], boxKey?: string): Array<{ p: number; item: StageItem }> {
   const miss = missAims(data, aims);
   const w = wantedLevels(item, miss);
   if (!w.length) return [{ p: 1, item }];
@@ -142,3 +150,43 @@ function withSame(base: StageItem, m: StageMod, was: StageMod): StageItem {
   const key = was.side === "prefix" ? "prefixes" : "suffixes";
   return { ...base, [key]: [...base[key], m] };
 }
+
+/**
+ * 削減の手前の枠 (S-65c、11-10 オーナー「削減打つ前の枠を1つ増やす必要あると思う」「探してから判断してね乱数で決まるんやからな」):
+ * ランダムに付いた外れ MOD のある箱に削減の手を置くと、1 つ前の手の結果を外れの MOD レベルで「低い・同じ・高い」の枠に分ける (鍵 `l:lo` / `l:eq` / `l:hi`、側の鍵とは `;` で並べる)。
+ * 比べる相手 = 残したい MOD (外れ以外の消せる MOD) のうち一番低い物 = 削減で次に消える MOD。外れが 2 つ以上なら外れのうち一番低い物で比べる。
+ * 枠はデータ (その部位・アイテムレベル・側で付きうる外れと重み = rankVariants の差し替え) で付きうる組だけ。MOD レベルが決まっている外れ (エッセンス・未発現) だけなら分けない
+ */
+export type LvClass = "lo" | "eq" | "hi";
+export const LV_ORDER: readonly LvClass[] = ["lo", "eq", "hi"];
+/** 鍵の枠の組 (無ければ null) */
+export const lvPart = (k: string | undefined): LvClass | null => { const s = k?.split(";").find((x) => x.startsWith("l:"))?.slice(2); return s === "lo" || s === "eq" || s === "hi" ? s : null; };
+/** 枠の組を外した鍵 */
+export const stripLv = (k: string | undefined): string | undefined => k?.split(";").filter((x) => !x.startsWith("l:")).join(";") || undefined;
+/** 枠の組を付けた鍵 */
+export const withLv = (k: string | undefined, c: LvClass): string => joinKeys(stripLv(k), `l:${c}`)!;
+/** 品の組: 外れのうち一番低い MOD レベルと、残したい MOD の一番低い MOD レベルの比べ (外れか残したい MOD が無ければ null) */
+export function lvClassOf(item: StageItem, miss: MissAims): LvClass | null {
+  const l = loose(item), j = l.filter((m) => isMissMod(m, miss)).map(lv), w = l.filter((m) => !isMissMod(m, miss)).map(lv);
+  if (!j.length || !w.length) return null;
+  const a = Math.min(...j), b = Math.min(...w);
+  return a < b ? "lo" : a === b ? "eq" : "hi";
+}
+/** MOD レベルが乱数の外れがあるか (エッセンス・未発現だけなら MOD レベルは決まっている) */
+const hasFreeJunk = (item: StageItem, miss: MissAims): boolean => loose(item).some((m) => isMissMod(m, miss) && !m.crafted && !m.unrevealed);
+/** データで付きうる組 (wanted = 残したい MOD の札)。乱数の外れが無い・残したい MOD が無ければ null (枠を分けない) */
+export function lvClassesOf(data: PatchData, item: StageItem, wanted: readonly AimLike[]): Set<LvClass> | null {
+  const miss = missAims(data, wanted);
+  if (!hasFreeJunk(item, miss) || !wantedLevels(item, miss).length) return null;
+  const out = new Set<LvClass>();
+  for (const v of rankVariantsAll(data, item, wanted)) { const c = lvClassOf(v.item, miss); if (c) out.add(c); }
+  return out.size ? out : null;
+}
+/** 枠の題の付け足し */
+export const lvLabel = (c: LvClass): [string, string] =>
+  c === "lo" ? ["外れの MOD レベルが低い", "miss mod level lower"] : c === "eq" ? ["外れの MOD レベルが同じ", "miss mod level same"] : ["外れの MOD レベルが高い", "miss mod level higher"];
+/** 枠の説明 (スマホの行の 2 行目・カードの説明) */
+export const lvNote = (c: LvClass): [string, string] =>
+  c === "lo" ? ["削減で外れが消える (外れの MOD レベルが残したい MOD より低い)", "Whittling removes the miss (its mod level is lower than the mods to keep)"]
+  : c === "eq" ? ["削減で外れか残したい MOD が半々で消える (同じ MOD レベル)", "Whittling removes the miss or a mod to keep, half and half (same mod level)"]
+  : ["削減で残したい MOD が消える (外れの MOD レベルが残したい MOD より高い)", "Whittling removes a mod to keep (the miss's mod level is higher)"];

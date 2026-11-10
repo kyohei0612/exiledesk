@@ -7,7 +7,9 @@ import { centerMerged, noteLaid, rowTops, settleRows } from "./tree-row-tops";
 /** 兄弟の並び = 狙いどおりが左 (S-142d、11-08 オーナー「狙い通りは基本左」): 当たり・打った後 → 外れが消えた (残したい MOD が残った) → 狙いが消えた → 外れ → 塞がった (S-33e) */
 export const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, junkGone: 1, lost: 2, junk: 3, blocked: 4 };
 /** 兄弟の中の順 (OUT_ORDER)。「エッセンスと同じ MOD (同格以上)」(鍵 hi = tree-outcome の SAME_HI) はエッセンスの当たりと同じ扱いで進むので、狙いどおり (当たり・打った後) のすぐ右隣 (S-33e ⑥、11-08 夜オーナー「打った後の理想形は必ず左ね、そのっ隣に置けって話一緒に進行する奴は」) */
-export const outRank = (b: Pick<TreeBox, "out" | "junkKey">): number => (b.out === "blocked" && b.junkKey === "hi" ? 0.5 : OUT_ORDER[b.out]);
+export const outRank = (b: Pick<TreeBox, "out" | "junkKey">): number => (b.out === "blocked" && b.junkKey === "hi" ? 0.5 : OUT_ORDER[b.out] + lvRank(b.junkKey));
+/** 削減の手前の枠 (S-65c、鍵 l:) は同じ種類の中で 低い → 同じ → 高い の順 (外れが消える方が左 = 狙いどおりが左) */
+const lvRank = (k: string | undefined): number => { const c = k?.split(";").find((x) => x.startsWith("l:")); return c === "l:lo" ? 0.01 : c === "l:eq" ? 0.02 : c === "l:hi" ? 0.03 : 0; };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
 /** 親から 2 行以上下の子へ降りる縦の線の、輪郭に入れる幅 (箱の真ん中から左右) */

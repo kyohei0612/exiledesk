@@ -26,8 +26,8 @@ export const placedBefore = (doc: TreeDoc, a: string, b: string): boolean => {
 const byPlace = (doc: TreeDoc) => (a: string, b: string): number => (placedBefore(doc, a, b) ? -1 : placedBefore(doc, b, a) ? 1 : 0);
 /** 親からの深さ (段) */
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
-/** 鍵の削減の順位の部分 (`w:`、tree-whittle) */
-const rankPart = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
+/** 鍵の削減の順位の部分 (`w:`、tree-whittle) と削減の手前の枠の組 (`l:`、S-65c) */
+const rankPart = (k: string | undefined): string => k?.split(";").filter((s) => s.startsWith("w:") || s.startsWith("l:")).join(";") ?? "";
 
 /** j = 判定 (tree-judge)。比べは「箱どうし」の fitsBox だけ */
 export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], j: Judge): void {

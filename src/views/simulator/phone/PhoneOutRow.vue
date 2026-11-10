@@ -21,6 +21,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { hasGot } from "../../../services/simulator/tree/tree-keep";
+import { lvNote, lvPart } from "../../../services/simulator/tree/tree-whittle";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { tr } from "../../../i18n/lang";
 import { clearHand, subtree } from "../../../services/simulator/tree/tree-model";
@@ -113,6 +114,9 @@ const sit = computed((): [string, string] => {
   const ph = parent.value ? t.doc.value.boxes[parent.value]?.hand : null;
   if (ph) {
     const n = handLabel(ph);
+    // 削減の手前の枠 (S-65c): 題は外れの MOD レベルの組入り、2 行目は次の削減で何が消えるか
+    const lvc = lvPart(box.value?.junkKey);
+    if (lvc && o !== "hit" && o !== "blocked") return [q.boxTitle(props.boxId), tr(...lvNote(lvc))];
     // 印の無い木の乱数のフラクチャーは「固定された」(付いたのではない、10-27 夜、要望 8a159e29、スイッチ fracRandom)
     // 狙い無しの乱数のフラクチャーは MOD ごとの箱「〇〇がフラクチャーされた場合」(外れとは言わない、スイッチ fracPick)
     if (o === "junk" && ph.pick === "random" && ph.free) return [tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured"), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];

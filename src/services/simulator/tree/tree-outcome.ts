@@ -14,7 +14,8 @@ import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence 
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
-import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
+import { aimedAims, isWhittleHand, joinKeys, lvClassOf, lvPart, rankVariants, stripLv, withLv } from "./tree-whittle";
+import { aimedMiss } from "./tree-miss";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goalTierOf, gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
@@ -74,7 +75,17 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   if (oc.out !== "blocked") for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
     if (b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === key) && sameModKids(doc, b).some((k) => essenceHold(data, after, k) === hold)) return { out: "blocked", hits: [], ...(key ? { junkKey: key } : {}) };
   }
-  return oc;
+  return lvKeyed(data, doc, b, oc, after, aimed);
+}
+/**
+ * 削減の手前の枠 (S-65c): 結果の箱が外れの MOD レベルの組 (低い・同じ・高い) で分かれていれば、打った後の品の組を鍵に足す (一人ずつ実物の外れの MOD レベルで枠へ)。
+ * 残したい MOD = 打った後に ☑ の印の付く狙い (打つ前の印 + この手で付いた狙い) を外れの式 (aimedMiss) で見た外れ以外
+ */
+function lvKeyed(data: PatchData, doc: TreeDoc, b: TreeBox, oc: Outcome, after: StageItem, aimed?: ReadonlySet<string> | null): Outcome {
+  if (oc.out === "blocked" || !b.outs.some((id) => { const c = doc.boxes[id]; return !!c && c.out === oc.out && !!lvPart(c.junkKey) && stripLv(c.junkKey) === stripLv(oc.junkKey); })) return oc;
+  const am = aimed ? new Set([...aimed, ...oc.hits.map((a) => a.modId)]) : null;
+  const c = lvClassOf(after, aimedMiss(data, doc, am));
+  return c ? { ...oc, junkKey: withLv(oc.junkKey, c) } : oc;
 }
 /** 「エッセンスと同じ MOD (同格以上)」の箱の鍵 (S-33e ⑥。前の手でエッセンスと同格以上の同じ系統が付いた人) */
 export const SAME_HI = "hi";
@@ -302,7 +313,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const item = pre ? applyCurrency(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const aimed = aimedOfSample(boxId, smp.item) ?? sampleAimed(data, doc, boxId, seed);
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
-    const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(data, doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item) : [item];
+    const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(data, doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey, aimedMiss(data, doc, aimed)).map((v) => v.item) : [item];
     for (const it of all) {
       // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝
       if (essenceHold(data, it, h.currency)) { const e = boxOutOf(handOutcome(data, doc, h, extra, extra, it, it, aims, aimed), freeSide); found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e); continue; }

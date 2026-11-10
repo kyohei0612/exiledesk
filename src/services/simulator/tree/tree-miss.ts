@@ -19,9 +19,13 @@ export const missAims = (data: PatchData, aims: readonly Aim[]): MissAims =>
  * stones = false で ☑ の置き石も入れない (前の世代の形の鍵の体。置き石を数えていなかった)
  */
 export function aimedMiss(data: PatchData, doc: TreeDoc, aimed?: ReadonlySet<string> | null, o: { stones?: boolean } = {}): MissAims {
+  return missAims(data, aimedList(data, doc, aimed, o));
+}
+/** aimedMiss の札の並び (削減の手前の枠 S-65c の比べの相手 = 残したい MOD も同じ札で見る) */
+export function aimedList(data: PatchData, doc: TreeDoc, aimed?: ReadonlySet<string> | null, o: { stones?: boolean } = {}): Aim[] {
   const goals = doc.memoAims ?? [];
-  if (!aimed) return missAims(data, goals);
-  return missAims(data, [...goals, ...(o.stones === false ? [] : placedAims(data, doc))].filter((a) => aimed.has(a.modId)));
+  if (!aimed) return [...goals];
+  return [...goals, ...(o.stones === false ? [] : placedAims(data, doc))].filter((a) => aimed.has(a.modId));
 }
 /** 外れ = 当たりに数える札のどれにも当たらない MOD */
 export const isMissMod = (m: StageMod, x: MissAims): boolean => !x.targets.some((t) => aimHits(m, t, x.opts));

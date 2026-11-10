@@ -13,8 +13,9 @@ import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
-import { isMissMod, missAims, type MissAims } from "./tree-miss";
+import { aimedMiss, isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
+import { lvClassOf, lvPart } from "./tree-whittle";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, placedAims } from "./tree-veil";
@@ -302,12 +303,15 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y)));
   /** 中身の鍵の ☑ の狙いの札 (先頭から最初の枠 ~ まで) を数だけにした物 (狙いが消えた箱、fitsLost) */
   const aimCount = (k: string): string => { const i = k.indexOf("~"), head = i < 0 ? k : k.slice(0, i); return `${head ? head.split(",").length : 0}${i < 0 ? "" : k.slice(i)}`; };
+  // 削減の手前の枠 (S-65c、鍵 l:): 中身の比べは MOD レベルを見ないので、枠の組 (外れの MOD レベルが低い・同じ・高い) は箱の鍵と人の品で別に見る
+  const lvOf = (id: string): string | null => lvPart(doc.boxes[id]?.junkKey);
+  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); return !c || lvClassOf(item, aimedMiss(data, doc, aimed)) === c; };
   return {
     contents,
     fitsBox(from, to) {
       // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
       // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
-      if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
+      if (from === to || !doc.boxes[from] || !doc.boxes[to] || lvOf(from) !== lvOf(to)) return false;
       // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
       const b = contents(to);
       if (!b) return false;
@@ -317,21 +321,22 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed)))));
+      return (!b || b.has(keyFor(to, own(contentOf(data, doc, item, aimed))))) && lvFits(item, aimed, to);
     },
     fitsLost(item, aimed, to) {
       const b = setFor(to, to);
+      if (!lvFits(item, aimed, to)) return false;
       if (!b) return true;
       const k = aimCount(keyFor(to, own(contentOf(data, doc, item, aimed))));
       return [...b].some((x) => aimCount(x) === k);
     },
     boxesOf(item, aimed, ok) {
       const k = own(contentOf(data, doc, item, aimed));
-      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && lvFits(item, aimed, id) && (!ok || ok(id)));
     },
     openOf(item, aimed) {
       const k = own(contentOf(data, doc, item, aimed));
-      return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
+      return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k)) && lvFits(item, aimed, b.id)).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
     aimedOf: (id) => samples(id).map(() => aimedAt(id)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)

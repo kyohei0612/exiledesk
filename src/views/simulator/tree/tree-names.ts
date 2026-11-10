@@ -13,7 +13,7 @@ import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isSideKey, isStripKey, sideKeyLabel, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
-import { rankLabel } from "../../../services/simulator/tree/tree-whittle";
+import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { swapGoneOf } from "../../../services/simulator/tree/tree-keep";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
@@ -125,7 +125,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const base = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
   // 側で分けた箱 (S-65): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
   // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
-  const rk = k && b.parent ? rankLabel(k) ?? swl : null;
+  // 削減の手前の枠 (S-65c): 外れの MOD レベルの組はいつも付ける
+  const lk = lvPart(k), rk = k && b.parent ? (lk ? lvLabel(lk) : null) ?? rankLabel(k) ?? swl : null;
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
   // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
   if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.out === b.out).length > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }

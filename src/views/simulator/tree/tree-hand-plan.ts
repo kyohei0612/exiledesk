@@ -15,7 +15,7 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome";
+import { needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
@@ -284,7 +284,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
-  setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
+  if (data) syncBeforeHand(data, d, at, h); setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at)); // 削減の手前の枠 (S-65c) を先に
   if (data) fillMissOuts(data, d, at);
   joinSameShape(d, id);
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
@@ -295,7 +295,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   pinDivineMisses(d);
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
-  if (data) syncSameMod(data, d, d.boxes[at]?.parent ?? null);
+  if (data) { syncSameMod(data, d, d.boxes[at]?.parent ?? null); syncWhittlePre(data, d, d.boxes[at]?.parent ?? null, at); } // 削減の手前の枠 (S-65c)
   linkAllSameHi(d);
   return at;
 }
