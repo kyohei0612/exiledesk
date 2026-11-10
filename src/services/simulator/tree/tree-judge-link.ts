@@ -10,6 +10,7 @@ import { clearHand, MATCH_BACK, setBack, subtree, type Hand, type TreeBox, type 
 import { DIVINE_LT, isDivineAim } from "./tree-divine";
 import { effectOf, isRuneHand } from "./tree-hands";
 import { treeOrder } from "./tree-order";
+import { outKey } from "./tree-recipe-v1";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -135,9 +136,38 @@ export function trunkOf(doc: TreeDoc, id: string, j: Judge): string | null {
   const below = new Set(subtree(doc, id)), cmp = shallow(doc);
   return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && !below.has(t.id) && cmp(t.id, id) < 0 && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
 }
-/** 箱 x の手と下を消して自動の ↩ to (同じ手なら選んだ手を handBack に持つ = S-51) */
+/** 人の決めのある箱か (手・完成 / 失敗・人の ↩・分かれ目) */
+const decided = (b: TreeBox | undefined): boolean => !!b && (!!b.hand || !!b.done || (!!b.back && !b.autoBack) || !!b.split);
+/**
+ * まとめられる箱 from の下の人の決めを、幹 to の下の同じ道 (結果の札が同じ) で決めの無い箱へ移す (S-50f、11-10)。決めのある箱は上書きしない。
+ * 同じ中身の箱なので下の結果の箱も同じ。前は幹へまとめると from の下の決めが消え、幹の下の同じ箱が未設定で止まった
+ * (手袋 r1: 削減の枠「高い」の下の消去の先の決めが「同じ」側へまとめた時に消え、保存して開き直すと 100 人中 86 人が止まった)
+ */
+export function graftDecided(doc: TreeDoc, from: string, to: string): void {
+  const f = doc.boxes[from], t = doc.boxes[to];
+  if (!f || !t) return;
+  const used = new Set<string>();
+  for (const c of [...f.outs]) {
+    const cb = doc.boxes[c];
+    if (!cb || !decided(cb) && !cb.outs.length) continue;
+    const mate = t.outs.find((o) => !used.has(o) && !!doc.boxes[o] && outKey(doc.boxes[o]!) === outKey(cb));
+    if (!mate) continue;
+    used.add(mate);
+    const mb = doc.boxes[mate]!;
+    if (!decided(mb) && !mb.outs.length && decided(cb)) {
+      // 決めの無い幹の側の箱を、決めのある箱 (下ごと) で差し替える。差し替える箱へ自動でつないでいた箱は移した箱へ
+      for (const o of Object.values(doc.boxes)) if (o.back === mate) o.back = c;
+      t.outs[t.outs.indexOf(mate)] = c;
+      f.outs = f.outs.filter((o) => o !== c);
+      cb.parent = to;
+      delete doc.boxes[mate];
+    } else if (mb.hand && cb.hand && sameHand(mb.hand, cb.hand)) graftDecided(doc, c, mate);
+  }
+}
+/** 箱 x の手と下を消して自動の ↩ to (同じ手なら選んだ手を handBack に持つ = S-51)。x の下の人の決めは幹の同じ道へ移す (graftDecided) */
 function foldInto(doc: TreeDoc, x: string, to: string): void {
   const b = doc.boxes[x]!, h = b.hand!, same = sameHand(doc.boxes[to]?.hand, h);
+  if (same) graftDecided(doc, x, to);
   clearHand(doc, x);
   setBack(doc, x, to);
   b.autoBack = true;

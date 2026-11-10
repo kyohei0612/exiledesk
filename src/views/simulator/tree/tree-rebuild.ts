@@ -6,10 +6,10 @@
  */
 import { treeOrder } from "../../../services/simulator/tree/tree-order";
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, migrateStart, setBack, subtree, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
-import { autoTarget, foldToTrunks, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, foldToTrunks, graftDecided, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, linkAllSameHi, onlyOf } from "./tree-hand-plan";
 import { extendAnnul, trimAnnul } from "./tree-annul-chain";
@@ -122,7 +122,32 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   for (let n = 0; n < 4; n++) { const lv = Object.keys(d.boxes).filter((id) => !!lvPart(d.boxes[id]!.junkKey) && !placed.has(id)); if (!lv.length) break; yield* replay(lv); }
   // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
   for (const id of Object.keys(d.boxes)) foldMisses(d, id);
-  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
+  /**
+   * 同じ手で戻り先へつないだ箱 (handBack、S-51) の下の保存の決めは、戻り先の下の同じ道で決めの無い箱の決めとして読む (S-50f、11-10)。
+   * 中身が同じなので下の結果の箱も同じ。前は読まれずに捨てられ、手袋 r1 を保存して開き直すと削減の枠「高い」の下の消去の先の決めが消え 86 人が止まった
+   */
+  function* carryPicks(): Generator<TreeDoc> {
+    for (let n = 0; n < 8; n++) {
+      let moved = false;
+      for (const b of Object.values(d.boxes)) {
+        if (!b.handBack || !b.autoBack || !b.back || b.hand) continue;
+        const from = placed.get(b.id)?.[1], to = placed.get(b.back)?.[1];
+        if (!from || !to) continue;
+        for (const x of subtree(d, b.back)) {
+          const xb = d.boxes[x], px = placed.get(x);
+          if (x === b.back || !xb || !px || picks.has(px[1]) || xb.hand || xb.done || (xb.back && !xb.autoBack) || !px[1].startsWith(`${to}/`)) continue;
+          const alt = from + px[1].slice(to.length);
+          if (!picks.has(alt) || used.has(alt)) continue;
+          q.push([x, px[0], alt]);
+          moved = true;
+        }
+      }
+      if (!moved) return;
+      yield* drain();
+    }
+  }
+  yield* carryPicks();
+  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); yield* carryPicks(); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
   const left = !stepped || [...picks.keys()].some((k) => !used.has(k));
   const added = left ? yield* arrivedSteps(data, d) : [];
@@ -173,6 +198,8 @@ function relinkSameHand(data: PatchData, d: TreeDoc): void {
     const hit = Object.values(d.boxes).map((b) => (b.hand && b.out !== "start" && !b.split ? ([b.id, sameHandByContent(d, b.id, b.hand, j)] as const) : null)).find((x) => !!x?.[1]);
     if (!hit) return;
     const [id, to] = hit, b = d.boxes[id]!, h = b.hand!;
+    // 下の人の決めは戻り先の同じ道へ移す (S-50f、前は消えて手袋 r1 を保存して開き直すと 86 人が止まった)
+    if (to) graftDecided(d, id, to);
     clearHand(d, id);
     // 全部消えてよい消去の結果の箱も中身ごとに分かれているので、ほかの箱と同じくその箱へ (S-28d。前は「形の合う箱へ」= 一人ずつ止まる所へ)
     setBack(d, id, to);

@@ -36,7 +36,7 @@ export function fullExample(start: StageItem, ex: RecipeExample): StageItem {
 export const isRecipeV1 = (d: { schema?: unknown } | null | undefined): boolean => d?.schema === RECIPE_V1 || d?.schema === RECIPE_V2;
 
 /** 結果の箱の札 (親の中で): 結果の種類 + 当たりの MOD + 側の鍵 */
-const outKey = (b: TreeBox): string => `${b.out}${b.aim ? `:${b.aim.modId}#${b.aim.tier}` : ""}${b.junkKey ? `[${b.junkKey}]` : ""}`;
+export const outKey = (b: TreeBox): string => `${b.out}${b.aim ? `:${b.aim.modId}#${b.aim.tier}` : ""}${b.junkKey ? `[${b.junkKey}]` : ""}`;
 /** 子の箱と道の札 (同じ札が 2 つ以上なら 2 つ目から ~n) */
 export function childKeysOf(d: TreeDoc, id: string, key: string): Array<[string, string]> {
   const seen = new Map<string, number>();
