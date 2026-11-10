@@ -9,6 +9,7 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 import { depthRows } from "../../../services/simulator/tree/tree-row-tops";
+import { mergedSameRow } from "../../../services/simulator/tree/tree-merge-open";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
 
@@ -54,6 +55,8 @@ export function isRetry(doc: TreeDoc, id: string): boolean {
 export function backText(doc: TreeDoc, id: string, to: string): string {
   // 当たりの箱を別の道の同じ状態の当たりの箱へまとめた (tree-shape の joinSameHit、10-26 夜) は戻りでなく合流
   if (doc.boxes[id]?.out === "hit" && doc.boxes[id]?.back !== MATCH && doc.boxes[to]?.out === "hit") { const n = stepOf(doc, to); return tr(`同じ MOD 群のため統合 (${n} 段目)`, `Merged: same mod group (step ${n})`); } // 10-27 オーナー「文言は『同じ MOD 群のため統合』と出そうか」
+  // 同じ段の同じ枠へまとめた箱 (S-66、11-11): 親の真下に描き「同じ枠へ (n 段目)」
+  if (doc.boxes[id] && mergedSameRow(doc, doc.boxes[id]!)) { const n = stepOf(doc, to); return tr(`同じ枠へ (${n} 段目)`, `Same box (step ${n})`); }
   const step = stepBackText(doc, to, id);
   return isRetry(doc, id) ? tr(`再度挑戦 · ${step}`, `Retry · ${step}`) : step;
 }
@@ -95,6 +98,8 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   if (k === "restart") return tr("↩ ベースから作り直し", "↩ Start over from a new base");
   if (!to.length) return tr("↩ 形の合う箱が無い (回すとここで止まる)", "↩ No box of the same shape (runs stop here)");
   const note = qualityNote(doc, id);
+  // 同じ段の同じ枠へまとめた箱 (S-66): 親の真下に描き、行き先は「→ 同じ枠へ (n 段目)」(11-11 オーナー「線がごちゃつくよりいいな　採用で」)
+  if (mergedSameRow(doc, b)) return tr(`→ 同じ枠へ (${stepOf(doc, to[0]!)} 段目)${note}${name ? `: ${name(to[0]!)}` : ""}`, `→ Same box (step ${stepOf(doc, to[0]!)})${note}${name ? `: ${name(to[0]!)}` : ""}`);
   // 形の合う箱へ (10-27 (a)) は統合でなく「n 段目へ戻る」(来た道で形が違い、同じ MOD 群とは限らない)
   if (b.out === "hit" && k !== "match" && to.every((x) => doc.boxes[x]?.out === "hit")) return `→ ${backText(doc, id, to[0]!)}${note}${name ? `: ${to.map(name).join(tr("・", ", "))}` : ""}`;
   // 戻り方の文は全部「n 段目へ戻る」(同じ手をもう一度・始め・自動・選んだ箱も。どの箱かは矢印で分かる)。スマホは矢印が無いので行き先の名前を添える

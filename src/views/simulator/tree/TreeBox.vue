@@ -112,18 +112,16 @@ const sameHi = computed(() => props.box.out === "blocked" && props.box.junkKey =
 const HI_ROW = "flex min-w-0 shrink-0 gap-0.5", HI_BTN = "nodrag h-6 shrink-0 !whitespace-nowrap rounded ring-1 px-0.5 text-[10.5px]", HI_OFF = "ring-white/15 text-sim-body opacity-45 hover:opacity-80", HI_ON_MERGE = "ring-cyan-300/80 bg-cyan-400/20 text-cyan-100", HI_ON_OWN = "ring-amber-300/80 bg-amber-400/20 text-amber-100";
 /** 枠の上の線に乗る題 (tree-names の headOf) */
 /** ヒネコラのハズレ (当たり以外をまとめた箱、S-39) は「ハズレ (打たない)」 */
-// 同じ枠をまとめた箱は、まとめた箱の題も「 / 」で並べる (訳が違う時だけ。11-06 オーナー「同じ枠あるなら統合しちゃっていい」の札は両方の訳が分かる形で、S-66)
+// 同じ枠へまとめた箱も 11-11 から親の真下に自分の題で描く (S-66。前はまとめ先の題に「 / 」で並べた)
 const head = computed(() => {
   if (props.box.seen) return tr("ハズレ (打たない)", "Miss (not used)");
   // 帯で見せる枠の頭 (S-65c ⑫、11-10 オーナー「上のその枠にはMODレベル事設定みたいな名前で」)
   if (props.bands?.length) return tr("MOD レベルごとの設定", "Settings per mod level");
-  const d = t.doc.value, own = headOf(props.box, t.aimShort);
-  const others = Object.values(d.boxes).filter((b) => b.back === props.box.id && mergedAway(d, b)).map((b) => headOf(b, t.aimShort));
-  return [...new Set([own, ...others])].join(" / ");
+  return headOf(props.box, t.aimShort);
 });
 /** 打たない枠のハズレ (ヒネコラで持つ削減を打たない、S-39 ②b) */
 const skipped = computed(() => !!props.box.seen && !!(props.box.parent && t.doc.value.boxes[props.box.parent]?.hand?.noUse));
-/** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
+/** ここへまとめた (描かない) 箱の数 = ヒネコラのハズレ箱の「当たり以外 n 通り」(tree-merge-open の mergedInto) */
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** どの帯から来たか (削減の帯の結果の箱、11-11 オーナー追い 6。線を 1 つの札に入れても箱で読めるように) */
 const fromBands = computed(() => bandsInto(t.doc.value, props.box.id, mergedAway));
@@ -218,10 +216,8 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <!-- 開いた時の組み直しで増えた箱 (前の形の木に無かった札、S-107・⑦19 案 A。保存しない) -->
     <span v-if="box.fresh" data-tree-fresh class="shrink-0 rounded-md border border-sky-400/60 bg-sim-panel px-1.5 text-[11px] font-bold leading-[18px] text-sky-300" :title="tr('今の決まりで組み直した時に、前の保存には無かった結果の箱。行き先を確かめて決める', 'A result box that was not in the saved recipe and appeared when rebuilt with the current rules. Check where it goes')">{{ tr("組み直しで増えた", "New after rebuild") }}</span>
-    <!-- まとめた箱がある = 線が何本か入る (案 A、S-66) -->
     <span v-if="hold || seenOut" data-tree-foresee-frame class="shrink-0 rounded-md border border-violet-300/60 bg-[#15110c] px-1.5 text-[11px] font-bold leading-[18px] text-violet-200" :title="hold ? tr('ヒネコラで予見したアイテム: 次の手の結果が使う前に見える', 'Foreseen with Hinekora: the next craft’s result is visible before use') : tr('予見で見えた結果 (ヒネコラで持った手の結果)', 'A foreseen result (of the craft held after Hinekora)')">{{ hold ? tr("予見", "Foresight") : tr("予見の結果", "Foreseen") }}</span>
     <span v-for="lv in fromBands" :key="`from-${lv}`" data-tree-from-band :data-band-lv="lv" class="shrink-0 rounded-md px-1.5 text-[11px] font-bold leading-[18px] text-black" :style="{ background: `rgb(${lvLook(lv).rgb})` }" :title="tr(`${BAND_TXT[lv]![0]} の帯から来た結果`, `Result from the ${BAND_TXT[lv]![1]} band`)">{{ tr(BAND_TXT[lv]![0], BAND_TXT[lv]![1]) }}</span>
-    <span v-if="joinedIn && !box.seen" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
     <template v-if="box.out !== 'start'">
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
       <span v-if="doneShown" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>

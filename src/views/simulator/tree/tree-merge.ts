@@ -9,7 +9,7 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
+import { mergedSameRow } from "../../../services/simulator/tree/tree-merge-open";
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { judgeOf } from "./tree-hand-plan";
@@ -40,8 +40,8 @@ export function joinSameShape(doc: TreeDoc, id: string): void {
 
 /** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */
 function mergeIds(doc: TreeDoc): Set<string> {
-  // まとめて描かない箱 (案 A、tree-merge-open の mergedAway) からは引かない (親の線がまとめ先へ直に入る)
-  return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent && !mergedAway(doc, b)).map((b) => b.id));
+  // 同じ段の同じ枠へまとめた箱 (S-66) からは引かない (描かない箱は親の線がまとめ先へ入り、描く箱は下の札「→ 同じ枠へ (n 段目)」で示す。11-11)
+  return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent && !mergedSameRow(doc, b)).map((b) => b.id));
 }
 
 /**

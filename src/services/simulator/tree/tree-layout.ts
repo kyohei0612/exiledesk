@@ -40,9 +40,9 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
   const kids = (id: string): string[] => {
     const b = d.boxes[id]!;
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
-    // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は場所を取らない
+    // 描かない箱 (ヒネコラのハズレの先頭へまとめた兄弟、tree-merge-open の mergedAway と同じ判定) は場所を取らない
     const dep = (x: string): number => { let n = 0; for (let q = d.boxes[x]; q?.parent; q = d.boxes[q.parent]) n++; return n; };
-    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back] && dep(o) === dep(c.back)); });
+    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back] && dep(o) === dep(c.back) && d.boxes[c.back]!.seen); });
   };
   const row = rowsOf(kids);
   /**

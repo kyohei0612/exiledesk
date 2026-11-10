@@ -64,10 +64,13 @@ function mergeTo(doc: TreeDoc, id: string, to: string): void {
   c.done = null;
 }
 /**
- * まとめた箱 = 描かない箱 (案 A、10-28 夜オーナー「N1の案Aだな」): 親の線はまとめ先の箱へ直に入り、まとめ先の題の横に「n 本から合流」。
- * 戻り先を手で替える・× で外す (autoBack が消える)・手を足すと、また普通の箱として描く
+ * 同じ段の同じ枠へまとめた箱 (S-66)。11-11 から描かない箱 (前の案 A = 親の線をまとめ先へ直に引く) にせず、各親の真下に普通の箱で描き、下の札を「→ 同じ枠へ (n 段目)」にする
+ * (オーナー「普通に直下に同じ箱でも出したら線ごちゃごちゃにならない説　どうせ同じ枠に戻るだけだし」→「線がごちゃつくよりいいな　採用で」。前は別の親の下の箱へ横に伸びる線が交わり合流に見えた)。
+ * 合流の線 (tree-merge) は引かない。戻り先を手で替える・× で外す (autoBack が消える)・手を足すと、ふつうの戻りの箱
  */
-export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back] && depthOf(d, b.id) === depthOf(d, b.back); // 違う段へまとめた古い箱は普通の箱 (↩) で描く
-/** その箱へまとめた (描かない) 箱の数 */
+export const mergedSameRow = (d: TreeDoc, b: TreeBox): boolean => !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back] && depthOf(d, b.id) === depthOf(d, b.back); // 違う段へまとめた古い箱は普通の箱 (↩) で描く
+/** 描かない箱 = ヒネコラの「ハズレ (打たない)」の先頭へまとめた兄弟だけ (S-39 ②)。同じ枠へまとめたほかの箱は 11-11 から親の真下に描く (S-66) */
+export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => mergedSameRow(d, b) && !!d.boxes[b.back!]?.seen;
+/** その箱へまとめた (描かない) 箱の数 = ヒネコラのハズレ箱の「当たり以外 n 通り」 */
 export const mergedInto = (d: TreeDoc, id: string): number => Object.values(d.boxes).filter((b) => b.back === id && mergedAway(d, b)).length;
 

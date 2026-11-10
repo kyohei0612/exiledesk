@@ -18,9 +18,9 @@ export const LINK_Y = LINE_Y * 3 + CHIP_Y;
 /** 画面に描く前の箱の高さの見込み (カードに MOD が 2 行の結果の箱くらい) */
 export const EST_H = 230;
 
-/** まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) */
+/** 描かない箱 (ヒネコラのハズレの先頭へまとめた兄弟、tree-merge-open の mergedAway と同じ判定) */
 const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
-const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back);
+const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back) && !!d.boxes[c.back]!.seen;
 /** 描く子 (まとめた箱はまとめ先へ線が行くので数えない。畳んだ消去の続きは札から止まった箱へ、S-28g) */
 export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => foldOuts(d, b).filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
 /** 横の枝分かれを描くか (線の行き先が 2 つ以上、まとめ先への線を含む) */
