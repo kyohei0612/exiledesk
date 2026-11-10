@@ -8,7 +8,7 @@ import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { FOLD_H, foldOuts, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
-import { bandAway, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
+import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -36,19 +36,26 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
   /**
    * 削減の手前の枠の帯 (S-65c ⑫): 枠ごとに 帯 → 手の札 → 結果の箱 を別の線で (11-11 オーナー「どこに何打ってこのツリーになったのか一ミリも分からん」)。
-   * 先頭の枠 (帯の頭の箱) は帯の真下に札、ほかの枠は帯の下で段をずらして横へ出し、その枠の列 (描かない枠の箱の真ん中) に札。右の帯ほど上の段を通るので線は交わらない
+   * 先頭の枠 (帯の頭の箱) は帯の真下に札、ほかの枠は帯の下で段をずらして横へ出し、その枠の列 (描かない枠の箱の真ん中) に札。右の帯ほど上の段を通るので線は交わらない。
+   * 同じ手の帯 (tree-band の bandGroup) は線を 1 つの札に入れてから結果の箱へ広げる (11-11 オーナー追い 6「3本とりあえず線をカオス削減に入れてから広がってもいいかも」):
+   * 札は組の帯の真ん中の下、札を出すのは組の先頭 (lead) だけ。組 = 札・枝分かれの高さと横の棒の段をそろえる単位 (group)
    */
-  const bandFrom = (b: TreeBox): { x: number; y: number; col: number; turn: number | null } | null => {
+  const bandFrom = (b: TreeBox): { x: number; y: number; col: number; turn: number | null; lead: string; group: string[] } | null => {
     const h = bandHead(doc.value, b.id), bs = headBands(doc.value, h), i = bs.findIndex((x) => x.id === b.id);
     if (i < 0) return null;
-    const q = posOf(doc.value.boxes[h]!), x = q.x + bandMidX(BOX_W, i, bs.length), y = q.y + (heightOf?.(h) || BOX_H);
-    return i === 0 ? { x, y, col: x, turn: null } : { x, y, col: posOf(b).x + BOX_W / 2, turn: y + 10 + (bs.length - 1 - i) * 12 };
+    const q = posOf(doc.value.boxes[h]!), xOf = (j: number): number => q.x + bandMidX(BOX_W, j, bs.length), x = xOf(i), y = q.y + (heightOf?.(h) || BOX_H);
+    const group = bandGroup(doc.value, b.id), js = group.map((g) => bs.findIndex((z) => z.id === g));
+    if (group.length > 1) return { x, y, col: js.reduce((a, j) => a + xOf(j), 0) / js.length, turn: y + 10 + (bs.length - 1 - js[0]!) * 12, lead: group[0]!, group };
+    return i === 0 ? { x, y, col: x, turn: null, lead: b.id, group } : { x, y, col: posOf(b).x + BOX_W / 2, turn: y + 10 + (bs.length - 1 - i) * 12, lead: b.id, group };
   };
+  /** 同じ手の帯の組の結果 (札・枝分かれの高さを組でそろえる) */
+  const groupOuts = (b: TreeBox): string[] => (bandFrom(b)?.group ?? [b.id]).flatMap((g) => outsOf(doc.value.boxes[g]!));
   /** 線の行き先 (まとめた箱はまとめ先、帯の中の枠の箱は帯の頭) */
   const toOf = (o: string): string => { const c0 = doc.value.boxes[o]!; return mergedAway(doc.value, c0) ? c0.back! : bandAway(doc.value, c0) ? bandHead(doc.value, o) : o; };
-  const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
-    const xs = [bandFrom(b)?.col ?? posOf(b).x + BOX_W / 2, ...outsOf(b).map(toOf).map(midOf)];
-    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...outsOf(b).map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
+  // 同じ手の帯の組は先頭の分だけ (組の結果を全部入れて 1 本の棒)
+  const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length && (bandFrom(b)?.lead ?? b.id) === b.id).map((b) => {
+    const os = groupOuts(b), xs = [bandFrom(b)?.col ?? posOf(b).x + BOX_W / 2, ...os.map(toOf).map(midOf)];
+    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...os.map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
   const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
@@ -59,18 +66,20 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
     // 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
     // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
-    const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
+    // 同じ手の帯の組は組の結果で札・枝分かれの高さを決める (組の線が同じ所を通る)
+    const bf = bandFrom(b), lead = bf?.lead ?? b.id, gk = bf && bf.group.length > 1 ? [...new Set(groupOuts(b).map(toOf))] : kids.map((k) => k.id);
+    const top = Math.min(...gk.map((k) => posOf(doc.value.boxes[k]!).y)), multi = gk.length > 1;
     // 帯の中の枠の箱は帯の真下から (手の名前は帯の中なので札は出さない、band)
-    const bf = bandFrom(b), px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
+    const px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
-    const Lr = layout?.() ?? null, r = Lr?.rows.get(b.id);
+    const Lr = layout?.() ?? null, r = Lr?.rows.get(lead);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
     // 畳んだ消去の続きの札の上下 (人の消去の箱 → 札・札 → 止まった箱) は、手の札を前の箱の下端と次の箱の上端の真ん中に (上下の線を同じ長さ。
     // 段の札の高さに揃えると、背の低い札の下の線だけ長くなった。11-07 オーナー「消去と前の枠と次のわくの間において欲しい…不細工にならないように線の長さが」)
     const mid = !pass && !multi && (fold.value.folds.has(b.id) || fold.value.folds.has(kids[0]!.id));
     const midJy = mid ? (fold.value.folds.has(b.id) ? py : p.y + (heightOf?.(b.id) || BOX_H)) / 2 + top / 2 : null;
     const jy = pass ? p.y : midJy ?? rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
-    const busY = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(b.id) ?? 0);
+    const busY = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(lead) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {
@@ -82,7 +91,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     }).sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
-    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
+    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, chip: lead === b.id, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
   }));
   /**
    * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。
@@ -90,8 +99,9 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
    */
   const chipRoom = computed(() => {
     const out = new Map<string, number>();
-    for (const e of edges.value) {
-      const near = Math.min(...edges.value.filter((f) => f !== e && Math.abs(f.jy - e.jy) < CHIP_HALF * 2).map((f) => Math.abs(f.jx - e.jx)));
+    const shown = edges.value.filter((e) => e.chip);
+    for (const e of shown) {
+      const near = Math.min(...shown.filter((f) => f !== e && Math.abs(f.jy - e.jy) < CHIP_HALF * 2).map((f) => Math.abs(f.jx - e.jx)));
       out.set(e.id, Math.min(CHIP_MAX, near - 12));
     }
     return out;

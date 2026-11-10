@@ -38,3 +38,31 @@ export function headBands(d: TreeDoc, id: string): Array<{ id: string; lv: LvCla
 export const BAND_H = 52;
 /** 帯の真ん中の x (箱の左からの差)。帯の幅は箱の幅を帯の数で割った物 */
 export const bandMidX = (boxW: number, i: number, n: number): number => (boxW / n) * (i + 0.5);
+/** 帯の手の比べ (札を 1 つにまとめる時の同じ手。見本で変わる品質・個数は見ない) */
+const handKey = (b: TreeBox): string | null => {
+  const h = b.hand;
+  return !h ? null : JSON.stringify([h.currency, [...h.omens].sort(), h.catalyst, !!h.free, !!h.noUse, !!h.useHeld, (h.keep ?? []).map((a) => JSON.stringify(a)).sort()]);
+};
+/**
+ * 同じ手の帯の組 (11-11 オーナー追い 6「3本とりあえず線をカオス削減に入れてから広がってもいいかも」): 帯の頭の並びのうち、この枠と同じ手の枠 (低い → 高い の順)。
+ * 手の無い枠・帯でない箱は [自分] だけ。線はこの組で 1 つの札に入れてから結果の箱へ広げる (use-tree-edges)
+ */
+export function bandGroup(d: TreeDoc, id: string): string[] {
+  const b = d.boxes[id], k = b ? handKey(b) : null;
+  if (!k) return [id];
+  const bs = headBands(d, bandHead(d, id));
+  return bs.length > 1 ? bs.map((x) => x.id).filter((x) => handKey(d.boxes[x]!) === k) : [id];
+}
+/** 結果の箱がどの帯から来たか (まとめた箱の分も、低い → 高い の順)。帯から来ていなければ空 (追い 6「結果の箱にどの帯から来たかは読めるように」) */
+export function bandsInto(d: TreeDoc, id: string, mergedFrom: (d: TreeDoc, b: TreeBox) => boolean): LvClass[] {
+  if (!bandsOn()) return [];
+  const own = d.boxes[id];
+  if (!own) return [];
+  const from = [own, ...Object.values(d.boxes).filter((b) => b.back === id && mergedFrom(d, b))];
+  const out = new Set<LvClass>();
+  for (const c of from) {
+    const p = c.parent ? d.boxes[c.parent] : undefined;
+    if (p && headBands(d, bandHead(d, p.id)).length > 1) { const lv = lvPart(p.junkKey); if (lv) out.add(lv); }
+  }
+  return LV_ORDER.filter((x) => out.has(x));
+}

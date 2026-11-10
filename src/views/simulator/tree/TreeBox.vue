@@ -24,6 +24,7 @@ import { setSameHiOwn } from "./tree-hand-plan";
 import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { lvLook } from "./tree-whittle-marks";
 import type { BandView } from "./use-tree-bands";
+import { bandsInto } from "../../../services/simulator/tree/tree-band";
 import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
@@ -124,6 +125,8 @@ const head = computed(() => {
 const skipped = computed(() => !!props.box.seen && !!(props.box.parent && t.doc.value.boxes[props.box.parent]?.hand?.noUse));
 /** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
+/** どの帯から来たか (削減の帯の結果の箱、11-11 オーナー追い 6。線を 1 つの札に入れても箱で読めるように) */
+const fromBands = computed(() => bandsInto(t.doc.value, props.box.id, mergedAway));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
 const headTitle = computed(() => (props.box.out === "hit" && props.box.aim ? boxAims(props.box).map(t.aimShort).join(" / ") : head.value));
 /** 札に乗せた時の説明。割合 % は木の画面に一切出さない (S-76 撤回、11-06 オーナー「なにこのいらん注記指示したっけ」。本当の割合は 100 人回し) */
@@ -217,6 +220,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <span v-if="box.fresh" data-tree-fresh class="shrink-0 rounded-md border border-sky-400/60 bg-sim-panel px-1.5 text-[11px] font-bold leading-[18px] text-sky-300" :title="tr('今の決まりで組み直した時に、前の保存には無かった結果の箱。行き先を確かめて決める', 'A result box that was not in the saved recipe and appeared when rebuilt with the current rules. Check where it goes')">{{ tr("組み直しで増えた", "New after rebuild") }}</span>
     <!-- まとめた箱がある = 線が何本か入る (案 A、S-66) -->
     <span v-if="hold || seenOut" data-tree-foresee-frame class="shrink-0 rounded-md border border-violet-300/60 bg-[#15110c] px-1.5 text-[11px] font-bold leading-[18px] text-violet-200" :title="hold ? tr('ヒネコラで予見したアイテム: 次の手の結果が使う前に見える', 'Foreseen with Hinekora: the next craft’s result is visible before use') : tr('予見で見えた結果 (ヒネコラで持った手の結果)', 'A foreseen result (of the craft held after Hinekora)')">{{ hold ? tr("予見", "Foresight") : tr("予見の結果", "Foreseen") }}</span>
+    <span v-for="lv in fromBands" :key="`from-${lv}`" data-tree-from-band :data-band-lv="lv" class="shrink-0 rounded-md px-1.5 text-[11px] font-bold leading-[18px] text-black" :style="{ background: `rgb(${lvLook(lv).rgb})` }" :title="tr(`${BAND_TXT[lv]![0]} の帯から来た結果`, `Result from the ${BAND_TXT[lv]![1]} band`)">{{ tr(BAND_TXT[lv]![0], BAND_TXT[lv]![1]) }}</span>
     <span v-if="joinedIn && !box.seen" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
     <template v-if="box.out !== 'start'">
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
