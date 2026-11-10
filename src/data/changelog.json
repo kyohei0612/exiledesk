@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.707",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存して開き直した木で、同じ中身の箱をまとめた所から先へ進めず止まることがあったのを直しました",
+    "en": "Simulator: fixed runs getting stuck after a merged box when you saved and reopened a tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ中身の箱をまとめる時、どちらの箱を残すかが開き直すたびに変わらないようにしました",
+    "en": "Simulator: when two boxes with the same contents are merged, the one that stays no longer changes each time you reopen the tree"
+   }
+  ]
+ },
+ {
   "v": "0.1.706",
   "date": "2026-11-10",
   "items": [
@@ -886,18 +904,6 @@
     "area": "",
     "text": "シミュレーター: エミュの「シミュレーターへ」で、MOD が 8 つある品もプレフィックス・サフィックスの数で削らずに取り込むようにしました (嵌めていたルーンも使用ルーンに入ります)",
     "en": "Simulator: \"To the simulator →\" in the Emulator now brings in items with 8 mods without trimming them by prefix and suffix count (socketed runes go into Runes in use too)"
-   }
-  ]
- },
- {
-  "v": "0.1.667",
-  "date": "2026-11-05",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ルーンを嵌めた箱と嵌めていない箱を同じ枠と見て、外れの戻り先に選べてしまう不具合を直しました",
-    "en": "Simulator: fixed boxes with and without socketed runes being treated as the same frame, which let a miss route back to a box without the runes"
    }
   ]
  }
