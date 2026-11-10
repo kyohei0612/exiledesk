@@ -236,7 +236,11 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
   type PlanDay = (typeof plan)[number];
   const weekSamples = [...inp.samples, ...inp.prevSamples].map((x) => ({ id: x.id, base: x.base, mods: JSON.parse(x.mods), n: x.n }) as DailySample);
   const toFull = (day: PlanDay): PlanDay => {
-    if (day.aims && fullMods(data, day.base, day.aims)) return day;
+    // 段は D-04 (全部 T3 以上、11-10)。前の決まりで組んだ予定の段もここで揃える (変わった時だけ新しい物 = planFix で書き戻す)
+    if (day.aims && fullMods(data, day.base, day.aims)) {
+      const fl = floorAims(data, day.base, day.ilvl ?? TOPIC_ILVL, day.aims);
+      return fl.some((a, i) => a.modId !== day.aims![i]!.modId || a.tier !== day.aims![i]!.tier) ? { ...day, aims: fl } : day;
+    }
     const seen = new Set(historyBefore(noOf(day.day)).map((h) => h.base));
     // 同じ部位 (今週と前の週の型 → 手の辞書の見本) → 部位を問わず (同じ順)。部位を問わず引いた時は出す部位の札も品に合わせる
     const n = nextFullSample(data, day.day, day.base, weekSamples, seen, day.sampleId) ?? nextFullSample(data, day.day, day.base, devSamples(data), seen, null)
