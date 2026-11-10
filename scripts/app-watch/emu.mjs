@@ -8,7 +8,7 @@
  *   [--steps 30] [--seed 1] [--json] [--update]
  *
  * 見る物:
- *   M-91  持った時のオレンジ・緑と打った結果: オレンジでない MOD は消えも変わりもしない、付いた MOD は緑の枠の側
+ *   M-91  持った時の赤 (data-doomed)・緑と打った結果: 赤でない MOD は消えも変わりもしない、付いた MOD は緑の枠の側
  *   M-90  1 手戻す (Ctrl+Z) の後のアイテム = その手の前 / 工程の行を押した後 = その手の直後
  *   U-81  Esc 1 回で閉じるのは一番後に開いた 1 つ (MOD 一覧の窓 → 持っている物の順)
  *   U-82  窓の外を押して閉じた時、その押下は下の物 (棚) に届かない
@@ -25,13 +25,13 @@ const BASE = "Sapphire%20Ring";
 const { r, done } = report("emu");
 const c = await open(Number(process.env.WATCH_PORT ?? 9382));
 
-// カードの MOD の行 (左の札 span.text-left が P1・S2 の行。付いた直後の珍しい段は先頭に光の柱の span が入るので :scope > span では取れない)。doomed = オレンジ (この手で変わる候補)。持っている = カードの下の一言が amber (StageItemCard の hint)
+// カードの MOD の行 (左の札 span.text-left が P1・S2 の行。付いた直後の珍しい段は先頭に光の柱の span が入るので :scope > span では取れない)。doomed = 行の data-doomed (この手で変わる候補。字は赤。11-10 に色で探すのをやめた = 前のオレンジ ff8a3d で探して空振りしていた)。持っている = カードの下の一言が amber (StageItemCard の hint)
 const READ = `(() => {
   const card = document.querySelector("[data-stage-card]");
   if (!card) return null;
   // 素の値の文 (盛った値の括弧を外し、品質で伸びた表示は title の素の値に戻す)。ほかの MOD が消えると盛りの表示だけ変わるので (合金など)
   const bare = (p) => { const k = p.cloneNode(true); k.querySelectorAll("[data-boosted-value], .stage-rare-beam").forEach((x) => x.remove()); for (const sp of k.querySelectorAll("span[title]")) { const m = sp.title.match(/^(?:品質で伸びた数値 \\(素は |Boosted by quality \\(base: )(.+)\\)$/); if (m) sp.textContent = m[1]; } return k.innerText.replace(/\\s+/g, " ").trim(); };
-  const rows = [...card.querySelectorAll("p")].map((p) => { const lab = p.querySelector(":scope > span.text-left")?.innerText?.trim() ?? ""; return /^[PS]\\d/.test(lab) ? { side: lab[0], text: bare(p), doomed: !!p.querySelector("[class*='ff8a3d']") } : null; }).filter(Boolean);
+  const rows = [...card.querySelectorAll("p")].map((p) => { const lab = p.querySelector(":scope > span.text-left")?.innerText?.trim() ?? ""; return /^[PS]\\d/.test(lab) ? { side: lab[0], text: bare(p), doomed: p.hasAttribute("data-doomed") } : null; }).filter(Boolean);
   const open = [...card.querySelectorAll("[data-open-slots] p")].map((p) => /プレフィックス|prefix/i.test(p.innerText) ? "P" : "S");
   const k = card.cloneNode(true); k.querySelectorAll("[data-rec-part=card-hint], [data-open-slots]").forEach((x) => x.remove());
   const steps = [...document.querySelectorAll("[data-rec^='step:']")].map((x) => x.getAttribute("data-rec")).filter((x) => x !== "step:start");
@@ -55,7 +55,8 @@ try {
   const t0 = Date.now();
 
   // ---- M-91 と M-90 (打つ → 色分けと比べる → 戻す → 打ち直す) ----
-  const m91 = r("M-91", "持った時のオレンジ・緑と打った結果が食い違わない");
+  const m91 = r("M-91", "持った時の赤・緑と打った結果が食い違わない");
+  let doomedSeen = 0; // 赤 (data-doomed) の行が出た手の数。0 のままなら目印の取り違えを疑う
   const m90 = r("M-90", "1 手戻す・工程の行の後のアイテムが前と同じ");
   const after = new Map(); // step:N → 打った直後のカード
   const prefer = /transmut|augment|regal|exalt|chaos|annul|alch|divine/i;
@@ -95,18 +96,19 @@ try {
     if (now.text === before.text) { stuck++; await c.key("Escape"); continue; } // 打てなかった・変わらなかった
     stuck = 0;
     after.set(now.last, now.text);
-    // M-91: オレンジでない行は残る、新しい行は緑の側。色分けが出ていない手 (お告げ無し) は何も言っていないので見ない
+    // M-91: 赤でない行は残る、新しい行は緑の側。色分けが出ていない手 (お告げ無し) は何も言っていないので見ない
     const shown = before.rows.some((x) => x.doomed) || before.open.length;
     if (shown) m91.seen++;
+    if (before.rows.some((x) => x.doomed)) doomedSeen++;
     if (shown) {
       const left = multiset(now.rows.map((x) => x.text));
       for (const x of before.rows.filter((y) => !y.doomed)) {
         if (left.get(x.text)) left.set(x.text, left.get(x.text) - 1);
-        else m91.bad.push(`${k}: オレンジでない行が消えた・変わった「${x.text.slice(0, 40)}」`);
+        else m91.bad.push(`${k}: 赤でない行が消えた・変わった「${x.text.slice(0, 40)}」`);
       }
       const had = multiset(before.rows.map((x) => x.text));
       const added = now.rows.filter((x) => { const n = had.get(x.text); if (n) { had.set(x.text, n - 1); return false; } return true; });
-      // 数値が変わる手 (オレンジの行の打ち直し) は新しい行に見えるので、オレンジの行と同じ側・同じ数までは付いた物と数えない
+      // 数値が変わる手 (赤の行の打ち直し) は新しい行に見えるので、赤の行と同じ側・同じ数までは付いた物と数えない
       const doomedSides = multiset(before.rows.filter((x) => x.doomed).map((x) => x.side));
       for (const a of added) {
         if (!before.open.length || before.open.includes(a.side)) continue; // 緑が出ていない手 (カオスなど消してから付ける手、preview.ts) は側を言っていない
@@ -126,6 +128,8 @@ try {
     await c.key("Escape");
   }
   await checkSteps();
+  m91.title += ` (赤 = data-doomed の行が出た手 ${doomedSeen})`;
+  if (m91.seen && !doomedSeen) m91.note.push("赤 (data-doomed) の行が 1 つも出ない (目印の取り違えを疑う)");
   if (!m91.seen) m91.note.push("色分けの出た手が 1 つも無い (お告げを掛けられる手が無かった。--seed を替える)");
 
   // ---- ここから台を開き直して見る (前の手の状態に左右されない)。白に戻すが押せるよう 1 手だけ打つ ----
