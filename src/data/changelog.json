@@ -8,6 +8,12 @@
     "area": "",
     "text": "シミュレーター: 偉大なる高貴なお告げなど 1 手で MOD が 2 つ付く手で、狙い MOD が 2 つとも付く場合の箱 (「2 つとも付いた」) も出すようにしました。結果はエミュと同じ 4 通り (片方ずつ・2 つとも・外れ) に分かれます",
     "en": "Simulator: crafts that add two mods at once (such as the Omen of Greater Exaltation) now also get a box for when both target mods land. The result splits into the same 4 cases as the emulator (either one, both, or a miss)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦の記録がリセットされた時は、一覧から今日の挑戦を始め直せるようにしました",
+    "en": "Daily: when your challenge record has been reset, you can now start today’s challenge again from the list"
    }
   ]
  },

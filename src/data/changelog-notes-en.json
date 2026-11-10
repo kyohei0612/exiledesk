@@ -1,6 +1,7 @@
 {
   "0.1.702": [
-    "Simulator: crafts that add two mods at once (such as the Omen of Greater Exaltation) now also get a box for when both target mods land. The result splits into the same 4 cases as the emulator (either one, both, or a miss)"
+    "Simulator: crafts that add two mods at once (such as the Omen of Greater Exaltation) now also get a box for when both target mods land. The result splits into the same 4 cases as the emulator (either one, both, or a miss)",
+    "Daily: when your challenge record has been reset, you can now start today’s challenge again from the list"
   ],
   "0.1.701": [
     "Daily: the tree’s start card now has “Restart from the start”. After a confirmation it resets the tree so you can pick the start and the mod to fracture again (the timer keeps running)"
