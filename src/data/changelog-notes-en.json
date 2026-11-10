@@ -1,4 +1,10 @@
 {
+  "0.1.706": [
+    "Simulator: fixed the automatic return (↩) and merge targets sometimes swapping after you saved and reopened a tree",
+    "Site: the daily look now switches at 16:00, the same time as the Daily",
+    "Daily: the English name is now Daily Craft everywhere",
+    "Feedback: the send window now says that your Daily name is included"
+  ],
   "0.1.705": [
     "Simulator: saved and shared recipe trees now open faster (about 40% less freezing on phones)"
   ],

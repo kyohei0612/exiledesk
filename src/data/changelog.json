@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.706",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存して開き直した時に、自動で戻る先 (↩) やまとめ先が入れ替わることがあったのを直しました",
+    "en": "Simulator: fixed the automatic return (↩) and merge targets sometimes swapping after you saved and reopened a tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "サイト: 日替わりの見た目の切り替わりを、デイリーと同じ 16:00 にしました",
+    "en": "Site: the daily look now switches at 16:00, the same time as the Daily"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 英語の画面での名前を Daily Craft に揃えました",
+    "en": "Daily: the English name is now Daily Craft everywhere"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "要望: 送る窓の説明に「デイリーの名前は入ります」と書くようにしました",
+    "en": "Feedback: the send window now says that your Daily name is included"
+   }
+  ]
+ },
+ {
   "v": "0.1.705",
   "date": "2026-11-10",
   "items": [
@@ -868,18 +898,6 @@
     "area": "",
     "text": "シミュレーター: ルーンを嵌めた箱と嵌めていない箱を同じ枠と見て、外れの戻り先に選べてしまう不具合を直しました",
     "en": "Simulator: fixed boxes with and without socketed runes being treated as the same frame, which let a miss route back to a box without the runes"
-   }
-  ]
- },
- {
-  "v": "0.1.666",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター・シミュレーター: 変成・錬金術・王者で MOD が付かなかった不具合を直しました",
-    "en": "Emulator and Simulator: fixed Orb of Transmutation, Orb of Alchemy and Regal Orb not adding mods"
    }
   ]
  }
