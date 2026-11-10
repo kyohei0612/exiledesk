@@ -26,6 +26,7 @@ import { sureFracOn, sureFracture } from "./tree-sure-frac";
 import { divineBranches, isDivineAim } from "./tree-divine";
 import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1, type RecipeExample } from "./tree-recipe-v1";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
+import { builtOf, type TreeBuilt } from "./tree-built";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null; /** 代表のほかにこの箱へ着く枝の品 (重い順、見本の種 2 以降 = 「見本を幾つか見る」所が 1 品の答えにならないように) */ alts?: readonly StageItem[] }
@@ -196,10 +197,13 @@ export function examplesOf(data: PatchData, doc: TreeDoc): Record<string, Recipe
  * 保存する形 (S-104・S-200 ⑦): 打ち方 (v1) + 例のアイテム (v2)。
  * 保存の形 (箱の無い、URL から来た物) は持っている例をそのまま。データがまだ無い時は v1
  */
-export function recipeOf(data: PatchData | null | undefined, d: TreeDoc): TreeDoc {
+export function recipeOf(data: PatchData | null | undefined, d: TreeDoc, withBuilt = true): TreeDoc {
   const rec = toRecipeV1(d);
   const ex = isRecipeV1(d) ? d.examples : data && d.boxes.start ? examplesOf(data, d) : undefined;
-  return ex && Object.keys(ex).length ? { ...rec, schema: RECIPE_V2, examples: JSON.parse(JSON.stringify(ex)) as Record<string, RecipeExample> } : rec;
+  const out: TreeDoc = ex && Object.keys(ex).length ? { ...rec, schema: RECIPE_V2, examples: JSON.parse(JSON.stringify(ex)) as Record<string, RecipeExample> } : rec;
+  // 組み上がった木の写し (S-104b): 組んだ木なら今の作りで作る、保存の形なら持っている物をそのまま (版・打ち方の比べは開く時に tree-built がする)
+  const built = !withBuilt ? undefined : isRecipeV1(d) ? d.built : data ? builtOf(d) : undefined;
+  return built ? { ...out, built: JSON.parse(JSON.stringify(built)) as TreeBuilt } : out;
 }
 
 /** 例のアイテムから組んだ品の覚え (組み直しの 1 手ごとに配置を出し直すので、毎回作ると重い。品は同じ物を使い回す = 品の鍵の覚えも効く) */
