@@ -1,4 +1,10 @@
 {
+  "0.1.694": [
+    "Simulator: before an Omen of Whittling, the tree now splits by whether the junk mod level is lower, the same or higher, so you can pick a different move for each",
+    "Simulator (phone): fixed the tier labels overlapping on the full tree view",
+    "Spam simulator (phone): fixed the back-to-top button covering \"Pick a target mod\"",
+    "Daily: submitting an item with two or more Genesis Tree mods now says \"Only 1 mod that can't be crafted again is allowed\" (also when pasting)"
+  ],
   "0.1.693": [
     "Emulator (phone): the currency shelf now comes before the steps, and the item card stays at the top as you scroll",
     "Simulator: with two or more ✦ mods on the final item, the trade site search now checks every ✦ mod",
