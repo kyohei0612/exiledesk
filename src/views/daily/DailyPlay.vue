@@ -23,6 +23,7 @@ import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
 import DailySubmitAsk from "./DailySubmitAsk.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
+import DailyRestartAsk from "./DailyRestartAsk.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
 import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
@@ -97,6 +98,34 @@ function openTree(): void {
   if (saved) t.open(saved);
   else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from)); }
   treeOn.value = true;
+}
+/**
+ * スタートからやり直す (D-37j、11-10 オーナー「タイマーは進むけどスタートのやり直しができるボタンを最初のカードに」)。
+ * 木・始め方・MOD の覚えを消して 1 段目 (始め方) へ。時刻はサーバーの始めた時刻のままなので残り時間は進む。終わった挑戦では出さない
+ */
+const restarting = ref(false);
+/** 差し込み先 = スタートの箱 (下の段を持つ箱)。木の箱は後から描かれ、描き直しで替わることもあるので、出た物を見張って拾う (Teleport は先にある所にしか置けない) */
+const startBox = ref<HTMLElement | null>(null);
+let startObs: MutationObserver | null = null;
+watch(treeOn, (on) => {
+  startObs?.disconnect(); startObs = null; startBox.value = null;
+  const root = document.querySelector<HTMLElement>("[data-daily-play]");
+  if (!on || !root) return;
+  const find = (): void => { const el = root.querySelector<HTMLElement>("[data-tree-box]:has([data-tree-start-under])"); if (el !== startBox.value) startBox.value = el; };
+  find();
+  startObs = new MutationObserver(find);
+  startObs.observe(root, { childList: true, subtree: true });
+}, { immediate: true, flush: "post" });
+onBeforeUnmount(() => startObs?.disconnect());
+function restart(): void {
+  restarting.value = false;
+  if (!tryOf.value || over.value) return;
+  clearTimeout(saveT);
+  treeOn.value = false;
+  if (dev) { tryOf.value = { ...tryOf.value, fractured: undefined, from: undefined, tree: undefined }; return; }
+  updateTry(props.topic.id, { fractured: undefined, from: undefined, tree: undefined });
+  const x = getTry(props.topic.id);
+  if (x) tryOf.value = { ...x };
 }
 function pick(modId: string, from: StartFrom): void {
   if (dev && tryOf.value) { tryOf.value = { ...tryOf.value, fractured: modId, from }; openTree(); return; }
@@ -243,6 +272,11 @@ const REFUSED: Record<StartError, () => string> = {
         <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
       </div>
     </Teleport>
+    <!-- スタートからやり直す (D-37j、11-10): 木のスタートの箱の下。シミュの部品は触らず、スタートの箱 (下の段を持つ箱) の末尾へ差し込む -->
+    <Teleport v-if="startBox && treeOn && !picking && !over" :to="startBox">
+      <button type="button" class="g-btn sm nodrag mt-1.5 w-full" data-daily-restart @click.stop="restarting = true">{{ tr("スタートからやり直す", "Start over") }}</button>
+    </Teleport>
+    <DailyRestartAsk :open="restarting" @close="restarting = false" @yes="restart" />
     <DailyGiveUpAsk :id="topic.id" :open="giving" :dev="!!dev" @close="giving = false" @done="giving = false; goDaily({ view: 'list' })" />
   </div>
 </template>
