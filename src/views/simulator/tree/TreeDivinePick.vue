@@ -69,12 +69,19 @@ const UP = "relative z-[2]";
 const rowEls: Record<string, HTMLElement | null> = {};
 const decideEl = ref<HTMLElement | null>(null);
 watch(() => current.value?.modId ?? null, async (id) => { await nextTick(); (id ? rowEls[id] : decideEl.value)?.scrollIntoView({ block: "nearest" }); });
+/** 暗幕の上のホイールは窓の中身を送る (暗幕は fixed なので、そのままだと窓は光った欄の上でしか送れなかった。11-10 オーナー「神のオーブがある地点でしかスクロールできない。全体スクロールに対応させてくれ」) */
+const rootEl = ref<HTMLElement | null>(null);
+function onSpotWheel(e: WheelEvent): void {
+  let sc: HTMLElement | null = rootEl.value?.parentElement ?? null;
+  while (sc && !(/(auto|scroll)/.test(getComputedStyle(sc).overflowY) && sc.scrollHeight > sc.clientHeight)) sc = sc.parentElement;
+  sc?.scrollBy({ top: e.deltaY, left: e.deltaX });
+}
 </script>
 
 <template>
-  <div data-tree-divine class="flex flex-col gap-2 text-[12px]">
-    <!-- 暗幕: 画面全部 (木・ほかの箱・窓のほかの所) を暗くする。光った枠の外 (暗い所) を押す・右クリックで神を手放す (右クリックのメニューは出さない。11-07 オーナー、S-202 ①) -->
-    <div v-if="spot" data-tree-divine-spot aria-hidden="true" class="fixed inset-0 z-[1] bg-black/75" @pointerdown.prevent.stop="emit('cancel')" @contextmenu.prevent.stop="emit('cancel')" />
+  <div ref="rootEl" data-tree-divine class="flex flex-col gap-2 text-[12px]">
+    <!-- 暗幕: 画面全部 (木・ほかの箱・窓のほかの所) を暗くする。光った枠の外 (暗い所) を押す・右クリックで神を手放す (右クリックのメニューは出さない。11-07 オーナー、S-202 ①)。ホイールは窓の中身を送る -->
+    <div v-if="spot" data-tree-divine-spot aria-hidden="true" class="fixed inset-0 z-[1] bg-black/75" @pointerdown.prevent.stop="emit('cancel')" @contextmenu.prevent.stop="emit('cancel')" @wheel.passive="onSpotWheel" />
     <label v-if="item.foreseen" data-tree-divine-reset class="flex min-h-7 items-center gap-2">
       <input type="checkbox" :checked="foreReset" @change="setReset(($event.target as HTMLInputElement).checked)" />
       <span>{{ tr("予見リセット (神 1 回で予見を消す。目標は手前の神で決めた値)", "Reset foresight (1 Divine clears it; targets are the values set by the earlier Divine)") }}</span>
