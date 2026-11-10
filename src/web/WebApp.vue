@@ -14,6 +14,8 @@ import FeedbackDialog from "./FeedbackDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
 import SupportDialog from "../components/SupportDialog.vue";
 import LeaveConfirm from "./LeaveConfirm.vue";
+import PressPopups from "./PressPopups.vue";
+import { FORCE_ON, forceReady, forceReload } from "./force-update";
 import ToTop from "./ToTop.vue";
 import Icon from "../components/ui/Icon.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
@@ -175,9 +177,11 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       </span>
       <!-- スマホ: 本日の訪問者だけ (版は出さない、… で切らない。2026-10-26 オーナーの A、1 段の決まりのまま)。押すと更新履歴 -->
       <!-- 375 未満で帯が足りない時だけ縮んで「本日」/「1,234 人」の 2 行に折れる (数と人の間は詰めない空白、10-26 夜) -->
-      <button v-if="phone && visitors" type="button" data-rec-part="header-version" class="g-plain flex shrink-0 flex-col items-start whitespace-nowrap text-left text-[10px] max-[374px]:min-w-0 max-[374px]:shrink max-[374px]:whitespace-normal leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
+      <button v-if="phone && visitors && !(FORCE_ON && forceReady)" type="button" data-rec-part="header-version" class="g-plain flex shrink-0 flex-col items-start whitespace-nowrap text-left text-[10px] max-[374px]:min-w-0 max-[374px]:shrink max-[374px]:whitespace-normal leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
         <span data-rec-part="header-visitors">{{ tr(`本日 ${visitors.today.toLocaleString()}\u00a0人`, `${visitors.today.toLocaleString()} today`) }}</span>
       </button>
+      <!-- 強制更新 (U-35): スマホは新しい版の合図が来た時だけ、本日の人数の所を絵と名前のボタンに替える (U-52 の 1 段のまま、幅を増やさない) -->
+      <button v-if="phone && FORCE_ON && forceReady" type="button" data-rec-part="header-update" class="g-btn sm text-[var(--exile-color-accent-focus)]" :class="PHONE_ICON" :title="tr('新しい版に更新 (今の所はそのまま戻ります)', 'Update to the new version (you come back to where you are)')" :aria-label="tr('更新する', 'Update')" @click="forceReload"><Icon name="rotate" class="size-4" /><span :class="PHONE_LABEL">{{ tr("更新", "Update") }}</span></button>
       <span v-if="phone" class="ml-auto shrink-0 max-[374px]:[&_button]:!px-1.5" data-rec-part="header-lang"><LangSwitch /></span>
       <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
       <!-- siteLook の入では出さない (U-49、オーナー 11-03「あとここクラフトステージはずしておｋいらんからな」) -->
@@ -188,6 +192,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <span v-if="visitors && !phone" data-rec-part="header-visitors" class="ml-auto whitespace-nowrap opacity-60" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ phone ? tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) : tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
       <button v-if="!phone" type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
+      <!-- 強制更新 (U-35): 版の横に「更新」。今の所を写して読み直す。新しい版の合図が来ている時は金の字で「新しい版」 -->
+      <button v-if="!phone && FORCE_ON" type="button" data-rec-part="header-update" class="g-plain inline-flex items-center gap-1 whitespace-nowrap" :class="forceReady ? 'text-[var(--exile-color-accent-focus)]' : 'opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]'" :title="tr('読み直して最新の版に (今の所はそのまま戻ります)', 'Reload to the latest version (you come back to where you are)')" @click="forceReload"><Icon name="rotate" class="size-3.5" />{{ forceReady ? tr("新しい版に更新", "Update to new version") : tr("更新", "Update") }}</button>
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
@@ -217,6 +223,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <HoverStack />
     <ChangelogDialog />
     <SupportDialog />
+    <PressPopups /><!-- 次に押した時に出すポップアップ: 強制更新 (U-35)・要望への返事 (U-36)。web/force-update.ts -->
     <LeaveConfirm /><!-- ツリーの作りかけで外へ移る前の確かめ (web/page.ts の setLeaveGuard) -->
     <ToTop /><!-- スマホの「上へ戻る」(全部の画面の右下) -->
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
