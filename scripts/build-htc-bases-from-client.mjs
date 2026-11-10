@@ -40,6 +40,7 @@ import { CLASS_TAGS, RUNE_POOLS, weightOn, familyOf, signature, signatureTags, R
 import { makeModBuilder } from "./_htc-mod-build.mjs";
 import { buildModTags, buildModSides, buildDropOnly } from "./_htc-mod-tags.mjs";
 import { report } from "./_htc-report.mjs";
+import { execFileSync } from "node:child_process";
 import { buildDisplayTags } from "./_htc-display-tags.mjs";
 import { buildBaseInfo, readImplicitTags } from "./_htc-base-info.mjs";
 
@@ -425,6 +426,8 @@ const main = async () => {
   const { borrowed, placeholder } = modBuilder.stats();
   report({ OUT, addedBases, baseInfo, baseLimits, modTags, modSides, dropOnly, familyStats, grantedN,
     outItems, outMods, addedPools, borrowed, placeholder, ASSUMED });
+  // 新しく入った行が、ベースの選び画面の札に出るか (E-98 B。落とさず一覧だけ。落とす側は check-base-shelves.mjs)
+  try { console.log(execFileSync(process.execPath, ["scripts/check-base-shelves.mjs", `--new=${Object.keys(Object.fromEntries(addedBases)).join(",")}`], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })); } catch (e) { console.log(String(e.stdout ?? "") + String(e.stderr ?? "")); }
 };
 
 main().catch((e) => {
