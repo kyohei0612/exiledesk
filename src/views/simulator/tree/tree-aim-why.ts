@@ -15,12 +15,13 @@ export function lockedAimRows(data: PatchData | null | undefined, item: StageIte
   const h = { key: hand.currency, omens: engineOmens(hand) };
   // 候補に有るかは狙いの鍵で引くだけ (当たりの判定はしない。判定は呼ぶ側の hitChoicesOf = エンジン)
   const can = new Set(choices.map(aimKey));
-  return goals.filter((a) => !can.has(aimKey(a))).map((a) => ({ key: aimKey(a), label: label(a), why: aimWhyNot(data, item, a, h) }));
+  // もう品に付いている狙いは出さない (付けられないのではなく済んでいるだけ。11-10 オーナー「そもそもグレーアウトしてる狙いＭＯＤだけど別についてるからそこグレーアウトってか非表示でいいんじゃねついたＭＯＤじゃまやろ」。
+  // 残すかは「残したい MOD」の欄 = TreeKeepList で選ぶ)
+  return goals.filter((a) => !can.has(aimKey(a)) && !aimHeldOn(data, item, a, { sameText: true })).map((a) => ({ key: aimKey(a), label: label(a), why: aimWhyNot(data, item, a, h) }));
 }
 
-/** その狙いが今付けられない訳 (箇条書きの行)。付けられる物には呼ばない。どの訳にも当たらなければ「この手では付かない」1 行 */
+/** その狙いが今付けられない訳 (箇条書きの行)。付けられる物・もう付いている物には呼ばない (lockedAimRows が外す)。どの訳にも当たらなければ「この手では付かない」1 行 */
 export function aimWhyNot(data: PatchData, item: StageItem, a: Aim, hand: { key: string; omens: readonly string[] }): string[] {
-  if (aimHeldOn(data, item, a, { sameText: true })) return [tr("もう付いている", "Already on the item")];
   const out: string[] = [];
   // エンジンの MOD の表から、その狙いの MOD の行を名前で引く (束ねた行は段ごとの MOD の名前も)
   const rows = new Map(modListFor(data, item).flatMap((r) => [r.id, ...r.tiers.flatMap((x) => (x.modId ? [x.modId] : []))].map((id) => [id, r] as const)));
