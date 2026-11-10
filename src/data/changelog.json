@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.709",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "サイト: 初めて来た時に「日本語 / English」を選べるお知らせを出すようにしました (共有されたレシピの URL から来た時も)。選んだ言語は覚えて、次からは出ません",
+    "en": "Site: on your first visit you can now choose 日本語 / English (also when you arrive from a shared recipe link). Your choice is remembered and the notice won't show again"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減の木を保存して開き直した時に、手を置いていない枠へ別の枠の削減が写ることがあったのを直しました。ヒネコラなど MOD を変えない手の後で、決まった枠がまた低い・同じ・高いに割れることがあったのも直しました",
+    "en": "Simulator: fixed a whittling step being copied into frames you hadn't set when you saved and reopened a tree, and fixed frames that were already decided splitting again into lower / same / higher after a hand that doesn't change mods, such as Hinekora's Lock"
+   }
+  ]
+ },
+ {
   "v": "0.1.708",
   "date": "2026-11-10",
   "items": [
@@ -880,24 +898,6 @@
     "area": "",
     "text": "シミュレーター: 品質はカタリスト以外は最初に上げてある前提で 50% まで設定でき、品質のカレンシーは手の棚に出さないようにしました",
     "en": "Simulator: Quality other than from Catalysts can now be set up to 50%, assuming it was raised first, and quality currencies no longer appear on the hand shelf"
-   }
-  ]
- },
- {
-  "v": "0.1.669",
-  "date": "2026-11-05",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ゲームの文を貼って取り込む時、4 つ目のサフィックスなどルーンで増えた枠の MOD が落ちる不具合を直しました。聖別の品・ルーンで付いた MOD も読み、嵌めていたルーンは使用ルーンに入ります",
-    "en": "Simulator: fixed pasted item text dropping mods from slots added by runes, such as a 4th suffix. Sanctified items and mods granted by runes are now read too, and socketed runes go into Runes in use"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアル: 「ジュエルの 5 MOD」の 2 手目で先へ進めない不具合を直しました",
-    "en": "Tutorial: fixed being unable to move past step 2 of \"5-mod jewels\""
    }
   ]
  }

@@ -1,4 +1,8 @@
 {
+  "0.1.709": [
+    "Site: on your first visit you can now choose 日本語 / English (also when you arrive from a shared recipe link). Your choice is remembered and the notice won't show again",
+    "Simulator: fixed a whittling step being copied into frames you hadn't set when you saved and reopened a tree, and fixed frames that were already decided splitting again into lower / same / higher after a hand that doesn't change mods, such as Hinekora's Lock"
+  ],
   "0.1.708": [
     "When a new version is out, you now see a notice and can update with one tap. Your trees, items and crafted steps come back as they were. There is also an Update button next to the version in the header.",
     "Replies to your feedback now arrive as a popup, and you can answer right away with text and images using \"Write a reply\"."
