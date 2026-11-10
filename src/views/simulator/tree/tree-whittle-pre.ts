@@ -11,8 +11,25 @@ import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { drop, type Hand, type OutKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
-import { isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
-import { frameGroupKey as groupKey, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
+import { handWhittleSide, isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { frameGroupKey as groupKey, frameHandOf, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
+import { keepsMods } from "../../../services/simulator/sim-engine";
+import type { StageItem, StageSide } from "../../../services/craft-stage/engine";
+
+/**
+ * 上の段で組の決まった枠 (S-65c ②b): 箱 a から上へ、MOD を変えない手 (ヒネコラ・神のオーブなど、エンジンの keepsMods) だけを挟んで
+ * 削減の枠 (鍵 l:) に着けば、その枠の組 (外れの MOD レベルはもう決まっている)。消える側の違う削減の枠・MOD の変わる手を挟めば null。
+ * 11-10 段 1 の B: ヒネコラの後で予見の箱がまた 低い・同じ・高い に割れ、来ない枠 (0 人) が未設定に数わった
+ */
+function fixedLvOf(data: PatchData, d: TreeDoc, a: string, side: StageSide | null, itemOf: (id: string) => StageItem | null): LvClass | null {
+  for (let q: TreeBox | undefined = d.boxes[a]; q; q = q.parent ? d.boxes[q.parent] : undefined) {
+    const it = itemOf(q.id);
+    if (!q.hand || !it || !keepsMods(data, it, q.hand.currency, q.hand.omens)) return null;
+    const c = lvPart(q.junkKey);
+    if (c) return handWhittleSide(frameHandOf(d, q.id)) === side ? c : null;
+  }
+  return null;
+}
 
 /** 枠に分けるかは箱の種類で決めない: 削減の手を置いた箱の品に乱数の外れ MOD があれば、どの種類の箱でも分ける (S-65c ①、11-10 オーナー「枠の決まりとしてこの枠の形ならの方がいいのではそもそも」)。組の鍵は tree-whittle-scene の 1 つ */
 /** 人の決めの無い箱 (消してよい) */
@@ -46,6 +63,9 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
         const { wanted, miss, side } = whittleCompare(data, d, d.boxes[holders[0]!]!.hand, aimed, item);
         cls = lvClassesOf(data, item, wanted, side);
         own = lvClassOf(item, miss, side);
+        // 上の段で組の決まった枠の下 (MOD を変えない手だけを挟む) は、その組の枠だけ (S-65c ②b)
+        const fixed = cls ? fixedLvOf(data, d, p.id, side, (x) => { const g = ft!.frames.get(x); if (g && !g.note) return g.item; const s = sampleOf(data, d, x, 1); return s && s.note !== "none" && !s.note?.startsWith("cant:") ? s.item : null; }) : null;
+        if (cls && fixed && cls.has(fixed)) cls = new Set([fixed]);
         break;
       }
     }

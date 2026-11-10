@@ -161,7 +161,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
-  const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !p.at.includes(";w:")).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
+  // 決めの無い枠の印 (open) は札の箱が今の木に無くても知らせない (データで付きえなくなった組の枠、S-65c ⑪)
+  const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !p.at.includes(";w:") && !p.open).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
   // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107)
   const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => o.why !== "gone" || !now.has(o.at));
   const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));

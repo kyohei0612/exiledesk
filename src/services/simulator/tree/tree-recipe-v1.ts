@@ -11,7 +11,10 @@ import type { StageItem } from "../../craft-stage/types";
 export const RECIPE_V1 = "exiledesk-recipe/1";
 /** 箱 1 つの人の決め。at = 道の札、hand = 打つ手 (☑ は aims、触媒の前のカタリストは pre)、ほかは箱の印 */
 /** back = 前の版で人が選んだ ↩ の行き先 (道の札、または形の合う箱へ match・作り直し restart。S-52b の「読めてそのまま回る」、組み直しで付け直す) */
-export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: string; done?: "main" | "fail"; note?: string; unwanted?: string[]; noAutoBack?: true; ownTree?: true; back?: string }
+/** open = 決めの無い削減の手前の枠 (S-65c ⑪、鍵 l:)。保存した時にその枠があった印 (開く時に兄弟の枠の決めを写さない = 写すのは枠の無かった古いレシピだけ) */
+export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: string; done?: "main" | "fail"; note?: string; unwanted?: string[]; noAutoBack?: true; ownTree?: true; back?: string; open?: true }
+/** 削減の手前の枠の箱か (鍵に l:lo / l:eq / l:hi。tree-whittle の lvPart と同じ見方、読み込みの輪を作らないためここに 1 行) */
+const isLvFrame = (b: TreeBox): boolean => /(^|;)l:(lo|eq|hi)(;|$)/.test(b.junkKey ?? "");
 /** 要確認の一覧 (S-107、⑦20 案 A): 組み直した木に札が無い決め (gone)・前の版の人の ↩ (back)・分かれ目 (split)・読めなかった箱 (check)。保存し直しても持ち越す */
 export interface RecipeOrphan { at: string; why: "gone" | "back" | "split" | "check"; raw: unknown }
 
@@ -100,6 +103,8 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
     if (b.back && !b.autoBack && !b.handBack) { const to = b.back === "match" || b.back === "restart" ? b.back : keys.get(b.back); if (to) p.back = to; else orphans.push({ at, why: "back", raw: { back: b.back } }); }
     if (b.split) orphans.push({ at, why: "split", raw: { split: clone(b.split) } });
     if (b.check) orphans.push({ at, why: "check", raw: clone(b.checkRaw ?? null) });
+    // 決めの無い削減の手前の枠も「あった」印だけ残す (11-10 段 1 の A: 残さないと開く時に兄弟の枠の手が写り、手を置いていない枠に削減が入った)
+    if (Object.keys(p).length === 1 && isLvFrame(b)) p.open = true;
     if (Object.keys(p).length > 1) picks.push(p);
   }
   return { ...(out as unknown as TreeDoc), boxes: {}, seq: 0, picks, ...(orphans.length ? { orphans } : {}) };
