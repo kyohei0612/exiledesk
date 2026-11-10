@@ -1,6 +1,6 @@
 <!--
   PhoneViewPage.vue — シミュのスマホの見るだけの 1 画面 (S-94〜S-94f、幅 768 未満 + オーナー 11-01「完全にスマホ版は見るだけに特化させた作りに変えよう修正もできない完全に観賞用」)。
-  上の帯 (タブ)・レシピとシェア・100 人回す (PC と同じ人数、11-07)、その下に開いたままのシート (小さな完成形 + 完成までの道 PhoneViewRoute、「詳細」で全体図 PhoneViewMap、S-94h)。木を変える入口は無い。
+  上の帯 (タブ)・レシピとシェア・10 人回す (11-10 に 10 人へ戻した。開いた時に穴チェックはしない、未設定は「未完成」)、その下に開いたままのシート (小さな完成形 + 完成までの道 PhoneViewRoute、「詳細」で全体図 PhoneViewMap、S-94h)。木を変える入口は無い。
   完成形は倍率で縮めるだけで文は切らず、押すと今の大きさ (D6)。スマホで回した結果はカードに載せない (D2、use-tree-run の view)。木が無い時は PhoneViewEmpty (S-94f)
 -->
 <script setup lang="ts">
@@ -10,8 +10,8 @@ import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import TreeRunReport from "../tree/TreeRunReport.vue";
 import TreeRunSum from "../tree/TreeRunSum.vue";
-import { holeBusy } from "../tree/hole-check";
-import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
+import { blocksRun, unsetIssues } from "../../../services/simulator/tree/tree-check";
+import { issueGroups, unfinishedText } from "../tree/hole-check";
 import { useGoalShown } from "../tree/use-goal-shown";
 import { useTree } from "../tree/use-tree";
 import { useTreeRun, VIEW_N } from "../tree/use-tree-run";
@@ -30,20 +30,12 @@ const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) =>
 /** 木を開いていない (S-94f。use-tree の白紙と同じ見方) */
 const noTree = computed(() => { const d = t.doc.value; return t.needBase.value || (!d.baseChosen && Object.keys(d.boxes).length <= 1 && !d.memoAims?.length); });
 
-/** 穴チェック: 結果は読むだけ (S-94e、一覧も直す入口も出さない) */
-const check = useTreeCheck(t.doc, () => !noTree.value);
 /**
- * 穴チェックは自動で回らない (S-70) ので開いた時にここで回す。
- * 回している間に木が読み替わった時 (pruneBacks) は、終わってからもう 1 回
+ * 開いた時に穴チェック (人を回す確かめ) はしない。レシピをそのまま見せるだけ (11-10 オーナー「スマホはレシピのまんま表示するだけでいいよ」、S-94e。
+ * 前は開いた時に 30 人を辿り、スマホで約 10 秒固まった)。未設定は箱を形だけで数え (見本も人も使わない unsetIssues)、1 つでもあれば「未完成」で回さない
  */
-let ranKey = "";
-watch([() => routeKeyOf(t.doc.value), () => !!s.data.value && !noTree.value, check.checking], ([key, ok, busy]) => { if (!ok || busy || ranKey === key) return; ranKey = key; void check.runCheck(); }, { immediate: true });
-const routeKey = computed(() => routeKeyOf(t.doc.value));
-/** 穴チェックが終わった木の形 (終わるまで「回せない」と言わない) */
-const doneKey = ref("");
-watch(check.checking, (on, was) => { if (was && !on) doneKey.value = routeKey.value; });
-const passed = computed(() => !check.checking.value && check.passed.value);
-const locked = computed(() => !check.checking.value && !passed.value && doneKey.value === routeKey.value);
+const unset = computed(() => (noTree.value ? 0 : issueGroups(unsetIssues(t.doc.value).filter((x) => blocksRun(x.kind)), t.doc.value).length));
+const locked = computed(() => unset.value > 0);
 
 // 100 人回す (PC と同じ人数・回し方・結果の行・結果のまとめ・木の上の層)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目が枠の外へ出たらその箱へ寄る (PC の onWalk と同じ)
 // (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」「挙動完全にPCに合わせていいよ…全て真似しておけ」、S-94e)
@@ -83,7 +75,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => { document.documentElement.style.overflow = lockWas; window.removeEventListener("resize", measureTop); ro?.disconnect(); });
 // 結果の行 (TreeRunSum) は 1 人目が進む間・回し終わりで字と札が替わり、390 では折り返して高さが変わる
-watch([topEl, () => run.result.value?.n, () => passed.value, locked, () => !!run.walk.value, () => run.walk.value?.fast, run.running, run.shown], () => void nextTick(measureTop), { flush: "post" });
+watch([topEl, () => run.result.value?.n, locked, () => !!run.walk.value, () => run.walk.value?.fast, run.running, run.shown], () => void nextTick(measureTop), { flush: "post" });
 
 // 小さな完成形 = 広い幅で描いて倍率で縮めるだけ (S-92 の例外、D6)。押すと今の大きさ
 // 道の画面は下へ送るので最初から広げ、詳細の全体図の時は小さく (オーナー 11-01「これなら完成MODカードでかくていいよ今小さいから　どうせ下にスクロールするだけだしな」「最初から押すと広がるでおｋだったら」)
@@ -123,10 +115,10 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       <div data-phone-recipe data-tree-own class="relative z-40 flex min-w-0 flex-wrap items-center justify-between gap-1 text-[13px]">
         <TreeRecipeBar class="!contents" view flat="flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-sim-body aria-expanded:text-amber-100" />
       </div>
-      <!-- 穴チェックの帯の所に 100 人回す。穴があれば短い文だけ (S-94e) -->
+      <!-- 穴チェックの帯の所に 10 人回す。未設定があれば「未完成」の短い文だけ (S-94e) -->
       <div data-phone-view-run class="flex min-w-0 flex-col gap-1">
-        <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ tr("未設定があるので回せない。PC で直す", "Can't run: this tree has unset boxes. Fix it on a PC") }}</p>
-        <button v-else type="button" data-phone-view-go class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="!passed || !s.data.value || run.running.value" @click="go">{{ !passed ? holeBusy() : run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
+        <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ unfinishedText(unset) }}</p>
+        <button v-else type="button" data-phone-view-go class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="!s.data.value || run.running.value" @click="go">{{ run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
         <!-- 結果の行は PC と同じ部品 (1 人目が進んでいる n/m 箱・早送り・飛ばす・止まり・沼った場所・結果のまとめ・結果を隠す)。390 では折り返す -->
         <TreeRunSum v-if="!locked" v-model:shown="run.shown.value" v-model:report="reportOpen" data-phone-view-sum class="flex-wrap text-[13px] text-amber-100" :result="run.result.value" :running="run.running.value" :stuck="run.stuckBoxes.value" :halted="run.halted.value" :walk="run.walk.value" :test="run.test.value" @go="goBox" @skip="run.skipWalk()" />
       </div>
@@ -150,9 +142,9 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
         <PhoneViewMap v-if="detail" ref="map" :result="run.shown.value ? run.result.value : null" :walk="run.shown.value ? run.walk.value : null" />
         <PhoneViewRoute v-else :result="run.result.value" />
       </section>
-      <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形。PC と同じ 100 人なので「振れる」の一言は出さない、S-94e) -->
+      <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形)。10 人なので振れる事を 1 行 (S-94e、11-10 に 10 人へ戻した) -->
       <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report data-overlay class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
-        <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="goBox" />
+        <TreeRunReport :result="run.result.value" :note="tr('人数が少ないので結果は振れます', 'Few runs, so results vary')" @close="reportOpen = false" @go="goBox" />
       </div>
     </template>
   </div>

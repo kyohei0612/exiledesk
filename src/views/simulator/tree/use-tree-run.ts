@@ -25,14 +25,14 @@ export const RUN_N = 100;
  */
 export const TEST_N = 30;
 /**
- * スマホの見るだけの 1 画面で回す人数 = PC と同じ (S-94e)。前は 10 人 (オーナー 11-01「まぁスマホ版だと10人とかになりそうだけど回すのは別にいいんじゃね」)、
- * 11-07 に 100 人 (オーナー「後スマホ版でも軽くなったよねレシピ なら100人でいいんじゃね10人より」)
+ * スマホの見るだけの 1 画面で回す人数 = 10 人 (S-94e)。11-01 に 10 人 (オーナー「まぁスマホ版だと10人とかになりそうだけど回すのは別にいいんじゃね」)、
+ * 11-07 に 100 人 (オーナー「後スマホ版でも軽くなったよねレシピ なら100人でいいんじゃね10人より」)、11-10 に 10 人へ戻した (オーナー「あとスマホは10人でおｋ」、開いた後が重かった)
  */
-export const VIEW_N = RUN_N;
+export const VIEW_N = 10;
 /** 割合・費用の青の札の説明 (S-75b・U-18)。木の上の帯と結果のまとめの見出しで同じ。「・」の縦の箇条書きで出る (11-09 オーナー「区切った方が良いね　・　で縦にホバー時の説明」) */
-export const ODDS_NOTE = (): string[] => [
+export const ODDS_NOTE = (n = RUN_N): string[] => [
   tr("ゲームは MOD の付きやすさ (重み) を公表していない", "The game does not publish how likely each mod is (its weight)"),
-  tr(`割合・費用は、サイトの重みの目安 (MOD 表の札のとおり) で ${RUN_N} 人を回して数えた物`, `Odds and costs come from ${RUN_N} runs using the site's estimated weights (see the notes on the mod table)`),
+  tr(`割合・費用は、サイトの重みの目安 (MOD 表の札のとおり) で ${n} 人を回して数えた物`, `Odds and costs come from ${n} runs using the site's estimated weights (see the notes on the mod table)`),
   tr("費用はベースの値段 (結果のまとめで入れる) と今の相場から", "Costs use the base price (entered in the summary) and current market prices"),
   tr("割合・費用は目安として見る", "Treat the odds and costs as estimates"),
 ];

@@ -12,6 +12,7 @@ import { backLabelOf, runText, stepOf } from "../tree/tree-fail";
 import { headOf } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { tr } from "../../../i18n/lang";
+import { unfinishedText } from "../tree/hole-check";
 import PhoneViewBranch from "./PhoneViewBranch.vue";
 import { routeSteps } from "./view-route";
 
@@ -35,7 +36,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 </script>
 
 <template>
-  <p v-if="!steps" data-phone-view-noroute class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ tr("未設定があるので回せない。PC で直す", "Can't run: this tree has unset boxes. Fix it on a PC") }}</p>
+  <p v-if="!steps" data-phone-view-noroute class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ unfinishedText(0) }}</p>
   <div v-else data-phone-view-route class="mx-auto flex flex-col pt-3" :style="{ width: `${BOX_W}px`, zoom }">
     <template v-for="(st, i) in steps" :key="`${st.kind}-${st.id}-${i}`">
       <template v-if="st.kind === 'box'">
