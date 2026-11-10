@@ -2,6 +2,7 @@
   ToTop.vue — スマホの「上へ戻る」ボタン (2026-10-25 オーナーがスマホの見え方を見て)。全部の画面の右下に付いてくる。少し下へ送った時だけ出し、押すと一番上へ。
   下に留まる帯 (data-bottom-bar・デイリーの data-daily-go・シミュのスマホの data-phone-bar。fixed か下に貼り付いた sticky) が出ている時はその上に浮かせて重ねない。PC (768px 以上) は出さない。WebApp.vue に 1 つ
   重ね窓 (共通の印 data-overlay = ModalShell・シミュのスマホの箱の窓・結果のまとめ・足りない所の窓・メモ、U-15) が開いている間は出さない (中のカードを隠していた、10-26 夜シミュのスマホ版)
+  印 data-to-top-avoid の物 (幅いっぱいの大きいボタン) に重なっている間も出さない。位置は動かさない (11-10、スパムの「狙う MOD を選ぶ」に重なっていた)
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -17,6 +18,17 @@ const lift = ref(0);
 const SHOW_AT = 400;
 /** 開いている間は出さない重ね窓 */
 const OVERLAY = "[data-overlay]";
+const btn = ref<HTMLButtonElement | null>(null);
+/** 印 data-to-top-avoid の物 (スパムの「狙う MOD を選ぶ」など幅いっぱいの大きいボタン) にボタンが重なっている間は出さない。位置は変えない (11-10 猿の 2) */
+function overAvoid(): boolean {
+  const b = btn.value?.getBoundingClientRect();
+  if (!b) return false;
+  for (const el of document.querySelectorAll<HTMLElement>("[data-to-top-avoid]")) {
+    const r = el.getBoundingClientRect();
+    if (r.height && r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top) return true;
+  }
+  return false;
+}
 function update(): void {
   shown.value = window.scrollY > SHOW_AT && !document.querySelector(OVERLAY);
   let h = 0;
@@ -29,6 +41,7 @@ function update(): void {
     if (r.height && r.bottom >= window.innerHeight - 24) h = Math.max(h, window.innerHeight - r.top);
   }
   lift.value = h;
+  if (shown.value && overAvoid()) shown.value = false;
 }
 const toTop = (): void => window.scrollTo({ top: 0, behavior: "smooth" });
 let raf = 0;
@@ -43,6 +56,7 @@ onBeforeUnmount(() => { window.removeEventListener("scroll", onScroll); window.r
 <template>
   <button
     v-if="phone"
+    ref="btn"
     type="button"
     data-to-top
     class="g-btn fixed right-3 z-[140] grid size-11 place-items-center !p-0 transition-opacity duration-200"
