@@ -6,6 +6,8 @@ export interface RowTag {
   title?: string;
   /** true なら MOD の文の代わりに text を行の名前として出す (札の印は出さない。シミュの外れ MOD の行) */
   replace?: boolean;
+  /** MOD の文 (または replace の名前) のすぐ後ろに置く色付きの印 (rgb = "r,g,b")。シミュの削減の手前の枠の ▼ 低い / ＝ 同じ / ▲ 高い (S-65c) */
+  after?: { text: string; rgb: string; title?: string };
 }
 
 /**
