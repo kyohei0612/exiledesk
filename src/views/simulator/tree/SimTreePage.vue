@@ -23,7 +23,7 @@ import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
-import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue"; import { laneBandW } from "./tree-lane-band";
+import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue";
@@ -315,7 +315,7 @@ useRowSettle(doc, measureBox, chipNatural);
 const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
 const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
 // 段の札の帯は木の枠の外の左の列 (S-147f、11-08)。帯の幅が変わった分は木の送りで打ち消す (倍率を変えても木が横に跳ねない)
-const lanes = computed(() => laneMarks(doc.value, rowL.value)); watch(() => (t.needBase.value ? 0 : laneBandW(lanes.value.map((l) => l.text), v.flow.viewport.value.zoom)), (w, old) => v.laneShift(w - old));
+const lanes = computed(() => laneMarks(doc.value, rowL.value)); // 段の札は 11-11 から木の面の中に重ねる (枠の幅が変わらない) ので、帯の幅の変わりを木の送りで打ち消す laneShift は呼ばない
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
@@ -387,14 +387,16 @@ const glowOf = (b: Box): boolean => {
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 pb-0.5 pt-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : '-mb-3.5'">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
-      <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
+      <!-- 11-11 オーナー「上も余りまくってるし」「1行でいいだろこんなん」: 手順の段と下の帯を 1 行に並べる。入りきらない幅だけ帯が次の行へ折り返す (帯の basis は道具が全部見える幅 1070px、帯の中は今までどおり横に送る) -->
+      <div data-tree-head class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+      <div class="flex shrink-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
         <!-- 箱の割合・100 人回しの費用はゲームが公表していない重みの目安 (U-46 の青の札、11-09 オーナー「全て洗って注意喚起」。箱ごとには付けず帯に 1 つ) -->
         <DataNote v-if="!t.needBase.value" small :text="tr('割合・費用は目安', 'Odds & costs are estimates')" :hint="ODDS_NOTE()" />
       </div>
       <!-- 帯は 1 行 (10-26 夜オーナー「1 行で表示させてくれ」「必要なのは下段」「テストで回すと 100 人で回すは上の枠内上部でおけ」): 穴チェック・足りない所・100 人回す・結果、タブ、道具。
            幅で形を変えない (字を短くしない・隠さない)。入らない幅は帯の中を横に送る (11-08 夜オーナー「pxみじけーやつは苦労させろ精神」、S-94g)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
-      <div class="relative flex min-w-0 items-center gap-1.5 text-[13px]">
+      <div class="relative flex min-w-0 flex-[1_1_1070px] items-center gap-1.5 text-[13px]">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
         <TreeIssues v-if="jt.shownIssues.value?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="jt.shownIssues.value" :doc="doc" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" @report="reportTreeBug(doc)" /><TreeBugReport />
         <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />
@@ -410,13 +412,15 @@ const glowOf = (b: Box): boolean => {
         <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
         </div>
       </div>
+      </div>
       <!-- PC の形 (1280 以上、U-53) だけ。1100px 未満で右の列を木の下へ回す分かれ道は消した -->
       <div ref="row" class="flex min-h-0 gap-2 h-[var(--row-h)]" :class="full ? 'flex-1' : ''" :style="full ? {} : { '--row-h': `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
         <!-- overflow-clip: hidden だと枠の外の箱にフォーカス・寄せが来た時にブラウザが枠ごとスクロールし、枠が上へずれて下が描かれなかった (11-06、未設定の「次へ」の後) -->
         <!-- 段の札の列も木の枠と同じくページの zoom を打ち消す (送りと倍率は枠の中の座標。打ち消さないと札が zoom 倍に伸び、下の段ほどずれた、11-08 ayqOgcD9 オーナー「段がバグってる」) -->
-        <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom"  />
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
+        <!-- 段の札の列は木の面 (点々の地) の左端に重ねる (11-11 オーナー「完成形から左側は全部下も含めてツリーの中に収めてくれこの点線をツリー中として」「段目と未設定だけ外に分けてるでしょ今」。前は枠の外の左の列 = 11-08)。ページの zoom を打ち消すのは木の面と同じ -->
+        <TreeLaneTags v-if="!t.needBase.value" inside :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
         <button v-if="!t.needBase.value && sideClosed" type="button" data-tree-side-toggle aria-expanded="false" :class="[SIDE_BTN, 'absolute right-2 top-2 z-20']" :title="tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)')" @click="sideClosed = false"><Icon name="chevron-right" class="size-3.5 -scale-x-100" />{{ tr("完成形", "Final item") }}</button>
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">

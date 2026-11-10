@@ -113,8 +113,13 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * (前は BOX_H で数え、全体表示でも下の段の箱が枠の外に 124px 切れた、10-26 モンキー 8 の 1)
    */
   const treeBottom = (): number => Math.max(...Object.values(doc.value.boxes).map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H) + NEXT_H));
+  /**
+   * 木の面の左に重ねた段の札の帯の幅 (画面の px = 木の面の px、TreeLaneTags の inside)。開いた時の寄せはこの分を左に空けて、
+   * 左端の箱が「n 段目」の下に入らないように (11-11 オーナー「この点線をツリー中として」で帯を木の面の中へ移した)
+   */
+  const laneW = (): number => document.querySelector("[data-tree-frame] [data-tree-lane-band]")?.getBoundingClientRect().width ?? 0;
   function fitLevel(): number | null {
-    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width, h = f.dimensions.value.height;
+    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width - laneW(), h = f.dimensions.value.height;
     if (!w || !h) return null;
     const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     const half = Math.max(sx - b.x, b.x + b.w - sx);
@@ -128,9 +133,9 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * (10-26 オーナー「スタートは必ずツリーを真ん中に配置して開始、それも一番上ね」)。完成形の窓は木の枠の外の右の列へ移したので、窓を避けて下げる処理は外した (10-26 夜)
    */
   function placeOf(lv: number): { x: number; y: number; z: number } {
-    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width;
+    const b = bounds.value, st = doc.value.boxes.start, lw = laneW(), w = f.dimensions.value.width - lw;
     const z = lv * pageZ.value, sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
-    const x = w / 2 - sx * z;
+    const x = lw + w / 2 - sx * z;
     const y = topY() - b.y * z;
     return { x, y, z };
   }
