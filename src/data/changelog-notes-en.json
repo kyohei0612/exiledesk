@@ -1,4 +1,8 @@
 {
+  "0.1.698": [
+    "Simulator: when a craft with an Omen of Whittling splits into frames, the next-craft window now lets you pick the mods to keep. Unchecked mods count as misses in the Whittling comparison",
+    "Simulator: miss mods are now shown in orange and the mods a held currency may remove in red, so they are easier to tell apart (the emulator's removal candidates are red too)"
+  ],
   "0.1.697": [
     "Simulator: when you hold a craft with an Omen of Whittling in the next-craft window, one line now shows which frames (lower, same, higher miss mod level) the result splits into and which one this box is",
     "Simulator: crafts that combine Whittling with a Sinistral or Dextral Erasure omen now pick the compared mod and the replaced miss only from that side's mods"

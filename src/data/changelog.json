@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.698",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減のお告げを含む手で結果が枠に分かれる時は、次に打つ手の窓で「残したい MOD」を選べるようにしました。☑ を外した MOD は削減の比べでは外れ MOD として数えます",
+    "en": "Simulator: when a craft with an Omen of Whittling splits into frames, the next-craft window now lets you pick the mods to keep. Unchecked mods count as misses in the Whittling comparison"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 外れ MOD の文字をオレンジに、持った時に消える候補を赤にして見分けやすくしました (エミュの消える候補も赤)",
+    "en": "Simulator: miss mods are now shown in orange and the mods a held currency may remove in red, so they are easier to tell apart (the emulator's removal candidates are red too)"
+   }
+  ]
+ },
+ {
   "v": "0.1.697",
   "date": "2026-11-10",
   "items": [
@@ -868,36 +886,6 @@
     "area": "",
     "text": "シミュレーター: 前の版で保存したレシピ・共有 URL を開いた時、今の木に無い決めを外して開くようにしました (スタートに「未設定」が残らなくなりました)。外した数はレシピの帯に 1 行で出ます",
     "en": "Simulator: opening a recipe or share URL saved in an older version now drops decisions the current tree no longer has (the Start node no longer stays \"not set\"). The recipe bar shows how many were removed"
-   }
-  ]
- },
- {
-  "v": "0.1.658",
-  "date": "2026-11-03",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "サイト全体の見た目を新しくしました。ページの題は石の帯の真ん中の金の銘板に、クラフト台は外枠 1 枚の卓に、音・表示通貨・色の選びは切り替えタブの行の右端にまとめました",
-    "en": "New site look: page titles sit on a gold plate in the middle of a stone band, the craft table is one framed board, and sound, display currency and color now sit at the right end of the tab row"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "サイトの色を選べるようにしました (既定 = 今の色・日替わり・12 か月の色 睦月〜師走)。選んだ色は端末に覚えます",
-    "en": "You can now pick the site color (Default = the current colors, Daily, or one of 12 monthly colors from Mutsuki to Shiwasu). Your choice is remembered on this device"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ベース選びの上を整理し、エミュレーターと同じ「ベースを選ぶ」の帯を付けました",
-    "en": "Simulator: tidied the top of base selection and added the same \"Choose a base\" band as the Emulator"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 100 人をまだ回していない時の結果の文を「100 人: まだ回していない」にしました",
-    "en": "Simulator: before you run 100 trials, the result line now reads \"100 runs: not run yet\""
    }
   ]
  }
