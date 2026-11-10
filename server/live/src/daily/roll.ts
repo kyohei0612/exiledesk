@@ -93,11 +93,16 @@ export async function rollPost(db: D1Database, b: Body, prices: string | null): 
   }
   // 今週の残りの予定の差し替え (D-82: フル MOD でない並びを台本が直した物)。台本が回らなかった日の控え (settleFromPlan) もフルになる。出たお題の日は触らない
   const fix = arr(b.planFix).filter((p) => str(p.day) && str(p.base) && Array.isArray(p.aims));
+  // checked = 台本がフル MOD・段 (D-04) で確かめた印 (D-80f)。台本は表に列がある時だけ送る (列の無い D1 に書くと全部が落ちるので、無ければ前の文のまま)
   for (const p of fix)
     stmts.push(
-      db
-        .prepare("UPDATE daily_plan SET slot = ?, item_class = ?, base = ?, base_ja = ?, sample_id = ?, ilvl = ?, aims = ? WHERE day = ? AND NOT EXISTS (SELECT 1 FROM daily_topics t WHERE t.day = daily_plan.day)")
-        .bind(num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims), str(p.day)),
+      str(p.checked)
+        ? db
+            .prepare("UPDATE daily_plan SET slot = ?, item_class = ?, base = ?, base_ja = ?, sample_id = ?, ilvl = ?, aims = ?, checked = ? WHERE day = ? AND NOT EXISTS (SELECT 1 FROM daily_topics t WHERE t.day = daily_plan.day)")
+            .bind(num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims), str(p.checked), str(p.day))
+        : db
+            .prepare("UPDATE daily_plan SET slot = ?, item_class = ?, base = ?, base_ja = ?, sample_id = ?, ilvl = ?, aims = ? WHERE day = ? AND NOT EXISTS (SELECT 1 FROM daily_topics t WHERE t.day = daily_plan.day)")
+            .bind(num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims), str(p.day)),
     );
   if (fix.length) done.push("planFix");
   const t = b.topic as Body | undefined;

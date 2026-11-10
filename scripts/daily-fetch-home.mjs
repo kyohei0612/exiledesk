@@ -10,7 +10,8 @@
  * 窓 (日 16:00〜月 16:00 JST) の外で回った時は取らず、その週の予定が無ければ ② ③ だけ (前の週の型で組む)。
  * その週の ninja_job が本番に 1 行でもあれば取らない (週 1 回)。止めのスイッチは本番の ninja_ctl の home_stop = '1'。
  *
- *   node scripts/daily-fetch-home.mjs [--local]
+ *   node scripts/daily-fetch-home.mjs [--local | --more]
+ *     --more  = お題に使える人が足りない週の取り直し (D-80f、毎日の台本 daily-roll.mjs が呼ぶ)。今の週を 1 ビルド 6 → 10 人で、週 2 回まで
  *     --local = 取るだけで写さない・組まない (取った物の数を出す)。D1 も読まない
  *   EXILEDESK_D1_LOCAL=<置き場> を付けると、読む・写すの行き先が本番でなく手元の D1 になる (_d1-shim.mjs、本番に書かずに通しを見る試し用)
  * 1 回ごとに docs/org/daily/notes/fetch-home.log へ 1 行 (git には入らない)。
@@ -23,7 +24,8 @@ import { inline, localD1, remoteD1, target, writeSql } from "./_d1-shim.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LOG = join(ROOT, "docs/org/daily/notes/fetch-home.log");
-const LOCAL = process.argv.slice(2).includes("--local");
+const args = process.argv.slice(2);
+const LOCAL = args.includes("--local");
 
 const JST = 9 * 3600e3, H16 = 16 * 3600e3, DAY = 86400e3;
 const jstNow = () => new Date(Date.now() + JST).toISOString().slice(0, 16).replace("T", " ");
@@ -53,14 +55,17 @@ function guardedFetch() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** ① 手元で最後まで回す。返り = 締めた ninja_job の行と品 */
-async function fetchLocal(J, week) {
+/**
+ * ① 手元で最後まで回す。返り = 締めた ninja_job の行と品。
+ * clock = 窓の時計 (ふだんは今。取り直し --more は窓の外で回るので、その週の窓の中の時刻を渡して同じ週として回す。送る間隔・待ちは本物の時間のまま)
+ */
+async function fetchLocal(J, week, clock = () => new Date()) {
   const db = await localD1();
   const kv = new Map();
   const env = { LOGS: db, LIVE: { get: async (k) => kv.get(k) ?? null, put: async (k, v) => void kv.set(k, v) }, NINJA_PER_RUN: "10" };
   const g = guardedFetch();
   for (let tick = 0; ; tick++) {
-    const now = new Date();
+    const now = clock();
     const w = J.windowOf(now);
     await J.ninjaTick(env, now, g.fetch);
     const job = await db.prepare("SELECT * FROM ninja_job WHERE week = ?").bind(week).first();
@@ -124,6 +129,46 @@ const curNo = Math.floor((now.getTime() + JST - H16) / DAY);
 const dayName = (no) => new Date(no * DAY).toISOString().slice(0, 10);
 // 組む週: 窓の中なら来週 (= 取る週)、外なら今の日の週
 const week = win.open ? win.week : dayName(curNo - ((new Date(curNo * DAY).getUTCDay() + 6) % 7));
+
+/**
+ * 取り直し (D-80f、11-10 オーナー「A　で、忍者取り直しでいいな追加でもっかい取って、人数増やす感じ」)。毎日の台本 (daily-roll.mjs) が、
+ * 明日から先にお題に使える人 (フル MOD、段は D-04) のいない日を見つけた時だけ呼ぶ。今の日の週を、1 ビルドの人数を増やして取り直す
+ * (1 回目 6 人・2 回目 10 人 = アプリの元の人数。最大 63 → 126 → 210 人)。週 2 回まで (数は ninja_ctl の more:<週>)。
+ * 取り方・間隔・止まり方はふだんと同じ (確認ページが出たら 0 にして止める、上限 400 本)。写すのは品・結果の行・週の型 (予定は組み直さず、続けて回る毎日の台本が拾う)
+ */
+if (args.includes("--more")) {
+  const D1m = remoteD1();
+  const mweek = dayName(curNo - ((new Date(curNo * DAY).getUTCDay() + 6) % 7));
+  try {
+    if (typeof J.setBuildSize !== "function") { record(`取り直し 週 ${mweek}: 人数を増やす口が無い (分析の直し待ち) ので取らない`); process.exit(2); }
+    const ctl = await D1m.prepare("SELECT v FROM ninja_ctl WHERE k = 'home_stop'").first();
+    if (ctl?.v === "1") { record(`取り直し 週 ${mweek}: 止めのスイッチ (home_stop = 1) なので取らない`); process.exit(2); }
+    const done = Number((await D1m.prepare("SELECT v FROM ninja_ctl WHERE k = ?").bind(`more:${mweek}`).first())?.v ?? 0);
+    if (done >= 2) { record(`取り直し 週 ${mweek}: もう 2 回取り直した (週 2 回まで) ので取らない`); process.exit(2); }
+    const size = done === 0 ? 6 : 10;
+    J.setBuildSize(size);
+    // その週の窓の中 (日曜 17:00 JST) の時計で回す = 同じ週として取る
+    const inWindow = Date.parse(`${mweek}T00:00:00Z`) - 16 * 3600e3;
+    const t0 = Date.now();
+    const got = await fetchLocal(J, mweek, () => new Date(inWindow + (Date.now() - t0)));
+    if (!got.job || got.tripped || !got.items.length) { record(`取り直し 週 ${mweek} (${done + 1} 回目・1 ビルド ${size} 人): 取れなかった ${got.tripped ? `確認ページ (${got.tripped})` : `${got.job?.state ?? "始まらない"}・${got.items.length} 品`} = 前の品のまま`); process.exit(1); }
+    globalThis.location ??= { hostname: "", href: "", search: "", hash: "", pathname: "/" };
+    const M = await bundleEntry("scripts/_daily-roll-entry.ts");
+    const items = got.items.map((it) => Object.fromEntries(ITEM_COLS.filter((c) => c !== "week" && c !== "asc" && c !== "skill").map((c) => [c, it[c]])));
+    const rows = M.sampleRowsOf(M.loadPatchSync(), items);
+    const lines = [
+      ...fetchSql(got.job, got.items),
+      ...rows.map((s) => inline("INSERT OR REPLACE INTO daily_samples (week, id, item_class, base, mods, n) VALUES (?, ?, ?, ?, ?, ?)", [mweek, s.id, s.itemClass, s.base, JSON.stringify(s.mods), s.n ?? 1])),
+      inline("INSERT OR REPLACE INTO ninja_ctl (k, v) VALUES (?, ?)", [`more:${mweek}`, String(done + 1)]),
+    ];
+    writeSql(lines);
+    record(`取り直し 週 ${mweek} (${done + 1} 回目・1 ビルド ${size} 人): ${got.job.state}・${got.sent} 本・${got.job.people ?? 0} 人・${got.items.length} 品 → 型 ${rows.length} → ${target()}へ ${lines.length} 文`);
+    process.exit(0);
+  } catch (e) {
+    record(`取り直し 週 ${mweek}: 落ちた ${String(e?.message ?? e).slice(0, 300)}`);
+    process.exit(1);
+  }
+}
 
 if (LOCAL) {
   if (!win.open) {

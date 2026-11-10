@@ -16,8 +16,10 @@
  *     --d1 = 口を通さず、Worker と同じ rollJson・rollPost (server/live/src/daily/roll.ts) を本番の D1 に直に (wrangler d1 execute --remote、オーナーのログイン)。
  *            お題の相場の写しは KV の market を wrangler で読む。覚えていた GET /daily.json (60 秒) は捨てないので、最大 60 秒は前の形が出る
  *     --week-only = 週の予定 (①) だけを書く (日曜 16:05 の週の取得の続き、scripts/daily-fetch-home.mjs)。締め・投稿・お題は書かない
+ *   明日から先にお題に使える人のいない日があれば、書いた後に daily-fetch-home.mjs --more で取り直して、もう 1 回だけ回す (D-80f、--no-more で止める)
  */
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { bundleEntry } from "./_bundle-ts.mjs";
 import { longValue, remoteD1, remoteKv } from "./_d1-shim.mjs";
 
@@ -77,8 +79,27 @@ if (D1) {
   const big = market ? longValue(db, { table: "daily_topics", col: "prices", id: `d${body.topic.day}`, value: market }) : null;
   const out = await R.rollPost(big ? big.db : db, body, big ? big.mark : market);
   console.log(`topic (d1): ${JSON.stringify(out)}`);
+  moreAndAgain();
   process.exit(0);
 }
 const w = await fetch(`${BASE}/daily/topic`, { method: "POST", headers, body: JSON.stringify(body) });
 console.log(`topic: ${w.status} ${(await w.text()).slice(0, 200)}`);
 if (!w.ok) process.exit(1);
+moreAndAgain();
+
+/**
+ * D-80f: 明日から先にお題に使える人のいない日 (needMore) があれば、今日のお題を書いた後に忍者から人数を増やして同じ週をもう 1 回取り
+ * (daily-fetch-home.mjs --more、週 2 回まで)、取れたらこの台本をもう 1 回だけ回して予定を組み直す (今日のお題は出た後なので変わらない)。
+ * 取り直しの後の回 (--no-more) からは呼ばない
+ */
+function moreAndAgain() {
+  if (!body.needMore?.length || args.includes("--no-more") || WEEK_ONLY) return;
+  const run = (file, a) => spawnSync(process.execPath, [new URL(file, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"), ...a], { stdio: "inherit", env: process.env });
+  console.log(`取り直し (D-80f): ${body.needMore.join("・")} にお題に使える人がいない → 忍者から人数を増やして取り直す`);
+  const f = run("./daily-fetch-home.mjs", ["--more"]);
+  if (f.status !== 0) { console.log(`取り直しは取れなかった (exit ${f.status})。予定のまま (印の無い日はサーバーが前の日のお題を出す)`); return; }
+  const dayAt = args.indexOf("--day");
+  const keep = args.filter((a, i) => a !== "--dry" && !(dayAt >= 0 && (i === dayAt || i === dayAt + 1)));
+  const again = run("./daily-roll.mjs", [...keep, "--no-more", "--day", target]);
+  console.log(`取り直しの後の組み直し: exit ${again.status}`);
+}

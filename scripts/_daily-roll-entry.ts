@@ -18,8 +18,8 @@ export { loadPatchSync } from "./_htc-bridge-entry";
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
 /** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
 const SOLVE_RATE = 1;
-/** D-05 の部位の表・D-04 の段の決まりの版 (変えたら上げる) */
-export const RULES_VER = "D04-D05-2026-11-05";
+/** D-05 の部位の表・D-04 の段の決まりの版 (変えたら上げる)。11-10 に D-04 を全部 T3 以上に、予定の確かめの印 (D-80f) もこの版 */
+export const RULES_VER = "D04T3-D05-2026-11-10";
 
 const noOf = (day: string): number => Math.round(Date.parse(`${day}T00:00:00Z`) / DAY);
 const nameOf = (no: number): string => new Date(no * DAY).toISOString().slice(0, 10);
@@ -34,7 +34,8 @@ type BoxRow = { id: string; created: number; note: string; item: string; status:
 type TryRow = { nick_id: string; name: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; recipe: string | null; checked: number | null };
 type ResultRow = { day: string; nick_id: string; place: number | null; cost: number; rate: number; used_ms: number; solved_n: number; entered_n: number; slot: number; base: string };
 type AwardRow = { nick_id: string; title_id: string; title_ver: number; first_day: string; ja: string; en: string; rank: number; retired: number };
-type PlanRow = { day: string; base: string; slot: number; sample_id: string | null; ilvl: number | null; aims: string | null };
+/** checked = 台本の確かめの印 (D-80f)。表に列がある D1 の行だけがこの鍵を持つ (無い D1 では鍵ごと無い) */
+type PlanRow = { day: string; base: string; slot: number; sample_id: string | null; ilvl: number | null; aims: string | null; checked?: string | null };
 export type RollInput = {
   now: number; target: string; week: string; closing: string; closed: boolean;
   job: { state: string } | null; items: FetchItem[]; samples: Array<{ id: string; base: string; mods: string; n: number }>; prevSamples: Array<{ id: string; base: string; mods: string; n: number }>;
@@ -87,6 +88,11 @@ const hashOf = (s: string): string => {
   for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
   return (h >>> 0).toString(36);
 };
+
+/** 取り直し (D-80f、daily-fetch-home.mjs --more) の品 → 週の型の行 (rollPost の week と同じ形 = 部位の札つき)。予定は組み直さない (毎日の台本の toFull が拾う) */
+export function sampleRowsOf(data: PatchData, items: FetchItem[]): Array<DailySample & { itemClass: string | null }> {
+  return samplesOf(data, items).samples.map((s) => ({ ...s, itemClass: classOfBase(s.base) }));
+}
 
 /** 週の取得の品 → 型 (同じベース・同じ並びは n で数える、同じアカウントは 1 人に) */
 export function samplesOf(data: PatchData, items: FetchItem[]): { samples: DailySample[]; read: number; skipped: number } {
@@ -251,8 +257,16 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
     return { ...day, base: n.s.base, aims: n.aims, sampleId: n.s.id, ilvl: TOPIC_ILVL, slot: (c && slotOfClass(c)) ?? day.slot };
   };
   // 今週の残りの予定 (明日から) も直して Worker の予定を書き換える。台本が回らなかった日の控えもフル MOD になる (お題の出た日は Worker が触らない)
-  const fixes = plan.filter((p) => noOf(p.day) > no && !inp.topics.some((t) => t.day === p.day)).map((p) => [p, toFull(p)] as const).filter(([a, b]) => a !== b).map(([, b]) => b);
-  if (fixes.length) body.planFix = fixes.map((p) => ({ day: p.day, slot: p.slot, itemClass: classOfBase(p.base), base: p.base, baseJa: jaTypeName(p.base), sampleId: p.sampleId, ilvl: p.ilvl, aims: p.aims }));
+  // D-80f: 表に確かめの印の列があれば、明日から先の予定を全部確かめ、フル MOD (段は D-04) に届いた日に印 (決まりの版) を付けて書き戻す。
+  // 届かない日 (どこにも候補が無い) は印を付けず needMore に出す = daily-roll.mjs が忍者から人数を増やして取り直し、もう一度組む。列の無い D1 は変わった日だけ (前のまま)
+  const marking = inp.plan.some((p) => "checked" in p);
+  const ahead = plan.filter((p) => noOf(p.day) > no && !inp.topics.some((t) => t.day === p.day)).map((p) => [p, toFull(p)] as const);
+  const isFull = (p: PlanDay): boolean => !!p.aims && fullMods(data, p.base, p.aims);
+  const marked = (d: string): string | null => inp.plan.find((p) => p.day === d)?.checked ?? null;
+  const fixes = ahead.filter(([a, b]) => a !== b || (marking && isFull(b) && marked(b.day) !== RULES_VER)).map(([, b]) => b);
+  if (fixes.length) body.planFix = fixes.map((p) => ({ day: p.day, slot: p.slot, itemClass: classOfBase(p.base), base: p.base, baseJa: jaTypeName(p.base), sampleId: p.sampleId, ilvl: p.ilvl, aims: p.aims, ...(marking && isFull(p) ? { checked: RULES_VER } : {}) }));
+  const short = ahead.filter(([, b]) => !isFull(b)).map(([, b]) => b.day);
+  if (short.length) { body.needMore = short; log.push(`お題に使える人が足りない日: ${short.join("・")} (取り直しの合図、D-80f)`); }
 
   // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD 以上の物だけ (前に通った物も見直す)
   if (!inp.topics.some((t) => t.day === inp.target)) {
