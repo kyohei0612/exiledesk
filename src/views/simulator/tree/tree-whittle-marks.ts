@@ -26,7 +26,7 @@ export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: Stage
   const c = lvPart(doc.boxes[id]?.junkKey);
   if (!c || !item) return tags;
   // 削減の手は枠の組の手 (手の無い兄弟の枠も)、比べるのはその手で消える側だけ = 枠を作る・回す時と同じ (tree-whittle-scene)
-  const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), { miss, side } = whittleCompare(data, doc, frameHandOf(doc, id), aimed);
+  const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), { miss, side } = whittleCompare(data, doc, frameHandOf(doc, id), aimed, item);
   const loose = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && (!side || m.side === side));
   const low = (l: StageMod[]): StageMod | undefined => l.reduce<StageMod | undefined>((a, m) => (!a || whittleLevel(m) < whittleLevel(a) ? m : a), undefined);
   const junk = low(loose.filter((m) => isMissMod(m, miss))), want = low(loose.filter((m) => !isMissMod(m, miss)));

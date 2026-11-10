@@ -10,7 +10,7 @@ import type { PatchData } from "../../craft-stage/engine";
 import { aimedList, missAims, type MissAims } from "./tree-miss";
 import { aimKey, boxAims, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { handWhittleSide, isWhittleHand, stripLv, whittleAimed } from "./tree-whittle";
-import type { StageSide } from "../../craft-stage/engine";
+import type { StageItem, StageSide } from "../../craft-stage/engine";
 
 /** 兄弟の枠の組の鍵: 種類・当たりの狙い (当たりは狙いごとに別の組)・枠 (l:) を外した鍵 */
 export const frameGroupKey = (c: Pick<TreeBox, "out" | "aim" | "anyOf" | "junkKey">): string => `${c.out}|${c.out === "hit" ? boxAims(c).map(aimKey).join(",") : ""}|${stripLv(c.junkKey) ?? ""}`;
@@ -33,7 +33,8 @@ export function frameHandOf(doc: TreeDoc, id: string): Hand | null {
 /** 削減の比べ: 消える側 (左右の抹消があればその側)・比べる相手と差し替えで見る欲しい MOD の札・外れの式 */
 export interface WhittleCompare { side: StageSide | null; wanted: Aim[]; miss: MissAims }
 /** h = 削減の手 (frameHandOf)、aimed = この品の ☑ の印 */
-export function whittleCompare(data: PatchData, doc: TreeDoc, h: Hand | { omens: readonly string[]; keep?: readonly { modId: string }[] } | null | undefined, aimed: ReadonlySet<string> | null | undefined): WhittleCompare {
-  const wanted = aimedList(data, doc, whittleAimed(data, h, aimed));
+export function whittleCompare(data: PatchData, doc: TreeDoc, h: Hand | { omens: readonly string[]; keep?: readonly { modId: string }[] } | null | undefined, aimed: ReadonlySet<string> | null | undefined, item?: StageItem | null): WhittleCompare {
+  // item = 比べる品 (この手で消えない狙いを残したい MOD に数える、whittleAimed)
+  const wanted = aimedList(data, doc, whittleAimed(data, h, aimed, item));
   return { side: handWhittleSide(h), wanted, miss: missAims(data, wanted) };
 }

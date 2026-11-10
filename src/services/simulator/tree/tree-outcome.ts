@@ -90,7 +90,7 @@ function lvKeyed(data: PatchData, doc: TreeDoc, b: TreeBox, oc: Outcome, after: 
   const am = aimed ? new Set([...aimed, ...oc.hits.map((a) => a.modId)]) : null;
   // 比べるのは枠の削減の手のお告げで消える側の MOD だけ。手・札・側は枠を作る所と同じ (tree-whittle-scene)
   const at = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && fits(c) && !!frameHandOf(doc, id); });
-  const w = whittleCompare(data, doc, at ? frameHandOf(doc, at) : null, am);
+  const w = whittleCompare(data, doc, at ? frameHandOf(doc, at) : null, am, after);
   const c = lvClassOf(after, w.miss, w.side);
   return c ? { ...oc, junkKey: withLv(oc.junkKey, c) } : oc;
 }
@@ -329,7 +329,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const aimed = aimedOfSample(boxId, smp.item) ?? sampleAimed(data, doc, boxId, seed);
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
     // 差し替えで見る欲しい MOD と組の比べの相手は同じ札 (tree-whittle-scene の whittleCompare、枠を作る所と同じ)
-    const w = isWhittleHand(h) ? whittleCompare(data, doc, h, aimed) : null;
+    const w = isWhittleHand(h) ? whittleCompare(data, doc, h, aimed, item) : null;
     const all = w ? rankVariants(data, item, w.wanted, doc.boxes[boxId]?.junkKey, w.miss, w.side).map((v) => v.item) : [item];
     for (const it of all) {
       // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝

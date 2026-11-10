@@ -27,9 +27,17 @@ export const handWhittleSide = (h: { omens: readonly string[] } | null | undefin
  * 削減の比べで使う ☑ の印: 削減の手で残したい MOD を決めていれば (S-27b 11-10、枠に分かれる時の窓)、消える側の印のうち残したい MOD に無い物を外す
  * = ☑ を外した MOD は外れとして比べる (11-10 オーナー「狙いＭＯＤを名前ありＭＯＤなら残しＭＯＤとして選べるようにしてあげたら？」)。決めていない手はそのまま
  */
-export function whittleAimed<T extends ReadonlySet<string> | null | undefined>(data: PatchData, h: { omens: readonly string[]; keep?: readonly { modId: string }[] } | null | undefined, aimed: T): T | Set<string> {
+export function whittleAimed<T extends ReadonlySet<string> | null | undefined>(data: PatchData, h: { omens: readonly string[]; keep?: readonly { modId: string }[] } | null | undefined, aimed: T, item?: StageItem | null): T | Set<string> {
   if (!aimed || !h?.keep || !isWhittleHand(h)) return aimed;
   const side = handWhittleSide(h), keep = new Set(h.keep.map((a) => a.modId));
+  // この手で消えない狙い (S-27e) も残したい MOD: 削減は MOD レベルが一番低い MOD を消すので、ほかの名前ありの狙いより MOD レベルが高い狙いは消えない。
+  // 窓は自動で ☑ と見せるのに保存の手 (Hand.keep) に入っていない木 (11-10 の前に置いた手) でも、品から同じ答えにする (要望 0b039a19、11-10 オーナー
+  // 「別にハズレMODとして扱おうがさ名前ありMODなんだから一緒でしょうに」。前は外れに数え、外れが差し替えの上限を超えて枠が割れなかった)
+  if (item) {
+    const named = loose(item, side).filter((m) => aimed.has(m.modId));
+    const low = named.length ? Math.min(...named.map(lv)) : Infinity;
+    for (const m of named) if (lv(m) > low) keep.add(m.modId);
+  }
   return new Set([...aimed].filter((id) => keep.has(id) || (!!side && sideOfMod(data, id) !== side)));
 }
 

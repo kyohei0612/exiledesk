@@ -311,7 +311,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const lvOf = (id: string): string | null => lvPart(doc.boxes[id]?.junkKey);
   // 比べるのは枠の削減の手のお告げで消える側の MOD だけ (tree-whittle-pre と同じ)
   // 削減の手は枠の組の手 (手の無い兄弟の枠も、tree-whittle-scene の frameHandOf)
-  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); if (!c) return true; const w = whittleCompare(data, doc, frameHandOf(doc, to), aimed); return lvClassOf(item, w.miss, w.side) === c; };
+  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); if (!c) return true; const w = whittleCompare(data, doc, frameHandOf(doc, to), aimed, item); return lvClassOf(item, w.miss, w.side) === c; };
   return {
     contents,
     fitsBox(from, to) {

@@ -43,7 +43,7 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
         // 残したい MOD は外れの式の札 (完成形の ☑ の狙い・置き石) で見る = 回す時の lvKeyed・判定と同じ (完成形に無いエッセンスの MOD は外れ、S-33c)
         // 削減の手で残したい MOD を決めていれば、☑ を外した MOD は外れとして比べる (S-27b 11-10)
         // 比べるのは削減の手のお告げで消える側の MOD だけ (左側の抹消ならプレフィックス、11-10)。札と側は tree-whittle-scene の 1 つ
-        const { wanted, miss, side } = whittleCompare(data, d, d.boxes[holders[0]!]!.hand, aimed);
+        const { wanted, miss, side } = whittleCompare(data, d, d.boxes[holders[0]!]!.hand, aimed, item);
         cls = lvClassesOf(data, item, wanted, side);
         own = lvClassOf(item, miss, side);
         break;

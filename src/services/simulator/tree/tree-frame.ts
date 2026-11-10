@@ -122,7 +122,7 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された 1 枝 (印の MOD が固定されえない品はいつもどおり)
   const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, f.item, b.hand!) : null;
   // 削減の差し替えで見る欲しい MOD と組の比べの相手は同じ札 (tree-whittle-scene の whittleCompare、枠を作る・回す時と同じ)
-  const w = isWhittleHand(b.hand!) ? whittleCompare(data, doc, b.hand, f.aimed) : null;
+  const w = isWhittleHand(b.hand!) ? whittleCompare(data, doc, b.hand, f.aimed, f.item) : null;
   const rs = sure ? [{ p: 1, item: sure.item }] : outsOfMemo(data, f.item, b, w ? w.wanted : [], w?.miss);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
@@ -303,7 +303,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       for (const k of kids) {
         const x = doc.boxes[k], brs = to.get(k);
         if (k === o || !x || !brs?.length || frameGroupKey(x) !== g) continue;
-        const sib = bestOf(k, brs, f), { wanted, miss, side } = whittleCompare(data, doc, wh, sib.aimed);
+        const sib = bestOf(k, brs, f), { wanted, miss, side } = whittleCompare(data, doc, wh, sib.aimed, sib.item);
         const v = rankVariants(data, sib.item, wanted, c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
         if (v) return { ...sib, item: v.item, p: sib.p * v.p, alts: undefined };
       }
