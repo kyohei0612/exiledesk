@@ -112,6 +112,18 @@ export async function dailyStart(db: D1Database, b: Body, now: number, prices: s
   return tryOut(t!, topic);
 }
 
+/**
+ * POST /daily/mine: 自分の挑戦の行があるかだけを返す (読むだけ、始めない。11-10)。
+ * 置き場で挑戦をリセットした人の端末の控え (時間切れ・終わった印) を捨てさせる用。始める口 (/daily/start) は行が無いと新しく始めるので一覧からは呼べない
+ */
+export async function dailyMine(db: D1Database, b: Body): Promise<unknown> {
+  const nick = await authNick(db, b.nickId, b.code);
+  if (!nick) return { error: "nick" };
+  const id = typeof b.id === "string" ? b.id : "";
+  const had = await db.prepare("SELECT 1 FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first();
+  return { has: !!had };
+}
+
 /** POST /daily/submit: 1 回だけ (出したら挑戦は終わり、D-35c。11-09 まで何回でも出せて一番安い解決を残した)。サーバーの始めた時刻から 1 時間 + 30 秒を過ぎたら受けない (D-32・D-56) */
 export async function dailySubmit(db: D1Database, b: Body, now: number): Promise<unknown> {
   const nick = await authNick(db, b.nickId, b.code);

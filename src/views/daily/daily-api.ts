@@ -133,6 +133,16 @@ export async function startTry(id: string): Promise<DailyTry | StartError> {
   save();
   return daily.local.tries[id]!;
 }
+/**
+ * 端末の控えが終わった挑戦 (時間切れ・諦めた・提出した) の時、サーバーに行がまだあるかを聞く (POST /daily/mine、読むだけ。11-10)。
+ * 置き場でリセットされて行が無ければ控えを捨て、一覧のボタンを「始める」に戻す。つながらない・古いサーバー (404) の時は控えのまま
+ */
+export async function recheckTry(id: string): Promise<void> {
+  const a = auth();
+  if (!a || !daily.local.tries[id]) return;
+  const r = await call<{ has?: boolean }>("/daily/mine", { ...a, id });
+  if (r?.has === false && daily.local.tries[id]) { delete daily.local.tries[id]; save(); }
+}
 export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "from" | "tree" | "saved">>): void {
   const t = daily.local.tries[id];
   if (t) { Object.assign(t, patch); save(); }
