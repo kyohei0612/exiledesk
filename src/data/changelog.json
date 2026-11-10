@@ -6,8 +6,8 @@
    {
     "kind": "",
     "area": "",
-    "text": "サイト: 初めて来た時に「日本語 / English」を選べるお知らせを出すようにしました (共有されたレシピの URL から来た時も)。選んだ言語は覚えて、次からは出ません",
-    "en": "Site: on your first visit you can now choose 日本語 / English (also when you arrive from a shared recipe link). Your choice is remembered and the notice won't show again"
+    "text": "初めて来た時に表示する言語 (日本語 / English) を選べるようにしました。あとから上の帯でいつでも変えられます",
+    "en": "On your first visit you can now choose the display language (日本語 / English). You can change it anytime from the top bar."
    },
    {
     "kind": "",

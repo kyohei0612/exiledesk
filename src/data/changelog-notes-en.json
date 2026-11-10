@@ -1,6 +1,6 @@
 {
   "0.1.709": [
-    "Site: on your first visit you can now choose 日本語 / English (also when you arrive from a shared recipe link). Your choice is remembered and the notice won't show again",
+    "On your first visit you can now choose the display language (日本語 / English). You can change it anytime from the top bar.",
     "Simulator: fixed a whittling step being copied into frames you hadn't set when you saved and reopened a tree, and fixed frames that were already decided splitting again into lower / same / higher after a hand that doesn't change mods, such as Hinekora's Lock"
   ],
   "0.1.708": [
