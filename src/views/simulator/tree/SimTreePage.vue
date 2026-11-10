@@ -38,7 +38,7 @@ import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
-import { useTreeBands } from "./use-tree-bands"; import { bandAway } from "../../../services/simulator/tree/tree-band";
+import { useTreeBands } from "./use-tree-bands"; import { fillHeldDefaults } from "./tree-held-use"; import { bandAway } from "../../../services/simulator/tree/tree-band";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
@@ -167,7 +167,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
-  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); return at; });
+  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); tidyOf(d); }); return at; });
   panel.value = null;
   // 視点は holdBox (S-147e)
 }

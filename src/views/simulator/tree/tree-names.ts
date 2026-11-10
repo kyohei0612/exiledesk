@@ -175,6 +175,7 @@ export const handIcon = (key: string): string => iconOfKey(key, baseItem.value);
 
 /** 矢印に出す 1 行 (触媒の時は先にカタリスト → カレンシー + お告げ、繰り返しは「当たるまで」。10-22 オーナー「カタリストを打つルートが無い」で先に出す) */
 export function handLabel(h: Hand): string {
+  if (h.noUse) return tr(`打たない (${handLabel({ ...h, noUse: undefined })})`, `Skip (${handLabel({ ...h, noUse: undefined })})`); // ヒネコラで持つ削減を打たない枠 (S-39 ②b)
   const cat = h.catalyst && h.omens.includes(CATALYSING)
     ? `${h.catalystCount ? tr(`${handName(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${handName(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${handName(h.catalyst)} ${tr("最大まで", "to max")}`} → `
     : "";

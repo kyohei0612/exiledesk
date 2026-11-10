@@ -7,6 +7,9 @@ import { bandHead, headBands } from "../../../services/simulator/tree/tree-band"
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { LvClass } from "../../../services/simulator/tree/tree-whittle";
 import { handLabel } from "./tree-names";
+import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
+import { isWhittleHand } from "../../../services/simulator/tree/tree-whittle";
+import { tr } from "../../../i18n/lang";
 
 /** 箱の帯 1 本の見せ方 */
 export interface BandView { id: string; lv: LvClass; hand: string | null; issue: string | null; selected: boolean }
@@ -15,7 +18,10 @@ export function useTreeBands(o: { doc: Ref<TreeDoc>; selectedId: () => string | 
   /** 帯の頭の箱 id に出す帯 (頭でなければ空) */
   const bandsFor = (id: string): BandView[] => headBands(o.doc.value, id).map(({ id: x, lv }) => {
     const b = o.doc.value.boxes[x]!;
-    return { id: x, lv, hand: b.hand ? handLabel(b.hand) : null, issue: o.issueOf(b), selected: o.selectedId() === x };
+    // ヒネコラで持つ削減は 打つ / 打たない (S-39 ②b)
+    const held = !!b.hand && holdsAt(o.doc.value, x) && isWhittleHand(b.hand);
+    const hand = !b.hand ? null : b.hand.noUse ? tr("打たない", "Skip") : held ? tr(`打つ: ${handLabel(b.hand)}`, `Use: ${handLabel(b.hand)}`) : handLabel(b.hand);
+    return { id: x, lv, hand, issue: o.issueOf(b), selected: o.selectedId() === x };
   });
   /** 帯を押した: 手があればその手の窓、無ければ＋と同じ (押すと次に打つ手・長押しで引っ張ってつなぐ) */
   const onBand = (id: string, e: PointerEvent): void => {

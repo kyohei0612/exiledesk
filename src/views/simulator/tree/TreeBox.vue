@@ -120,6 +120,8 @@ const head = computed(() => {
   const others = Object.values(d.boxes).filter((b) => b.back === props.box.id && mergedAway(d, b)).map((b) => headOf(b, t.aimShort));
   return [...new Set([own, ...others])].join(" / ");
 });
+/** 打たない枠のハズレ (ヒネコラで持つ削減を打たない、S-39 ②b) */
+const skipped = computed(() => !!props.box.seen && !!(props.box.parent && t.doc.value.boxes[props.box.parent]?.hand?.noUse));
 /** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
 const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
@@ -268,7 +270,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <div class="mt-1 flex flex-wrap items-center gap-1 text-[12px]">
       <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
-      <span v-if="box.seen" data-tree-box-seen class="w-full text-violet-200/80">{{ tr(`当たり以外 ${joinedIn + 1} 通り · 手は使わずアイテムはこのまま`, `${joinedIn + 1} non-hit result(s) · craft not used, item unchanged`) }}</span>
+      <span v-if="box.seen" data-tree-box-seen class="w-full text-violet-200/80">{{ skipped ? tr("打たない枠 · 手は使わずアイテムはこのまま", "Skipped frame · craft not used, item unchanged") : tr(`当たり以外 ${joinedIn + 1} 通り · 手は使わずアイテムはこのまま`, `${joinedIn + 1} non-hit result(s) · craft not used, item unchanged`) }}</span>
       <span v-if="allMiss" data-tree-foresee-nohit class="w-full text-amber-200" :title="tr('ヒネコラの後は狙いの結果だけ使い、ほかはハズレ (打たない)。手の札を押して狙いの MOD に ☑ する', 'After Hinekora only the targeted result is used; everything else is a miss. Click the craft and tick the target mods')">{{ tr("狙いを ☑ して (今は全部ハズレ)", "Tick a target (all results are misses now)") }}</span>
       <span v-if="box.hand && !bands?.length" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
       <span v-if="cantHand" data-tree-cant-hand class="w-full break-words text-rose-300">{{ tr(`この品には打てない手 (${cantHand})`, `Can't be used on this item (${cantHand})`) }}</span>

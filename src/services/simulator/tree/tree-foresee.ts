@@ -6,6 +6,8 @@
  * ハズレの人は手を使わず (費用も無し)、持つ前のアイテムのまま、ハズレ箱の手 (別のカレンシー) か ↩ へ (見本は tree-sample、回すのは tree-run)
  */
 import type { TreeDoc } from "./tree-model";
+import { bandsOn } from "./tree-band";
+import { isWhittleHand, lvPart } from "./tree-whittle";
 import { tr } from "../../../i18n/lang";
 // MOD が付かない・消えない・入れ替わらない手か (神・ヒネコラなど) はエンジンの keepsMods (sim-engine、11-07 オーナー「ゲームシステムはジンだけ」。前はここに同じ打ち方の写し)
 
@@ -30,7 +32,11 @@ export const noHitHeld = (doc: TreeDoc, id: string): boolean => holdsAt(doc, id)
  */
 export function foldMisses(doc: TreeDoc, id: string): void {
   if (!holdsAt(doc, id)) return;
-  const miss = (doc.boxes[id]?.outs ?? []).filter((o) => doc.boxes[o] && doc.boxes[o]!.out !== "hit");
+  // 削減の手前の枠で持つ削減 (S-39 ②b、スイッチ whittleBands): 枠ごとに 打つ = ハズレにまとめない (ふつうの削減の結果を使う) / 打たない = 当たりも全部ハズレ
+  const b0 = doc.boxes[id], lvHeld = bandsOn() && !!b0 && isWhittleHand(b0.hand) && !!lvPart(b0.junkKey);
+  if (lvHeld && !b0!.hand!.noUse) return;
+  // まとめ先 (先頭) は当たり以外から (打たない枠で当たりの箱がハズレの顔になって当たりの印が出ないように)
+  const miss = (doc.boxes[id]?.outs ?? []).filter((o) => doc.boxes[o] && (lvHeld || doc.boxes[o]!.out !== "hit")).sort((a, z) => Number(doc.boxes[a]!.out === "hit") - Number(doc.boxes[z]!.out === "hit"));
   const hub = miss[0];
   for (const o of miss) {
     const b = doc.boxes[o]!;

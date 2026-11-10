@@ -8,6 +8,7 @@ import type { Aim, Hand, HandKind } from "../../../services/simulator/tree/tree-
 import type { OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import TreeHandShelf from "./TreeHandShelf.vue";
+import TreeHeldUse from "./TreeHeldUse.vue";
 import { computed } from "vue";
 import { useTree } from "./use-tree";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
@@ -22,6 +23,7 @@ const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCa
 
 <template>
   <ModalShell :open="true" rec="tree-hand" :title="title" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-[94%] max-w-[1500px] max-[48rem]:w-full min-[48rem]:h-[88%]" full-on-phone body-class="px-3 pb-3" @close="emit('close')">
+    <TreeHeldUse :box-id="boxId" />
     <TreeHandShelf :box-id="boxId" :current="current" @pick="(...a) => emit('pick', ...a)" @clear="emit('clear')" @close="emit('close')" @aim="emit('aim')" />
   </ModalShell>
 </template>

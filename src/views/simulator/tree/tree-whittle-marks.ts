@@ -17,8 +17,8 @@ import { tr } from "../../../i18n/lang";
 const LOOK: Record<LvClass, { rgb: string; ja: string; en: string; tja: string; ten: string }> = {
   // 字は「MOD レベルが」を付ける (11-10 オーナー「中の高い低いはMODレベル高いとか低いって出してあげたいね」。枠の上の題はそのまま)
   lo: { rgb: "122,196,132", ja: "▼ MOD レベルが低い", en: "▼ lower mod level", tja: "外れの MOD レベルが比べる相手より低い = 次の削減で外れが消える", ten: "The miss mod level is lower than the compared mod: whittling removes the miss" },
-  eq: { rgb: "226,190,96", ja: "＝ MOD レベルが同じ", en: "= same mod level", tja: "外れの MOD レベルが比べる相手と同じ = 次の削減は外れか比べる相手が半々で消える", ten: "Same mod level as the compared mod: whittling removes either, half and half" },
-  hi: { rgb: "214,72,110", ja: "▲ MOD レベルが高い", en: "▲ higher mod level", tja: "外れの MOD レベルが比べる相手より高い = 次の削減で比べる相手 (残したい MOD) が消える", ten: "The miss mod level is higher: whittling removes the compared mod (a mod to keep)" },
+  eq: { rgb: "226,190,96", ja: "＝ 同じ MOD レベル", en: "= same mod level", tja: "外れの MOD レベルが比べる相手と同じ = 次の削減は外れか比べる相手が半々で消える", ten: "Same mod level as the compared mod: whittling removes either, half and half" },
+  hi: { rgb: "214,72,110", ja: "▲ 残す MOD より高い MOD レベル", en: "▲ higher mod level", tja: "外れの MOD レベルが比べる相手より高い = 次の削減で比べる相手 (残したい MOD) が消える", ten: "The miss mod level is higher: whittling removes the compared mod (a mod to keep)" },
 };
 
 /** 組の色と字 (箱の下の帯も同じ色、S-65c ⑫) */
@@ -27,6 +27,9 @@ export const lvLook = (c: LvClass): (typeof LOOK)[LvClass] => LOOK[c];
 /** 箱 id のカードの札 tags に、削減の手前の枠の印を足した物 (枠の箱でなければ tags のまま) */
 export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: StageItem | null, tags: Map<string, RowTag>): Map<string, RowTag> {
   const c = lvPart(doc.boxes[id]?.junkKey);
+  // 打たない枠のハズレ (S-39 ②b): 品は枠の箱のまま (手を使わない) なので、枠の箱の札をそのまま出す
+  const up = doc.boxes[id]?.parent;
+  if (!c && doc.boxes[id]?.seen && up && lvPart(doc.boxes[up]?.junkKey)) return lvRowTags(data, doc, up, item, tags);
   if (!c || !item) return tags;
   // 削減の手は枠の組の手 (手の無い兄弟の枠も)、比べるのはその手で消える側だけ = 枠を作る・回す時と同じ (tree-whittle-scene)
   const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), { miss, side } = whittleCompare(data, doc, frameHandOf(doc, id), aimed, item);
