@@ -7,23 +7,16 @@
  */
 import { subtree, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import type { Judge } from "./tree-judge";
+import { treeOrder } from "./tree-order";
 
 /** まとめる結果の箱 (外れ・打った後・外れが消えた・狙いが消えた、S-66) */
 const OPEN_JUDGE: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone", "lost"]);
-/** 木の並びの位置 = 始まりから各段の結果の何番目かの並び (作った順ではない。組んだ順と開いた時の打ち直しの順が違っても同じ答え、S-66・S-140) */
-const placeOf = (doc: TreeDoc, id: string): number[] => {
-  const at: number[] = [];
-  for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) at.unshift(doc.boxes[b.parent]?.outs.indexOf(b.id) ?? 0);
-  return at;
-};
-/** a が木の並びで b より前か (上の段・同じ段は左が先) */
-export const placedBefore = (doc: TreeDoc, a: string, b: string): boolean => {
-  const x = placeOf(doc, a), y = placeOf(doc, b);
-  if (x.length !== y.length) return x.length < y.length;
-  for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i]! < y[i]!;
-  return false;
-};
-const byPlace = (doc: TreeDoc) => (a: string, b: string): number => (placedBefore(doc, a, b) ? -1 : placedBefore(doc, b, a) ? 1 : 0);
+/**
+ * a が木の並びで b より前か (上の段・同じ段は道の並び、S-66・S-140)。並びは S-50f の treeOrder (作った順ではない)。
+ * 前は各段の親の結果の何番目か (outs の並び) で、削減の手前の枠 (S-65c) は開くたびに 高い・低い・同じ の並びが変わり、まとめ先が入れ替わった (S-50f)
+ */
+export const placedBefore = (doc: TreeDoc, a: string, b: string): boolean => a !== b && treeOrder(doc)(a, b) < 0;
+const byPlace = (doc: TreeDoc): ((a: string, b: string) => number) => treeOrder(doc);
 /** 親からの深さ (段) */
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 /** 鍵の削減の順位の部分 (`w:`、tree-whittle) と削減の手前の枠の組 (`l:`、S-65c) */

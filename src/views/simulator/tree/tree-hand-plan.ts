@@ -2,6 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
+import { treeOrder } from "../../../services/simulator/tree/tree-order";
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
@@ -402,10 +403,9 @@ export const holdLinks = <T>(fn: () => T): T => fn();
 export function tidyJunk(d: TreeDoc, auto = false): void {
   const data = craftStage.data.value;
   if (!data) return;
-  const depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
-  const seq = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? -1);
   const link = (): void => {
-    const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort((a, z) => depth(a) - depth(z) || seq(a) - seq(z));
+    // 見る順は木の並び (S-50e の足し、tree-order。前は段と箱の番号で、開き直すとまとめ先が入れ替わった)
+    const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort(treeOrder(d));
     const j = judgeMemo(data, d);
     linkByContent(d, ids, j);
     mergeOpenSame(d, ids, j);

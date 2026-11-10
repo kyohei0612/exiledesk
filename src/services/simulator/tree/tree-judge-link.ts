@@ -9,12 +9,13 @@ import { playHand } from "./tree-sample";
 import { clearHand, MATCH_BACK, setBack, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { DIVINE_LT, isDivineAim } from "./tree-divine";
 import { effectOf, isRuneHand } from "./tree-hands";
+import { treeOrder } from "./tree-order";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
-const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
 export const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
-export const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
+/** 同じ中身の候補の決め手 = 木の並び (上の段 → 道の並び、削減の枠は 低い→同じ→高い → 箱の番号、S-50e の足し・tree-order)。前は段と箱の番号で、開き直すと行き先が入れ替わった */
+export const shallow = (doc: TreeDoc): ((x: string, y: string) => number) => treeOrder(doc);
 const keepSig = (h: Hand): string => (h.keep ?`k:${h.keep.map((a) => a.modId).sort().join()}` : "");
 const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency &&[...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);
 

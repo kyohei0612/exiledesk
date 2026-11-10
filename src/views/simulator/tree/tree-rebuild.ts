@@ -4,6 +4,7 @@
  * 人の手のある箱は人の手が先 (自動の ↩ で上書きしない)、完成 / 失敗だけの箱は付いた自動の ↩ を外して印を付ける。
  * 札の無くなった決めは要確認 (orphans、⑦20)。前の形の木から開いた時だけ、前に無かった札の箱に「組み直しで増えた」(fresh、⑦19、保存しない)
  */
+import { treeOrder } from "../../../services/simulator/tree/tree-order";
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
@@ -17,7 +18,6 @@ import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simu
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
-import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
 import { restoreWhittlePre } from "./tree-whittle-pre";
 import { lvPart } from "../../../services/simulator/tree/tree-whittle";
 
@@ -255,10 +255,10 @@ function mergeIntoBacked(data: PatchData, d: TreeDoc): void {
   const rank = (k: string | undefined): string => k?.split(";").filter((s) => s.startsWith("w:") || s.startsWith("l:")).join(";") ?? "";
   for (const l of Object.values(d.boxes)) {
     if (!junkPath(l) || l.hand || l.back || l.done || l.split || l.noAutoBack) continue;
-    // まとめ先は木の並びで前の箱 (打ち直しの順で番号が振り直されても同じ、tree-merge-open の placedBefore)
+    // まとめ先は木の並びで前の箱 (打ち直しの順で番号が振り直されても、削減の枠の並びが変わっても同じ、S-50f の treeOrder)
     const to = Object.values(d.boxes)
       .filter((x) => x.id !== l.id && OPEN.has(x.out) && !x.hand && !x.done && !x.split && !!x.back && !x.autoBack && depth(x.id) === depth(l.id) && rank(x.junkKey) === rank(l.junkKey) && j.fitsBox(l.id, x.id))
-      .sort((x, y) => (placedBefore(d, x.id, y.id) ? -1 : placedBefore(d, y.id, x.id) ? 1 : 0))[0];
+      .sort((x, y) => treeOrder(d)(x.id, y.id))[0];
     if (to) { l.back = to.id; l.autoBack = true; l.merged = true; }
   }
 }
@@ -267,9 +267,9 @@ function mergeIntoBacked(data: PatchData, d: TreeDoc): void {
  * 前の木に無かった結果の箱 (今の決まりで増えた結果) に着く人は、前の版では回すと「同じ状態の箱へ」移って進んでいた (10-29 共有の木 ibMlQuAV の b22・b24)
  */
 function linkLeftovers(data: PatchData, d: TreeDoc): void {
-  const j = judgeMemo(data, d), depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
-  const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
-  const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
+  const j = judgeMemo(data, d);
+  // 並びは木の並び (S-50e の足し、tree-order)
+  const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort(treeOrder(d));
   for (const b of Object.values(d.boxes)) {
     if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue; // 外れの道も (11-06、tree-judge-link の linkByContent と同じ)
     // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)

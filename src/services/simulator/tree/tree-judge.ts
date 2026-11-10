@@ -21,6 +21,7 @@ import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type Tree
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, placedAims } from "./tree-veil";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
+import { treeOrder } from "./tree-order";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
@@ -301,10 +302,9 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     return out;
   };
   const full = (id: string): ReadonlySet<string> | null => fullUntil(id) as ReadonlySet<string> | null;
-  const depth = (id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
-  const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   let order: string[] | null = null;
-  const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y)));
+  // 並びは木の並び (S-50e の足し、tree-order。前は段と箱の番号で、開き直すと回す人の移り先が入れ替わりえた)
+  const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort(treeOrder(doc)));
   /** 中身の鍵の ☑ の狙いの札 (先頭から最初の枠 ~ まで) を数だけにした物 (狙いが消えた箱、fitsLost) */
   const aimCount = (k: string): string => { const i = k.indexOf("~"), head = i < 0 ? k : k.slice(0, i); return `${head ? head.split(",").length : 0}${i < 0 ? "" : k.slice(i)}`; };
   // 削減の手前の枠 (S-65c、鍵 l:): 中身の比べは MOD レベルを見ないので、枠の組 (外れの MOD レベルが低い・同じ・高い) は箱の鍵と人の品で別に見る
@@ -349,7 +349,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     openOf(item, aimed) {
       const k = own(contentOf(data, doc, item, aimed));
-      return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k)) && lvFits(item, aimed, b.id)).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
+      return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k)) && lvFits(item, aimed, b.id)).map((b) => b.id).sort(treeOrder(doc));
     },
     aimedOf: (id) => samples(id).map(() => aimedAt(id)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)
