@@ -150,6 +150,8 @@ function rankVariantsAll(data: PatchData, item: StageItem, aims: readonly AimLik
 const FLOORS = new WeakMap<object, ReadonlyMap<string, number>>();
 const fKey = (m: StageMod): string => `${m.side}|${m.modId}|${m.tierIndex}`;
 const floorsOf = (it: StageItem): ReadonlyMap<string, number> | undefined => FLOORS.get(it) ?? FLOORS.get(originOf(it));
+/** 持ち回っている下限の比べの文字 (品の JSON の外にあるので、品の答えを覚える鍵に足す。tree-frame の outsOf の覚え) */
+export const floorKeyOf = (it: StageItem): string => { const f = floorsOf(it); return f?.size ? JSON.stringify([...f].sort()) : ""; };
 /** before に手を打った after へ下限を持ち回る。wanted = 削減の手の欲しい MOD (削減でなければ null): 消えた MOD の MOD レベルを、残った外れの下限に足す */
 export function carryFloors(data: PatchData, before: StageItem, after: StageItem, wanted: readonly AimLike[] | null): void {
   const was = floorsOf(before), bm = loose(before), am = loose(after), next = new Map<string, number>();

@@ -6,7 +6,7 @@
  * 乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
  * 段階 2: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
  */
-import { mulberry32, occupiedFamiliesOf, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { mulberry32, occupiedFamiliesOf, stageTuning, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf, essenceHold } from "./tree-outcome";
@@ -17,7 +17,7 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { carryFloors, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants } from "./tree-whittle";
+import { carryFloors, floorKeyOf, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants } from "./tree-whittle";
 import { frameGroupKey, frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import type { MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
@@ -83,6 +83,24 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
 }
 
 /**
+ * 手の起こりうる行き先の覚え (データごと)。答えは品 (下限の持ち回りも)・手・エンジンの設定だけで決まる (削減の手は外れの差し替えが箱の鍵で変わるので覚えない)。
+ * 下の分けの覚え (SPLITS) は鍵に木の狙いの一覧 (part) が入り、開く時の組み直しで当たりの箱が増えるたびに全部外れ、同じ品に同じ手の数え上げを打ち直していた
+ * (スマホ 390 で開く時の固まりの 1 割前後、11-10 開く速さの案 D)
+ */
+const OUTS = new WeakMap<PatchData, Map<string, Br[] | "tooMany">>();
+function outsOfMemo(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = [], lvMiss?: MissAims): Br[] | "tooMany" {
+  if (isWhittleHand(b.hand)) return outsOf(data, item, b, wanted, lvMiss);
+  let m = OUTS.get(data);
+  if (!m) OUTS.set(data, (m = new Map()));
+  const k = `${JSON.stringify(b.hand)}|${JSON.stringify(stageTuning())}|${floorKeyOf(item)}|${itemKeyOf(item)}`;
+  const had = m.get(k);
+  if (had) return had;
+  const rs = outsOf(data, item, b, wanted, lvMiss);
+  putCapped(m, k, rs, SPLITS_MAX);
+  return rs;
+}
+
+/**
  * 分けた枝の覚え (データごと)。答えは木の前提 (狙い・置き石)・代表の品・☑・手・箱と子の札だけで決まるので、開く・組み替えで木が 1 手ずつ変わる間も
  * 変わらない所は引き直さない (覚えないと 1 手ごとに全部の箱を数え直し、小さな木の開きが前の作りより遅くなった)
  */
@@ -105,7 +123,7 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, f.item, b.hand!) : null;
   // 削減の差し替えで見る欲しい MOD と組の比べの相手は同じ札 (tree-whittle-scene の whittleCompare、枠を作る・回す時と同じ)
   const w = isWhittleHand(b.hand!) ? whittleCompare(data, doc, b.hand, f.aimed) : null;
-  const rs = sure ? [{ p: 1, item: sure.item }] : outsOf(data, f.item, b, w ? w.wanted : [], w?.miss);
+  const rs = sure ? [{ p: 1, item: sure.item }] : outsOfMemo(data, f.item, b, w ? w.wanted : [], w?.miss);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;
