@@ -1,4 +1,8 @@
 {
+  "0.1.697": [
+    "Simulator: when you hold a craft with an Omen of Whittling in the next-craft window, one line now shows which frames (lower, same, higher miss mod level) the result splits into and which one this box is",
+    "Simulator: crafts that combine Whittling with a Sinistral or Dextral Erasure omen now pick the compared mod and the replaced miss only from that side's mods"
+  ],
   "0.1.696": [
     "Simulator: opening a recipe now builds the tree once before showing it, with \"Loading recipe…\" on screen and input paused meanwhile (it no longer jumps to base selection while loading). Opening on phones is lighter"
   ],

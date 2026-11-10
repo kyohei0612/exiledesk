@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.697",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓で削減のお告げを含む手を持つと、外れの MOD レベルで結果がどの枠 (低い・同じ・高い) に分かれ、この箱がどれになるかを一行で出すようにしました",
+    "en": "Simulator: when you hold a craft with an Omen of Whittling in the next-craft window, one line now shows which frames (lower, same, higher miss mod level) the result splits into and which one this box is"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減と左側・右側の抹消のお告げを一緒に使う手は、比べる相手と差し替える外れをその側の MOD だけで決めるようにしました",
+    "en": "Simulator: crafts that combine Whittling with a Sinistral or Dextral Erasure omen now pick the compared mod and the replaced miss only from that side's mods"
+   }
+  ]
+ },
+ {
   "v": "0.1.696",
   "date": "2026-11-10",
   "items": [
@@ -880,36 +898,6 @@
     "area": "",
     "text": "シミュレーター: 100 人をまだ回していない時の結果の文を「100 人: まだ回していない」にしました",
     "en": "Simulator: before you run 100 trials, the result line now reads \"100 runs: not run yet\""
-   }
-  ]
- },
- {
-  "v": "0.1.657",
-  "date": "2026-11-03",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形のカードに狙いの MOD を全部並べるようにしました (枠を超えた狙いもカードの中のふつうの行に。候補は付け方ごとに 10 まで)",
-    "en": "Simulator: the final-item card now lists every target mod (targets beyond the slot limit are normal rows inside the card; up to 10 candidates per crafting method)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 枠を増やす MOD (液化した感情など) を狙いにした時、完成形のカードが増えた枠で数えるようにしました。液化した感情の手は当たりの札を出し、当たり所で成り立たない時は打ち直します",
-    "en": "Simulator: targeting a mod that adds slots (such as Liquid Emotions) now counts the extra slots on the final-item card. Liquid Emotion steps show a hit label and are retried when the hit can't apply"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定で、上に留まる帯・MOD 表の目次と見出しを上端から少し空け、下を流れる字が透けないようにしました",
-    "en": "Simulator: in the final-item settings, the sticky bars and the mod table's index and headers now sit a little below the top edge, so text scrolling underneath no longer shows through"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: ジュエルの MOD 一覧に、液化した感情で付く MOD の「デリリウム」の節を足しました",
-    "en": "Emulator: the jewel mod list now has a Delirium section for mods added by Liquid Emotions"
    }
   ]
  }
