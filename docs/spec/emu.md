@@ -24,7 +24,7 @@
 | 始めの MOD | 1 手も打つ前に MOD 一覧の「付ける」で組んだ MOD (`startMods`) | 同上 |
 | 工程 | 打った手の一覧 (新しい手が上)。Web は 50 手まで (`LOG_KEEP`) | `StageHistory.vue` |
 | 持った時の % | 持っている物で次に付く確率 (MOD 一覧の表) | `StageModList.vue` (計算は engine.md) |
-| 変わる候補 / 付く空き | 持っている物を打つと消える・変わる MOD (オレンジ) / 付く側の空き (緑の枠) | `previewUse` → `StageItemCard` |
+| 変わる候補 / 付く空き | 持っている物を打つと消える・変わる MOD (赤) / 付く側の空き (緑の枠) | `previewUse` → `StageItemCard` |
 | 次の手で狙う | 狙う MOD を選び、打ち方ごとの当たる確率を棚の上に出す欄 | `StageAimPicker.vue`・`StageAimPanel.vue` |
 | スパムシミュレーター | 増強・カオス・高貴のスパムを 100 人で比べる別のページ (`?page=routes`) | `StageRoutesPage.vue`・`StageRouteLuck.vue` |
 | 運試し | スパムシミュで自分で押している間スパムする欄 | `StageRouteLuck.vue` |
@@ -121,7 +121,7 @@
 
 ### D. 表示
 
-- **M-40 持った時の色分け**: 持っている間、カードの MOD のうち打つと消える・入れ替わる・数値が変わる・固定される候補はオレンジの文字、付く空きは側ごとに緑の枠で光らせる。両側が光る時は「どちらの側かは運」。中身はエンジンの previewUse。
+- **M-40 持った時の色分け**: 持っている間、カードの MOD のうち打つと消える・入れ替わる・数値が変わる・固定される候補は赤の文字 (11-10 からオレンジ → 赤。シミュの外れ MOD のオレンジと分ける、S-57b)、付く空きは側ごとに緑の枠で光らせる。両側が光る時は「どちらの側かは運」。中身はエンジンの previewUse。
   - 有効。出どころ: オーナー 10-17 (前は削減のカオスだけ、全部の手に)。確かめ: 画面、見張りは無い (⑦ の 2)。
 - **M-41 打てない時**: 持っている物が打てない時は打たず、理由を枠の真ん中の札に出す。工程には理由を薄く残す。
   - 有効。出どころ: メモ craft-stage-feature。確かめ: 画面。
@@ -191,7 +191,7 @@
 
 - **M-90** 1 手戻す (M-14) の後のアイテム・お告げは、その手を打つ前と同じ。工程の手を押した (M-15) 後は、その手の直後と同じ。
   - 確かめ: 見張り `scripts/app-watch/emu.mjs` (release.md R-37。Ctrl+Z と工程の行)、画面。
-- **M-91** 持った時のオレンジ・緑 (M-40) と打った結果が食い違わない: オレンジでない MOD は消えも変わりもせず、付く MOD は緑の枠の側に付く。予見 (M-47) と発現の候補は打った結果と同じ。
+- **M-91** 持った時の赤・緑 (M-40) と打った結果が食い違わない: 赤でない MOD は消えも変わりもせず、付く MOD は緑の枠の側に付く。予見 (M-47) と発現の候補は打った結果と同じ。
   - 確かめ: 見張り `scripts/app-watch/emu.mjs` (release.md R-37。色分けはお告げを掛けた時だけ出るので、その手で見る。予見・発現の候補はまだ見ていない、docs/org/dev/app-watch.md)。持った時の % の突き合わせは engine.md。
 - **M-92** エミュの画面 (`src/views/craft-stage`・`state/emulator`・`services/emulator`) はシミュの画面のコード (`views/simulator`・`state/simulator`・`services/simulator`) を import しない。
   - 確かめ: 見張り `scripts/app-watch/static.mjs` (release.md R-36)。入口 engine.ts を通さない import は `docs/org/emu/notes/scripts/emu-imports.mjs` (見張り D)。
