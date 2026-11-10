@@ -31,9 +31,9 @@ export const MONTH_SKINS: readonly Skin[] = [
 ];
 const monthById = (id: string): Skin | null => MONTH_SKINS.find((k) => k.id === id) ?? null;
 
-/** 7:00 JST 区切りの日の番号 (views/daily/daily-api.ts の dayNoOf と同じ式。あちらはお題の部品まで読むので、入口からは読まない) */
-const JST = 9 * 3600_000, H7 = 7 * 3600_000, DAY = 24 * 3600_000;
-const dayNoOf = (now: number): number => Math.floor((now + JST - H7) / DAY);
+/** 16:00 JST 区切りの日の番号 = デイリーの切り替えと同じ (views/daily/daily-api.ts の dayNoOf と同じ式。あちらはお題の部品まで読むので、入口からは読まない。U-49b、11-10 オーナー「日替わりは任せる」→ デイリーと同じに) */
+const JST = 9 * 3600_000, H16 = 16 * 3600_000, DAY = 24 * 3600_000;
+const dayNoOf = (now: number): number => Math.floor((now + JST - H16) / DAY);
 /** 日替わりの今日の札 (12 か月の色を日の番号で順に) */
 const skinOfToday = (now: number): Skin => MONTH_SKINS[((dayNoOf(now) % 12) + 12) % 12]!;
 
@@ -91,7 +91,7 @@ function apply(): void {
   root.setAttribute("data-site-skin", k.id);
 }
 
-/** 入口で 1 回。日替わりは開いたままでも 7:00 JST で替わるよう 10 分ごとに見直す */
+/** 入口で 1 回。日替わりは開いたままでも 16:00 JST で替わるよう 10 分ごとに見直す */
 export function initSiteSkin(): void {
   if (!flag("siteLook")) return;
   apply();

@@ -165,7 +165,7 @@ async function send(): Promise<void> {
         <span class="min-w-0 text-[11px] opacity-50">{{ imageNote || tr(`貼り付け (Ctrl+V) でも付けられます · ${MAX_IMAGES} 枚まで`, `You can also paste (Ctrl+V) · up to ${MAX_IMAGES}`) }}</span>
       </div>
       <!-- 画面の状態はいつも添付 (チェックの欄は外した。2026-10-13 オーナー「その欄いらんわ、送ってほしいから」: 外して送られ、再現できなかった) -->
-      <p v-if="!forId" class="mt-2 text-[11px] opacity-60">{{ tr("今の画面の状態 (ベース・付いている MOD・直前の操作の流れ) も一緒に届きます。名前やログインの情報は入りません", "The current screen state (base, mods, recent actions) is sent along. No names or login info") }}</p>
+      <p v-if="!forId" class="mt-2 text-[11px] opacity-60">{{ tr("今の画面の状態 (ベース・付いている MOD・直前の操作の流れ) も一緒に届きます。デイリーの名前は入ります。ログインの情報は入りません", "The current screen state (base, mods, recent actions) is sent along, with your Daily Craft name. No login info") }}</p>
       <p v-if="state === 'error'" class="mt-2 text-rose-300">{{ tr("送れなかった", "Could not send") }}: {{ errorText }}</p>
     </div>
     <template #footer>
