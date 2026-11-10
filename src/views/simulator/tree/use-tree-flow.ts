@@ -272,8 +272,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
       await put();
       const kids = kidsOf();
       if (!kids.length) return;
-      const barGap = !document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
-      const { x, y } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - barGap, m = 8;
+      // 未設定の帯は 0 の時も置くので (TreeUnsetBar)、木の面の高さは札が出ても変わらない (前は札の無い時に先に 44px 引いていた)
+      const { x, y } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 8;
       const l = Math.min(...kids.map((b) => b.x)), r = Math.max(...kids.map((b) => b.x + BOX_W)), t0 = Math.min(...kids.map((b) => b.y)), b0 = Math.max(...kids.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + NEXT_H;
       const head = BOX_H * z / 2;
       if (changed && l * z + x < w - m && r * z + x > m && t0 * z + y < h - m - head && t0 * z + y > m) return;
@@ -283,6 +283,24 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
       if (nx !== x || ny !== y) await f.setViewport({ x: nx, y: ny, zoom: z });
     } finally { holding = false; }
   }
+  /**
+   * 箱の背や置き場が変わった (言葉の切り替え・中身の変わり。箱は同じ) 時、変わる前に＋まで全部見えていた箱は、＋が木の面の下へ出たら見える所まで最小限だけ上へ寄せる
+   * (上端は見えたまま)。どの幅・高さでも同じ (11-10 最終チェック: 英語にすると箱の背が伸び、＋が木の面の下へ出て「未設定 → 次へ」の札の裏で押せなかった)
+   */
+  let laid = new Map<string, { y: number; h: number }>();
+  watch(() => f.getNodes.value.map((n) => `${n.id}:${n.position.y}:${n.dimensions.height}`).join("|"), async () => {
+    const was = laid, now = new Map(f.getNodes.value.map((n) => [n.id, { y: n.position.y, h: n.dimensions.height || BOX_H }] as const));
+    laid = now;
+    if (holding || !was.size || was.size !== now.size || [...now.keys()].some((k) => !was.has(k))) return;
+    const { x, y, zoom: z } = f.viewport.value, h = f.dimensions.value.height, m = 8;
+    // はみ出した箱 (前は＋まで見えていて、今は＋が木の面の下へ出た) だけで寄せる。上限はその箱の上端 (ほかの見えていた箱の上端では止めない = 1920 で上の段の箱が止めていた)
+    // 見えていたかは木の面の中にあれば良い (余白 0。NEXT_H は＋の下端より数 px 大きいので、余白を取ると下端ぎりぎりの＋が漏れた = 1660・1920 の試し)
+    const over = [...was].filter(([, o]) => o.y * z + y >= 0 && (o.y + o.h + NEXT_H) * z + y <= h).map(([k]) => now.get(k)!).filter((o) => (o.y + o.h + NEXT_H) * z + y > h - m);
+    if (!over.length) return;
+    const bottom = Math.max(...over.map((o) => o.y + o.h + NEXT_H)), top = Math.min(...over.map((o) => o.y));
+    const ny = Math.max(h - m - bottom * z, m - top * z);
+    if (ny < y) await f.setViewport({ x, y: ny, zoom: z });
+  });
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
   function rectOf(b: { x: number; y: number }, w = BOX_W, h = BOX_H): { left: number; top: number; right: number; bottom: number; W: number; H: number } {

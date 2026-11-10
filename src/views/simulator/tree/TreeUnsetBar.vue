@@ -29,8 +29,9 @@ function next(): void {
 
 <template>
   <!-- 木の枠の一番下の帯 (木の面はこの上で終わる = 箱の MOD に被らない。⑦11 → ブラック案・オーナー「進めてくれ」10-28) -->
-  <div v-if="n" class="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center justify-center border-t border-white/[0.06] bg-[#0c0a08]">
-  <button type="button" data-tree-unset-bar class="flex items-center gap-2 whitespace-nowrap rounded-full border-2 border-rose-500 bg-[#1a0f10]/95 py-1 pl-1.5 pr-3 text-[13px] font-bold text-rose-100 shadow-[0_0_16px_rgba(244,63,94,0.45)] hover:bg-[#2a1416]"
+  <!-- 帯は未設定が 0 の時も置く (札が出た時に木の面が縮んで下の＋が札の裏へ隠れない、11-10 最終チェック。ブラック 75「札の分だけ木の下に余白」) -->
+  <div data-tree-unset-strip class="absolute inset-x-0 bottom-0 z-20 flex h-11 items-center justify-center border-t border-white/[0.06] bg-[#0c0a08]">
+  <button v-if="n" type="button" data-tree-unset-bar class="flex items-center gap-2 whitespace-nowrap rounded-full border-2 border-rose-500 bg-[#1a0f10]/95 py-1 pl-1.5 pr-3 text-[13px] font-bold text-rose-100 shadow-[0_0_16px_rgba(244,63,94,0.45)] hover:bg-[#2a1416]"
     :title="tr('手も戻りも完成も決めていない箱 (＋ が出ている箱)。押すと順にその箱へ寄る', 'Boxes with no next step, return or finish yet (the ones showing ＋). Click to jump to each in turn')" @click="next">
     <span class="flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] text-white">!</span>
     <span>{{ holesCount(n) }}</span>
