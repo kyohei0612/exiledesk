@@ -18,6 +18,7 @@ import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { useTree } from "./use-tree";
 import { modText } from "../../../i18n/lang";
 import { keepablesOf } from "./tree-row-tags";
+import { whittleFrames } from "./tree-whittle-hint";
 
 const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
 export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem }) {
@@ -28,7 +29,9 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const isSwap = computed(() => isSwapEssenceKey(o.held.value));
   const choices = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return d && it && h ? keepChoicesOf(d, it, h, o.omens.value, t.goals.value) : []; });
   /** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
-  const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value, t.goals.value); });
+  const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && (keepAskOf(d, it, h, o.omens.value, t.goals.value) || whittleSplit.value); });
+  /** 削減を含む手で外れの MOD レベルの枠が 2 つ以上に分かれる (S-65c ②) 時も聞く (S-27b 11-10、オーナー「狙いＭＯＤを名前ありＭＯＤなら残しＭＯＤとして選べるようにしてあげたら？」) */
+  const whittleSplit = computed(() => { const d = s.data.value, h = o.held.value; return !!d && !!h && (whittleFrames(d, t.doc.value, o.boxId, { currency: h, omens: [...o.omens.value], catalyst: null, quality: 0 })?.all.length ?? 0) > 1; });
   /** カードの見本の ☑ の印 (箱のカードと同じ見本、S-82) */
   const aimedNow = (d: PatchData, it: StageItem | null): ReadonlySet<string> => (it && aimedOfCard(d, t.doc.value, o.boxId, it)) || sampleAimed(d, t.doc.value, o.boxId, 1);
   /**

@@ -15,7 +15,7 @@ import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
 import { aimedMiss, isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
-import { handWhittleSide, lvClassOf, lvPart } from "./tree-whittle";
+import { handWhittleSide, lvClassOf, lvPart, whittleAimed } from "./tree-whittle";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, placedAims } from "./tree-veil";
@@ -306,7 +306,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   // 削減の手前の枠 (S-65c、鍵 l:): 中身の比べは MOD レベルを見ないので、枠の組 (外れの MOD レベルが低い・同じ・高い) は箱の鍵と人の品で別に見る
   const lvOf = (id: string): string | null => lvPart(doc.boxes[id]?.junkKey);
   // 比べるのは枠の削減の手のお告げで消える側の MOD だけ (tree-whittle-pre と同じ)
-  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); return !c || lvClassOf(item, aimedMiss(data, doc, aimed), handWhittleSide(doc.boxes[to]?.hand)) === c; };
+  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); return !c || lvClassOf(item, aimedMiss(data, doc, whittleAimed(data, doc.boxes[to]?.hand, aimed)), handWhittleSide(doc.boxes[to]?.hand)) === c; };
   return {
     contents,
     fitsBox(from, to) {

@@ -12,8 +12,8 @@ import { syncBeforeHand } from "./tree-whittle-pre";
 
 const WORD: Record<LvClass, [string, string]> = { lo: ["低い", "lower"], eq: ["同じ", "same"], hi: ["高い", "higher"] };
 
-/** [日本語, 英語] の一行。削減の手でない・枠に分かれない箱は null */
-export function whittleHint(data: PatchData, doc: TreeDoc, boxId: string, h: Hand | null): [string, string] | null {
+/** この箱に手 h を置いた時の枠: この箱の枠 own と、付きうる枠の全部 all (並びは 低い → 同じ → 高い)。削減の手でない・枠に分かれない箱は null */
+export function whittleFrames(data: PatchData, doc: TreeDoc, boxId: string, h: Hand | null): { own: LvClass; all: LvClass[] } | null {
   if (!h || !isWhittleHand(h) || !doc.boxes[boxId]?.parent) return null;
   const d = structuredClone(toRaw(doc));
   syncBeforeHand(data, d, boxId, h);
@@ -22,7 +22,14 @@ export function whittleHint(data: PatchData, doc: TreeDoc, boxId: string, h: Han
   const base = stripLv(b.junkKey);
   const sib = new Set(d.boxes[b.parent!]!.outs.map((o) => d.boxes[o]).filter((x) => !!x && x.out === b.out && stripLv(x.junkKey) === base).map((x) => lvPart(x!.junkKey)));
   // 並べるのはこの場面のデータで付きうる枠だけ (S-65c ②。比べる相手より低い外れが付きえなければ「低い」は無い、など)。固定の 3 つにしない
-  const all = LV_ORDER.filter((c) => c === own || sib.has(c));
+  return { own, all: LV_ORDER.filter((c) => c === own || sib.has(c)) };
+}
+
+/** [日本語, 英語] の一行。削減の手でない・枠に分かれない箱は null */
+export function whittleHint(data: PatchData, doc: TreeDoc, boxId: string, h: Hand | null): [string, string] | null {
+  const f = whittleFrames(data, doc, boxId, h);
+  if (!f) return null;
+  const { own, all } = f;
   const [nj, ne] = lvNote(own);
   if (all.length === 1) return [`この手では結果は 1 通り: 外れの MOD レベルはこの場面では「${WORD[own][0]}」だけ (${nj})`, `One possible result for this craft: the miss's mod level can only be "${WORD[own][1]}" here (${ne})`];
   return [

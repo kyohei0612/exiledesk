@@ -9,7 +9,7 @@
  * 結果の箱は、打つ前からあって残った外れの順位 (欲しい MOD に対して) を鍵に持つ (④、TreeBox.junkKey の `w:` の部分、側の鍵 `s:` とは `;` で並べる)。
  * 次の削減は鍵の順位に合う外れを差し替えない (見本の MOD レベルがその順位の代わり)
  */
-import { candidates, makeStageMod, OMEN_KEY, omenSideOf, whittleLevel, type PatchData, type StageItem, type StageMod, type StageSide } from "../../craft-stage/engine";
+import { candidates, makeStageMod, OMEN_KEY, omenSideOf, sideOfMod, whittleLevel, type PatchData, type StageItem, type StageMod, type StageSide } from "../../craft-stage/engine";
 import { effectiveCls, without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
 import { isMissMod, missAims, type MissAims } from "./tree-miss";
@@ -23,6 +23,15 @@ export const isWhittleHand = (h: { omens: readonly string[] } | null | undefined
 export const whittleSide = (omens: readonly string[]): StageSide | null => omens.map((o) => omenSideOf(o).remove).find((s): s is StageSide => !!s) ?? null;
 /** 削減の手の消える側 (削減でない手・側の決まらない手は null) */
 export const handWhittleSide = (h: { omens: readonly string[] } | null | undefined): StageSide | null => (isWhittleHand(h) ? whittleSide(engineOmens(h!)) : null);
+/**
+ * 削減の比べで使う ☑ の印: 削減の手で残したい MOD を決めていれば (S-27b 11-10、枠に分かれる時の窓)、消える側の印のうち残したい MOD に無い物を外す
+ * = ☑ を外した MOD は外れとして比べる (11-10 オーナー「狙いＭＯＤを名前ありＭＯＤなら残しＭＯＤとして選べるようにしてあげたら？」)。決めていない手はそのまま
+ */
+export function whittleAimed<T extends ReadonlySet<string> | null | undefined>(data: PatchData, h: { omens: readonly string[]; keep?: readonly { modId: string }[] } | null | undefined, aimed: T): T | Set<string> {
+  if (!aimed || !h?.keep || !isWhittleHand(h)) return aimed;
+  const side = handWhittleSide(h), keep = new Set(h.keep.map((a) => a.modId));
+  return new Set([...aimed].filter((id) => keep.has(id) || (!!side && sideOfMod(data, id) !== side)));
+}
 
 /** 削減の MOD レベル (未発現は 1) はエンジンの whittleLevel (whittleTargets と同じ物) */
 const lv = whittleLevel;

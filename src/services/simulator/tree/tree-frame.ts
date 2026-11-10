@@ -17,7 +17,7 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { aimedAims, carryFloors, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants, stripLv } from "./tree-whittle";
+import { aimedAims, carryFloors, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants, stripLv, whittleAimed } from "./tree-whittle";
 import { keptAimedOf } from "./tree-keep";
 import { aimedList, aimedMiss, type MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
@@ -103,7 +103,7 @@ function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem
 function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
   // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された 1 枝 (印の MOD が固定されえない品はいつもどおり)
   const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, f.item, b.hand!) : null;
-  const rs = sure ? [{ p: 1, item: sure.item }] : outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(data, doc, b.hand, f.aimed)) : [], isWhittleHand(b.hand!) ? aimedMiss(data, doc, f.aimed) : undefined);
+  const rs = sure ? [{ p: 1, item: sure.item }] : outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(data, doc, b.hand, f.aimed)) : [], isWhittleHand(b.hand!) ? aimedMiss(data, doc, whittleAimed(data, b.hand, f.aimed)) : undefined);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;
@@ -281,8 +281,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       for (const k of kids) {
         const x = doc.boxes[k], brs = to.get(k);
         if (k === o || !x || !brs?.length || x.out !== c.out || stripLv(x.junkKey) !== stripLv(c.junkKey)) continue;
-        const sib = bestOf(k, brs, f), miss = aimedMiss(data, doc, sib.aimed), side = handWhittleSide(c.hand) ?? handWhittleSide(x.hand);
-        const v = rankVariants(data, sib.item, aimedList(data, doc, sib.aimed), c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
+        const sib = bestOf(k, brs, f), wh = isWhittleHand(c.hand) ? c.hand : x.hand, sa = whittleAimed(data, wh, sib.aimed), miss = aimedMiss(data, doc, sa), side = handWhittleSide(c.hand) ?? handWhittleSide(x.hand);
+        const v = rankVariants(data, sib.item, aimedList(data, doc, sa), c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
         if (v) return { ...sib, item: v.item, p: sib.p * v.p, alts: undefined };
       }
       return null;

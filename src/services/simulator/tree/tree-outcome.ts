@@ -14,7 +14,7 @@ import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence 
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
-import { aimedAims, handWhittleSide, isWhittleHand, joinKeys, lvClassOf, lvPart, rankVariants, stripLv, withLv } from "./tree-whittle";
+import { aimedAims, handWhittleSide, isWhittleHand, joinKeys, lvClassOf, lvPart, rankVariants, stripLv, whittleAimed, withLv } from "./tree-whittle";
 import { aimedMiss } from "./tree-miss";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goalTierOf, gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
@@ -89,7 +89,7 @@ function lvKeyed(data: PatchData, doc: TreeDoc, b: TreeBox, oc: Outcome, after: 
   const am = aimed ? new Set([...aimed, ...oc.hits.map((a) => a.modId)]) : null;
   // 比べるのは枠の削減の手のお告げで消える側の MOD だけ (枠を作る tree-whittle-pre と同じ)
   const side = b.outs.map((id) => doc.boxes[id]).find((c) => !!c && fits(c) && isWhittleHand(c.hand))?.hand;
-  const c = lvClassOf(after, aimedMiss(data, doc, am), handWhittleSide(side));
+  const c = lvClassOf(after, aimedMiss(data, doc, whittleAimed(data, side, am)), handWhittleSide(side));
   return c ? { ...oc, junkKey: withLv(oc.junkKey, c) } : oc;
 }
 /** 「エッセンスと同じ MOD (同格以上)」の箱の鍵 (S-33e ⑥。前の手でエッセンスと同格以上の同じ系統が付いた人) */
@@ -318,7 +318,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const item = pre ? applyCurrency(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const aimed = aimedOfSample(boxId, smp.item) ?? sampleAimed(data, doc, boxId, seed);
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
-    const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(data, doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey, aimedMiss(data, doc, aimed), handWhittleSide(h)).map((v) => v.item) : [item];
+    const all = isWhittleHand(h) ? rankVariants(data, item, aimedAims(aims, keptAimedOf(data, doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey, aimedMiss(data, doc, whittleAimed(data, h, aimed)), handWhittleSide(h)).map((v) => v.item) : [item];
     for (const it of all) {
       // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝
       if (essenceHold(data, it, h.currency)) { const e = boxOutOf(handOutcome(data, doc, h, extra, extra, it, it, aims, aimed), freeSide); found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e); continue; }
