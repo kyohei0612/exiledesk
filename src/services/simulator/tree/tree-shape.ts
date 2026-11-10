@@ -12,7 +12,7 @@ import { effectOf } from "./tree-hands";
 import { essenceBoxFits } from "./tree-sample";
 import { judgeMemo } from "./tree-judge";
 import { pruneByContent } from "./tree-judge-link";
-import { aimKey, keepCut, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
+import { aimKey, bothOf, keepCut, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
 /**
  * 形の合う箱へ (設計の「消去の後は 形の合う箱へ」、back: "match")。形 = 付いている狙いの組 + 外れがあるか。
@@ -166,6 +166,8 @@ function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKi
     if (c.out === "any" || c.out === "pass") return oc.out !== "hit" || !oc.hits.length;
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
     if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(data, doc, b, c, after);
+    // 「2 つとも付いた」の当たりの箱 (鍵 a:、S-22d) は、同じ組が付いた人だけ (鍵の合う人は上の junkKey で入る。片方だけ付いた人を入れない)
+    if (oc.out === "hit" && bothOf(c.junkKey).length) return bothOf(c.junkKey).join("+") === bothOf(oc.junkKey).join("+");
     // 「どれか」の当たりの箱は、その一覧のどれかが付いたら (anyOf、10-26)
     return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => sameAim(data, a, x)));
   });

@@ -34,6 +34,11 @@ export interface Aim { modId: string; tier: number; /** フラクチャーの印
  * max = 打つ回数の上限 (null = 上限なし)。今はカオススパムだけ画面に出すが、高貴をもう一度・消去にも同じ形で付けられる
  */
 export interface Repeat { until: "hit"; max: number | null }
+/** 1 手で ☑ の狙いが 2 つ以上付いた結果の鍵 `a:<modId>+<modId>` (「2 つとも付いた」の当たりの箱、S-22d。tree-outcome の withBoth が付ける) */
+const BOTH = "a:";
+export const bothKeyOf = (hits: readonly { modId: string }[]): string | undefined => { const ids = [...new Set(hits.map((a) => a.modId))].sort(); return ids.length > 1 ? `${BOTH}${ids.join("+")}` : undefined; };
+/** 鍵の「同時に付いた狙い」の modId (無ければ []) */
+export const bothOf = (key: string | undefined): string[] => key?.split(";").find((s) => s.startsWith(BOTH))?.slice(BOTH.length).split("+").filter(Boolean) ?? [];
 /** 当たりの箱の狙いの一覧 (「どれか」の箱は anyOf、ほかは aim 1 つ) */
 export const boxAims = (b: { aim: Aim | null; anyOf?: Aim[] }): Aim[] => (b.anyOf?.length ? b.anyOf : b.aim ? [b.aim] : []);
 /** その箱が受ける結果の種類 (まとめた種類も) */
@@ -366,7 +371,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !hold();
   // 印の無い木の乱数のフラクチャー (hand.pick) は当たり + 外れ (どの MOD が固定されるかは乱数。起こりうる結果が取れない時の既定、要望 8a159e29)
   const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? outsOf.filter((k) => k !== "lost") : outsOf;
-  if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
+  // 「2 つとも付いた」の当たり (鍵 a:、S-22d) は狙いの一覧に入れず、下で鍵ごとの箱にする (入れると同じ狙いの鍵の無い箱が 2 つできた)
+  if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim && !bothOf(o.junkKey).length ? [o.aim] : [])); if (hs.length) aims = hs; }
   // 当たりの箱は完成の狙いの順に並べる (手ごとに順が違った、10-26 モンキー 7 の 17)。完成の狙いに無い物は後ろ
   const order = (a: Aim): number => { const i = (d.memoAims ?? []).findIndex((g) => g.modId === a.modId); return i < 0 ? 999 : i; };
   aims = [...aims].sort((x, y) => order(x) - order(y));
@@ -393,7 +399,10 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   for (const g of groups) g.sort((x, y) => order(x) - order(y));
   // ☑ の無いパーフェクトエッセンスの当たりは入れ替わって消えた MOD ごとの箱 (鍵 `e:`、S-29 のエッセンスの枝、tree-keep の swapKeyOf)。ほかの当たりの鍵 (数え上げられない手の側) は今までどおり 1 箱
   const swapHits = (only ?? []).filter((o, i, l) => o.out === "hit" && o.aim && !!o.junkKey?.split(";").some((s) => s.startsWith("e:")) && l.findIndex((x) => x.out === "hit" && x.junkKey === o.junkKey && x.aim?.modId === o.aim?.modId) === i);
-  b.outs = want.flatMap((k) => (k === "hit" && swapHits.length ? swapHits.map((o) => { const h = mk(d, "hit", id); h.aim = { ...o.aim! }; h.junkKey = o.junkKey; return h.id; }) : k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k !== "hit" && keysOf(k).length ? keysOf(k).map((jk) => { const j = mk(d, k, id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
+  // 「2 つとも付いた」の当たりは付いた組ごとに 1 箱 (鍵 a: を持つ、S-22d)。狙い 1 つの当たりの箱の後に並べる
+  const bothHits = (only ?? []).filter((o, i, l) => o.out === "hit" && o.aim && bothOf(o.junkKey).length > 0 && l.findIndex((x) => x.out === "hit" && x.junkKey === o.junkKey) === i);
+  const bothBoxes = (): string[] => bothHits.map((o) => { const h = mk(d, "hit", id); h.aim = { ...o.aim! }; h.junkKey = o.junkKey; return h.id; });
+  b.outs = want.flatMap((k) => (k === "hit" && swapHits.length ? swapHits.map((o) => { const h = mk(d, "hit", id); h.aim = { ...o.aim! }; h.junkKey = o.junkKey; return h.id; }) : k === "hit" && groups.length ? [...groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }), ...bothBoxes()] : k === "hit" && bothHits.length ? bothBoxes() : k !== "hit" && keysOf(k).length ? keysOf(k).map((jk) => { const j = mk(d, k, id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
   // 消去の結果 (外れが消えた) も外れの道なので自動の ↩ を付けない (S-190b、11-04 オーナー「はい、未設定にして」)。
   // 前は外れが消えた → 外れの前の箱 (S-50d の残り)・全部消えてよい消去 → 回す時に形の合う箱 (MATCH_BACK、S-28d)
   if (kind === "free") addHits(d, b, aims, order);

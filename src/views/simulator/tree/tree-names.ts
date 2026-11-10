@@ -8,7 +8,7 @@ import { iconOfKey, nameOfKey } from "../../../state/for-share/craft-stage-shelf
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
-import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type StartFrom, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { bothOf, boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type StartFrom, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
@@ -110,10 +110,15 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const swName = (id: string): string => { if (id === "j") return tr("外れ MOD", "a miss mod"); const a = (doc0.memoAims ?? []).find((g) => g.modId === id); return a ? modShort(aimShort(a)) : id; };
   const swl: [string, string] | null = sw.length ? [`${sw.map(swName).join("・")} と入れ替わり`, `replaced ${sw.map(swName).join(", ")}`] : null;
   if (b.out === "hit" && b.aim && swl && !fixed) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた (${swl[0]})`, `${n} added (${swl[1]})`); }
+  // 「2 つとも付いた」の当たりの箱 (鍵 a:、S-22d): 付いた狙いを全部「・」で並べる (11-10 オーナー「偉大って２こつくから」)
+  // 名前は完成形の狙い・この箱の狙いから引き、無ければ鍵の modId のまま (同じ文の別の modId で付いた狙い)
+  const named = new Map([...boxAims(b), ...(doc0.memoAims ?? [])].map((a) => [a.modId, a] as const));
+  const both = bothOf((b as { junkKey?: string }).junkKey).map((id) => named.get(id) ?? { modId: id, tier: b.aim?.tier ?? 1 });
+  const hitName = (): string => (both.length > 1 ? both.map((a) => modShort(aimShort(a))).join("・") : boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")));
   // 当たりの箱の削減の手前の枠 (S-65c ①、11-10): 題に外れの MOD レベルの組を付ける
   const hl = b.out === "hit" && b.aim && !free && !fixed ? lvPart((b as { junkKey?: string }).junkKey) : null;
-  if (hl) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")), [ja, en] = lvLabel(hl); return tr(`${n}が付いた (${ja})`, `${n} added (${en})`); }
-  if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
+  if (hl) { const n = hitName(), [ja, en] = lvLabel(hl); return tr(`${n}が付いた (${ja})`, `${n} added (${en})`); }
+  if (b.out === "hit" && b.aim) { const n = hitName(); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
     // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける
     const many = (useTree().doc.value.boxes[b.parent!]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.junkKey).length > 1, k = (b as { junkKey?: string }).junkKey;

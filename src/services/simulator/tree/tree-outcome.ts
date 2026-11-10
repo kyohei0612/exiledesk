@@ -7,7 +7,7 @@ import { applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, u
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
-import { boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { bothKeyOf, boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
 import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
@@ -173,7 +173,15 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   const sc = oc.out === "hit" && h && mainSideOf(data, before, h) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
   // ☑ の無いパーフェクトエッセンスは入れ替わって消えた MOD ごとに分ける (S-29 のエッセンスの枝)
   const sw = swapKeyOf(doc, h, before, after);
-  return sw ? { ...sc, junkKey: joinKeys(sc.junkKey, sw) } : sc;
+  return withBoth(sw ? { ...sc, junkKey: joinKeys(sc.junkKey, sw) } : sc);
+}
+/**
+ * 1 手で ☑ の狙いが 2 つ以上付いた結果 (偉大なる高貴なお告げなど 2 つ足す手) は、付いた狙いの組の鍵 `a:<modId>+<modId>` を持つ「2 つとも付いた」箱へ (S-22d、11-10 オーナー
+ * 「偉大って２こつくから２こ狙いMODえらんだり１こ狙いMOD選んだりで枝が結構違ってくるから作りこんでくれ」。前は当たりの箱が狙い 1 つの形しか無く、2 つとも付いた人は先頭の狙いの箱に入った)
+ */
+function withBoth(oc: Outcome): Outcome {
+  const k = oc.out === "hit" ? bothKeyOf(oc.hits) : undefined;
+  return k ? { ...oc, junkKey: joinKeys(oc.junkKey, k) } : oc;
 }
 /** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33)。残したければ人が ☑ */
 function noStones(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
@@ -348,7 +356,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       // 結果の分けは回す時と同じ handOutcome (当たりの札・付いた狙いの札 = 棚の当たりの候補 extra)
       for (const o of outs) {
         const oc = handOutcome(data, doc, h, extra, extra, it, o.item, aims, aimed);
-        if (oc.hits.length > 1) return null; // 足すのは外れ・打った後の形だけ (当たりの箱は ☑ だけ、S-22)
+        // ☑ の狙いが 2 つ以上同時に付く結果も箱にする (「2 つとも付いた」、鍵 a:、S-22d。前は null で手の種類の箱に戻り、2 つとも付いた箱が出なかった)
         const e = boxOutOf(oc, freeSide);
         found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e);
       }
