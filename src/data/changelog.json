@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.700",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減のお告げの前の枠 (外れの MOD レベルが低い・同じ・高い) は、箱の種類を問わず乱数の外れ MOD があれば分けるようにしました (途中で狙いが付いた当たりの箱も)。前に作った木は開く時に組み直し、前の決めは割れた枠の全部に写します",
+    "en": "Simulator: the frames before an Omen of Whittling (miss mod level lower, same or higher) now split any box that has a random miss mod, whatever its kind (including hit boxes where a target landed along the way). Older trees are rebuilt when opened, and the earlier choice is copied to every split frame"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓の「狙う MOD」に、もう品に付いている狙いを出さないようにしました",
+    "en": "Simulator: the “target mods” list in the next-craft window no longer shows targets the item already has"
+   }
+  ]
+ },
+ {
   "v": "0.1.699",
   "date": "2026-11-10",
   "items": [
@@ -862,42 +880,6 @@
     "area": "",
     "text": "シミュレーター: 同じ形・同じ手の箱が 2 つできる時は、浅い方に手を置いて深い方を ↩ でつなぐようにしました",
     "en": "Simulator: when two boxes have the same shape and the same move, the move stays on the shallower one and the deeper one links back (↩) to it"
-   }
-  ]
- },
- {
-  "v": "0.1.660",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ハズレの道の箱は自動でつながず全部「未設定」にしました。箱に手を決めた時だけ、未設定のハズレの箱から同じ形の箱を探して ↩ でつなぎます",
-    "en": "Simulator: boxes on the miss path no longer link back automatically; they all start as \"not set\". When you choose a move for a box, matching miss boxes with the same shape are linked back (↩) to it"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 最終チェックの途中で未設定が出た時、それを全部決めれば押し直さずにそのまま続きます",
-    "en": "Simulator: if the Final Check stops on new \"not set\" boxes, setting them all lets it continue without pressing it again"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成・失敗にした箱には ＋ を出さないようにしました (完成を外せばまた出ます)",
-    "en": "Simulator: boxes marked Done or Failed no longer show the ＋ button (unmark Done to get it back)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 右手の死霊術などのお告げが、ツリーの箱で灰色になって選べないことがあったのを直しました",
-    "en": "Simulator: omens like Dextral Necromancy no longer get greyed out on tree boxes"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 引いて見た時の ＋ の大きさ、1 人目の再生の早送りを整えました",
-    "en": "Simulator: tuned the size of ＋ when zoomed out and the fast-forward in the first run replay"
    }
   ]
  }
