@@ -13,9 +13,10 @@ import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
-import { aimedMiss, isMissMod, missAims, type MissAims } from "./tree-miss";
+import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
-import { handWhittleSide, lvClassOf, lvPart, whittleAimed } from "./tree-whittle";
+import { lvClassOf, lvPart } from "./tree-whittle";
+import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, placedAims } from "./tree-veil";
@@ -46,7 +47,8 @@ export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): Readon
 /** 打つ前の印のうち、この手で消えない MOD の物 (S-27e、候補の外は自動で残したい MOD。お告げの有無では分けない) */
 export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined): string[] {
   if (!h || !prev || !before) return [];
-  const gone = goneOf(data, before, h.currency, h.omens);
+  // 消えうるかは窓の候補と同じ数え (削減は外れを付きうる段に差し替えた結果も、S-27d の頭の 1 本)
+  const gone = goneOf(data, before, h.currency, h.omens, aimedList(data, doc, prev));
   if (!gone) return [];
   const mods = [...before.prefixes, ...before.suffixes].filter((m) => gone.has(m.modId)), o = aimOpts(data);
   return [...prev].filter((id) => { const g = contentAims(data, doc).find((a) => a.modId === id), ts = g ? targetsOf(data, [g]) : null; return !mods.some((m) => m.modId === id || (ts && isAimMod(m, ts, o))); });
@@ -306,7 +308,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   // 削減の手前の枠 (S-65c、鍵 l:): 中身の比べは MOD レベルを見ないので、枠の組 (外れの MOD レベルが低い・同じ・高い) は箱の鍵と人の品で別に見る
   const lvOf = (id: string): string | null => lvPart(doc.boxes[id]?.junkKey);
   // 比べるのは枠の削減の手のお告げで消える側の MOD だけ (tree-whittle-pre と同じ)
-  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); return !c || lvClassOf(item, aimedMiss(data, doc, whittleAimed(data, doc.boxes[to]?.hand, aimed)), handWhittleSide(doc.boxes[to]?.hand)) === c; };
+  // 削減の手は枠の組の手 (手の無い兄弟の枠も、tree-whittle-scene の frameHandOf)
+  const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); if (!c) return true; const w = whittleCompare(data, doc, frameHandOf(doc, to), aimed); return lvClassOf(item, w.miss, w.side) === c; };
   return {
     contents,
     fitsBox(from, to) {

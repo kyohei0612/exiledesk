@@ -7,9 +7,10 @@ import { whittleLevel, type PatchData, type StageItem, type StageMod } from "../
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
-import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss";
+import { isMissMod } from "../../../services/simulator/tree/tree-miss";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { lvPart, whittleAimed, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { frameHandOf, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
 import { tr } from "../../../i18n/lang";
 
 /** 組の色 (r,g,b): 低い = 緑・同じ = 金黄・高い = 紅 (今の外れの赤橙と分ける、見比べ 11-10) と字 */
@@ -24,8 +25,9 @@ const LOOK: Record<LvClass, { rgb: string; ja: string; en: string; tja: string; 
 export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: StageItem | null, tags: Map<string, RowTag>): Map<string, RowTag> {
   const c = lvPart(doc.boxes[id]?.junkKey);
   if (!c || !item) return tags;
-  const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), miss = aimedMiss(data, doc, whittleAimed(data, doc.boxes[id]?.hand, aimed));
-  const loose = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
+  // 削減の手は枠の組の手 (手の無い兄弟の枠も)、比べるのはその手で消える側だけ = 枠を作る・回す時と同じ (tree-whittle-scene)
+  const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), { miss, side } = whittleCompare(data, doc, frameHandOf(doc, id), aimed);
+  const loose = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && (!side || m.side === side));
   const low = (l: StageMod[]): StageMod | undefined => l.reduce<StageMod | undefined>((a, m) => (!a || whittleLevel(m) < whittleLevel(a) ? m : a), undefined);
   const junk = low(loose.filter((m) => isMissMod(m, miss))), want = low(loose.filter((m) => !isMissMod(m, miss)));
   if (!junk || !want) return tags;

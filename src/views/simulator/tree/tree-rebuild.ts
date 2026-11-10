@@ -19,6 +19,7 @@ import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hand
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { placedBefore } from "../../../services/simulator/tree/tree-merge-open";
 import { restoreWhittlePre } from "./tree-whittle-pre";
+import { lvPart } from "../../../services/simulator/tree/tree-whittle";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -117,6 +118,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   }
   // 打ち直しの間に足した「エッセンスと同じ MOD」の箱 (S-33e ①、親の手を置いた後にエッセンスの手で足す) に保存の決めがあれば打ち直す
   yield* replay(Object.keys(d.boxes).filter((id) => d.boxes[id]!.out === "blocked" && !placed.has(id)));
+  // 打ち直した削減の手で割れた枠 (S-65c、親の結果に後から足した兄弟の枠) にも保存の決めを写す (前は決めの無い空の箱のままだった。下の段でまた割れるので 4 回まで)
+  for (let n = 0; n < 4; n++) { const lv = Object.keys(d.boxes).filter((id) => !!lvPart(d.boxes[id]!.junkKey) && !placed.has(id)); if (!lv.length) break; yield* replay(lv); }
   // ヒネコラのハズレのまとめは保存しないので付け直す (保存の noAutoBack で打ち直しの途中に外れる、S-39)
   for (const id of Object.keys(d.boxes)) foldMisses(d, id);
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
@@ -196,8 +199,12 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   // 配置で組むと、道で当てた狙いが消えた形は「狙いが消えた」(前の打ち直しの見本では「外れ」の札で保存された物がある。鍵の中身 = 消えた MOD が同じ)。S-200
   const lostJunk = (t: string): string | null => (/^\/lost\[/.test(t) ? t.replace(/^\/lost/, "/junk") : /^\/junk\[/.test(t) ? t.replace(/^\/junk/, "/lost") : null);
   const sw = swap(tail), lj = lostJunk(tail);
-  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : [])];
-  const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
+  // 削減の手前の枠 (S-65c) の鍵 `l:` は開く時に今のデータで作り直す (11-10 オーナー「たとえ古いレシピ途中で保存してる奴でも聞くようにしてよ」→ 表の ②「3つともおｋ」):
+  // 枠の鍵の無い前の保存の札は割れた枠の全部へ、保存に無い組の枠は保存のある兄弟の枠 (低い → 同じ → 高い の順の最初) の決めを写す
+  const unlv = (t: string): string => t.replace(/;l:(lo|eq|hi)\]/, "]").replace(/\[l:(lo|eq|hi)\]/, "");
+  const lvSibs = /l:(lo|eq|hi)\]/.test(tail) ? (["lo", "eq", "hi"] as const).map((c) => at + tail.replace(/l:(lo|eq|hi)\]/, `l:${c}]`)) : [];
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + unlv(tail), at + unlv(unrank(tail)), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : []), ...lvSibs];
+  const hit = tries.find((k, i) => onPath.has(k) && (i < 6 || !exact.has(k) || lvSibs.includes(k)));
   if (hit) return hit;
   // 消去の結果の中身の鍵 (`c:<プレ>|<サフィ>~<中身の印>`) は、枠の比べが変わると印だけ変わる (11-04 に品質を枠へ入れた、S-60b)。側の数の同じ札の決めとして読む
   const gone = /^(.*\[c:[^~\]]*)~[0-9a-z]+(\](?:~\d+)?)$/.exec(tail);

@@ -17,7 +17,8 @@ import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../..
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
-import { aimedOfCard, judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { aimedOfCard, judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { aimedList } from "../../../services/simulator/tree/tree-miss";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { depthOf, shallow, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
@@ -95,9 +96,11 @@ export function keepChoicesOf(data: PatchData, item: StageItem, currency?: strin
  * 消せる MOD の無い手 (高貴・ふつうのエッセンス・空きのある側の骨・ルーン・カタリスト・フラクチャー) は候補 0 なので聞かない。
  * 消えうるかはエンジンの stepOutcomes の答え (keepChoicesOf の goneOf) だけで見る (前はルーン・カタリスト・フラクチャーを手の種類で先に外す式があった)
  */
-export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], _wanted: readonly Aim[] = []): boolean {
-  // 聞くかはこの品にエンジンで手を当てて消えうる MOD の数 (削減の外れの段の出方は差し替えない、S-27b 11-08 オーナー「カオス削減とかでも１MODしか確定で動かんのに残したいMODなんか選べるし」)
-  return keepChoicesOf(data, item, currency, omens).length > 1;
+export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[], wanted: readonly Aim[] = []): boolean {
+  // 聞くかはこの品の乱数の外れを付きうる段に差し替えてエンジンで当てた結果で、消えうる MOD が 2 つ以上か (S-27d の頭の 1 本、11-10 オーナー「3つともおｋ」)。
+  // wanted = 比べる相手 (☑ の印の札、tree-miss の aimedList)。差し替えても 1 通りなら聞かない = 11-08「カオス削減とかでも１MODしか確定で動かんのに残したいMODなんか選べるし」も守る。
+  // 削減で外れの MOD レベルの枠が 2 つ以上に分かれる時 (S-65c) は、外れと比べる相手の両方が消えうるので聞く (前は別の数え whittleSplit を足していた)
+  return keepChoicesOf(data, item, currency, omens, wanted).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
 export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null, stones: readonly Aim[] = []): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId) && !stones.some((a) => a.modId === c.aim.modId)).map((c) => c.aim);
@@ -494,7 +497,8 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)。消える手 (S-27d) も同じ口 (渡さなければ既定 = 持っている狙い)
   // 残したい MOD に選べるのは外れ MOD 以外 (☑ の印 + まだ外れでない付けたエッセンス、S-27b、棚の窓 use-hand-keep の picks と同じ)
   const am = opt.keep ? new Set([...(aimedOfCard(data, doc, id, it) ?? []), ...keepablesOf(data, doc, id, it)]) : null;
-  const keep = opt.keep && keepAskOf(data, it, key, omens, goals) ? opt.keep.filter((a) => !am || am.has(a.modId)) : undefined;
+  // 聞くかは棚の窓 (use-hand-keep の ask) と同じ数え = 比べる相手はカードの ☑ の印の札
+  const keep = opt.keep && keepAskOf(data, it, key, omens, aimedList(data, doc, aimedOfCard(data, doc, id, it) ?? sampleAimed(data, doc, id, 1))) ? opt.keep.filter((a) => !am || am.has(a.modId)) : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;

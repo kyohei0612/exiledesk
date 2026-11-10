@@ -7,7 +7,8 @@
 import { toRaw } from "vue";
 import type { PatchData } from "../../../services/craft-stage/engine";
 import type { Hand, TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { isWhittleHand, LV_ORDER, lvNote, lvPart, stripLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { isWhittleHand, LV_ORDER, lvNote, lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { frameSiblings } from "../../../services/simulator/tree/tree-whittle-scene";
 import { syncBeforeHand } from "./tree-whittle-pre";
 
 const WORD: Record<LvClass, [string, string]> = { lo: ["低い", "lower"], eq: ["同じ", "same"], hi: ["高い", "higher"] };
@@ -19,8 +20,8 @@ export function whittleFrames(data: PatchData, doc: TreeDoc, boxId: string, h: H
   syncBeforeHand(data, d, boxId, h);
   const b = d.boxes[boxId]!, own = lvPart(b.junkKey);
   if (!own) return null;
-  const base = stripLv(b.junkKey);
-  const sib = new Set(d.boxes[b.parent!]!.outs.map((o) => d.boxes[o]).filter((x) => !!x && x.out === b.out && stripLv(x.junkKey) === base).map((x) => lvPart(x!.junkKey)));
+  // 兄弟の枠は同じ組 (種類・当たりの狙い・枠を外した鍵 = 枠を作る所と同じ tree-whittle-scene)
+  const sib = new Set(frameSiblings(d, boxId).map((x) => lvPart(x.junkKey)));
   // 並べるのはこの場面のデータで付きうる枠だけ (S-65c ②。比べる相手より低い外れが付きえなければ「低い」は無い、など)。固定の 3 つにしない
   return { own, all: LV_ORDER.filter((c) => c === own || sib.has(c)) };
 }

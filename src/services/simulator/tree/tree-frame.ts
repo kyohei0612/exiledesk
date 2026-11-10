@@ -17,9 +17,9 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { aimedAims, carryFloors, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants, stripLv, whittleAimed } from "./tree-whittle";
-import { keptAimedOf } from "./tree-keep";
-import { aimedList, aimedMiss, type MissAims } from "./tree-miss";
+import { carryFloors, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants } from "./tree-whittle";
+import { frameGroupKey, frameHandOf, whittleCompare } from "./tree-whittle-scene";
+import type { MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
 import { holdsAt } from "./tree-foresee";
 import { sureFracOn, sureFracture } from "./tree-sure-frac";
@@ -103,7 +103,9 @@ function splitOf(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem
 function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageItem; aimed: ReadonlySet<string> }, aims: readonly Aim[]): Split | "tooMany" {
   // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された 1 枝 (印の MOD が固定されえない品はいつもどおり)
   const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, f.item, b.hand!) : null;
-  const rs = sure ? [{ p: 1, item: sure.item }] : outsOf(data, f.item, b, isWhittleHand(b.hand!) ? aimedAims(aims, keptAimedOf(data, doc, b.hand, f.aimed)) : [], isWhittleHand(b.hand!) ? aimedMiss(data, doc, whittleAimed(data, b.hand, f.aimed)) : undefined);
+  // 削減の差し替えで見る欲しい MOD と組の比べの相手は同じ札 (tree-whittle-scene の whittleCompare、枠を作る・回す時と同じ)
+  const w = isWhittleHand(b.hand!) ? whittleCompare(data, doc, b.hand, f.aimed) : null;
+  const rs = sure ? [{ p: 1, item: sure.item }] : outsOf(data, f.item, b, w ? w.wanted : [], w?.miss);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;
@@ -278,11 +280,13 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
     const lvFrameOf = (o: string, kids: readonly string[], to: Map<string, Br[]>, f: Frame): Frame | null => {
       const c = doc.boxes[o]!, want = lvPart(c.junkKey);
       if (!want) return null;
+      // 兄弟の枠は同じ組 (種類・当たりの狙い・枠を外した鍵)、削減の手は枠の組の手 (tree-whittle-scene、枠を作る所と同じ)
+      const g = frameGroupKey(c), wh = frameHandOf(doc, o);
       for (const k of kids) {
         const x = doc.boxes[k], brs = to.get(k);
-        if (k === o || !x || !brs?.length || x.out !== c.out || stripLv(x.junkKey) !== stripLv(c.junkKey)) continue;
-        const sib = bestOf(k, brs, f), wh = isWhittleHand(c.hand) ? c.hand : x.hand, sa = whittleAimed(data, wh, sib.aimed), miss = aimedMiss(data, doc, sa), side = handWhittleSide(c.hand) ?? handWhittleSide(x.hand);
-        const v = rankVariants(data, sib.item, aimedList(data, doc, sa), c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
+        if (k === o || !x || !brs?.length || frameGroupKey(x) !== g) continue;
+        const sib = bestOf(k, brs, f), { wanted, miss, side } = whittleCompare(data, doc, wh, sib.aimed);
+        const v = rankVariants(data, sib.item, wanted, c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
         if (v) return { ...sib, item: v.item, p: sib.p * v.p, alts: undefined };
       }
       return null;

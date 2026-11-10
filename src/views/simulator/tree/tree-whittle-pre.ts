@@ -8,15 +8,13 @@
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { aimKey, boxAims, drop, type Hand, type OutKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { drop, type Hand, type OutKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
-import { aimedList, missAims } from "../../../services/simulator/tree/tree-miss";
-import { handWhittleSide, isWhittleHand, whittleAimed, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { frameGroupKey as groupKey, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
 
-/** 枠に分けるかは箱の種類で決めない: 削減の手を置いた箱の品に乱数の外れ MOD があれば、どの種類の箱でも分ける (S-65c ①、11-10 オーナー「枠の決まりとしてこの枠の形ならの方がいいのではそもそも」) */
-/** 組の鍵: 種類・当たりの狙い (狙いごとに別の箱)・枠を外した鍵 */
-const groupKey = (c: TreeBox): string => `${c.out}|${c.out === "hit" ? boxAims(c).map(aimKey).join(",") : ""}|${stripLv(c.junkKey) ?? ""}`;
+/** 枠に分けるかは箱の種類で決めない: 削減の手を置いた箱の品に乱数の外れ MOD があれば、どの種類の箱でも分ける (S-65c ①、11-10 オーナー「枠の決まりとしてこの枠の形ならの方がいいのではそもそも」)。組の鍵は tree-whittle-scene の 1 つ */
 /** 人の決めの無い箱 (消してよい) */
 const idle = (d: TreeDoc, id: string): boolean => { const c = d.boxes[id]; return !!c && !c.hand && (!c.back || !!c.autoBack) && !c.done && !c.split; };
 
@@ -44,11 +42,10 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
         const item = smp ? smp.item : f!.item, aimed = smp ? aimedOfSample(id, smp.item) ?? sampleAimed(data, d, id, 1) : f!.aimed;
         // 残したい MOD は外れの式の札 (完成形の ☑ の狙い・置き石) で見る = 回す時の lvKeyed・判定と同じ (完成形に無いエッセンスの MOD は外れ、S-33c)
         // 削減の手で残したい MOD を決めていれば、☑ を外した MOD は外れとして比べる (S-27b 11-10)
-        const hh = d.boxes[holders[0]!]!.hand, wanted = aimedList(data, d, whittleAimed(data, hh, aimed));
-        // 比べるのは削減の手のお告げで消える側の MOD だけ (左側の抹消ならプレフィックス、11-10)
-        const side = handWhittleSide(hh);
+        // 比べるのは削減の手のお告げで消える側の MOD だけ (左側の抹消ならプレフィックス、11-10)。札と側は tree-whittle-scene の 1 つ
+        const { wanted, miss, side } = whittleCompare(data, d, d.boxes[holders[0]!]!.hand, aimed);
         cls = lvClassesOf(data, item, wanted, side);
-        own = lvClassOf(item, missAims(data, wanted), side);
+        own = lvClassOf(item, miss, side);
         break;
       }
     }
