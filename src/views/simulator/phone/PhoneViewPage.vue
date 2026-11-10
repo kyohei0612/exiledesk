@@ -22,6 +22,7 @@ import { simOp } from "../../../web/track";
 import PhoneViewEmpty from "./PhoneViewEmpty.vue";
 import PhoneViewMap from "./PhoneViewMap.vue";
 import PhoneViewRoute from "./PhoneViewRoute.vue";
+import { mapFolded, setMapFold } from "./map-fold";
 
 const t = useTree();
 const shown = useGoalShown();
@@ -88,6 +89,11 @@ watch([topEl, () => run.result.value?.n, () => passed.value, locked, () => !!run
 // 道の画面は下へ送るので最初から広げ、詳細の全体図の時は小さく (オーナー 11-01「これなら完成MODカードでかくていいよ今小さいから　どうせ下にスクロールするだけだしな」「最初から押すと広がるでおｋだったら」)
 const CARD_SMALL = 0.55;
 const goalBig = ref(true);
+/**
+ * 共有 URL で来た時は全体図 (詳細) を開いて着く (S-103。openSharedRecipe が setMapFold(false) で知らせる、1 回読んだら戻す)。
+ * 11-10 直し: S-94 の作り替えでこの印を読まなくなり、未設定のある木は完成形と「PC で直す」だけで木が出ていなかった
+ */
+watch(mapFolded, (folded) => { if (folded) return; detail.value = true; goalBig.value = false; setMapFold(true); }, { immediate: true });
 /** 詳細 (全体図) の時に完成形を題の 1 行にたたむ (このブラウザに覚える。11-07 オーナー「スマホのレシピ見づら、詳細みたら完成形閉じるかどうか選択できるようにしたいなツリーが見づらい」、S-94h) */
 const SHUT_KEY = "exiledesk.phone.goal-shut";
 const goalShut = ref((() => { try { return localStorage.getItem(SHUT_KEY) === "1"; } catch { return false; } })());
