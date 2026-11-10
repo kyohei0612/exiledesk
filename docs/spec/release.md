@@ -50,7 +50,7 @@
 - **R-19 合格は G-22 で、報告は分けて書く**: 合格と言えるのは外の正解・オーナーの目だけ (G-22、10-31 に見張りの不変条件を外した)。報告では「見張りが通った」「外の正解と合った」「画面で見た」を分けて書き、自分で作ったテストが通っただけで「確かめた」と言わない。状態 有効。出どころ G-22、オーナー 10-17 (メモ feedback-self-tests)・10-31 (G-22 を縮める案に「OK」)。
 
 ### 要望の返事
-- **R-20 直して出したら返事を置く**: 要望・バグを直して出した版では、その要望 id へ返事を置く。中身は `{ text, en?, version, at }` の JSON ファイルを `npx --prefix server/live wrangler kv key put "fbr:<id>" --path <file> --ttl 15552000 --namespace-id 381d091adcaa439cb38d1fff106f7c63 --remote` で置き、`https://exiledesk-live.exiledesk.workers.dev/feedback/replies?ids=<id>` で文と版が返るのを見る。文は直した中身だけ (お礼は画面が付ける)、英語の要望には宣伝のお願いを英語で添える。置くのはブラックが頼んだ人 (ふだんはサーバー管理人、出しと一緒なら最終チェック長)。状態 有効。出どころ オーナー 10-11・10-12・10-20 (メモ feedback-replies)。
+- **R-20 直して出したら返事を置く**: 要望・バグを直して出した版では、その要望 id へ返事を置く。中身は `{ text, en?, version, at }` の JSON ファイルを `npx --prefix server/live wrangler kv key put "fbr:<id>" --path <file> --ttl 15552000 --namespace-id 381d091adcaa439cb38d1fff106f7c63 --remote` で置き、`https://exiledesk-live.exiledesk.workers.dev/feedback/replies?ids=<id>` で文と版が返るのを見る。文は直した中身だけ (お礼は画面が付ける)、英語の要望には宣伝のお願いを英語で添える。置くのはブラックが頼んだ人 (ふだんはサーバー管理人、出しと一緒なら最終チェック長)。状態 有効。出どころ オーナー 10-11・10-12・10-20 (メモ feedback-replies)。デイリーの「リセット希望」の要望は、返事の前にブラックが添付の `daily.nickId` で `pnpm daily:reset-one <id>` を打って消す (D-37h4、名前を推さない、11-10 オーナー「IDで追跡でいいんじゃね」)。
 
 ## ④ 表示の決まり
 - 本番に出した物の文 (更新内容) は R-11、ポップアップは R-12。開発版の印 (赤い枠など) は本番に出ない (U-xx)。

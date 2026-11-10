@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * daily-reset-one.mjs — 本番のデイリーで、名前 1 つの「今日の挑戦」だけを消す (設計図 D-37h4、11-10)。
- *   pnpm daily:reset-one <名前> [--day YYYY-MM-DD] [--yes] [--dry]
+ *   pnpm daily:reset-one <名前 | id> [--day YYYY-MM-DD] [--yes] [--dry]
  *     <名前>  = 一覧・順位に出る名前 (大文字小文字・全角半角は本番の名前の照らしと同じく見ない)
+ *     <id>    = 名前の id (n + 16 字、daily_nicks.id)。要望の添付の daily.nickId をそのまま渡す (11-10 オーナー「IDで追跡でいいんじゃね」)
  *     --day   = 消すお題の日 (16:00 に始まる日)。省くと今のお題の日
  *     --yes   = 提出済みの挑戦も消す (無いと消す前に止まる)
  *     --dry   = 見るだけで消さない
@@ -18,7 +19,7 @@ const flag = (k) => args.includes(k);
 const dayAt = args.indexOf("--day");
 const name = args.find((a, i) => !a.startsWith("--") && !(dayAt >= 0 && i === dayAt + 1));
 if (!name) {
-  console.error("名前が要る: pnpm daily:reset-one <名前> [--day YYYY-MM-DD] [--yes] [--dry]");
+  console.error("名前か id が要る: pnpm daily:reset-one <名前 | id> [--day YYYY-MM-DD] [--yes] [--dry]");
   process.exit(1);
 }
 const JST = 9 * 3600e3, H16 = 16 * 3600e3, DAY = 86400e3;
@@ -31,9 +32,13 @@ const nameKey = (s) => s.normalize("NFKC").trim().toLowerCase();
 const jst = (ms) => (ms == null ? "-" : new Date(ms + JST).toISOString().slice(5, 16).replace("T", " "));
 
 const db = remoteD1();
-console.log(`[daily:reset-one] ${target()} / お題 ${topicId} / 名前「${name}」`);
-const nick = await db.prepare("SELECT id, name FROM daily_nicks WHERE name_key = ?").bind(nameKey(name)).first();
-if (!nick) { console.log("その名前は無い。一覧・順位の名前をそのまま渡す"); process.exit(1); }
+// まず名前の id (daily_nicks.id、要望の添付の daily.nickId) で引き、無ければ名前で引く (id の形は決め打ちしない)
+console.log(`[daily:reset-one] ${target()} / お題 ${topicId} / 「${name}」`);
+let nick = await db.prepare("SELECT id, name FROM daily_nicks WHERE id = ?").bind(name).first();
+const byId = !!nick;
+if (!nick) nick = await db.prepare("SELECT id, name FROM daily_nicks WHERE name_key = ?").bind(nameKey(name)).first();
+if (!nick) { console.log("その id も名前も無い。要望の添付の daily.nickId か、一覧・順位の名前をそのまま渡す"); process.exit(1); }
+console.log(byId ? `id で見つけた = 名前「${nick.name}」` : `名前で見つけた (id ${nick.id})`);
 const t = await db.prepare("SELECT started_at, submitted_at, cost, rate, gave_up_at FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(topicId, nick.id).first();
 if (!t) { console.log(`「${nick.name}」の ${topicId} の挑戦は無い (もう始め直せる)`); process.exit(0); }
 const state = t.submitted_at != null ? `提出済み (${jst(t.submitted_at)}、完成 1 個あたり ${t.cost} 神・完成率 ${t.rate}%)` : t.gave_up_at != null ? `諦めた (${jst(t.gave_up_at)})` : "途中 / 時間切れ";
