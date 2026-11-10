@@ -29,14 +29,13 @@ export interface BoxCard extends Card { sample: StageItem; note: string | null }
 export function cardFor(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem, opts: CardOpts = {}): Card {
   const item = fixedValues(d, doc, sameModShown(d, doc, boxId, it), boxId); // 「エッセンスと同じ MOD」の箱はエッセンス未満の一番高い段で出す (S-33e)
   const b = opts.box ?? doc.boxes[boxId];
-  const tags = treeRowTags(d, doc, b?.unwanted ?? [], item, b);
-  return { item, tags: opts.routeNames ? routeRowTags(d, doc, item, tags) : tags };
+  const tags = treeRowTags(d, doc, b?.unwanted ?? [], item, b), shown = opts.routeNames ? routeRowTags(d, doc, item, tags) : tags;
+  // 削減の手前の枠 (S-65c ⑧): 比べる相手 と外れ MOD の ▼ ＝ ▲。木の箱・スマホの道・次に打つ手の窓 (TreeHandShelf) で同じ所 (11-10 オーナー「ここでもリンクさせてくれ」。前は箱のカードだけで窓のカードに出なかった)
+  return { item, tags: lvRowTags(d, doc, boxId, item, shown) };
 }
 /** 箱 boxId のカード (見本は箱の形に合う見本)。箱が無ければ null */
 export function boxCardOf(d: PatchData, doc: TreeDoc, boxId: string, opts: CardOpts = {}): BoxCard | null {
   if (!opts.box && !doc.boxes[boxId]) return null;
   const s = shapeSampleWithNote(d, doc, boxId);
-  const c = cardFor(d, doc, boxId, s.item, opts);
-  // 削減の手前の枠 (S-65c ⑧): 比べる相手 と外れ MOD の ▼ ＝ ▲ (PC の箱・スマホの道・窓で同じ)
-  return { ...c, tags: lvRowTags(d, doc, boxId, c.item, c.tags), sample: s.item, note: s.note };
+  return { ...cardFor(d, doc, boxId, s.item, opts), sample: s.item, note: s.note };
 }
