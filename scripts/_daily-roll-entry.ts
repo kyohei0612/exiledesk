@@ -266,7 +266,8 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
   const fixes = ahead.filter(([a, b]) => a !== b || (marking && isFull(b) && marked(b.day) !== RULES_VER)).map(([, b]) => b);
   if (fixes.length) body.planFix = fixes.map((p) => ({ day: p.day, slot: p.slot, itemClass: classOfBase(p.base), base: p.base, baseJa: jaTypeName(p.base), sampleId: p.sampleId, ilvl: p.ilvl, aims: p.aims, ...(marking && isFull(p) ? { checked: RULES_VER } : {}) }));
   const short = ahead.filter(([, b]) => !isFull(b)).map(([, b]) => b.day);
-  if (short.length) { body.needMore = short; log.push(`お題に使える人が足りない日: ${short.join("・")} (取り直しの合図、D-80f)`); }
+  // 取り直しも印の列がある D1 (= D-80f を出した後) だけ。列を本番に当てるまでは前の動きのまま (忍者を取りに行かない)
+  if (short.length && marking) { body.needMore = short; log.push(`お題に使える人が足りない日: ${short.join("・")} (取り直しの合図、D-80f)`); }
 
   // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD 以上の物だけ (前に通った物も見直す)
   if (!inp.topics.some((t) => t.day === inp.target)) {
