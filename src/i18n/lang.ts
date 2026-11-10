@@ -26,7 +26,7 @@ function initial(): Lang {
     const v = localStorage.getItem(KEY);
     if (v === "ja" || v === "en") { from = "saved"; return v; }
   } catch { /* 無くてよい */ }
-  return typeof navigator !== "undefined" && /^ja\b/i.test(navigator.language ?? "") ? "ja" : "en";
+  return browserLang();
 }
 
 export const lang = ref<Lang>(initial());
@@ -44,6 +44,13 @@ export function setLang(v: Lang): void {
   } catch { /* 無くてよい */ }
 }
 if (typeof document !== "undefined") document.documentElement.lang = lang.value;
+
+/** この端末で言語を一度でも選んだか (?lang= で来た・上の帯で押した・言語選びのポップアップで選んだ。U-37 の「初めて」の判定) */
+export function langChosen(): boolean {
+  try { const v = localStorage.getItem(KEY); return v === "ja" || v === "en"; } catch { return true; /* 覚えられない端末には聞かない */ }
+}
+/** ブラウザの言語から決めた言語 (選んでいない人の既定。initial より先に呼ばれるので function で巻き上げる) */
+export function browserLang(): Lang { return typeof navigator !== "undefined" && /^ja\b/i.test(navigator.language ?? "") ? "ja" : "en"; }
 
 /** 画面の言葉: 日本語と英語を並べて書く */
 export const tr = (ja: string, en: string): string => (lang.value === "en" ? en : ja);
