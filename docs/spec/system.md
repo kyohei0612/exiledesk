@@ -138,7 +138,7 @@
   - 本数 (頁の数) の上限: 1 週 1 回の起動で 400 本まで (index-state 1・build-index-state 1・search と character の残り。7 アセ × ビルド 3 × 3 人の選び方で見込み 100〜250 本、11-09 の手元の試しで 112 本)。超えたらその週は取れた分で締める。取り直しの起動はしない (週 1 回)。
   - 止め: D1 `ninja_ctl` の `stop` = 1 で取らない (`wrangler d1 execute exiledesk-logs --remote --command "INSERT OR REPLACE INTO ninja_ctl VALUES ('stop','1')"`)。ninja から連絡・ブロックがあれば止めてオーナーへ。止まっても前の週の分でデイリーは回る。
   - 残す物は D-80c・D-80b (アカウント名・キャラ名は取得の途中だけ)。ここで持つのは `daily_fetch_items` (部位・ベース・MOD の文・アカウントのハッシュ) と、結果の異常の控え (`alert`) 1 行 → 日報。
-  - 仮 (作った・本番に出ていない)。出どころ: オーナー 11-05「週 1 回だけ自動で取る」「アプリの挙動まんま使えばいいか…アプリでその方法やエラー時の回し方も熟知してんのに」「今回サーバーが取るからマジで引っかからないならゆっくり取れるよね24時間」「そうだね3人が丸いか」。ninja の案内の「builds・character は内部用」を伝えた上での決め。確かめ: `server/live/src/ninja/`。
+  - 有効 (11-10 整理: 予定のタスク `exiledesk-daily-fetch-weekly` が 11-09 から週 1 回回る、D-80e は v0.1.689 で本番。前は「仮 (作った・本番に出ていない)」)。出どころ: オーナー 11-05「週 1 回だけ自動で取る」「アプリの挙動まんま使えばいいか…アプリでその方法やエラー時の回し方も熟知してんのに」「今回サーバーが取るからマジで引っかからないならゆっくり取れるよね24時間」「そうだね3人が丸いか」。ninja の案内の「builds・character は内部用」を伝えた上での決め。確かめ: `server/live/src/ninja/`。
 
 ### G. 記録と分析
 
@@ -196,7 +196,7 @@
 ### J. セキュリティ
 
 - **Y-90 鍵は wrangler の secret だけに置く**: 鍵・トークン (REFRESH_KEY・YOUTUBE_API_KEY・TWITCH_*・DISCORD_WEBHOOK・DISCORD_BOT_TOKEN・REPORT_WEBHOOK・CF_ANALYTICS_TOKEN) は wrangler の secret だけに置き、リポジトリ・手元のファイル・ログ・報告に書かない。手元に鍵を置かない。
-  - 有効。出どころ: docs/org/analytics/README.md 4、メモ feedback-replies (鍵は手元に無い)。確かめ: —。見張りは無い (10-29 に ⑦ の 7 から: Y-90 は今の作業の木だけ、過去の commit は鍵を回した時に 1 回。自動にできない理由と代わりは docs/org/dev/app-watch.md)。
+  - 有効。出どころ: docs/org/analytics/README.md 4、メモ feedback-replies (鍵は手元に無い)。確かめ: 見張り `scripts/app-watch/static.mjs` (release.md R-36、今の作業の木だけ)。過去の commit・手元のファイル・ログ・報告の見張りは無い (10-29 に ⑦ の 7 から: 過去の commit は鍵を回した時に 1 回。自動にできない理由と代わりは docs/org/dev/app-watch.md)。
 - **Y-91 鍵の要る作業は wrangler の login か一時の合言葉で**: 要望の一覧・返事・D1 の読み出しは `wrangler kv` / `wrangler d1 execute --remote` (オーナーの login) で行う。鍵の口を手元で使う時は一時の合言葉で `wrangler dev --remote` を立て、終わったら PID で止めて .dev.vars を消す。
   - 有効。出どころ: 10-12・10-17 (メモ feedback-replies)、メモ stop-processes-by-pid。確かめ: 8799 などの LISTEN が 0。
 - **Y-92 CI に Cloudflare の鍵を置かない**: GitHub (CI) には Cloudflare の鍵を置かない。出すのは手元の `pnpm deploy:web` と server/live の deploy。
