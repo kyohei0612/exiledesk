@@ -147,8 +147,10 @@ function measureRow(): void {
   });
 }
 const onResizeH = (): void => { requestAnimationFrame(measureRow); };
-onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
-onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
+// 上の行 (流れの段と帯、11-11 から 1 行) の高さが変わったら測り直す (データが来て帯の中身が変わり 2 行 → 1 行になると、下に空きが残った)。上の行の高さは木の欄の高さに左右されない
+let headRo: ResizeObserver | null = null;
+onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); const h = row.value?.previousElementSibling; if (h) { headRo = new ResizeObserver(onResizeH); headRo.observe(h); } });
+onBeforeUnmount(() => { window.removeEventListener("resize", onResizeH); headRo?.disconnect(); });
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
 const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value, (id) => v.flow.findNode(id)?.dimensions.height ?? 0);
@@ -386,7 +388,7 @@ const glowOf = (b: Box): boolean => {
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 pb-0.5 pt-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : '-mb-3.5'">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
-      <!-- 11-11 オーナー「上も余りまくってるし」「1行でいいだろこんなん」: 手順の段と下の帯を 1 行に並べる。入りきらない幅だけ帯が次の行へ折り返す (帯の basis は道具が全部見える幅 1070px、帯の中は今までどおり横に送る) -->
+      <!-- 11-11 オーナー「上も余りまくってるし」「1行でいいだろこんなん」: 手順の段と下の帯を 1 行に並べる。入りきらない幅だけ帯が次の行へ折り返す (帯の basis は道具が全部見える幅 950px、帯の中は今までどおり横に送る) -->
       <div data-tree-head class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
       <div class="flex shrink-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
@@ -395,7 +397,7 @@ const glowOf = (b: Box): boolean => {
       </div>
       <!-- 帯は 1 行 (10-26 夜オーナー「1 行で表示させてくれ」「必要なのは下段」「テストで回すと 100 人で回すは上の枠内上部でおけ」): 穴チェック・足りない所・100 人回す・結果、タブ、道具。
            幅で形を変えない (字を短くしない・隠さない)。入らない幅は帯の中を横に送る (11-08 夜オーナー「pxみじけーやつは苦労させろ精神」、S-94g)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
-      <div class="relative flex min-w-0 flex-[1_1_1070px] items-center gap-1.5 text-[13px]">
+      <div class="relative flex min-w-0 flex-[1_1_950px] items-center gap-1.5 text-[13px]">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
         <TreeIssues v-if="jt.shownIssues.value?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="jt.shownIssues.value" :doc="doc" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" @report="reportTreeBug(doc)" /><TreeBugReport />
         <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />

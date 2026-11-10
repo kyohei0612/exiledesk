@@ -10,6 +10,7 @@ import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { isMissMod } from "../../../services/simulator/tree/tree-miss";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { headBands } from "../../../services/simulator/tree/tree-band";
 import { frameHandOf, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
 import { tr } from "../../../i18n/lang";
 
@@ -25,11 +26,11 @@ const LOOK: Record<LvClass, { rgb: string; ja: string; en: string; tja: string; 
 export const lvLook = (c: LvClass): (typeof LOOK)[LvClass] => LOOK[c];
 
 /** 箱 id のカードの札 tags に、削減の手前の枠の印を足した物 (枠の箱でなければ tags のまま) */
-export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: StageItem | null, tags: Map<string, RowTag>): Map<string, RowTag> {
+export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: StageItem | null, tags: Map<string, RowTag>, viaSeen = false): Map<string, RowTag> {
   const c = lvPart(doc.boxes[id]?.junkKey);
-  // 打たない枠のハズレ (S-39 ②b): 品は枠の箱のまま (手を使わない) なので、枠の箱の札をそのまま出す
+  // 打たない枠のハズレ (S-39 ②b): 品は枠の箱のまま (手を使わない) なので、枠の箱の札をそのまま出す (帯の頭の「枝へ」ではなく組の札)
   const up = doc.boxes[id]?.parent;
-  if (!c && doc.boxes[id]?.seen && up && lvPart(doc.boxes[up]?.junkKey)) return lvRowTags(data, doc, up, item, tags);
+  if (!c && doc.boxes[id]?.seen && up && lvPart(doc.boxes[up]?.junkKey)) return lvRowTags(data, doc, up, item, tags, true);
   if (!c || !item) return tags;
   // 削減の手は枠の組の手 (手の無い兄弟の枠も)、比べるのはその手で消える側だけ = 枠を作る・回す時と同じ (tree-whittle-scene)
   const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), { miss, side } = whittleCompare(data, doc, frameHandOf(doc, id), aimed, item);
@@ -39,7 +40,12 @@ export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: Stage
   if (!junk || !want) return tags;
   const out = new Map(tags), L = LOOK[c];
   const jt = out.get(junk.modId) ?? { text: tr("外れ MOD", "Miss mod"), tone: "bad" as const, replace: true };
-  out.set(junk.modId, { ...jt, after: { text: tr(L.ja, L.en), rgb: L.rgb, title: tr(L.tja, L.ten) } });
+  // 帯で見せる「MOD レベルごとの設定」の箱 (S-65c ⑫) は、外れの MOD レベルが帯ごとに分かれるので組の字でなく「MOD レベルごとの枝へ」
+  // (11-11 オーナー「今カオス削減打つ枠に低いレベルってなってるけどここはMODLv事の枝へって表記でおｋ」。結果の箱・打たない枠のハズレの札はそのまま)
+  const head = !viaSeen && headBands(doc, id).length > 1;
+  out.set(junk.modId, { ...jt, after: head
+    ? { text: tr("MOD レベルごとの枝へ", "Split by mod level"), rgb: "214,190,140", title: tr("この外れの MOD レベルは人ごとに違うので、下の帯 (低い・同じ・高い) ごとの枝へ分かれる", "This miss's mod level differs per run, so it splits into the bands below (lower / same / higher)") }
+    : { text: tr(L.ja, L.en), rgb: L.rgb, title: tr(L.tja, L.ten) } });
   // 比べる相手は名前の行のまま、後ろに小さな札 (今の札があればそれを残す)
   const wantKey = want.modId;
   if (out.get(wantKey) === undefined) out.set(wantKey, { text: tr("比べる相手", "Compared"), tone: "info", title: tr("外れ以外で MOD レベルが一番低い MOD (削減で次に消える物)。外れ MOD の ▼ ＝ ▲ はこれと比べた", "The lowest-level mod other than the miss (the next to go with whittling). The miss's ▼ = ▲ compares with this") });
