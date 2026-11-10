@@ -284,7 +284,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
-  if (data) syncBeforeHand(data, d, at, h); setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at)); // 削減の手前の枠 (S-65c) を先に
+  // 削減の手前の枠 (S-65c) を先に。枠に割れたら結果の一覧はその枠の組で数え直す (④、割る前の一覧には枠の組で起こらない結果が入っている)
+  if (data && syncBeforeHand(data, d, at, h) && only) only = onlyOf(data, d, at, h, null, aims);
+  setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (data) fillMissOuts(data, d, at);
   joinSameShape(d, id);
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)

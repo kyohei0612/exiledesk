@@ -98,12 +98,17 @@ export function restoreWhittlePre(d: TreeDoc, id: string, at: string, onPath: Re
   }
 }
 
-/** 手を置く前 (applyPick): 削減の手なら先に枠をそろえる (この箱の枠の組が決まってから結果の箱を作る = その組の出方だけの結果、S-65c ④) */
-export function syncBeforeHand(data: PatchData, d: TreeDoc, at: string, h: Hand): void {
+/**
+ * 手を置く前 (applyPick): 削減の手なら先に枠をそろえる (この箱の枠の組が決まってから結果の箱を作る = その組の出方だけの結果、S-65c ④)。
+ * この箱の鍵が変わった (枠に割れた) なら true = 呼ぶ側は割る前に数えた結果の一覧 (only) を数え直す
+ * (11-10 1 外れの試し: 割る前の一覧のまま置き、低い枠の下に誰も来ない「狙いが消えた」が 2 箱出た)
+ */
+export function syncBeforeHand(data: PatchData, d: TreeDoc, at: string, h: Hand): boolean {
   const b = d.boxes[at];
-  if (!b?.parent || !isWhittleHand(h)) return;
-  const was = b.hand;
+  if (!b?.parent || !isWhittleHand(h)) return false;
+  const was = b.hand, key = b.junkKey;
   b.hand = h;
   syncWhittlePre(data, d, b.parent, at);
   b.hand = was;
+  return d.boxes[at]?.junkKey !== key;
 }

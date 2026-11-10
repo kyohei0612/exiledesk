@@ -1,6 +1,6 @@
 /**
  * tree-whittle-marks.ts — 削減の手前の枠 (S-65c ⑧、11-10 オーナーの選び「案4」) の箱のカードの印:
- * 比べる相手 (外れ以外で一番 MOD レベルの低い消せる MOD) の行に「比べる相手」、外れ MOD (外れのうち一番低い物) の行の後ろに ▼ 低い / ＝ 同じ / ▲ 高い。
+ * 比べる相手 (外れ以外で一番 MOD レベルの低い消せる MOD) の行に「比べる相手」、外れ MOD (外れのうち一番低い物) の行の後ろに ▼ MOD レベルが低い / ＝ 同じ / ▲ 高い。
  * どの行かは表示する品の MOD レベル (エンジンの whittleLevel) と外れの式 (aimedMiss) で、組の字は箱の鍵 (l:) から
  */
 import { whittleLevel, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
@@ -14,9 +14,10 @@ import { tr } from "../../../i18n/lang";
 
 /** 組の色 (r,g,b): 低い = 緑・同じ = 金黄・高い = 紅 (今の外れの赤橙と分ける、見比べ 11-10) と字 */
 const LOOK: Record<LvClass, { rgb: string; ja: string; en: string; tja: string; ten: string }> = {
-  lo: { rgb: "122,196,132", ja: "▼ 低い", en: "▼ lower", tja: "外れの MOD レベルが比べる相手より低い = 次の削減で外れが消える", ten: "The miss mod level is lower than the compared mod: whittling removes the miss" },
-  eq: { rgb: "226,190,96", ja: "＝ 同じ", en: "= same", tja: "外れの MOD レベルが比べる相手と同じ = 次の削減は外れか比べる相手が半々で消える", ten: "Same mod level as the compared mod: whittling removes either, half and half" },
-  hi: { rgb: "214,72,110", ja: "▲ 高い", en: "▲ higher", tja: "外れの MOD レベルが比べる相手より高い = 次の削減で比べる相手 (残したい MOD) が消える", ten: "The miss mod level is higher: whittling removes the compared mod (a mod to keep)" },
+  // 字は「MOD レベルが」を付ける (11-10 オーナー「中の高い低いはMODレベル高いとか低いって出してあげたいね」。枠の上の題はそのまま)
+  lo: { rgb: "122,196,132", ja: "▼ MOD レベルが低い", en: "▼ lower mod level", tja: "外れの MOD レベルが比べる相手より低い = 次の削減で外れが消える", ten: "The miss mod level is lower than the compared mod: whittling removes the miss" },
+  eq: { rgb: "226,190,96", ja: "＝ MOD レベルが同じ", en: "= same mod level", tja: "外れの MOD レベルが比べる相手と同じ = 次の削減は外れか比べる相手が半々で消える", ten: "Same mod level as the compared mod: whittling removes either, half and half" },
+  hi: { rgb: "214,72,110", ja: "▲ MOD レベルが高い", en: "▲ higher mod level", tja: "外れの MOD レベルが比べる相手より高い = 次の削減で比べる相手 (残したい MOD) が消える", ten: "The miss mod level is higher: whittling removes the compared mod (a mod to keep)" },
 };
 
 /** 箱 id のカードの札 tags に、削減の手前の枠の印を足した物 (枠の箱でなければ tags のまま) */

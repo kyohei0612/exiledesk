@@ -82,7 +82,10 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
  * 残したい MOD = 打った後に ☑ の印の付く狙い (打つ前の印 + この手で付いた狙い) を外れの式 (aimedMiss) で見た外れ以外
  */
 function lvKeyed(data: PatchData, doc: TreeDoc, b: TreeBox, oc: Outcome, after: StageItem, aimed?: ReadonlySet<string> | null): Outcome {
-  if (oc.out === "blocked" || !b.outs.some((id) => { const c = doc.boxes[id]; return !!c && c.out === oc.out && !!lvPart(c.junkKey) && stripLv(c.junkKey) === stripLv(oc.junkKey); })) return oc;
+  // 箱の種類の比べは行き先の選び (tree-shape の outBoxOf の鍵の合わせ) と同じ: 狙い無しの手の箱は「打った後」で、人の結果は外れ = 種類でなく狙いが消えたかどうかで合わせる
+  // (11-10 1 外れの試し: 種類で比べて枠の鍵が付かず、高い枠の 29 人が先頭の低い枠に着いてから移り、低い枠の札が 100 人になった)
+  const fits = (c: TreeBox): boolean => (c.out === "lost") === (oc.out === "lost") && !!lvPart(c.junkKey) && stripLv(c.junkKey) === stripLv(oc.junkKey);
+  if (oc.out === "blocked" || !b.outs.some((id) => { const c = doc.boxes[id]; return !!c && fits(c); })) return oc;
   const am = aimed ? new Set([...aimed, ...oc.hits.map((a) => a.modId)]) : null;
   const c = lvClassOf(after, aimedMiss(data, doc, am));
   return c ? { ...oc, junkKey: withLv(oc.junkKey, c) } : oc;
