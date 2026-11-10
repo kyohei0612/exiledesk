@@ -4,7 +4,7 @@
  * お題は 16:00 の台本 (scripts/daily-roll.mjs → POST /daily/topic) が書く。台本が回らなかった日は、ここで週の予定 (daily_plan) からそのまま出す (D-84 の ③)
  */
 import { authNick, hasBadWord, ipHash } from "./nick";
-import { canStartAt, dayName, dayNoOf, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
+import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
 /** 1 日の順位に返す人数 */
 const RANK_TOP = 50;
@@ -18,23 +18,43 @@ type Aim = { modId: string; tier: number; ja: string; en: string };
 type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string };
 type TryRow = { topic_id: string; nick_id: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; checked: number | null; gave_up_at?: number | null };
 
-/** 台本が回らなかった日 (今日まで) を週の予定から出す。出した後は変えない (INSERT OR IGNORE) */
+/**
+ * 台本が回らなかった日 (今日まで) を週の予定から出す。出した後は変えない (INSERT OR IGNORE)。
+ * 予定の表に台本の確かめの印 (checked、D-80f) の列がある時は、印のある予定だけを出し、印の無い日は前の日のお題をもう 1 日出す (最後の砦。
+ * 台本はフル MOD・段 D-04 を確かめた予定にだけ印を付ける。11-10 に古い予定の MOD 5 の弓がそのまま出た)。前の日のお題も無ければ予定のまま。
+ * 列の無い D1 (印の列を足す前) は今までどおり予定のまま
+ */
 export async function settleFromPlan(db: D1Database, upTo: number, prices: string | null): Promise<void> {
   const from = upTo - weekdayOf(upTo);
   const days = Array.from({ length: upTo - from + 1 }, (_, i) => dayName(from + i));
   const marks = days.map(() => "?").join(",");
+  type PlanRow = { day: string; week: string; slot: number; item_class: string | null; base: string; base_ja: string | null; sample_id: string | null; ilvl: number | null; aims: string; checked?: string | null };
   const { results: plan } = await db
-    .prepare(`SELECT p.* FROM daily_plan p LEFT JOIN daily_topics t ON t.day = p.day WHERE p.day IN (${marks}) AND t.day IS NULL AND p.aims IS NOT NULL`)
+    .prepare(`SELECT p.* FROM daily_plan p LEFT JOIN daily_topics t ON t.day = p.day WHERE p.day IN (${marks}) AND t.day IS NULL AND p.aims IS NOT NULL ORDER BY p.day`)
     .bind(...days)
-    .all<{ day: string; week: string; slot: number; item_class: string | null; base: string; base_ja: string | null; sample_id: string | null; ilvl: number | null; aims: string }>();
+    .all<PlanRow>();
   if (!plan.length) return;
-  await db.batch(
-    plan.map((p) =>
-      db
+  // 前の日から順に 1 日ずつ (続けて落ちた日は、前の日に出した物をまた繰り返す)
+  for (const p of plan) {
+    if (!("checked" in p) || p.checked) {
+      await db
         .prepare("INSERT OR IGNORE INTO daily_topics (id, day, week, sample_id, slot, item_class, base, base_ja, ilvl, aims, prices, seed, shown_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'plan')")
-        .bind(`d${p.day}`, p.day, p.week, p.sample_id, p.slot, p.item_class, p.base, p.base_ja, p.ilvl ?? 82, p.aims, prices, seedOfDay(p.day)),
-    ),
-  );
+        .bind(`d${p.day}`, p.day, p.week, p.sample_id, p.slot, p.item_class, p.base, p.base_ja, p.ilvl ?? 82, p.aims, prices, seedOfDay(p.day))
+        .run();
+      continue;
+    }
+    const prev = await db.prepare("SELECT * FROM daily_topics WHERE day = ?").bind(dayName(dayNoOfName(p.day) - 1)).first<TopicRow>();
+    if (prev)
+      await db
+        .prepare("INSERT OR IGNORE INTO daily_topics (id, day, week, box_id, sample_id, slot, item_class, base, base_ja, ilvl, aims, prices, seed, shown_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'repeat')")
+        .bind(`d${p.day}`, p.day, p.week, prev.box_id, prev.sample_id, prev.slot, prev.item_class, prev.base, prev.base_ja, prev.ilvl ?? 82, prev.aims, prices, seedOfDay(p.day))
+        .run();
+    else
+      await db
+        .prepare("INSERT OR IGNORE INTO daily_topics (id, day, week, sample_id, slot, item_class, base, base_ja, ilvl, aims, prices, seed, shown_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'plan')")
+        .bind(`d${p.day}`, p.day, p.week, p.sample_id, p.slot, p.item_class, p.base, p.base_ja, p.ilvl ?? 82, p.aims, prices, seedOfDay(p.day))
+        .run();
+  }
 }
 
 /** 解決の順位 (D-50): 解決だけ・検算で外れた物は除く・費用の安い順・同じなら先に出した人 */

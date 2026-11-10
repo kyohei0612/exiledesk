@@ -10,6 +10,7 @@ import { readCharacter, type Main, type RareItem } from "./character";
 import { getOnce, MIN_REQUEST_INTERVAL_MS, readBuildIndexState, readIndexState, urls, type Gate, type Pending } from "./fetch";
 import { searchRefs, type Ref } from "./protobuf";
 import { runAll, searchKey, TOP_ASCENDANCIES, type AscResult, type Memo, type Need } from "./select";
+export { setBuildSize } from "./select";
 
 /** 1 回の起動で取る本数 (CPU 10ms に収める。vars の NINJA_PER_RUN で変えられる) */
 const PER_RUN = 3;

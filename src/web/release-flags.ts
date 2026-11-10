@@ -113,6 +113,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // デイリーで完成 0% でも提出 (オーナー 11-10「完成率０でも別にいい」「一緒に出せる奴は出しておk」、v0.1.704)
+  "dailyZero",
   // データの OK 待ちで poe2db の裏付けがある物 (オーナー 10-24「データとれてるならそのまま出してええよ」、ジン部長)
   "abyssSuffix", "skillPlus", "talismanWeight", "dntBases",
   // ルーンの「明示 MOD の強さ」は書いてある効果どおり (オーナー 10-24「ルーンも書いてある効果どおりやし出してええよ」)

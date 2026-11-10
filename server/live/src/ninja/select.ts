@@ -17,6 +17,9 @@ export const BUILD_COUNT = 3;
 export const BUILD_SIZE = 3;
 /** これより少ないビルドは外して次のスキルへ。アプリは 5、デイリーは 3 (D-80b「足りない時の下限も 3」) */
 export const BUILD_MIN = 3;
+/** 今回の 1 ビルドの人数。ふだんは BUILD_SIZE、デイリーの取り直しの時だけ家の PC が増やす (D-80f、6 → 10) */
+let buildSize = BUILD_SIZE;
+export function setBuildSize(n: number): void { buildSize = Math.max(BUILD_MIN, Math.min(10, Math.floor(n))); }
 const WINDOWS = 4;
 const ROUNDS = 4;
 const MISMATCH_LIMIT = 20;
@@ -94,7 +97,7 @@ function runAscendancy(asc: string, memo: Memo): AscResult | null {
       if (plan.full()) break;
       const refs = search(skillsParam(null, plan.excluded()));
       const before = plan.chosen.length;
-      for (const r of refs.slice(0, BUILD_SIZE)) {
+      for (const r of refs.slice(0, buildSize)) {
         const m = getChar(r);
         if (m) plan.pick(m.skills[0]!);
       }
@@ -109,7 +112,7 @@ function runAscendancy(asc: string, memo: Memo): AscResult | null {
       const b = { skill, members: [] as string[] };
       let mismatch = 0;
       for (const r of refs) {
-        if (b.members.length >= BUILD_SIZE || mismatch >= MISMATCH_LIMIT) break;
+        if (b.members.length >= buildSize || mismatch >= MISMATCH_LIMIT) break;
         const m = getChar(r);
         if (m && m.skills[0] === skill) {
           mismatch = 0;
