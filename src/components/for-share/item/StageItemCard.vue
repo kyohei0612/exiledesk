@@ -353,6 +353,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
         <p
           v-for="r in plainRows"
           :data-card-mod="r.m.modId"
+          :data-doomed="isDoomed(r.m) ? '' : undefined"
           @click="onRowClick($event, r.m)"
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"
