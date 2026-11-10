@@ -15,7 +15,7 @@ import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
 import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
-import { lvClassOf, lvPart } from "./tree-whittle";
+import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
@@ -317,7 +317,14 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     fitsBox(from, to) {
       // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
       // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
-      if (from === to || !doc.boxes[from] || !doc.boxes[to] || lvOf(from) !== lvOf(to)) return false;
+      if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
+      const lf = lvOf(from), lt = lvOf(to);
+      if (lf !== lt) {
+        // 削減の手前の枠 (l:) を持たない箱 (削減を打った後など) は中身 (名前の印は ☑ どおり) が同じなら枠へ戻る (S-65c ⑩、11-10 オーナー「おｋ」。前は札で比べ、中身が全部同じでも枠に戻れず
+        // 人が削減の枠を足し続けた = 要望 0b039a19)。戻り先は外れの MOD レベルの組が合う枠か、組の頭 (削減の手を持つ枠)。回す人は着いた所で lvFits が枠へ分ける
+        const f = lf || !lt ? null : frameAt(from);
+        if (!f || (!lvFits(f.item, f.aimed, to) && !isWhittleHand(doc.boxes[to]!.hand))) return false;
+      }
       // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
       const b = contents(to);
       if (!b) return false;
