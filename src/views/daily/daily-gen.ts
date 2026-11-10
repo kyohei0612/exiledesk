@@ -61,17 +61,24 @@ const seedOf = (s: string): number => { let h = 2166136261; for (const c of s) h
 const pickOf = <T>(a: readonly T[], rng: () => number): T => a[Math.floor(rng() * a.length)]!;
 const nameOf = (r: ListRow): string => r.id.slice(r.id.indexOf("/") + 1);
 
-/** 段の下限 (D-04): 元が T1 なら T1、ほかは全部 T2 以上 */
-export const tierFloor = (tier: number): number => (tier <= 1 ? 1 : 2);
-/** 行の段のうちアイテムレベルで出る物から、元の段 tier の下限 (D-04) の段。無ければその上の段の一番近い物。どちらも無ければ undefined */
+/**
+ * 段の下限 (D-04): 元の段に関係なく全部 T3 以上 (11-10 オーナー「P1の奴いかついな。やっぱT3下限にさせようか」「加えてT3で固定とする」)。
+ * 前の「元が T1 なら T1、ほかは T2 以上」(11-05) はやめ。引数は前の形のまま残す (呼ぶ所を変えない)
+ */
+export const TIER_FLOOR = 3;
+export const tierFloor = (_tier: number): number => TIER_FLOOR;
+/**
+ * 行の段のうちアイテムレベルで出る物から、下限 (D-04 = T3) の段。無ければその下の段の一番近い物、それも無ければ持っている中で一番下の段
+ * (T3 を持たない MOD は「持っている中で一番下」= どれが付いても達成)。段が 1 つも無ければ undefined
+ */
 const floorTierOf = (r: ListRow | undefined, ilvl: number, tier: number): { able: ListRow["tiers"]; t: ListRow["tiers"][number] | undefined } => {
   const want = tierFloor(tier), able = (r?.tiers ?? []).filter((x) => x.ilvl <= ilvl).sort((x, y) => x.tier - y.tier);
-  return { able, t: able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want) };
+  return { able, t: able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want) ?? able[able.length - 1] };
 };
 
 /**
  * 1 人分の並びをそのままお題にする (D-06・D-82)。段は D-04、付かない並び (D-83) は null。
- * 段の下限の段がアイテムレベルで出ない MOD は、出る中で一番上の段
+ * 下限 (T3) の段がアイテムレベルで出ない MOD は floorTierOf の決まり (その下の段 → 持っている中で一番下)
  */
 export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL): GenAim[] | null {
   let rows: ListRow[];
@@ -102,7 +109,7 @@ export function floorAims(data: PatchData, base: string, ilvl: number, aims: rea
   return aims.map((a) => {
     const r = rows.find((x) => x.id === a.modId || x.tiers.some((t) => t.modId === a.modId));
     const { t } = floorTierOf(r, ilvl, a.tier);
-    return r && t ? { ...a, modId: t.modId ?? r.id, tier: t.tier } : { ...a, tier: Math.min(a.tier, tierFloor(a.tier)) };
+    return r && t ? { ...a, modId: t.modId ?? r.id, tier: t.tier } : { ...a, tier: tierFloor(a.tier) };
   });
 }
 

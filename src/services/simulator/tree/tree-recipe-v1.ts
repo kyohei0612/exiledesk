@@ -73,11 +73,11 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
   return b.hand && kind(b.hand) === "quality" && !b.hand.quality && c?.out === "pass" && c.hand?.omens.includes(CATALYSING) ? c : null;
 }
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
-const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld", "examples"]);
+const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld", "examples", "built"]);
 
 /** 木 (どの版でも) → 保存の形 v1 (打ち方だけ。例のアイテムは外す、入れるのは tree-frame の recipeOf)。保存の形ならそのまま (欄を揃えるだけ) */
 export function toRecipeV1(d: TreeDoc): TreeDoc {
-  if (isRecipeV1(d)) { const { examples: _e, ...r } = clone(d); return { ...r, schema: RECIPE_V1, boxes: {}, picks: d.picks ?? [], ...(d.orphans?.length ? { orphans: d.orphans } : {}) }; }
+  if (isRecipeV1(d)) { const { examples: _e, built: _b, ...r } = clone(d); return { ...r, schema: RECIPE_V1, boxes: {}, picks: d.picks ?? [], ...(d.orphans?.length ? { orphans: d.orphans } : {}) }; }
   const out: Record<string, unknown> = { schema: RECIPE_V1 };
   for (const [k, v] of Object.entries(d)) if (!NOT_KEPT.has(k) && v !== undefined) out[k] = clone(v);
   const picks: RecipePick[] = [], orphans: RecipeOrphan[] = clone(d.orphans ?? []);

@@ -30,7 +30,13 @@ const RECIPE_SHARE_PREFIX = "#recipe=";
 type PackedTree = { v: 2; n: string; t: TreeDoc };
 
 /** ツリーのレシピの code (#recipe= の後ろ)。打ち方 (v1、S-104) + 例のアイテム (v2、S-200 ⑦)。開く側は v1・v2 も前の木も migrateTreeDoc で読む */
-export const treeCodeOf = (r: { name: string; tree: TreeDoc }): Promise<string> => packJson({ v: 2, n: r.name, t: recipeOf(craftStage.data.value, r.tree) } satisfies PackedTree);
+export async function treeCodeOf(r: { name: string; tree: TreeDoc }): Promise<string> {
+  const code = await packJson({ v: 2, n: r.name, t: recipeOf(craftStage.data.value, r.tree) } satisfies PackedTree);
+  // 組み上がった木の写し (S-104b) を入れて短い URL の受け口の上限 (server/web/recipe-share.js の 20,000 字、カード絵込み) に届きそうな時は、写し無し (開く人が組み直す) にする
+  return code.length <= SHORT_CODE_MAX ? code : packJson({ v: 2, n: r.name, t: recipeOf(craftStage.data.value, r.tree, false) } satisfies PackedTree);
+}
+/** 短い URL に乗せる code の字数の上限 (受け口の上限 20,000 字から、一緒に送るカード絵の値 (3,000 字まで) と JSON の枠を引いた物) */
+const SHORT_CODE_MAX = 16_500;
 /** ツリーのレシピの URL (#recipe= の頭は同じ。開くと読む側が v で見分ける) */
 export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
   const code = await treeCodeOf(r);

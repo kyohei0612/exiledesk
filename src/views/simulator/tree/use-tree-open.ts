@@ -8,6 +8,7 @@ import { ref, type ShallowRef } from "vue";
 import type { PatchData } from "../../../services/craft-stage/engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { rebuildInSteps } from "./tree-rebuild";
+import { fromBuilt } from "../../../services/simulator/tree/tree-built";
 
 /** 開いている間 (木は触れない。読み込み中の覆いを出す) */
 export const treeLoading = ref(false);
@@ -23,7 +24,8 @@ export async function openStepped(data: PatchData, tree: TreeDoc, doc: ShallowRe
   let done: TreeDoc | null = null;
   try {
     await frame();
-    if (no === openNo) done = await rebuildInSteps(data, tree, () => {}, () => no === openNo);
+    // 同じ組み方の版・同じ打ち方の組み上がった木の写しがあれば組み直さない (S-104b、開く速さの案 E)。無ければ・違えば今どおり組み直す
+    if (no === openNo) done = fromBuilt(tree) ?? (await rebuildInSteps(data, tree, () => {}, () => no === openNo));
   } finally {
     if (no === openNo) {
       doc.value = openFrom!; openFrom = null; treeLoading.value = false;

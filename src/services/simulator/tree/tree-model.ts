@@ -10,6 +10,7 @@
 
 import type { TreeTune } from "./tree-tune";
 import type { RecipeExample, RecipeOrphan, RecipePick } from "./tree-recipe-v1";
+import type { TreeBuilt } from "./tree-built";
 import type { StageItem } from "../../craft-stage/engine";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
@@ -172,6 +173,7 @@ export interface TreeDoc {
   schema: `exiledesk-tree/${number}` | `exiledesk-recipe/${number}`;
   /** 保存の形 v1 (exiledesk-recipe/1) の打ち方と要確認の一覧 (tree-recipe-v1.ts、S-104〜S-108)。組み直した木も要確認は持ち越す */ picks?: RecipePick[]; orphans?: RecipeOrphan[];
   /** v2 (exiledesk-recipe/2) の例のアイテム (道の札 → 代表の品、S-200 ⑦)。開いた木は保存の時の物を持ち、配置の代表に使う (tree-frame) */ examples?: Record<string, RecipeExample>;
+  /** 保存の形に持たせる組み上がった木の写し (S-104b、tree-built)。同じ組み方の版・同じ打ち方の時だけ開く時に使い、組み直しを省く */ built?: TreeBuilt;
   base: string;
   itemLevel: number;
   /** 完成形のレアリティ (0 完成形の設定の箱。無ければレア。スタートの箱の start.rarity とは別、10-22 オーナー) */
