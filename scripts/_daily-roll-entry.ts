@@ -216,10 +216,11 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
   }
 
   // ② 投稿の機械の確かめ (D-20): 段の下限を D-04 に上げてから、エンジンで作れるか・悪口
+  // 通った投稿 (ok) も毎回段を D-04 に揃え直す (前の決まりで通った物が T2 のままお題に出ないように、11-10)。箱の行は書き換えず、お題に使う段だけ
   const checkedBox = inp.box.map((b) => {
-    if (b.status !== "wait") return { b, status: b.status, aims: (JSON.parse(b.item) as { aims: GenAim[] }).aims };
     const it = JSON.parse(b.item) as { base: string; ilvl: number; aims: GenAim[] };
     const aims = floorAims(data, it.base, it.ilvl, it.aims);
+    if (b.status !== "wait") return { b, status: b.status, aims };
     const why = boxCheck(data, { base: it.base, ilvl: it.ilvl, aims, note: b.note ?? "" }, b.nick ?? "");
     return { b, status: why ? "no" : "ok", why, aims };
   });
