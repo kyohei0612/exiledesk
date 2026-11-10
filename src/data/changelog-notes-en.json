@@ -1,4 +1,7 @@
 {
+  "0.1.696": [
+    "Simulator: opening a recipe now builds the tree once before showing it, with \"Loading recipe…\" on screen and input paused meanwhile (it no longer jumps to base selection while loading). Opening on phones is lighter"
+  ],
   "0.1.695": [
     "Simulator (phone): phones now only view recipes and no longer run them for now. Opening skips the hole check so it loads faster, and unfinished recipes say \"Unfinished recipe\"",
     "Simulator (phone): tier labels on the full tree view are thinned out when they would overlap",

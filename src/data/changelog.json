@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.696",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: レシピを開く時は木を 1 回だけ組んでから出すようにし、組んでいる間は「レシピ読み込み中…」を出して操作を止めます (開く途中でベース選びへ飛ぶ事もなくなりました)。スマホでは開くのが軽くなりました",
+    "en": "Simulator: opening a recipe now builds the tree once before showing it, with \"Loading recipe…\" on screen and input paused meanwhile (it no longer jumps to base selection while loading). Opening on phones is lighter"
+   }
+  ]
+ },
+ {
   "v": "0.1.695",
   "date": "2026-11-10",
   "items": [
@@ -898,18 +910,6 @@
     "area": "",
     "text": "エミュレーター: ジュエルの MOD 一覧に、液化した感情で付く MOD の「デリリウム」の節を足しました",
     "en": "Emulator: the jewel mod list now has a Delirium section for mods added by Liquid Emotions"
-   }
-  ]
- },
- {
-  "v": "0.1.656",
-  "date": "2026-11-02",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定で始め方を変えた時の「保存しますか?」が画面の外に出て見えないことがあったのを直しました",
-    "en": "Simulator: the \"Save first?\" prompt after changing the start in the final-item settings could appear off screen; it now scrolls into view"
    }
   ]
  }
