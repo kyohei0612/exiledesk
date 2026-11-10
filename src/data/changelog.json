@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.695",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): スマホでは当分回さず、レシピを見るだけにしました。開いた時の穴チェックもやめて開くのを軽くし、未完成のレシピは「未完成のレシピです」と出します",
+    "en": "Simulator (phone): phones now only view recipes and no longer run them for now. Opening skips the hole check so it loads faster, and unfinished recipes say \"Unfinished recipe\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): 全体図で段の札が重なる時は間引くようにしました",
+    "en": "Simulator (phone): tier labels on the full tree view are thinned out when they would overlap"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "要望・バグを送るページを閉じた時に、開く前のページへ同じ見え方で戻るようにしました (前はベース選びに戻っていました)。戻るボタンには元のページの名前を出します",
+    "en": "Closing the feedback page now returns to the page you came from, as you left it (it used to go back to base selection). The back button shows that page's name"
+   }
+  ]
+ },
+ {
   "v": "0.1.694",
   "date": "2026-11-10",
   "items": [
@@ -886,18 +910,6 @@
     "area": "",
     "text": "シミュレーター: 完成形の設定で始め方を変えた時の「保存しますか?」が画面の外に出て見えないことがあったのを直しました",
     "en": "Simulator: the \"Save first?\" prompt after changing the start in the final-item settings could appear off screen; it now scrolls into view"
-   }
-  ]
- },
- {
-  "v": "0.1.655",
-  "date": "2026-11-02",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 同じ系統の MOD が付いている時は、その系統のエッセンスを打てないようにしました (MOD 一覧のエッセンスの行も灰色になります)。同じ系統の MOD は 1 つのアイテムに 1 つまでです (フラックスで元素を変えた時は除く)",
-    "en": "Emulator: you can no longer use an essence when the item already has a mod of the same family (its row in the mod list is greyed out too). An item holds only one mod per family (except when a flux changes the element)"
    }
   ]
  }

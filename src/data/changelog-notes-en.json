@@ -1,4 +1,9 @@
 {
+  "0.1.695": [
+    "Simulator (phone): phones now only view recipes and no longer run them for now. Opening skips the hole check so it loads faster, and unfinished recipes say \"Unfinished recipe\"",
+    "Simulator (phone): tier labels on the full tree view are thinned out when they would overlap",
+    "Closing the feedback page now returns to the page you came from, as you left it (it used to go back to base selection). The back button shows that page's name"
+  ],
   "0.1.694": [
     "Simulator: before an Omen of Whittling, the tree now splits by whether the junk mod level is lower, the same or higher, so you can pick a different move for each",
     "Simulator (phone): fixed the tier labels overlapping on the full tree view",
