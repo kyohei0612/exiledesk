@@ -204,9 +204,11 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
   <!-- 押せる物は全部 24px 以上 (2026-10-22 押しにくい所の洗い出し、notes/2026-10-22-tree-ui-click-audit.md) -->
   <!-- 押すは Vue Flow の箱の node-click、引っ張るは use-gesture.ts (Vue Flow の引っ張りは遊びの 5px 分が動きから抜けた)。
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
-  <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-tree-swamp="swamp ? '' : undefined" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
-    :class="[x === undefined ? 'relative' : 'absolute', 'flex flex-col', viewOnly ? 'cursor-pointer' : 'cursor-grab', gray ? 'opacity-45 grayscale' : '', guide ? 'ring-2 ring-amber-300 !border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '', settled ? 'ring-1 ring-amber-200/35' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !hold && !seenOut ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
-    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon, ...(swamp ? { outline: `${3 * swamp}px solid #38bdf8` } : {}) }" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
+  <!-- 包み = 置き場だけ。中に枠 (data-tree-box) と、その下の枠の外に削減の帯 (S-65c ⑫、11-11 オーナー追い 8「線出すならこいつら枠の下がいいんじゃね」)。Vue Flow の箱の高さは帯まで -->
+  <div data-tree-box-wrap :class="x === undefined ? 'relative' : 'absolute'" :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px` }">
+  <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-tree-swamp="swamp ? '' : undefined" :data-sample-note="sampled?.note || undefined" class="relative select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
+    :class="['flex flex-col', viewOnly ? 'cursor-pointer' : 'cursor-grab', gray ? 'opacity-45 grayscale' : '', guide ? 'ring-2 ring-amber-300 !border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '', settled ? 'ring-1 ring-amber-200/35' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !hold && !seenOut ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
+    :style="{ width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon, ...(swamp ? { outline: `${3 * swamp}px solid #38bdf8` } : {}) }" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。割合 % は出さない (S-76 撤回) -->
@@ -301,18 +303,6 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
         <button v-if="removable" type="button" data-tree-box-remove class="nodrag -mr-1 flex min-h-6 shrink-0 items-center justify-center rounded" :class="rm.is(box.id) ? 'whitespace-nowrap bg-rose-700 px-1.5 text-[11px] font-bold text-white hover:bg-rose-600' : 'size-6 opacity-60 hover:bg-white/10 hover:opacity-100'" :title="rmTitle" @click.stop="rm.arm(box.id) && emit('remove')"><template v-if="rm.is(box.id)">{{ tr(`下の ${rmCount} 箱ごと消す`, `Remove ${boxesEn(rmCount)}`) }}</template><Icon v-else name="x" class="size-3.5" /></button>
       </span>
     </div>
-    <!-- 削減の手前の枠の帯 (S-65c ⑫、11-10 オーナー案 ③): 枠ごとに 1 本、押すとその枠の手の窓 (未設定なら次に打つ手)。線は帯の真下から下へ -->
-    <div v-if="bands?.length" data-tree-bands class="-mx-1 -mb-1 mt-2 flex gap-1">
-      <button v-for="x in bands" :key="x.id" type="button" data-tree-band :data-band-lv="x.lv" :data-box-id="x.id" class="nodrag relative flex min-w-0 flex-1 flex-col items-stretch gap-0.5 rounded-md border px-1 pb-0.5 pt-1 text-[11px] leading-4 hover:brightness-125"
-        :class="[quiet ? 'pointer-events-none' : '', x.selected ? 'ring-2 ring-amber-200' : '']" :style="{ borderColor: `rgba(${lvLook(x.lv).rgb},0.75)`, background: `rgba(${lvLook(x.lv).rgb},0.12)` }"
-        :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="!quiet && emit('band', x.id, $event)" @click.stop>
-        <span class="truncate rounded-sm text-center font-bold text-black" :style="{ background: `rgb(${lvLook(x.lv).rgb})` }">{{ tr(BAND_TXT[x.lv]![0], BAND_TXT[x.lv]![1]) }}</span>
-        <span class="truncate text-center text-white/70">{{ tr(BAND_TXT[x.lv]![2], BAND_TXT[x.lv]![3]) }}</span>
-        <!-- 手は帯の下の札 (絵と名前、11-11 オーナー「どこに何打って…一ミリも分からん」)。帯の中は未設定の時だけ -->
-        <span v-if="!x.hand" data-tree-band-hand class="truncate text-center font-bold text-rose-300">{{ tr("未設定 ＋", "Unset +") }}</span>
-        <span v-if="x.issue" data-tree-band-issue class="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white">!</span>
-      </button>
-    </div>
     <!-- 操作 (分ける・まとめる。箱の一番下、上の帯の「まとめる」と同じ選び方へ入る入口) -->
     <div v-if="!quiet && ((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" class="mt-1 flex items-center justify-end gap-1 text-[12px]">
       <button v-if="((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" type="button" data-tree-split-any class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('MOD ごとに当たりの箱を分ける (先頭の MOD はこの箱のまま、続きの手もそのまま。1 つ戻すで戻せる)', 'Split into one hit box per mod (the first mod keeps this box and its next steps; Undo restores)')" @click.stop="t.edit((d) => (box.anyOf?.length ? splitAny(d, box.id) : splitOuts(d, box.id)))"><Icon v-if="k > 1" name="layers" class="size-3.5" /><template v-else>{{ tr("分ける", "Split") }}</template></button>
@@ -328,5 +318,18 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <!-- 予見の枠では ＋ でなく「進む」(次に持つ手を選ぶ、11-05 オーナー「UI的には進むがイイかもね＋じゃなくて」) -->
     <button v-if="plusOn" type="button" data-tree-next :data-tree-foresee-next="hold ? '' : undefined" :style="{ scale: String(plusK), top: `calc(100% + ${plusY}px)` }" class="nodrag absolute left-1/2 flex h-7 -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 bg-[#1d1812]" :class="hold ? 'whitespace-nowrap border-violet-300/80 px-3 text-[12px] font-bold text-violet-100 hover:bg-violet-500/30' : 'w-7 border-amber-400/70 text-amber-200 hover:bg-amber-500/30'"
       :title="hold ? tr('予見したアイテムで次に持つ手を選ぶ (結果が見える)', 'Choose the next craft to hold on the foreseen item (its result is visible)') : tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)" @click.stop><template v-if="hold">{{ tr("進む", "Next") }}</template><Icon v-else name="plus" class="size-4" /></button>
+  </div>
+  <!-- 削減の手前の枠の帯 (S-65c ⑫、11-10 オーナー案 ③): 枠ごとに 1 本、押すとその枠の手の窓 (未設定なら次に打つ手)。線は帯の真下から下へ。帯は枠の外のすぐ下 (追い 8) -->
+  <div v-if="bands?.length" data-tree-bands class="mt-1 flex gap-1">
+    <button v-for="x in bands" :key="x.id" type="button" data-tree-band :data-band-lv="x.lv" :data-box-id="x.id" class="nodrag relative flex min-w-0 flex-1 flex-col items-stretch gap-0.5 rounded-md border px-1 pb-0.5 pt-1 text-[11px] leading-4 hover:brightness-125"
+      :class="[quiet ? 'pointer-events-none' : '', x.selected ? 'ring-2 ring-amber-200' : '']" :style="{ borderColor: `rgba(${lvLook(x.lv).rgb},0.75)`, background: `linear-gradient(rgba(${lvLook(x.lv).rgb},0.12), rgba(${lvLook(x.lv).rgb},0.12)), #15110c` }"
+      :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="!quiet && emit('band', x.id, $event)" @click.stop>
+      <span class="truncate rounded-sm text-center font-bold text-black" :style="{ background: `rgb(${lvLook(x.lv).rgb})` }">{{ tr(BAND_TXT[x.lv]![0], BAND_TXT[x.lv]![1]) }}</span>
+      <span class="truncate text-center text-white/70">{{ tr(BAND_TXT[x.lv]![2], BAND_TXT[x.lv]![3]) }}</span>
+      <!-- 手は帯の下の札 (絵と名前、11-11 オーナー「どこに何打って…一ミリも分からん」)。帯の中は未設定の時だけ -->
+      <span v-if="!x.hand" data-tree-band-hand class="truncate text-center font-bold text-rose-300">{{ tr("未設定 ＋", "Unset +") }}</span>
+      <span v-if="x.issue" data-tree-band-issue class="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white">!</span>
+    </button>
+  </div>
   </div>
 </template>
