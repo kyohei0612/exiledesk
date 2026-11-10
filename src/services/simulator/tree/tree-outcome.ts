@@ -67,15 +67,19 @@ function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
  * (消えても外れが消えた・外れ。どれが狙いかは打つ前の中身、S-29・S-60。エッセンスも同じ = 大本 2)
  */
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
+  const oc = plainOutcomeOf(data, doc, b, before, after, aims0, aimed);
+  // 次のエッセンス / 合金と同じ系統の MOD が付いた人は「エッセンスと同じ MOD」の箱へ (S-33e ③。その箱がある時だけ)。同格以上は (同格以上) の箱へ (S-33e ⑥)
+  if (oc.out !== "blocked") for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
+    if (b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === key) && sameModKids(doc, b, oc.out).some((k) => essenceHold(data, after, k) === hold)) return { out: "blocked", hits: [], ...(key ? { junkKey: key } : {}) };
+  }
+  return lvKeyed(data, doc, b, oc, after, aimed);
+}
+/** 箱 b の手の結果 (「エッセンスと同じ MOD」・削減の枠の振り分けの前の本体) */
+function plainOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
   const own = ownOf(doc, b);
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
-  const oc = handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
-  // 次のエッセンス / 合金と同じ系統の MOD が付いた人は「エッセンスと同じ MOD」の箱へ (S-33e ③。その箱がある時だけ)。同格以上は (同格以上) の箱へ (S-33e ⑥)
-  if (oc.out !== "blocked") for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
-    if (b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === key) && sameModKids(doc, b).some((k) => essenceHold(data, after, k) === hold)) return { out: "blocked", hits: [], ...(key ? { junkKey: key } : {}) };
-  }
-  return lvKeyed(data, doc, b, oc, after, aimed);
+  return handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
 }
 /**
  * 削減の手前の枠 (S-65c): 結果の箱が外れの MOD レベルの組 (低い・同じ・高い) で分かれていれば、打った後の品の組を鍵に足す (一人ずつ実物の外れの MOD レベルで枠へ)。
@@ -132,7 +136,8 @@ export function sameModShown(data: PatchData, doc: TreeDoc, boxId: string, item:
   return { ...item, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) };
 }
 /** 箱 a の結果の箱に置いたエッセンス / 合金の手 (「エッセンスと同じ MOD」の箱を作る相手) */
-const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">): string[] => a.outs.flatMap((id) => { const c = doc.boxes[id]; return c && c.out !== "blocked" && c.hand && effectOf(c.hand.currency) === "essence" ? [c.hand.currency] : []; });
+/** out を渡すと、人の結果と同じ側の箱 (狙いが消えたか・当たりかが同じ。狙い無しの「打った後」は外れと同じ側) に置いたエッセンスだけ (エッセンスの箱へ行かない人は「エッセンスと同じ MOD」に入れない、S-33e) */
+const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">, out?: OutKind): string[] => a.outs.flatMap((id) => { const c = doc.boxes[id]; return c && c.out !== "blocked" && (!out || ((c.out === "lost") === (out === "lost") && (c.out === "hit") === (out === "hit"))) && c.hand && effectOf(c.hand.currency) === "essence" ? [c.hand.currency] : []; });
 /**
  * 箱 a の手の結果に「エッセンスと同じ MOD」の箱が要るか (S-33e ①、11-08 オーナー「エッセンス打つ前の枝だから、枠を増やすのはエッセンスの前に１つ枠を作る形になるよね」):
  * a の見本に a の手を打った結果のどれかが、結果の箱に置いたエッセンス / 合金と同じ系統の普通の MOD を低い段で持つ (E-56 の塞がる) 時だけ。前の手で付きようが無ければ作らない
@@ -144,7 +149,9 @@ export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string, hold: "
     const smp = sampleOf(data, doc, aId, i);
     if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
     const outs = stepOutcomes(data, smp.item, a.hand.currency, engineOmens(a.hand)) ?? [];
-    if (outs.some((o) => !o.void && keys.some((k) => essenceHold(data, o.item, k) === hold))) return true;
+    // エッセンスの手のある箱と同じ結果になる人だけ (11-11 枝のフルチェック: 左側の消去で外れが消えた人がエッセンスの MOD を持ったまま「塞がった」へ入り、外れが消えたの箱に誰も着かなかった)
+    const aims = aimsOf(data, doc), aimed = sampleAimed(data, doc, aId, i);
+    if (outs.some((o) => !o.void && sameModKids(doc, a, plainOutcomeOf(data, doc, a, smp.item, o.item, aims, aimed).out).some((k) => essenceHold(data, o.item, k) === hold))) return true;
   }
   return false;
 }
