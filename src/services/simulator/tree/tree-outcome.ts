@@ -298,6 +298,9 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (h.repeat || isCatalyst(h.currency)) return null;
   // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
   if (isRuneHand(h.currency)) return [{ out: "any", aim: null }];
+  // ヒネコラの髪束は MOD を変えない手: 直下に予見した「打った後」の 1 箱だけ (S-39 ①、11-11 オーナー「1枠ヒネコラ打ったらその直下に枠出来るだけじゃないのそもそも」。
+  // 前はエンジンの枝が取れず手の種類の既定 = 当たり + 外れ の 2 箱になり、合流をやめた後に直下が 2 つに見えた)
+  if (h.currency === "hinekora") return [{ out: "any", aim: null }];
   // 後から打つ発現の手: 見本の未発現に出うる MOD (エンジンの revealOutcomes) が ☑ の札に当たれば当たり、どれにも当たらない MOD があれば外れ (発現は MOD を消さない。
   // 当て方は回す時の revealHitOf と同じ。前は ☑ の札全部 + 外れの決め打ち)。箱に着いた見本が無ければ前の形のまま
   if (isRevealHand(h.currency)) {
