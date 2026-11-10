@@ -1,4 +1,12 @@
 {
+  "0.1.693": [
+    "Emulator (phone): the currency shelf now comes before the steps, and the item card stays at the top as you scroll",
+    "Simulator: with two or more ✦ mods on the final item, the trade site search now checks every ✦ mod",
+    "Simulator: a tree with only the start now shows the unset mark too",
+    "Simulator: fixed the sample of a box after Orb of Alchemy then a Bone left Unrevealed being empty, which hid Reveal",
+    "Simulator: shared recipes opened on a phone now start on the full tree view",
+    "Daily: items with two or more Genesis Tree mods can no longer be submitted. The 100-run numbers during a challenge now match the final tally"
+  ],
   "0.1.692": [
     "Simulator: it now always opens at base selection (no longer resumes the last unsaved tree)",
     "Simulator: Hinekora's Lock (foresight) is now available"

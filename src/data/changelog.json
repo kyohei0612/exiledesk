@@ -1,5 +1,47 @@
 [
  {
+  "v": "0.1.693",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター (スマホ): 素材の棚を工程の前に出し、下へ送るとアイテムのカードが上に止まるようにしました",
+    "en": "Emulator (phone): the currency shelf now comes before the steps, and the item card stays at the top as you scroll"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ✦ が 2 つ以上の完成形でも、取引所の検索が ✦ の MOD を全部見るようにしました",
+    "en": "Simulator: with two or more ✦ mods on the final item, the trade site search now checks every ✦ mod"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スタートしか無いツリーにも未設定の印を出すようにしました",
+    "en": "Simulator: a tree with only the start now shows the unset mark too"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 錬金術の後に骨を未発現のまま打った箱の見本が空になり、発現を選べなかったのを直しました",
+    "en": "Simulator: fixed the sample of a box after Orb of Alchemy then a Bone left Unrevealed being empty, which hid Reveal"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホで共有のレシピを開いた時に、ツリーの全体図から見られるようにしました",
+    "en": "Simulator: shared recipes opened on a phone now start on the full tree view"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 創生の樹の MOD が 2 つ以上の装備は投稿できないようにしました。挑戦中に 100 人回した数を締めの集計と同じにしました",
+    "en": "Daily: items with two or more Genesis Tree mods can no longer be submitted. The 100-run numbers during a challenge now match the final tally"
+   }
+  ]
+ },
+ {
   "v": "0.1.692",
   "date": "2026-11-10",
   "items": [
@@ -874,42 +916,6 @@
     "area": "",
     "text": "シミュレーター: 壊れたレシピの URL を開いた時、黙ってベース選びに戻らず「このレシピは読めませんでした」と出すようにしました",
     "en": "Simulator: opening a broken recipe URL now says \"This recipe couldn't be read\" instead of silently going back to base selection"
-   }
-  ]
- },
- {
-  "v": "0.1.653",
-  "date": "2026-11-01",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホは見るだけの画面にしました。完成形のカードと完成までの道を出し、「詳細」で全体図を指で動かして拡大できます。「10 人回す」も使えます。ツリーを組むのは幅 768 以上で",
-    "en": "Simulator: phones now get a view-only screen with the final item card and the route to it. Tap Details for the full map, which you can drag and pinch to zoom. Run 10 works too. Building trees needs a width of 768 or more"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの読み込み・穴チェック・100 人回す・手を足す時・箱の移動を軽くし、大きな木で固まるのを減らしました (結果は変わりません)",
-    "en": "Simulator: faster tree loading, gap check, Run 100, adding crafts and box dragging, with fewer freezes on big trees (results unchanged)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 穴チェックは自動で回さず、ボタンを押した時だけ回すようにしました。木を変えると合格は消えるので、もう一度押してください",
-    "en": "Simulator: the gap check no longer runs by itself, only when you press the button. Changing the tree clears the pass, so press it again"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧の目次のタブを 1 回押せば、その節の見出しまで飛ぶようにしました",
-    "en": "Mod list: one tap on a contents tab now jumps to that section's heading"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベースを選んだ後に上のタブでベースのページへ来た時、開いている一覧まで送るようにしました (PC)",
-    "en": "Coming back to the base page from the top tabs after choosing a base now scrolls to the open list (PC)"
    }
   ]
  }
