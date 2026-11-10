@@ -1,7 +1,7 @@
 # 分析用の記録の動向 (2026-10-10、2026-10-19 に来た・PV・流れ・チュートリアル・スパムシミュレーターを足した)
 #   python scripts/analyze-logs.py data-cache/logs/2026-10-15.jsonl data-cache/logs/2026-10-16.jsonl ...   (data-cache/logs/*.jsonl でも可)
 # 記録の取り出し: node scripts/pull-logs.mjs <日付> ... (鍵が無ければ wrangler で D1 を読む)。1 行 = 届いた 1 まとまり {at, country, b: {app, v, uid, sid, dev, recs}}
-# 記録の中身はメモ analytics-logs (visit・screen・emu_use・aim_odds / aim_roll・emu_spam / emu_spam_share・routes_calc / routes_shared・tutorial・pwa・gem_corrupt・ブログの screen "blog:<slug>:<言語>"・blog_share)
+# 記録の中身はメモ analytics-logs (visit (lang・langFrom・w)・lang (押して替えた from → to)・screen・emu_use・aim_odds / aim_roll・emu_spam / emu_spam_share・routes_calc / routes_shared・tutorial・pwa・gem_corrupt・ブログの screen "blog:<slug>:<言語>"・blog_share)
 import collections, glob, json, statistics, sys
 from datetime import datetime, timedelta, timezone
 
@@ -244,6 +244,11 @@ if recs["stay"]:
     print(f"見ていた秒 (訪問の中央): {med(list(sec.values()))} 秒 ({len(sec)} 訪問) / 開くまで (中央): {med(load)} ms / エミュの戻し: {dict(emu)}")
 if recs["visit"] and any("lang" in r["d"] for r in recs["visit"]):
     print("言語 (訪問):", top(collections.Counter(r["d"].get("lang") for r in recs["visit"] if "lang" in r["d"]), 4))
+    lv = [r["d"] for r in recs["visit"] if "lang" in r["d"]]
+    print("言語の出どころ (訪問, url / saved / browser):", top(collections.Counter(f'{d.get("lang")}:{d.get("langFrom")}' for d in lv), 6))
+    print("初めての人の言語:", top(collections.Counter(d.get("lang") for d in lv if d.get("first")), 4))
+if recs["lang"]:
+    print("言語を押して替えた:", top(collections.Counter(f'{r["d"].get("from")}→{r["d"].get("to")}' for r in recs["lang"]), 4), f'/ 開いてから (中央) {med([r["d"].get("s", 0) for r in recs["lang"]])} 秒')
 if recs["tree_recipe_open"]:
     print("共有のレシピを開いた:", top(collections.Counter(r["d"].get("ok") for r in recs["tree_recipe_open"]), 2))
 if recs["blog_read"]:

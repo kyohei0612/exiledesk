@@ -10,6 +10,9 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 export type Lang = "ja" | "en";
 const KEY = "exiledesk.lang";
+/** 開いた時の言語がどこから来たか (来た時の記録 visit に載せる。2026-11-10 オーナー「足しておいて」): url = ?lang=、saved = この端末で前に選んだ、browser = ブラウザの言語 (一度も選んでいない) */
+export type LangFrom = "url" | "saved" | "browser";
+let from: LangFrom = "browser";
 
 function initial(): Lang {
   // 画面の無い所 (テスト・Node。Node 21 からは navigator.language が en-US) とアプリは日本語
@@ -17,16 +20,18 @@ function initial(): Lang {
   // ?lang=en / ?lang=ja (英語のベースのページからのリンク。2026-10-17)。選んだ言語として覚える
   try {
     const q = new URLSearchParams(location.search).get("lang");
-    if (q === "ja" || q === "en") { localStorage.setItem(KEY, q); return q; }
+    if (q === "ja" || q === "en") { from = "url"; localStorage.setItem(KEY, q); return q; }
   } catch { /* 無くてよい */ }
   try {
     const v = localStorage.getItem(KEY);
-    if (v === "ja" || v === "en") return v;
+    if (v === "ja" || v === "en") { from = "saved"; return v; }
   } catch { /* 無くてよい */ }
-  return typeof navigator !== "undefined" && /^ja\b/i.test(navigator.language ?? "") ? "ja" : "en";
+  return browserLang();
 }
 
 export const lang = ref<Lang>(initial());
+/** 開いた時の言語の出どころ (開いた後に押して替えても変わらない) */
+export const langFrom: LangFrom = from;
 export const isEn = computed(() => lang.value === "en");
 export function setLang(v: Lang): void {
   lang.value = v;
@@ -39,6 +44,13 @@ export function setLang(v: Lang): void {
   } catch { /* 無くてよい */ }
 }
 if (typeof document !== "undefined") document.documentElement.lang = lang.value;
+
+/** この端末で言語を一度でも選んだか (?lang= で来た・上の帯で押した・言語選びのポップアップで選んだ。U-37 の「初めて」の判定) */
+export function langChosen(): boolean {
+  try { const v = localStorage.getItem(KEY); return v === "ja" || v === "en"; } catch { return true; /* 覚えられない端末には聞かない */ }
+}
+/** ブラウザの言語から決めた言語 (選んでいない人の既定。initial より先に呼ばれるので function で巻き上げる) */
+export function browserLang(): Lang { return typeof navigator !== "undefined" && /^ja\b/i.test(navigator.language ?? "") ? "ja" : "en"; }
 
 /** 画面の言葉: 日本語と英語を並べて書く */
 export const tr = (ja: string, en: string): string => (lang.value === "en" ? en : ja);

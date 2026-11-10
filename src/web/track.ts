@@ -8,7 +8,7 @@ import { watch } from "vue";
 import { craftStage } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
 import { randId } from "../utils/rand-id";
-import { lang } from "../i18n/lang";
+import { lang, langFrom } from "../i18n/lang";
 import { logRecord } from "../utils/log-record";
 import { onSim, simLeave, simOp, simPage } from "./sim-trail";
 /** シミュの画面はここから simOp (操作の流れ) を呼ぶ (入口を track.ts 1 つに) */
@@ -172,7 +172,7 @@ export function startTracking(): void {
   trackOnce("open");
   trackOnce(`entry:${entry}`);
   // 私 (Claude) が手元から読める記録 (D1) にも入口を残す。印 (Analytics Engine) はサーバーの鍵が無いと読めない (2026-10-16)
-  if (!noLog()) logRecord("visit", { ref, entry, path: location.pathname, ...(landing.get("base") ? { base: landing.get("base") } : {}), ...(Object.keys(utm).length ? { utm } : {}), dev, first });
+  if (!noLog()) logRecord("visit", { ref, entry, path: location.pathname, ...(landing.get("base") ? { base: landing.get("base") } : {}), ...(Object.keys(utm).length ? { utm } : {}), dev, first, lang: lang.value, langFrom, w: window.innerWidth });
   try {
     if (via || [...landing.keys()].some((k) => k === "r" || k.startsWith("utm_"))) {
       const u = new URL(location.href);
@@ -182,6 +182,8 @@ export function startTracking(): void {
   } catch { /* 外せなくてよい */ }
   // 画面の言語 (英語版の需要を見る。訪問ごとに 1 回、切り替えたらその言語も 1 回。2026-10-12)
   watch(lang, (l) => trackOnce(`lang:${l}`), { immediate: true });
+  // 押して言語を替えた時は D1 にも 1 件 (from → to と開いてから何秒目か。2026-11-10 オーナー「足しておいて」、印は AE にしか無かった)
+  watch(lang, (to, was) => { if (!noLog() && was && to !== was) logRecord("lang", { from: was, to, s: Math.round((Date.now() - t0) / 1000) }); });
   const s = craftStage;
   watch(s.mode, (m) => trackOnce(`mode:${m}`), { immediate: true });
   // 確率機だけ回した人は「エミュレーターで打った人」に入れない (2026-10-16)
