@@ -14,12 +14,22 @@ const props = defineProps<{ lanes: Lane[]; /** 木の送り (縦) */ ty: number;
 
 const size = computed(() => laneSize(props.k));
 const bandW = computed(() => laneBandW(props.lanes.map((l) => l.text), props.k));
+/**
+ * 出す札: 上から順に、前に出した札と重なる札は飛ばす (11-10 オーナー「どのスマホや画面でもいけるようにしたいけどわざわざその型にあわせてやるんじゃなくて」、S-147f2)。
+ * 字は最小 12px より小さくしないので、縮めて段の間が字の高さより狭くなると重なっていた (縦の短いスマホの全体図など)。画面の大きさでは分けず、間 (段の間 × 倍率) だけを見る
+ */
+const shown = computed(() => {
+  const gap = size.value * 1.15, out: Lane[] = [];
+  let last = -Infinity;
+  for (const l of [...props.lanes].sort((a, z) => a.mid - z.mid)) { const y = l.mid * props.k; if (y - last < gap) continue; out.push(l); last = y; }
+  return out;
+});
 </script>
 
 <template>
   <div data-tree-lanes class="pointer-events-none" :class="column ? 'relative shrink-0 self-stretch overflow-hidden rounded-l-lg' : 'absolute inset-y-0 left-0 z-[15]'" :style="column ? { width: `${bandW}px` } : {}">
     <div data-tree-lane-band class="absolute inset-y-0 left-0 border-r border-amber-200/15 bg-black/55" :style="{ width: `${bandW}px` }" />
-    <span v-for="l in lanes" :key="l.text + l.mid" data-tree-lane :data-lane-text="l.text"
+    <span v-for="l in shown" :key="l.text + l.mid" data-tree-lane :data-lane-text="l.text"
       class="absolute left-0 flex -translate-y-1/2 items-center justify-center whitespace-nowrap font-bold leading-none tabular-nums text-amber-100/85 [text-shadow:0_1px_3px_#000]"
       :style="{ top: `${ty + l.mid * k}px`, fontSize: `${size}px`, width: `${bandW}px` }">{{ label(l.text) }}</span>
   </div>
