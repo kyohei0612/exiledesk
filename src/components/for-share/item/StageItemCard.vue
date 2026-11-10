@@ -47,7 +47,7 @@ const toggleOf = (m: StageMod): RowToggle | null => (ROW_TOGGLE && !m.unrevealed
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
 /** replace の札を行の名前にする時の文字の色 */
-const ROW_TAG_TEXT: Record<RowTag["tone"], string> = { bad: "text-rose-300", warn: "text-amber-200", good: "text-emerald-300", info: "text-sky-200" };
+const ROW_TAG_TEXT: Record<RowTag["tone"], string> = { bad: "text-orange-400" /* 外れ MOD はオレンジ (11-10 オーナー「外れＭＯＤもあと色変えてあっげ無いとねオレンジに」、消える候補は赤 = stage-doomed) */, warn: "text-amber-200", good: "text-emerald-300", info: "text-sky-200" };
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /** 行の × (rowRemove)。removable の × がある時・持っている時・未発現には出さない */
 const rowX = (m: StageMod): boolean => !!props.rowRemove && !props.removable && !props.holding && !m.unrevealed;

@@ -133,7 +133,7 @@
     --exile-color-stage-pop-bg:             #0b0a08;
     --exile-color-stage-prefix:             #e0846a;
     --exile-color-stage-suffix:             #6aa8e8;
-    --exile-color-stage-doomed:             #ff8a3d;
+    --exile-color-stage-doomed:             #fb7185; /* 持った時に消える候補 = 赤 (11-10、外れ MOD のオレンジと分ける。前は #ff8a3d) */
     --exile-color-stage-unrevealed:         #a6e05c;
     --exile-color-stage-mod:                #c8c8ff;
 
