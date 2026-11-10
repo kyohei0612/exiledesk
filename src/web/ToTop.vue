@@ -9,6 +9,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../components/ui/Icon.vue";
 import { tr } from "../i18n/lang";
 import { usePhone } from "../utils/use-phone";
+import { treePage } from "../state/web-page";
 
 const phone = usePhone();
 const shown = ref(false);
@@ -49,7 +50,8 @@ const onScroll = (): void => { if (!raf) raf = requestAnimationFrame(() => { raf
 // 重ね窓の開け閉めはスクロールが起きないので、要素の出入りで見直す (スマホだけ。1 コマに 1 回)
 const mo = typeof MutationObserver !== "undefined" ? new MutationObserver(onScroll) : null;
 onMounted(() => { window.addEventListener("scroll", onScroll, { passive: true }); window.addEventListener("resize", onScroll); update(); });
-watch(phone, (p) => { mo?.disconnect(); if (p) mo?.observe(document.body, { childList: true, subtree: true }); }, { immediate: true });
+// シミュの木のページ (スマホは送らない作り、S-94b) では出る事が無いので見張らない。開く時に描くたびに位置を測り約 0.3 秒使っていた (11-10)
+watch([phone, treePage], ([p, tree]) => { mo?.disconnect(); if (p && !tree) mo?.observe(document.body, { childList: true, subtree: true }); }, { immediate: true });
 onBeforeUnmount(() => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); mo?.disconnect(); cancelAnimationFrame(raf); });
 </script>
 
