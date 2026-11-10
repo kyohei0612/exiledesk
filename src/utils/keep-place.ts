@@ -40,7 +40,7 @@ export function keepPlace(el: Element | null | undefined, change: () => void): v
 }
 
 /**
- * 物を見える所へ送る。スマホは上に貼るアイテムの帯 (StageItemMini) の下に出す
+ * 物を見える所へ送る。スマホは上に貼るアイテムのカード ([data-item-pin]、11-10 から。前は文字だけの要約の帯) の下に出す
  * (2026-10-09 エミュレーターの「狙う」: scrollIntoView だと見出しと狙いの札が帯の裏に隠れた)。
  * 「見える所へ送る」はみなこれで。pcBlock = PC の時の位置 (発現の欄は真ん中)。behavior "auto" は一気に、それ以外は glideBy でぬるっと
  */
@@ -49,7 +49,7 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
   const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
   const view = box ? box.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-  const bar = isPhoneWidth() ? (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0 : 0;
+  const bar = isPhoneWidth() ? (document.querySelector("[data-item-pin]") as HTMLElement | null)?.offsetHeight ?? 0 : 0;
   // 固定の見出し (scroll-mt-*) の分は下げる (MOD 一覧の目次で飛ぶと、節の見出しが固定の目次の裏に隠れていた。2026-10-10 点検)
   const mt = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
   const top = view.top + bar + 8 + mt;

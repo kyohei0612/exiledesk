@@ -26,7 +26,6 @@ import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import StageQualityBar from "../../components/for-share/item/StageQualityBar.vue";
 import StageSanctifyBar from "./StageSanctifyBar.vue";
 import { flag } from "../../web/release-flags";
-import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
@@ -135,17 +134,8 @@ const btn = "g-btn sm";
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
  */
 const phone = usePhone();
-/** アイテムのカードが画面に見えているか (スマホで外に出たら StageItemMini を上に貼る) */
+/** アイテムのカードの枠 (持っている時、外を押すと離す判定から外す) */
 const cardEl = ref<HTMLElement | null>(null);
-const cardOnScreen = ref(true);
-let cardIo: IntersectionObserver | null = null;
-watch(cardEl, (el) => {
-  cardIo?.disconnect();
-  if (!el || typeof IntersectionObserver === "undefined") { cardOnScreen.value = true; return; }
-  cardIo = new IntersectionObserver(([e]) => { cardOnScreen.value = !!e?.isIntersecting; }, { threshold: 0.25 });
-  cardIo.observe(el);
-});
-onBeforeUnmount(() => cardIo?.disconnect());
 /**
  * アイテムの MOD を右クリックでフラクチャー (今の段のまま固定。2026-10-09 オーナー「MOD 右クリックでフラクチャー化させてあげてもいいかも」)。
  * MOD 一覧の「フラクチャー」と同じ手 (レアだけ・1 つまで。打てない時は理由が出る)
@@ -276,8 +266,6 @@ function pickMode(m: typeof s.mode.value): void {
 
     <!-- 設定と操作 (StageSettings.vue) -->
     <StageSettings :phone="phone" />
-    <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
-    <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="sanctifySample ?? s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
     <p v-if="s.error.value" class="mb-3 flex items-center gap-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300"><span class="min-w-0 flex-1">{{ s.error.value }}</span><button v-if="!s.data.value" type="button" class="g-btn sm shrink-0" @click="retryInit">{{ tr("もう一度", "Retry") }}</button></p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center"><BusyTag :text="tr('クラフトのデータを読み込み中', 'Loading craft data')" /></p>
@@ -286,17 +274,19 @@ function pickMode(m: typeof s.mode.value): void {
     <CourseHost part="main" :guide-page="guidePage" />
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>
-    <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
+    <div v-if="s.ready.value && ((s.mode.value === 'hand' && !handNoBase) || s.replay.value)" class="grid gap-4 max-md:grid-cols-[minmax(0,1fr)] @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
-      <div class="flex min-w-0 flex-col items-center gap-8 max-md:items-stretch">
+      <!-- スマホは中身を外の縦積みに直に並べる (contents): カードを棚の所まで上に貼れるように、工程を棚の後へ回せるように (M-72、オーナー 11-10) -->
+      <div class="flex min-w-0 flex-col items-center gap-8 max-md:contents">
         <!-- 品質を変える帯はアイテムの説明の窓の外、すぐ上 (2026-10-10)。カードの上の帯: 左に「MOD 一覧へ」、右に品質 (2026-10-10 オーナー「アイテムカードの枠左上に MOD 一覧へ、行ったり来たり、ワープでいい」) -->
-        <div v-if="!courseHidesEmulator" class="-mb-6 flex w-full max-w-[480px] items-center gap-2">
+        <div v-if="!courseHidesEmulator" class="-mb-6 flex w-full max-w-[480px] items-center gap-2 max-md:-mb-2">
           <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top shrink-0" :title="tr('このベースに付く MOD の一覧へ (Tab でも開く)', 'Go to the mod list (Tab also opens it)')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}</button><!-- Tab の札は説明へ (品質の帯が 1 行に入らなかった。2026-10-18) -->
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
-        <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px]"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
-        <div ref="cardEl" data-stage-well class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
+        <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px] max-md:-mb-2"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
+        <!-- スマホはカードそのものを上に貼る (下へ送っても打っている物が見える。前の文字だけの要約の帯の代わり、オーナー 11-10「今打ってるアイテムカードから固定に」) -->
+        <div ref="cardEl" data-stage-well data-item-pin class="relative max-md:sticky max-md:top-0 max-md:z-30" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"
           :item="sanctifySample ?? s.item.value!"
@@ -322,7 +312,7 @@ function pickMode(m: typeof s.mode.value): void {
         <StageForesight /><!-- ヒネコラの髪束の予見 (StageForesight.vue) -->
         <!-- 工程 (累計と新しい手が上。2026-10-10 オーナー)。上の行との間はカードとの間と同じ mt-2、枠に近く p-1 (10-11)。コースの間は出さない (10-17) -->
         <CourseHost part="under-item" :phone="phone" /><!-- コースの案内はアイテムの下。スマホは今の手もアイテムのすぐ下 (2026-10-17 オーナー) -->
-        <div v-if="!courseHidesEmulator" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
+        <div v-if="!courseHidesEmulator" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:order-last max-md:mt-0 max-md:w-full p-1 text-[12px]"><!-- スマホは棚の後 (M-72、オーナー 11-10「カレンシー打つところと工程の位置逆だろ普通」) -->
           <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
             <span class="ml-auto tabular-nums opacity-70" data-rec-part="history-cost">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
           <!-- 中で送るのはここだけ。伸びるのは 3 手ぶんくらいまで (2026-10-11 オーナー「工程はでかくなる必要ない、ここで固定値」) -->
