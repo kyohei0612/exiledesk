@@ -10,7 +10,8 @@ import { computed } from "vue";
 import { laneBandW, laneLabel as label, laneSize } from "./tree-lane-band";
 
 export interface Lane { /** 段の真ん中 (木の座標) */ mid: number; /** 段の番号 (畳みで混ざる時は「5〜7」) */ text: string }
-const props = defineProps<{ lanes: Lane[]; /** 木の送り (縦) */ ty: number; /** 倍率 */ k: number; /** 枠の外の列 (PC) */ column?: boolean }>();
+const props = defineProps<{ lanes: Lane[]; /** 木の送り (縦) */ ty: number; /** 倍率 */ k: number; /** 枠の外の列 (PC) */ column?: boolean;
+  /** 列の下で木の面ではない高さ (PC の木の下の未設定の帯。木の面と同じ値を渡す)。列をそこで終え、切れた段の札が帯の横まで出ないように (11-10 1920 の木の「3 段目」) */ cut?: number }>();
 
 const size = computed(() => laneSize(props.k));
 const bandW = computed(() => laneBandW(props.lanes.map((l) => l.text), props.k));
@@ -27,7 +28,7 @@ const shown = computed(() => {
 </script>
 
 <template>
-  <div data-tree-lanes class="pointer-events-none" :class="column ? 'relative shrink-0 self-stretch overflow-hidden rounded-l-lg' : 'absolute inset-y-0 left-0 z-[15]'" :style="column ? { width: `${bandW}px` } : {}">
+  <div data-tree-lanes class="pointer-events-none" :class="column ? 'relative shrink-0 self-stretch overflow-hidden rounded-l-lg' : 'absolute inset-y-0 left-0 z-[15]'" :style="column ? { width: `${bandW}px`, marginBottom: `${cut ?? 0}px` } : {}">
     <div data-tree-lane-band class="absolute inset-y-0 left-0 border-r border-amber-200/15 bg-black/55" :style="{ width: `${bandW}px` }" />
     <span v-for="l in shown" :key="l.text + l.mid" data-tree-lane :data-lane-text="l.text"
       class="absolute left-0 flex -translate-y-1/2 items-center justify-center whitespace-nowrap font-bold leading-none tabular-nums text-amber-100/85 [text-shadow:0_1px_3px_#000]"

@@ -404,7 +404,7 @@ const glowOf = (b: Box): boolean => {
         <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
         <!-- overflow-clip: hidden だと枠の外の箱にフォーカス・寄せが来た時にブラウザが枠ごとスクロールし、枠が上へずれて下が描かれなかった (11-06、未設定の「次へ」の後) -->
         <!-- 段の札の列も木の枠と同じくページの zoom を打ち消す (送りと倍率は枠の中の座標。打ち消さないと札が zoom 倍に伸び、下の段ほどずれた、11-08 ayqOgcD9 オーナー「段がバグってる」) -->
-        <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
+        <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" :cut="issuesShown ? 44 * pageZ : 0" />
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <button v-if="!t.needBase.value && sideClosed" type="button" data-tree-side-toggle aria-expanded="false" :class="[SIDE_BTN, 'absolute right-2 top-2 z-20']" :title="tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)')" @click="sideClosed = false"><Icon name="chevron-right" class="size-3.5 -scale-x-100" />{{ tr("完成形", "Final item") }}</button>
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
