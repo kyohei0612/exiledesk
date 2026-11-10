@@ -36,7 +36,7 @@ const noTree = computed(() => { const d = t.doc.value; return t.needBase.value |
  */
 const locked = computed(() => !noTree.value && unsetIssues(t.doc.value).some((x) => blocksRun(x.kind)));
 
-// 100 人回す (PC と同じ人数・回し方・結果の行・結果のまとめ・木の上の層)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目が枠の外へ出たらその箱へ寄る (PC の onWalk と同じ)
+// 10 人回す (人数は 10 人 = S-94e、回し方・結果の行・結果のまとめ・木の上の層)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目が枠の外へ出たらその箱へ寄る (PC の onWalk と同じ)
 // (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」「挙動完全にPCに合わせていいよ…全て真似しておけ」、S-94e)
 const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, (id, i) => void (i ? map.value?.reveal(id) : map.value?.showAll()), true);
 const reportOpen = ref(false);
@@ -118,7 +118,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       <div data-phone-view-run class="flex min-w-0 flex-col gap-1">
         <button type="button" data-phone-view-go :data-phone-view-locked="locked || undefined" class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="locked || !s.data.value || run.running.value" @click="go">{{ locked ? unfinishedText() : run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
         <!-- 結果の行は PC と同じ部品 (1 人目が進んでいる n/m 箱・早送り・飛ばす・止まり・沼った場所・結果のまとめ・結果を隠す)。390 では折り返す -->
-        <TreeRunSum v-if="!locked" v-model:shown="run.shown.value" v-model:report="reportOpen" data-phone-view-sum class="flex-wrap text-[13px] text-amber-100" :result="run.result.value" :running="run.running.value" :stuck="run.stuckBoxes.value" :halted="run.halted.value" :walk="run.walk.value" :test="run.test.value" @go="goBox" @skip="run.skipWalk()" />
+        <TreeRunSum v-if="!locked" v-model:shown="run.shown.value" v-model:report="reportOpen" data-phone-view-sum class="flex-wrap text-[13px] text-amber-100" :result="run.result.value" :running="run.running.value" :stuck="run.stuckBoxes.value" :halted="run.halted.value" :walk="run.walk.value" :test="run.test.value" :n="VIEW_N" @go="goBox" @skip="run.skipWalk()" />
       </div>
       <div ref="topEl" />
       <section data-phone-view-sheet class="fixed inset-x-0 bottom-0 z-30 flex flex-col overscroll-contain rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel px-3 pb-2 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]" :class="detail ? '' : 'overflow-y-auto'" :style="{ top: `${sheetTop}px` }">
