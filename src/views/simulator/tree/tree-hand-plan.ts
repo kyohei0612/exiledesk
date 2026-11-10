@@ -5,7 +5,7 @@
 import { treeOrder } from "../../../services/simulator/tree/tree-order";
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
-import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
+import { foldMisses, holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -54,6 +54,8 @@ export const needAimOf = (doc: TreeDoc, boxId: string, note: string | null | und
  * (「n % まで」の結果の箱も、S-31b)。閉じている間は品質だけ上げる手の後の通り抜けの箱だけ
  */
 export function afterQualityOf(doc: TreeDoc, boxId: string): boolean {
+  // 予見の箱 (S-39) では前にカタリストを自動で足さない: カタリストもアイテムを変えるので予見が消える (エンジンの dropForesight、11-11 オーナーの決め A)。品質は ヒネコラの前に
+  if (holdsAt(doc, boxId)) return true;
   const j = judgeOf(doc);
   if (j && doc.boxes[boxId]) return j.afterQuality(boxId);
   const b = doc.boxes[boxId], p = b?.out === "pass" && b.parent ? doc.boxes[b.parent] : null;
@@ -246,6 +248,8 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
   if (preCat && preFill && !preFill.applied && !full) return tr(`前に足すカタリストが入らない: ${preFill.reason ?? ""}`, `The catalyst before this can't be used: ${preFill.reason ?? ""}`);
   // 当たるまで繰り返すのに狙いが 1 つも無い時は決めさせない (MOD を選んでいない・まだ付いていない狙いが無い・このカレンシーでは付かない)
   if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (当たるまで繰り返す手は狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (a repeat-until-hit craft needs one; if there are none, add one to the final mods first)");
+  // 品質の無い品で触媒のお告げを持つ (予見の箱で、前にカタリストを足さない時、S-39 ⑦)
+  if (!preCat && h.omens.includes(CATALYSING) && !(item.quality > 0)) return tr("品質が要る: カタリストはヒネコラの前に打つ (ヒネコラの後に打つと予見が消える)", "Needs quality: use the catalyst before Hinekora’s Lock (anything used after it clears the foresight)");
   return handProblem(data, preCat && preFill ? preFill.item : item, h);
 }
 /**
