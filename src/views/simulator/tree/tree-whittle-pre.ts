@@ -14,9 +14,7 @@ import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tre
 import { aimedList, missAims } from "../../../services/simulator/tree/tree-miss";
 import { handWhittleSide, isWhittleHand, whittleAimed, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
 
-/** 枠を分ける結果の種類 (当たりは ☑ の札で決まるので分けない) */
-/** 当たり (狙いが途中で付いただけの箱) も乱数の外れがあれば分ける (11-10 オーナー「当たりの箱っていっても理想でついたわけじゃないんだが」、デイリーの弓 SOQUoHYT) */
-const KINDS: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost", "hit"]);
+/** 枠に分けるかは箱の種類で決めない: 削減の手を置いた箱の品に乱数の外れ MOD があれば、どの種類の箱でも分ける (S-65c ①、11-10 オーナー「枠の決まりとしてこの枠の形ならの方がいいのではそもそも」) */
 /** 組の鍵: 種類・当たりの狙い (狙いごとに別の箱)・枠を外した鍵 */
 const groupKey = (c: TreeBox): string => `${c.out}|${c.out === "hit" ? boxAims(c).map(aimKey).join(",") : ""}|${stripLv(c.junkKey) ?? ""}`;
 /** 人の決めの無い箱 (消してよい) */
@@ -30,7 +28,7 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
   const p = a ? d.boxes[a] : undefined;
   if (!p?.hand) return [];
   const groups = new Map<string, string[]>();
-  for (const id of p.outs) { const c = d.boxes[id]; if (c && KINDS.has(c.out)) { const k = groupKey(c); (groups.get(k) ?? groups.set(k, []).get(k)!).push(id); } }
+  for (const id of p.outs) { const c = d.boxes[id]; if (c) { const k = groupKey(c); (groups.get(k) ?? groups.set(k, []).get(k)!).push(id); } }
   const made: string[] = [];
   let ft: ReturnType<typeof frameOfDoc> | null = null;
   for (const ids of groups.values()) {
@@ -95,7 +93,7 @@ export function restoreWhittlePre(d: TreeDoc, id: string, at: string, onPath: Re
   if (!p?.hand) return;
   for (const o of [...p.outs]) {
     const c = d.boxes[o];
-    if (!c || !KINDS.has(c.out) || lvPart(c.junkKey)) continue;
+    if (!c || lvPart(c.junkKey)) continue;
     const saved = LV_ORDER.filter((x) => onPath.has(`${at}/${c.out}${c.aim ? `:${c.aim.modId}#${c.aim.tier}` : ""}[${withLv(c.junkKey, x)}]`)); // 札の形は tree-recipe-v1 の outKey (当たりは狙いも)
     if (!saved.length || p.outs.some((s) => { const x = d.boxes[s]; return !!x && groupKey(x) === groupKey(c) && !!lvPart(x.junkKey); })) continue;
     const base = c.junkKey;
