@@ -58,7 +58,7 @@ const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
     <!-- 嵌めるルーンと「狙う MOD を選ぶ」は真ん中下 (使い方のカードは外した。2026-10-19 オーナー「これいらんかも、真ん中下に配置した方がシンプル」) -->
     <div class="mt-6 flex flex-col items-center gap-5">
       <StageRouteRunes :picked="picked" :required="required" @change="emit('runes', $event)" />
-      <button type="button" data-routes-pick class="g-btn-red min-h-14 w-full max-w-[22rem] text-[17px]" @click="emit('pick')">{{ tr("狙う MOD を選ぶ", "Pick a target mod") }}</button>
+      <button type="button" data-routes-pick data-to-top-avoid class="g-btn-red min-h-14 w-full max-w-[22rem] text-[17px]" @click="emit('pick')">{{ tr("狙う MOD を選ぶ", "Pick a target mod") }}</button>
       <p class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr(`各道 ${runs} 人ずつ。値段は今の相場、ベース代と始めの状態を作る費用は入れない`, `${runs} runs per route. Current prices; base and start-state costs not included`) }}</p>
     </div>
   </div>
