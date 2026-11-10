@@ -92,6 +92,8 @@ function contextNow(): unknown {
     url: location.href,
     // 端末の乱数の番号 (使い方の記録と同じ。名前とは結び付かない)。同じ人の要望だと知らせで分かるように (2026-10-12 オーナー)
     uid: (() => { try { return localStorage.getItem("exiledesk.web.uid") ?? null; } catch { return null; } })(),
+    // デイリーの名前の id と名前 (端末の控え、views/daily/daily-api.ts の KEY)。困った人の今日の挑戦を `pnpm daily:reset-one <id>` で消せるように。引き継ぎコードは入れない (U-05d・D-37h4、11-10 オーナー「IDで追跡でいいんじゃね」)
+    daily: (() => { try { const n = (JSON.parse(localStorage.getItem("exiledesk.daily.v4") ?? "null") as { nick?: { id?: string; name?: string } } | null)?.nick; return n?.id && n.name ? { nickId: n.id, name: n.name } : null; } catch { return null; } })(),
     // 受けた側が読む日本語のまとめ (何を作っていて、どこまで打ったか。Discord の本文に出る)
     summaryJa: (() => { try { return feedbackSummaryJa(); } catch { return []; } })(),
     mode: s.mode.value,
