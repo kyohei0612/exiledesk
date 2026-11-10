@@ -14,10 +14,10 @@ export const holeBusy = (): string => tr("穴チェック中…", "Checking…")
 /** スマホの「もう一度」 */
 export const holeAgain = (): string => tr("もう一度穴チェック", "Check again");
 /** PC のボタンに乗せた時の説明 */
-export const holeTitle = (): string => tr("穴チェック: 5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)。木を変えるたびに必ず自動で回る。足りない所があっても回す", "Gap check: walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs). Runs by itself after every change, even with parts missing");
+export const holeTitle = (): string => tr("穴チェック: 人を回さず木の全部の枠を 2 周辿って (代表の形と ↩ で着く形)、未設定・行き先の無い結果・打てない手・完成に着かない道や輪を探す (費用は出さない)。木を変えるたびに必ず自動で回る。足りない所があっても回す", "Gap check: without running anyone, walk every frame of the tree twice (the representative shape and shapes arriving by ↩) to find unset boxes, results with nowhere to go, unusable crafts, unreachable hits and paths that never finish (no costs). Runs by itself after every change, even with parts missing");
 /** PC の最終チェック (S-70。スマホは穴チェックのまま) */
 export const finalName = (): string => tr("最終チェック", "Final check");
-export const finalTitle = (): string => tr("最終チェック: ハズレを整理してから、5 人を辿り 30 人を回して止まる所を探す。止まりが 0 で 100 人回せる", "Final check: sort the misses, then walk 5 runs and run 30 to find where runs stop. Zero stops unlocks the 100-run");
+export const finalTitle = (): string => tr("最終チェック: ハズレを整理してから、人を回さず木の全部の枠を 2 周辿って未設定・止まり・行き先の無い結果・輪を探す。未設定が 0 で 100 人回せる", "Final check: sort the misses, then walk every frame of the tree twice without running anyone to find unset boxes, stops, results with nowhere to go and loops. Zero unset unlocks the 100-run");
 export const finalLockedWhy = (): string => tr("最終チェックに合格すると回せる", "Pass the final check to run");
 /**
  * 未設定の数 (左上の札・赤い札・一覧の見出し・下の帯・スマホで同じ文と同じ数、11-08 オーナー「足りない所と下の未設定の数字が合わない。未設定に合わせて」)。
