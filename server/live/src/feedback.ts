@@ -19,6 +19,9 @@ export interface Feedback {
   ip: string;
   /** 付いた画像の id (D1 の fb_images、feedback-images.ts)。後から足した物も入る */
   images?: string[];
+  /** 返事への返事 (U-36): 元の要望の id と、その頭 (Discord で 1 本の話として読めるように) */
+  replyTo?: string;
+  replyHead?: string;
 }
 
 const MAX_TEXT = 4000;
@@ -181,10 +184,12 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
   // 画面が付けた日本語のまとめ (何を作っていて、どこまで打ったか)。前の版から来た物には無いので、その時は今まで通り
   const summary = (fb.context as { summaryJa?: unknown } | null)?.summaryJa;
   const sumLines = Array.isArray(summary) ? summary.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 600)) : [];
+  const reply = fb.replyTo ? `↩ 返事 · 元の要望 ${fb.replyTo}${fb.replyHead ? `: ${fb.replyHead.slice(0, 80)}` : ""}` : "";
   const content = [
     // 送った人 (ブラウザの番号 context.uid の頭) を目立つ所に、要望の id は最後の行に小さく (返事を置く時に使う)。
     // 前は「送った人 ◯ · id ◯」と並んで、1 件ごとに変わる id が送った人の印に見えた (2026-10-16 要望 cd3cf0e3「同じ人なのに ID が違う」)
     `**${head}** 👤 **${await senderTag(fb)}** ${images.length ? `🖼${images.length} ` : ""}${fb.contact ? `(${fb.contact}) ` : ""}· ${jst} JST`,
+    reply,
     fb.text.slice(0, 1200),
     "",
     // 短く (2026-10-12 オーナー「長くなるから打った手・最後の手・状態・流れはいらない、JSON だけでいい」): 作っている物と今の MOD・PC かスマホか・エラーだけ。手順と流れは添付の JSON に

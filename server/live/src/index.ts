@@ -6,7 +6,7 @@
  *   scheduled (毎朝 9:03 JST) … Discord を読むだけの Bot (discord.ts)。数字の日報・記録の件数を Discord に流すのは 10-26 にやめた (#日報 は AI の評価と見解の全文だけ = ai-review.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
- *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json(ヘッダー x-exiledesk-key) で一覧
+ *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。返事への返事は replyTo に元の要望の id (U-36)。GET /feedback.json(ヘッダー x-exiledesk-key) で一覧
  *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>(ヘッダー x-exiledesk-key) で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
@@ -200,6 +200,9 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     if (!im.ok) return json({ error: im.why }, 400);
     const fb: Feedback = { id: crypto.randomUUID().slice(0, 8), at: new Date().toISOString(), kind: p.kind, text: p.text, contact: p.contact, context: p.context, ua: req.headers.get("user-agent") ?? "", ip };
     if (im.images.length && env.LOGS) fb.images = await saveImages(env.LOGS, fb.id, im.images);
+    // 返事への返事 (U-36): 元の要望の id を付けて残す。元が残っていなくても受ける (頭が付かないだけ)
+    const rt = (body as { replyTo?: unknown }).replyTo;
+    if (typeof rt === "string" && FEEDBACK_ID_RE.test(rt)) { fb.replyTo = rt; const parent = await getFeedback(env.LIVE, rt); if (parent) fb.replyHead = parent.text.slice(0, 120); }
     await saveFeedback(env.LIVE, fb);
     if (env.DISCORD_WEBHOOK) ctx.waitUntil(notifyDiscord(env.DISCORD_WEBHOOK, fb, fetch, im.images));
     return json({ ok: true, id: fb.id });
