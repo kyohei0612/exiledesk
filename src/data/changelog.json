@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.701",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 木のスタートのカードに「スタートからやり直す」を足しました。確かめの後に木をリセットして、始め方とフラクチャーする MOD を選び直せます (残り時間は止まりません)",
+    "en": "Daily: the tree’s start card now has “Restart from the start”. After a confirmation it resets the tree so you can pick the start and the mod to fracture again (the timer keeps running)"
+   }
+  ]
+ },
+ {
   "v": "0.1.700",
   "date": "2026-11-10",
   "items": [
@@ -856,30 +868,6 @@
     "area": "",
     "text": "シミュレーター: 組み終わった木ではスタートに未設定の印を付けないようにしました。完成の箱が無い時は一番深い段の箱に「未設定: 完成にする箱が無い」と出します",
     "en": "Simulator: a finished tree no longer marks Start as not set. When there is no box to mark as complete, the deepest box shows \"Not set: no box to complete\""
-   }
-  ]
- },
- {
-  "v": "0.1.661",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 消去もカオス・エッセンスと同じ決まりにしました。残したい MOD を同じ形で選び、結果も同じように分けます。消去だけの自動の枝と灰色をやめ、ハズレが消えた結果の箱も自動でつながず「未設定」から始まります",
-    "en": "Simulator: Annulment now follows the same rules as Chaos and Essences. You pick the mods to keep the same way, and results are split the same way. The Annulment-only automatic branches and greying are gone, and result boxes where a miss mod was removed start as \"not set\" instead of linking back automatically"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 品質 (値・種類)・ルーン・ソケットも箱の形として見るようにしました。全部同じ時だけ同じ形として ↩ でつなぎます",
-    "en": "Simulator: quality (value and type), runes and sockets now count toward a box's shape. Boxes are linked back (↩) only when all of it matches"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 同じ形・同じ手の箱が 2 つできる時は、浅い方に手を置いて深い方を ↩ でつなぐようにしました",
-    "en": "Simulator: when two boxes have the same shape and the same move, the move stays on the shallower one and the deeper one links back (↩) to it"
    }
   ]
  }

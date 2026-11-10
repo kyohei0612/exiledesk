@@ -1,4 +1,7 @@
 {
+  "0.1.701": [
+    "Daily: the tree’s start card now has “Restart from the start”. After a confirmation it resets the tree so you can pick the start and the mod to fracture again (the timer keeps running)"
+  ],
   "0.1.700": [
     "Simulator: the frames before an Omen of Whittling (miss mod level lower, same or higher) now split any box that has a random miss mod, whatever its kind (including hit boxes where a target landed along the way). Older trees are rebuilt when opened, and the earlier choice is copied to every split frame",
     "Simulator: the “target mods” list in the next-craft window no longer shows targets the item already has"
