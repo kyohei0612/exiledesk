@@ -14,6 +14,7 @@ import { markFlags } from "./release-flags";
 markFlags();
 import { loadBoot } from "./boot";
 import { page, pageTitle, startPages } from "./page";
+import { startForceUpdate } from "./force-update";
 import { startDevLog } from "./dev-log";
 import type { CurrencyItem, League } from "../api/poe2scout";
 
@@ -38,6 +39,7 @@ createApp(WebApp).mount("#app");
 // ページ (使い方・コツ・コース) ごとに題を変える (web/page.ts)
 watchEffect(() => { document.title = pageTitle.value; });
 startPages();
+startForceUpdate(); // 強制更新の合図を押した時に読む (U-35、スイッチ forceUpdate)
 // 分析用の記録 (開発中は送らない)
 if (!import.meta.env.DEV) startLogSender("web");
 // ホーム画面に追加 (PWA) とオフライン (public/sw.js)。開発中は登録しない (2026-10-17)
