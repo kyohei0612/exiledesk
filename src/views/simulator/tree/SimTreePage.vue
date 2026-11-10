@@ -38,6 +38,7 @@ import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
+import { useTreeBands } from "./use-tree-bands"; import { bandAway } from "../../../services/simulator/tree/tree-band";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
@@ -106,12 +107,12 @@ const boxes = computed(() => Object.values(doc.value.boxes));
 // 消去の続きを畳む (S-28g ③、use-strip-fold.ts): 隠した箱は描かず、根の最初の自動の消去の箱は札 (TreeStripFold)、止まった箱は札の下
 const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => x.boxId) ?? [], () => tr100.result.value?.stuckAt ?? null);
 useTreeDraft(doc); // 要望に添える作りかけの木 (11-08 オーナー「1おけ」、web/feedback-tree.ts)
-const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
+const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !bandAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
 const rv = useTreeReveal(shown, () => !!s.data.value, t.opened, t.bigStepNow); watch(t.loading, (on) => { if (!on) void v.openView(); });
 /** 出ている箱どうしの線と札だけ描く (通り抜けは箱が無いので数えない) */
-const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(id))));
+const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(bd.drawnId(id)))));
 
 /**
  * 画面の高さ (拡大前の CSS ピクセル)。html の zoom (WebApp.vue の fitZoom) が 1 より大きいと 100vh が画面より高くなり、
@@ -287,7 +288,7 @@ const checkBusy = computed((): { text: string; n?: number; of?: number } | null 
   const p = progress.value;
   return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Running"), n: p.n, of: p.of };
 });
-async function goIssue(id: string): Promise<void> { if (!doc.value.boxes[id]) return; await sf.openFor(id); void v.reveal(id, true); } // 箱の無い要確認 (S-89c ③) は寄らない
+async function goIssue(id: string): Promise<void> { if (!doc.value.boxes[id]) return; await sf.openFor(id); void v.reveal(bd.drawnId(id), true); } // 箱の無い要確認 (S-89c ③) は寄らない
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
 // 札の幅は名前を切らない幅 (… で切れている分を足す) × 今の倍率で拡げる分 (全体表示で並んでも重ならない)
 const chipNatural = (id: string): number | undefined => {
@@ -309,6 +310,7 @@ const lanes = computed(() => laneMarks(doc.value, rowL.value)); watch(() => (t.n
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
+const bd = useTreeBands({ doc, selectedId: () => panel.value?.id ?? plus.value?.id ?? null, issueOf, openHand: (id) => (panel.value = { kind: "hand", id }), onPlus: (b, e) => onPlus(b, "next", e) }); // 削減の手前の枠の帯 (S-65c ⑫)
 watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.revealSpot(id), 0); } });
 // 手の窓を選ばずに閉じたら開く前の視点へ (S-147e)。手を決めた時は holdBox が先に場所を使い切る
 watch(panel, (p, was) => { if (!p && was?.kind === "hand") void v.backSpot(); });
@@ -420,7 +422,7 @@ const glowOf = (b: Box): boolean => {
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
               <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
-              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
+              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" @band="bd.onBand"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
                 @clear-back="t.edit((d) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
@@ -436,7 +438,7 @@ const glowOf = (b: Box): boolean => {
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
               <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
-              <TreeHandChip v-for="e in shownEdges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
+              <TreeHandChip v-for="e in shownEdges.filter((x) => !x.band)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
               <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
               <button v-for="b in rv.done.value ? passes.filter((x) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
                 :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>

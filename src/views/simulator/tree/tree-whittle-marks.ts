@@ -21,6 +21,9 @@ const LOOK: Record<LvClass, { rgb: string; ja: string; en: string; tja: string; 
   hi: { rgb: "214,72,110", ja: "▲ MOD レベルが高い", en: "▲ higher mod level", tja: "外れの MOD レベルが比べる相手より高い = 次の削減で比べる相手 (残したい MOD) が消える", ten: "The miss mod level is higher: whittling removes the compared mod (a mod to keep)" },
 };
 
+/** 組の色と字 (箱の下の帯も同じ色、S-65c ⑫) */
+export const lvLook = (c: LvClass): (typeof LOOK)[LvClass] => LOOK[c];
+
 /** 箱 id のカードの札 tags に、削減の手前の枠の印を足した物 (枠の箱でなければ tags のまま) */
 export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: StageItem | null, tags: Map<string, RowTag>): Map<string, RowTag> {
   const c = lvPart(doc.boxes[id]?.junkKey);

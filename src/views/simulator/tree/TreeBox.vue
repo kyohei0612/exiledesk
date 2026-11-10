@@ -22,6 +22,8 @@ import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { setSameHiOwn } from "./tree-hand-plan";
 import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
+import { lvLook } from "./tree-whittle-marks";
+import type { BandView } from "./use-tree-bands";
 import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
@@ -30,7 +32,8 @@ import { cantHandOf } from "../../../services/simulator/tree/tree-frame-check";
 
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
-  /** スマホの道の画面: エッセンスの行は MOD の名前で出す (S-94h、tree-row-tags の routeRowTags) */ routeNames?: boolean }>();
+  /** スマホの道の画面: エッセンスの行は MOD の名前で出す (S-94h、tree-row-tags の routeRowTags) */ routeNames?: boolean;
+  /** 削減の手前の枠の帯 (帯の頭の箱だけ、S-65c ⑫) */ bands?: BandView[] }>();
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: [];
@@ -46,6 +49,8 @@ const emit = defineEmits<{
   plus: [kind: "side" | "next", e: PointerEvent];
   /** 要確認の印を押した (確かめたので印を消す) */
   checked: [];
+  /** 削減の手前の枠の帯を押した (その枠の箱 id) */
+  band: [id: string, e: PointerEvent];
 }>();
 const t = useTree();
 /**
@@ -109,6 +114,8 @@ const HI_ROW = "flex min-w-0 shrink-0 gap-0.5", HI_BTN = "nodrag h-6 shrink-0 !w
 // 同じ枠をまとめた箱は、まとめた箱の題も「 / 」で並べる (訳が違う時だけ。11-06 オーナー「同じ枠あるなら統合しちゃっていい」の札は両方の訳が分かる形で、S-66)
 const head = computed(() => {
   if (props.box.seen) return tr("ハズレ (打たない)", "Miss (not used)");
+  // 帯で見せる枠の頭 (S-65c ⑫、11-10 オーナー「上のその枠にはMODレベル事設定みたいな名前で」)
+  if (props.bands?.length) return tr("MOD レベルごとの設定", "Settings per mod level");
   const d = t.doc.value, own = headOf(props.box, t.aimShort);
   const others = Object.values(d.boxes).filter((b) => b.back === props.box.id && mergedAway(d, b)).map((b) => headOf(b, t.aimShort));
   return [...new Set([own, ...others])].join(" / ");
@@ -154,7 +161,9 @@ const plusK = computed(() => (props.plusFar != null ? Math.min(PLUS_FAR_MAX, pro
 const PLUS_Y = LINE_Y + CHIP_HALF;
 /** 倍率を上げても ＋ が枠に掛からない所まで下げる (半径 14 + 間 6) */
 const plusY = computed(() => Math.max(PLUS_Y, 20 * plusK.value));
-const plusOn = computed(() => free.value && (!quiet.value || !!props.plusFar));
+const plusOn = computed(() => free.value && (!quiet.value || !!props.plusFar) && !props.bands?.length);
+/** 帯の上の字 (組の名前と次の削減で消える物、11-10 案 ③ の見本と同じ) */
+const BAND_TXT: Record<string, [string, string, string, string]> = { lo: ["▼ 低い", "▼ Lower", "外れが消える", "miss goes"], eq: ["＝ 同じ", "= Same", "半々で消える", "50/50"], hi: ["▲ 高い", "▲ Higher", "狙いが消える", "keeper goes"] };
 /** スタートの形は印で決まる (10-23 オーナー): フラクチャーの印 (✦ の候補)・＋の MOD・1 行目の文 */
 // フラクチャー前から (start.from four) は印があっても白から始まるので、スタートの箱には印も＋の MOD も出さない (10-24 夜オーナー)
 const marks = computed(() => (startsFractured(t.doc.value) ? fractureMarks(t.doc.value) : []));
@@ -261,7 +270,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
       <span v-if="box.seen" data-tree-box-seen class="w-full text-violet-200/80">{{ tr(`当たり以外 ${joinedIn + 1} 通り · 手は使わずアイテムはこのまま`, `${joinedIn + 1} non-hit result(s) · craft not used, item unchanged`) }}</span>
       <span v-if="allMiss" data-tree-foresee-nohit class="w-full text-amber-200" :title="tr('ヒネコラの後は狙いの結果だけ使い、ほかはハズレ (打たない)。手の札を押して狙いの MOD に ☑ する', 'After Hinekora only the targeted result is used; everything else is a miss. Click the craft and tick the target mods')">{{ tr("狙いを ☑ して (今は全部ハズレ)", "Tick a target (all results are misses now)") }}</span>
-      <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
+      <span v-if="box.hand && !bands?.length" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
       <span v-if="cantHand" data-tree-cant-hand class="w-full break-words text-rose-300">{{ tr(`この品には打てない手 (${cantHand})`, `Can't be used on this item (${cantHand})`) }}</span>
       <!-- 「エッセンスと同じ MOD (同格以上)」はボタン 2 つでいつも選ぶ: 選んでいる方が点き、選んでいない方はグレー (押すと切り替え)。既定は「エッセンスと同じ枠で扱う」。
            選んだ後も「→ n 段目へ進む」の文に置き換えない。下の行の頭に全幅の 1 行で、ほかの札と同じ高さ (S-33e ⑥、11-08 夜オーナー「ボタンは2つね…選んでないほうグレーアウト」「4段目へ進むとかに切り替えなくておk」「枠の中が整頓してくれ」) -->
@@ -289,6 +298,17 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
         <button type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
         <button v-if="removable" type="button" data-tree-box-remove class="nodrag -mr-1 flex min-h-6 shrink-0 items-center justify-center rounded" :class="rm.is(box.id) ? 'whitespace-nowrap bg-rose-700 px-1.5 text-[11px] font-bold text-white hover:bg-rose-600' : 'size-6 opacity-60 hover:bg-white/10 hover:opacity-100'" :title="rmTitle" @click.stop="rm.arm(box.id) && emit('remove')"><template v-if="rm.is(box.id)">{{ tr(`下の ${rmCount} 箱ごと消す`, `Remove ${boxesEn(rmCount)}`) }}</template><Icon v-else name="x" class="size-3.5" /></button>
       </span>
+    </div>
+    <!-- 削減の手前の枠の帯 (S-65c ⑫、11-10 オーナー案 ③): 枠ごとに 1 本、押すとその枠の手の窓 (未設定なら次に打つ手)。線は帯の真下から下へ -->
+    <div v-if="bands?.length" data-tree-bands class="-mx-1 -mb-1 mt-2 flex gap-1">
+      <button v-for="x in bands" :key="x.id" type="button" data-tree-band :data-band-lv="x.lv" :data-box-id="x.id" class="nodrag relative flex min-w-0 flex-1 flex-col items-stretch gap-0.5 rounded-md border px-1 pb-0.5 pt-1 text-[11px] leading-4 hover:brightness-125"
+        :class="[quiet ? 'pointer-events-none' : '', x.selected ? 'ring-2 ring-amber-200' : '']" :style="{ borderColor: `rgba(${lvLook(x.lv).rgb},0.75)`, background: `rgba(${lvLook(x.lv).rgb},0.12)` }"
+        :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="!quiet && emit('band', x.id, $event)" @click.stop>
+        <span class="truncate rounded-sm text-center font-bold text-black" :style="{ background: `rgb(${lvLook(x.lv).rgb})` }">{{ tr(BAND_TXT[x.lv]![0], BAND_TXT[x.lv]![1]) }}</span>
+        <span class="truncate text-center text-white/70">{{ tr(BAND_TXT[x.lv]![2], BAND_TXT[x.lv]![3]) }}</span>
+        <span data-tree-band-hand class="truncate text-center" :class="x.hand ? 'text-amber-100' : 'font-bold text-rose-300'">{{ x.hand ?? tr("未設定 ＋", "Unset +") }}</span>
+        <span v-if="x.issue" data-tree-band-issue class="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white">!</span>
+      </button>
     </div>
     <!-- 操作 (分ける・まとめる。箱の一番下、上の帯の「まとめる」と同じ選び方へ入る入口) -->
     <div v-if="!quiet && ((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" class="mt-1 flex items-center justify-end gap-1 text-[12px]">

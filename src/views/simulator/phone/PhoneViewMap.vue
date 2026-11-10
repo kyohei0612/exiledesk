@@ -19,7 +19,8 @@ import TreeRunLayer from "../tree/TreeRunLayer.vue";
 import type { TreeRunWalk } from "../tree/use-tree-run";
 import { LINE } from "../tree/use-tree-edges";
 import { backLabelOf } from "../tree/tree-fail";
-import { handIcon, OUT_LOOK } from "../tree/tree-names";
+import { handIcon, handLabel, OUT_LOOK } from "../tree/tree-names";
+import { bandAway, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { useTree } from "../tree/use-tree";
 import { simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
@@ -56,7 +57,13 @@ const rows = computed(() => rowLayout(doc.value, () => EST_H).rows);
 /** 全体図の中の箱の上の辺 */
 const yOf = (b: Box): number => b.y + (rows.value.get(b.id) ?? 0) * ROW_EXTRA;
 /** 描く箱 (PC の木と同じ: 品質だけの箱・まとめた箱・畳んだ箱は描かない) */
-const boxes = computed(() => Object.values(doc.value.boxes).filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !hidden.value.has(b.id)));
+const boxes = computed(() => Object.values(doc.value.boxes).filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !bandAway(doc.value, b) && !hidden.value.has(b.id)));
+/** 削減の手前の枠の帯 (PC と同じ、S-65c ⑫): 帯の頭の箱に出す帯と、枠の箱から出る線の元 (帯の真下) */
+const bandsView = (id: string) => headBands(doc.value, id).map(({ id: x, lv }) => { const h = doc.value.boxes[x]!.hand; return { id: x, lv, hand: h ? handLabel(h) : null, issue: null, selected: false }; });
+const bandFrom = (b: Box): { x: number; y: number } | null => {
+  const h = bandHead(doc.value, b.id), bs = headBands(doc.value, h), i = bs.findIndex((x) => x.id === b.id), hb = doc.value.boxes[h]!;
+  return i < 0 ? null : { x: hb.x + bandMidX(BOX_W, i, bs.length), y: yOf(hb) + (cardIds.value.has(h) ? BOX_H : EST_H) };
+};
 const bounds = computed((): MapBounds => {
   const bs = boxes.value;
   if (!bs.length) return { x: 0, y: 0, w: 1, h: 1 };
@@ -114,9 +121,9 @@ const paths = computed(() => {
   const d = doc.value;
   return Object.values(d.boxes).flatMap((b) => {
     const pid = lastToHead.value.get(b.id) ?? b.parent, p = pid ? d.boxes[pid] : null;
-    const to = mergedAway(d, b) ? d.boxes[b.back!] : b;
+    const to = mergedAway(d, b) ? d.boxes[b.back!] : bandAway(d, b) ? d.boxes[bandHead(d, b.id)] : b;
     if (!p || !to || hidden.value.has(b.id) || hidden.value.has(p.id)) return [];
-    const x0 = p.x + BOX_W / 2, y0 = yOf(p) + (p.out === "pass" ? 0 : cardIds.value.has(p.id) ? BOX_H : EST_H), x1 = to.x + BOX_W / 2, y1 = yOf(to);
+    const bf = bandFrom(p), x0 = bf?.x ?? p.x + BOX_W / 2, y0 = bf?.y ?? yOf(p) + (p.out === "pass" ? 0 : cardIds.value.has(p.id) ? BOX_H : EST_H), x1 = to.x + BOX_W / 2, y1 = yOf(to);
     return [{ id: b.id, d: `M${x0},${y0} V${y1 - BUS_DY} H${x1} V${y1}`, color: ["hit", "any", "pass", "branch"].includes(to.out) ? LINE.fwd : LINE.bad }];
   });
 });
@@ -149,7 +156,7 @@ const chips = computed(() => {
   if (z < CARD_K) return [];
   const x0 = -m.tx.value / z, y0 = -m.ty.value / z, w = (wrap.value?.clientWidth ?? 0) / z, h = (wrap.value?.clientHeight ?? 0) / z;
   return Object.values(d.boxes).flatMap((b) => {
-    if ((!b.hand && !b.split) || hidden.value.has(b.id)) return [];
+    if ((!b.hand && !b.split) || hidden.value.has(b.id) || bandFrom(b)) return []; // 帯の枠の手は帯の中 (札は出さない)
     const kids = foldOuts(d, b, folds.value, hidden.value).map((o) => (mergedAway(d, d.boxes[o]!) ? d.boxes[d.boxes[o]!.back!]! : d.boxes[o]!));
     if (!kids.length) return [];
     const x = b.x + BOX_W / 2, y = b.out === "pass" ? yOf(b) : Math.min(...kids.map(yOf)) - CHIP_DY;
@@ -192,7 +199,7 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
       <div v-if="cards.length || chips.length" data-map-cards class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">
         <TreeHandChip v-for="c in chips" :id="c.id" :key="c.id" :hand="c.hand" :split="c.split" :x="c.x" :y="c.y" :inv="1" off :room="CHIP_ROOM" />
         <template v-for="b in cards" :key="b.id">
-          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only :swamp="swampOf(b.id) ? Math.max(1, 1 / m.k.value) : 0" />
+          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only :bands="bandsView(b.id)" :swamp="swampOf(b.id) ? Math.max(1, 1 / m.k.value) : 0" />
         </template>
       </div>
       <!-- 回す時: PC と同じ重ねる層 (1 人目の光・足跡・通った線・誰も来ない箱の暗さ・来た人数・回数・止まり)。線だけ画面の上の太さで描く (全体図の倍率は PC より小さい) -->

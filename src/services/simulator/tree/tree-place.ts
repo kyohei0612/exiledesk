@@ -11,6 +11,7 @@
 import { BOX_W, type TreeDoc } from "./tree-model";
 import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
+import { bandAway } from "./tree-band";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -97,7 +98,8 @@ function near(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW?
   // 札の幅は画面を測るので、置き直しの間は箱ごとに 1 回だけ (やり直しのたびに DOM を探し、200 箱で 9 秒かかった。S-71b)
   const chipSeen = new Map<string, number>();
   const chipOf = (id: string): number => { let w = chipSeen.get(id); if (w === undefined) chipSeen.set(id, (w = chipW?.(id) ?? 0)); return w; };
-  const ext = (id: string): [number, number] => { const w = kids.get(id)!.length ? chipOf(id) : 0; return [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)]; };
+  // 帯で見せる枠の箱 (描かない、S-65c ⑫) は幅 0 の列: 子の部分木だけがその下に入る
+  const ext = (id: string): [number, number] => { if (bandAway(d, d.boxes[id])) return [BOX_W / 2, BOX_W / 2]; const w = kids.get(id)!.length ? chipOf(id) : 0; return [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)]; };
   const gap = (a: string, b: string): number => (kids.get(a)!.length || kids.get(b)!.length ? GAP_DEEP : GAP_LEAF);
   const byRow: string[][] = [];
   for (const id of seen) { const r = L.rows.get(id); if (id !== "start" && r) (byRow[r] ??= []).push(id); }

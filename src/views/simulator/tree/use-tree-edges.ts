@@ -8,6 +8,7 @@ import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { FOLD_H, foldOuts, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { bandAway, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -32,21 +33,31 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   // 畳んだ消去の続き (S-28g ③): 根の線は札へ、札の線は止まった箱へ、隠した箱からは引かない
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
+  /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
+  const bandFrom = (b: TreeBox): { x: number; y: number } | null => {
+    const h = bandHead(doc.value, b.id), bs = headBands(doc.value, h), i = bs.findIndex((x) => x.id === b.id);
+    if (i < 0) return null;
+    const q = posOf(doc.value.boxes[h]!);
+    return { x: q.x + bandMidX(BOX_W, i, bs.length), y: q.y + (heightOf?.(h) || BOX_H) };
+  };
+  /** 線の行き先 (まとめた箱はまとめ先、帯の中の枠の箱は帯の頭) */
+  const toOf = (o: string): string => { const c0 = doc.value.boxes[o]!; return mergedAway(doc.value, c0) ? c0.back! : bandAway(doc.value, c0) ? bandHead(doc.value, o) : o; };
   const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
-    const xs = [posOf(b).x + BOX_W / 2, ...outsOf(b).map(midOf)];
-    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...outsOf(b).map((o) => posOf(doc.value.boxes[o]!).y)) - BUS_DY };
+    const xs = [bandFrom(b)?.x ?? posOf(b).x + BOX_W / 2, ...outsOf(b).map(toOf).map(midOf)];
+    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...outsOf(b).map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
   const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
     // まとめて描かない箱 (案 A) は、まとめ先の箱へ直に線を引く (同じまとめ先が 2 つあれば 1 本)
-    const kids = [...new Map(outsOf(b).map((o) => { const c0 = doc.value.boxes[o]!, to = mergedAway(doc.value, c0) ? c0.back! : o; return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
+    const kids = [...new Map(outsOf(b).map((o) => { const to = toOf(o); return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
     // 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
     // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
     const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
-    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H);
+    // 帯の中の枠の箱は帯の真下から (手の名前は帯の中なので札は出さない、band)
+    const bf = bandFrom(b), px = bf?.x ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
     const Lr = layout?.() ?? null, r = Lr?.rows.get(b.id);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
@@ -67,7 +78,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     }).sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
-    return { id: b.id, hand: b.hand, split: b.split?.length, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
+    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
   }));
   /**
    * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。
