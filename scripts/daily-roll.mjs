@@ -19,7 +19,7 @@
  */
 import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
-import { remoteD1, remoteKv } from "./_d1-shim.mjs";
+import { longValue, remoteD1, remoteKv } from "./_d1-shim.mjs";
 
 const BASE = process.env.EXILEDESK_LIVE_BASE ?? "https://exiledesk-live.exiledesk.workers.dev";
 const KEY = process.env.EXILEDESK_LIVE_KEY;
@@ -71,7 +71,11 @@ if (!Object.keys(body).length) {
   process.exit(0);
 }
 if (D1) {
-  const out = await R.rollPost(db, body, body.topic ? remoteKv("market") : null);
+  // 相場の写し (KV market、11-10 で約 540KB) は 1 文に埋めると D1 の 1 文の上限 (100KB) を超えて全部が落ちる (SQLITE_TOOBIG)。
+  // お題の行は印だけで入れ、同じ書き込みの中で小分けに足す (D-80e)。Worker の口は値を bind するので要らない
+  const market = body.topic ? remoteKv("market") : null;
+  const big = market ? longValue(db, { table: "daily_topics", col: "prices", id: `d${body.topic.day}`, value: market }) : null;
+  const out = await R.rollPost(big ? big.db : db, body, big ? big.mark : market);
   console.log(`topic (d1): ${JSON.stringify(out)}`);
   process.exit(0);
 }

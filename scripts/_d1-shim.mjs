@@ -119,6 +119,42 @@ export function remoteD1() {
   return { prepare: (sql) => mk(sql, []), batch: async (stmts) => (writeSql(stmts.map((s) => s._sql())), stmts.map(() => ({ success: true }))) };
 }
 
+/** D1 の 1 文の上限 (100KB) より下に置く 1 切れのバイト数 ('' の重ねも数える) */
+const PIECE_BYTES = 80_000;
+
+/** 長い文字を、上限を超えない切れに分ける (サロゲートの対を割らない) */
+export function pieces(s, max = PIECE_BYTES) {
+  const out = [];
+  let i = 0;
+  while (i < s.length) {
+    let n = Math.min(s.length - i, Math.floor(max / 3));
+    for (;;) {
+      if (n < s.length - i && /[\uD800-\uDBFF]/.test(s[i + n - 1])) n--;
+      const c = s.slice(i, i + n);
+      if (Buffer.byteLength(c) + (c.match(/'/g)?.length ?? 0) <= max || n <= 1) break;
+      n = Math.floor(n / 2);
+    }
+    out.push(s.slice(i, i + n));
+    i += n;
+  }
+  return out;
+}
+
+/**
+ * 1 文に埋めると上限を超える値を、印で入れてから同じ書き込みの中で小分けに足す (11-10、相場の写しで SQLITE_TOOBIG)。
+ * 返す db を rollPost などに渡し、値の代わりに mark を渡す。batch の最後に「印のままの行だけ」へ切れを足す文を付けるので、
+ * INSERT OR IGNORE で前からあった行 (印でない) は触らない。1 つの batch のままなので途中で落ちれば全部戻る
+ */
+export function longValue(db, { table, col, id, value }) {
+  const mark = `~split-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}~`;
+  const still = `${col} IS NOT NULL AND substr(${col}, 1, ${mark.length}) = ?`;
+  const tail = [
+    ...pieces(value).map((p) => db.prepare(`UPDATE ${table} SET ${col} = ${col} || ? WHERE id = ? AND ${still}`).bind(p, id, mark)),
+    db.prepare(`UPDATE ${table} SET ${col} = substr(${col}, ${mark.length + 1}) WHERE id = ? AND ${still}`).bind(id, mark),
+  ];
+  return { mark, db: { ...db, prepare: (sql) => db.prepare(sql), batch: (stmts) => db.batch([...stmts, ...tail]) } };
+}
+
 /** 書く SQL を 1 つのファイルにして --file で流す */
 export function writeSql(lines) {
   if (!lines.length) return;
