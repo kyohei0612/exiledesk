@@ -12,7 +12,7 @@ import { drop, type Hand, type OutKind, type TreeDoc } from "../../../services/s
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { aimedList, missAims } from "../../../services/simulator/tree/tree-miss";
-import { isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { handWhittleSide, isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
 
 /** 枠を分ける結果の種類 (当たりは ☑ の札で決まるので分けない) */
 const KINDS: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost"]);
@@ -43,8 +43,10 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
         const item = smp ? smp.item : f!.item, aimed = smp ? aimedOfSample(id, smp.item) ?? sampleAimed(data, d, id, 1) : f!.aimed;
         // 残したい MOD は外れの式の札 (完成形の ☑ の狙い・置き石) で見る = 回す時の lvKeyed・判定と同じ (完成形に無いエッセンスの MOD は外れ、S-33c)
         const wanted = aimedList(data, d, aimed);
-        cls = lvClassesOf(data, item, wanted);
-        own = lvClassOf(item, missAims(data, wanted));
+        // 比べるのは削減の手のお告げで消える側の MOD だけ (左側の抹消ならプレフィックス、11-10)
+        const side = handWhittleSide(d.boxes[holders[0]!]!.hand);
+        cls = lvClassesOf(data, item, wanted, side);
+        own = lvClassOf(item, missAims(data, wanted), side);
         break;
       }
     }

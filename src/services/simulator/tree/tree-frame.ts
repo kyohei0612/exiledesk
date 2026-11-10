@@ -17,7 +17,7 @@ import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
-import { aimedAims, carryFloors, isWhittleHand, lvClassOf, lvPart, rankVariants, stripLv } from "./tree-whittle";
+import { aimedAims, carryFloors, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants, stripLv } from "./tree-whittle";
 import { keptAimedOf } from "./tree-keep";
 import { aimedList, aimedMiss, type MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
@@ -63,7 +63,7 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
     // 削減は一番低い MOD レベルの MOD が消える (E-33)。外れの MOD レベルは、その外れが付いた手の池で出うる MOD レベルの出方ごとに差し替えて打つ
     // (tree-whittle の rankVariants、割合 = その出方の重み)。消えうる MOD が 1 つなら 1 枝 (11-07 オーナー「削減の対象先がハズレMODの場合かな」で決め (a) の「2 枝を必ず」をやめた、S-65b)
     rs = [];
-    for (const v of rankVariants(data, item, wanted, b.junkKey, lvMiss)) {
+    for (const v of rankVariants(data, item, wanted, b.junkKey, lvMiss, handWhittleSide(h))) {
       const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
       if (s === "tooMany") return s;
       // 残った外れに、消えた MOD の MOD レベルを下限として持たせる (次の削減で絞る、S-65b)
@@ -281,8 +281,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       for (const k of kids) {
         const x = doc.boxes[k], brs = to.get(k);
         if (k === o || !x || !brs?.length || x.out !== c.out || stripLv(x.junkKey) !== stripLv(c.junkKey)) continue;
-        const sib = bestOf(k, brs, f), miss = aimedMiss(data, doc, sib.aimed);
-        const v = rankVariants(data, sib.item, aimedList(data, doc, sib.aimed), c.junkKey, miss).find((y) => lvClassOf(y.item, miss) === want);
+        const sib = bestOf(k, brs, f), miss = aimedMiss(data, doc, sib.aimed), side = handWhittleSide(c.hand) ?? handWhittleSide(x.hand);
+        const v = rankVariants(data, sib.item, aimedList(data, doc, sib.aimed), c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
         if (v) return { ...sib, item: v.item, p: sib.p * v.p, alts: undefined };
       }
       return null;

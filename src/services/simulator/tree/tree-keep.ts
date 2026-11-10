@@ -11,7 +11,7 @@ import { engineOmens } from "./tree-hands";
 import { isMissMod, missAims } from "./tree-miss";
 import { sameAimMod } from "./tree-hand-core";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
-import { joinKeys, rankVariants, WHITTLE } from "./tree-whittle";
+import { joinKeys, rankVariants, WHITTLE, whittleSide } from "./tree-whittle";
 
 /** 残したい MOD を決めた手か。消去も同じ (11-04、[] = 全部消えてよい = 残したい MOD 無し。前は消去だけ tree-outcome の isKeepAnnul で別に数えた) */
 export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep;
@@ -42,7 +42,7 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
   // 外れか = 外れの式 (tree-miss の isMissMod、当たり方はエンジンの aimHits の sameText)
   const junkOn = (side: string): string[] => mods.filter((x) => x.side === side && !x.fractured && isMissMod(x, miss)).map((x) => x.modId);
   // お告げは品を渡して効かない状態の物を落とす (omensFor の第 3 引数)
-  const outs = (whittle ? rankVariants(data, item, wanted).map((v) => v.item) : [item]).flatMap((it) => stepOutcomes(data, it, currency, engineOmens({ omens: omensFor(currency, [...omens], it) }))?.filter((o) => !o.void) ?? []);
+  const outs = (whittle ? rankVariants(data, item, wanted, undefined, undefined, whittleSide(omens)).map((v) => v.item) : [item]).flatMap((it) => stepOutcomes(data, it, currency, engineOmens({ omens: omensFor(currency, [...omens], it) }))?.filter((o) => !o.void) ?? []);
   const out = outs.length ? new Set(outs.flatMap((o) => o.removed.flatMap((x) => (ids.has(x.modId) ? [x.modId] : junkOn(x.side))))) : null;
   if (m.size > 20000) m.clear();
   m.set(key, out);
