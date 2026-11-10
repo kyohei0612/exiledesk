@@ -153,7 +153,8 @@ async function openRecipeCode(code: string): Promise<boolean> {
       // 開いて見ただけなら離れる時に保存を聞かない (S-03c)
       markOpened(tr2.id);
       openTreePage();
-      logRecord("tree_recipe_shared", { boxes: Object.keys(t.boxes).length });
+      // 共有の形 (v1/v2) は打ち方だけで箱は開いた後に組み直すので、箱の数ではなく打ち方の数を残す (11-10: boxes はいつも 0 で「空の木」と読み違えた)。前の形の木は箱の数
+      logRecord("tree_recipe_shared", t.picks ? { picks: t.picks.length } : { boxes: Object.keys(t.boxes).length });
       return true;
     }
     // 旧シミュレーターのレシピ (v 1) は工程ページを 10-22 に消したので開かない (クラフトのまま)
