@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.705",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存・共有したレシピの木を開くのを速くしました (スマホで固まる時間がおよそ 4 割短くなります)",
+    "en": "Simulator: saved and shared recipe trees now open faster (about 40% less freezing on phones)"
+   }
+  ]
+ },
+ {
   "v": "0.1.704",
   "date": "2026-11-10",
   "items": [
@@ -868,24 +880,6 @@
     "area": "",
     "text": "エミュレーター・シミュレーター: 変成・錬金術・王者で MOD が付かなかった不具合を直しました",
     "en": "Emulator and Simulator: fixed Orb of Transmutation, Orb of Alchemy and Regal Orb not adding mods"
-   }
-  ]
- },
- {
-  "v": "0.1.665",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター・シミュレーター: MOD の段の表は T1〜T3 だけ出し、T4 以下は「もっと見る」で開くようにしました",
-    "en": "Emulator and Simulator: the tier table of each mod now shows only T1 to T3, and T4 and below open with \"Show more\""
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター・シミュレーター: MOD の数が上限を超えた側 (ジュエルで侮蔑が消えた後など) には、骨で冒涜の MOD を付けられないようにしました",
-    "en": "Emulator and Simulator: bones can no longer add a Desecrated mod to a side that is over its mod limit (for example after a Jewel loses the mod that adds a slot)"
    }
   ]
  }
