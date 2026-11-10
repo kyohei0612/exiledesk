@@ -8,14 +8,17 @@
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { drop, type Hand, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { aimKey, boxAims, drop, type Hand, type OutKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { aimedList, missAims } from "../../../services/simulator/tree/tree-miss";
 import { handWhittleSide, isWhittleHand, whittleAimed, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
 
 /** 枠を分ける結果の種類 (当たりは ☑ の札で決まるので分けない) */
-const KINDS: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost"]);
+/** 当たり (狙いが途中で付いただけの箱) も乱数の外れがあれば分ける (11-10 オーナー「当たりの箱っていっても理想でついたわけじゃないんだが」、デイリーの弓 SOQUoHYT) */
+const KINDS: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost", "hit"]);
+/** 組の鍵: 種類・当たりの狙い (狙いごとに別の箱)・枠を外した鍵 */
+const groupKey = (c: TreeBox): string => `${c.out}|${c.out === "hit" ? boxAims(c).map(aimKey).join(",") : ""}|${stripLv(c.junkKey) ?? ""}`;
 /** 人の決めの無い箱 (消してよい) */
 const idle = (d: TreeDoc, id: string): boolean => { const c = d.boxes[id]; return !!c && !c.hand && (!c.back || !!c.autoBack) && !c.done && !c.split; };
 
@@ -27,7 +30,7 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
   const p = a ? d.boxes[a] : undefined;
   if (!p?.hand) return [];
   const groups = new Map<string, string[]>();
-  for (const id of p.outs) { const c = d.boxes[id]; if (c && KINDS.has(c.out)) { const k = `${c.out}|${stripLv(c.junkKey) ?? ""}`; (groups.get(k) ?? groups.set(k, []).get(k)!).push(id); } }
+  for (const id of p.outs) { const c = d.boxes[id]; if (c && KINDS.has(c.out)) { const k = groupKey(c); (groups.get(k) ?? groups.set(k, []).get(k)!).push(id); } }
   const made: string[] = [];
   let ft: ReturnType<typeof frameOfDoc> | null = null;
   for (const ids of groups.values()) {
@@ -63,7 +66,7 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
       taken.add(pick);
     }
     const first = d.boxes[ids[0]!]!;
-    for (const x of LV_ORDER) if (cls.has(x) && !taken.has(x)) made.push(addOut(d, p.id, first.out as OutKind, withLv(first.junkKey, x)));
+    for (const x of LV_ORDER) if (cls.has(x) && !taken.has(x)) made.push(addLike(d, p.id, first, withLv(first.junkKey, x)));
     // 付きえない組の枠 (前の手を替えた・データで出ない) は人の決めが無ければ消す
     const gone = ids.filter((id) => { const c = lvPart(d.boxes[id]!.junkKey); return !!c && !cls!.has(c) && idle(d, id); });
     if (gone.length) { drop(d, gone); p.outs = p.outs.filter((o) => !gone.includes(o)); }
@@ -93,11 +96,11 @@ export function restoreWhittlePre(d: TreeDoc, id: string, at: string, onPath: Re
   for (const o of [...p.outs]) {
     const c = d.boxes[o];
     if (!c || !KINDS.has(c.out) || lvPart(c.junkKey)) continue;
-    const saved = LV_ORDER.filter((x) => onPath.has(`${at}/${c.out}[${withLv(c.junkKey, x)}]`));
-    if (!saved.length || p.outs.some((s) => { const x = d.boxes[s]; return !!x && x.out === c.out && !!lvPart(x.junkKey) && stripLv(x.junkKey) === stripLv(c.junkKey); })) continue;
+    const saved = LV_ORDER.filter((x) => onPath.has(`${at}/${c.out}${c.aim ? `:${c.aim.modId}#${c.aim.tier}` : ""}[${withLv(c.junkKey, x)}]`)); // 札の形は tree-recipe-v1 の outKey (当たりは狙いも)
+    if (!saved.length || p.outs.some((s) => { const x = d.boxes[s]; return !!x && groupKey(x) === groupKey(c) && !!lvPart(x.junkKey); })) continue;
     const base = c.junkKey;
     c.junkKey = withLv(base, saved[0]!);
-    for (const x of saved.slice(1)) addOut(d, id, c.out as OutKind, withLv(base, x));
+    for (const x of saved.slice(1)) addLike(d, id, c, withLv(base, x));
   }
 }
 
@@ -114,4 +117,11 @@ export function syncBeforeHand(data: PatchData, d: TreeDoc, at: string, h: Hand)
   syncWhittlePre(data, d, b.parent, at);
   b.hand = was;
   return d.boxes[at]?.junkKey !== key;
+}
+
+/** 箱 src と同じ種類 (当たりなら同じ狙い) の手の無い枠を親 pid の下に足す */
+function addLike(d: TreeDoc, pid: string, src: TreeBox, key: string): string {
+  const id = addOut(d, pid, src.out as OutKind, key), c = d.boxes[id]!;
+  if (src.out === "hit") { c.aim = src.aim ? { ...src.aim } : null; if (src.anyOf?.length) c.anyOf = src.anyOf.map((a) => ({ ...a })); }
+  return id;
 }

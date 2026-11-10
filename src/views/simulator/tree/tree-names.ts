@@ -110,6 +110,9 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const swName = (id: string): string => { if (id === "j") return tr("外れ MOD", "a miss mod"); const a = (doc0.memoAims ?? []).find((g) => g.modId === id); return a ? modShort(aimShort(a)) : id; };
   const swl: [string, string] | null = sw.length ? [`${sw.map(swName).join("・")} と入れ替わり`, `replaced ${sw.map(swName).join(", ")}`] : null;
   if (b.out === "hit" && b.aim && swl && !fixed) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた (${swl[0]})`, `${n} added (${swl[1]})`); }
+  // 当たりの箱の削減の手前の枠 (S-65c ①、11-10): 題に外れの MOD レベルの組を付ける
+  const hl = b.out === "hit" && b.aim && !free && !fixed ? lvPart((b as { junkKey?: string }).junkKey) : null;
+  if (hl) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")), [ja, en] = lvLabel(hl); return tr(`${n}が付いた (${ja})`, `${n} added (${en})`); }
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
     // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける

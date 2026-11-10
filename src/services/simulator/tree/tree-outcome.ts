@@ -84,7 +84,8 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
 function lvKeyed(data: PatchData, doc: TreeDoc, b: TreeBox, oc: Outcome, after: StageItem, aimed?: ReadonlySet<string> | null): Outcome {
   // 箱の種類の比べは行き先の選び (tree-shape の outBoxOf の鍵の合わせ) と同じ: 狙い無しの手の箱は「打った後」で、人の結果は外れ = 種類でなく狙いが消えたかどうかで合わせる
   // (11-10 1 外れの試し: 種類で比べて枠の鍵が付かず、高い枠の 29 人が先頭の低い枠に着いてから移り、低い枠の札が 100 人になった)
-  const fits = (c: TreeBox): boolean => (c.out === "lost") === (oc.out === "lost") && !!lvPart(c.junkKey) && stripLv(c.junkKey) === stripLv(oc.junkKey);
+  // 当たりの箱も枠に分かれる (S-65c ①、11-10): 当たりは当たりの枠 (同じ狙い) だけ、外れ側は外れ側の枠だけに合わせる
+  const fits = (c: TreeBox): boolean => (c.out === "lost") === (oc.out === "lost") && (c.out === "hit") === (oc.out === "hit") && (oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => sameAim(data, a, x)))) && !!lvPart(c.junkKey) && stripLv(c.junkKey) === stripLv(oc.junkKey);
   if (oc.out === "blocked" || !b.outs.some((id) => { const c = doc.boxes[id]; return !!c && fits(c); })) return oc;
   const am = aimed ? new Set([...aimed, ...oc.hits.map((a) => a.modId)]) : null;
   // 比べるのは枠の削減の手のお告げで消える側の MOD だけ (枠を作る tree-whittle-pre と同じ)
