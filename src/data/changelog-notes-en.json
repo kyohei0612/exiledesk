@@ -1,4 +1,12 @@
 {
+  "0.1.703": [
+    "Simulator: hit boxes are now ordered left to right by how many targets landed (the “both landed” box of the Omen of Greater Exaltation now comes first)",
+    "Simulator: fixed Omen of Whittling frames (miss mod level lower, same or higher) where only “lower” could be made, or where a box after the whittle could not return to its earlier frame and the frames kept piling up",
+    "Simulator: the cards in the next-move window now also show the whittling frame marks (the mod compared against and ▼ ＝ ▲)",
+    "Simulator: trees now open faster when they are rebuilt",
+    "Simulator: on PC, fixed the “Step n” labels running past the bottom of the tree into the bar below when the tree was cut off",
+    "Feedback: feedback you send now includes your Daily name, so we can help you restart today’s challenge if something goes wrong"
+  ],
   "0.1.702": [
     "Simulator: crafts that add two mods at once (such as the Omen of Greater Exaltation) now also get a box for when both target mods land. The result splits into the same 4 cases as the emulator (either one, both, or a miss)",
     "Daily: when your challenge record has been reset, you can now start today’s challenge again from the list"

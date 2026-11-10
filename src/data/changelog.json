@@ -1,5 +1,47 @@
 [
  {
+  "v": "0.1.703",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 当たりの箱を、付いた狙いの多い順に左から並べるようにしました (偉大なる高貴なお告げの「2 つとも付いた」の箱が左端に来ます)",
+    "en": "Simulator: hit boxes are now ordered left to right by how many targets landed (the “both landed” box of the Omen of Greater Exaltation now comes first)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減のお告げの枠 (外れの MOD レベルが低い・同じ・高い) が「低い」1 つしかできなかったり、打った後の箱が前の枠へ戻れずに枠が増え続けたりしていたのを直しました",
+    "en": "Simulator: fixed Omen of Whittling frames (miss mod level lower, same or higher) where only “lower” could be made, or where a box after the whittle could not return to its earlier frame and the frames kept piling up"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓のカードにも、削減の枠の印 (比べる相手と ▼ ＝ ▲) を出すようにしました",
+    "en": "Simulator: the cards in the next-move window now also show the whittling frame marks (the mod compared against and ▼ ＝ ▲)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木を開く時の組み直しを速くしました",
+    "en": "Simulator: trees now open faster when they are rebuilt"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: PC で木が枠の下で切れた時、「n 段目」の札が下の帯の横まで出ていたのを直しました",
+    "en": "Simulator: on PC, fixed the “Step n” labels running past the bottom of the tree into the bar below when the tree was cut off"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "要望: 送る要望にデイリーの名前を添えるようにしました (困った時に今日の挑戦をやり直せるよう手助けできます)",
+    "en": "Feedback: feedback you send now includes your Daily name, so we can help you restart today’s challenge if something goes wrong"
+   }
+  ]
+ },
+ {
   "v": "0.1.702",
   "date": "2026-11-10",
   "items": [
@@ -838,24 +880,6 @@
     "area": "",
     "text": "シミュレーター: 完成形の設定で一緒に付かない組を断る時、止めている MOD の名前を出すようにしました",
     "en": "Simulator: when the final item setup refuses a pair that can't roll together, it now names the mod that blocks it"
-   }
-  ]
- },
- {
-  "v": "0.1.663",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 付いている MOD が止めて今は付かない MOD は灰色の 0% にし、ほかの MOD の出やすさの計算からも外しました (まとめた行の中の段も同じ)",
-    "en": "Emulator: mods that an existing mod blocks are now greyed out at 0% and no longer count toward the chances of the other mods (tiers inside grouped rows too)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定と貼り付けでも、付いている MOD が止めて一緒に付かない組を断るようにしました",
-    "en": "Simulator: the final item setup and pasted items now also refuse mods that can't roll together because an existing mod blocks them"
    }
   ]
  }
