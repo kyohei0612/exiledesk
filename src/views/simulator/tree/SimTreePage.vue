@@ -77,7 +77,7 @@ const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; 
 const MEMO_KEY = "exiledesk.tree.memo-open";
 const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
 watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
-/** 右の列 (完成形・保存・ミニマップ・倍率) を閉じて木を右端まで広げる (S-94h、このブラウザに覚える) */
+/** 右の列 (完成形・保存・ミニマップ・倍率) を閉じて木を右端まで広げる (S-94hx、このブラウザに覚える) */
 /** ↩ の札の × (同格以上の箱は「新しいツリーを作る」と同じ = 押した印を残す、S-33e ⑥。ほかは ↩ を外すだけ) */
 const clearBack = (d: TreeDoc, id: string): void => { const b = d.boxes[id]; if (b?.out === "blocked" && b.junkKey === "hi") setSameHiOwn(d, id, true); else setBack(d, id, null); };
 const SIDE_KEY = "exiledesk.tree.side-closed";
@@ -469,7 +469,7 @@ const glowOf = (b: Box): boolean => {
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」) -->
         <aside v-if="!t.needBase.value" v-show="!sideClosed" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
-          <!-- 右の列を閉じる小さなボタン (列の上の左端 = 完成形の設定のカードの左の線に揃える、11-08 夜オーナー「とじるは左端に置こうか」。閉じると木の枠の右上に「◂ 完成形」、S-94h。11-08 オーナー「とじるボタン上にちょびっと表示でいいんじゃね」) -->
+          <!-- 右の列を閉じる小さなボタン (列の上の左端 = 完成形の設定のカードの左の線に揃える、11-08 夜オーナー「とじるは左端に置こうか」。閉じると木の枠の右上に「◂ 完成形」、S-94hx。11-08 オーナー「とじるボタン上にちょびっと表示でいいんじゃね」) -->
           <button type="button" data-tree-side-toggle aria-expanded="true" :class="[SIDE_BTN, 'self-start']" :title="tr('右の列を閉じて木を広げる', 'Hide the side column to widen the tree')" @click="sideClosed = true"><Icon name="chevron-right" class="size-3.5" />{{ tr("閉じる", "Hide") }}</button>
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
