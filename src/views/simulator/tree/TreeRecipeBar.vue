@@ -10,6 +10,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useDismiss } from "../../../utils/use-dismiss";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { feedbackPage } from "../../../state/web-page";
 import { askLeave, openRecipesPage } from "../../../web/page";
 import { copyRecipeUrl, fmtDate, seedDevRecipes, closeNewer, sharedNewer, treeShortUrl, useRecipeUrl } from "../recipe-share";
 import { xIntentUrl } from "../../../services/craft-stage/share";
@@ -170,6 +171,7 @@ useDismiss(() => pop.value || naming.value || share.value, [root], closeAll, { s
  */
 const phone = useViewOnlyWidth();
 function onKey(e: KeyboardEvent): void {
+  if (feedbackPage.value) return; // 要望のページの間は木が隠れているだけ (U-05c)
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !props.view && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
 // 小窓を開いた時に向きと高さを測る (placePop)

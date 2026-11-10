@@ -63,6 +63,9 @@ const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.
  */
 watch(imageAskFor, (id) => { if (id) feedbackPage.value = true; }, { immediate: true });
 function closeFeedback(): void { feedbackPage.value = false; imageAskFor.value = null; }
+/** 要望のページの戻るボタン = 開いた元のページの名前 (U-05c) */
+const feedbackBack = computed(() => (treePage.value ? tr("← ツリーへ戻る", "← Back to tree") : recipesPage.value ? tr("← レシピへ戻る", "← Back to recipes")
+  : dailyPage.value ? tr("← デイリーへ戻る", "← Back to daily") : skinsPage.value ? tr("← 見た目へ戻る", "← Back to looks") : tr("← クラフトへ戻る", "← Back to craft")));
 let fbScroll = 0;
 watch(feedbackPage, (on) => {
   if (on) { fbScroll = window.scrollY; window.scrollTo(0, 0); return; }
@@ -226,7 +229,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 要望・バグを送るのページ (両脇の枠の間の真ん中にフォーム) -->
       <section v-if="feedbackPage" data-feedback-page class="flex min-w-0 flex-1 items-start justify-center gap-6 p-4">
         <div class="min-w-0 max-w-[48rem] flex-1">
-          <button type="button" data-feedback-back class="g-btn sm mb-3 max-md:min-h-10" @click="closeFeedback">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          <button type="button" data-feedback-back class="g-btn sm mb-3 max-md:min-h-10" @click="closeFeedback">{{ feedbackBack }}</button>
           <FeedbackDialog page open :for-id="imageAskFor" @close="closeFeedback" />
           <WebFooter class="mt-10" />
         </div>
@@ -247,7 +250,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
         </section>
       </template>
       <SkinsPage v-if="skinsPage && !feedbackPage" />
-      <SimTreePage v-if="treePage && !feedbackPage && !recipesPage" /><!-- クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ) -->
+      <!-- 要望の間は作り直さず隠すだけ (閉じると同じ見え方で戻る、U-05c) -->
+      <div v-if="treePage && !recipesPage" v-show="!feedbackPage" class="contents"><SimTreePage /></div><!-- クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ) -->
       <CraftStage v-show="!feedbackPage && !recipesPage && !treePage && !dailyPage && !skinsPage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />

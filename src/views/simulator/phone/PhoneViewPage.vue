@@ -15,6 +15,7 @@ import { useTree } from "../tree/use-tree";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
+import { feedbackPage } from "../../../state/web-page";
 import PhoneViewEmpty from "./PhoneViewEmpty.vue";
 import PhoneViewMap from "./PhoneViewMap.vue";
 import PhoneViewRoute from "./PhoneViewRoute.vue";
@@ -51,6 +52,8 @@ onMounted(() => {
   ro = new ResizeObserver(measureTop);
   ro.observe(document.body);
 });
+// 要望のページの間は木が隠れているだけ (U-05c)。要望のページは送れるように止めを外し、戻ったら止め直す
+watch(feedbackPage, (on) => { document.documentElement.style.overflow = on ? lockWas : "hidden"; if (!on) { window.scrollTo(0, 0); void nextTick(measureTop); } });
 onBeforeUnmount(() => { document.documentElement.style.overflow = lockWas; window.removeEventListener("resize", measureTop); ro?.disconnect(); });
 // 未完成の表示が出る・消えると帯の高さが変わる
 watch([topEl, locked], () => void nextTick(measureTop), { flush: "post" });

@@ -40,7 +40,7 @@ import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
-import { recipesPage } from "../../../state/web-page";
+import { feedbackPage, recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
@@ -323,6 +323,7 @@ const grid = computed(() => {
 });
 
 function onKey(e: KeyboardEvent): void {
+  if (feedbackPage.value) return; // 要望のページの間は木が隠れているだけ (U-05c)。戻す・やり直しなどを効かせない
   const tag = (e.target as HTMLElement | null)?.tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
   if ((e.ctrlKey || e.metaKey) && ((e.key.toLowerCase() === "z" && e.shiftKey) || e.key.toLowerCase() === "y")) { e.preventDefault(); t.redo(); return; }
@@ -340,6 +341,8 @@ onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 // 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったら開いた時の見え方 (全体・上寄せ) に合わせ直す
+// 要望のページの間は隠れて大きさ 0。開く前の見え方を覚えて戻す (U-05c)
+watch(feedbackPage, (on) => { if (viewPhone.value) return; if (on) v.keepView(); else setTimeout(() => { measureRow(); void v.backView(); }, 0); });
 watch(() => t.goalInline.value, (on) => { if (on) v.keepView(); else setTimeout(() => { measureRow(); void v.backView(); }, 0); });
 
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));

@@ -176,16 +176,14 @@ export function openGuide(): void {
   });
 }
 
-/** 要望・バグを送るのページを開く (ヘッダーのボタン・返事の窓から) */
+/**
+ * 要望・バグを送るのページを開く (ヘッダーのボタン・返事の窓から)。開く前のページ (木・レシピ・デイリー・見た目) は閉じずに下に残し、
+ * 閉じると開く前のページへそのまま戻る (U-05c、11-10 オーナー「おすすめでおｋ」。前は閉じるとベース選びへ戻った)。ページを離れないので保存の確かめも聞かない。
+ * 木のページは作り直さず隠すだけ (WebApp の v-show) なので、全体図・動かした位置・組みかけもそのまま
+ */
 export function openFeedback(): void {
-  leaveThen("page=feedback", () => {
-    s.hold(null);
-    recipesPage.value = false;
-    treePage.value = false;
-    dailyPage.value = null;
-    skinsPage.value = false;
-    feedbackPage.value = true;
-  });
+  s.hold(null);
+  feedbackPage.value = true;
 }
 
 /** レシピのページを開く (シミュレーターの右上・ベースを選ぶページから) */
