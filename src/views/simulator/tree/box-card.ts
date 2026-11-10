@@ -5,6 +5,7 @@
  * 前は PC の箱 (TreeBox)・手の窓 (TreeHandShelf)・スマホの 4 画面 (PhoneAsk・PhoneBoxPeek・PhoneBoxSheet・PhoneOutRow) が別々に組み、
  * スマホは boxId を渡さず神の目標値が出ず、見本も 1 人目だけ (PC は箱の形に合う人) だった。
  */
+import { lvRowTags } from "./tree-whittle-marks";
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -35,5 +36,7 @@ export function cardFor(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem
 export function boxCardOf(d: PatchData, doc: TreeDoc, boxId: string, opts: CardOpts = {}): BoxCard | null {
   if (!opts.box && !doc.boxes[boxId]) return null;
   const s = shapeSampleWithNote(d, doc, boxId);
-  return { ...cardFor(d, doc, boxId, s.item, opts), sample: s.item, note: s.note };
+  const c = cardFor(d, doc, boxId, s.item, opts);
+  // 削減の手前の枠 (S-65c ⑧): 比べる相手 と外れ MOD の ▼ ＝ ▲ (PC の箱・スマホの道・窓で同じ)
+  return { ...c, tags: lvRowTags(d, doc, boxId, c.item, c.tags), sample: s.item, note: s.note };
 }
