@@ -1,4 +1,8 @@
 {
+  "0.1.708": [
+    "When a new version is out, you now see a notice and can update with one tap. Your trees, items and crafted steps come back as they were. There is also an Update button next to the version in the header.",
+    "Replies to your feedback now arrive as a popup, and you can answer right away with text and images using \"Write a reply\"."
+  ],
   "0.1.707": [
     "Simulator: fixed runs getting stuck after a merged box when you saved and reopened a tree",
     "Simulator: when two boxes with the same contents are merged, the one that stays no longer changes each time you reopen the tree"
