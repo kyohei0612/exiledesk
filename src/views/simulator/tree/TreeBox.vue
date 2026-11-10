@@ -308,7 +308,8 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
         :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="!quiet && emit('band', x.id, $event)" @click.stop>
         <span class="truncate rounded-sm text-center font-bold text-black" :style="{ background: `rgb(${lvLook(x.lv).rgb})` }">{{ tr(BAND_TXT[x.lv]![0], BAND_TXT[x.lv]![1]) }}</span>
         <span class="truncate text-center text-white/70">{{ tr(BAND_TXT[x.lv]![2], BAND_TXT[x.lv]![3]) }}</span>
-        <span data-tree-band-hand class="truncate text-center" :class="x.hand ? 'text-amber-100' : 'font-bold text-rose-300'">{{ x.hand ?? tr("未設定 ＋", "Unset +") }}</span>
+        <!-- 手は帯の下の札 (絵と名前、11-11 オーナー「どこに何打って…一ミリも分からん」)。帯の中は未設定の時だけ -->
+        <span v-if="!x.hand" data-tree-band-hand class="truncate text-center font-bold text-rose-300">{{ tr("未設定 ＋", "Unset +") }}</span>
         <span v-if="x.issue" data-tree-band-issue class="absolute -right-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white">!</span>
       </button>
     </div>

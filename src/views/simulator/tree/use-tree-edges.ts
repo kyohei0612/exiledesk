@@ -34,16 +34,20 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
   /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
-  const bandFrom = (b: TreeBox): { x: number; y: number } | null => {
+  /**
+   * 削減の手前の枠の帯 (S-65c ⑫): 枠ごとに 帯 → 手の札 → 結果の箱 を別の線で (11-11 オーナー「どこに何打ってこのツリーになったのか一ミリも分からん」)。
+   * 先頭の枠 (帯の頭の箱) は帯の真下に札、ほかの枠は帯の下で段をずらして横へ出し、その枠の列 (描かない枠の箱の真ん中) に札。右の帯ほど上の段を通るので線は交わらない
+   */
+  const bandFrom = (b: TreeBox): { x: number; y: number; col: number; turn: number | null } | null => {
     const h = bandHead(doc.value, b.id), bs = headBands(doc.value, h), i = bs.findIndex((x) => x.id === b.id);
     if (i < 0) return null;
-    const q = posOf(doc.value.boxes[h]!);
-    return { x: q.x + bandMidX(BOX_W, i, bs.length), y: q.y + (heightOf?.(h) || BOX_H) };
+    const q = posOf(doc.value.boxes[h]!), x = q.x + bandMidX(BOX_W, i, bs.length), y = q.y + (heightOf?.(h) || BOX_H);
+    return i === 0 ? { x, y, col: x, turn: null } : { x, y, col: posOf(b).x + BOX_W / 2, turn: y + 10 + (bs.length - 1 - i) * 12 };
   };
   /** 線の行き先 (まとめた箱はまとめ先、帯の中の枠の箱は帯の頭) */
   const toOf = (o: string): string => { const c0 = doc.value.boxes[o]!; return mergedAway(doc.value, c0) ? c0.back! : bandAway(doc.value, c0) ? bandHead(doc.value, o) : o; };
   const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
-    const xs = [bandFrom(b)?.x ?? posOf(b).x + BOX_W / 2, ...outsOf(b).map(toOf).map(midOf)];
+    const xs = [bandFrom(b)?.col ?? posOf(b).x + BOX_W / 2, ...outsOf(b).map(toOf).map(midOf)];
     return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...outsOf(b).map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
@@ -57,7 +61,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
     const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
     // 帯の中の枠の箱は帯の真下から (手の名前は帯の中なので札は出さない、band)
-    const bf = bandFrom(b), px = bf?.x ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
+    const bf = bandFrom(b), px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
     const Lr = layout?.() ?? null, r = Lr?.rows.get(b.id);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
@@ -78,7 +82,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     }).sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
-    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
+    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
   }));
   /**
    * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。

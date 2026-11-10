@@ -98,8 +98,8 @@ function near(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW?
   // 札の幅は画面を測るので、置き直しの間は箱ごとに 1 回だけ (やり直しのたびに DOM を探し、200 箱で 9 秒かかった。S-71b)
   const chipSeen = new Map<string, number>();
   const chipOf = (id: string): number => { let w = chipSeen.get(id); if (w === undefined) chipSeen.set(id, (w = chipW?.(id) ?? 0)); return w; };
-  // 帯で見せる枠の箱 (描かない、S-65c ⑫) は幅 0 の列: 子の部分木だけがその下に入る
-  const ext = (id: string): [number, number] => { if (bandAway(d, d.boxes[id])) return [BOX_W / 2, BOX_W / 2]; const w = kids.get(id)!.length ? chipOf(id) : 0; return [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)]; };
+  // 帯で見せる枠の箱 (描かない、S-65c ⑫) は箱の無い列: 手の札の幅だけ取り、子の部分木はその下に入る
+  const ext = (id: string): [number, number] => { if (bandAway(d, d.boxes[id])) { const c = kids.get(id)!.length ? chipOf(id) : 0; return [BOX_W / 2 - c / 2, BOX_W / 2 + c / 2]; } const w = kids.get(id)!.length ? chipOf(id) : 0; return [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)]; };
   const gap = (a: string, b: string): number => (kids.get(a)!.length || kids.get(b)!.length ? GAP_DEEP : GAP_LEAF);
   const byRow: string[][] = [];
   for (const id of seen) { const r = L.rows.get(id); if (id !== "start" && r) (byRow[r] ??= []).push(id); }

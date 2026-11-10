@@ -34,6 +34,8 @@ export function foldMisses(doc: TreeDoc, id: string): void {
   if (!holdsAt(doc, id)) return;
   // 削減の手前の枠で持つ削減 (S-39 ②b、スイッチ whittleBands): 枠ごとに 打つ = ハズレにまとめない (ふつうの削減の結果を使う) / 打たない = 当たりも全部ハズレ
   const b0 = doc.boxes[id], lvHeld = bandsOn() && !!b0 && isWhittleHand(b0.hand) && !!lvPart(b0.junkKey);
+  // 印の無い前の木 (11-11 ブラック 79 の OK): 低い = 打つ、同じ・高い = 打たない にそろえる
+  if (lvHeld && !b0!.hand!.noUse && !b0!.hand!.useHeld) { if (lvPart(b0!.junkKey) === "lo") b0!.hand!.useHeld = true; else b0!.hand!.noUse = true; }
   if (lvHeld && !b0!.hand!.noUse) return;
   // まとめ先 (先頭) は当たり以外から (打たない枠で当たりの箱がハズレの顔になって当たりの印が出ないように)
   const miss = (doc.boxes[id]?.outs ?? []).filter((o) => doc.boxes[o] && (lvHeld || doc.boxes[o]!.out !== "hit")).sort((a, z) => Number(doc.boxes[a]!.out === "hit") - Number(doc.boxes[z]!.out === "hit"));
