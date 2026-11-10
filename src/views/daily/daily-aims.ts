@@ -10,7 +10,7 @@ import { aimTextsOf } from "./daily-gen";
 import { migrateStart, startRarity, type Aim, type StartFrom, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
-import { genesisOver, genesisWhy } from "./daily-check";
+import { genesisOver, genesisWhy, isGenesis, isGenesisLine } from "./daily-check";
 
 export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: Array<{ line: string; why: string }> };
 
@@ -40,7 +40,25 @@ export function itemFromText(data: PatchData, text: string): PostItem | string {
   if (!r.base) return r.skipped[0] ? tr(r.skipped[0].reason.ja, r.skipped[0].reason.en) : tr("ベースが読めない", "Couldn't read the base");
   if (r.rarity === "unique") return tr("ユニークはお題にできない", "Uniques can't be used");
   const reading = r.readings?.[0] ?? { mods: r.mods, skipped: r.skipped };
-  return take(data, r.base, r.itemLevel ?? 82, reading.mods, reading.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en) })));
+  const p = take(data, r.base, r.itemLevel ?? 82, reading.mods, reading.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en) })));
+  return genesisLines(data, p, text);
+}
+
+/**
+ * 貼る口の創生の樹 (D-14): 読みは創生の樹の行を読めない行 (ドロップ限定・説明できない) にするので、狙いと読めない行を合わせて 2 つ目から訳を創生の樹の物にする。
+ * 1 つだけなら今のまま (ドロップ限定の訳)。数える順は貼った文の行の順
+ */
+function genesisLines(data: PatchData, p: PostItem, text: string): PostItem {
+  const order = text.split(/\r?\n/).map((l) => l.trim());
+  const at = (line: string): number => order.indexOf(line.trim());
+  const rows = [
+    ...p.aims.filter((a) => isGenesis(data, a.modId)).map(() => ({ at: -1, bad: null as PostItem["bad"][number] | null })),
+    ...p.bad.filter((b) => b.why !== genesisWhy() && isGenesisLine(data, b.line)).map((b) => ({ at: at(b.line), bad: b })),
+  ].sort((a, b) => a.at - b.at);
+  const already = p.bad.filter((b) => b.why === genesisWhy()).length;
+  if (rows.length + already < 2) return p;
+  rows.slice(already ? 0 : 1).forEach((r) => { if (r.bad) r.bad.why = genesisWhy(); });
+  return p;
 }
 
 /** エミュのアイテムを読む (エミュの「シミュレーターへ」と同じ渡し方) */

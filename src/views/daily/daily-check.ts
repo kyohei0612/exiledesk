@@ -4,6 +4,8 @@
  */
 import type { PatchData } from "../../services/craft-stage/engine";
 import { sideLimits } from "../../services/htc/bridge";
+import { matchKey } from "../../services/htc/bridge-index";
+import { matchModLine } from "../../services/htc/paste-parse";
 import { goalBlock } from "../../services/simulator/sim-engine";
 import type { GenAim } from "./daily-gen";
 import { tr } from "../../i18n/lang";
@@ -25,8 +27,25 @@ export function fullMods(data: PatchData, base: string, aims: readonly { modId: 
 export const isGenesis = (data: PatchData, modId: string): boolean => !!data.mods.get(modId)?.tags.some((t) => t.startsWith("genesis_tree_"));
 /** 創生の樹の MOD が 2 つ以上か (D-14・D-04 の「お題に 1 つまで」)。投稿の画面 (daily-aims の読み) と 16:00 の boxCheck が同じ物を呼ぶ */
 export const genesisOver = (data: PatchData, aims: readonly { modId: string }[]): boolean => aims.filter((a) => isGenesis(data, a.modId)).length > 1;
-/** 創生の樹の 2 つ目の行・落とした訳 genesis-2 の文 */
-export const genesisWhy = (): string => tr("創生の樹の MOD は 1 つまで", "Only 1 Genesis Tree mod per item");
+/** 創生の樹の 2 つ目の行・落とした訳 genesis-2 の文 (オーナー 11-10 の言葉どおり) */
+export const genesisWhy = (): string => tr("やり直し不可能なMODは1つまでです", "Only 1 mod that can't be crafted again is allowed");
+
+/** エンジンの創生の樹の MOD の文の鍵 (どの部位の物も)。貼った文の読めない行を見分ける用 */
+const genesisKeys = new WeakMap<PatchData, Set<string>>();
+/**
+ * 貼った文の 1 行が創生の樹の MOD か (D-14)。貼る口の読みは創生の樹の行を MOD にせず読めない行にするので、行の型をエンジンの創生の樹の MOD の文と突き合わせる
+ * (見分けの元はエンジンのタグのまま。そのベースに無い創生の樹の MOD でも当てる)
+ */
+export function isGenesisLine(data: PatchData, line: string): boolean {
+  let keys = genesisKeys.get(data);
+  if (!keys) {
+    keys = new Set([...data.mods.values()].filter((m) => m.tags.some((t) => t.startsWith("genesis_tree_"))).map((m) => matchKey(m.text ?? "")));
+    genesisKeys.set(data, keys);
+  }
+  // 段の幅の添え書き「10(8-10)%」は読みと同じく値だけにする (item-text の stripRangeHint と同じ)
+  const hit = matchModLine(line.trim().replace(/(\d+(?:\.\d+)?)\((?:-?\d+(?:\.\d+)?)(?:-(?:\d+(?:\.\d+)?))?\)/g, "$1"));
+  return !!hit && keys.has(matchKey(hit.template));
+}
 
 /** 機械の確かめ (D-20)。エンジンで作れるか (同じ系統の重なりも goalBlock が見る)・創生の樹の MOD が 1 つまでか (D-14)・フル MOD か (D-84)・名前と一言に悪口が無いか。落ちたら訳、通れば null */
 export function boxCheck(data: PatchData, item: { base: string; ilvl: number; aims: GenAim[]; note: string }, nick: string): string | null {
