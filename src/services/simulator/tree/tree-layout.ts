@@ -1,13 +1,18 @@
 /**
  * tree-layout.ts — ツリーの整列 (tidy) と段の札の高さ (bandsOf)。tree-model.ts から分けた (2026-10-24、500 行の決まり。中身は前のまま)
  */
-import { aimKey, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, bothOf, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
 import { centerMerged, noteLaid, rowTops, settleRows } from "./tree-row-tops";
 
 /** 兄弟の並び = 狙いどおりが左 (S-142d、11-08 オーナー「狙い通りは基本左」): 当たり・打った後 → 外れが消えた (残したい MOD が残った) → 狙いが消えた → 外れ → 塞がった (S-33e) */
 export const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, junkGone: 1, lost: 2, junk: 3, blocked: 4 };
 /** 兄弟の中の順 (OUT_ORDER)。「エッセンスと同じ MOD (同格以上)」(鍵 hi = tree-outcome の SAME_HI) はエッセンスの当たりと同じ扱いで進むので、狙いどおり (当たり・打った後) のすぐ右隣 (S-33e ⑥、11-08 夜オーナー「打った後の理想形は必ず左ね、そのっ隣に置けって話一緒に進行する奴は」) */
-export const outRank = (b: Pick<TreeBox, "out" | "junkKey">): number => (b.out === "blocked" && b.junkKey === "hi" ? 0.5 : OUT_ORDER[b.out] + lvRank(b.junkKey));
+export const outRank = (b: Pick<TreeBox, "out" | "junkKey">): number => (b.out === "blocked" && b.junkKey === "hi" ? 0.5 : OUT_ORDER[b.out] + lvRank(b.junkKey) + hitRank(b));
+/**
+ * 当たりの箱どうしは、この手で付いた狙いの多い順に左から (S-142d、11-10 オーナー「ほんで完成品はいつも一番左端ルールは？偉大」)。
+ * 「2 つとも付いた」の箱 (鍵 a:、S-22d) は付いた組の数、ほかの当たりは 1。数が同じなら今の順のまま
+ */
+const hitRank = (b: Pick<TreeBox, "out" | "junkKey">): number => (b.out === "hit" ? -0.001 * Math.max(1, bothOf(b.junkKey).length) : 0);
 /** 削減の手前の枠 (S-65c、鍵 l:) は同じ種類の中で 低い → 同じ → 高い の順 (外れが消える方が左 = 狙いどおりが左) */
 const lvRank = (k: string | undefined): number => { const c = k?.split(";").find((x) => x.startsWith("l:")); return c === "l:lo" ? 0.01 : c === "l:eq" ? 0.02 : c === "l:hi" ? 0.03 : 0; };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
