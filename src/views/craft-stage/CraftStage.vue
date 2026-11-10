@@ -327,11 +327,13 @@ function pickMode(m: typeof s.mode.value): void {
         <CourseHost part="above-shelf" :phone="phone" /><!-- コースの今の手 (棚のすぐ上) -->
         <StageAimPanel v-if="!s.replay.value && !courseHidesEmulator" data-rec-part="aim-panel" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section v-show="!courseHidesShelf" ref="shelfEl" class="g-panel relative p-2">
+        <!-- スマホは見出しと枠の間を空ける (オーナー 11-10「枠きわきわやな」) -->
+        <section v-show="!courseHidesShelf" ref="shelfEl" class="g-panel relative p-2 max-md:px-3 max-md:pt-4">
           <p class="g-sec-head">
             <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
-            <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
-            <span v-else class="g-sec-sub whitespace-nowrap">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
+            <!-- スマホは持っている物を下の帯で見せるので、見出しの札は出さない (オーナー 11-10「この欄もないし」) -->
+            <span v-if="s.held.value && !phone" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
+            <span v-else-if="!s.held.value" class="g-sec-sub whitespace-nowrap">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
             <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span><button v-if="PAGES_ON && s.mode.value === 'hand' && !courseHidesEmulator && s.item.value" type="button" data-routes-open class="g-btn sm ml-auto" :title="tr('MOD を 1 つ選んで、増強・カオス・高貴のどのスパムが一番安く着くかを比べる', 'Pick one mod and compare which spam (augment / chaos / exalt) gets there cheapest')" @click="openRoutes">{{ tr("スパムシミュレーター", "Spam simulator") }}</button>
           </p>
           <CurrencyShelf @hold="hold">
