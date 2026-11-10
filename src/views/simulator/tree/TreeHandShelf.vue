@@ -38,7 +38,7 @@ import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
-import { useHandLater } from "./use-hand-later";
+import { useHandLater } from "./use-hand-later"; import { whittleHint } from "./tree-whittle-hint";
 import { foreseeBlock, heldOutNames } from "../../../services/simulator/tree/tree-foresee";
 import { keepsMods } from "../../../services/simulator/sim-engine";
 
@@ -282,7 +282,7 @@ const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.va
 const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
-const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
+const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null)); /** 削減を含む手の分かれ方の一行 (S-65c ⑨) */ const lvHint = computed(() => (s.data.value && !problem.value ? whittleHint(s.data.value, t.doc.value, props.boxId, hand.value) : null));
 /** 結果の箱の文 (写しに手を付けて「狙いが消えた」が出来るかを見る) */
 const resultText = computed((): [string, string] | null => {
   const h = hand.value, k = kind.value;
@@ -408,7 +408,7 @@ function ok(): void {
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
-      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
+      <p v-if="lvHint" data-tree-hand-lv-hint class="break-words text-[12px] text-amber-200">{{ tr(lvHint[0], lvHint[1]) }}</p><p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem && !divOn" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
