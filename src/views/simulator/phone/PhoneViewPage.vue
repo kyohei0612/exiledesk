@@ -11,7 +11,7 @@ import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import TreeRunReport from "../tree/TreeRunReport.vue";
 import TreeRunSum from "../tree/TreeRunSum.vue";
 import { blocksRun, unsetIssues } from "../../../services/simulator/tree/tree-check";
-import { issueGroups, unfinishedText } from "../tree/hole-check";
+import { unfinishedText } from "../tree/hole-check";
 import { useGoalShown } from "../tree/use-goal-shown";
 import { useTree } from "../tree/use-tree";
 import { useTreeRun, VIEW_N } from "../tree/use-tree-run";
@@ -34,8 +34,7 @@ const noTree = computed(() => { const d = t.doc.value; return t.needBase.value |
  * 開いた時に穴チェック (人を回す確かめ) はしない。レシピをそのまま見せるだけ (11-10 オーナー「スマホはレシピのまんま表示するだけでいいよ」、S-94e。
  * 前は開いた時に 30 人を辿り、スマホで約 10 秒固まった)。未設定は箱を形だけで数え (見本も人も使わない unsetIssues)、1 つでもあれば「未完成」で回さない
  */
-const unset = computed(() => (noTree.value ? 0 : issueGroups(unsetIssues(t.doc.value).filter((x) => blocksRun(x.kind)), t.doc.value).length));
-const locked = computed(() => unset.value > 0);
+const locked = computed(() => !noTree.value && unsetIssues(t.doc.value).some((x) => blocksRun(x.kind)));
 
 // 100 人回す (PC と同じ人数・回し方・結果の行・結果のまとめ・木の上の層)。押すと全体図 (詳細) を開いて全体表示に引き、1 人目が枠の外へ出たらその箱へ寄る (PC の onWalk と同じ)
 // (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」「挙動完全にPCに合わせていいよ…全て真似しておけ」、S-94e)
@@ -115,10 +114,9 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
       <div data-phone-recipe data-tree-own class="relative z-40 flex min-w-0 flex-wrap items-center justify-between gap-1 text-[13px]">
         <TreeRecipeBar class="!contents" view flat="flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-sim-body aria-expanded:text-amber-100" />
       </div>
-      <!-- 穴チェックの帯の所に 10 人回す。未設定があれば「未完成」の短い文だけ (S-94e) -->
+      <!-- 穴チェックの帯の所に 10 人回す。未設定があればボタンの所に「未完成のレシピです」(押せない、S-94e。11-10 オーナー「未完成のは未完成のレシピですって10人回すところのボタンにかいとけばおｋ」) -->
       <div data-phone-view-run class="flex min-w-0 flex-col gap-1">
-        <p v-if="locked" data-phone-view-locked class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ unfinishedText(unset) }}</p>
-        <button v-else type="button" data-phone-view-go class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="!s.data.value || run.running.value" @click="go">{{ run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
+        <button type="button" data-phone-view-go :data-phone-view-locked="locked || undefined" class="g-btn-red !min-h-11 w-full px-2 text-[15px]" :disabled="locked || !s.data.value || run.running.value" @click="go">{{ locked ? unfinishedText() : run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${VIEW_N}`, `Running ${run.result.value?.n ?? 0} / ${VIEW_N}`) : tr(`${VIEW_N} 人回す`, `Run ${VIEW_N}`) }}</button>
         <!-- 結果の行は PC と同じ部品 (1 人目が進んでいる n/m 箱・早送り・飛ばす・止まり・沼った場所・結果のまとめ・結果を隠す)。390 では折り返す -->
         <TreeRunSum v-if="!locked" v-model:shown="run.shown.value" v-model:report="reportOpen" data-phone-view-sum class="flex-wrap text-[13px] text-amber-100" :result="run.result.value" :running="run.running.value" :stuck="run.stuckBoxes.value" :halted="run.halted.value" :walk="run.walk.value" :test="run.test.value" @go="goBox" @skip="run.skipWalk()" />
       </div>

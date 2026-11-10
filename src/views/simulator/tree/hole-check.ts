@@ -25,12 +25,10 @@ export const finalLockedWhy = (): string => tr("最終チェックに合格す�
  */
 export const holesCount = (n: number): string => tr(`未設定 ${n} つ`, `${n} unset`);
 /**
- * スマホの見るだけの画面で、未設定のあるレシピ (S-94e、11-10 オーナー「未完成なら未完成って書いとけばいいんじゃね回せないだろうし」)。
- * n = 未設定の数 (holesCount と同じ数え、箱を形だけで数える)。0 = 完成までの道が無いだけの時 (道の画面)
+ * スマホの見るだけの画面で、未設定のあるレシピ。「10 人回す」のボタンの所に押せない形で出す (S-94e、11-10 オーナー「未完成なら未完成って書いとけばいいんじゃね回せないだろうし」
+ * 「未完成のは未完成のレシピですって10人回すところのボタンにかいとけばおｋ」)。完成までの道が無い時の道の画面も同じ文
  */
-export const unfinishedText = (n: number): string => (n
-  ? tr(`未完成のレシピ (${holesCount(n)})。回せない`, `Unfinished recipe (${holesCount(n)}). Can't run`)
-  : tr("未完成のレシピ。回せない", "Unfinished recipe. Can't run"));
+export const unfinishedText = (): string => tr("未完成のレシピです", "Unfinished recipe");
 /** 一覧の上の説明 (11-08 オーナー OK の文) */
 export const holesWhat = (): string => tr("!の付いた箱です。全部直すと100人回せます。行を押すとその箱へ移ります", "Boxes marked !. Fix them all to run 100. Click a row to go to the box");
 /** 箱ごとにまとめた困り事 (boxId "" = 箱の無い物、木の側の不具合など。1 つにまとめて最後に置く) */

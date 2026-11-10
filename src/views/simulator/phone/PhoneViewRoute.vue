@@ -36,7 +36,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 </script>
 
 <template>
-  <p v-if="!steps" data-phone-view-noroute class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ unfinishedText(0) }}</p>
+  <p v-if="!steps" data-phone-view-noroute class="rounded-md border border-amber-300/30 px-3 py-2 text-center text-[13px] text-amber-100">{{ unfinishedText() }}</p>
   <div v-else data-phone-view-route class="mx-auto flex flex-col pt-3" :style="{ width: `${BOX_W}px`, zoom }">
     <template v-for="(st, i) in steps" :key="`${st.kind}-${st.id}-${i}`">
       <template v-if="st.kind === 'box'">
