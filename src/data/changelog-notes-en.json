@@ -1,4 +1,9 @@
 {
+  "0.1.704": [
+    "Simulator: while holding a Divine Orb, the mouse wheel now scrolls the window from anywhere (before, it only scrolled over the highlighted area)",
+    "Daily: you can now submit even if 0% of the 100 runs finish. It is saved as today’s record (it does not appear in the ranking)",
+    "Daily: the minimum tier of every challenge mod is now T3 or better"
+  ],
   "0.1.703": [
     "Simulator: hit boxes are now ordered left to right by how many targets landed (the “both landed” box of the Omen of Greater Exaltation now comes first)",
     "Simulator: fixed Omen of Whittling frames (miss mod level lower, same or higher) where only “lower” could be made, or where a box after the whittle could not return to its earlier frame and the frames kept piling up",

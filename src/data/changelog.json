@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.704",
+  "date": "2026-11-10",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 神のオーブを持っている時、窓のどこでもホイールで中身を送れるようにしました (前は光った欄の上でしか送れませんでした)",
+    "en": "Simulator: while holding a Divine Orb, the mouse wheel now scrolls the window from anywhere (before, it only scrolled over the highlighted area)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 100 人回して完成 0% でも提出できるようにしました。今日の記録として残ります (順位には載りません)",
+    "en": "Daily: you can now submit even if 0% of the 100 runs finish. It is saved as today’s record (it does not appear in the ranking)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: お題の MOD の段の下限を、どれも T3 以上に揃えました",
+    "en": "Daily: the minimum tier of every challenge mod is now T3 or better"
+   }
+  ]
+ },
+ {
   "v": "0.1.703",
   "date": "2026-11-10",
   "items": [
@@ -862,24 +886,6 @@
     "area": "",
     "text": "エミュレーター・シミュレーター: MOD の数が上限を超えた側 (ジュエルで侮蔑が消えた後など) には、骨で冒涜の MOD を付けられないようにしました",
     "en": "Emulator and Simulator: bones can no longer add a Desecrated mod to a side that is over its mod limit (for example after a Jewel loses the mod that adds a slot)"
-   }
-  ]
- },
- {
-  "v": "0.1.664",
-  "date": "2026-11-04",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: カオス・骨など、MOD を消してから付ける手は打つ前の品の枠で見るようにしました。枠を増やす MOD が消えても、付いている MOD の数が減りません",
-    "en": "Emulator: currencies that remove a mod and then add one (Chaos Orb, bones and similar) now use the item's mod slots from before the craft, so removing a mod that adds slots no longer lowers the number of mods"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定で一緒に付かない組を断る時、止めている MOD の名前を出すようにしました",
-    "en": "Simulator: when the final item setup refuses a pair that can't roll together, it now names the mod that blocks it"
    }
   ]
  }
