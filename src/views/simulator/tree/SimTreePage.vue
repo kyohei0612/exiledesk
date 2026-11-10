@@ -122,12 +122,15 @@ const row = ref<HTMLElement | null>(null);
 /** ツリーの段の高さ = 画面の下まで (段の上の位置を測って引く。決め打ちの 230px では 1920 幅で 24px はみ出した、10-22 開発版で測った) */
 const rowH = ref(480);
 /**
- * 段の下にある物 (.g-panel の下の余白 8 + 枠 18 + ページの下の余白 16) と余り。余りは 12px (前は 4px):
- * ページの拡大率 (html の zoom、WebApp の fitZoom) が 1 より少し小さい時に測ると、拡大率 1 では数 px 高すぎて縦のスクロールバーが出て、
+ * 段の下にある物 (.g-panel の下の余白 2 + 枠 18 + ページの下の余白の残り 2 (16 を枠の -mb-3.5 で詰める)) と余り 2。
+ * 11-11 オーナー「枠下空きすぎ。もっとぎりぎり攻めておk」「外側のシミュの枠の話」で 54 → 24。
+ * 前の余り 12px の訳: ページの拡大率 (html の zoom、WebApp の fitZoom) が 1 より少し小さい時に測ると、拡大率 1 では数 px 高すぎて縦のスクロールバーが出て、
  * 幅が縮む → 拡大率が下がる → スクロールバーが消える → 拡大率が戻る、をフレームごとにくり返し、CPU が回りっぱなしになった
- * (10-23 オーナー「シミュめっちゃ重くなった」。初手のページ (長い) から木へ戻った時に起きた)
+ * (10-23 オーナー「シミュめっちゃ重くなった」)。今は余りを小さくし、測った次のコマでページがはみ出ていればその分を trim に足して縮める。
+ * trim は増えるだけ (窓の高さが変わった時だけ 0 に戻す) なので、出る・消えるのくり返しにならない
  */
-const ROW_BOTTOM = 54;
+const ROW_BOTTOM = 24;
+let trim = 0, trimH = 0;
 function measureRow(): void {
   const el = row.value;
   if (!el) return;
@@ -135,7 +138,13 @@ function measureRow(): void {
   // スマホの形 (1280 未満、U-53) はボタンが何段にも折り返して残りが 240px ほどになり、木がほとんど見えず道具の帯がスタートの箱に重なった (10-23 モンキー 5)。
   // 画面の高さの 7 割は取り、はみ出す分はページを縦に送る
   const phoneMin = innerWidth < VIEW_ONLY_MAX ? Math.round((innerHeight / z) * 0.72) : 200;
-  rowH.value = Math.max(phoneMin, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
+  if (trimH !== innerHeight) { trim = 0; trimH = innerHeight; }
+  rowH.value = Math.max(phoneMin, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM) - trim);
+  if (innerWidth < VIEW_ONLY_MAX) return;
+  requestAnimationFrame(() => {
+    const h = document.documentElement, over = h.scrollHeight - h.clientHeight;
+    if (over > 0 && rowH.value > phoneMin) { const d = Math.ceil(over / Math.min(1, pageZoom())) + 1; trim += d; rowH.value = Math.max(phoneMin, rowH.value - d); }
+  });
 }
 const onResizeH = (): void => { requestAnimationFrame(measureRow); };
 onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
@@ -376,7 +385,7 @@ const glowOf = (b: Box): boolean => {
     <div class="mb-3 flex flex-wrap items-center gap-2"><ModeTabs /><SiteSkinPicker class="ml-auto" /></div><!-- 色はタブの行の右端 (U-49) -->
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
-    <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 py-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
+    <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 pb-0.5 pt-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : '-mb-3.5'">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
@@ -406,7 +415,7 @@ const glowOf = (b: Box): boolean => {
         <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
         <!-- overflow-clip: hidden だと枠の外の箱にフォーカス・寄せが来た時にブラウザが枠ごとスクロールし、枠が上へずれて下が描かれなかった (11-06、未設定の「次へ」の後) -->
         <!-- 段の札の列も木の枠と同じくページの zoom を打ち消す (送りと倍率は枠の中の座標。打ち消さないと札が zoom 倍に伸び、下の段ほどずれた、11-08 ayqOgcD9 オーナー「段がバグってる」) -->
-        <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" :cut="issuesShown ? 44 * pageZ : 0" />
+        <TreeLaneTags v-if="!t.needBase.value" column class="-mr-2" :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom"  />
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <button v-if="!t.needBase.value && sideClosed" type="button" data-tree-side-toggle aria-expanded="false" :class="[SIDE_BTN, 'absolute right-2 top-2 z-20']" :title="tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)')" @click="sideClosed = false"><Icon name="chevron-right" class="size-3.5 -scale-x-100" />{{ tr("完成形", "Final item") }}</button>
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
@@ -414,7 +423,7 @@ const glowOf = (b: Box): boolean => {
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
-        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(issuesShown ? { bottom: `${44 * pageZ}px` } : {}) }" @wheel="v.onWheel">
+        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
             :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
             :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"

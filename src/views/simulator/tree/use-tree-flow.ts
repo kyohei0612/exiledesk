@@ -190,7 +190,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     // スイッチ nextInView (S-147c): 箱の本当の高さ + 下の ＋ まで (帯「! 未設定」の下に ＋ を隠さない)
     const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = ((f.findNode(id)?.dimensions.height || BOX_H) + NEXT_H) * z;
     // 帯「! 未設定」は枠の下に重なるので、その分だけ見える高さが狭い。箱の真ん中でなく箱と ＋ の全体を見える所の真ん中へ (背の高い箱の ＋ が帯の裏へ落ちた、11-02 オーナーのレシピの b29)
-    const bar = document.querySelector<HTMLElement>("[data-tree-unset-bar]")?.offsetHeight ?? 0;
+    // 11-11 から札は木の面の上に浮くので (TreeUnsetBar)、札の帯の高さ 44 を見える高さから引く
+    const bar = document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
     const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - bar - m;
     if (center || out) await f.setCenter(b.x + BOX_W / 2, sh > h - bar - m * 2 ? b.y + (h / 2 - m) / z : b.y + sh / (2 * z) + bar / (2 * z), { zoom: z });
   }
@@ -216,7 +217,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (fresh.length > 3) { await openView(); return; }
     const ys = new Set(fresh.map((id) => doc.value.boxes[id]?.y));
     // nextInView: 帯「! 未設定」(TreeUnsetBar、高さ 44) が数え直しの間だけ消えていても、帯の分を下に空けて数える (新しい箱はたいてい未設定で、帯がすぐ戻る)
-    const barGap = !document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
+    const barGap = 44 * pageZ.value;
     const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - barGap, m = 8;
     const row = Object.values(doc.value.boxes).filter((b) => ys.has(b.y));
     const l = Math.min(...row.map((b) => b.x)), r = Math.max(...row.map((b) => b.x + BOX_W)), t0 = Math.min(...row.map((b) => b.y)), b0 = Math.max(...row.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + NEXT_H;
@@ -273,7 +274,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
       const kids = kidsOf();
       if (!kids.length) return;
       // 未設定の帯は 0 の時も置くので (TreeUnsetBar)、木の面の高さは札が出ても変わらない (前は札の無い時に先に 44px 引いていた)
-      const { x, y } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 8;
+      // 11-11 から札は木の面の上に浮くので、帯の高さ 44 を下に空けて数える
+      const { x, y } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - 44 * pageZ.value, m = 8;
       const l = Math.min(...kids.map((b) => b.x)), r = Math.max(...kids.map((b) => b.x + BOX_W)), t0 = Math.min(...kids.map((b) => b.y)), b0 = Math.max(...kids.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + NEXT_H;
       const head = BOX_H * z / 2;
       if (changed && l * z + x < w - m && r * z + x > m && t0 * z + y < h - m - head && t0 * z + y > m) return;
