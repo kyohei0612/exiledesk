@@ -30,6 +30,11 @@ export interface HeldOdds {
   bone?: true;
   /** 1 回で 1 つだけ足す手 (w / total がそのまま付く確率で、MOD どうしは同時に付かない) */
   single?: true;
+  /**
+   * 回して数える表 (錬金など 3 つ以上足す手) で、付く候補にあるのに 1 度も出なかった MOD と段 (id → 段の番号)。
+   * 0% ではなく「ごくまれに付く」(E-88a)。数字は持たないので byMod には入れない (byMod にも unseen にも無い物だけが本当に付かない)
+   */
+  unseen?: Map<string, number[]>;
 }
 
 /** 勢力の保証のタグ → エンジンの勢力のお告げ */
@@ -45,7 +50,7 @@ export function heldOdds(data: PatchData, item: StageItem, key: string, omens: r
   if (plan.actions.some((a) => "addEssence" in a)) return sampled(data, item, key, omens);
   const odds = addOddsBySpec(data, item, key, omens, plan);
   if (!odds) return null;
-  if (odds.n > 2) return sampled(data, item, key, omens);
+  if (odds.n > 2) return withUnseen(sampled(data, item, key, omens), odds.cands);
   if (odds.n === 2) return twoAdds(data, item, plan, odds.cands);
   const cs = odds.cands;
   return { byMod: new Map(cs.map((c) => [c.mod.id, { w: c.w, tiers: c.tiers }])), total: cs.reduce((a, c) => a + c.w, 0), single: true };
@@ -80,6 +85,22 @@ export function heldAnyOf(data: PatchData, item: StageItem, key: string, omens: 
     if (got.some((m) => keys.has(aimTierKey(m.modId, m.tierIndex)))) hit++;
   }
   return ok ? hit / ok : 0;
+}
+
+/**
+ * 回して数えた表に「付く候補にあるのに 1 度も出なかった MOD・段」の印を足す (E-88a)。
+ * 候補は打つ処理と同じ土台 (addOddsBySpec の 1 つ目の候補 = 消した後の品に付きうる物の全部。2 つ目からは付いた物の系統・タグで減るだけ)
+ */
+function withUnseen(h: HeldOdds | null, cands: readonly Candidate[]): HeldOdds | null {
+  if (!h) return h;
+  const unseen = new Map<string, number[]>();
+  for (const c of cands) {
+    if (!(c.w > 0)) continue;
+    const got = new Set(h.byMod.get(c.mod.id)?.tiers.map((t) => t.index) ?? []);
+    const miss = c.tiers.filter((t) => t.w > 0 && !got.has(t.index)).map((t) => t.index);
+    if (miss.length) unseen.set(c.mod.id, miss);
+  }
+  return unseen.size ? { ...h, unseen } : h;
 }
 
 /** 1 回で MOD を幾つも足す・決まった MOD を足す手 (錬金 4 つ、エッセンス)。候補の式が無いので、打つ処理そのものを決まった種で回して数える */

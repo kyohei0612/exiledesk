@@ -96,7 +96,7 @@ describe("確率表 = 打った結果 (MOD を足す手)", () => {
         // 付いた MOD を全部数える (大いなる高貴は 2 つ。表は「どれかで付く確率」。前は 1 つ目だけ見ていて、大いなる高貴の抜けを見逃した)
         for (const id of new Set((r.added ?? []).map((m) => m.modId))) seen.set(id, (seen.get(id) ?? 0) + 1);
       }
-      for (const [id, n] of seen) expect(h!.byMod.has(id), `表で 0% なのに付いた: ${id}`).toBe(true);
+      for (const [id, n] of seen) expect(h!.byMod.has(id) || !!h!.unseen?.has(id), `表で 0% なのに付いた: ${id}`).toBe(true);
       for (const [id, x] of h!.byMod) {
         const p = x.w / h!.total;
         expect(Math.abs(p - (seen.get(id) ?? 0) / N), `${id} 表 ${p.toFixed(3)} / 実際 ${((seen.get(id) ?? 0) / N).toFixed(3)}`).toBeLessThan(tol(p));

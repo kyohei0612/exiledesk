@@ -94,7 +94,8 @@ function check(item: StageItem, key: string, omens: string[], bad: string[]): vo
     } else ids = (r.added ?? []).map((m) => m.modId);
     for (const id of new Set(ids)) seen.set(id, (seen.get(id) ?? 0) + 1);
   }
-  for (const id of seen.keys()) if (!h.byMod.has(id)) bad.push(`${label}: 表で 0% なのに出た ${id} (${seen.get(id)}/${N})`);
+  // 回して数える表で 1 度も出なかったが付く候補にある MOD (h.unseen、E-88a) は 0% ではない
+  for (const id of seen.keys()) if (!h.byMod.has(id) && !h.unseen?.has(id)) bad.push(`${label}: 表で 0% なのに出た ${id} (${seen.get(id)}/${N})`);
   for (const [id, x] of h.byMod) {
     const p = x.w / h.total;
     const q = (seen.get(id) ?? 0) / N;

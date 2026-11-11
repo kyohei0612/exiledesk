@@ -11,6 +11,7 @@ import { forceKey } from "../src/services/craft-stage/apply-force";
 import { allMods, room } from "../src/services/craft-stage/stage-core";
 import { revealOffers } from "../src/services/craft-stage/apply-desecrate";
 import { infiniteChoices, isInfiniteEssence } from "../src/services/craft-stage/apply-essence";
+import { heldOdds } from "../src/services/craft-stage/held-odds";
 import { SANCTIFY_MAX, SANCTIFY_MIN, sanctifyChanceAtLeast } from "../src/services/craft-stage/apply-vaal";
 import { factionCandidates } from "../src/services/craft-stage/spec/parts-unrevealed";
 import { FACTION_TAG, omenFor } from "../src/services/craft-stage/spec/omen-layer";
@@ -136,6 +137,32 @@ describe("エンジンの決まり (設計図の番号)", () => {
     let all: StageItem = { ...withOne.item, rarity: "rare" };
     for (const f of fams.slice(1)) { const r = A(all, forceKey(normalOf(f), null, "n"), 1); expect(r.applied, r.reason).toBe(true); all = r.item; }
     expect(infiniteChoices(data, all, key)).toHaveLength(0);
+  });
+
+  it("E-88a: 回して数える表 (錬金) は、付く候補を「数字のある物」か「出なかったが付く」の印で全部持つ。どちらにも無いのは本当に付かない物だけ", () => {
+    // グラスピングメイル: 重み 1 の MOD (E-13) は 1,500 回では出ないことが多い。それでも付く候補なので印に入る
+    const mail = freshItem(data, "Grasping Mail", 82);
+    const h = heldOdds(data, mail, "alchemy", [])!;
+    const pool = [...mail.cls.pools.normal.prefixes, ...mail.cls.pools.normal.suffixes];
+    for (const id of pool) expect(h.byMod.has(id) || !!h.unseen?.has(id), `グラスピングメイルの ${id}`).toBe(true);
+    expect(h.unseen?.size ?? 0).toBeGreaterThan(0);
+    for (const [id, tiers] of h.unseen!) {
+      const m = data.mods.get(id)!;
+      for (const i of tiers) {
+        expect(m.tiers[i]!.weight, `${id} の段 ${i}`).toBeGreaterThan(0);
+        expect(h.byMod.get(id)?.tiers.some((t) => t.index === i) ?? false).toBe(false);
+      }
+    }
+    // 本当に付かない物 (段のレベルがアイテムレベルを超える MOD、E-11b) は数字にも印にも無い
+    const low = freshItem(data, "Gold Ring", 10);
+    const hl = heldOdds(data, low, "alchemy", [])!;
+    let never = 0;
+    for (const id of [...low.cls.pools.normal.prefixes, ...low.cls.pools.normal.suffixes]) {
+      const can = data.mods.get(id)!.tiers.some((t) => t.ilvl <= 10 && t.weight > 0);
+      expect(hl.byMod.has(id) || !!hl.unseen?.has(id), `アイテムレベル 10 の指輪の ${id}`).toBe(can);
+      if (!can) never++;
+    }
+    expect(never).toBeGreaterThan(0);
   });
 
   it("E-66: 勢力のお告げを掛けた骨の発現は、候補 3 つとも勢力の MOD (足りない分だけ一般 MOD)", () => {
