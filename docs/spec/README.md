@@ -94,3 +94,4 @@
 | G-48 | フックと登録 (`.claude/hooks/`・`.claude/settings.json`) の Edit / Write と commit は、オーナーの OK の後にブラックが置く印 `~/.claude/exiledesk-hooks-ok` が無ければ止める (出しの印とは別)。セッションの始まりに「見張りが入っている (版)」を 1 行出す (出ない PC はフックが入っていない) | `exiledesk-guard.cjs` (PreToolUse)・`exiledesk-habits.cjs` (UserPromptSubmit) | オーナー 11-12「設計mdやらコードやらしっかりフック付けないと死ぬよね今後」 |
 | G-49 | エンジンの紙 (`engine.md`) に足した文が画面の紙の番号 (M・S・D・T・U) を指したら止める (遊びごとの上書きの一覧 E-100 番台の表は除く)。画面の決まりは画面の紙へ | `exiledesk-guard.cjs` (PreToolUse、commit の時に `scripts/check-spec-tidy.mjs`) | G-29・オーナー 11-11「挙動とかはエンジンが元となってるはずだからな」 |
 | G-50 | シミュ・デイリー・チュートリアルの紙に足した文が「エミュと同じ」で挙動の決まりを指したら止める (E か U の番号を一緒に書けば通す)。エンジン以外の紙に挙動の数 (%・倍率) を E 番号なしで足した時は、止めずに知らせるだけ | 同上 | G-29・同上 |
+| G-51 | エンジンの挙動 (`src/services/craft-stage/`) か木の分け方 (`simulator/tree/` の tree-outcome・tree-model・tree-shape・tree-hands) の入った commit で、そのセッションに枝の突き合わせを回した跡が無ければ、止めずに「変えた手で回す」と知らせる | `exiledesk-guard.cjs` (PreToolUse) | S-210・オーナー 11-12「新しい挙動や追加の際だろうなそれやる時。」 |

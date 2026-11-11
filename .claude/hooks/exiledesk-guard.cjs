@@ -14,6 +14,8 @@ const REPO = path.resolve(__dirname, "../..").replace(/\\/g, "/");
 // フックと登録 (.claude/hooks/・.claude/settings.json) の書き換えは、出しの印とは別の印が要る (オーナーの OK の後にブラックが置き、済んだら消す)
 const HOOKS_MARK = path.join(os.homedir(), ".claude", "exiledesk-hooks-ok");
 const HOOK_FILE = /(^|\/)\.claude\/(hooks\/[^/]+|settings\.json)$/;
+// 止めずに知らせる文 (G-51 など)。終わりに 1 回だけ Claude へ返す
+const notes = [];
 const hooksWhy = () => `フックと登録 (.claude/hooks/・.claude/settings.json) の書き換えは、オーナーの OK の後にブラックが置く印 (${HOOKS_MARK}) が要る`;
 
 // セッションの題の頭 → 触ってよい部 (owners.txt の部の名前)。ブラック・最終チェック長は全部の部を触るので載せない
@@ -217,6 +219,13 @@ process.stdin.on("end", () => {
       const num = /\b[GYEMSURTD]-\d{2,3}[a-z]?\b/.test(msg);
       if (code.length && !spec && !num)
         block(`設計図が先 (G-20): ${code.slice(0, 3).join("・")} などの commit には、同じ commit の docs/spec/ か、commit の文に設計図の番号 (S-50b・M-31 など) が要る。設計図に無い事なら先に設計図に書く`);
+      // 枝の突き合わせを回す知らせ (G-51、オーナー 11-12「新しい挙動や追加の際だろうなそれやる時。」「ア」): エンジンの挙動か木の分け方の commit で、
+      //    このセッションに scripts/sim-watch/branch を回した跡が無ければ 1 行知らせる (止めない)
+      if (list.some((f) => /src\/services\/craft-stage\//.test(f) || /src\/services\/simulator\/tree\/tree-(outcome|model|shape|hands)\.ts$/.test(f))) {
+        let ran = false;
+        try { ran = fs.readFileSync(String(input.transcript_path || ""), "utf8").includes("sim-watch/branch/vitest.config"); } catch { ran = false; }
+        if (!ran) notes.push("エンジンの挙動か木の分け方を変えた: 枝の突き合わせを変えた手で回す (S-210、KEY=<変えた手> … scripts/sim-watch/branch/README.md)。回さないなら訳を報告に 1 行");
+      }
       // 設計図の散らばり (G-46 番号と状態の食い違い・G-47 経緯の書き足し、オーナー 11-11「散らばらないようにフックしっかり効かせてくれ」):
       //    設計図の入った commit は、その作業場の scripts/check-spec-tidy.mjs を回し、増えた分に落ちがあれば止める (台本の無い古い作業場は見ない)
       const tidy = path.join(root, "scripts", "check-spec-tidy.mjs");
@@ -276,5 +285,7 @@ process.stdin.on("end", () => {
         block(`RELEASED への書き足し (本番で開ける) は、オーナーの「出して」の後にブラックが置く印 (${MARK}) が要る (G-08・R-02)`);
     }
   }
+  if (notes.length)
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", additionalContext: `[ExileDesk の見張り] 知らせ (止めていない): ${notes.join(" / ")}` } }));
   process.exit(0);
 });
