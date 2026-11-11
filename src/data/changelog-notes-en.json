@@ -1,4 +1,7 @@
 {
+  "0.1.712": [
+    "Simulator: fixed the tree area being squashed after you chose a base"
+  ],
   "0.1.711": [
     "Daily: fixed the tree area on the challenge screen (PC) being squeezed into a narrow column"
   ],

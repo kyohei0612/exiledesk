@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.712",
+  "date": "2026-11-11",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ベースを選んだ後に木の欄が潰れていたのを直しました",
+    "en": "Simulator: fixed the tree area being squashed after you chose a base"
+   }
+  ]
+ },
+ {
   "v": "0.1.711",
   "date": "2026-11-11",
   "items": [
@@ -886,24 +898,6 @@
     "area": "",
     "text": "エミュレーター: 削減のお告げを持った時、未発現の冒涜 MOD も消える候補ならオレンジで光るようにしました",
     "en": "Emulator: with the Omen of Whittling, an Unrevealed Desecrated mod now also glows orange when it can be removed"
-   }
-  ]
- },
- {
-  "v": "0.1.672",
-  "date": "2026-11-06",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター・シミュレーター: 深淵のエッセンスで付いたアビサルロードの紋章から骨を打つ時、出る MOD の下限をアイテムレベルではなく、消した MOD のレベルから決めるようにしました (そのレベルの 40% 以下の MOD は出ません)",
-    "en": "Emulator and Simulator: when using a bone on a Mark of the Abyssal Lord from Essence of the Abyss, the minimum mod level is now based on the level of the removed mod instead of the item level (mods at or below 40% of that level cannot appear)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ブログ: 深淵のエッセンスの記事を今の決まりに直しました",
-    "en": "Blog: updated the Essence of the Abyss article to the current rules"
    }
   ]
  }
