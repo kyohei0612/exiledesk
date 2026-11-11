@@ -100,4 +100,4 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 ## アプリ (当分触らない)
 
 画面は Vue、裏は Rust (`src-tauri/src`: 取引所 trade2 の門番・捌き速度の巡回・PoB (Lua)・画像パック・更新)。サイドバーにカレンシーランキング・取引履歴・ヴァールの天秤・クラフト計算機 (廃止予定)・火力チェック・スキン。
-配布は `v*.*.*` のタグで `.github/workflows/release.yml`。取引所の検索は 10 秒間隔・5 分 30 回を守る。手順の詳細は `docs/archive/README-app-2026-10.md` とメモの memory-archive-1029 (INDEX.md)。
+配布の自動の流れ (タグで動く出し・Rust のキャッシュ作りと掃除・毎週の辞書) は 11-12 に消した (最後の配布は 10-16 の v0.1.524、元は git の履歴)。取引所の検索は 10 秒間隔・5 分 30 回を守る。手順の詳細は `docs/archive/README-app-2026-10.md` とメモの memory-archive-1029 (INDEX.md)。
