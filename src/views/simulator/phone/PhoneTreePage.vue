@@ -15,9 +15,9 @@ import TreeOverlays from "../tree/TreeOverlays.vue";
 import TreeHandPage from "../tree/TreeHandPage.vue";
 import TreePanelPage from "../tree/TreePanelPage.vue";
 import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
-import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
+import { applyPick, type OnlyOut } from "../tree/tree-hand-plan"; import { clearHandAt } from "../tree/tree-clear-hand";
 import { useTree } from "../tree/use-tree";
-import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { outStep, phoneCheck, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { runLockedWhy } from "../tree/hole-check";
@@ -111,7 +111,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
 }
 function clearHandOf(): void {
   const id = handFor.value!;
-  q.answer((d) => clearHand(d, id), [id]);
+  q.answer((d) => clearHandAt(d, id), [id]);
   handFor.value = null;
   q.focus.value = { kind: "hand", id };
 }

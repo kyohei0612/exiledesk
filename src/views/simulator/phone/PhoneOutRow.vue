@@ -16,7 +16,7 @@ import { handLabel, OUT_LOOK, boxesEn, sameModHead } from "../tree/tree-names";
 import { answerFor, isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { retryOf, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
-import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
+import { joinableFor, sideGroup } from "../tree/tree-hand-plan"; import { clearHandAt } from "../tree/tree-clear-hand";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
@@ -24,7 +24,7 @@ import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { lvNote, lvPart } from "../../../services/simulator/tree/tree-whittle";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { tr } from "../../../i18n/lang";
-import { clearHand, subtree } from "../../../services/simulator/tree/tree-model";
+import { subtree } from "../../../services/simulator/tree/tree-model";
 import { useArmed } from "../../../utils/use-armed";
 import { useDismiss } from "../../../utils/use-dismiss";
 import DataNote from "../../../components/ui/DataNote.vue"; import { isSiteData } from "../../../components/ui/data-note";
@@ -171,7 +171,7 @@ const rmCount = computed(() => { const d = t.doc.value, p = parent.value ? d.box
 function removeHand(): void {
   const p = parent.value;
   if (!p || !rm.arm(props.boxId)) return;
-  t.edit((d) => clearHand(d, p));
+  t.edit((d) => clearHandAt(d, p));
   q.focus.value = { kind: "hand", id: p };
 }
 const CHIP = "inline-flex min-h-10 items-center rounded-full border px-3 py-1.5 text-[13px] leading-tight";
