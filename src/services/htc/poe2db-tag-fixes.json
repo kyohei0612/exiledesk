@@ -44,6 +44,18 @@
    "ulaman_mod"
   ],
   "Body_Armours_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
+  "Body_Armours_ring_str_dex_int/ElementalAilmentEffect__hit_damage_freeze_multiplier_if_consumed_power_charge_recently": [
+   "ailment",
+   "kurgal_mod"
+  ],
+  "Body_Armours_ring_str_dex_int/ElementalAilmentEffect__ignite_effect_if_consumed_endurance_charge_recently": [
+   "ailment",
+   "amanamu_mod"
+  ],
+  "Body_Armours_ring_str_dex_int/ElementalAilmentEffect__shock_effect_if_consumed_frenzy_charge_recently": [
+   "ailment",
+   "ulaman_mod"
+  ],
   "Body_Armours_str_dex_int/PerfectEssence_ReducedCriticalStrikeDamageTaken": [],
   "Body_Armours_str_dex/Desecrated_ChanceToTakeCriticalStrike": [
    "critical",
