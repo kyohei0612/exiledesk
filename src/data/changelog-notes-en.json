@@ -1,4 +1,11 @@
 {
+  "0.1.710": [
+    "Simulator: the mod level frames before a whittle (lower, same, higher) now show as one box with bands under it. Click a band to choose the move for that frame",
+    "Simulator: when you hold a whittle with Hinekora's Lock, you can now choose use / don't use for each mod level frame. Frames where the miss mod is higher than the mod you keep start as “don't use”",
+    "Simulator: Final Check no longer runs people. It goes over every frame twice to find unset frames and dead ends, so it finishes right away",
+    "Simulator: cleaner lines. Boxes merged into the same frame now also show right under each parent, and a line crossing another line gets a small bridge, so unconnected lines no longer look joined. Also fixed boxes and lines overlapping when you reopened the same recipe",
+    "Simulator: fixed how branches split, such as whittle frames showing only “lower” with 3 or more miss mods, no branch for losing an aim mod to an Orb of Alchemy, and dead ends after bones or essences. The top row now fits in one line and the simulator frame reaches the bottom of the screen"
+  ],
   "0.1.709": [
     "On your first visit you can now choose the display language (日本語 / English). You can change it anytime from the top bar.",
     "Simulator: fixed a whittling step being copied into frames you hadn't set when you saved and reopened a tree, and fixed frames that were already decided splitting again into lower / same / higher after a hand that doesn't change mods, such as Hinekora's Lock"
