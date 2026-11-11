@@ -2,10 +2,14 @@
 // 設計図の散らばりの見張り (G-29、フック G-46・G-47 が commit の時に呼ぶ)。読むだけ。
 //   C (G-46) 番号と状態の食い違い: 同じ番号が 2 行・どの紙にも無い番号を指す・⑦ の表が「仮」なのに本文は「有効」・状態の語が無い
 //   A (G-47) 経緯を項目に足した: 足した文に「前は」「以下は…の形」・撤回でない項目の「撤回」・2 つ目からのオーナーの「」・不具合の話
+//   D 向き: エンジンの紙に足した文が画面の紙の番号 (M・S・D・T・U) を指す (「遊びごとの上書き」の一覧 E-100 番台の表は除く)
+//   E 向き: シミュ・デイリー・チュートリアルの紙に足した文が「エミュと同じ」で決まりを指す (E か U の番号を一緒に書けば通す)
+//   写しの知らせ (止めない): エンジン以外の紙に足した文にゲームの数があり E 番号が無い。控えは <tmp>/exiledesk-spec-copy-notes.log
 // 見るのは base (既定 HEAD) から「増えた分」だけ。前からある物では止めない (直す・短くする・移すは通る)。
 // 使い方: node scripts/check-spec-tidy.mjs [--root <dir>] [--base <rev>] [--only A|C] [--warn]
 //   落ちる時は 1 行ずつ訳を出して exit 1。--warn は出すだけで exit 0。
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, appendFileSync } from "node:fs";
+import os from "node:os";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
@@ -54,6 +58,7 @@ const defs = (pm) => { const s = new Set(); for (const p of pm.values()) for (co
 const tail = (ln) => { const i = ln.lastIndexOf(" — "); return i < 0 ? "" : ln.slice(i); };
 const retracted = (ln) => /^\s*(?:- \*\*|\|)[^*|]*\(撤回/.test(ln) || /^ — 撤回/.test(tail(ln));
 const out = [];
+const notes = [];
 
 if (only !== "A") {
   // C-1 同じ番号が 2 行 (増えた分)
@@ -104,6 +109,42 @@ if (only !== "C") {
       if (why.length) out.push(`[経緯] ${f}: ${id.replace(/'+$/, "")} に経緯を足している = ${why.join("・")}。項目には今の決まりと出どころ 1 つだけ、経緯は記録の紙 (docs/spec/history/<紙>.md) へ (G-29)`);
     }
   }
+
+  // D・E・写しの知らせ: 「挙動の正はエンジンの紙、指す向きは下から上だけ」(オーナー 11-12)。見るのは足した文だけ
+  const SCREEN = /(?<![A-Za-z0-9])[MSDTU]-\d{2,3}[a-z]?/;
+  const EMU = /エミュと同じ|エミュで[^。]{0,30}と同じ|エミュどおり|エミュで動く物/;
+  const GAME_NUM = /\d+(?:\.\d+)?\s?%|×\s?\d|\d+ 倍|1 品 1 つ|\d+\/\d+/;
+  const idOf = (ln) => (ln.match(DEF) || [])[1] || "番号の無い行";
+  for (const f of changed) {
+    const oldLines = new Set(old.get(f).split(/\r?\n/));
+    for (const ln of now.get(f).split(/\r?\n/)) {
+      if (oldLines.has(ln)) continue;
+      const add = sents(ln).filter((s) => !had.has(s));
+      if (!add.length) continue;
+      if (f === "engine.md") {
+        // D エンジンの紙は画面の紙を指さない。「遊びごとの上書き」の一覧 (E-100 番台の表) だけは指してよい
+        if (/^\|\s*E-1\d\d\s*\|/.test(ln)) continue;
+        const hit = add.map((s) => (s.match(SCREEN) || [])[0]).filter(Boolean);
+        if (hit.length) out.push(`[向き] engine.md: ${idOf(ln)} に足した文が画面の紙の番号 (${[...new Set(hit)].join("・")}) を指している。エンジンの紙は画面の紙を指さない (画面の決まりは画面の紙へ。指してよいのは「遊びごとの上書き」の一覧だけ)`);
+        continue;
+      }
+      // E 挙動の出どころにエミュを書かない (シミュ・デイリー・チュートリアルの紙)。画面の並びの話は共通の部品の番号 (U-xx) かエンジンの番号を一緒に書けば通す
+      if (/^(sim-tree|daily|tutorial)/.test(f)) {
+        const e = add.find((s) => EMU.test(s) && !/(?<![A-Za-z0-9])[EU]-\d{2,3}/.test(s));
+        if (e) out.push(`[向き] ${f}: ${idOf(ln)} に足した文が「エミュと同じ」で決まりを指している。挙動はエンジンの番号 (E-xx)、画面の並びは共通の部品の番号 (U-xx) で指す`);
+      }
+      // 写しの知らせ (止めない): エンジン以外の紙に足した文にゲームの数があり、同じ文に E 番号が無い
+      if (/^\s*- \*\*/.test(ln)) {
+        const g = add.find((s) => GAME_NUM.test(s) && !/(?<![A-Za-z0-9])E-\d{2,3}/.test(s));
+        if (g) notes.push(`[知らせ・止めない] ${f}: ${idOf(ln)} に足した文にゲームの数らしき物 (${(g.match(GAME_NUM) || [])[0]}) があり、E 番号が無い。エンジンの決まりの写しなら番号で指す`);
+      }
+    }
+  }
 }
 
+// 知らせは止めない。数えるために 1 行ずつ控える (過去の commit への当て直し --head の時は控えない)
+if (notes.length) {
+  console.log(notes.join("\n"));
+  if (!head) { try { appendFileSync(path.join(os.tmpdir(), "exiledesk-spec-copy-notes.log"), notes.map((n) => `${new Date().toISOString().slice(0, 16)} ${n}`).join("\n") + "\n"); } catch {} }
+}
 if (out.length) { console.log(out.join("\n")); process.exit(warn ? 0 : 1); }
