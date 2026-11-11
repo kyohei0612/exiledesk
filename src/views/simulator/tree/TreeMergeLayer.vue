@@ -23,7 +23,7 @@ const hot = (l: MergeLine): boolean => on(l, props.hover) || on(l, props.sel);
 // 再挑戦・戻りの線 (back) は「線を全部表示」でも出さず、乗せた時だけ (案 ①、S-87c。10-28 深夜オーナー「P１は案①だな」。全部出すと木を囲む四角になった)
 // 灰の ↩ (当たり・打った後の戻り、fwd) も乗せた時だけ (S-145、⑦10 → ブラック案・オーナー「進めてくれ」10-28)
 const shown = computed(() => props.lines.filter((l) => hot(l) || (!HOV && l.kind === "join")));
-const joins = computed(() => props.lines.filter((l) => l.kind === "join" && l.mark));
+const joins = computed(() => props.lines.filter((l) => l.kind === "join" && l.mark && (!HOV || hot(l)))); // スイッチの下は鎖の印も線と一緒に乗せた時だけ
 const busy = computed(() => !!(props.hover || props.sel));
 const opacity = (l: MergeLine): number => (busy.value ? 0.25 : l.kind === "join" ? 0.6 : 0.5);
 </script>
