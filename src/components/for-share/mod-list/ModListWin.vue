@@ -55,7 +55,9 @@ const sh = useHeldShares(() => {
 }, () => s.data.value);
 /** オンの間、その手で付かない MOD・ティアを出さない (U-12d) */
 const MOD_HIDE = flag("modHide");
-const CHIP = "flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[12px] leading-none transition";
+/** オンの札の光り方はカレンシーもお告げも同じ強さ (2 つ並んでも両方同じに見える。87 の気付き 11-13) */
+const ON = "border-amber-300 bg-amber-400/25 text-white shadow-[0_0_0_2px_rgba(252,211,77,0.85),0_0_10px_rgba(252,211,77,0.45)]";
+const CHIP ="flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[12px] leading-none transition";
 </script>
 
 <template>
@@ -73,7 +75,7 @@ const CHIP = "flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text
       <!-- 上: 打てるカレンシーの帯 (2 行まで、多い時は帯の中だけ送る)。押す = オン / もう一度でオフ -->
       <div data-mod-win-shelf role="toolbar" :aria-label="tr('カレンシー (押すとその手で付く MOD だけ)', 'Currency (press to show only what it can roll)')" class="flex max-h-[76px] shrink-0 flex-wrap items-center gap-1.5 overflow-y-auto border-b border-white/10 px-3 py-1.5 max-xl:max-h-none">
         <button v-for="k in chips" :key="k" type="button" :data-rec="`shelf:${k}`" :aria-pressed="on === k" :title="tr(on === k ? 'もう一度押すと全部の MOD に戻す' : 'この手で付く MOD だけと付く確率を出す', on === k ? 'Press again to show all mods' : 'Show only the mods this can roll, with their chances')"
-          :class="[CHIP, on === k ? 'border-[var(--exile-color-border-brass)] bg-sky-500/20 text-sky-50 shadow-[0_0_0_1px_rgba(125,211,252,0.55)]' : 'border-white/12 bg-black/30 text-[var(--exile-color-text-secondary)] hover:border-white/30 hover:text-white']" @click="toggle(k)">
+          :class="[CHIP, on === k ? ON :'border-white/12 bg-black/30 text-[var(--exile-color-text-secondary)] hover:border-white/30 hover:text-white']" @click="toggle(k)">
           <img v-if="iconOfKey(k, item)" :src="iconOfKey(k, item) ?? undefined" alt="" class="size-6 object-contain" />
           <span class="whitespace-nowrap">{{ nameOfKey(k, item) }}</span>
         </button>
@@ -84,7 +86,7 @@ const CHIP = "flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text
         <span class="shrink-0 text-[11px] text-violet-200/80">{{ tr("お告げ", "Omens") }}</span>
         <span data-held-omens class="flex flex-wrap items-center gap-1.5">
           <button v-for="o in omenChips" :key="o.k" type="button" :data-omen="o.k" :aria-pressed="omens.includes(o.k)" :disabled="!!o.why && !omens.includes(o.k)" :title="o.why ?? undefined"
-            :class="[CHIP, omens.includes(o.k) ? 'border-violet-300/70 bg-violet-500/25 text-violet-50' : 'border-violet-400/25 bg-violet-500/[0.06] text-violet-200/85 hover:border-violet-300/50 hover:text-white', 'disabled:pointer-events-none disabled:opacity-35']" @click="toggleOmen(o.k)">
+            :class="[CHIP, omens.includes(o.k) ? ON :'border-violet-400/25 bg-violet-500/[0.06] text-violet-200/85 hover:border-violet-300/50 hover:text-white', 'disabled:pointer-events-none disabled:opacity-35']" @click="toggleOmen(o.k)">
             <img v-if="iconOfKey(o.k, item)" :src="iconOfKey(o.k, item) ?? undefined" alt="" class="size-6 object-contain" />
             <span class="whitespace-nowrap">{{ nameOfKey(o.k, item) }}</span>
           </button>
