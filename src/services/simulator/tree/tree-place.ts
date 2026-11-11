@@ -18,12 +18,17 @@ import { doneLeftOrder } from "./tree-place-order";
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
 
+/** 帯の各段を 1 つ下の段の幅まで広げた物 (S-142f の比べ用) */
+const withNext = (c: ReadonlyArray<[number, number]>): Array<[number, number]> => c.map((x, j): [number, number] => { const y = c[j + 1]; return y ? [Math.min(x[0], y[0]), Math.max(x[1], y[1])] : [x[0], x[1]]; });
+
 export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: (id: string) => number | undefined): boolean {
   const start = d.boxes.start;
   if (!start) return false;
   const before = new Map(Object.values(d.boxes).map((b) => [b.id, `${b.x},${b.y}`]));
   // 描く子を結果の順に (当たり → 狙いが消えた → 外れが消えた → 外れ、同じ順は作った順)
   // 完成の箱を下に持つ枝を左端 → 下に手が続く枝 → 矢印で戻るだけの箱を右 (S-142e、スイッチ treeDoneLeft)
+  /** (S-142f) 箱のすぐ下の段にはその箱の続きだけ、1 段以上空いていればほかの枝を詰める (スイッチ treeKidsBelow) */
+  const below = flag("treeKidsBelow");
   const reorder = flag("treeDoneLeft") ? doneLeftOrder(d) : null;
   const kidsOf = (id: string): string[] => { const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o); return reorder ? reorder(l) : l; };
   /** 子の箱の x (親の箱の x からの差) */
@@ -39,6 +44,8 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     const own: [number, number] = [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)];
     if (!ks.length) return [own];
     const cs = ks.map((k) => rows(k, seen));
+    // (S-142f) 比べる時だけ、帯の各段を 1 つ下の段の幅まで広げる = 箱のすぐ下の段にほかの枝の箱を置かない。持ち上げる帯 (acc) は広げない幅のまま
+    const cmp = below ? cs.map(withNext) : cs;
     const offs: number[] = [], acc: Array<[number, number]> = [];
     ks.forEach((k, i) => {
       const c = cs[i]!;
@@ -46,7 +53,8 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
       if (i) {
         const gap = kidsOf(ks[i - 1]!).length || kidsOf(k).length ? GAP_DEEP : GAP_LEAF;
         off = -Infinity;
-        for (let r = 0; r < Math.min(acc.length, c.length); r++) off = Math.max(off, acc[r]![1] + gap - c[r]![0]);
+        const a = below ? withNext(acc) : acc, x = cmp[i]!;
+        for (let r = 0; r < Math.min(a.length, x.length); r++) off = Math.max(off, a[r]![1] + gap - x[r]![0]);
         // 兄弟は左から結果の順 (前の兄弟の箱より左へは置かない)
         off = Math.max(off, offs[i - 1]! + BOX_W + gap);
       }
@@ -54,12 +62,13 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
       c.forEach(([l, r], j) => { const a = acc[j]; acc[j] = a ? [Math.min(a[0], l + off), Math.max(a[1], r + off)] : [l + off, r + off]; });
     });
     const n = ks.length, h = Math.floor(n / 2);
-    const px = n % 2 ? offs[h]! : (offs[h - 1]! + offs[h]!) / 2;
+    // 親は子の並びの真ん中 (S-142f)。スイッチの外は真ん中の子の真上
+    const px = below ? (offs[0]! + offs[n - 1]!) / 2 : n % 2 ? offs[h]! : (offs[h - 1]! + offs[h]!) / 2;
     ks.forEach((k, i) => rel.set(k, offs[i]! - px));
     return [[Math.min(own[0], offs[0]! - px), Math.max(own[1], offs[n - 1]! + BOX_W - px)], ...acc.map(([l, r]): [number, number] => [l - px, r - px])];
   };
   const L = rowLayout(d, heightOf);
-  const xs = near(d, L, kidsOf, chipW);
+  const xs = below ? null : near(d, L, kidsOf, chipW);
   if (xs) {
     for (const [id, x] of xs) {
       const b = d.boxes[id]!, r = L.rows.get(id);
