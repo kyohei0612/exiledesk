@@ -17,6 +17,7 @@ import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
 import { noteFixMiss, resetFixMisses } from "./fix-misses";
 import poolFixes from "./poe2db-pool-fixes.json";
+import handFixes from "./poe2db-pool-fixes-hand.json";
 import { applyPoe2dbTagFixes } from "./poe2db-tag-fixes";
 import { applyAbyssSuffix } from "./poe2db-abyss-fix";
 import { applySpellTags } from "./spell-tags";
@@ -306,7 +307,10 @@ type Poe2dbFixes = {
  *   - weights: poe2db が数字を出していて違う段の重み (MOD id → 段の ilvl → 重み)
  */
 function applyPoe2dbFixes(data: PatchData): PatchData {
-  const fx = poolFixes as unknown as Poe2dbFixes;
+  // 直しは 2 つのファイルを順に重ねる (E-06): 台本の出力 poe2db-pool-fixes.json (build-poe2db-fixes.mjs が毎回 0 から書く) →
+  // 手の足し poe2db-pool-fixes-hand.json (グラスピングメイルなど。台本を回しても消えない)。後の方が同じ id を置き換え、置き場は足す
+  const gen = poolFixes as unknown as Poe2dbFixes, hand = handFixes as unknown as Poe2dbFixes;
+  const fx: Poe2dbFixes = { weights: { ...(gen.weights ?? {}), ...(hand.weights ?? {}) }, mods: [...(gen.mods ?? []), ...(hand.mods ?? [])], pools: gen.pools ?? {} };
   const mods = new Map(data.mods);
   for (const m of fx.mods ?? []) mods.set(m.id, m);
   // ルーン (ソウルコア) の特殊 MOD の重みは Craft of Exile (beta) の Krakenbul の実測 (scripts/build-rune-weights-coe.mjs、2026-10-09)
@@ -327,7 +331,7 @@ function applyPoe2dbFixes(data: PatchData): PatchData {
       suffixes: [...new Set([...cur.suffixes.filter((id) => !drop.has(id)), ...x.add.suffixes])],
     };
   };
-  for (const [cls, groups] of Object.entries(fx.pools ?? {})) {
+  for (const [cls, groups] of [...Object.entries(fx.pools ?? {}), ...Object.entries(hand.pools ?? {})]) {
     const b = bases.get(cls);
     if (!b) { noteFixMiss("poe2db-pools", `行が無い ${cls}`); continue; }
     const pools: { -readonly [K in keyof typeof b.pools]: (typeof b.pools)[K] } = { ...b.pools };

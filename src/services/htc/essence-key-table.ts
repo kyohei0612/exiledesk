@@ -7,9 +7,11 @@
  */
 import essenceKeys from "./essence-keys.json";
 import poolFixes from "./poe2db-pool-fixes.json";
+import handFixes from "./poe2db-pool-fixes-hand.json"; // 手で足した直し (台本の出力とは別のファイル、E-06)
 
 type EssenceName = { en: string; ja: string };
 export const ESSENCE_KEYS: Readonly<Record<string, EssenceName>> = { // E-90
   ...(essenceKeys as unknown as { keys: Record<string, EssenceName> }).keys,
   ...((poolFixes as unknown as { essenceKeys?: Record<string, EssenceName> }).essenceKeys ?? {}),
+  ...((handFixes as unknown as { essenceKeys?: Record<string, EssenceName> }).essenceKeys ?? {}),
 };
