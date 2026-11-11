@@ -18,5 +18,5 @@
 - 字幕: scripts の `pnpm subs` → data-cache/subs/<ID>.<言語>.txt (scripts/subs-annotate.mjs で日本語名つき)。メモ youtube-subtitles。
 - ゲームの決まり: 設計図 docs/spec/engine.md (E-xx)。元の記録はメモ poe2-craft-rules-confirmed・craft-weight-sources、docs/reviews/2026-10-17-rule-checklist.md。
 - 似たサイト: メモ competitor-poe2-craft-beta (poe2-craft-beta.pages.dev)。
-- AI の進め方: docs/org/README.md (組織の図)・black/README.md (振り先)・dev/README.md (全部の部の決まり)、dev/notes/plugins-2026-10-20.md。
+- AI の進め方: docs/org/README.md (組織の図)・black/README.md (振り先)・dev/README.md (全部の部の決まり)。
 - 渡し先を選ぶ表: black/README.md の「振り先」。
