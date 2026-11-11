@@ -1,4 +1,7 @@
 {
+  "0.1.717": [
+    "Daily: from the 11/12 challenge, besides starting from a white base with a guaranteed fracture, you can choose “Start without fracture” (Fracturing Orbs can't be used in that tree). Simulator: tree layout no longer spreads parents apart unnecessarily, and changing only the tier of an Exalted or Chaos move now keeps the tree below"
+  ],
   "0.1.716": [
     "Simulator: for moves that swap a mod (such as Perfect Essences and Chaos), a hit that removed a non-aim mod and a hit that removed an unrevealed mod now go to separate boxes. Previously they shared one box and one of the two cases got stuck further down"
   ],

@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.717",
+  "date": "2026-11-11",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 11/12 のお題から、始め方は白から確定フラクチャーに加えて「フラクチャー無しで始める」を選べるようにしました (その木ではフラクチャーのオーブは打てません)。シミュレーター: 木の並べで親の間を無駄に広げないようにし、高貴・カオスの格だけ替えた時は下の木を残すようにしました",
+    "en": "Daily: from the 11/12 challenge, besides starting from a white base with a guaranteed fracture, you can choose “Start without fracture” (Fracturing Orbs can't be used in that tree). Simulator: tree layout no longer spreads parents apart unnecessarily, and changing only the tier of an Exalted or Chaos move now keeps the tree below"
+   }
+  ]
+ },
+ {
   "v": "0.1.716",
   "date": "2026-11-11",
   "items": [
@@ -910,18 +922,6 @@
     "area": "",
     "text": "シミュレーター: 削減のお告げの結果の箱・箱の題の MOD の短い名前・スタートの箱の字の重なり・エッセンスの残したい MOD の既定のチェックなどを直しました",
     "en": "Simulator: fixed Omen of Whittling result boxes, short mod names in box titles, overlapping text on the Start box, default checks for mods to keep with Essences, and more"
-   }
-  ]
- },
- {
-  "v": "0.1.677",
-  "date": "2026-11-07",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: スマホで打った後に下の帯へ出ていた MOD の増減の知らせを消しました (結果は MOD 一覧で見られます)",
-    "en": "Emulator: removed the notice of added/removed mods that appeared in the bottom bar after each craft on phones (results stay visible in the mod list)"
    }
   ]
  }
