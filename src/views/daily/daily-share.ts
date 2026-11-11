@@ -10,7 +10,14 @@ import { baseArtFile } from "../../components/art/base-art";
 import { packCard, sendShare, shareOrigin, shortIdOf } from "../craft-stage/use-spam-share";
 import { rankOf, SOLVE_RATE, topicOfId } from "./daily-api";
 
-export type DailyShare = { url: string; code: string; text: string; web: string };
+/**
+ * 検索に引っかかる基本のハッシュタグ (11-11 オーナー「シェアに基本ハッシュタグ頼むね色々検索引っかかるように」)。
+ * X は日本語を 2 字で数えるので、本文・URL (23 字) 込みで 280 字に収まる数 (日本語の文で長い名前でも 230 字ほど)
+ */
+const SHARE_TAGS_JA = "#PoE2 #パスオブエグザイル2 #PathofExile2 #PoE2クラフト #ExileDesk #デイリークラフト";
+const SHARE_TAGS_EN = "#PoE2 #PathofExile2 #PoE2Crafting #ExileDesk #DailyCraft";
+
+export type DailyShare ={ url: string; code: string; text: string; web: string };
 
 /** その時の順位 (今日の順位の表での位、完成 0 は null) と挑戦した人数 */
 export function placeOf(id: string, rate: number): { place: number | null; entered: number } {
@@ -36,8 +43,8 @@ export async function dailyShare(id: string, cost: number | null, rate: number, 
   const day = id.replace(/^d\d{4}-/, "").replace("-", "/");
   const rankLine = place ? tr(`${place} 位 / ${entered} 人`, `#${place} of ${entered}`) : tr("順位なし (完成 0)", "unranked (nothing finished)");
   const text = tr(
-    `デイリークラフトチャレンジ ${day} 「${name}」 完成 1 個あたり ${costText}・完成率 ${rate}%・${rankLine}\n#PoE2 #ExileDesk`,
-    `Daily Craft Challenge ${day} "${name}": ${costText} per finished item, ${rate}% finished, ${rankLine}\n#PoE2 #ExileDesk`,
+    `デイリークラフトチャレンジ ${day} 「${name}」 完成 1 個あたり ${costText}・完成率 ${rate}%・${rankLine}\n${SHARE_TAGS_JA}`,
+    `Daily Craft Challenge ${day} "${name}": ${costText} per finished item, ${rate}% finished, ${rankLine}\n${SHARE_TAGS_EN}`,
   );
   return { url, code, text, web: `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}` };
 }
