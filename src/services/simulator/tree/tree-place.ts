@@ -13,6 +13,7 @@ import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-t
 import { outRank } from "./tree-layout";
 import { bandAway } from "./tree-band";
 import { flag } from "../../../web/release-flags";
+import { doneLeftOrder } from "./tree-place-order";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -22,7 +23,9 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   if (!start) return false;
   const before = new Map(Object.values(d.boxes).map((b) => [b.id, `${b.x},${b.y}`]));
   // 描く子を結果の順に (当たり → 狙いが消えた → 外れが消えた → 外れ、同じ順は作った順)
-  const kidsOf = (id: string): string[] => drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
+  // 完成の箱を下に持つ枝を左端 → 下に手が続く枝 → 矢印で戻るだけの箱を右 (S-142e、スイッチ treeDoneLeft)
+  const reorder = flag("treeDoneLeft") ? doneLeftOrder(d) : null;
+  const kidsOf = (id: string): string[] => { const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o); return reorder ? reorder(l) : l; };
   /** 子の箱の x (親の箱の x からの差) */
   const rel = new Map<string, number>();
   /**
