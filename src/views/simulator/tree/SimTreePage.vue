@@ -133,7 +133,9 @@ const ROW_BOTTOM = 24;
 let trim = 0, trimH = 0;
 function measureRow(): void {
   const el = row.value;
-  if (!el) return;
+  // 木の欄が隠れている間 (ベース選び・完成形の設定の画面 = goalInline で .g-panel が display:none) は測らない。
+  // 前はその間のページのはみ出し (長いベースの一覧) を trim に積み、木に移ると欄が 200px ほどに潰れたまま戻らなかった (11-11 オーナー、デイリーの挑戦中にシミュのタブへ移った時の絵)
+  if (!el || !el.offsetParent) return;
   const z = pageZoom();
   // スマホの形 (1280 未満、U-53) はボタンが何段にも折り返して残りが 240px ほどになり、木がほとんど見えず道具の帯がスタートの箱に重なった (10-23 モンキー 5)。
   // 画面の高さの 7 割は取り、はみ出す分はページを縦に送る
