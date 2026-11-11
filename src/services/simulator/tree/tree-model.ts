@@ -143,7 +143,7 @@ export interface TreeBox {
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
   /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107) */ handBack?: Hand; fresh?: true;
   /** ヒネコラで持った手のハズレ (打たない、S-39・tree-foresee の foldMisses。保存しない = 手を決めるたびに付け直す): 人はその手を使わず持つ前のアイテムのままこの箱の手・↩ へ */ seen?: true;
-  /** 消去の続きで自動で足した消去の手 (S-28g、tree-annul-chain。保存しない = 開く時に同じ決まりで作り直す。人が手を置き替えると外れる) */ autoAnnul?: true;
+  /** 消去の続きで自動で足した消去の手 (S-28g、tree-annul-chain。保存しない = 開く時に同じ決まりで作り直す。人が手を置き替えると外れる) */ autoAnnul?: true; /** 人が自動の消去の手を消した箱 = 自動の消去を足し直さない (S-28g ⑤ カ、保存しない) */ noAnnul?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];

@@ -22,7 +22,7 @@ const DEPTH_MAX = 12;
 const opening = new WeakSet<TreeDoc>();
 export const holdAnnul = (d: TreeDoc, on: boolean): void => { if (on) opening.add(d); else opening.delete(d); };
 export const isAnnulHand =(h: Hand | null | undefined): h is Hand => !!h && effectOf(h.currency) === "remove";
-const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back && !b.done && !b.split && !b.merged && !b.noAutoBack && b.out !== "pass" && b.out !== "branch";
+const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back && !b.done && !b.split && !b.merged && !b.noAutoBack && !b.noAnnul && b.out !== "pass" && b.out !== "branch";
 
 /**
  * roots の消去の手の結果の空いた箱を続ける (roots を渡さなければ木の消去の手の全部)。返すのは自動で手を足した箱の数。

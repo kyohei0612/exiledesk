@@ -8,11 +8,16 @@ import { craftStage } from "../../../state/craft-stage";
 import { clearHand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { syncSameMod } from "./tree-hand-plan";
 import { syncWhittlePre } from "./tree-whittle-pre";
+import { flag } from "../../../web/release-flags";
 
 /** 箱 id の手 (と結果の箱・その下) を消し、親の手の結果の枠をそろえ直す */
 export function clearHandAt(d: TreeDoc, id: string): void {
   const p = d.boxes[id]?.parent ?? null;
+  // 自動の消去の続きの途中の箱の手を人が消したら、その箱は空きのまま残す (自動の消去を足し直さない。上の自動と横の結果の箱の自動はそのまま。
+  // S-28g ⑤ カ、スイッチ treeNoAnnulAuto。11-12 オーナー「今自動ルートの途中の結果を修正したい時、消去が全部消えちゃうから途中から手動で消して枝決めれるようにして自動処理しても」)
+  const wasAuto = flag("treeNoAnnulAuto") && !!d.boxes[id]?.autoAnnul;
   clearHand(d, id);
+  if (wasAuto) d.boxes[id]!.noAnnul = true;
   const data = craftStage.data.value;
   if (!data || !p) return;
   syncSameMod(data, d, p);
