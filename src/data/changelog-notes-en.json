@@ -1,4 +1,10 @@
 {
+  "0.1.715": [
+    "Daily: after your attempt, the challenge now shows the finished item card. Luck stays the same for the parts of the tree you did not change. Fixed names wrapping vertically in the ranking list",
+    "Simulator: box header tags are larger, and result tags are filled with the result color. With Hinekora's foresight, a box where nothing showed up can now choose to “Use” the move or “Hold” it (look ahead with one more foresight)",
+    "Simulator: “Aim lost” boxes are now split by the mod that was lost. Whittle moves without a chosen aim now show “No aim” on the move tag. Reopened trees fold matching remove boxes again, and drawing merge lines is lighter",
+    "Simulator: the per-crafter cost cap when running a tree is now the price of 2 Mirrors (current market). If prices can't be loaded, it is 2,000 Divine"
+  ],
   "0.1.714": [
     "Daily: starting with today's (11/11) challenge, the ranking sorts by score (cost per finished item ÷ finish rate, lower is better); ties go to the faster run. The score is shown in the rightmost column, and the numbers are blurred until you start that day's challenge"
   ],

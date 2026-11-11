@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.715",
+  "date": "2026-11-11",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦した後は、お題の所に完成形のカードを出すようにしました。同じ木なら、手を変えていない所の運は変わらないようにしました。一覧の順位で名前が縦に折れる表示を直しました",
+    "en": "Daily: after your attempt, the challenge now shows the finished item card. Luck stays the same for the parts of the tree you did not change. Fixed names wrapping vertically in the ranking list"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 箱の頭の札を大きくし、結果の名前の札を結果の色で塗るようにしました。ヒネコラの予見で、どれも出なかった箱の手を「打つ」か「持つ (もう 1 つ予見で見る)」で選べるようにしました",
+    "en": "Simulator: box header tags are larger, and result tags are filled with the result color. With Hinekora's foresight, a box where nothing showed up can now choose to “Use” the move or “Hold” it (look ahead with one more foresight)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「狙いが消えた」の箱を消えた MOD ごとに分けるようにしました。削減の手で狙いを選んでいない時も手の札に「狙い無し」と出すようにしました。開き直した木で同じ形になった消去の箱がまた畳まれるようにし、合流の線を引くのを軽くしました",
+    "en": "Simulator: “Aim lost” boxes are now split by the mod that was lost. Whittle moves without a chosen aim now show “No aim” on the move tag. Reopened trees fold matching remove boxes again, and drawing merge lines is lighter"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木を回す時の 1 人あたりの費用の上限を、鏡 2 個分 (今の相場) にしました。相場が取れない時は 2,000 神です",
+    "en": "Simulator: the per-crafter cost cap when running a tree is now the price of 2 Mirrors (current market). If prices can't be loaded, it is 2,000 Divine"
+   }
+  ]
+ },
+ {
   "v": "0.1.714",
   "date": "2026-11-11",
   "items": [
@@ -892,18 +922,6 @@
     "area": "",
     "text": "シミュレーター: 木で畳んだ消去の札の上下にある手の札を、前後の箱の真ん中に置いて線の長さをそろえました",
     "en": "Simulator: in the tree, the step labels above and below a folded Annulment card now sit midway between the boxes, so the lines are even"
-   }
-  ]
- },
- {
-  "v": "0.1.675",
-  "date": "2026-11-07",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木で消去を畳んだ札から止まった箱への線が消えていたのを直し、止まった箱を札の真下に並べるようにしました",
-    "en": "Simulator: fixed the missing line from a folded Annulment card to its stop point in the tree, and the stop point now sits right below the card"
    }
   ]
  }
