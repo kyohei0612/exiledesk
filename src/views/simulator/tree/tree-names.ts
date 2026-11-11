@@ -7,6 +7,7 @@ import { computed } from "vue";
 import { iconOfKey, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
+import { goneAlloyAt } from "../../../services/simulator/tree/tree-box-shape";
 import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import { bothOf, boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type StartFrom, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -95,6 +96,8 @@ export function sameModHead(parent: string | null): string {
  * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
  * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
  */
+/** 箱 b で消えた名前の印の MOD が全部合金か (tree-box-shape の goneAlloyAt) */
+const goneAlloy = (b: object): boolean => { const data = s.data.value, id = (b as { id?: string }).id; return !!data && !!id && goneAlloyAt(data, useTree().doc.value, id); };
 export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null; junkKey?: string }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
@@ -132,7 +135,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 完成形に無いエッセンスの MOD は外れなので、消えても MOD 名の題は作らない (S-33c、11-07。前の「<MOD> が消えた」は撤回)
   const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
   // 木の手で付けたエッセンス / 合金の MOD が消えた枝 (鍵 n:、S-65b): MOD の名前は出さず「エッセンスの MOD が消えた」とだけ付ける (S-33c の MOD 名の題は作らないまま)
-  const base = namedGoneOf(k) ? tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`) : base0;
+  // 合金で付けた MOD なら「合金の MOD が消えた」(11-11 オーナー「おけ」)。種類は親の見本にあってこの箱の見本に無いクラフト MOD をエンジンの craftedKindOf で
+  const base = namedGoneOf(k) ? (goneAlloy(b) ? tr(`${base0} (合金の MOD が消えた)`, `${base0} (alloy mod removed)`) : tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`)) : base0;
   // 側で分けた箱 (S-65): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
   // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
   // 削減の手前の枠 (S-65c): 外れの MOD レベルの組はいつも付ける

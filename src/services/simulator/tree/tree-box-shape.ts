@@ -97,3 +97,14 @@ export function sameShape(data: PatchData, d: TreeDoc, from: string, to: string,
   if (to === MATCH || to === RESTART) return true;
   return shapeFits(d, from, to) && sameBody(body, from, to);
 }
+/** 箱 id で消えた名前の印の MOD が合金か (親の見本より合金の MOD が減り、エッセンスの MOD は減っていない。箱の題「合金の MOD が消えた」、S-65b2) */
+export function goneAlloyAt(data: PatchData, d: TreeDoc, id: string): boolean {
+  const p = d.boxes[id]?.parent;
+  if (!p || !d.boxes[p]) return false;
+  const count = (it: StageItem): { alloy: number; essence: number } => {
+    const k = [...it.prefixes, ...it.suffixes].map((m) => craftedKindOf(data, m));
+    return { alloy: k.filter((x) => x === "alloy").length, essence: k.filter((x) => x === "essence").length };
+  };
+  const a = count(sampleOf(data, d, p, 1).item), b = count(sampleOf(data, d, id, 1).item);
+  return b.alloy < a.alloy && b.essence >= a.essence;
+}

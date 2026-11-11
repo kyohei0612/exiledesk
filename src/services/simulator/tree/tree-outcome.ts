@@ -69,6 +69,8 @@ function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
  * (消えても外れが消えた・外れ。どれが狙いかは打つ前の中身、S-29・S-60。エッセンスも同じ = 大本 2)
  */
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
+  // この箱のエッセンス / 合金を打たない人 (前の手より前で同じ系統を同格以上で付けた = 飛ばす) は、この箱の下の「エッセンスと同じ MOD (同格以上)」へ (S-33e ⑦、11-11 オーナー「A」)
+  if (b.hand && after === before && b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === SAME_HI) && essenceHold(data, before, b.hand.currency) === "skip") return { out: "blocked", hits: [], junkKey: SAME_HI };
   const oc = plainOutcomeOf(data, doc, b, before, after, aims0, aimed);
   // 次のエッセンス / 合金と同じ系統の MOD が付いた人は「エッセンスと同じ MOD」の箱へ (S-33e ③。その箱がある時だけ)。同格以上は (同格以上) の箱へ (S-33e ⑥)
   if (oc.out !== "blocked") for (const [hold, key] of [["blocked", undefined], ["skip", SAME_HI]] as const) {
@@ -116,10 +118,12 @@ export const SAME_HI = "hi";
  * 既定 (統合) のまま別の箱へ移る人だけ、兄弟のエッセンス / 合金と同じ系統の普通の MOD に crafted (エッセンスで付いた印) を立てる。
  * 以後の 1 品 1 つ・MOD レベルで切る手の側・カードの札はエンジンがそのまま見る。「新しいツリーを作る」にした箱 (自分の手へ進む) では立てない
  */
-export function passSameHi(data: PatchData, doc: TreeDoc, from: Pick<TreeBox, "outs">, at: string, to: string, item: StageItem): StageItem {
+export function passSameHi(data: PatchData, doc: TreeDoc, from: Pick<TreeBox, "outs" | "hand">, at: string, to: string, item: StageItem): StageItem {
   const ab = doc.boxes[at];
   if (to === at || ab?.out !== "blocked" || ab.junkKey !== SAME_HI) return item;
-  const key = sameModKids(doc, from).find((k) => essenceHold(data, item, k) === "skip");
+  // 自分の手がエッセンスの箱の下の「同格以上」(S-33e ⑦) は自分の手のエッセンスで
+  const own = from.hand && effectOf(from.hand.currency) === "essence" ? [from.hand.currency] : [];
+  const key = [...own, ...sameModKids(doc, from)].find((k) => essenceHold(data, item, k) === "skip");
   const v = key ? essenceTierVerdict(data, item, key) : null;
   if (!v) return item; // 同格以上かは木の決まり (essenceHold の値の比べ) で決めた。系統だけエンジンから
   const mark = (m: StageMod): StageMod => { const md = data.mods.get(m.modId); return md && !m.crafted && !isCraftedSource(md.source) && familiesOf(md).some((f) => v.families.includes(f)) ? { ...m, crafted: true } : m; };
@@ -163,6 +167,25 @@ export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string, hold: "
     // エッセンスの手のある箱と同じ結果になる人だけ (11-11 枝のフルチェック: 左側の消去で外れが消えた人がエッセンスの MOD を持ったまま「塞がった」へ入り、外れが消えたの箱に誰も着かなかった)
     const aims = aimsOf(data, doc), aimed = sampleAimed(data, doc, aId, i);
     if (outs.some((o) => !o.void && sameModKids(doc, a, plainOutcomeOf(data, doc, a, smp.item, o.item, aims, aimed).out).some((k) => essenceHold(data, o.item, k) === hold))) return true;
+  }
+  return false;
+}
+/**
+ * エッセンス / 合金の手の箱 eId の下に「エッセンスと同じ MOD (同格以上)」が要るか (S-33e ⑦、11-11 オーナー「A」): 1 つ前の手より上の手 (2 つ前から始まりまで) の結果で、
+ * このエッセンスと同じ系統の普通の MOD を同格以上で持つ品が出うる時 (その人はここへ着いてエッセンスを打たない)。1 つ前の手の結果で付く人は 1 つ前の手の側の箱 (S-33e ⑥) へ行く
+ */
+export function needsSameHiUnder(data: PatchData, doc: TreeDoc, eId: string): boolean {
+  const e = doc.boxes[eId], key = e?.hand?.currency;
+  if (!key || effectOf(key) !== "essence") return false;
+  const p = e.parent ? doc.boxes[e.parent] : undefined;
+  for (let a = p?.parent ? doc.boxes[p.parent] : undefined; a; a = a.parent ? doc.boxes[a.parent] : undefined) {
+    if (!a.hand) continue;
+    for (let i = 1; i <= SINGLE_SEEDS; i++) {
+      const smp = sampleOf(data, doc, a.id, i);
+      if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
+      if (essenceHold(data, smp.item, key) === "skip") return true;
+      if ((stepOutcomes(data, smp.item, a.hand.currency, engineOmens(a.hand)) ?? []).some((o) => !o.void && essenceHold(data, o.item, key) === "skip")) return true;
+    }
   }
   return false;
 }

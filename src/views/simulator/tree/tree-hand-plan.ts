@@ -16,7 +16,7 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
+import { needsSameHiUnder, needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { aimedList } from "../../../services/simulator/tree/tree-miss";
@@ -307,6 +307,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   pinDivineMisses(d);
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
+  if (data) syncSameHiUnder(data, d, at); // エッセンスの箱の下の「同格以上」(S-33e ⑦)
   if (data) { syncSameMod(data, d, d.boxes[at]?.parent ?? null); syncWhittlePre(data, d, d.boxes[at]?.parent ?? null, at); } // 削減の手前の枠 (S-65c)
   linkAllSameHi(d);
   return at;
@@ -334,15 +335,27 @@ export function syncSameMod(data: PatchData, d: TreeDoc, a: string | null): stri
   }
   return made;
 }
+/** エッセンス / 合金の手の箱 e の下の「エッセンスと同じ MOD (同格以上)」(S-33e ⑦): 2 つ前より上の手で同格以上が付きうれば 1 つ足して統合、要らなければ人の決めの無い物を消す */
+function syncSameHiUnder(data: PatchData, d: TreeDoc, e: string): void {
+  const p = d.boxes[e];
+  if (!p?.hand || effectOf(p.hand.currency) !== "essence") return;
+  const has = p.outs.find((id) => d.boxes[id]?.out === "blocked" && d.boxes[id]?.junkKey === SAME_HI);
+  if (needsSameHiUnder(data, d, e)) { linkSameHi(d, has ?? addOut(d, e, "blocked", SAME_HI)); return; }
+  const c = has ? d.boxes[has] : undefined;
+  if (c && !c.hand && (!c.back || c.autoBack) && !c.done) { drop(d, [c.id]); p.outs = p.outs.filter((o) => o !== c.id); }
+}
 /**
- * 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥) の既定 = エッセンスと同じ枠で扱う: 兄弟の箱のエッセンス / 合金の当たりの箱へ統合の ↩ (鎖の印)。
+ * 「エッセンスと同じ MOD (同格以上)」の箱 (S-33e ⑥) の既定 =エッセンスと同じ枠で扱う: 兄弟の箱のエッセンス / 合金の当たりの箱へ統合の ↩ (鎖の印)。
  * 人が「新しいツリーを作る」を押した箱 (ownTree) と手のある箱はつながない。自動の直し (打てない人の ↩ 外しなど) で立った noAutoBack では外さない
  * (11-08 夜オーナー「デフォでエッセンスと同じとして扱うにしてくれあとボタン押さんと扱わないからこれだと」= 手元の木で統合が外れて未設定に落ちていた)
  */
 function linkSameHi(d: TreeDoc, id: string): void {
   const b = d.boxes[id], p = b ? d.boxes[b.parent ?? ""] : undefined;
   if (!b || !p || b.hand || b.ownTree || b.done || (b.back && !b.autoBack)) return;
-  const hit = p.outs.flatMap((o) => { const c = d.boxes[o]; return c?.hand && effectOf(c.hand.currency) === "essence" ? c.outs : []; }).find((o) => d.boxes[o]?.out === "hit");
+  // 統合の先 = エッセンスの結果の当たり (完全なエッセンスは打った後の箱、同じ側 s:0|0 を先に)。箱がエッセンスの箱の下 (S-33e ⑦) なら親の結果から
+  const res = (outs: readonly string[]): string | undefined => outs.find((o) => d.boxes[o]?.out === "hit") ?? outs.find((o) => d.boxes[o]?.out === "any" && (!d.boxes[o]?.junkKey || d.boxes[o]!.junkKey!.startsWith("s:0|0"))) ?? outs.find((o) => d.boxes[o]?.out === "any");
+  const under = !!p.hand && effectOf(p.hand.currency) === "essence";
+  const hit = under ? res(p.outs.filter((o) => o !== id)) : res(p.outs.flatMap((o) => { const c = d.boxes[o]; return c?.hand && effectOf(c.hand.currency) === "essence" ? c.outs : []; }));
   if (hit) { b.back = hit; b.autoBack = true; delete b.noAutoBack; }
 }
 /** 木の中の「エッセンスと同じ MOD (同格以上)」の箱を全部、既定の統合にそろえる (手を決めた後・開いた時の組み直しの後) */
