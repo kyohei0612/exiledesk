@@ -14,7 +14,7 @@ import ModTable from "./ModTable.vue";
 import ShelfButton from "../shelf/ShelfButton.vue";
 import { heldOmensOf } from "../shelf/held-omens";
 import { useHeldShares } from "./use-held-shares";
-import { ORBS, bonesFor, essenceShelf, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { ORBS, bonesFor, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { provideShelf } from "../../../state/for-share/shelf-context";
 import { craftStage as s } from "../../../state/craft-stage";
 import { omenBlock, toggleOmen as toggleHeld, useReason, type StageItem } from "../../../services/craft-stage/engine";
@@ -34,19 +34,23 @@ const item = computed(() => (onBox.value && props.boxItem ? props.boxItem : prop
 const on = ref<string | null>(null);
 const omens = ref<string[]>([]);
 function off(): void { on.value = null; omens.value = []; }
-function toggle(k: string): void { if (on.value === k) off(); else { on.value = k; omens.value = []; } }
+function toggle(k: string): void { if (on.value === k) off(); else if (canUse(k)) { on.value = k; omens.value = []; } }
+/** 今の品に打てるか (エンジンの useReason、棚の「使用可能」と同じ判定)。打てない札は薄くして押せない (場所は残す) */
+const canUse = (k: string): boolean => { const d = s.data.value, it = item.value; return !!d && !!it && useReason(d, it, k, []) === null; };
 // 開くたびに素の品・オフから。品が替わった時もオフ (前の品でオンにした物を持ち越さない)
 watch(() => props.open, () => { onBox.value = false; off(); });
 watch(item, () => off());
 
-/** 帯に並べない種類: MOD を足さない物 (神・フラクチャー・髪束・フラックス・品質・消去)。確率を見る窓なので、足す手だけ */
-const NO_ADD = new Set(["other", "flux", "quality", "annul"]);
-/** 帯の札 = 今の品に打てて (エンジンの useReason、棚の「使用可能」と同じ判定)、MOD を足す物。オーブ → 骨 → エッセンスの順 */
+/**
+ * 帯に並べる種類 = ランダムに MOD が付いて確率を見たい物だけ: 変成・増強・高貴・カオス (それぞれの格) と冒涜 (骨)。
+ * エッセンスは確定で付くだけなので出さない、王者・錬金などほかの物も出さない (オーナー 11-12「確率が見たい高貴とカオス、冒涜だけでいいんじゃねって思うんやがどうかな」「あーそれと増強変性か」)
+ */
+const BAND = new Set(["transmute", "augment", "exalt", "chaos"]);
+/** 帯の札 (いつも同じ場所に同じ並び: オーブ → 骨)。今の品に打てない物も場所は残し、薄くして押せない (canUse) */
 const chips = computed((): string[] => {
-  const d = s.data.value, it = item.value;
-  if (!d || !it) return [];
-  const all = [...ORBS.filter((g) => !NO_ADD.has(g.kind)).flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(d, it).flatMap((g) => g.keys)];
-  return all.filter((k) => !props.hidden?.(k, it) && useReason(d, it, k, []) === null);
+  const it = item.value;
+  if (!s.data.value || !it) return [];
+  return [...ORBS.filter((g) => BAND.has(g.kind)).flatMap((g) => g.keys), ...bonesFor(it)].filter((k) => !props.hidden?.(k, it));
 });
 /** オンの物に掛けられるお告げ (エミュ・木の手の窓と同じ入口。帯に出さない物は除く)。掛けられない物を押せなくするのは札の側 (エンジンの omenBlock) */
 const omenChips = computed(() => (on.value ? heldOmensOf(on.value).filter((o) => !props.hidden?.(o, item.value)) : []));
@@ -81,7 +85,7 @@ const MOD_HIDE = flag("modHide");
     <div v-if="item" data-mod-win class="flex h-full min-h-0 flex-col max-xl:overflow-y-auto" @contextmenu="on && ($event.preventDefault(), off())">
       <!-- 上: 打てるカレンシーの帯 (2 行まで、多い時は帯の中だけ送る)。押す = オン / もう一度でオフ -->
       <div data-mod-win-shelf role="toolbar" :aria-label="tr('カレンシー (押すとその手で付く MOD だけ)', 'Currency (press to show only what it can roll)')" class="flex max-h-[106px] shrink-0 flex-wrap items-center gap-x-0.5 gap-y-1 overflow-y-auto border-b border-white/10 px-3 py-1.5 max-xl:max-h-none">
-        <ShelfButton v-for="k in chips" :key="k" :k="k" bare :aria-pressed="on === k" @pick="toggle" />
+        <ShelfButton v-for="k in chips" :key="k" :k="k" bare :aria-pressed="on === k" :class="canUse(k) ? '' : 'cursor-not-allowed'" @pick="toggle" />
         <span v-if="!chips.length" class="text-[12px] opacity-50">{{ tr("この品に打てるカレンシーが無い", "No currency can be used on this item") }}</span>
       </div>
       <!-- オンの間だけ、帯のすぐ下の 1 行: オンの物の名前 (札に名前が無いので) と、掛けられるお告げのいつものアイコン (オン / オフ)。掛けると進めない・意味が無い物は押せない (理由は乗せた時のカード) -->

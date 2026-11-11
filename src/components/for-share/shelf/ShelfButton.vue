@@ -54,10 +54,12 @@ const badge = computed(() => {
   return b ? ([id, ...b] as const) : null;
 });
 /**
- * 小さい形 (bare) のカレンシーの格の印 = マスの右下の縦の棒: 上級は 2 本、完全は 3 本、ふつうは無し (ゲームの持ち物でなじみのある形。
- * 11-12 オーナー「上級は2縦完全は3縦」)。骨・エッセンスの格には棒の形が無いので字の札のまま
+ * カレンシーの格の印 = マスの右下の縦の棒: 上級は 2 本、完全は 3 本、ふつうは無し (ゲームの持ち物でなじみのある形。
+ * 11-12 オーナー「上級は2縦完全は3縦」)。骨・エッセンスの格には棒の形が無いので字の札のまま。
+ * 小さい形 (bare = MOD 一覧の窓の帯) はいつも棒、いつもの棚 (エミュ・木の手の棚) はスイッチ tierBars の下 (U-13d)
  */
-const bars = computed((): number => { if (!props.bare || props.nobadge) return 0; const p = parseKey(props.k); return p.type !== "currency" ? 0 : p.strength === "greater" ? 2 : p.strength === "perfect" ? 3 : 0; });
+const TIER_BARS = flag("tierBars");
+const bars = computed((): number => { if ((!props.bare && !TIER_BARS) || props.nobadge || props.corner) return 0; const p = parseKey(props.k); return p.type !== "currency" ? 0 : p.strength === "greater" ? 2 : p.strength === "perfect" ? 3 : 0; });
 /** 札の印 (上級・完全など) を出しているか */
 const badgeShown = computed(() => !!badge.value && !props.nobadge && !props.corner && !bars.value);
 /** 札に出す名前。印があっても「(上級)」「(完全)」は外さない (U-13b の撤回、2026-11-08 オーナー「アイコンに完全上級ついててもやっぱりカレンシー名に上級完全ほしいみたい」) */
@@ -182,7 +184,7 @@ onBeforeUnmount(holdCancel);
     <!-- 枠はゲームの両替所の枠 (持っている時は光る枠、src/styles/game-ui.css) -->
     <!-- 2026-10-10 オーナー「サイズも小さくしておｋ、ちょっと大きい」: PC は枠 68 → 56px、絵 52 → 42px -->
     <span class="g-slot relative grid place-items-center" :class="[bare ? 'size-11' : 'size-[52px] md:size-[56px]', on ? 'on' : '', on && omen ? 'stage-omen-on' : '']">
-      <span v-if="bars" data-tier-bars :data-bars="bars" aria-hidden="true" class="pointer-events-none absolute bottom-[3px] right-[3px] z-[1] flex gap-[2px]"><i v-for="n in bars" :key="n" class="block h-[10px] w-[2.5px] rounded-[1px] bg-[#f1e3b4] shadow-[0_0_0_1px_rgba(0,0,0,0.75)]" /></span>
+      <span v-if="bars" data-tier-bars :data-bars="bars" aria-hidden="true" class="pointer-events-none absolute z-[1] flex" :class="bare ? 'bottom-[3px] right-[3px] gap-[2px]' : 'bottom-1 right-1 gap-[2.5px]'"><i v-for="n in bars" :key="n" class="block rounded-[1px] bg-[#f1e3b4] shadow-[0_0_0_1px_rgba(0,0,0,0.75)]" :class="bare ? 'h-[10px] w-[2.5px]' : 'h-3 w-[3px]'" /></span>
       <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="object-contain" :class="bare ? 'h-[34px] w-[34px]' : 'h-9 w-9 md:h-[42px] md:w-[42px]'" draggable="false" />
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
