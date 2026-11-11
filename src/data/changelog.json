@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.714",
+  "date": "2026-11-11",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 今日 (11/11) のお題から、順位をスコア (完成 1 個あたりの費用 ÷ 完成率、小さいほど上) で並べるようにしました。同じスコアなら早く作った人が上です。順位の表の一番右にスコアが出ます。まだ挑戦していないお題の順位の数字はぼかして見せます",
+    "en": "Daily: starting with today's (11/11) challenge, the ranking sorts by score (cost per finished item ÷ finish rate, lower is better); ties go to the faster run. The score is shown in the rightmost column, and the numbers are blurred until you start that day's challenge"
+   }
+  ]
+ },
+ {
   "v": "0.1.713",
   "date": "2026-11-11",
   "items": [
@@ -892,30 +904,6 @@
     "area": "",
     "text": "シミュレーター: 木で消去を畳んだ札から止まった箱への線が消えていたのを直し、止まった箱を札の真下に並べるようにしました",
     "en": "Simulator: fixed the missing line from a folded Annulment card to its stop point in the tree, and the stop point now sits right below the card"
-   }
-  ]
- },
- {
-  "v": "0.1.674",
-  "date": "2026-11-06",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木で神のオーブの手を、狙いの数値に届いた / 届かないの 2 つに分けて組めるようにしました",
-    "en": "Simulator: Divine Orb steps in the tree now split into two branches, reaching the target value or not"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 消去の後の外れの扱い・同じ枠の箱のまとめ・手を選び直した時に先を全部作り直す・カタリストを品質の上限まで繰り返す など、木の結果の不具合を直しました",
-    "en": "Simulator: fixed tree results, including misses after Annulment, merging boxes with the same slots, rebuilding everything below a step when you change it, and repeating Catalysts up to the quality cap"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木を開く・組むのを速くしました",
-    "en": "Simulator: opening and building trees is faster"
    }
   ]
  }

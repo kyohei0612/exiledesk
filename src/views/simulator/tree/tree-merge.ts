@@ -144,6 +144,32 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
   const key = (i: number, j: number, d: number): number => (i * Y.length + j) * 3 + d; // d = 0 着いたばかり / 1 横に来た / 2 縦に来た
   const dist = new Map<number, number>(), prev = new Map<number, number>();
   const ix = new Map(X.map((x, i) => [x, i])), iy = new Map(Y.map((y, j) => [y, j]));
+  // 格子の隣どうしの 1 区間が箱で塞がるか・木の線の上を走るかを、探す前に 1 回だけ表にする (hits・along と同じ答え。前は区間を見るたびに全部の箱・線を数え、
+  // 箱 70 の木で線を引くのが 1 回 0.5 秒かかった = 要望 88df3901)。h* = 横の区間 (i → i+1、段 j)、v* = 縦の区間 (j → j+1、列 i)
+  const NX = X.length, NY = Y.length, mm = M - 2;
+  const hBlock = new Uint8Array(NX * NY), vBlock = new Uint8Array(NX * NY), hAlong = new Uint8Array(NX * NY), vAlong = new Uint8Array(NX * NY);
+  for (const r of block) {
+    const rx0 = r.x - mm, rx1 = r.x + r.w + mm, ry0 = r.y - mm, ry1 = r.y + r.h + mm;
+    for (let j = 0; j < NY; j++) {
+      const y = Y[j]!;
+      if (y > ry0 && y < ry1) for (let i = 0; i + 1 < NX; i++) if (X[i]! < rx1 && X[i + 1]! > rx0) hBlock[j * NX + i] = 1;
+      if (j + 1 < NY && y < ry1 && Y[j + 1]! > ry0) for (let i = 0; i < NX; i++) if (X[i]! < rx1 && X[i]! > rx0) vBlock[i * NY + j] = 1;
+    }
+  }
+  for (const g of segs) {
+    if (Math.abs(g.y0 - g.y1) < 1) {
+      const gx0 = Math.min(g.x0, g.x1), gx1 = Math.max(g.x0, g.x1);
+      for (let j = 0; j < NY; j++) if (Math.abs(g.y0 - Y[j]!) < 6) for (let i = 0; i + 1 < NX; i++) if (gx0 < X[i + 1]! && gx1 > X[i]!) hAlong[j * NX + i] = 1;
+    } else if (Math.abs(g.x0 - g.x1) < 1) {
+      const gy0 = Math.min(g.y0, g.y1), gy1 = Math.max(g.y0, g.y1);
+      for (let i = 0; i < NX; i++) if (Math.abs(g.x0 - X[i]!) < 6) for (let j = 0; j + 1 < NY; j++) if (gy0 < Y[j + 1]! && gy1 > Y[j]!) vAlong[i * NY + j] = 1;
+    }
+  }
+  /** i,j → ni,nj (隣) の区間が塞がるか・木の線に沿うか */
+  const edgeOf = (i: number, j: number, ni: number, nj: number): [boolean, boolean] => nj === j
+    ? [hBlock[j * NX + Math.min(i, ni)] === 1, hAlong[j * NX + Math.min(i, ni)] === 1]
+    : [vBlock[i * NY + Math.min(j, nj)] === 1, vAlong[i * NY + Math.min(j, nj)] === 1];
+  void along;
   const open = minHeap();
   const push = (k: number, c: number, from?: number): void => { if (c < (dist.get(k) ?? Infinity)) { dist.set(k, c); if (from !== undefined) prev.set(k, from); open.push(c, k); } };
   for (const e of A) { if (hits(e.p.x, e.p.y, e.q.x, e.q.y, others)) continue; push(key(ix.get(e.q.x)!, iy.get(e.q.y)!, 0), M); }
@@ -158,8 +184,9 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
     for (const [di, dj, nd] of [[1, 0, 1], [-1, 0, 1], [0, 1, 2], [0, -1, 2]] as const) {
       const ni = i + di, nj = j + dj;
       if (ni < 0 || nj < 0 || ni >= X.length || nj >= Y.length) continue;
-      if (hits(X[i]!, Y[j]!, X[ni]!, Y[nj]!, block)) continue;
-      push(key(ni, nj, nd), c + Math.abs(X[ni]! - X[i]!) + Math.abs(Y[nj]! - Y[j]!) + (d && d !== nd ? BEND : 0) + (along(X[i]!, Y[j]!, X[ni]!, Y[nj]!) ? ALONG : 0), k);
+      const [blocked, onLine] = edgeOf(i, j, ni, nj);
+      if (blocked) continue;
+      push(key(ni, nj, nd), c + Math.abs(X[ni]! - X[i]!) + Math.abs(Y[nj]! - Y[j]!) + (d && d !== nd ? BEND : 0) + (onLine ? ALONG : 0), k);
     }
   }
   let pts: Pos[];

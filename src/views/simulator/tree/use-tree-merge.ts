@@ -8,6 +8,9 @@ import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, roundPath, routeBacks, typ
 import { sideRoute } from "./tree-lines-grid";
 import { joinPath, mergeReqs } from "./tree-merge";
 
+/** 合流の線を引き直す前に、入力 (箱の位置・高さ) が変わらないのを待つ時間 */
+const SETTLE_MS = 120;
+
 export function useTreeMerge(o: {
   doc: Ref<TreeDoc>; posOf: (b: TreeBox) => { x: number; y: number }; segs: () => Seg[];
   /** 箱の今の高さ (アイテムの枠で BOX_H より高い。測れなければ BOX_H。線がほかの箱を横切っていた、10-27 オーナーの絵) */ heightOf?: (id: string) => number;
@@ -24,13 +27,18 @@ export function useTreeMerge(o: {
    * 箱の高さが測れて並べ直すたびに途中の形で 8 回引き直した (1 回 20〜30ms、11-05 オーナー「白紙ご1つ戻るボタンでぎゃっと固まる」)
    */
   const merged = shallowRef<ReturnType<typeof draw>>();
-  let frame = 0;
+  let frame = 0, settle = 0;
   const eff = new ReactiveEffect(() => draw());
   const later = (): void => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; merged.value = eff.run(); }); };
-  eff.scheduler = () => { if (o.moving?.()) { cancelAnimationFrame(frame); frame = 0; merged.value = eff.run(); } else later(); };
-  // 最初も次のコマで (呼ぶ側の段の決め rowL などはこの後に作られる)
+  /**
+   * 1 手の後は箱の高さが測れて並べ直すたびに入力が変わる。落ち着くまで (SETTLE_MS 入力が変わらない) 待ってから 1 回だけ引く
+   * (前は変わるたびに次のコマで引き直し、箱 70 の木で 1 回 0.5〜1 秒 × 数回止まった = 要望 88df3901、11-11 オーナー「めっちゃ途中重かったぞ」)
+   */
+  const settled = (): void => { clearTimeout(settle); settle = window.setTimeout(() => { settle = 0; later(); }, SETTLE_MS); };
+  eff.scheduler = () => { if (o.moving?.()) { clearTimeout(settle); settle = 0; cancelAnimationFrame(frame); frame = 0; merged.value = eff.run(); } else settled(); };
+  // 最初は次のコマで (呼ぶ側の段の決め rowL などはこの後に作られる)
   later();
-  onScopeDispose(() => { cancelAnimationFrame(frame); eff.stop(); });
+  onScopeDispose(() => { clearTimeout(settle); cancelAnimationFrame(frame); eff.stop(); });
   function draw() {
     const d = o.doc.value;
     const mv = o.moving?.() ?? null;
