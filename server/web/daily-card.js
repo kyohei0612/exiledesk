@@ -1,10 +1,20 @@
 // デイリークラフトチャレンジの結果の X のカード (設計図 daily.md D-38、2026-11-11 オーナー「デイリー挑戦終わった画面でシェアできるようにしたいな流石に」)。
 // 置き場・短い id・キャッシュは og-card.js の運試しのカードと同じ (/s/<id>・/og/<id>.png・POST /s/new)。中身の並び PACK の kd = "daily" の時だけここで作る。
+// 見た目はオーナー 11-11 の選び (案 D-3「３で真ん中かな」「見た目おｋ」): 経緯は設計図 D-38
 // 中身: l=ja|en, b=ベースの英語名, bn=ベースの表示名, a=ベースの絵のファイル名, c=完成 1 個あたりの費用 (完成 0 は —),
-//       dy=お題の id (d2026-11-11), rt=完成率, pl=その時の順位 (完成 0 は無し), pe=挑戦した人数。木 (レシピ) は入れない
+//       dy=お題の id (d2026-11-11), rt=完成率, pl=その時の順位 (完成 0 は無し), pe=挑戦した人数, sk=シェアした人の皮 (D-60 の id)。木 (レシピ) は入れない
 import { ImageResponse } from "workers-og";
 import { dataUrl, esc, font, pngSize } from "./og-card.js";
+// 皮の数字 (src/views/daily/skin/skin.ts の SKINS の写し。scripts/build-og-skin-art.py がカードの飾りの絵と一緒に書く)
+import SKINS from "./daily-skins.json";
 
+/** hsl → rgba() (satori が読める形に) */
+function hsl(h, s, l, a = 1) {
+  s /= 100; l /= 100;
+  const k = (n) => (n + h / 30) % 12, m = s * Math.min(l, 1 - l);
+  const f = (n) => Math.round(255 * (l - m * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+  return `rgba(${f(0)},${f(8)},${f(4)},${a})`;
+}
 const num = (v, max = 1e6) => { if (v == null || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n <= max ? n : null; };
 
 /** 中身を読む (変な値は捨てる) */
@@ -20,12 +30,13 @@ export function readDaily(get) {
     rate: num(get("rt"), 100) ?? 0,
     place: num(get("pl"), 100000) || null,
     entered: num(get("pe"), 100000) ?? 0,
+    skin: Object.hasOwn(SKINS, get("sk") ?? "") ? get("sk") : null,
   };
 }
 
 const T = (c, ja, en) => (c.en ? en : ja);
 const dayText = (c) => (c.day ? `${Number(c.day.slice(6, 8))}/${Number(c.day.slice(9, 11))}` : "");
-const rankText = (c) => (c.place ? T(c, `${c.place} 位 / ${c.entered} 人`, `#${c.place} of ${c.entered}`) : T(c, "順位なし (完成 0)", "Unranked (nothing finished)"));
+const rankText = (c) => (c.place ? T(c, `${c.place} 位 / ${c.entered} 人`, `#${c.place} of ${c.entered}`) : c.rate === 0 ? T(c, "順位なし (完成 0)", "Unranked (nothing finished)") : T(c, "順位なし", "Unranked"));
 const titleOf = (c) => T(c, `デイリークラフトチャレンジ ${dayText(c)} 「${c.baseName}」 ${rankText(c)}`, `Daily Craft Challenge ${dayText(c)} "${c.baseName}" ${rankText(c)}`);
 const descOf = (c) => T(c, `完成 1 個あたり ${c.cost}・完成率 ${c.rate}% — ExileDesk のデイリー (毎日 16:00 に替わるお題を 1 時間で組む)`, `${c.cost} per finished item, ${c.rate}% finished — ExileDesk Daily (a new challenge every day at 16:00 JST, 1 hour to build)`);
 
@@ -46,53 +57,102 @@ export function dailySharePage(url, c, img) {
   });
 }
 
-/** カードの絵 (1200×630)。運試しのカードと同じ地・ロゴ・右の品の絵。X は下 80px に題を重ねるので字は 500px より上。1 位は銅色の枠 */
+const COPPER_TEXT = "background-image:linear-gradient(180deg, #ffe2c4 0%, #e0a46e 45%, #a8612e 75%, #6e3a17 100%);background-clip:text;color:transparent";
+
+/** 字の幅の見積もり (字の大きさ 1 の時)。漢字・かな・全角は 1、数字・英字は 0.6 前後 (Zen Antique・Noto Sans JP の実測に近い値) */
+function textW(s) {
+  let w = 0;
+  for (const ch of String(s)) {
+    const cp = ch.codePointAt(0);
+    w += cp >= 0x2e80 || ch === "—" ? 1 : /[0-9]/.test(ch) ? 0.6 : /[A-Z#%]/.test(ch) ? 0.7 : /[a-z]/.test(ch) ? 0.55 : /[ .,/()]/.test(ch) ? 0.32 : 0.6;
+  }
+  return Math.max(w, 0.5);
+}
+
+/** カードの絵 (1200×630)。PoE2 の UI の質感: 地は石、外は面の枠、費用・完成率は像の付いた見出しの上、区切りはゲームの線、字は Zen Antique。
+ * 1 位は順位の字だけ銅色。X は下に題を重ねるが、大事な字は 560px より上 */
 export async function dailyCardImage(url, env, c) {
-  const art = c.art ? await dataUrl(env, url, `/og-art/${c.art}.png`) : null;
+  const k = c.skin ? SKINS[c.skin] : null;
   const size = c.art ? await pngSize(env, url, `/og-art/${c.art}.png`) : null;
-  const k = size ? Math.min(2.4, 380 / size.w, 440 / size.h) : 1;
-  const aw = size ? Math.round(size.w * k) : 300, ah = size ? Math.round(size.h * k) : 300;
-  const ax = 930 - aw / 2, ay = 290 - ah / 2;
-  const logo = await dataUrl(env, url, "/web/icon-192.png");
+  const [art, logo, plaque, slotFrame, cardFrame, headL, headR, divider, stone] = await Promise.all([
+    c.art ? dataUrl(env, url, `/og-art/${c.art}.png`) : null,
+    dataUrl(env, url, "/web/icon-192.png"),
+    dataUrl(env, url, "/og-art/_ui-title-c.png"),
+    dataUrl(env, url, "/og-art/_ui-frame-s.png"),
+    dataUrl(env, url, "/og-art/_ui-card-frame.png"),
+    dataUrl(env, url, "/og-art/_ui-head-l.png"),
+    dataUrl(env, url, "/og-art/_ui-head-r.png"),
+    dataUrl(env, url, "/og-art/_ui-divider.png"),
+    dataUrl(env, url, "/og-art/_ui-stone.jpg"),
+  ]);
+  const day = dayText(c);
   const head = T(c, "デイリークラフトチャレンジ", "Daily Craft Challenge");
-  const date = c.day ? T(c, `${dayText(c)} のお題`, dayText(c)) : "";
+  const plate = T(c, `${day} のお題`, `Challenge ${day}`);
   const placeBig = c.place ? T(c, String(c.place), `#${c.place}`) : T(c, "順位なし", "Unranked");
   const placeUnit = c.place ? T(c, "位", "") : "";
-  const placeTail = c.place ? T(c, `/ ${c.entered} 人`, `of ${c.entered}`) : T(c, "(完成 0)", "(nothing finished)");
-  const costLabel = T(c, "完成 1 個あたりの費用", "Cost per finished item"), rateLabel = T(c, "完成率", "Finished");
-  const allText = ["ExileDesk", head, date, c.baseName, placeBig, placeUnit, placeTail, costLabel, rateLabel, c.cost, `${c.rate}%`, "#exiledesk.com0123456789/—"].join("");
-  const [bold, regular] = await Promise.all([font(allText, 800), font(allText, 500)]);
+  // 順位なしで「(完成 0)」と書くのは完成率 0% の時だけ (完成があっても、その時の順位の表に自分の行が無いと順位なしで来る)
+  const placeTail = c.place ? T(c, `/ ${c.entered} 人`, `of ${c.entered}`) : c.rate === 0 ? T(c, "(完成 0)", "(nothing finished)") : "";
+  const costLabel = T(c, "完成 1 個あたり", "Cost per item"), rateLabel = T(c, "完成率", "Finished");
+  const antiqueText = [c.baseName, placeBig, placeUnit, plate, c.cost, `${c.rate}%`, "0123456789#/%.—"].join("");
+  const plainText = ["ExileDesk", head, placeTail, costLabel, rateLabel, "exiledesk.com0123456789/"].join("");
+  const [antique, bold, regular] = await Promise.all([font(antiqueText, 0, "Zen+Antique"), font(plainText, 800), font(plainText, 500)]);
   const cinzel = await font("EXILEDESK", 600, "Cinzel").catch(() => null);
   const top = c.place === 1;
+  const gold = "background-image:linear-gradient(180deg, #fff3cf 0%, #f0cf86 38%, #b8873c 62%, #7a5320 100%);background-clip:text;color:transparent";
+  const rankStyle = top ? COPPER_TEXT : c.place ? gold : "color:#a99d86";
+  const glow = "rgba(255,180,80,0.16)";
+  // シェアした人の皮 (D-60) の色で石を暗く渋く染める。皮の無いシェアは真鍮だけ
+  const dye = k
+    ? `<div style="display:flex;position:absolute;left:0;top:0;width:1200px;height:630px;background-image:radial-gradient(ellipse at 50% 45%, ${hsl(k.h, k.s * 1.4, 22, 0.42)} 0%, ${hsl(k.h, k.s, 10, 0.35)} 60%, rgba(0,0,0,0.2) 100%)"></div>`
+    : "";
+  // 品の絵は小さな枠 (124) の中で 96 まで。元の大きさ (og-art の 128px) より大きくしない (11-11 オーナー「画質荒くなるからちっさくとか目立たん位がいいかもな」)
+  const ak = size ? Math.min(1, 96 / size.w, 96 / size.h) : 1;
+  const aw = size ? Math.round(size.w * ak) : 96, ah = size ? Math.round(size.h * ak) : 96;
+  const value = "font-family:'Zen Antique';color:#f2d38a";
+  // 下の 2 枚の札: 字は札の内枠 (像を除いた中の暗い所。左 = 札の中の横 95〜520、右 = 30〜455、縦 16〜68) の真ん中。
+  // はみ出る時は字を小さくして収める (11-11 オーナー「３で真ん中かな枠の内枠を基準に中央寄せではみ出るならフォント小さくして表示させようか」)
+  const inner = 400, gap = 12;
+  const lw = Math.ceil(textW(costLabel) * 20), rw = Math.ceil(textW(rateLabel) * 20);
+  const vpx = (label, v) => Math.max(18, Math.min(46, Math.floor((inner - label - gap) / textW(v))));
+  const costPx = vpx(lw, c.cost), ratePx = vpx(rw, `${c.rate}%`);
+  const namePx = Math.max(22, Math.min(40, Math.floor(430 / textW(c.baseName))));
+  const tailPx = 46, rankPx = c.place ? 196 : 104, unitPx = placeUnit ? 84 : 0;
+  const rankW = textW(placeBig) * rankPx + textW(placeUnit) * unitPx + textW(placeTail) * tailPx + 30;
+  const rankK = Math.min(1, 1040 / rankW);
+  const card = (x, label, v, px) => `
+  <div style="display:flex;align-items:center;justify-content:center;position:absolute;left:${x}px;top:456px;width:${inner + 25}px;height:52px">
+    <span style="font-size:20px;font-weight:500;color:#b9a98a;margin-right:${gap}px">${esc(label)}</span>
+    <span style="${value};font-size:${px}px;line-height:1">${esc(v)}</span>
+  </div>`;
   const html = `
-<div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 78% 45%, #4a3410 0%, #1c140a 38%, #050403 75%);font-family:'Noto Sans JP';color:#efe6d2">
-  <div style="display:flex;position:absolute;left:730px;top:80px;width:400px;height:420px;border-radius:210px;background-image:radial-gradient(circle, rgba(255,190,90,0.28) 0%, rgba(255,150,40,0.10) 45%, rgba(0,0,0,0) 70%)"></div>
-  ${art ? `<img src="${art}" width="${aw}" height="${ah}" style="position:absolute;left:${ax}px;top:${ay}px" />` : ""}
-  <div style="display:flex;position:absolute;right:48px;top:44px;font-size:26px;font-weight:800;color:#f2c96b">exiledesk.com</div>
-  ${top ? `<div style="display:flex;position:absolute;left:18px;top:18px;width:1164px;height:594px;border:2px solid rgba(184,115,51,0.75)"></div>` : ""}
-  <div style="display:flex;flex-direction:column;position:absolute;left:70px;top:36px;width:660px">
+<div style="display:flex;width:1200px;height:630px;position:relative;background:#0c0a08;font-family:'Noto Sans JP';color:#efe6d2">
+  ${stone ? `<img src="${stone}" width="1200" height="630" style="position:absolute;left:0;top:0" />` : ""}
+  ${dye}
+  <div style="display:flex;position:absolute;left:250px;top:170px;width:700px;height:250px;border-radius:350px;background-image:radial-gradient(ellipse, ${glow} 0%, rgba(0,0,0,0) 70%)"></div>
+  ${slotFrame ? `<img src="${slotFrame}" width="124" height="124" style="position:absolute;left:58px;top:44px" />` : ""}
+  ${art ? `<img src="${art}" width="${aw}" height="${ah}" style="position:absolute;left:${120 - aw / 2}px;top:${106 - ah / 2}px" />` : ""}
+  <div style="display:flex;flex-direction:column;position:absolute;left:200px;top:46px;width:440px">
     <div style="display:flex;align-items:flex-end">
-      ${logo ? `<img src="${logo}" width="54" height="54" style="margin-right:12px;margin-bottom:2px" />` : ""}
-      <span style="font-family:${cinzel ? "Cinzel" : "Noto Sans JP"};font-size:44px;font-weight:${cinzel ? 600 : 800};letter-spacing:3px;background-image:linear-gradient(180deg, #fff3cf 0%, #f0cf86 38%, #b8873c 62%, #7a5320 100%);background-clip:text;color:transparent">EXILEDESK</span>
+      ${logo ? `<img src="${logo}" width="30" height="30" style="margin-right:8px" />` : ""}
+      <span style="font-family:${cinzel ? "Cinzel" : "Noto Sans JP"};font-size:24px;font-weight:600;letter-spacing:3px;${gold}">EXILEDESK</span>
     </div>
-    <div style="display:flex;font-size:24px;font-weight:500;color:#b9a98a;margin-top:16px;white-space:nowrap"><span>${esc(head)}</span>${date ? `<span style="margin-left:18px">${esc(date)}</span>` : ""}</div>
-    <span style="font-size:${c.baseName.length > 16 ? 34 : 40}px;font-weight:800;color:#f3e3b5;margin-top:2px">${esc(c.baseName)}</span>
-    <div style="display:flex;align-items:flex-end;margin-top:14px">
-      <span style="font-size:${c.place ? 96 : 64}px;font-weight:800;color:${top ? "#e0a46e" : c.place ? "#6ee7b7" : "#a99d86"};line-height:1">${esc(placeBig)}</span>
-      ${placeUnit ? `<span style="font-size:44px;font-weight:800;color:#d9f5e8;margin-left:6px;margin-bottom:8px">${esc(placeUnit)}</span>` : ""}
-      <span style="font-size:32px;font-weight:800;color:#cfc3aa;margin-left:14px;margin-bottom:12px">${esc(placeTail)}</span>
-    </div>
-    <div style="display:flex;margin-top:22px">
-      <div style="display:flex;flex-direction:column;margin-right:48px">
-        <span style="font-size:20px;font-weight:500;color:#a99d86">${esc(costLabel)}</span>
-        <span style="font-size:40px;font-weight:800;color:#f2c96b">${esc(c.cost)}</span>
-      </div>
-      <div style="display:flex;flex-direction:column">
-        <span style="font-size:20px;font-weight:500;color:#a99d86">${esc(rateLabel)}</span>
-        <span style="font-size:40px;font-weight:800;color:#f2c96b">${c.rate}%</span>
-      </div>
-    </div>
+    <span style="font-family:'Zen Antique';font-size:${namePx}px;white-space:nowrap;color:#f3e3b5;line-height:1.25;margin-top:4px">${esc(c.baseName)}</span>
+    <span style="font-size:19px;font-weight:500;color:#a99d86">${esc(head)}</span>
   </div>
+  ${plaque ? `<img src="${plaque}" width="520" height="129" style="position:absolute;left:636px;top:34px" />` : ""}
+  <div style="display:flex;position:absolute;left:776px;top:108px;width:240px;height:38px;align-items:center;justify-content:center;font-family:'Zen Antique';font-size:24px;color:#2b1a06">${esc(plate)}</div>
+  ${divider ? `<img src="${divider}" width="748" height="4" style="position:absolute;left:226px;top:184px" />` : ""}
+  <div style="display:flex;align-items:flex-end;justify-content:center;position:absolute;left:0;top:192px;width:1200px;height:212px;padding-bottom:${c.place ? 0 : 22}px">
+    <span style="font-family:'Zen Antique';font-size:${Math.floor(rankPx * rankK)}px;line-height:1;${rankStyle}">${esc(placeBig)}</span>
+    ${placeUnit ? `<span style="font-family:'Zen Antique';font-size:${Math.floor(unitPx * rankK)}px;margin-left:6px;margin-bottom:${Math.round(14 * rankK)}px;${rankStyle}">${esc(placeUnit)}</span>` : ""}
+    ${placeTail ? `<span style="font-size:${Math.floor(tailPx * rankK)}px;font-weight:800;color:#cfc3aa;margin-left:18px;margin-bottom:${Math.round(24 * rankK)}px">${esc(placeTail)}</span>` : ""}
+  </div>
+  ${divider ? `<img src="${divider}" width="748" height="4" style="position:absolute;left:226px;top:410px" />` : ""}
+  ${headL ? `<img src="${headL}" width="545" height="118" style="position:absolute;left:52px;top:440px" />` : ""}
+  ${headR ? `<img src="${headR}" width="549" height="118" style="position:absolute;left:599px;top:440px" />` : ""}
+  ${card(52 + 95, costLabel, c.cost, costPx)}
+  ${card(599 + 30, rateLabel, `${c.rate}%`, ratePx)}
+  ${cardFrame ? `<img src="${cardFrame}" width="1200" height="630" style="position:absolute;left:0;top:0" />` : ""}
 </div>`;
   return new ImageResponse(html, {
     width: 1200,
@@ -100,6 +160,7 @@ export async function dailyCardImage(url, env, c) {
     fonts: [
       { name: "Noto Sans JP", data: bold, weight: 800, style: "normal" },
       { name: "Noto Sans JP", data: regular, weight: 500, style: "normal" },
+      { name: "Zen Antique", data: antique, weight: 400, style: "normal" },
       ...(cinzel ? [{ name: "Cinzel", data: cinzel, weight: 600, style: "normal" }] : []),
     ],
   }).arrayBuffer();

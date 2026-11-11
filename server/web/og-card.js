@@ -23,8 +23,8 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 // 12・13 番目 (h = 題、o = 主のカレンシーの絵の URL) はスパムシミュレーターの運試し (2026-10-19)。無ければカオススパム計算機
 // 14 番目 (p) は比べた人数 (スマホは 10 人。2026-10-19)。無ければ 100
 // 15 番目 (q) は何位 (人数が少ない時。自分を入れて p + 1 人の中)。あれば % ではなく「何位」で出す (2026-10-19 オーナー「スマホは何位、% やなくて」)
-// 16〜20 番目 (kd = "daily"・dy = お題の id・rt = 完成率・pl = 順位・pe = 挑戦した人数) はデイリーの提出の後のシェア (D-38、2026-11-11)。カードは daily-card.js
-const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q", "kd", "dy", "rt", "pl", "pe"];
+// 16〜21 番目 (kd = "daily"・dy = お題の id・rt = 完成率・pl = 順位・pe = 挑戦した人数・sk = シェアした人の皮) はデイリーの提出の後のシェア (D-38、2026-11-11)。カードは daily-card.js
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q", "kd", "dy", "rt", "pl", "pe", "sk"];
 export async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
