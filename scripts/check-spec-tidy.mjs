@@ -88,9 +88,11 @@ if (only !== "C") {
       if (!/^\s*- \*\*/.test(ln)) continue;
       const before = po.get(f).items.get(id) || "";
       if (before === ln) continue;
-      const add = sents(ln).filter((s) => !had.has(s));
+      const add = sents(ln).filter((s) => !had.has(s) && !/記録の紙/.test(s)); // 「前の形は記録の紙」と指すだけの文は数えない
       if (!add.length) continue;
-      const txt = add.join(" ");
+      // 「前の形 (…) は記録の紙」は、括弧で文が切れても指すだけの文として外す
+      const ptr = ln.match(/前の(?:形|決め)[^。]{0,60}記録の紙/g) || [];
+      const txt = add.filter((s) => !ptr.some((p) => p.includes(s.slice(0, 12)))).join(" ");
       const why = [];
       const m1 = txt.match(/前は[^。]{0,24}|以下は[^。]{0,24}(?:形|見方)|前の決め[^。]{0,16}|前の形[^。]{0,16}/);
       if (m1 && !/前の形は記録の紙|経緯は記録の紙/.test(m1[0])) why.push(`「${m1[0].slice(0, 22)}…」`);
