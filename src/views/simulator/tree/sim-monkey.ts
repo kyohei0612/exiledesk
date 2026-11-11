@@ -50,6 +50,7 @@ import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { fillHeldDefaults } from "./tree-held-use";
 
 type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
@@ -119,7 +120,8 @@ export function installSimMonkey(): () => void {
       const { hand: h, kind, aims: hitAims, preCat, only, problem } = planPick(d, t.doc.value, id, it, key, omens, opt, t.goals.value);
       if (problem) return { ok: false, problem };
       let at = id;
-      t.edit((x) => { at = holdLinks(() => applyPick(x, id, h, kind, hitAims, preCat, only)); });
+      // 画面の手の決定 (SimTreePage) と同じく、ヒネコラで持つ削減の枠の既定 (打つ / 打たない、S-39 ②b) も入れる
+      t.edit((x) => { at = holdLinks(() => applyPick(x, id, h, kind, hitAims, preCat, only)); fillHeldDefaults(x, id); });
       const boxes = (t.doc.value.boxes[at]?.outs ?? []).map((bid) => {
         const b = t.doc.value.boxes[bid]!, item = sample(bid)?.item;
         return {

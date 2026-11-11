@@ -19,6 +19,7 @@ import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { restoreWhittlePre } from "./tree-whittle-pre";
+import { fillHeldHi } from "./tree-held-use";
 import { lvPart } from "../../../services/simulator/tree/tree-whittle";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
@@ -157,6 +158,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 消去の続き (S-28g): つなぎのそろった木で、同じ枠ができた自動の消去を畳み、空いた消去の結果を続ける (手を決める時と同じ)
   const trimmed = trimAnnul(data, d);
   if (extendAnnul(data, d) || trimmed) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  fillHeldHi(d); // ヒネコラで持つ削減の「高い」の枠は既定で打たない (S-39 ②b、11-11)
   linkAllSameHi(d); // 「エッセンスと同じ MOD (同格以上)」は押していなければ既定の統合 (保存・見直しで外れていても、S-33e ⑥)
   for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認

@@ -59,7 +59,12 @@ export const dropHeldPick = (id: string): void => void pending.delete(id);
 export function seedHeldPick(d: TreeDoc, id: string): void {
   if (pending.has(id)) return;
   const now = heldUseRows(d, id);
-  if (now.length) pending.set(id, Object.fromEntries(now.map((r) => [r.lv, r.use])));
+  // 手の無い枠 (use = null) は持ち越さない = 既定のまま (前は「未選択」として持ち越し、高い = 打たない の既定が入らず未設定の赤枠に残った、11-11)
+  if (now.length) pending.set(id, Object.fromEntries(now.filter((r) => r.use !== null).map((r) => [r.lv, r.use])));
+}
+/** 開いた時: 手の無い「高い」の枠は既定の打たないで埋める (S-39 ②b、11-11 オーナー「打たないをデフォルトで設定ね いま未設定やろ」) */
+export function fillHeldHi(d: TreeDoc): void {
+  for (const id of Object.keys(d.boxes)) for (const r of heldUseRows(d, id)) if (r.lv === "hi" && r.use === null && DEFAULT_USE.hi === false) setHeldUse(d, r.id, false);
 }
 /** 削減を持った時: 持っている間の選び (無ければ既定) を各枠に入れる。未選択の枠は手の無いまま (決めるまで未設定) */
 export function fillHeldDefaults(d: TreeDoc, id: string): void {
