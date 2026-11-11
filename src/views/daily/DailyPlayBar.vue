@@ -9,6 +9,10 @@ import { craftStage as s } from "../../state/craft-stage";
 import { freshItem } from "../../services/craft-stage/engine";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import ModTable from "../../components/for-share/mod-list/ModTable.vue";
+import ModListWin from "../../components/for-share/mod-list/ModListWin.vue";
+import { treeHidden } from "../simulator/use-sim-shelf";
+import { flag } from "../../web/release-flags";
+const MOD_WIN = flag("simModList");
 import { goDaily } from "./daily-open";
 import type { DailyAim } from "./daily-api";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
@@ -34,7 +38,9 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
       <button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まらない', 'The clock keeps running')" @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     </div>
 
-    <ModalShell :open="listOpen" :title="tr('このベースに付く MOD (何も付いていない状態)', 'Mods for this base (nothing attached)')" width="w-[1100px] max-w-[96vw]" @close="listOpen = false">
+    <!-- スイッチ simModList: シミュの帯と同じ窓 (棚 + 表)。品は今までどおり何も付いていない品 (D-37d)、棚は木の棚と同じ物 -->
+    <ModListWin v-if="MOD_WIN" :open="listOpen" :blank="blank" :hidden="treeHidden" @close="listOpen = false" />
+    <ModalShell v-else :open="listOpen" :title="tr('このベースに付く MOD (何も付いていない状態)', 'Mods for this base (nothing attached)')" width="w-[1100px] max-w-[96vw]" @close="listOpen = false">
       <div data-daily-modlist-body class="p-2"><ModTable v-if="blank" overlay :data="s.data.value" :item="blank" /></div>
     </ModalShell>
     <DailyGiveUpAsk :id="id" :open="asking" :dev="dev" @close="asking = false" @done="asking = false; goDaily({ view: 'list' })" />

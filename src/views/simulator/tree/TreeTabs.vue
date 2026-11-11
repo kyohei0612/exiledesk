@@ -5,7 +5,12 @@
   「コピー」= 今の木を丸ごと写して新しいタブで開く (名前は「〜 のコピー」、元は変えない)。10-24 夜オーナー
 -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import ModListWin from "../../../components/for-share/mod-list/ModListWin.vue";
+import { craftStage as s } from "../../../state/craft-stage";
+import { freshItem } from "../../../services/craft-stage/engine";
+import { treeHidden } from "../use-sim-shelf";
+import { flag } from "../../../web/release-flags";
 import Icon from "../../../components/ui/Icon.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
@@ -18,6 +23,11 @@ const emit = defineEmits<{ switched: [] }>();
 defineProps<{ compact?: boolean }>();
 const FLAT = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-[#15110c]/95 px-1.5 ring-1 ring-white/10 text-[12px] text-sim-body hover:bg-white/10 hover:text-white";
 const t = useTree();
+/** 帯の「MOD 一覧」(スイッチ simModList、PC の帯だけ): 棚 + MOD の表の窓 (共通の ModListWin)。見るだけで木には何もしない */
+const MOD_WIN = flag("simModList");
+const modWin = ref(false);
+/** 窓で見る品 = 木のベース・アイテムレベルの何も付いていない品 (確率を確かめるだけの窓。箱とはつながない、オーナー 11-12「アイテムカードに何もついてない状態で見たい」) */
+const modItem = computed(() => { const d = s.data.value; try { return modWin.value && d && !t.needBase.value ? freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare") : null; } catch { return null; } });
 /** タブを替えた後の段の URL を画面に合わせる (完成形の設定のページから替えて木へ戻った時に sim-base のまま残らない。ベース選びの白紙のタブは sim-base) */
 function syncStep(): void {
   const to = t.goalPage.value === 1 ? "base" : t.goalPage.value === 2 ? "mods" : "tree";
@@ -79,6 +89,8 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, tru
     <template v-if="compact">
       <button type="button" data-tree-tab-add :class="FLAT" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-4" /><span class="">{{ tr("新規", "New") }}</span></button>
       <button type="button" data-tree-tab-copy :class="FLAT" :aria-label="tr('コピー', 'Copy')" :title="tr('今のツリーを丸ごと写して新しいタブで開く (元は変わらない)', 'Copy this whole tree into a new tab (the original stays)')" @click="copy"><Icon name="copy" class="size-4" /><span class="">{{ tr("コピー", "Copy") }}</span></button>
+      <button v-if="MOD_WIN && !t.needBase.value" type="button" data-tree-modlist :class="FLAT" :title="tr('このベースに付く MOD とカレンシーの棚 (棚の物を押すと、それで付く MOD だけと確率)', 'Mods for this base with the currency shelf (pick a currency to see only what it can roll)')" @click="modWin = true"><span>{{ tr("MOD 一覧", "Mod list") }}</span></button>
+      <ModListWin v-if="MOD_WIN" :open="modWin" :blank="modItem" :hidden="treeHidden" @close="modWin = false" />
     </template>
     <template v-else>
       <button type="button" data-tree-tab-add class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-3.5" /><span class="max-[48rem]:hidden">{{ tr("新しいツリー", "New tree") }}</span></button>
