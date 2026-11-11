@@ -11,15 +11,14 @@
 6. 足す手順と確かめは emu.md ⑥ (手元 1440 を本物のマウスで、報告に何で確かめたか)。合格の基準は G-22。
 7. スマホはエミュでの当て方が M-70〜72、省略しない・並びの土台は shared-ui.md。
 8. UI の決まり・英語のセットは shared-ui.md。決まりが変わったら同じ commit で emu.md を直す (G-20)。
-9. AdSense の再審査中は、読み物・AdSense のコード・ads.txt を壊さない。
+9. 広告の審査の間は Y-22b (読み物・AdSense のコード・ads.txt を壊さない)。
 
 ## 地図
 - データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まずエンジンの関数で (直に読んでよい表は目録に書いてある物だけ)。
 - 画面 src/views/craft-stage/: CraftStage.vue (入口)、アイテム StageCurrencyCard (スマホの上に貼るのはカードそのもの [data-item-pin]、11-10 に StageItemMini を消した)、MOD 一覧 StageModList (このベースに付く MOD。持った時の %・チェック欄・次の手で狙う・付ける・重み・カードから飛ぶ。表の土台は for-share の ModTable を包み props と slot で、10-23)・ModAddPicker・StageWeightEdit、工程 StageHistory、StageForesight・RevealPanel・StageSanctifyBar・StageBasePicker/Page・use-stage-base・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・route-place・use-spam-share。
 - 状態 src/state/emulator/: aim-state・stage-extra・spam-share-open。
 - エミュだけの扱い (10-26 にエンジンから出した置き場。emu-engine/ の持ち主は 11-07 からジン = owners.txt、emu-engine.ts はエミュ部長): src/services/emulator/emu-engine.ts・emu-engine/。
-- 共通管理 for-share (デザイン部長の物、10-23): 棚 src/components/for-share/shelf (CurrencyShelf・ShelfButton・HeldOmens・StageOmenTune)、アイテムのカード item (StageItemCard・base-values)、MOD 表の土台 mod-list (ModTable)、use-stage-fx、状態 src/state/for-share (craft-stage-shelf・shelf-context・stage-steps・stage-tuning・craft-stage-help*)。シミュの画面も使う。直したい時はデザイン部長に。
+- 共通の部品 for-share (棚・アイテムのカード・MOD 表の土台) はデザイン部長の物。地図は docs/org/design/README.md。
 - エンジン: 核 src/services/craft-stage/ (よく使う名前の束 engine.ts、打てるかは useReason)。チュートリアルの差し込み口は views/tutorial/course-entry.ts だけ。
-- 共有と各画面 (オーナー 10-23、docs/org/README.md の「流れ」): どの画面でも同じ物はデザイン部長、エミュの流れにしか無い物 (持つ・次の手で狙う・スパムの計算) はここ。迷ったらここで作り、2 つ目の画面で要った時に共有へ。
-- 前の記録 (ジン部長の時代の画面の仕事) は docs/org/emulator/todo.md・notes/。画面の残りはここの todo.md に移す。
+- 共有と各画面の線は U-01。エミュの流れにしか無い物 (持つ・次の手で狙う・スパムの計算) はここ。
 - 決めた事: 画面の決まりは docs/spec/emu.md (M-xx、残っている仮は ⑦)。経緯は docs/decisions/001-craft-stage.md・notes/。

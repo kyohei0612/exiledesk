@@ -10,17 +10,17 @@
 5. 部品は U-10〜16、決まった挙動は U-20〜30、見た目は U-40〜47、スマホは U-50〜52、要望は全部に (U-05)。
 6. 英語と用語は U-60〜62 (GLOSSARY)。名前の出し方は engine.md と G-05。
 7. 常駐・報告・触るファイルは dev の決まり 1・2・8。push は自分で、本番は最終チェック長 (R-03)。
-8. 確かめの場所は Y-70 (作る・確かめるは 1440、ビルドに関わる物 = 部品の分け方・先読み・古い塊・SW は 1461 = release.md ②。1460 は出す直前の 1 回だけ = R-09)。オーナーの確かめは R-13。足す手順と確かめの並べ比べは shared-ui.md の ⑥、成り立つべき事は ⑤ (U-80〜85)。何で確かめたか書く (G-22)。
-9. 1 ファイル 500 行まで。AdSense の再審査中は、読み物・AdSense のコード・ads.txt を壊さない。
+8. 確かめの場所は Y-70・R-09 (作る・確かめるは 1440、ビルドに関わる物は release.md ②)。
+9. 1 ファイル 500 行まで (G-26d)。広告の審査の間は Y-22b。
 10. 決まりが変わる直しは、同じ commit で shared-ui.md を直す (G-20)。仮・未決は shared-ui.md の ⑦。
 
 ## 地図
 - データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
-- 共有にする線引き (オーナー 10-23、メモ org-roles-2026-10-23): ユーザーが「どの画面でも同じ」と感じる物 = ページの枠 (ヘッダー・上の切り替えタブ・戻る・フッター・広告の枠)・決まった挙動 (Esc・枠の外・連打の守り・移り方・開く畳む)・同じゲームの物を出す部品 (アイテムのカード・MOD 表の土台・棚・ベース選び)。その作業の流れにしか無い物は各画面。迷ったら画面で作り、2 つ目の画面で要った時に共有へ上げる。
+- 共有にする線は U-01 (迷ったら画面で作り、2 つ目の画面で要った時に共有へ)。
 - for-share: src/components/for-share/ (棚一式 shelf/・アイテムのカード item/・MOD 表の土台 mod-list/ModTable.vue (エミュの特化は views/craft-stage/StageModList.vue、シミュは TreeGoalPage の slot)・use-stage-fx、10-23 にジン部長が src/views/craft-stage から移した)・src/state/for-share/ (棚・説明・stage-steps など)。移しの記録 docs/org/emulator/notes/2026-10-22-entry-split-plan.md。ファイルごとの使う画面と ModTable の差し込み口 (props・slot 8 つ) は notes/2026-10-23-components-map.md。カードはエミュ・シミュ・チュートリアル、棚は CraftStage と TreeHandShelf・TreeMemoFloat、sim-links はエミュだけが使う。
 - ほかの共通の部品 src/components/ (アプリだけの物は owners.txt のアプリの行で凍結)。部品ごとの使う画面の表は notes/2026-10-23-components-map.md。Web で多く使う物: ui/ (Icon・ModalShell・Disclosure・HelpTip・BusyTag・AdSlot)・decor/ (RichText・GameItemCard・HoverStack)・items/BaseCatalog (エミュ・シミュのベース選び)・NumStep (シミュ)・vaal-scales/CurrencyPicker (エミュ)・ChangelogDialog・SupportDialog・LangSwitch (web 枠)。
 - 見た目 src/style.css → src/styles/game-ui.css (@import、全部の画面)、route-rule.css・spam-lucky.css (エミュのスパムシミュ、`<style src>`)、poe-card.css (アプリ)。owners.txt はどちらもデザイン (b27e7213)。言語の切り替え src/i18n/lang.ts、用語集 src/i18n/GLOSSARY.md。i18n のゲームのデータ (名前・MOD の文の JSON) はジン部長の「共通」のまま。
 - 画面の挙動 (10-23 にジン部長から): src/web/ (WebApp.vue・page.ts = ページの入口と移り方 (ツリーの中の段 treeStep = sim-tree / sim-base / sim-mods、離れる時の確かめ setLeaveGuard(to => bool) と窓 LeaveConfirm.vue、戻るは history.state の edIdx で元の位置へ戻して聞く。10-24、確かめの台本は共有メモ design5/leave-check*.mjs)・boot.ts・main.ts・track.ts・広告の枠・pwa.ts = 古い塊の読み直し)、public/sw.js (サービスワーカー。HTML は通信が先・/assets/ と絵・音・フォントは一度取った物を使う (FILE_RE、mtx-art 入り)・/s/・/og/・?k= には触らない。10-25 にジン部長から、701e97b5)、web.html (ページの入口、頭に入口の塊の読み直し。AdSense のコードは触らない、10-23 にデザインへ)、1 つ前の版の塊を残す本番の案は notes/2026-10-23-keep-prev-assets.md、src/composables/ (useKeyboardShortcuts など)、src/utils/ (use-dismiss = 枠の外・Esc で取り消す、swallow-click・use-armed = 連打の守り、pointer-moved = 説明のカードはマウスが実際に動いた時だけ (10-24)、keep-place、use-phone、sfx = 音、zoom、ads.ts、format-pct など)。rec-mode.ts は動画との受け渡し (`?rec=1`) なので、変える時は動画編集長と同じ commit で (メモ poe2tube-handoff)。境目なので、型が落ちる変更は commit の前にブラックへ (dev の決まり 7)。
 - 見張り scripts/check-engine-entry.mjs (エミュ ⇄ シミュの直の import を落とす D、持ち主は owners.txt)。
-- 今の仕事と本番待ち: todo.md の頭 (10-28 は armAll・emuRedo・noCut・backPlace・phoneHelp・tierWord がオーナー OK 済みで本番待ち)。
-- 決めた事: docs/spec/shared-ui.md (U-xx)。元のメモは game-ui-art-direction (絵の出どころ)・web-phone-layout (スマホの作り) が残り、ほかは 10-29 に memory-archive-1029 へ移した (設計図にある)。
+- 今の仕事と本番待ち: todo.md の頭。今のスイッチは src/web/release-flags.ts の RELEASED。
+- 決めた事: docs/spec/shared-ui.md (U-xx)。
