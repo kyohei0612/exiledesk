@@ -265,3 +265,7 @@ scripts/_monkey-*.ts                 モンキー
 scripts/check-www-redirect.mjs       サーバー
 src/state/stage-session.ts           デザイン
 
+
+# フックと登録 (G-48、書き換えは印 ~/.claude/exiledesk-hooks-ok が要る)
+.claude/hooks/**                     ブラック
+.claude/settings.json                ブラック
