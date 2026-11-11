@@ -8,7 +8,7 @@
  * 鍵は使わない (Y-90)。D1 はオーナーの wrangler のログインで読み書きする。
  * 確認ページ (403・cf-mitigated・HTML) が 1 本でも出たら、以降の問い合わせを 0 にして止め、品 0 の ninja_job を写す = その週は前の週の品のまま (予定は前の週の型で組む)。
  * 窓 (日 16:00〜月 16:00 JST) の外で回った時は取らず、その週の予定が無ければ ② ③ だけ (前の週の型で組む)。
- * その週の ninja_job が本番に 1 行でもあれば取らない (週 1 回)。止めのスイッチは本番の ninja_ctl の home_stop = '1'。
+ * その週の ninja_job が本番に品 1 つ以上で在るか、確認ページで止めた (stopped) 時は取らない (週 1 回。品 0 の「済み」の行では止めない、11-11)。止めのスイッチは本番の ninja_ctl の home_stop = '1'。
  *
  *   node scripts/daily-fetch-home.mjs [--local | --more]
  *     --more  = お題に使える人が足りない週の取り直し (D-80f、毎日の台本 daily-roll.mjs が呼ぶ)。今の週を 1 ビルド 6 → 10 人で、週 2 回まで
@@ -188,7 +188,9 @@ try {
     const ctl = await D1.prepare("SELECT v FROM ninja_ctl WHERE k = 'home_stop'").first();
     const had = await D1.prepare("SELECT state, requests, people, items FROM ninja_job WHERE week = ?").bind(week).first();
     if (ctl?.v === "1") said = "止めのスイッチ (ninja_ctl home_stop = 1) なので取らない";
-    else if (had) said = `もう取ってある (${had.state}・${had.requests} 本・${had.items ?? 0} 品) ので取らない`;
+    // 「取ってある」は品が 1 つ以上ある時だけ (11-11。11-09 の週はサーバーの先に書いた「済み・0 品」の行で取らずに終わった)。
+    // 確認ページで止めた週 (stopped) はもう 1 回送らない (Y-52)
+    else if (had && ((had.items ?? 0) > 0 || had.state === "stopped")) said = `もう取ってある (${had.state}・${had.requests} 本・${had.items ?? 0} 品) ので取らない`;
     else {
       fetched = await fetchLocal(J, week);
       if (!fetched.job) throw new Error("手元の取得が始まらなかった");

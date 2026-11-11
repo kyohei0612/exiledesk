@@ -2,7 +2,7 @@
 /**
  * daily-roll.mjs — デイリーの 16:00 の切り替え (設計図 D-59、2026-11-05)。予定のタスクで毎日 15:55 JST に回す (Y-45 と同じ形)。
  *   ① その週の予定が無ければ、週の取得 (Y-53) の品 → 型 → 月〜日の予定 (D-06)  ② 投稿の機械の確かめ (D-20)
- *   ③ 前の日を締める (順位・日の結果・称号、D-59 ①)  ④ 次のお題 (D-84)
+ *   ③ 前の日を締める (順位・日の結果・称号、D-59 ①。--d1 の時は締めそびれた過去の日 (14 日まで) も先に締める ①b)  ④ 次のお題 (D-84)
  * エンジンを使う所は _daily-roll-entry.ts (画面と同じ関数)。この台本は GET /daily/roll.json を読んで POST /daily/topic に書くだけ。
  * 回らなかった日も Worker が週の予定からお題を出すので、毎日は止まらない (台本が回るのは投稿を使う・締める・称号のため)。何度回しても同じ物は二重に書かない。
  *
@@ -61,6 +61,24 @@ globalThis.location ??= { hostname: "", href: "", search: "", hash: "", pathname
 const M = await bundleEntry("scripts/_daily-roll-entry.ts");
 const data = M.loadPatchSync();
 const ver = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+// 締めそびれた日を拾う (D-59 ①b、11-11): 締めはふだん「組む日の前の日」1 日だけなので、PC が消えていて回らなかった日は後から締まらなかった。
+// 挑戦があって日の結果が 0 の過去の日 (14 日まで) を古い順に、その日を前の日とする回で締めだけ書く (称号は全部の日から計算し直すので二重にならない)
+if (D1 && !WEEK_ONLY) {
+  const DAYMS = 86400e3, nameOfNo = (n) => new Date(n * DAYMS).toISOString().slice(0, 10), noOfName = (s) => Math.round(Date.parse(`${s}T00:00:00Z`) / DAYMS);
+  const tNo = noOfName(target);
+  const { results: late } = await db.prepare(
+    "SELECT DISTINCT substr(t.topic_id, 2) AS day FROM daily_tries t WHERE substr(t.topic_id, 2) < ? AND substr(t.topic_id, 2) >= ? AND NOT EXISTS (SELECT 1 FROM daily_results r WHERE r.day = substr(t.topic_id, 2)) ORDER BY day",
+  ).bind(nameOfNo(tNo - 1), nameOfNo(tNo - 15)).all();
+  for (const { day } of late ?? []) {
+    const lin = await R.rollJson(db, now, nameOfNo(noOfName(day) + 1));
+    const close = M.roll(data, lin, ver, false).body.close;
+    if (!close) { console.log(`締めそびれ ${day}: 締められない (お題が無い・まだ終わっていない)`); continue; }
+    console.log(`締めそびれ ${day}: 挑戦 ${lin.tries.length}・解決 ${close.results.filter((r) => r.place).length}${DRY ? " (書かない)" : ""}`);
+    if (!DRY) console.log(`close (d1): ${JSON.stringify(await R.rollPost(db, { close }, null))}`);
+  }
+  // 締めた日の結果を称号の計算に入れるため、組む日の材料を読み直す
+  if (late?.length && !DRY) inp = await R.rollJson(db, now, target);
+}
 const { body, log } = M.roll(data, inp, ver, VERIFY);
 if (WEEK_ONLY) for (const k of Object.keys(body)) if (k !== "week") delete body[k];
 for (const l of log) console.log(l);
