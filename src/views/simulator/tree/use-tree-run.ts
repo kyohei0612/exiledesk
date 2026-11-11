@@ -69,7 +69,7 @@ export { runPrice };
  * 木を外から持たせる画面 (デイリーの挑戦、D-41 ④) が回す時の種・値段・ベースの値段 (S-70c)。null = 普段 (種 1・木の相場・木のベースの値段)。
  * price は相場のまま (高貴建て、priceOfKey と同じ形)。神に直すのは runPrice。入れた画面が出る時に null に戻す
  */
-export type TreeRunRig = { seed: number; price: (key: string) => number; startCost?: number };
+export type TreeRunRig = { seed: number; price: (key: string) => number; startCost?: number; perBox?: boolean };
 /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・1 箱の間 ms・通った箱・早送り中か)。PC の木とスマホの全体図が同じ物を描く */
 export type TreeRunWalk = { box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean };
 export const treeRunRig = shallowRef<TreeRunRig | null>(null);
@@ -123,7 +123,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, perBox: rig?.perBox, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {

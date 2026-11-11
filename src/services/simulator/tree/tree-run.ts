@@ -53,6 +53,24 @@ export interface TreeRunOpts {
    * 3.6 秒・試しの 30 人で 1 人 0.24 秒ずつ固まった)。100 人回しは 1 回目の next() で 1 人目が終わる前提なので渡さない。結果は渡しても同じ
    */
   slice?: number;
+  /**
+   * 乱数を「何人目 × どの箱」ごとの列にする (デイリー D-58b、11-11 オーナー「乱数同じの方が良いのやっぱり　この動きの後はこの乱数で統一的な」)。
+   * 無ければ今までどおり全員で 1 本の列を使った順。ある時は 1 人目の箱 b12 の 3 回目は、ほかの箱の手を替えても同じ数を引く (始めの品・作り直しは "start" の列)
+   */
+  perBox?: boolean;
+}
+/** 箱ごとの列 (perBox)。種・何人目・箱の名前を混ぜて 1 本ずつ作る */
+function boxStreams(seed: number, i: number): (box: string) => () => number {
+  const m = new Map<string, () => number>();
+  return (box) => {
+    let f = m.get(box);
+    if (!f) {
+      let h = 2166136261 ^ seed;
+      for (const c of `${i}|${box}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+      m.set(box, (f = mulberry32(h >>> 0)));
+    }
+    return f;
+  };
 }
 interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -119,11 +137,13 @@ export const stopAimedOf = (item: StageItem): ReadonlySet<string> | null => STOP
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
-function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand">): Generator<void, Person> {
+function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, pick: ((box: string) => () => number) | null, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand">): Generator<void, Person> {
   // 輪の早送り (S-71b): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
   const light = !o.onHand;
   let rolls = 0, seenRolls = -1;
-  const rng = light ? (): number => { rolls++; return rng0(); } : rng0;
+  // 引く列 (perBox の時は箱ごと、無ければ全員で 1 本)。輪の早送りは引いた回数 rolls で見るので、どの列から引いても数える
+  const rngOf = (box: string): (() => number) => { const f = pick ? pick(box) : rng0; return light ? (): number => { rolls++; return f(); } : f; };
+  const rng = rngOf("start");
   const seen = new Map<string, { at: number; steps: number; cost: number }>();
   let ops: LoopOp[] = [];
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
@@ -231,7 +251,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品、使う物は 3 回分
     const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
     if (sure) useSureFrac(b.hand, (k, n) => { spent.push([k, n]); });
-    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
+    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
@@ -426,7 +446,7 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const every = Math.max(1, opts.every ?? 10);
   for (let i = 0; i < opts.n; i++) {
     // 細切れの時は 1 区切りごとに holdDocSig で包む (覚えは捨てて作り直すだけ = 結果は同じ)。無ければ今までどおり 1 人を一気に
-    const g = runOne(data, doc, aims, j, rng, o);
+    const g = runOne(data, doc, aims, j, rng, opts.perBox ? boxStreams(opts.seed, i) : null, o);
     let p: Person;
     if (!o.slice) p = holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } });
     else for (;;) { const s = holdDocSig(doc, () => g.next()); if (s.done) { p = s.value; break; } yield i; }
