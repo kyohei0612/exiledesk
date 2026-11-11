@@ -1,4 +1,7 @@
 {
+  "0.1.714": [
+    "Daily: starting with today's (11/11) challenge, the ranking sorts by score (cost per finished item ÷ finish rate, lower is better); ties go to the faster run. The score is shown in the rightmost column, and the numbers are blurred until you start that day's challenge"
+  ],
   "0.1.713": [
     "Daily: after you submit, you can now share your result with “Share on X” under the “Submitted” line on the challenge page. The card shows the item art and name, cost per finished item, finish rate and your rank at that time",
     "Share: posts shared to X now include basic hashtags so they are easier to find in search (Daily, the emulator luck test and simulator recipes)",
