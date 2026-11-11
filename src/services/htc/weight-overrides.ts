@@ -28,6 +28,7 @@
  * 2. **どこにも数字が無い物 (クロスボウのグレネード 3 個) は、CoE の値をそのまま使う**。
  */
 import { tr } from "../../i18n/lang";
+import { noteFixMiss } from "./fix-misses";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
 /** 画面に出す断り書き (英語は weightOverrideNote()) */
@@ -104,6 +105,7 @@ export function applyWeightOverrides(data: PatchData): { data: PatchData; applie
   const applied: string[] = [];
   for (const [id, o] of Object.entries(OVERRIDES)) {
     const m = mods.get(id);
+    if (!m) noteFixMiss("weight-overrides", `MOD が無い ${id}`); // 本物の重みが入って勝った物 (仮置きでない) は外れに数えない (E-06)
     if (!m || !isPlaceholderWeight(m)) continue;
     const tiers = m.tiers.map((t) => (o.byIlvl[t.ilvl] != null ? { ...t, weight: o.byIlvl[t.ilvl]! } : t));
     mods.set(id, { ...m, tiers });

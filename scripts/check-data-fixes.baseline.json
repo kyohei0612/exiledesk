@@ -1,0 +1,4 @@
+{
+ "note": "今ある外れの控え (check-data-fixes.mjs --write)。増えたら落ちる",
+ "misses": []
+}

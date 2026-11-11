@@ -7,15 +7,21 @@
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import table from "./spell-tags.json";
+import { noteFixMiss } from "./fix-misses";
 
 const TYPES = (table as { types: Record<string, { adds: string[]; blocked: string[] }> }).types;
 
 export function applySpellTags(data: PatchData): PatchData {
   const mods = new Map<string, Mod>(data.mods);
+  const used = new Set<string>();
   for (const [id, m] of data.mods) {
-    const t = TYPES[(m as Mod & { group?: string }).group ?? id.split("/")[1] ?? ""];
+    const key = (m as Mod & { group?: string }).group ?? id.split("/")[1] ?? "";
+    const t = TYPES[key];
     if (!t) continue;
+    used.add(key);
     mods.set(id, { ...m, ...(t.adds.length ? { addsTags: t.adds } : {}), ...(t.blocked.length ? { blockedByTags: t.blocked } : {}) });
   }
+  // 表にあるのに、その型の MOD が 1 つも無い物 (E-06)
+  for (const key of Object.keys(TYPES)) if (!used.has(key)) noteFixMiss("spell-tags", `その型の MOD が無い ${key}`);
   return { ...data, mods };
 }

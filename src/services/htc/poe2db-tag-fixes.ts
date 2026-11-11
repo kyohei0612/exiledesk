@@ -7,6 +7,7 @@
  * tags (抽選: 陣営のお告げ・均質化、カタリスト) と displayTags (画面・ジュエルのカタリスト) の両方を直す。patch.ts の最後で当てる
  */
 import tagFixes from "./poe2db-tag-fixes.json";
+import { noteFixMiss } from "./fix-misses";
 import { TAG_STYLE } from "../mods/tag-ja";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -19,7 +20,7 @@ export function applyPoe2dbTagFixes(data: PatchData): PatchData {
   const mods = new Map(data.mods);
   for (const [id, db] of Object.entries(fixes)) {
     const m = mods.get(id);
-    if (!m) continue;
+    if (!m) { noteFixMiss("poe2db-tags", `MOD が無い ${id}`); continue; }
     const keep = (xs: readonly string[] | undefined): string[] => (xs ?? []).filter((t) => !replaceable(t));
     const next: Mod = {
       ...m,

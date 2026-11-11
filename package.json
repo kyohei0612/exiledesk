@@ -31,6 +31,7 @@
     "build:htc-price-keys": "node scripts/build-htc-price-keys-from-client.mjs && node scripts/build-htc-essence-prices-from-client.mjs && node scripts/build-htc-catalysts-from-client.mjs",
     "check:htc-bases": "node scripts/build-htc-bases-from-client.mjs --verify",
     "check:base-shelves": "node scripts/check-base-shelves.mjs",
+    "check:data-fixes": "node scripts/check-data-fixes.mjs",
     "check:mods": "node scripts/check-mod-values.mjs",
     "build:stat-scale": "node scripts/build-stat-scale-from-client.mjs",
     "build:htc-bases": "node scripts/build-granted-skills-poe2db.mjs --offline && node scripts/build-htc-bases-from-client.mjs",

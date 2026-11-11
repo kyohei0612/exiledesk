@@ -8,6 +8,7 @@
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { flag } from "../../web/release-flags";
+import { noteFixMiss } from "./fix-misses";
 
 /** MOD の id (正規表現)・段の必要レベル → 生の値の幅 */
 const FIXES: ReadonlyArray<{ id: RegExp; ilvl: number; ranges?: Array<[number, number]>; weight?: number }> = [
@@ -18,14 +19,18 @@ const FIXES: ReadonlyArray<{ id: RegExp; ilvl: number; ranges?: Array<[number, n
 
 export function applyPoe2dbValueFixes(data: PatchData): PatchData {
   const mods = new Map(data.mods);
+  const used = new Set<(typeof FIXES)[number]>();
   for (const [id, m] of data.mods) {
     const fixes = FIXES.filter((f) => f.id.test(id));
     if (!fixes.length) continue;
     const tiers = m.tiers.map((t) => {
       const f = fixes.find((x) => x.ilvl === t.ilvl);
+      if (f) used.add(f);
       return f ? { ...t, ...(f.ranges ? { ranges: f.ranges } : {}), ...(f.weight != null ? { weight: f.weight } : {}) } : t;
     });
     mods.set(id, { ...m, tiers } as Mod);
   }
+  // どの MOD のどの段にも当たらなかった直し (E-06)
+  for (const f of FIXES) if (!used.has(f)) noteFixMiss("poe2db-values", `当たる MOD・段が無い ${f.id.source} Lv${f.ilvl}`);
   return { ...data, mods };
 }

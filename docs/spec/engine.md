@@ -48,6 +48,7 @@
 - **E-03 公開値の無い重み・割合は Craft of Exile (beta) のデータと動きを正にする。** ルーンの特殊 MOD は CoE (Krakenbul の実測) → `htc/rune-weights.json`。冒涜専用 MOD どうしの重みは全部同じ。出どころの当て先はメモ craft-weight-sources。 — 有効 / ADR-004 の 4、v0.1.528 / 外の正解: `data-cache/coe-beta-data.json`・`scripts/check-htc-odds-vs-coe`
 - **E-04 こちらで決めた値には出どころと日付を付ける。** spec の `source` (client / poe2db / coe / owner / community / assumed) に書く。重みを埋めた・借りた MOD と、自前で作った部位の仮の重み 1000 (`extra-bases.json` の `weightSource: "client-placeholder"`、普通の MOD だけ。冒涜・ルーンは節の札) は `weight-overrides.ts` の `OVERRIDDEN` に入れ、画面は「重みは推定」の札を出す (11-09、重みは変えない)。 — 有効 / ADR-004 / 確かめ: spec を読む
 - **E-05 データが poe2db と同じなら、貼り付けで段に収まらない行も直さず読めない行のまま (推し量らない)。** 例: 「パペットマスターの最大スタック数 +6」(poe2db・データとも合金 +(4—5))。 — 有効 (コードは今のまま) / 10-28 の決め (前の ⑦ 7、11-10 の整理で番号を付けた)
+- **E-06 データの直しは、当てる先 (MOD の id・部位の行・段のレベル) が無ければ飛ばすが、飛ばした物を 1 件ずつ控えに残す。控えに無い外れが出たら見張りが落ちる。** 読み込み (`patch.ts` の `applyExtras`) が重ねる直し = 重みの上書き (`weight-overrides.ts`)・poe2db に合わせる置き場と重み (`poe2db-pool-fixes.json`)・ルーンの重み (`rune-weights.json`)・タグ (`poe2db-tag-fixes.json`)・値 (`poe2db-value-fixes.ts`)・足すタグ (`spell-tags.json`)。読み込みは止めない (画面の動きは同じ)。控えは `htc/fix-misses.ts` の `fixMisses()`、見るのは `scripts/check-data-fixes.mjs`。データを作り直した後と出す前に回す。 — 有効 / オーナー 11-12 (データの道具に OK) / 見張り: `pnpm check:data-fixes`
 
 ### MOD の置き場・重み・段
 
@@ -247,6 +248,7 @@
 | お告げの棚の表・名前の定数・掛け替えの組が OmenSpec と同じ | `tests/omen-layer.test.ts` |
 | 全部位 × 骨・お告げ・品質・触媒・ソケットの打てる / 打てない | `tests/item-classes.test.ts` |
 | ベースの選び画面: baseCatalog の全ベースの `cls` が札の一覧 `CATALOG_ROWS` にある (置き場の行が無くてよいのはユニーク専用 `Golden …` と removed-bases.json の消えたベースだけ、E-98) | `scripts/check-base-shelves.mjs` (`pnpm check:base-shelves`) |
+| データの直しが当て先を失っていない (控えに無い外れ 0、E-06) | `scripts/check-data-fixes.mjs` (`pnpm check:data-fixes`) |
 | 置き場・段・タグが poe2db と合う | `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` (0 件) |
 | 画面がエンジンの中身を自作しない (段・幅の直読み・# 埋め・生 JSON・Math.random) | `scripts/check-engine-entry.mjs` (E、控えから増えたら落ちる) |
 | CoE と合う決まりは CoE の関数名を spec の `source.coe` に持つ | `docs/reviews/2026-10-16-coe-rule-check.md` |

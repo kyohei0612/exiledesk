@@ -15,6 +15,7 @@ import { inGroup } from "../mods/item-classes";
 import { splitMixedRuneMods } from "./rune-split";
 import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import { applyWeightOverrides } from "./weight-overrides";
+import { noteFixMiss, resetFixMisses } from "./fix-misses";
 import poolFixes from "./poe2db-pool-fixes.json";
 import { applyPoe2dbTagFixes } from "./poe2db-tag-fixes";
 import { applyAbyssSuffix } from "./poe2db-abyss-fix";
@@ -190,6 +191,7 @@ function extraModText(m: Mod): Mod["text"] {
   return text.replace(/\d+(?:\.\d+)?/g, (d) => (k++ < n ? "#" : d));
 }
 export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBases): PatchData {
+  resetFixMisses(); // 当たらずに飛ばした直しの控え (E-06、fix-misses.ts)
   const mods = new Map(data.mods);
   const bases = new Map(data.bases);
   // ジュエル (2026-10-11、poe2db が正。build-jewel-bases.mjs)。部位も MOD も同梱・クライアントの追加分とは別の id なので、そのまま足す
@@ -309,10 +311,12 @@ function applyPoe2dbFixes(data: PatchData): PatchData {
   for (const m of fx.mods ?? []) mods.set(m.id, m);
   // ルーン (ソウルコア) の特殊 MOD の重みは Craft of Exile (beta) の Krakenbul の実測 (scripts/build-rune-weights-coe.mjs、2026-10-09)
   // 冒涜専用 MOD どうしの重みは公開されていないので全部等しい (2026-10-16 オーナー「不明につき MOD は全て均一」。指輪の Reddit の実測は使わない)
-  const weightTables = [fx.weights ?? {}, (runeWeights as { weights: Record<string, Record<string, number>> }).weights];
-  for (const [id, byIlvl] of weightTables.flatMap((t) => Object.entries(t))) {
+  const weightTables: Array<[string, Record<string, Record<string, number>>]> = [["poe2db-weights", fx.weights ?? {}], ["rune-weights", (runeWeights as { weights: Record<string, Record<string, number>> }).weights]];
+  for (const [step, table] of weightTables) for (const [id, byIlvl] of Object.entries(table)) {
     const m = mods.get(id);
-    if (m) mods.set(id, { ...m, tiers: m.tiers.map((t) => (byIlvl[t.ilvl] != null ? { ...t, weight: byIlvl[t.ilvl]! } : t)) });
+    if (!m) { noteFixMiss(step, `MOD が無い ${id}`); continue; }
+    for (const lv of Object.keys(byIlvl)) if (!m.tiers.some((t) => String(t.ilvl) === lv)) noteFixMiss(step, `段が無い ${id} Lv${lv}`);
+    mods.set(id, { ...m, tiers: m.tiers.map((t) => (byIlvl[t.ilvl] != null ? { ...t, weight: byIlvl[t.ilvl]! } : t)) });
   }
   const bases = new Map(data.bases);
   const edit = (p: ReadonlyPool | undefined, x: { add: { prefixes: string[]; suffixes: string[] }; remove: string[] }): ReadonlyPool => {
@@ -325,10 +329,13 @@ function applyPoe2dbFixes(data: PatchData): PatchData {
   };
   for (const [cls, groups] of Object.entries(fx.pools ?? {})) {
     const b = bases.get(cls);
-    if (!b) continue;
+    if (!b) { noteFixMiss("poe2db-pools", `行が無い ${cls}`); continue; }
     const pools: { -readonly [K in keyof typeof b.pools]: (typeof b.pools)[K] } = { ...b.pools };
     let rune = b.pools.rune ? { ...b.pools.rune } : undefined;
     for (const [g, x] of Object.entries(groups)) {
+      // 足す id が MOD の表に無い・置き場の名前が読めない物は、今まで通り当てるが控えに残す (E-06)
+      for (const id of [...x.add.prefixes, ...x.add.suffixes]) if (!mods.has(id)) noteFixMiss("poe2db-pools", `足す MOD が無い ${cls} ${g} ${id}`);
+      if (!g.startsWith("rune:") && g !== "normal" && g !== "desecrated" && g !== "essence") noteFixMiss("poe2db-pools", `置き場が読めない ${cls} ${g}`);
       if (g.startsWith("rune:")) {
         rune ??= {};
         rune[g.slice(5)] = edit(rune[g.slice(5)], x);
