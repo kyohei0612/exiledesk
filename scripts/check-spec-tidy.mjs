@@ -82,7 +82,8 @@ if (only !== "C") {
   const sents = (ln) => ln.split(/(?<=。)|(?<=\) )(?=[^\s])/).map((s) => s.trim()).filter((s) => s.length >= 8);
   const had = new Set();
   for (const t of old.values()) for (const ln of t.split(/\r?\n/)) for (const s of sents(ln)) had.add(s);
-  const quotes = (s) => (s.match(/オーナー[^「」。]{0,30}「/g) || []).length;
+  // 出どころの引用 = 「オーナー + 日付 +「」と、続けて並ぶ「」「」。決まりの文の中の「オーナーの『たてて』」のような言葉は数えない
+  const quotes = (s) => (s.match(/オーナー \d{1,2}-\d{1,2}[^「」。]{0,20}「/g) || []).length + (s.match(/」「/g) || []).length;
   for (const f of changed) {
     for (const [id, ln] of pn.get(f).items) {
       if (!/^\s*- \*\*/.test(ln)) continue;
