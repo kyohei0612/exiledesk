@@ -12,6 +12,7 @@ import { BOX_W, type TreeDoc } from "./tree-model";
 import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
 import { bandAway } from "./tree-band";
+import { flag, type Flag } from "../../../web/release-flags";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -164,6 +165,8 @@ function near(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW?
       const top = cp[i]!, a = cp[i - 1]!, b = cq[cq.indexOf(top) - 1]!, sib = kids.get(top)!;
       right = sib.indexOf(a) > sib.indexOf(b) ? a : b;
     }
+    // 横線がほかの親の縦線をまたいでも上の段を広げない (スイッチ treeNoWiden、11-11 オーナー「見た目おｋ」。広げ直しで木の幅が倍になった = バナナの木 19,749 → 10,120)
+    if (flag("treeNoWiden" as Flag)) return x;
     extra.set(right, (extra.get(right) ?? 0) + Math.max(GAP_LEAF, hit.need));
   }
   return null;
