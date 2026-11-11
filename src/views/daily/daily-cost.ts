@@ -24,6 +24,10 @@ export const RUN_N = 100;
 export const BOX_SEED_FROM = "2026-11-11";
 /** その日 ("YYYY-MM-DD"、お題の id "dYYYY-MM-DD" も可) が箱ごとの乱数で回す日か。挑戦の画面・提出・16:00 の検算が同じここを見る */
 export const perBoxOn = (day: string): boolean => day.replace(/^d/, "") >= BOX_SEED_FROM;
+/** 始め方を (b) 白から確定フラクチャーだけにする最初のお題の日 (D-03・D-37j、11-11 オーナー「２だねフラクチャー時の挙動は失敗費用含めたら絶対いいわ」)。前の日は (a) も選べたまま */
+export const FOUR_ONLY_FROM = "2026-11-12";
+/** その日のお題が (b) だけか (始め方の窓は (a) を出さない) */
+export const fourOnlyOn = (day: string): boolean => day.replace(/^d/, "") >= FOUR_ONLY_FROM;
 
 /**
  * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。

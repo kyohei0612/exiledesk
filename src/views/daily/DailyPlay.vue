@@ -17,7 +17,7 @@ import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
-import { metBoxes, markMet, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
+import { fourOnlyOn, metBoxes, markMet, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
@@ -272,7 +272,7 @@ const REFUSED: Record<StartError, () => string> = {
 
     <DailySubmitAsk v-if="asking" :id="topic.id" :open="!!asking" :cost="asking.cost" :rate="asking.rate" :shown="doneShown" :dev="!!dev" @close="asking = null" @done="submitted" />
     <p v-if="devNoAims" class="daily-note">{{ tr("開発の見本: このお題の狙いが見えない (締めた日のお題か、この端末で始めたお題の id を q に)。", "Dev sample: this topic's targets aren't visible (use a closed day's id or one you started here).") }}</p>
-    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" @pick="pick" />
+    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyOn(topic.id)" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->

@@ -16,11 +16,11 @@ import STAT_ORDER from "../../data/stat-order.json";
 import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
 
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom }>();
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
 const t = useTree();
 /** 1 段目で選んだ始め方 (null = まだ選んでいない) */
-const from = ref<StartFrom | null>(props.initialFrom ?? null);
+const from = ref<StartFrom | null>(props.fourOnly ? "four" : (props.initialFrom ?? null));
 /** 完成形のカードはお題の狙いを付けた形 (木の完成形と同じ作り)。選んだ後の木はお題から作り直すので、ここで狙いを入れても残らない */
 onMounted(() => {
   t.startTreeWith(props.base, props.ilvl);
@@ -78,8 +78,9 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
       <div v-else class="min-w-0">
         <p class="daily-frac-now mb-3 text-[14px]">
           <span data-daily-frac-chosen>{{ tr(`始め方: ${SHORT[chosen.k].title[0]}`, `Start: ${SHORT[chosen.k].title[1]}`) }}</span>
-          <button type="button" class="g-btn sm" data-daily-frac-back @click="from = null">{{ tr("始め方を選び直す", "Change how to start") }}</button>
+          <button v-if="!fourOnly" type="button" class="g-btn sm" data-daily-frac-back @click="from = null">{{ tr("始め方を選び直す", "Change how to start") }}</button>
         </p>
+        <p v-if="fourOnly" class="mb-3 text-[13px] opacity-70" data-daily-frac-four-note>{{ tr(...SHORT.four.sub) }}</p>
         <ul class="daily-frac-list" :aria-label="tr('フラクチャー予定の MOD', 'Mod to fracture')">
           <li v-for="a in ordered" :key="a.modId">
             <button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @click="emit('pick', a.modId, chosen.k)">
