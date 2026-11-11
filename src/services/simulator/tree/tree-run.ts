@@ -18,6 +18,7 @@ import { contentDiff, goalsOn, judgeMemo, nextAimed, startAimed, type Judge } fr
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
 import { sureFracOn, sureFracture, useSureFrac } from "./tree-sure-frac";
+import { defaultCapDiv } from "./run-price";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -28,7 +29,7 @@ export interface TreeRunOpts {
   price: (key: string) => number;
   /** 始めの形の値段 (神)。始まりの 1 回だけ払う */
   startCost?: number;
-  /** 1 人の打ち止め (神、既定 2000) */
+  /** 1 人の打ち止め (神、既定 = 相場の値段 (runPrice) なら鏡 2 個分、ほかは 2000。S-71・run-price の defaultCapDiv) */
   capDiv?: number;
   /** 1 人の手の上限 (既定 20000) */
   capSteps?: number;
@@ -438,7 +439,7 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
  */
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, slice: opts.slice ?? 0 };
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? defaultCapDiv(opts.price), capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, slice: opts.slice ?? 0 };
   const aims = opts.aims ?? aimsOf(data, doc);
   const j = judgeMemo(data, doc);
   const rng = mulberry32(opts.seed);
