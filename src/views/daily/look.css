@@ -58,16 +58,19 @@
 .daily-root[data-daily-page] [data-tree-goal] { position: relative; border-color: transparent !important; border-radius: 0; background: none; box-shadow: none; }
 
 /* ---------- 枠の中の枠を外し、帯を 1 本に ---------- */
-.daily-root[data-daily-page] [data-tree-page] > .g-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0; padding: 0 0 6px; }
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(1),
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(2) {
+.daily-root[data-daily-page] [data-tree-page] > .g-panel { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0; padding: 0 0 6px; }
+/* 上の帯: 流れの段の欄 (左) と道具の帯 (右) を 1 行に並べ、どちらにも題の帯の絵。シミュは 11-11 に 2 つを 1 つの箱 [data-tree-head] にまとめたので、
+   前の「木の枠の 1 番目・2 番目の子」で数える形だと木が 2 番目の細い列に押し込まれた (要望 b1cf37b9、11-11)。箱を名指しで見る */
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0; }
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] > div:nth-child(1),
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] > div:nth-child(2) {
   min-height: 50px;
   padding: 6px 12px 8px;
   position: relative;
   isolation: isolate;
 }
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(1)::before,
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(2)::before {
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] > div:nth-child(1)::before,
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] > div:nth-child(2)::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -75,9 +78,9 @@
   background: url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
   filter: var(--skin-art, none);
 }
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(1)::before { background: url("/ui-art/title-l.webp") left top / auto 100% no-repeat, url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(2)::before { background: url("/ui-art/title-r.webp") right top / auto 100% no-repeat, url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
-.daily-root[data-daily-page] [data-tree-page] > .g-panel > div:nth-child(3) { grid-column: 1 / -1; gap: 0; }
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] > div:nth-child(1)::before { background: url("/ui-art/title-l.webp") left top / auto 100% no-repeat, url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] > div:nth-child(2)::before { background: url("/ui-art/title-r.webp") right top / auto 100% no-repeat, url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
+.daily-root[data-daily-page] [data-tree-page] > .g-panel > [data-tree-head] + div { gap: 0; }
 .daily-root[data-daily-page] [data-tree-side] { position: relative; margin-left: 12px; padding: 8px 8px 6px 0; }
 .daily-root[data-daily-page] [data-tree-page] > .g-panel [data-tree-side]::before { content: ""; }
 .daily-root[data-daily-page] [data-tree-frame]::after {
