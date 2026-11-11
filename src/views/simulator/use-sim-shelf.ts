@@ -34,8 +34,10 @@ const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_cha
 const foreseeShown = (key: string, it: StageItem | null | undefined): boolean => FORESEE_ON && (key === "hinekora" || (key === "divine" && !!it?.foreseen));
 /** 腐食のお告げは品をコラプトして先へ進めず、デイリーでは提出もできないので木の棚に出さない (S-20c、スイッチ treeNoPutrefaction、11-11 オーナー「腐食のオーブ消してあと。シミュでのカレンシー」) */
 const putrefyHidden = (key: string): boolean => key === OMEN_KEY.putrefaction && flag("treeNoPutrefaction");
+/** 錬金のオーブは木の棚に出さない = 新しく置けない (S-20d、スイッチ treeNoAlchemy、11-12 オーナー「錬金消してもいいけどなシミュ」。もう置いてある錬金の手は棚を通らずに開くので残る) */
+const alchemyHidden = (key: string): boolean => key === "alchemy" && flag("treeNoAlchemy");
 /** it = 棚に渡したアイテム (無ければ予見の例外は神のオーブに効かない) */
-export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || putrefyHidden(key));
+export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || putrefyHidden(key) || alchemyHidden(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {
