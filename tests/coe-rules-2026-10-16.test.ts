@@ -124,7 +124,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
 
   // 2026-10-18 オーナー: 切り捨てに戻す (ゲームでは宝飾品のスキルレベル +3 が品質 34% でちょうど +4 になる = 33% では 3。四捨五入だと 17% で 4 になってしまう)。
   // 10-16 の「CoE 仕様 (Math.round)」のうち品質の丸めだけを上書き
-  it("13. 品質で伸びた整数の値は切り捨て (スキルレベル +3 は品質 34% が境目で +4)", async () => {
+  it("E-72: 13. 品質で伸びた整数の値は切り捨て (スキルレベル +3 は品質 34% が境目で +4)", async () => {
     const { displayedValue, rawValue } = await import("../src/services/htc/quality");
     expect(displayedValue(3, 33)).toBe(3);
     expect(displayedValue(3, 34)).toBe(4);
@@ -155,7 +155,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(applyCurrency(data, revealed, key!, mulberry32(3)).applied).toBe(false);
   });
 
-  it("10. 触媒の高貴の倍率は 1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12", () => {
+  it("E-32: 10. 触媒の高貴の倍率は 1 + 0.2 × 品質、20% を超えた分は 1% ごとに +0.12", () => {
     expect(catalysingMultiplier(0)).toBe(1);
     expect(catalysingMultiplier(10)).toBeCloseTo(3);
     expect(catalysingMultiplier(20)).toBeCloseTo(5);

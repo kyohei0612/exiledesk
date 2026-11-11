@@ -21,7 +21,7 @@ it("指名のフラクチャー: 冒涜の MOD は固定できない (骨で付�
   const it0 = startFrom(data, "Gold Ring", 82, { rarity: "rare", mods: [{ mod: "Rings/Intelligence", desecrated: true }] } as never, 1);
   expect(applyForce(data, it0, forceKey("Rings/Intelligence", null, "f"), () => 0.5).applied).toBe(false);
 });
-it("フラクチャーオーブ: 冒涜専用の MOD は数に入るが選ばれない", () => {
+it("E-41: フラクチャーオーブ: 冒涜専用の MOD は数に入るが選ばれない", () => {
   const item = withDes(["Rings/FireDamage", "Rings/Intelligence", "Rings/ChaosResistance"]);
   expect(allMods(item)).toHaveLength(4);
   for (let s = 0; s < 40; s++) {

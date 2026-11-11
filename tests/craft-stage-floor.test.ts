@@ -111,7 +111,7 @@ describe("要望 ㉟", () => {
     expect(rollText("(20-10)% reduced Attribute Requirements", [-15])).toBe("15% reduced Attribute Requirements");
     expect(rollText("+(5-10)% to all", [7])).toBe("+7% to all");
   });
-  it("② 要求レベル = max(ベース、各 MOD の floor(MOD レベル × 0.8)、ルーン)", async () => {
+  it("E-11c: ② 要求レベル = max(ベース、各 MOD の floor(MOD レベル × 0.8)、ルーン)", async () => {
     const { reqOfItem } = await import("../src/services/craft-stage/stage-bases");
     const data = await loadPatch();
     let it = applyCurrency(data, freshItem(data, "Gold Amulet", 10), "transmute", mulberry32(1)).item;
