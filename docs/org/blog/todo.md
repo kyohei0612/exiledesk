@@ -4,7 +4,7 @@
 
 ## 今の状態 (10-22 夜)
 - 記事 30 本 (日) / 29 本 (英、x-share-bug は日本語だけ) は合格の形・ready。本番は v0.1.590 (7884f2f6) で公開済み。~~新しい記事は足さない (オーナー「30 本で十分」)~~ → 10-31 に再開 (上)。
-- 仕上げの頼みの文: 日本語 notes/finish-brief.md → 照らし合わせ notes/finish-checker-brief.md → 英語 notes/finish-en-brief.md → 照らし合わせ notes/finish-en-checker-brief.md。新しく書く時は notes/writer-brief.md・checker-brief.md、配信の跡を消す時は notes/destream-brief.md。
+- 仕上げの頼みの文: 日本語 briefs/finish-brief.md → 照らし合わせ briefs/finish-checker-brief.md → 英語 briefs/finish-en-brief.md → 照らし合わせ briefs/finish-en-checker-brief.md。新しく書く時は briefs/writer-brief.md・checker-brief.md、配信の跡を消す時は briefs/destream-brief.md。
 - 合格の形: 頭に分かる事 3 行と言葉の説明・ずんだもん / めたんの掛け合いで進む短文・文の途中で改行しない・英語の添え書き無し・図は使わず言葉の入った表・出どころと未確認は畳む (:::fold・:::note fold)。
 - 本番で開かないリンク: ?page=sim-tree と ?page=routes は URL から開かない (src/web/page.ts)。記事・FAQ では使わず、スパムシミュレーターは「クラフトステージのカレンシーの見出しのボタンから」と書く (15fbc24d)。
 - 手袋のフラクチャーの書き方: 記録 (メモ optimal-craft-dp) ではプレフィックスの 1 つがフラクチャー、投射物 +2 はサフィックス (付け直す狙い)。chaos-spam-odds は記録で決め切れず「ある知性の手袋」とだけ書いた。
