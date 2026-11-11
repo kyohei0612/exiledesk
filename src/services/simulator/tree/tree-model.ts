@@ -175,7 +175,8 @@ export type TreeRarity = "normal" | "magic" | "rare";
 export type StartFrom = "fractured" | "four";
 export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number; from?: StartFrom;
   /** ✦ が 2 つ以上で白ベースからに自動で替えた (✦ が 1 つに戻ったらフラクチャー済みからへ戻す) */ autoWhite?: true;
-  /** デイリーのお題の木の印: ベースからのフラクチャーは ✦ の MOD が必ず固定・費用は 3 回分 (D-03、tree-sure-frac。シミュの木には付けない) */ sureFrac?: true }
+  /** デイリーのお題の木の印: ベースからのフラクチャーは ✦ の MOD が必ず固定・費用は 3 回分 (D-03、tree-sure-frac。シミュの木には付けない) */ sureFrac?: true;
+  /** デイリーの「フラクチャー無しで始める」の木の印: 手の棚でフラクチャーのオーブを打たせない (S-13b、D-03。シミュの木には付けない) */ noFracOrb?: true }
 /** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
