@@ -15,7 +15,7 @@ import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
-import { DEV_BUILD } from "../../web/release-flags";
+import { flag } from "../../web/release-flags";
 import { dailyShare, sendDailyShare, type DailyShare } from "./daily-share";
 
 const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>();
@@ -48,13 +48,13 @@ const action = computed(() => {
   if (t.value) return { label: tr("続きから始める", "Resume"), sub: tr(`残り ${clock(left.value)}`, `${clock(left.value)} left`) };
   return props.today && !closed.value && canStartAt(props.now) ? { label: tr("1 時間の挑戦を始める", "Start the 1 hour challenge") } : null;
 });
-/** 提出した挑戦の X シェア (D-38、見た目の OK まで開発版だけ)。完成 0 の提出 (last だけ) もそのまま */
+/** 提出した挑戦の X シェア (D-38、スイッチ dailyShare。RELEASED に足すのはオーナーの「出して」の後)。完成 0 の提出 (last だけ) もそのまま */
 const share = ref<DailyShare | null>(null);
 /** 今の皮 (カードの色を合わせる。ページの外で開いた時は無し = 元の真鍮の色) */
 const skinId = inject(DAILY_SKIN_KEY, null);
 watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props.topic.tries, skinId?.value] as const, async () => {
   const r = t.value?.submitted ? (t.value.best ?? t.value.last) : null;
-  share.value = DEV_BUILD && r ? await dailyShare(props.topic.id, t.value!.best ? r.cost : null, r.rate, skinId?.value ?? null) : null;
+  share.value = flag("dailyShare") && r ? await dailyShare(props.topic.id, t.value!.best ? r.cost : null, r.rate, skinId?.value ?? null) : null;
 }, { immediate: true });
 </script>
 
