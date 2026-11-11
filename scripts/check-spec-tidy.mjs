@@ -96,7 +96,7 @@ if (only !== "C") {
       const why = [];
       const m1 = txt.match(/前は[^。]{0,24}|以下は[^。]{0,24}(?:形|見方)|前の決め[^。]{0,16}|前の形[^。]{0,16}/);
       if (m1 && !/前の形は記録の紙|経緯は記録の紙/.test(m1[0])) why.push(`「${m1[0].slice(0, 22)}…」`);
-      if (!retracted(ln) && /撤回/.test(txt)) why.push("撤回の話 (撤回は撤回の項目の 1 行に)");
+      if (!retracted(ln) && /[はをに]撤回(?!し)|撤回 \(\d|\(撤回/.test(txt)) why.push("撤回の話 (撤回は撤回の項目の 1 行に)");
       if (quotes(ln) - quotes(before) >= 2 || (!before && quotes(ln) >= 2)) why.push("オーナーの言葉が 2 つ以上 (出どころは 1 つ)");
       const m2 = txt.match(/\d+ 人中 \d+ 人/);
       if (m2) why.push(`不具合の話「${m2[0]}」`);
