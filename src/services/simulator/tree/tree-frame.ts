@@ -34,7 +34,7 @@ export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: strin
 export interface FrameMiss { box: string; out: string; p: number; from?: string; oc: Outcome }
 /** 代表のほか (↩ で着く人・印の違う枝) の形で、その箱の手が打てない (cant) か、当たるまでの手が当たらない (noHit)。from = その形の元の箱 */
 export interface FrameCant { box: string; from: string; why: "cant" | "noHit" }
-export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[]; cant: FrameCant[] }
+export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[]; cant: FrameCant[]; /** 手の結果で枠の違う品が 2 つ以上着く箱 (S-27d (ア) の見張り、11-11) */ mixed: string[] }
 
 type Outcome = ReturnType<typeof boxOutcomeOf>;
 /** off = 札の鍵 (junkKey) の合わない結果を種類の合う箱へ寄せた枝 (代表には後に選ぶ) */
@@ -211,7 +211,7 @@ const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem }>(
 
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
-    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], aims = aimsOf(data, doc), part = docPartOf(data, doc);
+    const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], mixed = new Set<string>(), aims = aimsOf(data, doc), part = docPartOf(data, doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
     // 保存の例のアイテム (v2、S-200 ⑦)。同じ配置の枝があればその代わりに代表にする。例の無い箱・古いレシピは種 1 つのまま (決め (c))
     const keys = doc.examples ? pathKeysOf(doc) : null;
@@ -242,6 +242,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       // 札の鍵の合う枝を先に (削減は順位を見ずに枝を出すので (決め (a))、エンジンでは消えない狙いが消えた枝が「クリティカルが消えた」の箱の代表になった、11-07 猿の照らし b29)
       const sorted = [...brs].sort((x, y) => Number(!!x.off) - Number(!!y.off) || y.p - x.p), heavy = sorted.slice(0, LOOK);
       const all = heavy.map(pick);
+      // 1 つの箱に枠の違う品が着く (結果が 2 通り以上なのに箱が 1 つ = S-27d (ア) の外れ、11-11 ごめんね)。「どれか」の当たり・まとめた箱は人が選んだので見ない
+      if (!c.anyOf?.length && !c.mergedOuts?.length && !c.merged && new Set(all.map((fr) => fr.key)).size > 1) mixed.add(o);
       // 重い順の LOOK に入らない枝も、木の族を塞ぐ MOD の組が違えば 1 つずつ当てる (外れの印 (g) の違う枝、代表には選ばない)
       const seenSig = new Set(heavy.map((r) => famSig(r.item))), marks = new Set(all.map((fr) => blockMarkOf(data, doc, fr.item, fr.aimed))), marked: Frame[] = [];
       for (const r of sorted.slice(LOOK)) {
@@ -338,6 +340,6 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       }
       if (again.length) walk(again);
     }
-    return { frames, miss, cant };
+    return { frames, miss, cant, mixed: [...mixed] };
   });
 }

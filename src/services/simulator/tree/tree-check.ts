@@ -22,10 +22,10 @@ import { judgeMemo } from "./tree-judge";
 import { canPlay } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
 
-type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMiss" | "frameDone";
+type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMix" | "frameMiss" | "frameDone";
 /** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
 /** 合格を止めない知らせ: 戻り先と外れの体だけ違う (S-73)・完成にしていない完成の箱 (S-77、印は付けるが止めない) */
-export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished", "frameMiss", "frameDone"];
+export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished", "frameMiss", "frameDone", "frameMix"];
 /**
  * 100 人回すを止める足りない所 = 未設定 (open) だけ (S-205 ③、11-07 オーナー「未設定がないならそのまま数値だしておｋ」)。
  * 止まり・輪・打てない手などは一覧に知らせとして残し、回した結果に止まった人の数で出る
