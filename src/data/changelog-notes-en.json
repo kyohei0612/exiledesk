@@ -1,4 +1,7 @@
 {
+  "0.1.716": [
+    "Simulator: for moves that swap a mod (such as Perfect Essences and Chaos), a hit that removed a non-aim mod and a hit that removed an unrevealed mod now go to separate boxes. Previously they shared one box and one of the two cases got stuck further down"
+  ],
   "0.1.715": [
     "Daily: after your attempt, the challenge now shows the finished item card. Luck stays the same for the parts of the tree you did not change. Fixed names wrapping vertically in the ranking list",
     "Simulator: box header tags are larger, and result tags are filled with the result color. With Hinekora's foresight, a box where nothing showed up can now choose to “Use” the move or “Hold” it (look ahead with one more foresight)",

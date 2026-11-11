@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.716",
+  "date": "2026-11-11",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: パーフェクトエッセンスやカオスのように MOD を入れ替える手の当たりで、外れが消えた場合と未発現が消えた場合を別の箱に分けるようにしました。同じ箱に入って、片方の形の人が先で止まっていたのを直しました",
+    "en": "Simulator: for moves that swap a mod (such as Perfect Essences and Chaos), a hit that removed a non-aim mod and a hit that removed an unrevealed mod now go to separate boxes. Previously they shared one box and one of the two cases got stuck further down"
+   }
+  ]
+ },
+ {
   "v": "0.1.715",
   "date": "2026-11-11",
   "items": [
@@ -910,18 +922,6 @@
     "area": "",
     "text": "エミュレーター: スマホで打った後に下の帯へ出ていた MOD の増減の知らせを消しました (結果は MOD 一覧で見られます)",
     "en": "Emulator: removed the notice of added/removed mods that appeared in the bottom bar after each craft on phones (results stay visible in the mod list)"
-   }
-  ]
- },
- {
-  "v": "0.1.676",
-  "date": "2026-11-07",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木で畳んだ消去の札の上下にある手の札を、前後の箱の真ん中に置いて線の長さをそろえました",
-    "en": "Simulator: in the tree, the step labels above and below a folded Annulment card now sit midway between the boxes, so the lines are even"
    }
   ]
  }
