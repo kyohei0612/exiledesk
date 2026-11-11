@@ -3,7 +3,11 @@
  * h = 地の色相、s = 鮮やかさ (0〜100)、d = 暗さ (0〜1、1 が一番暗い)、g = 光の強さ (0〜1)、a = 見出しの色相、f = 時間の光の色相。
  * 要素の style に skinVars の答えを渡すだけで効くので、シミュの画面からも読める (D-60c)。字と枠も皮の変数で持つ
  */
+import type { InjectionKey, Ref } from "vue";
+
 export type Skin = { id: string; ja: string; en: string; h: number; s: number; d: number; g: number; a: number; f: number };
+/** デイリーのページが下に渡す、今の皮の id (X シェアのカードの色、D-38) */
+export const DAILY_SKIN_KEY: InjectionKey<Ref<string>> = Symbol("daily-skin");
 
 export const SKINS: readonly Skin[] = [
   { id: "ember", ja: "残り火", en: "Embers", h: 24, s: 16, d: 0.9, g: 0.8, a: 40, f: 20 },

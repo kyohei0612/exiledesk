@@ -1,7 +1,7 @@
 /**
  * daily-share.ts — デイリーの提出の後の X シェア (D-38、11-11 オーナー「デイリー挑戦終わった画面でシェアできるようにしたいな流石に」)。
  * 仕組みはエミュの運試しのシェア (M-65、use-spam-share.ts) と同じ: 中身を縮めて短い id にし、押した時に POST /s/new で置いて /s/<id> の X のカード。
- * 中身の並びは server/web/og-card.js の PACK と同じ (先頭 15 個は運試しの物で空け、16 番目から kd = "daily"・dy = お題の id・rt = 完成率・pl = 順位・pe = 挑戦した人数)。
+ * 中身の並びは server/web/og-card.js の PACK と同じ (先頭 15 個は運試しの物で空け、16 番目から kd = "daily"・dy = お題の id・rt = 完成率・pl = 順位・pe = 挑戦した人数・21 番目 sk = その時の皮の id、無ければ null = 元の真鍮の色)。
  * カードの絵は server/web/daily-card.js、カードを押した先はその日のお題のページ。木 (レシピ) は入れない
  */
 import { tr, isEn } from "../../i18n/lang";
@@ -21,7 +21,7 @@ export function placeOf(id: string, rate: number): { place: number | null; enter
 }
 
 /** シェアの中身 (URL・投稿の文)。お題が引けなければ null */
-export async function dailyShare(id: string, cost: number | null, rate: number): Promise<DailyShare | null> {
+export async function dailyShare(id: string, cost: number | null, rate: number, skin: string | null = null): Promise<DailyShare | null> {
   const t = topicOfId(jaTypeName, id);
   if (!t) return null;
   const en = isEn.value;
@@ -30,7 +30,7 @@ export async function dailyShare(id: string, cost: number | null, rate: number):
   const costText = cost == null || rate < SOLVE_RATE ? "—" : `${cost} ${tr("神", "div")}`;
   const code = await packCard([
     en ? "en" : "ja", t.base, name, null, null, baseArtFile(t.base), null, null, null, costText, null, null, null, null, null,
-    "daily", id, rate, place, entered,
+    "daily", id, rate, place, entered, skin,
   ]);
   const url = `${shareOrigin()}/s/${await shortIdOf(code)}`;
   const day = id.replace(/^d\d{4}-/, "").replace("-", "/");

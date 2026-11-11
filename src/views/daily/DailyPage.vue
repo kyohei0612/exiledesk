@@ -4,7 +4,7 @@
   見た目は皮 (skin/skin.ts) の変数を一番外の要素に渡すだけ。その日の皮は日付で回り、見比べで押すと開発の間だけ替わる (D-60)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import "./daily-skin.css";
 import "./look.css";
 import { tr } from "../../i18n/lang";
@@ -17,7 +17,7 @@ import { isPhoneWidth } from "../../utils/use-phone";
 import { daily, dayNoOf, getTry, myAwards, myBox, myNick, myTitlePick, refreshDaily, setTitlePick, SLOT_NAMES, todayId, topicOfId, untilRefresh, weekBoard, yesterdayTop, type DailyBoxItem, type DailyTopic } from "./daily-api";
 import { baseArt } from "../../components/art/base-art";
 import { goDaily, seatListUnder, useRankRecipe } from "./daily-open";
-import { skinById, skinOfDay, skinVars } from "./skin/skin";
+import { DAILY_SKIN_KEY, skinById, skinOfDay, skinVars } from "./skin/skin";
 import DailyHero from "./DailyHero.vue";
 import DailyName from "./DailyName.vue";
 import DailyPlay from "./DailyPlay.vue";
@@ -87,6 +87,8 @@ const SKIN_KEY = "exiledesk.daily.skin";
 const picked = ref((() => { try { return localStorage.getItem(SKIN_KEY); } catch { return null; } })());
 watch(picked, (v) => { try { if (v) localStorage.setItem(SKIN_KEY, v); else localStorage.removeItem(SKIN_KEY); } catch { /* 覚えられなくても使える */ } });
 const skin = computed(() => skinById(picked.value) ?? skinOfDay(dayNo.value));
+/** 今の皮の id を下に渡す (X シェアのカードの色、D-38) */
+provide(DAILY_SKIN_KEY, computed(() => skin.value.id));
 </script>
 
 <template>

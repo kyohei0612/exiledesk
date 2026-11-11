@@ -3,7 +3,8 @@
   スタートは今日のお題だけ、14:50 まで、1 日 1 回 (D-01・D-33)。ニックネームが無ければ先に決める (D-51)。幅 1280 未満は今は挑戦できない (D-70、シミュの PC の木の境)
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
+import { DAILY_SKIN_KEY } from "./skin/skin";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
@@ -49,9 +50,11 @@ const action = computed(() => {
 });
 /** 提出した挑戦の X シェア (D-38、見た目の OK まで開発版だけ)。完成 0 の提出 (last だけ) もそのまま */
 const share = ref<DailyShare | null>(null);
-watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props.topic.tries] as const, async () => {
+/** 今の皮 (カードの色を合わせる。ページの外で開いた時は無し = 元の真鍮の色) */
+const skinId = inject(DAILY_SKIN_KEY, null);
+watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props.topic.tries, skinId?.value] as const, async () => {
   const r = t.value?.submitted ? (t.value.best ?? t.value.last) : null;
-  share.value = DEV_BUILD && r ? await dailyShare(props.topic.id, t.value!.best ? r.cost : null, r.rate) : null;
+  share.value = DEV_BUILD && r ? await dailyShare(props.topic.id, t.value!.best ? r.cost : null, r.rate, skinId?.value ?? null) : null;
 }, { immediate: true });
 </script>
 
