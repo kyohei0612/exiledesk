@@ -14,8 +14,9 @@ import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "../for-share/stage-steps";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
-import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, type StageItem, catalystBoosts, revealOffers, unrevealedOf, OMEN_KEY, aimDone, aimHits, parseKey } from "../../services/craft-stage/engine";
+import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, catalystBoosts, revealOffers, unrevealedOf, OMEN_KEY, aimDone, aimHits, parseKey } from "../../services/craft-stage/engine";
 import { isRareChance } from "../../utils/format-pct";
+import { prepItem } from "./prep-step";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** チュートリアルの間はお告げを打つと消す (ゲームと同じ)。エミュレーターの既定は掛けっぱなし (2026-10-18 オーナー「デフォではかけっぱなし、チュートリアルでは分離して」) */
@@ -107,12 +108,8 @@ export function prepareStep(o: { viaNext?: boolean } = {}): void {
   if (!st.prep) return;
   const key = topicKey(st, d, it);
   if (!otherBase && key && !s.usable(key) && !st.prepAlways) return;
-  const g = mulberry32(Math.floor(Math.random() * 1e9));
-  // startMods があれば決まった MOD から用意の手を打つ (カタリストは決まった MOD の指輪に火の品質 20%。2026-10-18)
-  const from = st.startMods ? startFrom(d, base, c.itemLevel, { rarity: st.start ?? "rare", mods: st.startMods }, Math.floor(Math.random() * 1e9)) : freshItem(d, base, c.itemLevel, st.start);
-  let next: StageItem = { ...fullSockets(from), rollSeed: it.rollSeed };
-  for (const k of st.prep) { const r = applyCurrency(d, next, k, g, []); if (r.applied) next = { ...r.item, rollSeed: it.rollSeed }; }
-  s.item.value = next;
+  // 用意の手を打って今の手を打てる品を作る (打てない品ができたら用意し直す、T-05・prep-step)
+  s.item.value = prepItem(d, st, base, c.itemLevel, Math.random, it.rollSeed);
   prepared.value = true;
 }
 

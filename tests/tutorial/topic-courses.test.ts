@@ -6,6 +6,7 @@ import { applyCurrency } from "../../src/services/craft-stage/apply-currency";
 import { mulberry32 } from "../../src/services/htc/rng";
 import { fullSockets } from "../../src/state/for-share/stage-steps";
 import { TOPIC_COURSES, topicKey } from "../../src/services/tutorial/topic-courses";
+import { prepItem } from "../../src/state/tutorial/prep-step";
 import type { PatchData } from "../../src/vendor/poe2htc/engine/types";
 
 let data: PatchData;
@@ -22,10 +23,8 @@ describe("動作を学ぶコース", () => {
           if (st.use === "reset") { it = fullSockets(freshItem(data, st.base ?? c.base, c.itemLevel)); return; }
           // 付ける手は MOD 0 個のそのレア度から、ほかは打てない時に prep の手で打てる状態を作る (craft-lesson.ts の prepareStep と同じ)
           if (st.start && !st.prep) it = fullSockets(st.startMods ? startFrom(data, st.base ?? c.base, c.itemLevel, { rarity: st.start, mods: st.startMods }, seed) : freshItem(data, st.base ?? c.base, c.itemLevel, st.start));
-          if (st.prep && (st.prepAlways || !applyCurrency(data, it, topicKey(st, data, it) ?? "", mulberry32(seed), st.omens ?? []).applied)) {
-            it = fullSockets(st.startMods ? startFrom(data, st.base ?? c.base, c.itemLevel, { rarity: st.start ?? "rare", mods: st.startMods }, seed) : freshItem(data, st.base ?? c.base, c.itemLevel, st.start));
-            for (const k of st.prep) { const p = applyCurrency(data, it, k, g, []); if (p.applied) it = p.item; }
-          }
+          // 用意は画面と同じ関数 (prep-step の prepItem = 打てない品ができたら用意し直す、T-05)
+          if (st.prep && (st.prepAlways || !applyCurrency(data, it, topicKey(st, data, it) ?? "", mulberry32(seed), st.omens ?? []).applied)) it = prepItem(data, st, st.base ?? c.base, c.itemLevel, g);
           const key = topicKey(st, data, it);
           const r = key ? applyCurrency(data, it, key, g, st.omens ?? []) : null;
           if (!r?.applied) { const k = `${i + 1}:${st.use} ${r?.reason ?? "キーが無い"}`; fails[k] = (fails[k] ?? 0) + 1; return; }
