@@ -194,9 +194,7 @@ src/services/tutorial/**             チュートリアル
 src/state/tutorial/**                チュートリアル
 tests/tutorial/**                    チュートリアル
 
-# 解析君 (順番だけ自動の計算。呼ぶ側 auto-order*.ts はシミュ)
-src/services/simulator/auto/**       解析
-src/services/simulator/auto/auto-order*.ts シミュ
+# 解析君
 scripts/analysis/**                  解析
 
 # 11-07 オーナー「カレンシーの挙動とかジンにおかないとダメなんじゃないの」: 画面の部の中にあった計算 (数え上げ・スパムの数え・エミュのスパムのモード) はエンジン部へ

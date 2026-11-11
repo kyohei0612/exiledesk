@@ -13,7 +13,7 @@ export type Strength = "base" | "greater" | "perfect";
 const STRENGTHS: readonly Strength[] = ["base", "greater", "perfect"];
 /** カオスの段の下限 (poe2db の Minimum Modifier Level、2026-10-14 確認。エンジンの CURRENCY_FLOOR には無い) */
 export const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 }; // E-11d
-/** 段の下限 (kind = transmute・augment・regal・exalt・chaos、s = 強さ)。入口 engine.ts から外に出す (解析君の auto-model、2026-10-20) */
+/** 段の下限 (kind = transmute・augment・regal・exalt・chaos、s = 強さ)。入口 engine.ts から外に出す (2026-10-20) */
 export const orbFloor = (kind: string, s: Strength): number =>
   kind === "chaos" ? CHAOS_FLOOR[s] : (CURRENCY_FLOOR as Record<string, Record<Strength, number>>)[kind]?.[s] ?? 0;
 

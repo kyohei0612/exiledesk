@@ -4,7 +4,7 @@
  *
  *   pnpm exec vitest run -c scripts/_sim-probe.config.ts
  *
- * 見本は scripts/analysis/check-auto-order.mjs と同じ手袋 (やふやふ、マナ T1 固定) と靴 (移動速度を固定)。
+ * 見本は手袋 (やふやふ、マナ T1 固定) と靴 (移動速度を固定)。
  */
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
