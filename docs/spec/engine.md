@@ -43,7 +43,7 @@
 
 ### データの出どころ
 
-- **E-01 出どころの正は poe2db。トレード (取引所のデータ) は確かめに使う。その次が Craft of Exile・オーナーのゲームでの確認。** 付く・付かない・段・ベースの有無は poe2db に合わせ、トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`、消さない) は照らすだけ。食い違ってもトレードに合わせて直さない (例: タリスマンの物理の段はトレードが P6、poe2db とデータは 9 段で T5 → データのまま)。クライアントは根拠にしない (今ある JSON の出どころの記録だけ、ARCHITECTURE の「データの出どころ」)。PoB は使わない。 — 有効 (10-28 オーナーの決め、コードの変更なし) / G-01、オーナー 10-09・10-17「db 見ときゃいい」・10-28「やっぱりdbにしようかトレードは確認くらいでおk」・同日「全体の順でおｋ」(タリスマンだけでなく全体、10-23「トレードは 1 番信頼できる」の順は 10-28 で置き換え) / 外の正解: `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` が 0
+- **E-01 出どころの正は poe2db。トレード (取引所のデータ) は確かめに使う。その次が Craft of Exile・オーナーのゲームでの確認。** 付く・付かない・段・ベースの有無は poe2db に合わせ、トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`、消さない) は照らすだけ。食い違ってもトレードに合わせて直さない (例: タリスマンの物理の段はトレードが P6、poe2db とデータは 9 段で T5 → データのまま)。クライアントは根拠にしない (今ある JSON の出どころの記録だけ、ARCHITECTURE の「データの出どころ」)。PoB は使わない。 — 有効 (10-28 オーナーの決め、コードの変更なし) / G-01、オーナー 10-09・10-17「db 見ときゃいい」・10-28「やっぱりdbにしようかトレードは確認くらいでおk」・同日「全体の順でおｋ」(タリスマンだけでなく全体、10-23「トレードは 1 番信頼できる」の順は 10-28 で置き換え) / 外の正解: `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` の `--check` (控えに無い食い違いが 0)
 - **E-02 写しどうしが食い違って決まらない値は poe2db に合わせる。聞かない。** (例: 兜の憤怒 45 段目の秒) — 有効 / オーナー 10-20・10-23 / 外の正解: poe2db の部位のページ
 - **E-03 公開値の無い重み・割合は Craft of Exile (beta) のデータと動きを正にする。** ルーンの特殊 MOD は CoE (Krakenbul の実測) → `htc/rune-weights.json`。冒涜専用 MOD どうしの重みは全部同じ。出どころの当て先はメモ craft-weight-sources。 — 有効 / ADR-004 の 4、v0.1.528 / 外の正解: `data-cache/coe-beta-data.json`・`scripts/check-htc-odds-vs-coe`
 - **E-04 こちらで決めた値には出どころと日付を付ける。** spec の `source` (client / poe2db / coe / owner / community / assumed) に書く。重みを埋めた・借りた MOD と、自前で作った部位の仮の重み 1000 (`extra-bases.json` の `weightSource: "client-placeholder"`、普通の MOD だけ。冒涜・ルーンは節の札) は `weight-overrides.ts` の `OVERRIDDEN` に入れ、画面は「重みは推定」の札を出す (11-09、重みは変えない)。 — 有効 / ADR-004 / 確かめ: spec を読む
@@ -76,7 +76,7 @@
 - **E-13 暗黙が足すタグも置き場に入る。** 例: グラスピングメイルは鎧 (Body Armours、筋力・器用さ・知性の混合 = タグ `str_dex_int_armour`、要求 41 / 41 / 41、レベル 65) だが暗黙の adds_tags = ring で指輪の MOD が付き、カタリストも使える (専用の行 `Body_Armours_ring_str_dex_int`)。暗黙が一緒に足す `genesis_tree_caster`・`genesis_tree_minion` も置き場に入れ、指輪の置き場を全部持つ (スペル・ミニオン・呪い・アーケインサージなど。重みは CoE・poe2db どおり 1 が多い。行の名前には入れない。`readImplicitTags` (_htc-base-info.mjs))。冒涜・ソウルは 3 属性の鎧と同じく `poe2db-pool-fixes.json` で `Desecrated_…`・直した `Rune_soul_…` を写す (普通と冒涜で id が重なるため)。11-06 まで genesis を足さず、普通 79 段・冒涜 4 段が足りなかった (10-28 の「創生の樹の MOD 用でクラフトには足さない」はグラスピングメイルでは撤回)。「この部位に◯◯は付かない」と言う前に暗黙を見る。ベースの選び画面の札は E-98。エッセンスの置き場は 3 属性の鎧 (`Body_Armours_str_dex_int`) と同じ 14 種 (深淵のエッセンスの紋章を含む。両方の行に `poe2db-pool-fixes.json` で足す。11-06 要望 37d854dd まで専用の行のエッセンスが 0 で棚が空、3 属性の鎧は紋章だけ抜けていた)。 — 有効 (10-28 オーナーの決め、エンジンの変更なし。エッセンスは 11-06 poe2db の Body_Armours_ring_str_dex_int・Body_Armours_str_dex_int のページ、`audit-poe2db-mods.mjs` のエッセンスの食い違い 0。指輪の置き場の全部はオーナー 11-06「グラスピングの暗黙の効果に準じて指輪のMOD足した方が良いな普通に」、audit で普通・冒涜・ソウルの無い/余計 0 (3 属性の鎧と同じく重みの差だけ)、CoE beta 0.5.5.5 のクラス 105 と普通 352・冒涜 27 段が一致) / 要望 a286ced8・poe2db (10-28 に読み直し)「Can roll Ring Modifiers」「Catalysts can be applied to this item」 / 外の正解: CoE beta の Grasping Mail の表、`tests/grasping-mail.test.ts`
 - **E-14 MOD の値に固定値は無い。** +1 も stat の値で、品質・ソケットの効果・お告げなどで動く前提で持つ (`stage-runes.json` の effects.stats など)。丸めが分からない時はデータか実測で。 — 有効 / オーナー 10-10「固定値のものなんてのは存在しない」 / 外の正解: 実物 (セールの凱旋 +2)
 - **E-15 暗黙にもタグがあり、カタリストの品質で伸びる。** タグ・品質・上の数値を触る時は暗黙 (`implicitRows`・`htc/implicit-stats.json`) も見る。 — 有効 / オーナー 10-12 / 確かめ: 暗黙の値の表示
-- **E-16 MOD のタグと冒涜の陣営は poe2db に合わせる** (`htc/poe2db-tag-fixes.json`)。poe2db を取り直したら照合を回す。 — 有効 / 10-18 v0.1.572、`docs/reviews/2026-10-18-tag-audit.md` / 外の正解: `audit-poe2db-tags.mjs` が 0
+- **E-16 MOD のタグと冒涜の陣営は poe2db に合わせる** (`htc/poe2db-tag-fixes.json`)。poe2db を取り直したら照合を回す。 — 有効 / 10-18 v0.1.572、`docs/reviews/2026-10-18-tag-audit.md` / 外の正解: `audit-poe2db-tags.mjs --check` (控えに無い食い違いが 0)
 - **E-17 → E-11a (基本動作) を見る。** エッセンスで付けた系統に、後から骨・高貴・カオスで同じ系統は付かない。エッセンスだけの決まりではない。 — 有効 (11-02 に E-11a へまとめた) / メモ poe2-craft-rules-confirmed / 見張り: golden
 - **E-18 フラスコ・チャームはエンジンに足さない。** (貼り付けでは「未対応」) — 有効 / オーナー 10-20
 - **E-18a カレンシーで付かない MOD (創生の樹・ハンドラップ専用) は、置き場の重みが 0 でどの手の候補にも出ない。** MOD としてはあるので、MOD の一覧 (`modListFor`) には別の節 (group `special`) で並べ、手で付ける (指名) 時だけ付く。見分けはデータのタグ (`genesis_tree_*` ほか) と置き場 `pools.special`。グラスピングメイルの暗黙が足す分は E-13。 — 有効 / poe2db (創生の樹の MOD はクラフトの置き場に無い) / 確かめ: MOD の一覧の節
@@ -250,12 +250,13 @@
 | 全部位 × 骨・お告げ・品質・触媒・ソケットの打てる / 打てない | `tests/item-classes.test.ts` |
 | ベースの選び画面: baseCatalog の全ベースの `cls` が札の一覧 `CATALOG_ROWS` にある (置き場の行が無くてよいのはユニーク専用 `Golden …` と removed-bases.json の消えたベースだけ、E-98) | `scripts/check-base-shelves.mjs` (`pnpm check:base-shelves`) |
 | データの直しが当て先を失っていない (控えに無い外れ 0、E-06) | `scripts/check-data-fixes.mjs` (`pnpm check:data-fixes`) |
-| 置き場・段・タグが poe2db と合う | `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` (0 件) |
+| 置き場・段・タグが poe2db と合う (今ある食い違いは控えに入れ、控えに無い物が出たら落ちる) | `scripts/audit-poe2db-mods.mjs --check`・`audit-poe2db-tags.mjs --check` (控え `scripts/audit-poe2db.baseline.json`、減ったら `--save`) |
 | 画面がエンジンの中身を自作しない (段・幅の直読み・# 埋め・生 JSON・Math.random) | `scripts/check-engine-entry.mjs` (E、控えから増えたら落ちる) |
 | CoE と合う決まりは CoE の関数名を spec の `source.coe` に持つ | `docs/reviews/2026-10-16-coe-rule-check.md` |
 
 テストは「変わっていないか」の見張り。合格は外の正解・オーナーの目だけ (G-22)。
 外の正解 (poe2db・CoE・説明文・オーナーのゲームでの確認) から期待値を写したテスト 24 本だけを回す口は `pnpm test:truth` (数秒。並びは package.json)。写した時点の正解なので、外が変わった時は写しを取り直して人が期待値を直す。
+出す前に手元で回す束は `pnpm check:truth` (test:truth → データの直しの外れ → タグ・置き場の照らし)。外の写し (`data-cache/poe2db-pages`) が要り、無ければ「回らなかった」で落ちる。
 
 ## ⑥ 新しい物を足す手順
 
