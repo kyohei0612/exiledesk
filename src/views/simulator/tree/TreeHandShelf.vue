@@ -30,6 +30,7 @@ import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, ty
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
+import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
 import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
@@ -327,7 +328,9 @@ const goneNow = computed((): number => {
   if (!props.current || !h || !k) return 0;
   // 別の手は下を全部消す。同じ手で ☑ を替える時だけ手を決める時と同じ組み替えで数える (S-57)
   const d = toRaw(t.doc.value);
-  return sameHand(props.current, h) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
+  // 高貴・カオスの格だけ替えた時も組み替えで数える (無くなる結果の箱の下だけ消える、S-57d)
+  const b = d.boxes[props.boxId];
+  return sameHand(props.current, h) || (!!b && gradeOnly(d, b, h, hitAims.value)) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
 // 入れ替えるソケットを選ぶ番は、ソケットを押した時にそのソケットで断る (左のソケットの訳を出さない)

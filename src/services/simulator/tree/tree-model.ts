@@ -14,6 +14,7 @@ import type { TreeBuilt } from "./tree-built";
 import type { StageItem } from "../../craft-stage/engine";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
+import { gradeOnly, graftOuts, takeOuts } from "./tree-grade-keep";
 import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
 
 /**
@@ -376,6 +377,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const hold = (): boolean => holds ?? mayHoldAim(d, id);
   const b = d.boxes[id];
   if (!b) return;
+  // 高貴・カオスの格だけ替えた = 同じ結果の箱は下ごと残す (S-57d、スイッチ gradeKeep)。☑ は起こりうる結果で絞る前の物で比べる
+  const kept = gradeOnly(d, b, hand, aims) ? takeOuts(d, b) : null;
   // カタリストの手で「何 % まで」を決めた物は見える「打った後」の箱 1 つ (S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け)
   const outsOf: OutKind[] = kind === "quality" && (hand.quality ?? 0) > 0 ? ["any"] : OUTS_OF[kind];
   // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)
@@ -398,7 +401,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh; delete b.autoAnnul;
   // 手をやり直したら (同じ手を選び直した時も) 下は全部消して、今の品と今の手で結果を作り直す。下の手は残さない (S-57b、11-06 オーナー「そもそも手をやり直したら全リセットって話でしょ」。
   // 前は同じ手なら今の箱と先をそのまま残し、上の手で枠が変わった後の古い結果が残った)
-  for (const o of b.outs) drop(d, subtree(d, o));
+  if (!kept) for (const o of b.outs) drop(d, subtree(d, o));
   // 当たりの箱は MOD ごと (10-26 オーナー「デフォではまとめないほうね」。まとめるのは人が「動きをまとめる」で選んだ箱だけ、joinSide)。
   // 前に「動きをまとめる」の箱 (anyOf) を通った道では、どれが付いているかが人ごとに違う (見本 1 人の付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
   // その一覧の狙いも当たりの箱に足す (もう付いている物は回す時に当たりに数えない = aimDiff は新しく付いた物だけ)。groupOf を渡した時だけ同じ側を 1 箱に
@@ -417,6 +420,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 消去の結果 (外れが消えた) も外れの道なので自動の ↩ を付けない (S-190b、11-04 オーナー「はい、未設定にして」)。
   // 前は外れが消えた → 外れの前の箱 (S-50d の残り)・全部消えてよい消去 → 回す時に形の合う箱 (MATCH_BACK、S-28d)
   if (kind === "free") addHits(d, b, aims, order);
+  if (kept) graftOuts(d, b, kept);
   spread(d, id);
   makeRoom(d, id);
   healLost(d);
