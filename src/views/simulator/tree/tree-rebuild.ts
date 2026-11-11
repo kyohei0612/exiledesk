@@ -21,6 +21,7 @@ import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { restoreWhittlePre } from "./tree-whittle-pre";
 import { fillHeldHi } from "./tree-held-use";
 import { lvPart } from "../../../services/simulator/tree/tree-whittle";
+import { flag } from "../../../web/release-flags";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
@@ -159,9 +160,11 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 続けた消去で足した箱に保存の決めがあれば打ち直し、打ち直した人の手と同じ枠になった自動の消去はまた畳む (S-28g ②「保存の決めがある箱は自動の手を外してから置く」・
   // 「後から木に同じ枠の手のある箱ができたら…畳む」)。前は打ち直しの途中は ↩ で止まっていた箱が終わりの見直しで ↩ が外れて消去が続き、足した箱の保存の決めを読まず、
   // その決めと同じ枠の別の枝の自動の消去も畳まずに止まった (11-11 デイリーの提出の木、100 人中 44 人。組んだ画面では人が手を置くたびに整理で畳む)
-  for (let n = 0; n < 4; n++) {
+  // (スイッチ treeNoAnnulAuto) 消去は続けないが、前に保存した決めが下にある箱だけは続ける (S-28g ⑤)。足した箱の札は replay で付くので 1 回に 1 段 = MOD の数まで回す
+  const toward = (id: string): boolean => { const at = placed.get(id)?.[1]; return !!at && [...picks.keys()].some((k) => k.startsWith(`${at}/`)); };
+  for (let n = 0; n < (flag("treeNoAnnulAuto") ? 12 : 4); n++) {
     const trimmed = trimAnnul(data, d), before = new Set(Object.keys(d.boxes));
-    if (!extendAnnul(data, d) && !trimmed) break;
+    if (!extendAnnul(data, d, undefined, toward) && !trimmed) break;
     yield* replay(Object.keys(d.boxes).filter((id) => !before.has(id)));
     linkLeftovers(data, d); mergeIntoBacked(data, d);
   }
