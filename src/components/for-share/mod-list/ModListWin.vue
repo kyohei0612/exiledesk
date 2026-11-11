@@ -59,7 +59,7 @@ const noAdd = computed(() => !!held.value && !sh.heldCands.value);
 </script>
 
 <template>
-  <ModalShell :open="open" :title="tr('MOD 一覧', 'Mod list')" width="h-[75vh] w-[75vw] max-w-full max-md:h-full max-md:w-full" body-class="min-h-0 flex-1 p-0" full-on-phone @close="emit('close')">
+  <ModalShell :open="open" :title="tr('MOD 一覧', 'Mod list')" width="w-[75%] h-[75%] max-md:h-auto" body-class="min-h-0 flex-1 p-0" full-on-phone @close="emit('close')">
     <template #header>
       <span v-if="item" class="g-sec-sub min-w-0" data-mod-win-item>{{ baseNameOf(item) }}</span>
       <!-- 見る品の切り替え (箱を押している時だけ)。押していなければ素の品だけなので出さない -->
