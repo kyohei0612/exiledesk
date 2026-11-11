@@ -23,6 +23,8 @@ export function nextKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet
   const parts = [...((up || us) && !noVeil ? [`u:${up}|${us}`] : []), ...(star ? [`f:${star.side === "prefix" ? "p" : "s"}${kept?.has(star.modId) ? "a" : "j"}`] : [])];
   return parts.join(";") || undefined;
 }
+/** 名前の印の付いた完成形に無い MOD (エッセンス / 合金) が消えた鍵 `n:` を持つか (tree-outcome の namedGoneKey、箱の題の付け足し) */
+export const namedGoneOf = (k: string | undefined): boolean => !!k && k.split(";").some((p) => p.startsWith("n:"));
 /** 側の鍵か (フラクチャーの鍵と見分ける) */
 export const isSideKey = (k: string | undefined): k is string => !!k && k.startsWith("s:");
 
