@@ -285,7 +285,8 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
             <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : '']">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="whitespace-nowrap" :class="[COL, tierW]">{{ tr(TIER, "T") }}</span><span class="w-7" :class="COL">Lv</span></span>
           </p>
-          <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
+          <!-- hideDim で片側の行が全部消えた時は、枠 (見出しと列) はそのまま・中は空 (U-12d、オーナー 11-12「プレサフィだけは非表示でもそのまま枠は残しておいてくれただ何もないけど」) -->
+          <p v-if="!col.items.length && !props.hideDim" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
           <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '', flag('aimTable') ? 'scroll-mt-8' : '']">
             <!-- 1 系統 1 行。後ろの棒が % (列の一番大きい物を 100%) -->
             <div class="flex items-center gap-0" :class="props.rowOn?.(r) ? 'rounded-md bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : ''">

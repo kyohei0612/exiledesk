@@ -69,9 +69,10 @@ const noAdd = computed(() => !!held.value && !sh.heldCands.value);
       </span>
       <span v-else class="g-sec-sub shrink-0 opacity-70">{{ tr("何も付いていない状態", "nothing attached") }}</span>
     </template>
-    <div v-if="item" data-mod-win class="grid h-full min-h-0 grid-cols-[minmax(0,30rem)_minmax(0,1fr)] max-xl:grid-cols-1 max-xl:overflow-y-auto" @contextmenu="held && ($event.preventDefault(), release())">
-      <!-- 左: カレンシーの棚 (押す = 持つ / もう一度で離す)。持った物に掛けられるお告げは棚の中 (エミュ・木の手の窓と同じ部品) -->
-      <div data-mod-win-shelf class="min-h-0 overflow-y-auto px-3 py-2 xl:border-r xl:border-white/10">
+    <div v-if="item" data-mod-win class="flex h-full min-h-0 flex-col max-xl:overflow-y-auto" @contextmenu="held && ($event.preventDefault(), release())">
+      <!-- 上: カレンシーの棚 (押す = 持つ / もう一度で離す)。持った物に掛けられるお告げは棚の中 (エミュ・木の手の窓と同じ部品)。高さは窓の半分まで (オーブの段 + お告げの欄が切れない高さ)、多い時は棚の中だけ送る
+           (オーナー 11-12「カレンシーは上がイイかな下にMODの方がプレサフィ分かっていいでしょ」) -->
+      <div data-mod-win-shelf class="shrink-0 overflow-y-auto border-b border-white/10 px-3 py-2 xl:max-h-[52%]">
         <p class="mb-2 flex min-h-7 flex-wrap items-center gap-2 text-[12px] text-[var(--exile-color-text-secondary)]" data-mod-win-held>
           <template v-if="held">
             <img v-if="iconOfKey(held, item)" :src="iconOfKey(held, item) ?? undefined" alt="" class="size-6 object-contain" />
@@ -85,8 +86,8 @@ const noAdd = computed(() => !!held.value && !sh.heldCands.value);
           <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
         </CurrencyShelf>
       </div>
-      <!-- 右: エミュの MOD 一覧と同じ表 (同じ % ・同じ判定) -->
-      <div data-mod-win-table class="min-h-0 px-3 pb-3 xl:overflow-y-auto">
+      <!-- 下: エミュの MOD 一覧と同じ表 (同じ % ・同じ判定。窓の幅いっぱいなのでプレフィックス / サフィックスが横 2 列) -->
+      <div data-mod-win-table class="min-h-0 flex-1 px-3 pb-3 xl:overflow-y-auto">
         <ModTable
           overlay :data="s.data.value" :item="item"
           :share="sh.shareOf" :tier-share="sh.tierShareOf" :row-dim="sh.rowDim" :tier-dim="sh.tierDim" :hide-dim="MOD_HIDE && !!sh.heldCands.value"
