@@ -19,6 +19,7 @@ import { MATCH, RESTART } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { frameIssues } from "./tree-frame-check";
 import { judgeMemo } from "./tree-judge";
+import { canPlay } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
 
 type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan" | "frameMiss" | "frameDone";
@@ -155,6 +156,16 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     // 見本が作れない箱 (誰も着かない) は分からない扱い
     if (!J.contents(b.id) || !J.contents(b.back)) continue;
     add(b.id, "shape", tr("戻り先の箱と中身が違う (狙いの組・外れの側と数と種類・✦・レアリティ・品質のどれかが違う人が入る)。直し方: 戻り先を同じ中身の箱にする (↩ で選び直す。選べる箱だけ明るくなる) か、ここに次の手を置く", "The return target holds a different item (targets, misses per side and kind, fractures, rarity or quality differ). Fix: return to a box with the same contents (pick again with ↩; only valid boxes are lit), or add a next craft here"));
+  }
+
+  // 0b) 戻り先の手がこの箱の代表の品に打てない (置けるのに打てない = 戻った人はそこで止まる。11-11 枝のフルチェック: 骨の発現の後の外れが ↩ 骨の箱へ戻り、
+  // 冒涜の MOD を持った人が 2 つ目の骨を打てなかった。オーナー「1周目で気づけない仕組みもどーかと思う」)。1 周目 (打たずに辿る) で止まりとして出す
+  for (const b of boxes) {
+    const to = b.back && b.back !== MATCH && b.back !== RESTART ? doc.boxes[b.back] : undefined;
+    if (!to?.hand || to.done) continue;
+    const s = sampleOf(data, doc, b.id, 1);
+    if (s.note === "none" || s.note?.startsWith("cant:") || canPlay(data, s.item, to.hand)) continue;
+    add(b.id, "open", tr(`戻り先の手 (${nameOfKey(to.hand.currency, null)}) がこの箱の品に打てない (戻った人はそこで止まる)。直し方: ここに次の手を置くか、打てる箱へ戻す`, `The return target's craft (${nameOfKey(to.hand.currency, null)}) can't be used on this box's item (runs that return stop there). Fix: add a next craft here, or return to a box where it can be used`));
   }
 
   // 1) 形だけで分かる穴: 決めていない芽・MOD を選んでいない当たり

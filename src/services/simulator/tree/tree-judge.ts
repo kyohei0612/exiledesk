@@ -8,13 +8,13 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { kindOf, mulberry32, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
 import { bodyOf } from "./tree-box-shape";
 import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
-import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, playHand, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
@@ -88,7 +88,9 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
  */
 export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
   const c = contentParts(data, doc, it, aimed);
-  return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}`;
+  // 狙いとして発現した冒涜の MOD の数 (#a。骨の手のある箱と比べる時だけ見る = 冒涜の MOD は 1 品 1 つ E-60。外れの冒涜は #d)
+  const da = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed && !m.fractured && !isMissMod(m, c.miss)).length;
+  return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}#a${da}`;
 }
 /** 中身の鍵の部分 (keys = 印の札、miss = 印の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
 function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): { keys: Set<string>; miss: MissAims; body: string } {
@@ -190,14 +192,16 @@ function junkOne(body: string): string {
   return `${[pp, ss, ...rest].join("|")}#d${px}.${sx}#c${pc}.${sc}`;
 }
 /** 中身の鍵から冒涜の発現済みの数とクラフト MOD の数を落とした物 (ふだんの比べ。光のお告げ・骨・エッセンスの手のある箱と比べる時だけ keyAt で残す) */
-export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+#c\d+\.\d+$/, "");
+export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+#c\d+\.\d+#a\d+$/, "");
 /** d = 冒涜の発現済みの数を残す、c = クラフト MOD (エッセンス) の数を残す */
-const keyAt = (k: string, d: boolean, c: boolean): string => k.replace(/#d(\d+\.\d+)#c(\d+\.\d+)$/, (_, xd: string, xc: string) => `${d ? `#d${xd}` : ""}${c ? `#c${xc}` : ""}`);
+const keyAt = (k: string, d: boolean, c: boolean, a = false): string => k.replace(/#d(\d+\.\d+)#c(\d+\.\d+)#a(\d+)$/, (_, xd: string, xc: string, xa: string) => `${d ? `#d${xd}` : ""}${c ? `#c${xc}` : ""}${a ? `#a${xa}` : ""}`);
 /**
  * 冒涜の発現済みの外れの数も合わせる箱か: 光のお告げ (冒涜の MOD しか消さない) を含む手 (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) と、
  * 骨の手 (冒涜の MOD は 1 つまで E-60。発現済みの外れを持つ人は打てない、S-60d)
  */
 export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (h.omens.includes(LIGHT) || isBone(h.currency)); };
+/** 骨の手の箱か (冒涜の MOD は 1 品 1 つ E-60: 狙いとして発現した冒涜を持つ人も打てないので、その数も合わせる。11-11 枝のフルチェックの満杯 + 骨の発現) */
+export const needsBoneFree = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && isBone(h.currency); };
 /** クラフト MOD を付ける手 (エッセンス・液化した感情) の箱か (クラフト MOD は 1 品 1 つ E-11h。クラフト MOD の外れを持つ人は打てないので、その数も合わせる、S-60d) */
 export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
 const LIGHT = OMEN_KEY.light;
@@ -262,6 +266,8 @@ export interface Judge {
   holdsAll(id: string): boolean;
   /** 箱の見本にカタリストの品質が入っているか (品質を上げた後、S-31b) */
   afterQuality(id: string): boolean;
+  /** from の代表の品に to の手が打てるか (自動の ↩ の先を選ぶ時。枠の比べ fitsBox は手を見ないまま、S-60c。11-11 骨の発現の後の外れが骨の箱へ戻って打てなかった) */
+  playsAt(from: string, to: string): boolean;
 }
 
 /** 中身を作る途中で止めた印 (judgeMemo の fullUntil) */
@@ -286,12 +292,12 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     return out;
   };
   /** to と比べる中身 (to が光のお告げの手のある箱なら冒涜の発現済みの数も) */
-  const keyFor = (to: string, k: string): string => keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to));
+  const keyFor = (to: string, k: string): string => keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to));
   const setFor = (to: string, id: string): ReadonlySet<string> | null => {
-    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to);
+    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to), a = needsBoneFree(doc, to);
     if (!d && !c) return contents(id);
     const f = full(id);
-    return f ? new Set([...f].map((k) => keyAt(k, d, c))) : null;
+    return f ? new Set([...f].map((k) => keyAt(k, d, c, a))) : null;
   };
   /** 箱の中身 (代表の品の枠 1 つ)。stop を渡すと、その中身で stop が真なら REJECTED を返す (覚えない、S-71b ⑲) */
   const fullUntil = (id: string, stop?: (k: string) => boolean): ReadonlySet<string> | null | typeof REJECTED => {
@@ -314,6 +320,12 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const lvFits = (item: StageItem, aimed: ReadonlySet<string>, to: string): boolean => { const c = lvOf(to); if (!c) return true; const w = whittleCompare(data, doc, frameHandOf(doc, to), aimed, item); return lvClassOf(item, w.miss, w.side) === c; };
   return {
     contents,
+    playsAt(from, to) {
+      const h = doc.boxes[to]?.hand, f = h ? frameAt(from) : null;
+      if (!h || !f || f.note) return true;
+      const r = playHand(data, f.item, { ...h, repeat: null }, mulberry32(1));
+      return r.applied || !!r.random;
+    },
     fitsBox(from, to) {
       // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
       // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
