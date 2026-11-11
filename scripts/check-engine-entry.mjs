@@ -18,6 +18,11 @@
  *     ① MOD の当たりを自前で比べる (modId の === / includes など、aimHits を通さない一致) ② カレンシー・お告げの鍵の文字を読む
  *     (startsWith("essence:")・kindOf(…) === "…" など、parseKey / actionClassOfKey を通さない) ③ お告げの名前を文字で書く ("Omenof…") ④ ゲームの数字を書く
  *     (段の下限 33・35・40・44・50・70、冒涜専用の 85%・14%、聖別の 0.78・1.22、紋章の × 0.4)。コメントは数えない。今ある分は控え、増えた時だけ落とす
+ *   H エンジンの答えの書き換え (2026-11-12 オーナー「っ足す」、設計図 G-40・engine.md「遊びごとの上書き」E-100〜106):
+ *     F と同じ画面の部が、エンジンが返した品・結果を自分で作り変える形。H1 品の MOD・品に印を立てる (crafted: true など)・H2 品の MOD の並び・ソケット・
+ *     レアリティ・品質を作り直す ({ ...item, prefixes: … })・H3 数え上げの確率に掛ける / 割る (p: a.p * b.p)・H4 段の値・重みを直に比べる / 割る
+ *     (.ranges … >=・.weight / total)・H5 打たずに「打てた」結果を作る (applied: true, item)。コメントは数えない。今ある分は控え、ファイルごとに増えた時だけ落とす。
+ *     増えた時の出口は 2 つ: 設計図に書いてオーナーの OK をもらい engine.md の一覧 (E-100〜) に 1 行足す / エンジンに口を頼む (ジン)
  *   A (入口の外) は 10-25 夜にやめた (画面はエンジンの関数を直接呼んでよい)
  * 今の数をファイルごとに控え (check-engine-entry.baseline.json) に持ち、決まりごとの合計が控えより増えた時だけ落ちる (オーナー 10-20 OK)。
  * ファイルを割って移っただけの時は合計が同じなので落とさず、ファイルごとの増えは知らせだけ。減ったら `--head --write` で控えを取り直す。
@@ -76,7 +81,15 @@ const GAME_RULE = [
   ["③ お告げの名前を文字で書く (OMEN_KEY・omenFor を通さない)", /["'`]Omen[oO]f\w+/g],
   ["④ ゲームの数字を書く (段の下限・冒涜専用の割合・聖別の幅・紋章の 0.4)", /(?:MOD ?レベル|mod level|[Ff][Ll][Oo][Oo][Rr]\w*|greater|perfect)\D{0,6}\b(?:33|35|40|44|50|70)\b|\b(?:85|14) ?%|\b0\.78\b|\b1\.22\b|(?:×|\*)\s*0\.4\b/g],
 ];
-/** コメントを消す (F はコメントの説明を数えない)。文字列の中の // (URL など、: や引用符の直後) は残す */
+/** H で見る、エンジンの答えを書き換える形 (見る部は F と同じ GAME_SCREEN) */
+const REWRITE = [
+  ["H1 品の MOD・品に印を立てる", /\b(?:crafted|fractured|desecrated|unrevealed|corrupted|sanctified|foreseen)\s*:\s*(?:true|false)\b/g],
+  ["H2 品の MOD の並び・ソケット・レアリティ・品質を作り直す", /\{\s*\.\.\.\w+\s*,\s*(?:prefixes|suffixes|sockets|rarity|quality|catalystQuality)\s*:/g],
+  ["H3 数え上げの確率に掛ける・割る", /\bp\s*:\s*[\w.]+\s*[*/]\s*[\w.(]|\b\w+\.p\s*\*\s*\w+\.p\b/g],
+  ["H4 段の値・重みを直に比べる・割る", /\.ranges\b[^;\n]{0,60}(?:>=|<=|>|<)|\.(?:weight|w)\s*\/\s*\w+/g],
+  ["H5 打たずに「打てた」結果を作る", /applied\s*:\s*true\s*,\s*item\b/g],
+];
+/** コメントを消す (F・H はコメントの説明を数えない)。文字列の中の // (URL など、: や引用符の直後) は残す */
 const stripComments = (t) => t.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`\\])\/\/.*$/gm, "$1");
 const CS = "src/services/craft-stage/";
 /** シミュだけ・エミュだけの、エンジンを使う置き場 (2026-10-26 にエンジンから出した、オーナー「全部それシミュに渡して削除してくれ」) */
@@ -119,15 +132,16 @@ for (const f of files) {
   if (GAME_SCREEN.has(who)) {
     const code = stripComments(text);
     for (const [what, re] of GAME_RULE) for (const m of code.matchAll(re)) hits.push({ rule: "F", file: f, target: `${what}: ${m[0].trim()}` });
+    for (const [what, re] of REWRITE) for (const m of code.matchAll(re)) hits.push({ rule: "H", file: f, target: `${what}: ${m[0].trim()}` });
   }
 }
 
-const RULES = ["B", "C", "D", "E", "F"];
+const RULES = ["B", "C", "D", "E", "F", "H"];
 const count = {};
 for (const h of hits) count[`${h.rule} ${h.file}`] = (count[`${h.rule} ${h.file}`] ?? 0) + 1;
 const total = (r) => hits.filter((h) => h.rule === r).length;
 const filesOf = (r) => new Set(hits.filter((h) => h.rule === r).map((h) => h.file)).size;
-console.log(`見張り: B 凍結の htc/ ${total("B")} 行・C エンジン ⇄ シミュ・エミュの置き場 ${total("C")} 行・D エミュ ⇄ シミュ ${total("D")} 行・E 画面の中のエンジンらしき物 ${total("E")} か所 (${filesOf("E")} ファイル)・F ゲームの仕様の自前 ${total("F")} か所 (${filesOf("F")} ファイル) (${head ? "HEAD" : "作業ツリー"})`);
+console.log(`見張り: B 凍結の htc/ ${total("B")} 行・C エンジン ⇄ シミュ・エミュの置き場 ${total("C")} 行・D エミュ ⇄ シミュ ${total("D")} 行・E 画面の中のエンジンらしき物 ${total("E")} か所 (${filesOf("E")} ファイル)・F ゲームの仕様の自前 ${total("F")} か所 (${filesOf("F")} ファイル)・H エンジンの答えの書き換え ${total("H")} か所 (${filesOf("H")} ファイル) (${head ? "HEAD" : "作業ツリー"})`);
 if (args.has("--list")) for (const h of hits) console.log(`${h.rule}\t${h.file}\t→ ${h.target}`);
 
 if (args.has("--write")) {
@@ -147,13 +161,14 @@ const WHY = {
   D: "エミュとシミュは互いの物を読まない。両方で使う部品は共通 src/components へ",
   E: "打つ・読む・MOD の文や値を作る中身は画面に書かず、エンジンの関数を呼ぶ (無ければジン部長に頼む)。見せるために読むだけなら --head --write で控えを取り直す",
   F: "ゲームの仕様はジンだけ。エンジンの関数を呼ぶか、無ければジンに頼む (G-40、オーナー 11-07「ゲームシステムはジンだけ追加修正可能」)",
+  H: "エンジンの答え (品・結果・確率) を画面の側で書き換える形が増えた。出口は 2 つ: ① 遊びの決まりとして要るなら、設計図 (シミュ・デイリーの紙) に書いてオーナーの OK をもらい、engine.md の「遊びごとの上書き」の一覧 (E-100〜) に 1 行足してから `--head --write` で控えを取り直す ② ゲームの挙動ならエンジンに口を頼む (ジン)。どの行かは `node scripts/check-engine-entry.mjs --list` の H (G-40)",
 };
 // F はファイルごとに増えたら止める (ほかで減った分で増えが隠れないように。合計で見ると、寄せで減った後の新しい自前を通していた。2026-11-07 ブラック 57)。
 // ファイルを割って移しただけの時は --head --write で控えを取り直す
-const grew = (k) => over.includes(k[0]) || k[0] === "F";
+const grew = (k) => over.includes(k[0]) || k[0] === "F" || k[0] === "H"; // H も F と同じくファイルごとに止める
 // 止める行 (フック G-40 はファイル名の入った「増えた:」の行だけを見せる) に訳を付ける。何が増えたかは --list で
 for (const [k, n] of worse) console.log(`${grew(k) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}${grew(k) ? ` (${WHY[k[0]]})` : ""}`);
 for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (${WHY[r]})`);
 if (better.length) console.log(`減った ${better.length} ファイル: 良い。\`node scripts/check-engine-entry.mjs --head --write\` で控えを取り直す`);
-if (over.length || worse.some(([k]) => k[0] === "F")) process.exit(1);
+if (over.length || worse.some(([k]) => k[0] === "F" || k[0] === "H")) process.exit(1);
 console.log("増えた所なし");
