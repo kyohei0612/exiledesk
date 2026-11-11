@@ -1,4 +1,7 @@
 {
+  "0.1.711": [
+    "Daily: fixed the tree area on the challenge screen (PC) being squeezed into a narrow column"
+  ],
   "0.1.710": [
     "Simulator: the mod level frames before a whittle (lower, same, higher) now show as one box with bands under it. Click a band to choose the move for that frame",
     "Simulator: when you hold a whittle with Hinekora's Lock, you can now choose use / don't use for each mod level frame. Frames where the miss mod is higher than the mod you keep start as “don't use”",
