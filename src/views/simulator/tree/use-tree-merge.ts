@@ -123,8 +123,9 @@ export function useTreeMerge(o: {
   }
   /** 帯の「線を全部表示」(このブラウザに覚える) */
   const KEY = "exiledesk.tree.lines-all";
-  const linesAll = ref((() => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } })());
-  watch(linesAll, (on) => { try { localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
+  // スイッチ simNoLineMemo: 帯の「線」を出さないので、覚えた入は見ず全員「切」(統合の線は乗せた箱だけ) に固定。覚えた値は書き換えない
+  const linesAll = ref((() => { try { return !flag("simNoLineMemo") && localStorage.getItem(KEY) === "1"; } catch { return false; } })());
+  watch(linesAll, (on) => { try { if (!flag("simNoLineMemo")) localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
   /** 乗せている箱 (線を濃く) と、少し待ってから出すホバーのカード (全部の箱・戻り先を選んでいる時の候補の箱も。オーナー 10-22「全てカードが出るように」) */
   const hoverBox = ref<string | null>(null);
   const cardBox = ref<string | null>(null);

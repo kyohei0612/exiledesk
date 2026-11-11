@@ -20,8 +20,11 @@ import ModTable from "../../components/for-share/mod-list/ModTable.vue";
 import { useHeldShares } from "../../components/for-share/mod-list/use-held-shares";
 import StageWeightEdit from "./StageWeightEdit.vue"; // 重みの札 (推定・直した) と直す 1 行
 import ModAddPicker from "./ModAddPicker.vue";
+import { flag } from "../../web/release-flags";
 
 const props = defineProps<{ embedded?: boolean; overlay?: boolean }>();
+/** 持っている間、その手で付かない MOD・段を灰色でなく出さない (M-43c、スイッチ modHide。オーナー 11-12「グレーアウトじゃなくて非表示がいいかな」) */
+const MOD_HIDE = flag("modHide");
 const s = craftStage;
 const item = computed(() => s.item.value);
 const table = ref<InstanceType<typeof ModTable> | null>(null);
@@ -130,7 +133,7 @@ watch(() => s.modJump.value, (j) => {
     <div v-if="open" :class="props.overlay ? '' : 'border-t border-white/10 px-3 pb-3 pt-2'">
       <ModTable
         ref="table" :data="s.data.value" :item="item" :overlay="props.overlay"
-        :share="shareOf" :tier-share="tierShareOf" :row-dim="rowDim" :tier-dim="tierDim" :row-title="rowTitle" :tier-title="tierTitle" :share-title="shareTitle"
+        :share="shareOf" :tier-share="tierShareOf" :row-dim="rowDim" :tier-dim="tierDim" :hide-dim="MOD_HIDE && !!heldCands" :row-title="rowTitle" :tier-title="tierTitle" :share-title="shareTitle"
         :share-head="shareHead" :tone="heldCands ? 'sky' : 'amber'" :section-late="sectionLate"
         :to-craft="!props.embedded && !props.overlay ? toCraft : undefined" :keep-open="['[data-mod-add-menu]', '[data-helptip-pop]']"
       >

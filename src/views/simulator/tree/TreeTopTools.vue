@@ -8,12 +8,15 @@ import Icon from "../../../components/ui/Icon.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { simOp } from "../../../web/track";
+import { flag } from "../../../web/release-flags";
 
 /** armed = 白紙に戻すを 1 回押した (もう一度押すと戻す) */
 defineProps<{ linesAll: boolean; memoOpen: boolean; full: boolean; note: boolean; armed: boolean }>();
 const emit = defineEmits<{ lines: []; memo: []; full: []; clear: [] }>();
 const t = useTree();
 const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[12px] text-sim-body hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35 aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
+/** 「線」と「メモ」のボタンを出さない (スイッチ simNoLineMemo。オーナー 11-12「あとこの線とメモ使わんから削除でおｋ」) */
+const NO_LM = flag("simNoLineMemo");
 /** 再挑戦の線は乗せた時だけ (S-87c) */
 /** 人が選ぶ「まとめる」は無い (S-52b) */
 </script>
@@ -24,9 +27,9 @@ const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitesp
       <button type="button" data-tree-undo :class="BTN" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" :aria-label="tr('1 つ戻す', 'Undo')" @click="simOp('undo'); t.undo()"><Icon name="undo" class="size-4" /><span>{{ tr("戻す", "Undo") }}</span></button>
       <button type="button" data-tree-redo :class="BTN" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="simOp('redo'); t.redo()"><Icon name="undo" class="size-4 -scale-x-100" /></button>
       <span class="mx-0.5 h-5 w-0.5 rounded bg-white/10" aria-hidden="true" />
-      <button type="button" data-tree-lines-all :class="BTN" :aria-pressed="linesAll" :title="linesAll ? tr('合流の線を隠す (再挑戦の線はいつも乗せた箱だけ)', 'Hide merge lines (retry lines always show only for the hovered box)') : tr('合流の線を全部出す (再挑戦の線はいつも乗せた箱だけ)', 'Show all merge lines (retry lines always show only for the hovered box)')" :aria-label="tr('線を全部表示', 'Show all lines')" @click="emit('lines')"><Icon name="link" class="size-4" /><span>{{ tr("線", "Lines") }}</span></button>
+      <button v-if="!NO_LM" type="button" data-tree-lines-all :class="BTN" :aria-pressed="linesAll" :title="linesAll ? tr('合流の線を隠す (再挑戦の線はいつも乗せた箱だけ)', 'Hide merge lines (retry lines always show only for the hovered box)') : tr('合流の線を全部出す (再挑戦の線はいつも乗せた箱だけ)', 'Show all merge lines (retry lines always show only for the hovered box)')" :aria-label="tr('線を全部表示', 'Show all lines')" @click="emit('lines')"><Icon name="link" class="size-4" /><span>{{ tr("線", "Lines") }}</span></button>
     </template>
-    <button type="button" data-tree-memo :class="BTN" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" :aria-label="tr('メモ', 'Notes')" @click="emit('memo')"><Icon name="pencil" class="size-4" /><span>{{ tr("メモ", "Notes") }}</span><span v-if="note" class="size-1.5 rounded-full bg-amber-400" /></button>
+    <button v-if="!NO_LM" type="button" data-tree-memo :class="BTN" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" :aria-label="tr('メモ', 'Notes')" @click="emit('memo')"><Icon name="pencil" class="size-4" /><span>{{ tr("メモ", "Notes") }}</span><span v-if="note" class="size-1.5 rounded-full bg-amber-400" /></button>
     <template v-if="!t.needBase.value">
       <button type="button" data-tree-full :class="BTN" :aria-pressed="full" :title="full ? tr('全画面を閉じる', 'Exit full screen') : tr('全画面に広げる', 'Full screen')" :aria-label="full ? tr('全画面を閉じる', 'Exit full screen') : tr('全画面に広げる', 'Full screen')" @click="emit('full')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg><span>{{ tr("全画面", "Full") }}</span>

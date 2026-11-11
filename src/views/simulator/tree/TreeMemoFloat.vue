@@ -28,6 +28,9 @@ import { tr } from "../../../i18n/lang";
 import { pageZoom, toCss } from "../../../utils/zoom";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
+import { flag } from "../../../web/release-flags";
+/** 帯の「メモ」を出さない間は、開いたまま覚えている人にも窓を出さない (スイッチ simNoLineMemo。木のメモの文と覚えた開け閉めは変えない) */
+const NO_MEMO = flag("simNoLineMemo");
 
 /** avoid: 右の欄が開いている (変わるたびに重なりを見直す。値は欄の種類と箱) */
 const props = defineProps<{ avoid?: string | null }>();
@@ -248,7 +251,7 @@ const chipCls = (on: boolean, used: boolean): string =>
   <div v-if="open && preview" class="pointer-events-none fixed z-[79] rounded-md border-2 border-amber-300/70 bg-amber-200/10 transition-all"
     :style="{ left: `${snapRect(preview).x + 6}px`, top: `${snapRect(preview).y + 6}px`, width: `${snapRect(preview).w - 12}px`, height: `${snapRect(preview).h - 12}px` }" />
   <!-- ページの中で一番上 (全画面のツリーより上)。ツリーを押しても閉じない -->
-  <div v-if="open && shown" data-tree-memo-float role="dialog" data-overlay :aria-label="tr('メモ', 'Notes')" class="g-panel !fixed z-[80] flex flex-col !bg-[#16120d] text-[13px]"
+  <div v-if="open && shown && !NO_MEMO" data-tree-memo-float role="dialog" data-overlay :aria-label="tr('メモ', 'Notes')" class="g-panel !fixed z-[80] flex flex-col !bg-[#16120d] text-[13px]"
     :class="[snap ? '' : 'shadow-[0_14px_40px_rgba(0,0,0,0.7)]', dragging ? 'select-none' : 'transition-[left,top,width,height] duration-150']"
     :style="{ left: `${shown.x}px`, top: `${shown.y}px`, width: `${shown.w}px`, height: `${shown.h}px` }" @keydown="onKey">
     <!-- 題の帯 (Windows の題と同じ: 引いて動かす・ダブルクリックで最大化 / 元に戻す) -->

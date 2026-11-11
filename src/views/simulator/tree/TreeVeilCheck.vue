@@ -22,6 +22,9 @@ import { ECHO } from "../../../services/simulator/tree/tree-hands";
 import type { Aim, Hand } from "../../../services/simulator/tree/tree-model";
 import { revealPool, type ListRow, type ListTier, type StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+/** 発現で出ない MOD・段を灰色でなく出さない (U-12d、スイッチ modHide。エミュの MOD 一覧と同じ) */
+const MOD_HIDE = flag("modHide");
 
 /** 骨の 3 択 (TreeHandShelf の boneMode)。reveal = 発現 (☑ の MOD)、free = 発現させて狙い無し、keep = 未発現のまま */
 export type BoneMode = "reveal" | "free" | "keep";
@@ -85,7 +88,7 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
     <div data-tree-hand-veil-pick>
       <ModTable
         overlay :data="s.data.value" :item="item"
-        :share="shares.shareOf" :tier-share="shares.tierShareOf" :row-dim="dimRow" :tier-dim="dimTier" :row-title="shares.rowTitle" :tier-title="shares.tierTitle" :share-title="shares.shareTitle"
+        :share="shares.shareOf" :tier-share="shares.tierShareOf" :row-dim="dimRow" :tier-dim="dimTier" :hide-dim="MOD_HIDE" :row-title="shares.rowTitle" :tier-title="shares.tierTitle" :share-title="shares.shareTitle"
         :share-head="shares.shareHead.value" :tone="shares.heldCands.value ? 'sky' : 'amber'" :section-late="shares.sectionLate"
       >
         <template #tier-actions="{ row: r, tier: tt }">
