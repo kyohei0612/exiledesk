@@ -107,6 +107,8 @@
 .daily-rank-row:nth-child(-n + 3) .daily-place { color: var(--skin-title); font-size: 16px; }
 .daily-points { font-weight: 400; color: var(--skin-title); font-variant-numeric: tabular-nums; }
 .daily-num { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--skin-dim); }
+/* 挑戦前のぼかし (D-50): 数は仮の字。読めないようにぼかし、選べないように */
+.daily-veiled { filter: blur(5px); user-select: none; }
 
 /* タグ (D-54): 1 位は金の銘の札、2〜10 位は石の札。絵のまま小さく */
 .daily-tag { display: inline-block; margin-left: 6px; padding: 0 9px; font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; color: var(--skin-text); background: url("/ui-art/tab.webp") center / 100% 100% no-repeat; vertical-align: 1px; }

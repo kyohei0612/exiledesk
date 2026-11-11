@@ -2,7 +2,9 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
-import { canStillTry, getTry, myNick, rankOf, type DailyTopic } from "./daily-api";
+import { canStillTry, getTry, myNick, rankByScore, rankOf, type DailyTopic } from "./daily-api";
+import { scoreOf } from "./daily-score";
+import { usePhone } from "../../utils/use-phone";
 import { useRankRecipe } from "./daily-open";
 import DailyName from "./DailyName.vue";
 import DailyNick from "./DailyNick.vue";
@@ -10,16 +12,23 @@ import DailyPeekAsk from "./DailyPeekAsk.vue";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const rows = computed(() => rankOf(props.topic.id).slice(0, 10));
-/** 締めた日 (狙いが見える日) か。今日の分も押せるが、自分の行は押さない (自分の木は「自分の木を見る」から) */
+/** スコアで並べる日 (D-02b)。列はスコアを一番右に足し、スマホは時間の列を外す (名前を潰さない) */
+const score = computed(() => rankByScore(props.topic.id));
+const phone = usePhone();
+const showTime = computed(() => !(score.value && phone.value));
+/** 挑戦前のぼかし (D-50): 今日のお題でまだ始めていない人は順位と名前だけ。数は画面に置かず仮の字をぼかす */
+const veiled = computed(() => score.value && !closed.value && !getTry(props.topic.id));
+const num = (real: string, fake: string): string => (veiled.value ? fake : real);
+/** 締めた日 (狙いが見える日) か。行はいつも押せる。自分の行は窓なし・諦めの扱いもなしで開く (D-50c、11-11 オーナー「あと自分のレシピクリックして見れないじゃん」) */
 const closed = computed(() => !!props.topic.aims);
-const canOpen = (me?: boolean): boolean => closed.value || !me;
+const canOpen = (_me?: boolean): boolean => true;
 const mins = (ms: number): string => tr(`${Math.round(ms / 60_000)} 分`, `${Math.round(ms / 60_000)}m`);
 const { busy, failed, open } = useRankRecipe();
 /** 窓を出している名前 (D-50c) と、名前を決めてから窓へ進む名前 (諦めの印は名前に置く、D-51) */
 const peekName = ref<string | null>(null);
 const nickFor = ref<string | null>(null);
-function press(name: string): void {
-  if (!canStillTry(props.topic.id)) { void open(props.topic.id, name, props.topic.day); return; }
+function press(name: string, me?: boolean): void {
+  if (me || !canStillTry(props.topic.id)) { void open(props.topic.id, name, props.topic.day); return; }
   if (!myNick() && !getTry(props.topic.id)) { nickFor.value = name; return; }
   peekName.value = name;
 }
@@ -33,18 +42,20 @@ function peeked(): void {
 <template>
   <div data-daily-rank class="min-w-0">
     <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("一番安く作った人", "Cheapest crafts") }}</h3></div>
-    <p class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。完成 1 個あたりの費用の安い順`, `Ranking for ${topic.day}: cheapest per finished item first`) : tr("今日のお題の順位。完成 1 個あたりの費用の安い順", "Today's ranking: cheapest per finished item first") }}</p>
+    <p v-if="score" class="daily-rank-what" data-daily-rank-score-what>{{ closed ? tr(`${topic.day} のお題の順位。スコア = 1 個あたりの費用 ÷ 完成率、小さいほど上`, `Ranking for ${topic.day}. Score = cost per item ÷ finish rate, lower is better`) : tr("今日のお題の順位。スコア = 1 個あたりの費用 ÷ 完成率、小さいほど上", "Today's ranking. Score = cost per item ÷ finish rate, lower is better") }}</p>
+    <p v-else class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。完成 1 個あたりの費用の安い順`, `Ranking for ${topic.day}: cheapest per finished item first`) : tr("今日のお題の順位。完成 1 個あたりの費用の安い順", "Today's ranking: cheapest per finished item first") }}</p>
     <template v-if="rows.length">
-      <p class="daily-cols" aria-hidden="true"><span class="flex-1">{{ tr("名前", "Name") }}</span><span class="w-12">{{ tr("時間", "Time") }}</span><span class="w-10">{{ tr("完成率", "Done") }}</span><span class="w-16" :title="tr('完成 1 個あたりの費用', 'Cost per finished item')">{{ tr("1 個あたり", "Per item") }}</span></p>
+      <p class="daily-cols" aria-hidden="true"><span class="flex-1">{{ tr("名前", "Name") }}</span><span v-if="showTime" class="w-12">{{ tr("時間", "Time") }}</span><span class="w-10">{{ tr("完成率", "Done") }}</span><span class="w-16" :title="tr('完成 1 個あたりの費用', 'Cost per finished item')">{{ tr("1 個あたり", "Per item") }}</span><span v-if="score" class="w-14" :title="tr('1 個あたりの費用 ÷ 完成率。小さいほど上', 'Cost per item ÷ finish rate. Lower is better')">{{ tr("スコア", "Score") }}</span></p>
       <ol>
         <li v-for="(r, i) in rows" :key="r.name" class="daily-rank-row" :class="r.me ? 'me' : ''">
           <component :is="canOpen(r.me) ? 'button' : 'div'" :type="canOpen(r.me) ? 'button' : undefined" class="daily-rank-in" :class="canOpen(r.me) ? 'link' : ''" :disabled="canOpen(r.me) && !!busy" :data-daily-rank-open="canOpen(r.me) ? r.name : undefined"
-            :title="canOpen(r.me) ? tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`) : undefined" @click="canOpen(r.me) && press(r.name)">
+            :title="canOpen(r.me) ? tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`) : undefined" @click="canOpen(r.me) && press(r.name, r.me)">
             <span class="daily-place">{{ i + 1 }}</span>
             <DailyName class="flex-1" :name="r.name" />
-            <span class="daily-num w-12">{{ mins(r.ms) }}</span>
-            <span class="daily-num w-10">{{ r.rate }}%</span>
-            <b class="daily-num daily-points w-16">{{ busy === r.name ? tr("開いている", "Opening") : `${r.cost} ${tr("神", "div")}` }}</b>
+            <span v-if="showTime" class="daily-num w-12" :class="{ 'daily-veiled': veiled }">{{ num(mins(r.ms), tr("00 分", "00m")) }}</span>
+            <span class="daily-num w-10" :class="{ 'daily-veiled': veiled }">{{ num(`${r.rate}%`, "00%") }}</span>
+            <component :is="score ? 'span' : 'b'" class="daily-num w-16" :class="[score ? '' : 'daily-points', { 'daily-veiled': veiled }]">{{ busy === r.name ? tr("開いている", "Opening") : num(`${r.cost} ${tr("神", "div")}`, `000.0 ${tr("神", "div")}`) }}</component>
+            <b v-if="score" class="daily-num daily-points w-14" data-daily-rank-score :class="{ 'daily-veiled': veiled }">{{ num(String(scoreOf(r.cost, r.rate) ?? "—"), "000.0") }}</b>
           </component>
         </li>
       </ol>

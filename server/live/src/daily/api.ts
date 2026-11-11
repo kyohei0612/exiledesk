@@ -4,6 +4,7 @@
  * お題は 16:00 の台本 (scripts/daily-roll.mjs → POST /daily/topic) が書く。台本が回らなかった日は、ここで週の予定 (daily_plan) からそのまま出す (D-84 の ③)
  */
 import { authNick, hasBadWord, ipHash } from "./nick";
+import { byScore, rankOrderSql } from "../../../../src/views/daily/daily-score";
 import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
 /** 1 日の順位に返す人数 */
@@ -57,9 +58,9 @@ export async function settleFromPlan(db: D1Database, upTo: number, prices: strin
   }
 }
 
-/** 解決の順位 (D-50): 解決だけ・検算で外れた物は除く・費用の安い順・同じなら先に出した人 */
-const RANK_SQL = `SELECT n.name, t.cost, t.rate, t.submitted_at - t.started_at AS ms FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id
-  WHERE t.topic_id = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0) ORDER BY t.cost, t.submitted_at LIMIT ?`;
+/** 解決の順位 (D-50): 解決だけ・検算で外れた物は除く・費用の安い順 (D-02b の日からはスコアの小さい順、並べは daily-score.ts の 1 か所)・同じなら先に出した人 */
+const rankSql = (topicId: string): string => `SELECT n.name, t.cost, t.rate, t.submitted_at - t.started_at AS ms FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id
+  WHERE t.topic_id = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0) ORDER BY ${rankOrderSql(byScore(topicId))} LIMIT ?`;
 
 function topicOut(t: TopicRow, tries: number, closed: boolean): Record<string, unknown> {
   const aims = JSON.parse(t.aims) as Aim[], no = noOfId(t.id)!;
@@ -88,7 +89,7 @@ export async function dailyJson(db: D1Database, now: number, prices: string | nu
   };
   const week = Array.from({ length: 7 }, (_, i) => ({ id: idOf(monday + i), wd: i, md: dayName(monday + i).slice(5).replace("-", "/"), today: monday + i === today, t: monday + i <= today ? out(monday + i) : null }));
   const ranks: Record<string, unknown[]> = {};
-  for (const t of topics) ranks[t.id] = (await db.prepare(RANK_SQL).bind(t.id, RANK_TOP).all()).results;
+  for (const t of topics) ranks[t.id] = (await db.prepare(rankSql(t.id)).bind(t.id, RANK_TOP).all()).results;
   const yesterday = ranks[idOf(today - 1)]?.slice(0, 3) ?? [];
   const names = [...new Set(Object.values(ranks).flat().map((r) => (r as { name: string }).name))];
   return { now, today: idOf(today), yesterday: idOf(today - 1), week, yesterdayTopic: out(today - 1), ranks, yesterdayTop: yesterday, titles: await titlesOf(db, names) };
