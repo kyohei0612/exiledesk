@@ -306,6 +306,36 @@
    "physical"
   ],
   "TwoHand_Maces/PerfectEssence_Strength": [],
+  "Wands_chaos/Desecrated_IncreasedCastSpeed": [
+   "caster",
+   "mana",
+   "speed",
+   "kurgal_mod"
+  ],
+  "Wands_cold/Desecrated_IncreasedCastSpeed": [
+   "caster",
+   "mana",
+   "speed",
+   "kurgal_mod"
+  ],
+  "Wands_fire/Desecrated_IncreasedCastSpeed": [
+   "caster",
+   "mana",
+   "speed",
+   "kurgal_mod"
+  ],
+  "Wands_lightning/Desecrated_IncreasedCastSpeed": [
+   "caster",
+   "mana",
+   "speed",
+   "kurgal_mod"
+  ],
+  "Wands_physical/Desecrated_IncreasedCastSpeed": [
+   "caster",
+   "mana",
+   "speed",
+   "kurgal_mod"
+  ],
   "Wands/Desecrated_IncreasedCastSpeed": [
    "caster",
    "mana",
