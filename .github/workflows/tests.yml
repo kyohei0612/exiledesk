@@ -4,11 +4,10 @@ name: Tests
 # main への push ごとに、画面側のテスト (pnpm test = vitest、tests/) と Rust のテスト (cargo test) を走らせる。
 # 落ちると GitHub から push した人にメールが届く。Rust のテストは時間がかかるのでリリースは待たない (こちらだけで回す)。
 
+# 2026-11-12 push ごとの自動の回しをやめた (オーナー「最終チェック長がやってる気がするわ修正追加チェックのモンキー　なら消していいんじゃね」)。
+# 直近 300 回で通った回が 0 のまま誰も見ておらず、出す前の守りは最終チェック長のモンキー・エンジンの控え (G-42)・見張り (G-40) が持つ。
+# 回したい時は GitHub の画面から手で (workflow_dispatch)。テストのファイル (tests/) は残す (エンジンの控え G-42 が使う)。
 on:
-  push:
-    branches: [main]
-    # 動画 (video/、Python) だけの commit では回さない
-    paths-ignore: ["video/**"]
   workflow_dispatch: {}
 
 # 前の実行を取り消さない (取り消すと初回の Rust のキャッシュ作りが途中で止まり、毎回ゼロから作り直すことになる)
