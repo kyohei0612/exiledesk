@@ -8,7 +8,7 @@
  *   __simMonkey.addable()                              手を足せる箱 [{ id, out, needAim, rarity }] (rarity = その箱のアイテム (見本) のレアリティ) (needAim = 当たりの MOD が無い当たりの箱、先に MOD が要る)
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
- *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
+ *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る。opt.holdNext = 予見のハズレ箱で持つ (S-39 ⑧) → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
  *   __simMonkey.hitChoices(id, key, omens?)            窓の「当たりの箱にする MOD」の候補 [{ modId, tier, label }]。add の opt.hitAims = [modId…] でチェック (画面と同じ: [] = 狙い無し、当たるまでなら確定しない (problem「狙う MOD を選んで」、10-25 オーナー)、渡さないと付きうる狙い全部)
  *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, raw, preRaw, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
  *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
@@ -117,8 +117,11 @@ export function installSimMonkey(): () => void {
       if (!d || !it || !t.doc.value.boxes[id]) return { ok: false, problem: "箱が無い・データが無い" };
       if (needAimOf(t.doc.value, id, smp?.note)) return { ok: false, problem: "当たりの MOD が無い当たりの箱 (先に MOD を選ぶ)" };
       // 「当たりの箱にする MOD」のチェック (opt.hitAims = modId の並び、[] = 狙い無し)。渡さない時は前からの既定 (付きうる狙い全部)
-      const { hand: h, kind, aims: hitAims, preCat, only, problem } = planPick(d, t.doc.value, id, it, key, omens, opt, t.goals.value);
+      // 予見のハズレ箱で「持つ」(S-39 ⑧、手の窓の 打つ / 持つ と同じ印。opt.held は持ったカレンシーの名前に使われているので別の名前)
+      const { holdNext, ...rest } = opt as Opt & { holdNext?: boolean };
+      const { hand: h0, kind, aims: hitAims, preCat, only, problem } = planPick(d, t.doc.value, id, it, key, omens, rest, t.goals.value);
       if (problem) return { ok: false, problem };
+      const h = holdNext ? { ...h0, held: true as const } : h0;
       let at = id;
       // 画面の手の決定 (SimTreePage) と同じく、ヒネコラで持つ削減の枠の既定 (打つ / 打たない、S-39 ②b) も入れる
       t.edit((x) => { at = holdLinks(() => applyPick(x, id, h, kind, hitAims, preCat, only)); fillHeldDefaults(x, id); });

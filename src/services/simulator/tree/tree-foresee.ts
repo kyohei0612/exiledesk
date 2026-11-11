@@ -9,15 +9,37 @@ import type { TreeDoc } from "./tree-model";
 import { bandsOn } from "./tree-band";
 import { isWhittleHand, lvPart } from "./tree-whittle";
 import { tr } from "../../../i18n/lang";
+import { flag, type Flag } from "../../../web/release-flags";
 // MOD が付かない・消えない・入れ替わらない手か (神・ヒネコラなど) はエンジンの keepsMods (sim-engine、11-07 オーナー「ゲームシステムはジンだけ」。前はここに同じ打ち方の写し)
 
 /** 本番でも出す (11-10 オーナー「おｋ」。前は開発版だけ = DEV_BUILD。棚のヒネコラ・予見したアイテムの棚の絞り、紫の枠、ハズレのまとめがこれを見る) */
 export const FORESEE_ON = true;
 
-/** ヒネコラの結果の箱 (予見したアイテム。ここの手は「持つ」) */
+/** 予見の枠で持つ手を複数 (S-39 ⑧、11-11 オーナー「おｋ」)。スイッチの表はデザインの持ち場なので、名前が無い間は閉じる */
+const multiOn = (): boolean => { try { return flag("heldMulti" as Flag); } catch { return false; } };
+
+/** 持った手のハズレ箱 (どれも出なかった、まとめ先の先頭) か */
+export function missHubAt(doc: TreeDoc, id: string): boolean {
+  const b = doc.boxes[id];
+  return !!b?.seen && !b.merged && !!b.parent && holdsAt(doc, b.parent);
+}
+
+/** ヒネコラの結果の箱 (予見したアイテム。ここの手は「持つ」)。S-39 ⑧: ハズレ箱に「持つ」印の手 (held) を置いた時もその手は持つ (もう 1 つ予見で見る) */
 export function holdsAt(doc: TreeDoc, id: string): boolean {
   const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
-  return FORESEE_ON && !!b && p?.hand?.currency === "hinekora";
+  if (!FORESEE_ON || !b) return false;
+  if (p?.hand?.currency === "hinekora") return true;
+  return !!b.hand?.held && multiOn() && missHubAt(doc, id);
+}
+
+/** ハズレ箱に次の持つ手を置けるか (S-39 ⑧、手の窓の「打つ / 持つ」の選び) */
+export const canHoldMore = (doc: TreeDoc, id: string): boolean => FORESEE_ON && multiOn() && missHubAt(doc, id);
+
+/** 予見の鎖の上で持った手 (この箱の親から予見の箱まで、S-39 ⑧)。同じカレンシーを持たせないため */
+function heldAbove(doc: TreeDoc, id: string): string[] {
+  const out: string[] = [];
+  for (let x = doc.boxes[id]; x?.seen && x.parent && holdsAt(doc, x.parent); x = doc.boxes[x.parent]) { const h = doc.boxes[x.parent]!.hand; if (h) out.push(h.currency); }
+  return out;
 }
 
 /** 予見で見えた結果の箱 (ヒネコラの結果の箱に持った手の結果) */
@@ -58,8 +80,9 @@ export const seenTo = (doc: TreeDoc, id: string): string => { const b = doc.boxe
 
 /** ハズレ箱で、予見で見た手と同じカレンシーを持った時の理由 (予見の結果は決まっているので、使っても見た結果と同じ。木では別の乱数になるので持たせない) */
 export function foreseeBlock(doc: TreeDoc, id: string, key: string): string | null {
-  const b = doc.boxes[id], h = b?.seen && b.parent ? doc.boxes[b.parent]?.hand : null;
-  return h?.currency === key ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシー・神のオーブ・↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency, a Divine Orb, or return to before Hinekora") : null;
+  // 持つ手を複数 (S-39 ⑧) の時は、予見の鎖の上で持った手のどれとも同じなら止める (前の手のハズレの人は、その手を予見で見ている)
+  const b = doc.boxes[id], seen = multiOn() ? heldAbove(doc, id) : [b?.seen && b.parent ? doc.boxes[b.parent]?.hand?.currency : undefined];
+  return seen.includes(key) ? tr("予見で見た手と同じ (同じ結果になる)。別のカレンシー・神のオーブ・↩ ヒネコラの前から選ぶ", "Same as the foreseen craft (same result). Pick another currency, a Divine Orb, or return to before Hinekora") : null;
 }
 
 /** 持つ手の窓の「結果の箱」の名前: 予見の箱なら 当たりの名前 + 「ハズレ (打たない)」(当たり以外は 1 つのハズレ箱にまとまる、前は 狙いが消えた + 外れ + 当たり と出た)。予見の箱でなければ null */
