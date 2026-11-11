@@ -28,7 +28,9 @@ import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
 import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
 import { DEV_RUN, DEV_RUN0, devState, devTry } from "./daily-dev-states";
-import { flag } from "../../web/release-flags";
+import { DEV_BUILD, flag } from "../../web/release-flags";
+/** 新しい始め方 (白から確定フラクチャー + フラクチャー無し、D-03) を出す日か。開発版は今日のお題でも出す (11-11 オーナー「開発版で触って挙動確認するわ。今日のデイリー出してくれ開発に」)、本番は FOUR_ONLY_FROM から */
+const fourOnlyHere = (id: string): boolean => DEV_BUILD || fourOnlyOn(id);
 import "./daily-play.css";
 import { getTry, leftMs, SOLVE_RATE, startTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
@@ -272,7 +274,7 @@ const REFUSED: Record<StartError, () => string> = {
 
     <DailySubmitAsk v-if="asking" :id="topic.id" :open="!!asking" :cost="asking.cost" :rate="asking.rate" :shown="doneShown" :dev="!!dev" @close="asking = null" @done="submitted" />
     <p v-if="devNoAims" class="daily-note">{{ tr("開発の見本: このお題の狙いが見えない (締めた日のお題か、この端末で始めたお題の id を q に)。", "Dev sample: this topic's targets aren't visible (use a closed day's id or one you started here).") }}</p>
-    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyOn(topic.id)" @pick="pick" />
+    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyHere(topic.id)" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
