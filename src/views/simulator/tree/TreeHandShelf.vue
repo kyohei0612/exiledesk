@@ -414,9 +414,9 @@ function ok(): void {
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
-      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
+      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70 min-[48rem]:truncate" :title="boxesLine">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
-      <div class="flex flex-wrap items-center gap-1.5">
+      <div class="flex min-h-[1lh] flex-wrap items-center gap-1.5 text-[11px]"><!-- ☑ を押すたびにこの行が出たり消えたりして窓が上下に揺れたので、1 行ぶんの高さをいつも取る (11-12 オーナー「絶対この2行のせいだろ」) -->
         <span v-if="problem && !divOn" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
         <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${boxesEn(gone)} below (Undo restores)`) }}</span>
       </div>
