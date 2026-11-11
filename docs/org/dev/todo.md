@@ -13,7 +13,7 @@
 | ジン部長 | — (jin-m43a は fbd8bb34d の後 11-05 にアーカイブ) | 仕事が来たらブラックが立てる |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_cf31d7ed (11 sim-lead11、11-11 夜に 10 = local_b764b0ad から交代、引き継ぎ = 共有ノート sim-lead10-handover.md) | 今: 待機 (開発版だけ = 腐食のお告げを棚から外す treeNoPutrefaction・並び順 treeDoneLeft、本番は「出して」待ち) |
+| シミュ部長 | local_9febc88c (12 sim-lead12、11-12 未明に 11 = local_cf31d7ed から交代、引き継ぎ = 共有ノート sim-lead11-handover.md) | 今: 待機 (開発版だけ = treeNoPutrefaction・treeDoneLeft・treeOwnHeight・noTidyBtn・boxFixed、本番は「出して」待ち。オーナーの返事待ち = 木 0A2NSJMN の見た目の候補 a・b・c・ピラミッド形・左右対称) |
 | デザイン部長 | — (design-logo は f69c887e8 の後 11-03 にアーカイブ) | 仕事が来たらブラックが立てる |
 | エミュ部長 | — (emu-back は 01171d809 の後 11-03 にアーカイブ) | 仕事が来たらブラックが立てる |
 | モンキー隊長 | — (10-31 にアーカイブ、モンキーは最終チェック長が回す) | 待機 |
