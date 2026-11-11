@@ -94,7 +94,7 @@ if (only !== "C") {
       const ptr = ln.match(/前の(?:形|決め)[^。]{0,90}(?:記録の紙|docs\/spec\/history\/)/g) || [];
       const txt = add.filter((s) => !ptr.some((p) => p.includes(s.slice(0, 12)))).join(" ");
       const why = [];
-      const m1 = txt.match(/(?<![名手直目])前は[^。]{0,24}|以下は[^。]{0,24}(?:形|見方)|前の決め[^。]{0,16}|前の形[^。]{0,16}/);
+      const m1 = txt.match(/前は[^。]{0,24}|以下は[^。]{0,24}(?:形|見方)|前の決め[^。]{0,16}|前の形[^。]{0,16}/);
       if (m1 && !/前の形は記録の紙|経緯は記録の紙/.test(m1[0])) why.push(`「${m1[0].slice(0, 22)}…」`);
       if (!retracted(ln) && /[はをに]撤回(?!し)|撤回 \(\d|\(撤回/.test(txt)) why.push("撤回の話 (撤回は撤回の項目の 1 行に)");
       if (quotes(ln) - quotes(before) >= 2 || (!before && quotes(ln) >= 2)) why.push("オーナーの言葉が 2 つ以上 (出どころは 1 つ)");

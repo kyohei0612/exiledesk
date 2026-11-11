@@ -155,7 +155,8 @@ const branchText = computed(() => { const r = props.box.parent ? t.doc.value.box
 const quiet = computed(() => !!props.viewOnly);
 /** 箱の地を押した (ボタン以外) = 引っ張る用。押せない時 (一望・手) は Vue Flow に任せる (画面が動く / 押した判定) */
 function down(e: PointerEvent): void {
-  if (quiet.value || (e.target as HTMLElement).closest("button")) return;
+  // 箱は並べ方が決めた位置に固定: つかんで動かさない (S-140、スイッチ boxFixed。押したまま動かすと画面の送りになる)
+  if (quiet.value || flag("boxFixed") || (e.target as HTMLElement).closest("button")) return;
   emit("drag", e);
 }
 const k = computed(() => Math.max(1, props.inv ?? 1));
@@ -209,7 +210,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
   <!-- 包み = 置き場だけ。中に枠 (data-tree-box) と、その下の枠の外に削減の帯 (S-65c ⑫、11-11 オーナー追い 8「線出すならこいつら枠の下がいいんじゃね」)。Vue Flow の箱の高さは帯まで -->
   <div data-tree-box-wrap :class="x === undefined ? 'relative' : 'absolute'" :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px` }">
   <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-tree-swamp="swamp ? '' : undefined" :data-sample-note="sampled?.note || undefined" class="relative select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
-    :class="['flex flex-col', viewOnly ? 'cursor-pointer' : 'cursor-grab', gray ? 'opacity-45 grayscale' : '', guide ? 'ring-2 ring-amber-300 !border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '', settled ? 'ring-1 ring-amber-200/35' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !hold && !seenOut ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
+    :class="['flex flex-col', viewOnly ? 'cursor-pointer' : flag('boxFixed') ? 'cursor-default' : 'cursor-grab', gray ? 'opacity-45 grayscale' : '', guide ? 'ring-2 ring-amber-300 !border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '', settled ? 'ring-1 ring-amber-200/35' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !hold && !seenOut ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
     :style="{ width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon, ...(swamp ? { outline: `${3 * swamp}px solid #38bdf8` } : {}) }" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->

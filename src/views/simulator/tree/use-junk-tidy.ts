@@ -7,6 +7,7 @@ import { guideOn, isGrayBox, tidyOn, tidyStep, unsetBoxes } from "../../../servi
 import { NOTICE_KINDS, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tidyJunk } from "./tree-hand-plan";
+import { flag } from "../../../web/release-flags";
 
 export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) => void, go: (id: string) => void, issues: Ref<CheckIssue[] | null>, passed: Ref<boolean>) {
   const on = computed(() => tidyOn());
@@ -14,7 +15,8 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   const unset = computed(() => (on.value ? unsetBoxes(doc.value) : []));
   /** 「組むに戻る」を押している間は案内を止める。木は何も変えない (一方通行にしない、S-198) */
   const paused = ref(false);
-  const step = computed(() => (paused.value && raw.value === "unset" ? "tidy" : raw.value));
+  // 整理は木を変えるたびに自動なので、案内を止めた後も「ハズレ整理」のボタンは出さず「未設定 n つ」のまま (S-192、スイッチ noTidyBtn)。案内へは完成の押し直し・最終チェックで戻る
+  const step = computed(() => (paused.value && raw.value === "unset" && !flag("noTidyBtn") ? "tidy" : raw.value));
   const guide = computed(() => guideOn(doc.value) && !paused.value && !passed.value);
   const busy = ref(false);
   /** スタートだけの木は整理する物が無い (押せなくする、S-192) */
@@ -26,7 +28,8 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   /** 帯の数も光る箱と同じ物差し (S-89b) */
   const shownIssues = computed(() => (guide.value ? (issues.value ?? []).filter((x) => targets.value.has(x.boxId)) : issues.value));
   /** 完成を押し直したら案内へ戻る */
-  watch(() => Object.values(doc.value.boxes).filter((b) => b.doneNow).length, (n, was) => { if (n > was) paused.value = false; });
+  // noTidyBtn: 完成の箱の数で見る (前は押した印 doneNow の数で、完成を外して押し直しても印が残って数が増えず戻らなかった。戻る道は名残の「ハズレ整理」だけだった)
+  watch(() => Object.values(doc.value.boxes).filter((b) => (flag("noTidyBtn") ? b.done === "main" : b.doneNow)).length, (n, was) => { if (n > was) paused.value = false; });
   /** 最終チェックが未設定で止めた時の続き。未設定が全部決まったら押し直さずに走らせる (S-190c)。「組むに戻る」・合格で捨てる */
   let resume: (() => void) | null = null;
   watch(step, (st) => { if (st === "check" && resume && !busy.value) { const f = resume; resume = null; f(); } });
