@@ -101,11 +101,13 @@ describe("指名で付ける (force:)", () => {
     expect(p2.applied).toBe(true);
     expect(p2.item.rarity).toBe("rare");
     expect(A({ ...white, rarity: "unique" }, forceKey(idOf("Rings", /IncreasedLife$/), "T2", "n")).reason).toMatch(/ユニーク/);
-    // 普通の MOD は冒涜で付かない
+    // E-62: 普通の MOD も冒涜で付けられる (骨の発現には普通の MOD も出る。2026-10-18 に「冒涜の MOD だけ」をやめた)
     const life = idOf("Rings", /IncreasedLife$/);
     let it = A(white, forceKey(life, "T2", "n")).item;
     it = A(it, "regal").item;
-    expect(A(it, forceKey(life, "T2", "d")).reason).toMatch(/冒涜の MOD だけ/);
+    const asDesecrated = A(it, forceKey(life, "T2", "d"));
+    expect(asDesecrated.applied).toBe(true);
+    expect(allMods(asDesecrated.item).find((m) => m.modId === life)?.desecrated).toBe(true);
     const f = A(it, forceKey(life, "T2", "f"));
     expect(f.applied).toBe(true);
     expect(allMods(f.item).filter((m) => m.modId === life)).toHaveLength(1);

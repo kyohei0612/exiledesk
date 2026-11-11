@@ -30,7 +30,8 @@ describe("ベース → エンジンの行 (STR / DEX / INT で MOD の置き場
 describe("重み", () => {
   it("普通の MOD に仮置きの重み 1 が残っていない (weight-overrides.ts が埋める)", () => {
     const left: string[] = [];
-    for (const m of data.mods.values()) if (m.source === "normal" && m.tiers.some((t) => t.weight === 1)) left.push(m.id);
+    // E-13: グラスピングメイルの行の指輪の MOD (11-06 に足した) は、出どころ (poe2db・CoE) の重みが 1 なので仮置きではない
+    for (const m of data.mods.values()) if (m.source === "normal" && !m.id.startsWith("Body_Armours_ring_str_dex_int/") && m.tiers.some((t) => t.weight === 1)) left.push(m.id);
     expect(left).toEqual([]);
   });
   it("弓のリーチの一番上の段 (65) は他の段と同じ 1000 (一部の段だけ仮置きだった)", () => {

@@ -36,19 +36,20 @@ describe("グラスピングメイルは指輪の MOD も付く", () => {
       expect(pre.has("IncreasedEvasionRating"), b).toBe(false); // CoE: 指輪の「+# to Evasion Rating」は出ない (spawn_weights の先頭の body_armour が 0)
     }
   });
-  it("鎧の行 + 指輪の行の和 (CoE の表と同じ形)", () => {
+  it("E-13: 鎧の行 + 指輪の行を全部持つ (11-06 から暗黙が足す創生の樹のタグの分 = スペル・ミニオン・呪いなども入る)", () => {
     for (const side of ["prefixes", "suffixes"] as const) {
       const g = families("Grasping Mail", side);
       const union = new Set([...families("Grand Regalia", side), ...families("Gold Ring", side)]);
       union.delete("IncreasedEvasionRating");
-      expect([...g].sort(), side).toEqual([...union].sort());
+      for (const f of union) expect(g.has(f), `${side} ${f}`).toBe(true);
+      expect(g.size, side).toBeGreaterThan(union.size);
     }
   });
   it("付く重みが 0 の段は無い (指輪の MOD がちゃんと出る)", () => {
     const it0 = freshItem(data, "Grasping Mail", 82);
     for (const id of [...it0.cls.pools.normal.prefixes, ...it0.cls.pools.normal.suffixes]) {
       const m = data.mods.get(id)!;
-      expect(m.tiers.some((t) => t.weight > 1), id).toBe(true);
+      expect(m.tiers.some((t) => t.weight > 0), id).toBe(true); // E-13: 重み 1 は仮置きではなく出どころの数 (poe2db・CoE)
     }
   });
   it("ほかのベースは変わらない: 同じ鎧の Grand Regalia に全ての元素耐性は無い、指輪の行に入るのは指輪だけ", () => {

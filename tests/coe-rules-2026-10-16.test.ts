@@ -135,7 +135,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(rawValue(12, 20)).toBe(10);
   });
 
-  it("15. 深淵のエッセンスは未発現の冒涜 MOD があれば打てて印に入れ替わり、発現済みだと打てない (2026-10-16 オーナーがゲームで確認)", async () => {
+  it("15. E-52: 深淵のエッセンスは未発現の冒涜 MOD があっても打てて、消せる MOD から等しく 1 つ消して消した側に印 (未発現を必ず選ぶのではない)。発現済みだと打てない (オーナーがゲームで確認 2026-10-16・11-06)", async () => {
     const { essenceShelf } = await import("../src/state/for-share/craft-stage-shelf");
     const { resolveEssence, ABYSS_ESSENCE_SPEC } = await import("../src/services/craft-stage/spec/essence-specs");
     const it = rareWhere((x) => room(x, "suffix"));
@@ -145,8 +145,11 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(allMods(bone.item).some((m) => m.desecrated)).toBe(true);
     const ess = applyCurrency(data, bone.item, key!, mulberry32(3));
     expect(ess.applied).toBe(true);
-    expect(ess.removed.map((m) => m.modId)).toEqual(["unrevealed"]);
-    expect(ess.added[0]!.side).toBe("suffix");
+    expect(ess.removed).toHaveLength(1);
+    expect(ess.added[0]!.side).toBe(ess.removed[0]!.side);
+    // 種を替えると、未発現が消える回も、ほかの MOD が消える回もある (等しく 1 つ)
+    const gone = new Set(Array.from({ length: 80 }, (_, s) => applyCurrency(data, bone.item, key!, mulberry32(s + 1)).removed?.[0]?.modId === "unrevealed"));
+    expect(gone.size).toBe(2);
     const revealed = applyCurrency(data, bone.item, "reveal:1", mulberry32(4)).item;
     expect(allMods(revealed).some((m) => m.desecrated && !m.unrevealed)).toBe(true);
     expect(applyCurrency(data, revealed, key!, mulberry32(3)).applied).toBe(false);

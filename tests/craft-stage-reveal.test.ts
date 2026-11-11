@@ -72,7 +72,7 @@ describe("深淵の印 (クラフトステージ)", async () => {
     for (const [k, o] of [["exalt", "OmenofSinistralExaltation"], ["exalt", "OmenofDextralExaltation"], ["exalt", "OmenofDextralExaltation"], ["exalt", "OmenofDextralExaltation"]] as const) it = A(it, k, [o]).item as typeof it;
     return it;
   }
-  it("結晶化 + 深淵のエッセンスで、消した側に印 → 骨は印を置き換える (段の下限 = アイテムレベル 82 × 0.4 = 32、CoE の式)", () => {
+  it("E-65: 結晶化 + 深淵のエッセンスで、消した側に印 → 骨は印を置き換える (段の下限 = 消された元の MOD のレベル × 0.4 の四捨五入 + 1)", () => {
     const it = rareBoots();
     const e = A(it, ABYSS, ["OmenofSinistralCrystallisation"]);
     expect(e.applied).toBe(true);
@@ -83,7 +83,8 @@ describe("深淵の印 (クラフトステージ)", async () => {
     expect(b.applied).toBe(true);
     expect(b.removed.some((m) => m.abyssMark)).toBe(true);
     const hidden = b.item.prefixes.find((m) => m.unrevealed)!;
-    expect(hidden.unrevealed!.floor).toBe(32);
+    // E-65: 下限はアイテムレベルでなく、深淵のエッセンスで消された元の MOD のレベルから
+    expect(hidden.unrevealed!.floor).toBe(Math.round(e.removed[0]!.modLevel * 0.4) + 1);
     expect(b.item.suffixes.length).toBe(3);
   });
   it("未発現の冒涜 MOD があれば深淵のエッセンスを打てる (印がそれに入れ替わる。2026-10-16 オーナーがゲームで確認)", () => {
