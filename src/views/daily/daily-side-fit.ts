@@ -23,7 +23,16 @@ export function fitDailySide(side: HTMLElement): () => void {
     const acts = side.querySelector<HTMLElement>(":scope > [data-daily-acts]"), bar = side.querySelector<HTMLElement>("[data-tree-tools] [role='toolbar']");
     const sr = side.getBoundingClientRect(), cr = card.getBoundingClientRect();
     // カードの外で要る高さ = カードより上 (閉じる・余白) + 提出の段 + 倍率の道具 + 間と下の余白
-    const fixed = (cr.top - sr.top) + (acts ? acts.offsetHeight + GAP + 2 : 0) + (bar ? Math.max(bar.offsetHeight, bar.scrollHeight + 2) + GAP : 0) + GAP + 6; // 道具は潰れる前の高さで (潰れた後の高さを測ると足りないまま落ち着く)
+    // 並びは上から カード → 提出の段 → 下の組 (その中の一番下が倍率の道具)。間・余白は決め打ちせず今の位置から測る
+    const low = bar?.closest<HTMLElement>("[data-tree-side] > *") ?? null;
+    const lr = low?.getBoundingClientRect();
+    const mid = lr ? lr.top - cr.bottom : acts ? acts.offsetHeight + GAP : 0;
+    // 下の組の中で道具の組 (ミニマップ + 道具) より上にある物 (レシピの段) の高さと間。ミニマップの高さと下へ寄せる空きは数えない
+    let above = 0;
+    for (const k of low?.children ?? []) { if (k.contains(bar)) break; above += (k as HTMLElement).offsetHeight + GAP; }
+    // 道具は潰れる前の高さで (潰れた後の高さを測ると足りないまま落ち着く)
+    const tools = bar ? above + Math.max(bar.offsetHeight, bar.scrollHeight + 2) : 0;
+    const fixed = (cr.top - sr.top) + mid + tools + GAP;
     const natural = cr.height / zNow;
     if (natural <= 0) return;
     const z = Math.max(Z_MIN, Math.min(zMax, (sr.height - fixed) / natural));
