@@ -128,7 +128,7 @@ export function floorAims(data: PatchData, base: string, ilvl: number, aims: rea
 /**
  * 完全なエッセンスを必ず 1 つ (D-04b、11-11 オーナー「必ずエッセンス入れるようにしてあげよーか」「変えるのはつく確率が高い方やね」)。
  * そのベースに付くパーフェクトエッセンス (Perfect Essence of …、ヒステリー・アビス・合金などの特別な物は数えない) の MOD が狙いに無ければ、
- * エッセンスと同じ側 (プレ / サフィ) の狙いのうち付く確率 (その側の普通の MOD の重みの中の割合) が一番高い物をエッセンスの MOD に替える。
+ * 同じ系統の狙いがあればそれを (他は替えない)、無ければエッセンスと同じ側 (プレ / サフィ) の狙いのうち付く確率 (その側の普通の MOD の重みの中の割合) が一番高い物をエッセンスの MOD に替える。
  * 同じ確率なら忍者の装備 (samples の同じ部位) で持っている人が少ない方を替える。付くエッセンスが複数なら、替える狙いの確率が一番高い物 (同じならエンジンの並び順)。
  * 替えると付かない組 (goalBlock) は使わない。付くパーフェクトエッセンスが無い品・もう入っている品はそのまま。投稿 (箱) には使わない
  */
@@ -137,8 +137,7 @@ export function essenceSwap(data: PatchData, base: string, ilvl: number, aims: r
   try { rows = modListFor(data, freshItem(data, base, ilvl)); } catch { return { aims: [...aims], swap: null }; }
   const perfectTier = (r: ListRow) => r.tiers.find((t) => t.essence?.en.startsWith("Perfect Essence"));
   const ess = rows.filter((r) => r.group === "perfect_essence" && perfectTier(r));
-  // もう入っている = 狙いがエッセンスの MOD そのもの。同じ系統の普通の MOD (近接スキルのレベルと戦闘のエッセンスのアタックスキルのレベル等) は別の MOD なので数えない
-  // (並べると系統がぶつかるので、その組は下の goalBlock で外れる)
+  // もう入っている = 狙いがエッセンスの MOD そのもの。同じ系統の普通の MOD は入っている扱いにせず、下でその狙いを先にエッセンスへ替える
   const essRows = new Set(ess);
   if (!ess.length || aims.some((a) => { const r = rowOfAim(rows, a); return !!r && essRows.has(r); })) return { aims: [...aims], swap: null };
   const norm = rows.filter((r) => r.group === "normal");
@@ -146,16 +145,26 @@ export function essenceSwap(data: PatchData, base: string, ilvl: number, aims: r
   const cls = classOfBase(base);
   const holders = (r: ListRow) => samples.filter((s) => classOfBase(s.base) === cls && s.mods.some((m) => m.name === nameOf(r))).length;
   const texts = aimTextsOf(data, base, ilvl);
-  let best: { i: number; pct: number; held: number; to: GenAim; essence: string } | null = null;
+  // 同じ MOD (同じ系統) が狙いにあれば、他を替えずにその狙いをエッセンスの MOD に替える (確率の高い狙いを替えるのは同じ系統が無い時だけ、
+  // 11-11 オーナー「同じMODなら普通にエッセンスに変えたらええんやないかそもそもやが」)。順は 同じ系統 → 確率の高い方 → 持つ人が少ない方
+  // ただし段 (数字) を下げる替え方はしない: 同じ系統でもエッセンスの値が狙いより小さければ替えない (11-11 オーナー「優先はMODのティアね同じ以下ならエッセンスで代用ってだけで、減らしてOKじゃないからな」)。
+  // 値は字の数字の合計で比べる (同じ系統なら字の形が同じなので比べられる。近接スキルのレベル +4 とアタックスキルのレベル +2 は 4 > 2 で替えない)
+  const sameFam = (r: ListRow, e: ListRow) => !!r.family && r.family === e.family;
+  const valOf = (s: string) => (s.match(/\d+(?:\.\d+)?/g) ?? []).reduce((n, x) => n + Number(x), 0);
+  let best: { i: number; same: boolean; pct: number; held: number; to: GenAim; essence: string } | null = null;
   for (const e of ess) {
     const t = perfectTier(e)!, modId = t.modId ?? e.id;
     const to: GenAim = { modId, tier: t.tier, ...(texts(modId, t.tier) ?? { ja: t.text, en: t.text }) };
-    const cands = aims.map((a, i) => ({ i, r: rowOfAim(rows, a) })).filter((c) => c.r && c.r.group === "normal" && c.r.side === e.side)
-      .map((c) => ({ i: c.i, pct: c.r!.weight / sideTotal(c.r!.side), held: holders(c.r!) }))
+    const cands = aims.map((a, i) => ({ i, r: rowOfAim(rows, a) })).filter((c) => c.r && c.r.group === "normal" && (c.r.side === e.side || sameFam(c.r, e)))
+      // 同じ系統で値が下がる狙いは替えない (その狙いは残し、ほかの狙いを替える候補にもしない = 並べると系統がぶつかるので goalBlock でも外れる)
+      .filter((c) => !sameFam(c.r!, e) || valOf(to.en) >= valOf(aims[c.i]!.en))
+      // スキルのレベル系の狙いは T1 から一切動かさない (エッセンスでも替えない・例外なし、11-11 オーナー「レベルは妥協ないね」)
+      .filter((c) => !isSkillLevel(c.r!))
+      .map((c) => ({ i: c.i, same: sameFam(c.r!, e), pct: c.r!.weight / sideTotal(c.r!.side), held: holders(c.r!) }))
       .filter((c) => !goalBlock(data, base, ilvl, aims.filter((_, j) => j !== c.i).map((a) => ({ modId: a.modId, tier: a.tier })), { modId, tier: t.tier }))
-      .sort((x, y) => y.pct - x.pct || x.held - y.held);
+      .sort((x, y) => Number(y.same) - Number(x.same) || y.pct - x.pct || x.held - y.held);
     const c = cands[0];
-    if (c && (!best || c.pct > best.pct || (c.pct === best.pct && c.held < best.held))) best = { ...c, to, essence: t.essence!.ja };
+    if (c && (!best || (c.same && !best.same) || (c.same === best.same && (c.pct > best.pct || (c.pct === best.pct && c.held < best.held))))) best = { ...c, to, essence: t.essence!.ja };
   }
   if (!best) return { aims: [...aims], swap: null };
   const out = aims.map((a, i) => (i === best!.i ? best!.to : a));
