@@ -31,8 +31,8 @@ import { runTree } from "../../../services/simulator/tree/tree-run";
 import { blocksRun, checkTreeAsync } from "../../../services/simulator/tree/tree-check";
 import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { boxShape, sameShape } from "../../../services/simulator/tree/tree-box-shape";
-import { judgeOf } from "./tree-hand-plan";
-import { clearHand, setAim, setBack, setDone, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { judgeOf } from "./tree-hand-plan"; import { clearHandAt } from "./tree-clear-hand";
+import { setAim, setBack, setDone, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -197,8 +197,8 @@ export function installSimMonkey(): () => void {
       t.edit((d) => setBack(d, id, to));
       return { ok: (t.doc.value.boxes[id]?.back ?? null) === to };
     },
-    /** 箱の手と下の箱を消す (箱の窓の「手を消す」と同じ clearHand) と 1 つ戻す (Ctrl+Z と同じ) */
-    clearHand(id: string) { t.edit((d) => clearHand(d, id)); return { ok: !t.doc.value.boxes[id]?.hand }; },
+    /** 箱の手と下の箱を消す (箱の窓の「手を消す」と同じ clearHandAt) と 1 つ戻す (Ctrl+Z と同じ) */
+    clearHand(id: string) { t.edit((d) => clearHandAt(d, id)); return { ok: !t.doc.value.boxes[id]?.hand }; },
     undo() { t.undo(); return { ok: true }; },
     /** ハズレ整理 (S-193) と今のボタンの状態 */
     tidy() { t.edit(tidyJunk); return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value) }; },
@@ -276,7 +276,7 @@ export function installSimMonkey(): () => void {
       });
     },
     /** 箱の手を消す (手の窓の「この手を消す」と同じ。下の箱も消える) */
-    clear(id: string) { t.edit((x) => clearHand(x, id)); return !t.doc.value.boxes[id]?.hand; },
+    clear(id: string) { t.edit((x) => clearHandAt(x, id)); return !t.doc.value.boxes[id]?.hand; },
     /** 箱の id → 道の札 (S-106。台本が新旧で箱を同じ札で指す) */
     pathKeys(): Record<string, string> { return Object.fromEntries(pathKeysOf(t.doc.value)); },
     /** 保存の形の前提だけ (箱はスタートだけ) を開く = 完成形の設定まで済んだ白紙。画面で同じ道を組み直す台本の始まり */
