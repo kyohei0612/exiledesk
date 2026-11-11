@@ -50,7 +50,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
   (同梱データ + `extra-bases.json` + `weight-overrides.ts` + poe2db の直し `poe2db-pool-fixes.json`)。ベース名 → 行は `services/htc/bridge.ts` の `classOfBase`。
   画面で MOD を並べるのは `services/craft-stage/mod-list.ts` の `modListFor`。
 - **MOD の決まり (系統・重み・出やすさ)** … `services/mods/mod-rules.ts`。`m.family` を直接比べたり、段の重みを自分で足したりしない。
-- **確率の表** … `services/craft-stage/held-odds.ts` (棚の確率)・`aim-odds.ts` (次の手で狙う)・`route-race.ts` (スパムシミュレーターの 100 人)・`chaos-spam.ts` (運の順位)。打つ処理と同じ部品を使う。
+- **確率の表** … `services/craft-stage/held-odds.ts` (棚の確率)・`aim-odds.ts` (次の手で狙う)・`route-race.ts` (スパムシミュレーターの 100 人)・`services/emulator/emu-engine/chaos-spam.ts` (運の順位のまとめの式)。打つ処理と同じ部品を使う。
 - **ベースの一覧** … `services/items/base-catalog.ts` と `components/items/BaseCatalog.vue`。今のゲームに無いベースは `removed-bases.json` で外す。
 - **部位のまとまり** … `services/mods/item-classes.ts` (クライアントの ItemClasses。部位の名前を手で並べない)。
 - **ゲームの名前・文面** … poe2db (日本語・英語は同じページ)。食い違ったら poe2db に合わせる。自分で訳さない (今ある `src/i18n/*-client.json`・`currency-hover-*.json` は下の「データの出どころ」の記録どおり)。画面の言葉は `i18n/lang.ts` の `tr("日本語", "English")`、MOD の文は `modText`。
