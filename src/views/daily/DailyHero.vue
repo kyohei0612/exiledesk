@@ -72,6 +72,9 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>
+        <!-- スマホも提出の記録の行のすぐ下にシェア (PC と同じ並び、11-11 オーナー「シェアはやっぱこの画面だな」) -->
+        <p v-if="t?.submitted && t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`提出済み: 完成 1 個あたり ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Submitted: ${t.best.cost} div per finished item (${t.best.rate}% finished)`) }}</p>
+        <p v-else-if="t?.submitted && t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`順位に載らない記録: 完成率 ${t.last.rate}%`, `Not ranked: ${t.last.rate}% finished`) }}</p>
         <a v-if="share" data-daily-hero-share :href="share.web" target="_blank" rel="noopener" class="g-btn mt-2 self-start" @click="sendDailyShare($event, share, topic.id)">{{ tr("X でシェア", "Share on X") }}</a>
       </template>
       <template v-else>

@@ -3,15 +3,11 @@
   確かめ: 「これで提出しますか?」+ 完成 1 個あたりの費用・完成率 → 「提出する」で POST /daily/submit。結果: 完成 1 個あたりの費用・完成率・今の順位 (D-02、1 人でも完成すれば順位に載る) → 「順位を見る」でお題のページへ
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { rankOf, SOLVE_RATE, submitTry } from "./daily-api";
 import { goDaily } from "./daily-open";
-import { dailyShare, sendDailyShare, type DailyShare } from "./daily-share";
-import { DEV_BUILD } from "../../web/release-flags";
-/** X シェア (D-38) は見た目の OK まで開発版だけ (出す時はデザイン部長にスイッチ dailyShare を足してもらい、ここを flag に替える) */
-const SHARE_ON = DEV_BUILD;
 
 /** cost = null は完成 0 人 (費用が無い = —、D-35d)。サーバーには 0 で送り、完成率 0% なので順位には載らない */
 const props = defineProps<{ id: string; open: boolean; cost: number | null; rate: number; /** 開発版の見本: 結果の窓から開く (dev=done) */ shown?: { cost: number | null; rate: number } | null; /** 開発版の見本: サーバーに送らない */ dev?: boolean }>();
@@ -25,9 +21,6 @@ const solved = computed(() => (sent.value?.rate ?? 0) >= SOLVE_RATE);
 const costText = (c: number | null): string => (c == null ? "—" : `${c} ${tr("神", "div")}`);
 /** 今の順位 (順位に載る時だけ。サーバーの表が古くても自分の記録は端末の物で入る) */
 const place = computed(() => { if (!solved.value) return null; const i = rankOf(props.id).findIndex((r) => r.me); return i < 0 ? null : i + 1; });
-/** 提出の後の X シェア (D-38)。出した数が決まったら中身を作る (押した時に置く) */
-const share = ref<DailyShare | null>(null);
-watch([sent, place], async ([v]) => { share.value = v && SHARE_ON ? await dailyShare(props.id, v.cost, v.rate) : null; }, { immediate: true });
 async function send(): Promise<void> {
   failed.value = false;
   step.value = "sending";
@@ -62,7 +55,6 @@ function close(): void {
       <p v-else>{{ tr("完成 0 の記録。順位には載りません。", "Nothing finished, so this isn't ranked.") }}</p>
       <p class="text-[13px] opacity-80">{{ tr("今日の挑戦はこれで終わり。木は見るだけで開けます。", "Today's challenge is over. You can still view the tree.") }}</p>
       <div class="flex justify-end gap-2">
-        <a v-if="share" data-daily-share :href="share.web" target="_blank" rel="noopener" class="g-btn mr-auto" @click="sendDailyShare($event, share, id)">{{ tr("X でシェア", "Share on X") }}</a>
         <button type="button" class="g-btn" data-daily-submit-close @click="close">{{ tr("木を見る", "View the tree") }}</button>
         <button type="button" class="g-btn-red" data-daily-submit-rank @click="close(); goDaily({ view: 'detail', q: id })">{{ tr("順位を見る", "See the ranking") }}</button>
       </div>
