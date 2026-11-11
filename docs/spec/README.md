@@ -76,7 +76,7 @@
 | G-30 | 毎回のメッセージに 5 つの決まり (書く文は全部日本語・確認はスクリプトで Chrome 1 タブ・リリース (本番の出しはオーナーの「出して」の後 = R-03・G-38、UI は見た目の OK の後) と日英・決着済みを蒸し返さない・自作テストで確かめたと言わない) を差し込む (11-07 オーナー OK で 3 番の「UI 以外はすぐ版上げ + deploy:web」を R-03 に合わせた) | `ja-reminder.js` (UserPromptSubmit、全プロジェクト) | G-22・R-11・メモ reply-in-japanese・feedback-check-settled-rules |
 | G-31 | Bash / PowerShell の許可の窓を自動で許可する (夜中に止めない)。強制 push・reset --hard・stash / switch・広い rm -rf・node_modules 消しだけは今まで通り聞く。広い rm -rf (`rm -r…`・`Remove-Item -Recurse`) = 消す先がドライブの根・`~`・`..`・ユーザーの家 (C:/Users/<名前>) とその 1 段下 (ExileDesk の根など)・ドライブ直下の 1 段・それらの中の `*` 全部 (11-07 オーナー OK)。bypass のセッションでは許可の窓が出ないので鳴らない | `auto-allow-bash.cjs` (PermissionRequest) | オーナー 10-27「許可待ちがだるい、どんどん先進めて」 |
 | G-32 | `git stash`・`--autostash`・`git add -A` / `git add .` を止める (自分のファイルだけパスで add) | `exiledesk-guard.cjs` (PreToolUse) | R-08 |
-| G-33 | `cd … &&` / `cd …;` のつなぎを止める (`git -C` か絶対パスで) | 同上 | CLAUDE.md「動かし方」 |
+| G-33 | `cd … &&` / `cd …;` のつなぎを止める (`git -C` か絶対パスで) | 同上 | 許可の窓で夜中に止まるため (ねらいは G-31 と同じ) |
 | G-34 | 本体での `git reset --hard`・ブランチの切り替え (`switch` / `checkout`) を止める (作業場 ExileDesk-preview への `git -C` は通す) | 同上 | R-01・R-08 |
 | G-35 | エンジン・エミュ・シミュ・共通の部品のコードの commit は、同じ commit に `docs/spec/` か、commit の文に設計図の番号 (S-50b・D-12 など) が要る。commit の時の見張り (G-35・40・41・42) は `--amend` でも見る (元の commit のファイルと文も合わせて見る、11-07 オーナー OK)。commit の場所は同じコマンドで決めた変数 (`R=…; git -C $R`) と Git Bash の `/c/…` も読み、読めない場所 (`$(…)`・決めていない変数・無いフォルダ) は止める | 同上 (`git commit` の時) | G-20 |
 | G-36 | 返事を終える時、このセッションが残したスクリーンショット・確認の Chrome・自分で立てたサーバー (1441〜1445・1460・1461・937x / 938x・9222)・止め残りの子プロセス (親の死んだ bash / node / python でこのセッションの置き場か worktree の入る物、G-26) を知らせて 1 回止める。置き場の中の git の写し (`.git` のある所) と node_modules の絵は数えない | `exiledesk-habits.cjs` (Stop) | R-14・CLAUDE.md「いつも」 |
