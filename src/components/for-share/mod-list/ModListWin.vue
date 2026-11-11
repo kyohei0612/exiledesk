@@ -52,7 +52,8 @@ const BAND = new Set(["transmute", "augment", "regal", "exalt", "chaos"]);
 const chips = computed((): string[] => {
   const it = item.value;
   if (!s.data.value || !it) return [];
-  return [...ORBS.filter((g) => BAND.has(g.kind)).flatMap((g) => g.keys), ...bonesFor(it)].filter((k) => !props.hidden?.(k, it));
+  // 噛み切られた骨 (アイテムレベル 64 以下だけの物) は帯に出さない (11-12 オーナー、88 の問い「帯から外す / 薄いまま置く」に「ア」= 外す)
+  return [...ORBS.filter((g) => BAND.has(g.kind)).flatMap((g) => g.keys), ...bonesFor(it).filter((k) => k !== "desecrate_gnawed")].filter((k) => !props.hidden?.(k, it));
 });
 /** オンの物に掛けられるお告げ (エミュ・木の手の窓と同じ入口。帯に出さない物は除く)。掛けられない物を押せなくするのは札の側 (エンジンの omenBlock) */
 const omenChips = computed(() => (on.value ? heldOmensOf(on.value).filter((o) => !props.hidden?.(o, item.value)) : []));
