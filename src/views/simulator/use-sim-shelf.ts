@@ -10,6 +10,7 @@ import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { OMEN_KEY, toggleOmen as toggleHeld, useReason, type StageItem } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { FORESEE_ON } from "../../services/simulator/tree/tree-foresee";
+import { flag } from "../../web/release-flags";
 
 /**
  * ツリーの棚だけで出さない物 (10-24 オーナー「要望があれば戻す」温度感。消さずに出さないだけ、戻す時はここ 1 か所):
@@ -31,8 +32,10 @@ const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_cha
  * 11-05 オーナー「神うって同じようにヒネコラしてどうループするのかって挙動みたら」)。ほかの所の神のオーブは今までどおり出さない (S-20)
  */
 const foreseeShown = (key: string, it: StageItem | null | undefined): boolean => FORESEE_ON && (key === "hinekora" || (key === "divine" && !!it?.foreseen));
+/** 腐食のお告げは品をコラプトして先へ進めず、デイリーでは提出もできないので木の棚に出さない (S-20c、スイッチ treeNoPutrefaction、11-11 オーナー「腐食のオーブ消してあと。シミュでのカレンシー」) */
+const putrefyHidden = (key: string): boolean => key === OMEN_KEY.putrefaction && flag("treeNoPutrefaction");
 /** it = 棚に渡したアイテム (無ければ予見の例外は神のオーブに効かない) */
-export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key));
+export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || putrefyHidden(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {
