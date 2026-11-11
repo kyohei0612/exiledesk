@@ -107,7 +107,34 @@ export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL)
 /** お題にできる 1 人分か: 並びが付き (D-83)、そのベースのフル MOD 以上 (D-84 と同じ判定 fullMods、オーナー 11-09「フルMODだけにして」)。できれば狙い */
 export function fullAimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL): GenAim[] | null {
   const aims = aimsOfSample(data, s, ilvl);
-  return aims && fullMods(data, s.base, aims) ? aims : null;
+  if (!aims) return null;
+  if (fullMods(data, s.base, aims)) return aims;
+  return essenceFill(data, s.base, ilvl, aims);
+}
+
+/**
+ * フル MOD に 1 つ足りない忍者の品に、完全なエッセンスの MOD を 1 つ足してフル MOD にする (D-04b ②、11-11 オーナー「5 MODとかで必須にエッセンスなかったら足したら？6モッドに出来るやろ」)。
+ * 宝飾品も同じ (11-11 オーナー「とにかく6モッドが条件絶対」「指輪なら他の指輪」)。もうエッセンスがある品・足しても付かない品は null = 呼ぶ側 (planWeek・nextFullSample) が同じ部位の別の品へ。
+ * 足すのは付く組 (goalBlock) が通り、足した形がフル MOD (fullMods) になる時だけ (2 つ以上足りない品は足せないので外れる)。
+ * 付くエッセンスが複数なら、そのエッセンスの MOD と同じ系統の普通の MOD の付く確率 (その側の重みの中の割合) が高い物 (普通に付かない物は 0、同じならエンジンの並び順)。足せなければ null
+ */
+export function essenceFill(data: PatchData, base: string, ilvl: number, aims: readonly GenAim[]): GenAim[] | null {
+  let rows: ListRow[];
+  try { rows = modListFor(data, freshItem(data, base, ilvl)); } catch { return null; }
+  const perfectTier = (r: ListRow) => r.tiers.find((t) => t.essence?.en.startsWith("Perfect Essence"));
+  const ess = rows.filter((r) => r.group === "perfect_essence" && perfectTier(r));
+  if (!ess.length || aims.some((a) => { const r = rowOfAim(rows, a); return !!r && r.group !== "normal"; })) return null;
+  const norm = rows.filter((r) => r.group === "normal");
+  const sideTotal = (side: string) => norm.filter((r) => r.side === side).reduce((n, r) => n + r.weight, 0) || 1;
+  const natural = (e: ListRow) => { const n = norm.find((x) => !!x.family && x.family === e.family); return n ? n.weight / sideTotal(n.side) : 0; };
+  const texts = aimTextsOf(data, base, ilvl);
+  const plain = aims.map((a) => ({ modId: a.modId, tier: a.tier }));
+  const cands = ess.map((e) => {
+    const t = perfectTier(e)!, modId = t.modId ?? e.id;
+    return { pct: natural(e), add: { modId, tier: t.tier, ...(texts(modId, t.tier) ?? { ja: t.text, en: t.text }) } as GenAim };
+  }).filter((c) => !goalBlock(data, base, ilvl, plain, { modId: c.add.modId, tier: c.add.tier }) && fullMods(data, base, [...aims, c.add]))
+    .sort((x, y) => y.pct - x.pct);
+  return cands[0] ? [...aims, cands[0].add] : null;
 }
 
 /** 投稿の狙いを D-04 の段に上げる (同じ系統をまとめた行は段ごとに modId が違うので表から引き直す)。行が見つからない狙いはそのまま */
