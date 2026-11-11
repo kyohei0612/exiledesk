@@ -31,7 +31,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 | サーバー (server/live・server/web)・分析の記録 | system.md (Y-xx)、server/live/README.md、メモ analytics-logs |
 | 広告・ドメイン・SEO のページ | Y-10〜25、メモ web-ads-domain-plan、scripts/build-seo-pages.mjs |
 | テストを足す・直す | G-22・R-19・G-26d、メモ pref-truth |
-| 動画・撮影・POE2Tube (video/) | docs/org/video/、メモ pref-video・video-channel、受け渡しの正は video/contracts/ |
+| 動画・撮影・POE2Tube (video/) | video/ (CLAUDE.md)、メモ pref-video・video-channel、受け渡しの正は video/contracts/ |
 | YouTube の字幕・外の調べもの | docs/org/research/、メモ youtube-subtitles |
 | アプリ・PoB・取引所・ヴァールの天秤 (当分触らない) | `memory-archive-1029/INDEX.md`、docs/archive/README-app-2026-10.md |
 
