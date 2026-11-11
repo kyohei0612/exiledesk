@@ -19,3 +19,4 @@ PoE2 で使える PoE1 のスキン (コスメティック) の一覧のペー�
 - SEO の静的なページ scripts/build-cosmetics-pages.mjs → /cosmetics/・/en/cosmetics/ (子ページは groups.json のまとめごと、中は元の種類ごとの見出し。既定 noindex、--index で index + サイトマップ。AdSense が通るまで noindex、通ったら index = オーナー 10-25。/bases/ は 10-31 に消して 410 = Y-84)。手元の開発版の作り (preview-prod.mjs --dev) だけが呼ぶ、本番の build:web にはオーナーの OK の後に足す。見た目は build-seo-pages.mjs (共通) の写し。
 - 確かめの台本: 共有メモ side-session-notes/local_b4352604-…/skins1/ (skins-check.mjs = ?page=skins、cosmetics-check.mjs = 静的なページを配って撮る)。
 - アプリのスキン画面 src/views/mtx/ (凍結、触らない)。
+- 残り (前の todo から): 静的なページ /cosmetics/ を本番に出す時は build:web に足す (--index ならサイトマップにも)。

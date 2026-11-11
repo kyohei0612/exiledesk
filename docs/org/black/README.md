@@ -27,7 +27,6 @@
 | 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 常駐しない (使う時だけ立てる、11-01) | Opus | blog/README.md |
 | リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 常駐しない (使う時だけ立てる、11-01) | Opus | research/README.md |
 | デイリー部長 | デイリークラフトチャレンジ (毎日のお題をシミュレーターで組んで平均の費用で競う別ページ) の画面とサーバー | src/views/daily/・docs/org/daily/ (後で server/live のデイリーの所・D1 の表) | 「デイリー」「クラフトチャレンジ」「お題」 | 常駐しない (使う時だけ立てる、11-01) | Opus | daily/README.md |
-| モンキー隊長 | 開発版を何も知らない人として乱暴に触り、壊れる所・迷う所を notes/ に書く。照らし合わせの台本 (check-monkey-engine・_monkey-*、10-25 ジンから) は持つ | docs/org/monkey/ | 10-31 にアーカイブ (出す前の猿は最終チェック長 = R-18) | 待機 | Opus | monkey/README.md |
 | スキン部長 | PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins)・データ (アプリの mtx を移す・poe2db で裏取り)・絵。アクセス回数を増やさない | docs/org/skins/・src/views/skins/ ほか (owners.txt) | 「スキン」「MTX」「コスメ」 | 常駐しない (使う時だけ立てる、11-01) | Opus | skins/README.md |
 | 最終チェック長 | 本番に上げる時の最後 (R-03 の ⓪ 猿 6 匹 × 20 手 (R-18) の結果報告・① 型チェック・版上げ・更新内容の日英・deploy:web・push・② 設計図の後片付け) | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | Opus | dev/README.md |
 

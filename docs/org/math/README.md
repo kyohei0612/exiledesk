@@ -23,3 +23,7 @@
 - テスト tests/: held-odds-parity・aim-odds・chaos-spam・engine-emulator-parity・desecrate-reveal-rates・mod-weights・catalysing-greater。
 - メモ: optimal-craft-dp (「落とし穴」= 段の下限・乱数・評価の仕方)・handoff-2026-10-22 (memory-archive-1029/)・held-odds-parity・aim-next-move・chaos-spam-and-sfx・craft-weight-sources・mod-engine-single-source・sim-cost-model。
 - 決着済み: docs/spec/engine.md (E-xx、確率は E-80〜82)。元の記録は docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md、メモ poe2-craft-rules-confirmed。
+
+## 後回し (前の todo から)
+- 勘所の一覧 (オーナー 10-22、シミュレーター完成の後): 狙いを 50〜100 通りばらして動的計画法で回し、どの部位にも効く決まりを抜き出す。機械学習ではなく計算で。内向きの知見 (notes/)、画面で勧める形にはしない。
+- 100 人回しの核 (tree-run.ts) の入口の形と確かめは notes/2026-10-23-tree-run.md。配信者の名前は G-26e。
