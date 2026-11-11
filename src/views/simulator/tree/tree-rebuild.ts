@@ -12,7 +12,7 @@ import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { autoTarget, foldToTrunks, graftDecided, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, linkAllSameHi, onlyOf } from "./tree-hand-plan";
-import { extendAnnul, trimAnnul } from "./tree-annul-chain";
+import { extendAnnul, holdAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath, staysGray } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
@@ -59,6 +59,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 保存の例のアイテム (v2、S-200 ⑦) は開いた木に持たせ、配置の代表に使う (tree-frame)。打ち方の比べ (toRecipeV1) には入れない
   if (src.examples) d.examples = JSON.parse(JSON.stringify(src.examples)) as NonNullable<TreeDoc["examples"]>;
   migrateStart(d);
+  holdAnnul(d, true); // 保存の手を置き直す間は、手を置くたびの消去の続きを止める (終わりの見直しで 1 段ずつ足す、S-28g ⑤ オ)
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
   const onPath = new Set([...picks.keys()].flatMap((k) => k.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));
@@ -160,14 +161,18 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 続けた消去で足した箱に保存の決めがあれば打ち直し、打ち直した人の手と同じ枠になった自動の消去はまた畳む (S-28g ②「保存の決めがある箱は自動の手を外してから置く」・
   // 「後から木に同じ枠の手のある箱ができたら…畳む」)。前は打ち直しの途中は ↩ で止まっていた箱が終わりの見直しで ↩ が外れて消去が続き、足した箱の保存の決めを読まず、
   // その決めと同じ枠の別の枝の自動の消去も畳まずに止まった (11-11 デイリーの提出の木、100 人中 44 人。組んだ画面では人が手を置くたびに整理で畳む)
-  // (スイッチ treeNoAnnulAuto) 消去は続けないが、前に保存した決めが下にある箱だけは続ける (S-28g ⑤)。足した箱の札は replay で付くので 1 回に 1 段 = MOD の数まで回す
+  // (スイッチ treeNoAnnulAuto、S-28g ⑤) 消去の続きは 1 回に 1 段ずつ、そのたびに保存の決めを置く。☑ のある消去は前に保存した決めが下にある箱だけ続ける (toward)。
+  // 足した箱の札は replay で付く。保存の消去の下の続きが道の先で何度も出るので回数は多めに (変わらなくなれば抜ける)
   const toward = (id: string): boolean => { const at = placed.get(id)?.[1]; return !!at && [...picks.keys()].some((k) => k.startsWith(`${at}/`)); };
-  for (let n = 0; n < (flag("treeNoAnnulAuto") ? 12 : 4); n++) {
+  for (let n = 0; n < (flag("treeNoAnnulAuto") ? 48 : 4); n++) {
     const trimmed = trimAnnul(data, d), before = new Set(Object.keys(d.boxes));
     if (!extendAnnul(data, d, undefined, toward) && !trimmed) break;
     yield* replay(Object.keys(d.boxes).filter((id) => !before.has(id)));
     linkLeftovers(data, d); mergeIntoBacked(data, d);
   }
+  // 保存の決めを置き終えたら、☑ の無い消去 (全部消えてよい) の残りの枝を止まる所まで続ける (スイッチ treeNoAnnulAuto。閉じている時は上でもう続いている)
+  holdAnnul(d, false);
+  if (flag("treeNoAnnulAuto") && extendAnnul(data, d)) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
   fillHeldHi(d); // ヒネコラで持つ削減の「高い」の枠は既定で打たない (S-39 ②b、11-11)
   linkAllSameHi(d); // 「エッセンスと同じ MOD (同格以上)」は押していなければ既定の統合 (保存・見直しで外れていても、S-33e ⑥)
   for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)

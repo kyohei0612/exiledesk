@@ -18,7 +18,10 @@ import { flag } from "../../../web/release-flags";
 
 /** 続ける段の上限 (消せる MOD は多くて 8 なので届かない、壊れた木の止め) */
 const DEPTH_MAX = 12;
-export const isAnnulHand = (h: Hand | null | undefined): h is Hand => !!h && effectOf(h.currency) === "remove";
+/** 開いている途中 (保存の決めを置き直している間) の木。スイッチ treeNoAnnulAuto の下だけ見る (S-28g ⑤ オ) */
+const opening = new WeakSet<TreeDoc>();
+export const holdAnnul = (d: TreeDoc, on: boolean): void => { if (on) opening.add(d); else opening.delete(d); };
+export const isAnnulHand =(h: Hand | null | undefined): h is Hand => !!h && effectOf(h.currency) === "remove";
 const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back && !b.done && !b.split && !b.merged && !b.noAutoBack && b.out !== "pass" && b.out !== "branch";
 
 /**
@@ -26,15 +29,19 @@ const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back
  * 止まり = 同じ枠の手のある箱へ自動の ↩・同じ段の同じ枠はまとめ (S-66)・アイテムの MOD が 1 つ・消せる MOD が無い (側のお告げならその側)・決まりで配置の出せない箱
  */
 export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string[], toward?: (id: string) => boolean): number {
-  // (スイッチ treeNoAnnulAuto、11-12 オーナー「一旦消去も自動ツリー無しにしてほしいな挙動的に他のカレンシーと一緒でおｋ」) 消去を置いても続けない = 置いた手の結果の箱だけ。
-  // 開く時だけ (toward)、前に保存した決めへ着くのに要る箱は続ける (自動の消去は保存していないので、続けないと下の人の決めの置き場が無くなる)
+  // (スイッチ treeNoAnnulAuto、S-28g ⑤。11-12 オーナー「消去自動は無しだな…すべて削除の奴だけ自動でいいかもね残しMODがある時は自動はやめた方が良いかもね」)
+  // 残したい MOD (☑) のある消去は続けない = 置いた手の結果の箱だけ。☑ の無い消去 (全部消えてよい) だけ今までどおり止まる所まで続ける。
+  // 開く時 (toward) は 1 回に 1 段だけ続け、呼ぶ側がそのたびに保存の決めを置く (まとめて続けてから置くと、続きの下の保存の決めが置かれない木があった = オーナーの木の 11 個)。
+  // ☑ のある消去は開く時だけ、前に保存した決めへ着くのに要る箱に限って続ける (自動の消去は保存していないので、続けないと下の人の決めの置き場が無くなる)
   const stop = flag("treeNoAnnulAuto");
-  if (stop && !toward) return 0;
+  const keeps = (h: Hand): boolean => !!h.keep?.length;
+  // 開いている途中の木は、保存の手を置き直すたびの続き (applyPick・整理から来る toward 無しの呼び) を止める。続きは開く側が 1 段ずつ足す
+  if (stop && !toward && opening.has(d)) return 0;
   // お告げ付きの消去は続けない (人が置いた分だけ。11-08 オーナー「お告げありの消去は自動でやらない」)
   const plain = (id: string): boolean => { const h = d.boxes[id]?.hand; return isAnnulHand(h) && !h.omens.length; };
   let front = (roots ?? Object.values(d.boxes).filter((b) => isAnnulHand(b.hand)).map((b) => b.id)).filter(plain);
   let made = 0;
-  for (let depth = 0; depth < DEPTH_MAX && front.length; depth++) {
+  for (let depth = 0; depth < (stop && toward ? 1 : DEPTH_MAX) && front.length; depth++) {
     const kids = front.flatMap((id) => d.boxes[id]!.outs).filter((id) => open(d.boxes[id]));
     if (!kids.length) break;
     // 配置は段の頭で 1 回 (つなぎ・まとめは子の代表を変えないので、後の決めにもそのまま使う)
@@ -43,7 +50,7 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
     mergeOpenSame(d, kids, j);
     const go = kids.flatMap((id) => {
       const b = d.boxes[id], f = frames.get(id), h = b?.parent ? d.boxes[b.parent]?.hand : null;
-      if (!open(b) || !f || f.note || !isAnnulHand(h) || (stop && !toward!(id))) return [];
+      if (!open(b) || !f || f.note || !isAnnulHand(h) || (stop && (toward ? !toward(id) : keeps(h)))) return [];
       // MOD が 1 つ (✦ も数える) になるまで続ける = 最後はプレ 1 つかサフィ 1 つ (11-06 オーナー「0になるまでじゃなくて１MODになるまでな サフィプレ1つずつになるだろ最終」。
       // 前は消去の結果が 1 つの所で止め、全部消えてよい消去が [エッセンス / ✦] で止まった)。消せる MOD が無い (結果 0) 時も止める。
       // 残したい MOD が消える枝は消せる物に数えない (残したい MOD は木の側の物でエンジンは知らない。同じ MOD かはエンジンの当て方 sameAimMod、✦ はエンジンが消さない)。

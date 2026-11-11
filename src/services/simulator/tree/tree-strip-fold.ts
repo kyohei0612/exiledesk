@@ -9,6 +9,7 @@
 import { ref } from "vue";
 import { effectOf } from "./tree-hands";
 import type { TreeBox, TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -32,7 +33,12 @@ const inner = (b: TreeBox | undefined): boolean => !!b?.autoAnnul && isAnnul(b);
  * 止まらずに続くだけの自動の消去の箱 (結果がどれも自動の消去かまとめの箱)。消去 1 回で止まった結果がある箱は畳まず普通に描き、
  * 止まった箱をその消去の下に出す (11-08 オーナー「消去単品で止まった枝は畳む中に置かない」)
  */
-const through = (d: TreeDoc, b: TreeBox | undefined): boolean => inner(b) && b!.outs.every((o) => inner(d.boxes[o]) || !!d.boxes[o]?.merged);
+const through = (d: TreeDoc, b: TreeBox | undefined): boolean => inner(b) && (oneBranch() || b!.outs.every((o) => inner(d.boxes[o]) || !!d.boxes[o]?.merged));
+/**
+ * (S-28g ⑤、スイッチ treeNoAnnulAuto、開発版だけ) 自動の消去の続きは 1 段でも・1 回で止まった枝も札 1 枚に畳み、止まった箱だけ下に並べる
+ * (11-12 オーナー「止まるところまでその際止まるところまで1枝でいいんじゃねって思うけど。」。このスイッチの下では上の 11-08 の「消去単品で止まった枝は畳まない」と「2 段以上」を変える)
+ */
+const oneBranch = (): boolean => flag("treeNoAnnulAuto");
 
 /** 畳める続きを全部 (開いた物も)。head → 畳み */
 export function stripChains(d: TreeDoc): Map<string, StripFold> {
@@ -50,7 +56,7 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
       for (const o of b.outs) walk(o, n + 1);
     };
     walk(h.id, 1);
-    if (steps < 2) continue;
+    if (steps < 2 && !oneBranch()) continue;
     // 畳んだ中の箱へまとめた箱 (同じ段のまとめ S-66) は札の中 = 止まった箱にしない。線の先に描かない箱が混ざると札の線ごと消えた (11-06 MISV6HZL、オーナー「普通に線が消えてね」)
     const inside = new Set(mids);
     out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => { const b = d.boxes[id]!; return !(b.merged && b.back && inside.has(b.back)); }), steps });
