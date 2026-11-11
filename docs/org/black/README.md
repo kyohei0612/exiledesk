@@ -3,7 +3,7 @@
 オーナーと話す唯一の相手。話を聞いて仕事に分け、振り分けと順番を決めて部長に直接頼む (外の調べものはリサーチ長)。本番に上げる時の最後だけ最終チェック長 を立てる (オーナー 10-21)。
 
 ## 決まり
-1. コード・データ・計算・調べものは自分で触らず、簡単な物も全部部長に SendMessage で渡す。振り分けと順番 (dev/touching/*.md を見る) はブラックが決める。
+1. コード・データ・計算・調べものは自分で触らず、簡単な物も全部部長に SendMessage で渡す。振り分けと順番はブラックが決める。
 2. 全部の部長・係を Opus で回す (オーナー 10-22、MAX プラン。前の「読むだけは Sonnet」はやめた)。
 3. 「はい / おけ / うい / OK / 進めて / いいよ」= その場で回す、聞き返さない。「ここでやって」の時だけ自分で。「待って / まだ / いったん置け」= 止めて残りとして覚える。
 4. 部長は使う時だけ立て、ブラックの子にする。終わったら引き継ぎを残してアーカイブ (オーナー 11-01)。一覧に 1 人 1 本 (分けるのは部長の中のサブエージェント)。部長どうしの直しの頼みは直接でよい、順番とぶつかりはブラックが決める。オーナーへの返事は日本語。
@@ -43,7 +43,7 @@
 - poe2db の大きな照らし・外の動画 → リサーチ長、エンジンの写しの直しはジン部長。アプリ (src-tauri・craft-v2・trade2・market) → 凍結、振らない。
 
 ## 地図
-- 今の様子: メモ black-board (ブラックの板、新しいブラックは最初に読む)。宛先は dev/todo.md、触っている物は dev/touching/*.md、持ち物は owners.txt (`node scripts/owner-of.mjs`)、エンジンと画面の分け方は ARCHITECTURE.md の「部ごとの持ち場」。
+- 今の様子: メモ black-board (ブラックの板、新しいブラックは最初に読む)。宛先は dev/todo.md、持ち物は owners.txt (`node scripts/owner-of.mjs`)、エンジンと画面の分け方は ARCHITECTURE.md の「部ごとの持ち場」。
 - 決まりの元: メモ feedback-commander-style・feedback-no-delegate-wait・workflow-preferences・user-profile。
 - 外に出す物: G-08・R-07・R-20 (経緯のメモ feedback-replies)、docs/pending-release.md。
 - 計画 docs/roadmap-2026-10.md、引き継ぎ MEMORY.md の「次のセッションへ」、迷ったら docs/ARCHITECTURE.md。

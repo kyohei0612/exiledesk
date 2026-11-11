@@ -5,7 +5,7 @@
 決まりの正は設計図 `docs/spec/system.md` (Y-xx、10-28 から)。下とメモは経緯、食い違ったら設計図が正。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
-1. 持ち物は server/ (sim.ts と src/daily/ 以外、owners.txt)・Web の作り・手元の環境と照らしの台本 (地図の「Web の作り」)。触るファイルは dev/touching/analytics.md に書く。
+1. 持ち物は server/ (sim.ts と src/daily/ 以外、owners.txt)・Web の作り・手元の環境と照らしの台本 (地図の「Web の作り」)。
 2. Cloudflare の使用量は Y-73・Y-74 (毎朝と大きな確かめの前後に見て、5 割で先にブラックへ)。Workers は無料のまま Y-76。
 3. 開発版は手元だけ Y-70・本番に書かない Y-71・確かめの記録を混ぜない Y-64。本番の worker・お金の掛かる設定はオーナーの OK の後 Y-75。
 4. 鍵は Y-90〜95、人が分かる物を記録しない Y-62、記録しない端末 (forget.ts) Y-63。
