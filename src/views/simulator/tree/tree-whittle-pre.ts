@@ -8,7 +8,7 @@
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { drop, type Hand, type OutKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { drop, subtree, type Hand, type OutKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { handWhittleSide, isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
@@ -69,7 +69,7 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
         break;
       }
     }
-    if (!cls) { if (changed && ids.includes(changed)) unsplit(d, p.id, ids); continue; }
+    if (!cls) { if (changed && ids.includes(changed)) unsplit(d, p.id, ids, changed); continue; }
     // 削減を置いた箱で組の無い物は、自分の品の組 (付きえなければ付きうる最初の組) の枠に
     const taken = new Set(ids.map((id) => lvPart(d.boxes[id]!.junkKey)).filter((c): c is LvClass => !!c));
     for (const id of ids) {
@@ -89,15 +89,18 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
   return made;
 }
 
-/** 削減の手が無くなった・乱数の外れが無い組: 人の決めの無い枠を消し、1 つだけ残ったら鍵の組を外す */
-function unsplit(d: TreeDoc, pid: string, ids: readonly string[]): void {
+/**
+ * 削減の手が無くなった組 (消した・別の手に打ち直した): 手を変えた枠 (changed) だけ残し、ほかの枠は置いてあった手と下の枝ごと消す。1 つだけ残ったら鍵の組を外す
+ * (11-11 オーナー「削減の手を消したり打ち直したら削減に携わった手を消さないと」。前は人の決めのある枠を残し、削減の無い枠に手と枝が残った)
+ */
+function unsplit(d: TreeDoc, pid: string, ids: readonly string[], changed: string): void {
   const lv = ids.filter((id) => lvPart(d.boxes[id]!.junkKey));
   if (!lv.length) return;
-  const keep = lv.filter((id) => !idle(d, id)), base = ids.filter((id) => !lvPart(d.boxes[id]!.junkKey));
-  // 全部手が無ければ 1 つ (並びの先頭) を残す
-  const stay = keep.length || base.length ? keep : [lv[0]!];
+  const base = ids.filter((id) => !lvPart(d.boxes[id]!.junkKey));
+  // 手を変えた箱が枠ならそれを残す。枠でなければ (鍵の無い兄弟) 枠は全部消す。どちらも無ければ並びの先頭を残す
+  const stay = lv.includes(changed) ? [changed] : base.length ? [] : [lv[0]!];
   const gone = lv.filter((id) => !stay.includes(id));
-  if (gone.length) { drop(d, gone); d.boxes[pid]!.outs = d.boxes[pid]!.outs.filter((o) => !gone.includes(o)); }
+  if (gone.length) { drop(d, gone.flatMap((g) => subtree(d, g))); d.boxes[pid]!.outs = d.boxes[pid]!.outs.filter((o) => !gone.includes(o)); }
   if (stay.length + base.length === 1) for (const id of stay) { const c = d.boxes[id]!; c.junkKey = stripLv(c.junkKey); if (!c.junkKey) delete c.junkKey; }
 }
 
