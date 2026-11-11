@@ -171,8 +171,8 @@ const shareText = computed(() => {
   if (!r?.hit) return "";
   const luckLine = r.rank == null ? "" : byPlace.value ? tr(`${people.value + 1} 人中 ${placeOf(r.n)} 位 (${luck(r.rank)})`, `#${placeOf(r.n)} of ${people.value + 1} (${luck(r.rank)})`) : tr(`${people.value} 人中 ${rankWord(r.rank)} の運 (${luck(r.rank)})`, `${rankWord(r.rank)} luck among ${people.value} people (${luck(r.rank)})`);
   return tr(
-    `${props.routeName}で ${baseName.value} に ${props.label} を ${r.n.toLocaleString()} 手 (${money(r.cost)}) で付けた！ ${luckLine}\n#PoE2 #ExileDesk`,
-    `${props.routeName}: ${props.label} on ${baseName.value} in ${r.n.toLocaleString()} uses (${money(r.cost)})! ${luckLine}\n#PoE2 #ExileDesk`,
+    `${props.routeName}で ${baseName.value} に ${props.label} を ${r.n.toLocaleString()} 手 (${money(r.cost)}) で付けた！ ${luckLine}\n#PoE2 #パスオブエグザイル2 #PathofExile2 #PoE2クラフト #ExileDesk`,
+    `${props.routeName}: ${props.label} on ${baseName.value} in ${r.n.toLocaleString()} uses (${money(r.cost)})! ${luckLine}\n#PoE2 #PathofExile2 #PoE2Crafting #ExileDesk`,
   );
 });
 /**

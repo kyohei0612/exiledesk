@@ -157,7 +157,7 @@ async function shareX(): Promise<void> {
   const url = await treeShortUrl({ name, tree: t.doc.value });
   track("tree-recipe:x");
   share.value = false;
-  const to = xIntentUrl(url, tr(`ExileDesk のシミュレーターで組んだクラフトの道「${name}」`, `My craft route on ExileDesk Simulator: "${name}"`));
+  const to = xIntentUrl(url, tr(`ExileDesk のシミュレーターで組んだクラフトの道「${name}」\n#PoE2 #パスオブエグザイル2 #PathofExile2 #PoE2クラフト #ExileDesk`, `My craft route on ExileDesk Simulator: "${name}"\n#PoE2 #PathofExile2 #PoE2Crafting #ExileDesk`));
   if (w) w.location.href = to; else window.open(to, "_blank");
 }
 /** 小窓 (レシピ・名前・シェア) を全部閉じる */
