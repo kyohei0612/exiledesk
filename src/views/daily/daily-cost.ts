@@ -11,7 +11,7 @@ import { aimOpts, sampleOf, targetsOf } from "../../services/simulator/tree/tree
 import { isAimMod } from "../../services/simulator/tree/tree-aim";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
-import { fillTopicDoc } from "./daily-aims";
+import { NO_FRAC, fillTopicDoc } from "./daily-aims";
 import type { GenAim } from "./daily-gen";
 import { freshItem } from "../../services/craft-stage/engine";
 import { marketStore } from "../../state/market-store";
@@ -71,9 +71,10 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
   const doc = rebuildTree(data, healRecipeV1(raw));
   const frac = doc.memoAims?.find((a) => a.fractured)?.modId;
-  if (doc.base !== topic.base || !frac || !topic.aims.some((a) => a.modId === frac)) return null;
+  // ✦ の無い木 = フラクチャー無し (11-12 のお題から選べる、D-03)。✦ があればお題の狙いの物だけ
+  if (doc.base !== topic.base || (frac && !topic.aims.some((a) => a.modId === frac))) return null;
   doc.itemLevel = topic.ilvl;
-  fillTopicDoc(doc, topic.aims, frac, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
+  fillTopicDoc(doc, topic.aims, frac ?? NO_FRAC, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
   markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims).length) return null;
   return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox }), 0));

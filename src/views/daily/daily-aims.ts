@@ -77,7 +77,9 @@ export function postBlock(p: PostItem): string | null {
   return null;
 }
 
-/** お題の木を作る: ✦ を 1 つ付け、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
+/** 「フラクチャー無し」を選んだ印 (DailyTry.fractured に入れる。どの狙いにも当たらないので ✦ は付かず、白い品から始まる。D-03・D-37j、11-12 のお題から) */
+export const NO_FRAC = "none";
+/** お題の木を作る: ✦ を 1 つ付け (フラクチャー無しなら付けない)、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
 export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured"): void {
   const list: Aim[] = aims.map((a) => ({ modId: a.modId, tier: a.tier, ...(a.modId === fractured ? { fractured: true as const } : {}) }));
   d.memoAims = list;

@@ -15,6 +15,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import STAT_ORDER from "../../data/stat-order.json";
 import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
+import { NO_FRAC } from "./daily-aims";
 
 const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
@@ -85,6 +86,12 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
           <li v-for="a in ordered" :key="a.modId">
             <button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @click="emit('pick', a.modId, chosen.k)">
               <span>{{ aimText(a) }}</span><small>{{ tierRankLabel(a.tier) }}</small>
+            </button>
+          </li>
+          <!-- フラクチャー無し (D-03・D-37j、11-12 のお題から): 白い品のまま始める、フラクチャーの費用は 0 -->
+          <li v-if="fourOnly">
+            <button type="button" class="daily-frac-row" data-daily-frac-pick data-daily-frac-none :data-mod="NO_FRAC" @click="emit('pick', NO_FRAC, 'four')">
+              <span>{{ tr("フラクチャー無し", "No fracture") }}</span><small>{{ tr("白い品のまま始める", "Start from the plain base") }}</small>
             </button>
           </li>
         </ul>
