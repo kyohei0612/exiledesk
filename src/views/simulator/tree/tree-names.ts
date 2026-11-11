@@ -12,7 +12,6 @@ import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tr
 import { bothOf, boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type StartFrom, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
-import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { swapGoneOf } from "../../../services/simulator/tree/tree-keep";
@@ -120,12 +119,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const hl = b.out === "hit" && b.aim && !free && !fixed ? lvPart((b as { junkKey?: string }).junkKey) : null;
   if (hl) { const n = hitName(), [ja, en] = lvLabel(hl); return tr(`${n}が付いた (${ja})`, `${n} added (${en})`); }
   if (b.out === "hit" && b.aim) { const n = hitName(); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
-  if (free && b.out === "junk") {
-    // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける
-    const many = (useTree().doc.value.boxes[b.parent!]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.junkKey).length > 1, k = (b as { junkKey?: string }).junkKey;
-    if (many && k) { const [ja, en] = junkKeyLabel(k); return tr(`外れ MOD (${ja}) がフラクチャーされた場合`, `If a miss mod (${en}) is fractured`); }
-    return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
-  }
+  // 側 (「(プレフィックス)」など) は付けない (S-41、11-11 オーナー「おけ」。S-65 の題と同じ)
+  if (free && b.out === "junk") return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
   // 骨を未発現のまま次へ 
   const k = (b as { junkKey?: string }).junkKey;
