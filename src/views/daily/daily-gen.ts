@@ -55,6 +55,8 @@ export const SLOTS: readonly { ja: string; en: string; has: (category: string) =
 const CLASS_CAT = new Map<string, string>();
 for (const c of ENGINE_CATEGORIES) { const k = clientClassOf(c); if (k && !CLASS_CAT.has(k)) CLASS_CAT.set(k, c); }
 export const classOfBase = (base: string): string | null => { const k = baseStatsOf(base)?.cls; return k && CLASS_CAT.has(k) ? k : null; };
+/** 宝飾品 = 指輪・アミュレット・ベルト (D-04b の例外) */
+export const isJewellery = (base: string): boolean => { const k = classOfBase(base); const c = k ? CLASS_CAT.get(k) : undefined; return !!c && (inGroup(c, "ringAmulet") || clientClassOf(c) === "Belt"); };
 export const slotOfClass = (cls: string): number | null => { const c = CLASS_CAT.get(cls); if (!c) return null; const i = SLOTS.findIndex((s) => s.has(c)); return i < 0 ? null : i; };
 
 const seedOf = (s: string): number => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
@@ -126,13 +128,14 @@ export function floorAims(data: PatchData, base: string, ilvl: number, aims: rea
 }
 
 /**
- * 完全なエッセンスを必ず 1 つ (D-04b、11-11 オーナー「必ずエッセンス入れるようにしてあげよーか」「変えるのはつく確率が高い方やね」)。
- * そのベースに付くパーフェクトエッセンス (Perfect Essence of …、ヒステリー・アビス・合金などの特別な物は数えない) の MOD が狙いに無ければ、
- * 同じ系統の狙いがあればそれを (他は替えない)、無ければエッセンスと同じ側 (プレ / サフィ) の狙いのうち付く確率 (その側の普通の MOD の重みの中の割合) が一番高い物をエッセンスの MOD に替える。
- * 同じ確率なら忍者の装備 (samples の同じ部位) で持っている人が少ない方を替える。付くエッセンスが複数なら、替える狙いの確率が一番高い物 (同じならエンジンの並び順)。
- * 替えると付かない組 (goalBlock) は使わない。付くパーフェクトエッセンスが無い品・もう入っている品はそのまま。投稿 (箱) には使わない
+ * 完全なエッセンスは入れられる時だけ 1 つ (D-04b、11-11 オーナー「エッセンス無理やり使わんでも」)。
+ * そのベースに付くパーフェクトエッセンス (Perfect Essence of …、ヒステリー・アビス・合金などの特別な物は数えない) と同じ系統の狙いがあり、
+ * 替えても値が下がらない時だけ、その狙いをエッセンスの MOD に替える (他は替えない)。替える候補が複数なら付く確率 (その側の普通の MOD の重みの中の割合) が一番高い物、同じなら忍者の装備で持つ人が少ない方。
+ * 替えない: 宝飾品・スキルのレベル系・値が下がる・替えると付かない組 (goalBlock)・付くパーフェクトエッセンスが無い品・もう入っている品。投稿 (箱) には使わない
  */
 export function essenceSwap(data: PatchData, base: string, ilvl: number, aims: readonly GenAim[], samples: readonly DailySample[] = []): { aims: GenAim[]; swap: { from: GenAim; to: GenAim; essence: string } | null } {
+  // 宝飾品 (指輪・アミュレット・ベルト) は忍者の品の MOD の組のまま、エッセンスを入れない・替えない (11-11 オーナー「忍者どおりに」)
+  if (isJewellery(base)) return { aims: [...aims], swap: null };
   let rows: ListRow[];
   try { rows = modListFor(data, freshItem(data, base, ilvl)); } catch { return { aims: [...aims], swap: null }; }
   const perfectTier = (r: ListRow) => r.tiers.find((t) => t.essence?.en.startsWith("Perfect Essence"));
@@ -155,7 +158,7 @@ export function essenceSwap(data: PatchData, base: string, ilvl: number, aims: r
   for (const e of ess) {
     const t = perfectTier(e)!, modId = t.modId ?? e.id;
     const to: GenAim = { modId, tier: t.tier, ...(texts(modId, t.tier) ?? { ja: t.text, en: t.text }) };
-    const cands = aims.map((a, i) => ({ i, r: rowOfAim(rows, a) })).filter((c) => c.r && c.r.group === "normal" && (c.r.side === e.side || sameFam(c.r, e)))
+    const cands = aims.map((a, i) => ({ i, r: rowOfAim(rows, a) })).filter((c) => c.r && c.r.group === "normal" && sameFam(c.r, e)) // 入れるのは同じ系統の狙いを替えられる時だけ (11-11 オーナー「エッセンス無理やり使わんでも」、前の「同じ側の確率の高い狙いを替える」はやめ)
       // 同じ系統で値が下がる狙いは替えない (その狙いは残し、ほかの狙いを替える候補にもしない = 並べると系統がぶつかるので goalBlock でも外れる)
       .filter((c) => !sameFam(c.r!, e) || valOf(to.en) >= valOf(aims[c.i]!.en))
       // スキルのレベル系の狙いは T1 から一切動かさない (エッセンスでも替えない・例外なし、11-11 オーナー「レベルは妥協ないね」)
