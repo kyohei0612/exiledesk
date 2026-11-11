@@ -8,6 +8,15 @@ import { heldOdds, type ListRow, type ListTier, type PatchData, type StageItem }
 import { TIER } from "../../../state/for-share/tier-word";
 import { fmtPct } from "../../../utils/format-pct";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+
+/**
+ * 回して数える表 (錬金) で、付く候補にあるのに 1 度も出なかった MOD・段 (エンジンの HeldOdds.unseen、E-88a) に入れるごく小さい確率。
+ * % の字は fmtPct が今ある書き方の "<0.1%" にし、灰色・「付かない」の文・節の並び・狙いのチェックも「付く」側になる (スイッチ oddsUnder01。閉じている間は今までどおり 0%)
+ */
+const UNSEEN_SHARE = 1e-9;
+const UNDER01 = flag("oddsUnder01");
+const unseenTitle = (): string => tr("回して数えた中では 1 度も出なかったが、付く候補にある (ごくまれ。0.1% 未満)", "Did not come up in the sampled rolls, but it can roll (very rare, under 0.1%)");
 
 /**
  * 今付きうる行か (付かない行は表の % を 0 に): 同じ系統が付いている (エンジンの ListRow.blocked)・差していないルーン・冒涜と異界は骨を持っている時だけ (2026-10-09 オーナー)。
@@ -53,6 +62,7 @@ export function useHeldShares(held: () => HeldAt | null, data: () => PatchData |
     const ids = new Set(r.tiers.map((t) => t.modId ?? r.id));
     let w = 0;
     for (const id of ids) w += h.byMod.get(id)?.w ?? 0;
+    if (!(w > 0) && UNDER01 && [...ids].some((id) => h.unseen?.has(id))) return UNSEEN_SHARE;
     return w / h.total;
   }
   /** その段が持っている物で付く確率 (下限より下・アイテムレベルが届かない段は 0) */
@@ -61,7 +71,9 @@ export function useHeldShares(held: () => HeldAt | null, data: () => PatchData |
     if (!h || !(h.total > 0)) return 0;
     const id = t.modId ?? r.id;
     const idx = tierIndexOf(id, t);
-    return (h.byMod.get(id)?.tiers.find((x) => x.index === idx)?.w ?? 0) / h.total;
+    const w = h.byMod.get(id)?.tiers.find((x) => x.index === idx)?.w ?? 0;
+    if (!(w > 0) && UNDER01 && h.unseen?.get(id)?.includes(idx)) return UNSEEN_SHARE;
+    return w / h.total;
   }
   const cannow = (r: ListRow): boolean => canRollNow(r, !!heldCands.value && "bone" in heldCands.value);
   /** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
@@ -70,9 +82,10 @@ export function useHeldShares(held: () => HeldAt | null, data: () => PatchData |
   const rowDim = (r: ListRow): boolean => r.blocked || (!!heldCands.value && !heldShare(r)) || (r.group === "rune" && !r.socketed);
   const rowTitle = (r: ListRow): string | undefined => (r.blocked ? blockedTitle(r) : heldCands.value && !heldShare(r) ? tr(`持っている ${heldCands.value.name} では付かない`, `Cannot roll with the held ${heldCands.value.name}`) : undefined);
   const tierDim = (r: ListRow, t: ListTier): boolean => !!t.blockedBy || (!!heldCands.value && !heldTierShare(r, t));
-  const tierTitle = (r: ListRow, t: ListTier): string | undefined => (t.blockedBy ? blockedTitle(t) : heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
+  const tierTitle = (r: ListRow, t: ListTier): string | undefined => (t.blockedBy ? blockedTitle(t) : heldCands.value && heldTierShare(r, t) === UNSEEN_SHARE ? unseenTitle() : heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
   function shareTitle(r: ListRow): string {
     const h = heldCands.value;
+    if (h && heldShare(r) === UNSEEN_SHARE) return unseenTitle();
     if (h) return "bone" in h ? tr(`持っている ${h.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)`, `Chance to appear among the 3 options on the next reveal with the held ${h.name} (1-3 desecrated-only mods + the rest normal, same as the calculator)`) : tr(`持っている ${h.name} で次に付く確率`, `Chance to roll next with the held ${h.name}`);
     return r.group === "desecrated" || r.group === "otherworldly" ? tr("骨を使わないと付かない (骨を持つと候補に出る確率)", "Only rolls via a Bone (hold a Bone to see the chance to be offered)") : tr("出やすさ (同じ側の重みの割合)", "Chance (share of weight on the same side)");
   }
