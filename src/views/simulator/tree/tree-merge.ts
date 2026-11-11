@@ -9,7 +9,8 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { mergedSameRow } from "../../../services/simulator/tree/tree-merge-open";
+import { mergedAway, mergedSameRow } from "../../../services/simulator/tree/tree-merge-open";
+import { flag } from "../../../web/release-flags";
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { judgeOf } from "./tree-hand-plan";
@@ -41,7 +42,9 @@ export function joinSameShape(doc: TreeDoc, id: string): void {
 /** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */
 function mergeIds(doc: TreeDoc): Set<string> {
   // 同じ段の同じ枠へまとめた箱 (S-66) からは引かない (描かない箱は親の線がまとめ先へ入り、描く箱は下の札「→ 同じ枠へ (n 段目)」で示す。11-11)
-  return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent && !mergedSameRow(doc, b)).map((b) => b.id));
+  // スイッチ treeLinesOnHover: 描いているまとめた箱からも引く (乗せた時だけ緑で出す、S-145)
+  const hov = flag("treeLinesOnHover") && flag("treeOwnHeight");
+  return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent && (!mergedSameRow(doc, b) || (hov && !mergedAway(doc, b)))).map((b) => b.id));
 }
 
 /**
@@ -69,7 +72,7 @@ export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>): { r
       // 行き先へは箱の上の、段の間の空いた高さ (箱の上 24) で入る。箱の上の端の高さは同じ段のほかの箱で塞がり、木の外を大回りした (10-28 夜オーナー「水色の…ふるい感じのきょどう」)。前は箱の横の辺の真ん中 = MOD の行に刺さった
       reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w - 24 : to.x + 24, y: to.y - 24 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
       const ph = doc.boxes[b.parent!]?.hand;
-      lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back", ...(ph && effectOf(ph.currency) === "remove" && ph.keep && !ph.keep.length ? { viaStrip: true } : {}) });
+      lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" || mergedSameRow(doc, b) ? "fwd" : "back", ...(ph && effectOf(ph.currency) === "remove" && ph.keep && !ph.keep.length ? { viaStrip: true } : {}) });
     }
   }
   return { reqs, lines };

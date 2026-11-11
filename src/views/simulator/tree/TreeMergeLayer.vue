@@ -6,20 +6,23 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { MergeLine } from "./tree-merge";
+import { flag } from "../../../web/release-flags";
 
 const props = defineProps<{ lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>; hover: string | null; /** 選んだ箱 (窓を開いている箱) */ sel: string | null; showAll: boolean }>();
 const emit = defineEmits<{ hover: [id: string | null] }>();
 /** 乗せた時だけつながる線を光らせ、ほかは少し暗く。乗せていない時は全部普段の色 (統合の線もいつも光らせない。S-85b、10-28 夜オーナー「真ん中とか枠にホバーしたら繋がってる線のみライトアップしてくれ」) */
-const COLOR = { fwd: "#a39a88", back: "#5fd0e0", join: "#d4a94a" } as const;
+// スイッチ treeLinesOnHover (S-145・S-146、11-12): 同じ枠への線 (統合・当たりの ↩・まとめた箱) は緑、いつも出す線は無し、乗せた箱が出元か行き先の線だけ (前後 1 枠)
+const HOV = flag("treeLinesOnHover");
+const COLOR = HOV ? { fwd: "#6fd08c", back: "#5fd0e0", join: "#6fd08c" } as const : { fwd: "#a39a88", back: "#5fd0e0", join: "#d4a94a" } as const;
 
 /** 乗せた箱・選んだ箱に関わる線 (出元の箱・行き先・出元の親) */
 // 全部消えてよい消去の直線の途中の箱 (出元の親) に乗せても線は出さない。動きは次の箱へ進むだけで、上へつながる線は誤解される (10-27 夜オーナー「何も線表示させないでおｋ」、スイッチ heldTags)
-const on = (l: MergeLine, id: string | null): boolean => !!id && (l.from === id || l.to === id || (l.parent === id && !(l.viaStrip)));
+const on = (l: MergeLine, id: string | null): boolean => !!id && (l.from === id || l.to === id || (!HOV && l.parent === id && !(l.viaStrip)));
 const hot = (l: MergeLine): boolean => on(l, props.hover) || on(l, props.sel);
 // 統合 (同じ MOD 群のため統合) の線はいつも出す (10-27 オーナー「実線で常に出す。普通の線だとなんでつながってるのか分からん」)
 // 再挑戦・戻りの線 (back) は「線を全部表示」でも出さず、乗せた時だけ (案 ①、S-87c。10-28 深夜オーナー「P１は案①だな」。全部出すと木を囲む四角になった)
 // 灰の ↩ (当たり・打った後の戻り、fwd) も乗せた時だけ (S-145、⑦10 → ブラック案・オーナー「進めてくれ」10-28)
-const shown = computed(() => props.lines.filter((l) => (props.showAll && l.kind === "join") || hot(l) || l.kind === "join"));
+const shown = computed(() => props.lines.filter((l) => hot(l) || (!HOV && l.kind === "join")));
 const joins = computed(() => props.lines.filter((l) => l.kind === "join" && l.mark));
 const busy = computed(() => !!(props.hover || props.sel));
 const opacity = (l: MergeLine): number => (busy.value ? 0.25 : l.kind === "join" ? 0.6 : 0.5);
