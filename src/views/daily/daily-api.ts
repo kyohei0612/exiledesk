@@ -189,14 +189,16 @@ export async function submitTry(id: string, cost: number, rate: number, now = Da
 
 /** その日の順位をスコアで並べるか (D-02b、出すまでは開発版の画面だけ) */
 export const rankByScore = (id: string): boolean => byScore(id, DEV_BUILD);
+/** 挑戦済み (提出・諦め・時間切れ) の人には今日のお題でも品の絵の代わりに完成形のカード (D-37e2、11-11 オーナー「挑戦済みならここアイテムカード完成形のMOD表示していいのでは挑戦後だし」)。出すまでは開発版だけ、出す時に true */
+export const TRIED_CARD: boolean = DEV_BUILD;
 /**
  * 順位 (D-50)。解決だけ、費用の安い順 (D-02b の日からはスコアの小さい順、同じなら使った時間の短い人)、それも同じなら先の人 (サーバーの並びのまま = 安定の並べ替え)。
- * サーバーの表は 60 秒古いことがあるので、自分の記録はこの端末の物で上書きする
+ * 自分の行はサーバーの数が正 (回し直しで差し替えた数も出す、11-11 ブラック 82)。サーバーの表は 60 秒古いことがあるので、サーバーに自分の行がまだ無い間だけこの端末の記録を足す
  */
 export function rankOf(id: string): DailyRankRow[] {
   const me = daily.local.nick?.name, best = daily.local.tries[id]?.best;
-  const rows = (daily.remote?.ranks[id] ?? []).filter((r) => !(best && r.name === me)).map((r) => (r.name === me ? { ...r, me: true } : r));
-  if (best && me) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true });
+  const rows = (daily.remote?.ranks[id] ?? []).map((r) => (r.name === me ? { ...r, me: true } : r));
+  if (best && me && !rows.some((r) => r.me)) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true });
   const score = rankByScore(id);
   return rows.sort((a, b) => rankCmp(a, b, score));
 }

@@ -12,7 +12,7 @@ import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, essenceSwap, floorAims,nextFullSample, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
 import { boxCheck, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
-import { runCost, topicPrice } from "../src/views/daily/daily-cost";
+import { perBoxOn, runCost, topicPrice } from "../src/views/daily/daily-cost";
 import { byScore, rankCmp } from "../src/views/daily/daily-score";
 export { loadPatchSync } from "./_htc-bridge-entry";
 
@@ -127,7 +127,7 @@ const VERIFY_TOP = 10;
  * 費用 (0.1 神) と完成率が提出と同じなら 1。木が読めない・ベースやフラクチャーが違う時も -1。
  * 値段の引き方は挑戦の画面と同じ topicPrice (daily-cost.ts)。11-10 から画面もお題の種・値段で回す。予定のタスクの締めに --verify を付けるのは、その形が本番に出た後に始まった日から
  */
-export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null }): Verify {
+export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null; perBox?: boolean }): Verify {
   const price = topicPrice(data, topic);
   if (!price) return () => null;
   return (t) => {
@@ -248,7 +248,7 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
 
   // ③ 前の日を締める (D-59 ①)
   const ct = inp.topics.find((t) => t.day === inp.closing);
-  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null }) : () => null;
+  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null, perBox: perBoxOn(ct.day) }) : () => null;
   const close = closeDay(inp, verify);
   if (close) {
     body.close = close;

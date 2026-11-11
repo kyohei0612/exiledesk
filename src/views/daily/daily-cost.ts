@@ -20,6 +20,11 @@ import { priceOfKey } from "../../state/for-share/craft-stage-shelf";
 /** 回す人数 (S-70 の RUN_N と同じ) */
 export const RUN_N = 100;
 
+/** 乱数を「何人目 × どの箱」で決める最初のお題の日 (D-58b、11-11 オーナー「乱数同じの方が良いのやっぱり　この動きの後はこの乱数で統一的な」)。前の日は全員で 1 本の列のまま。11-11 の提出は出した後に保存のレシピで回し直して差し替える (11-11 オーナー「ランキングも今の奴に乱数同じでそのレシピで回して本物のランキングにしてあげるか全部入ったら」) */
+export const BOX_SEED_FROM = "2026-11-11";
+/** その日 ("YYYY-MM-DD"、お題の id "dYYYY-MM-DD" も可) が箱ごとの乱数で回す日か。挑戦の画面・提出・16:00 の検算が同じここを見る */
+export const perBoxOn = (day: string): boolean => day.replace(/^d/, "") >= BOX_SEED_FROM;
+
 /**
  * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。
  * 箱の見本の品 (sampleOf) で見る。当たりの判定はシミュと同じ isAimMod (同じ系統・同じ文も当たり)
@@ -58,7 +63,7 @@ export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: s
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
-export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
+export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
   const doc = rebuildTree(data, healRecipeV1(raw));
   const frac = doc.memoAims?.find((a) => a.fractured)?.modId;
@@ -67,7 +72,7 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   fillTopicDoc(doc, topic.aims, frac, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
   markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims).length) return null;
-  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0 }), 0));
+  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox }), 0));
 }
 
 /**

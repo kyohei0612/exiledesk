@@ -9,7 +9,7 @@ import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import { goDaily } from "./daily-open";
-import { canStartAt, getTry, leftMs, myNick, recheckTry, SLOT_NAMES, type DailyTopic } from "./daily-api";
+import { canStartAt, getTry, leftMs, myNick, recheckTry, SLOT_NAMES, TRIED_CARD, type DailyTopic } from "./daily-api";
 import { devBackState, devBackTry, devTreeUrl } from "./daily-dev-states";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
@@ -38,6 +38,8 @@ const go =(): void => goDaily({ view: "start", q: props.topic.id });
 const start = (): void => { if (devT) { location.assign(devTreeUrl(props.topic.id)); return; } if (t.value || myNick()) go(); else asking.value = true; };
 /** 終わった挑戦 (提出・諦めた・時間切れ)。ボタンは「挑戦済み」で押せない (D-35c、11-09 夜オーナー「提出後は戻ってきた際は挑戦済みにしてグレーアウト」) */
 const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
+/** 完成形のカードに出す狙い: 締めた日はお題の狙い (D-37e)、今日のお題は挑戦済みの人だけ挑戦の控えの狙い (D-37e2)。挑戦前・挑戦中は伏せたまま (D-32b) */
+const cardAims = computed(() => props.topic.aims ?? (TRIED_CARD && over.value && t.value?.aims?.length ? t.value.aims : null));
 // 置き場でリセットされた挑戦は、端末の控えが終わったままだと「挑戦済み」で始め直せなかった (11-10、要望 c28f225a の後)。今日のお題で控えが終わっている時だけ、開いた時に 1 回サーバーに行があるかを聞く
 onMounted(() => { if (props.today && !devT && over.value) void recheckTry(props.topic.id); });
 /** 押せる物: 始める (今日・14:50 まで) / 続きから始める (残りがある) / 挑戦済み (押せない) / 無し */
@@ -62,7 +64,7 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
   <section data-daily-hero class="daily-hero">
     <h2 class="daily-title" data-daily-title><span class="daily-title-plate">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</span></h2>
     <div class="daily-hero-main">
-      <div class="daily-veil" :class="{ 'has-card': !!topic.aims }">
+      <div class="daily-veil" :class="{ 'has-card': !!cardAims }">
         <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t || closed ? 'open' : ''" /></span>
         <div class="min-w-0">
           <div class="daily-plate"><p class="daily-veil-name">{{ name }}</p></div>
@@ -70,8 +72,8 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
           <p v-if="topic.fromBox" class="daily-meta">{{ tr("クラフトボックスの投稿から", "From the craft box") }}</p>
         </div>
       </div>
-      <!-- 締めた日は狙いを完成形のカードで (D-37e)。今日のお題は伏せたまま (D-32b) -->
-      <DailyAimCard v-if="topic.aims" data-daily-aims :base="topic.base" :ilvl="topic.ilvl" :aims="topic.aims" />
+      <!-- 締めた日・挑戦済みの人は狙いを完成形のカードで (D-37e・D-37e2)。挑戦前・挑戦中の今日のお題は伏せたまま (D-32b) -->
+      <DailyAimCard v-if="cardAims" data-daily-aims :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" />
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>

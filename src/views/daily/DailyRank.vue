@@ -41,7 +41,8 @@ function peeked(): void {
 
 <template>
   <div data-daily-rank class="min-w-0">
-    <div class="g-sec-head"><h3 class="g-sec-title">{{ score ? tr("スコアの順位 (費用 ÷ 完成率、小さいほど上)", "Score ranking (cost ÷ finish rate, lower is better)") : tr("一番安く作った人", "Cheapest crafts") }}</h3></div>
+    <!-- 題は短く、数え方は横の説明 (狭い幅では次の行へ回る。題は 1 行の字なので長いと右が切れた、11-11 ブラック 82) -->
+    <div class="g-sec-head"><h3 class="g-sec-title">{{ score ? tr("スコアの順位", "Score ranking") : tr("一番安く作った人", "Cheapest crafts") }}</h3><span v-if="score" class="g-sec-sub" data-daily-rank-how>{{ tr("費用 ÷ 完成率、小さいほど上", "cost ÷ finish rate, lower is better") }}</span></div>
     <p v-if="score" class="daily-rank-what" data-daily-rank-score-what>{{ closed ? tr(`${topic.day} のお題の順位。費用は完成 1 個あたり`, `Ranking for ${topic.day}. Cost is per finished item`) : tr("今日のお題の順位。費用は完成 1 個あたり", "Today's ranking. Cost is per finished item") }}</p>
     <p v-else class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。完成 1 個あたりの費用の安い順`, `Ranking for ${topic.day}: cheapest per finished item first`) : tr("今日のお題の順位。完成 1 個あたりの費用の安い順", "Today's ranking: cheapest per finished item first") }}</p>
     <template v-if="rows.length">

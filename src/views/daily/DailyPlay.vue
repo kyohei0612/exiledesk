@@ -17,7 +17,7 @@ import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
-import { metBoxes, markMet, topicPrice, unmetDone } from "./daily-cost";
+import { metBoxes, markMet, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
@@ -161,7 +161,7 @@ watch([treeOn, tryOf, () => s.data.value], ([on, x, data]) => {
   const key = `${x!.seed}|${JSON.stringify(x!.prices)}`;
   if (treeRunRig.value && key === rigKey) return;
   rigKey = key;
-  treeRunRig.value = { seed: x!.seed!, price, startCost: 0 };
+  treeRunRig.value = { seed: x!.seed!, price, startCost: 0, perBox: perBoxOn(props.topic.id) }; // 箱ごとの乱数は D-58b の日から (検算と同じ)
 }, { immediate: true });
 onBeforeUnmount(() => { treeRunRig.value = null; });
 // 別の場所の木を持ち込まない (D-36): 貼り付けは入力欄の外では届かせない
