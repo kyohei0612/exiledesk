@@ -41,8 +41,8 @@ function peeked(): void {
 
 <template>
   <div data-daily-rank class="min-w-0">
-    <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("一番安く作った人", "Cheapest crafts") }}</h3></div>
-    <p v-if="score" class="daily-rank-what" data-daily-rank-score-what>{{ closed ? tr(`${topic.day} のお題の順位。スコア = 1 個あたりの費用 ÷ 完成率、小さいほど上`, `Ranking for ${topic.day}. Score = cost per item ÷ finish rate, lower is better`) : tr("今日のお題の順位。スコア = 1 個あたりの費用 ÷ 完成率、小さいほど上", "Today's ranking. Score = cost per item ÷ finish rate, lower is better") }}</p>
+    <div class="g-sec-head"><h3 class="g-sec-title">{{ score ? tr("スコアの順位 (費用 ÷ 完成率、小さいほど上)", "Score ranking (cost ÷ finish rate, lower is better)") : tr("一番安く作った人", "Cheapest crafts") }}</h3></div>
+    <p v-if="score" class="daily-rank-what" data-daily-rank-score-what>{{ closed ? tr(`${topic.day} のお題の順位。費用は完成 1 個あたり`, `Ranking for ${topic.day}. Cost is per finished item`) : tr("今日のお題の順位。費用は完成 1 個あたり", "Today's ranking. Cost is per finished item") }}</p>
     <p v-else class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。完成 1 個あたりの費用の安い順`, `Ranking for ${topic.day}: cheapest per finished item first`) : tr("今日のお題の順位。完成 1 個あたりの費用の安い順", "Today's ranking: cheapest per finished item first") }}</p>
     <template v-if="rows.length">
       <p class="daily-cols" aria-hidden="true"><span class="flex-1">{{ tr("名前", "Name") }}</span><span v-if="showTime" class="w-12">{{ tr("時間", "Time") }}</span><span class="w-10">{{ tr("完成率", "Done") }}</span><span class="w-16" :title="tr('完成 1 個あたりの費用', 'Cost per finished item')">{{ tr("1 個あたり", "Per item") }}</span><span v-if="score" class="w-14" :title="tr('1 個あたりの費用 ÷ 完成率。小さいほど上', 'Cost per item ÷ finish rate. Lower is better')">{{ tr("スコア", "Score") }}</span></p>
