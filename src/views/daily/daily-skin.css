@@ -222,6 +222,10 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-frac-opt b { font-family: var(--skin-font-head); font-size: 20px; font-weight: 400; color: var(--skin-title); }
 .daily-frac-opt span { font-size: 14px; line-height: 1.6; color: var(--skin-text); }
 .daily-frac-now { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--skin-text); }
+/* フラクチャー無し (D-37j): MOD の並びの下に区切りを置いた金の枠のボタン */
+.daily-frac-none { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--skin-line); }
+.daily-frac-none-or { width: 100%; font-size: 13px; color: var(--skin-dim); }
+.daily-frac-none small { font-size: 13px; color: var(--skin-dim); }
 
 /* 皮の見比べ */
 .daily-skin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }

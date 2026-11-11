@@ -88,13 +88,13 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
               <span>{{ aimText(a) }}</span><small>{{ tierRankLabel(a.tier) }}</small>
             </button>
           </li>
-          <!-- フラクチャー無し (D-03・D-37j、11-12 のお題から): 白い品のまま始める、フラクチャーの費用は 0 -->
-          <li v-if="fourOnly">
-            <button type="button" class="daily-frac-row" data-daily-frac-pick data-daily-frac-none :data-mod="NO_FRAC" @click="emit('pick', NO_FRAC, 'four')">
-              <span>{{ tr("フラクチャー無し", "No fracture") }}</span><small>{{ tr("白い品のまま始める", "Start from the plain base") }}</small>
-            </button>
-          </li>
         </ul>
+        <!-- フラクチャー無し (D-03・D-37j、11-12 のお題から): 並びと分けた金の枠のボタン (11-11 オーナー「ボタンがフラクチャー無しの目立つ感じで」)。白い品のまま始める、フラクチャーの費用は 0 -->
+        <div v-if="fourOnly" class="daily-frac-none">
+          <span class="daily-frac-none-or">{{ tr("または", "or") }}</span>
+          <button type="button" class="g-btn" data-daily-frac-none :data-mod="NO_FRAC" @click="emit('pick', NO_FRAC, 'four')">{{ tr("フラクチャー無しで始める", "Start without fracturing") }}</button>
+          <small>{{ tr("MOD の無い白い品のまま始める (フラクチャーの費用は 0)", "Start from the plain base with no mods (no fracture cost)") }}</small>
+        </div>
       </div>
     </div>
   </section>
