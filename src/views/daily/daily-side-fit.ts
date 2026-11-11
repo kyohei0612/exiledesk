@@ -23,7 +23,7 @@ export function fitDailySide(side: HTMLElement): () => void {
     const acts = side.querySelector<HTMLElement>(":scope > [data-daily-acts]"), bar = side.querySelector<HTMLElement>("[data-tree-tools] [role='toolbar']");
     const sr = side.getBoundingClientRect(), cr = card.getBoundingClientRect();
     // カードの外で要る高さ = カードより上 (閉じる・余白) + 提出の段 + 倍率の道具 + 間と下の余白
-    const fixed = (cr.top - sr.top) + (acts ? acts.offsetHeight + GAP + 2 : 0) + (bar ? bar.offsetHeight + GAP : 0) + GAP;
+    const fixed = (cr.top - sr.top) + (acts ? acts.offsetHeight + GAP + 2 : 0) + (bar ? Math.max(bar.offsetHeight, bar.scrollHeight + 2) + GAP : 0) + GAP + 6; // 道具は潰れる前の高さで (潰れた後の高さを測ると足りないまま落ち着く)
     const natural = cr.height / zNow;
     if (natural <= 0) return;
     const z = Math.max(Z_MIN, Math.min(zMax, (sr.height - fixed) / natural));

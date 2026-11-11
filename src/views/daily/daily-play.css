@@ -50,6 +50,7 @@
 [data-daily-play] { --daily-side-w: 440px; --daily-card-zmax: 1.42; --daily-card-z: var(--daily-card-zmax); }
 @media (max-width: 1699px) { [data-daily-play] { --daily-side-w: 360px; --daily-card-zmax: 1.16; } }
 /* 残りの高さが足りない時はミニマップを出さない (倍率の道具は残す)。印は daily-side-fit.ts */
+[data-daily-play] [data-tree-side] [data-tree-tools] > [role="toolbar"] { flex-shrink: 0; }
 [data-daily-play] [data-tree-side][data-daily-side-tight] [data-tree-tools] > div:not([role="toolbar"]) { display: none; }
 [data-daily-play] [data-tree-side] { position: relative; width: var(--daily-side-w) !important; padding-top: 4px; }
 [data-daily-play] [data-tree-side] > [data-tree-goal-side] { order: -2; max-height: none; overflow: visible; }
