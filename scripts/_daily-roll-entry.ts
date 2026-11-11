@@ -13,7 +13,7 @@ import { classOfBase, devSamples, essenceSwap, floorAims,nextFullSample, planWee
 import { boxCheck, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
 import { runCost, topicPrice } from "../src/views/daily/daily-cost";
-import { byScore, rankKey } from "../src/views/daily/daily-score";
+import { byScore, rankCmp } from "../src/views/daily/daily-score";
 export { loadPatchSync } from "./_htc-bridge-entry";
 
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
@@ -146,9 +146,10 @@ function closeDay(inp: RollInput, verify: Verify): Record<string, unknown> | nul
   if (inp.closed || inp.now < allDoneAt(noOf(inp.closing))) return null;
   const topic = inp.topics.find((t) => t.day === inp.closing);
   if (!topic) return null;
-  // 並べは費用の安い順 (D-02b の日からはスコアの小さい順、daily-score.ts の 1 か所)。同じなら先に出した人
+  // 並べは費用の安い順 (D-02b の日からはスコアの小さい順、同じなら使った時間の短い人、daily-score.ts の 1 か所)。それも同じなら先に出した人
   const score = byScore(inp.closing);
-  const byCost = (a: { t: TryRow }, b: { t: TryRow }): number => rankKey(a.t.cost!, a.t.rate ?? 0, score) - rankKey(b.t.cost!, b.t.rate ?? 0, score) || (a.t.submitted_at ?? 0) - (b.t.submitted_at ?? 0);
+  const row = (t: TryRow): { cost: number; rate: number; ms: number; at: number } => ({ cost: t.cost!, rate: t.rate ?? 0, ms: (t.submitted_at ?? 0) - t.started_at, at: t.submitted_at ?? 0 });
+  const byCost = (a: { t: TryRow }, b: { t: TryRow }): number => rankCmp(row(a.t), row(b.t), score);
   // 上位 VERIFY_TOP 人 (解決・並べの順) だけ回し直す。外れた人が出たら次の人を繰り上げて見る
   const order = inp.tries.map((t, i) => ({ t, i })).filter(({ t }) => t.cost != null && (t.rate ?? 0) >= SOLVE_RATE).sort(byCost);
   const checked = inp.tries.map((t) => ({ nickId: t.nick_id, checked: t.checked }));

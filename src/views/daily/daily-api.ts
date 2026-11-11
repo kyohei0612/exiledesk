@@ -11,7 +11,7 @@ import { WEB_API_BASE } from "../../web/config";
 import { floorAims, SLOTS, type GenAim } from "./daily-gen";
 import { boxCheck } from "./daily-check";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
-import { byScore, rankKey } from "./daily-score";
+import { byScore, rankCmp } from "./daily-score";
 import { DEV_BUILD } from "../../web/release-flags";
 
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
@@ -190,7 +190,7 @@ export async function submitTry(id: string, cost: number, rate: number, now = Da
 /** その日の順位をスコアで並べるか (D-02b、出すまでは開発版の画面だけ) */
 export const rankByScore = (id: string): boolean => byScore(id, DEV_BUILD);
 /**
- * 順位 (D-50)。解決だけ、費用の安い順 (D-02b の日からはスコアの小さい順)、同じなら先の人 (サーバーの並びのまま = 安定の並べ替え)。
+ * 順位 (D-50)。解決だけ、費用の安い順 (D-02b の日からはスコアの小さい順、同じなら使った時間の短い人)、それも同じなら先の人 (サーバーの並びのまま = 安定の並べ替え)。
  * サーバーの表は 60 秒古いことがあるので、自分の記録はこの端末の物で上書きする
  */
 export function rankOf(id: string): DailyRankRow[] {
@@ -198,7 +198,7 @@ export function rankOf(id: string): DailyRankRow[] {
   const rows = (daily.remote?.ranks[id] ?? []).filter((r) => !(best && r.name === me)).map((r) => (r.name === me ? { ...r, me: true } : r));
   if (best && me) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true });
   const score = rankByScore(id);
-  return rows.sort((a, b) => rankKey(a.cost, a.rate, score) - rankKey(b.cost, b.rate, score));
+  return rows.sort((a, b) => rankCmp(a, b, score));
 }
 /** GET /daily/recipe.json。締めた日の順位の人の木 (exiledesk-recipe/1 の JSON、D-50b)。今日の分・無い時は null */
 export async function rankRecipe(id: string, name: string): Promise<string | null> {
