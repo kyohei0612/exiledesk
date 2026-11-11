@@ -67,10 +67,13 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 | 何 | どこから | 作り直し |
 |---|---|---|
-| アイテム名・MOD の文面・ジェム・エッセンス・説明文 | ゲームのクライアント (`pathofexile-dat`) | `pnpm data:client` |
+| 作り直しの順の全部 (下の行の台本を 1 本道で) | — | `pnpm data:all` (一覧だけ)・`pnpm data:all --run` (手元の写しで作れる段を順に)。直しが当て先を失っていないかは `pnpm check:data-fixes` (E-06) |
+| アイテム名・MOD の文面・ジェム・エッセンス・値段の鍵・ベースの数値 | ゲームのクライアント (`pathofexile-dat`) | `pnpm data:client` (17 段) |
+| 説明文 (カレンシー・用語集・ジェム・ユニーク)・MOD の stat とタグ・部位のまとまり・足すタグ・ルーン・防御の数・はめ方・元素の変換 | ゲームのクライアント | `data:client` には入っていない。`pnpm data:all` の client2 の束 (20 段) |
 | 付く・付かない・ベースの有無 (確かめの出どころ、消さない。正は poe2db) | トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`) | `scripts/build-tradeable-bases.mjs`・`scripts/build-trade2-*.mjs` |
-| MOD の置き場・重み | poe2db (同梱エンジン + `poe2db-pool-fixes.json`)。冒涜専用は全部同じ重み | `scripts/build-poe2db-fixes.mjs`、照合は `scripts/audit-poe2db-mods.mjs` |
-| 付き方の正解 | Craft of Exile の写し (`data-cache/coe-beta-package_poe2.js`) とオーナーのゲームでの確認 | — |
+| MOD の置き場・重み | poe2db (同梱エンジン + 台本の出力 `poe2db-pool-fixes.json` + 手の足し `poe2db-pool-fixes-hand.json`)。冒涜専用は全部同じ重み | `scripts/build-poe2db-fixes.mjs` (出力だけを 0 から書く。手の足しは別ファイルなので消えない)、照合は `scripts/audit-poe2db-mods.mjs` |
+| 土台の MOD・ベースの表 (`src/vendor/poe2htc/data/`) | 上流の取り込み (ゲームの版 0.5.0) | 作る台本は無い。今のゲームとの差は上の行の直しを重ねて埋める |
+| 付き方の正解 | Craft of Exile の写し (`data-cache/coe-beta-package_poe2.js`、重みは `coe-beta-data.json`) とオーナーのゲームでの確認 | 写しを取る台本は無い (控えは非公開の repo exiledesk-data) |
 | ベース・ユニーク・ルーンの絵 | クライアントの DDS → webp (`public/<pack>/`) | `pnpm data:client` |
 | 相場 | poe2scout をサーバーが 1 時間おきに取り、`/boot.json` で配る | server/live |
 

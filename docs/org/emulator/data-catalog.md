@@ -99,10 +99,13 @@
 - goalBlock[シミュ]・CarriedAims・carryAims[シミュ]
 
 ## データのファイルを直に読んでいる部 (ジン・共通の外、台本で数えた)
-入口へ付け替える物 (10-25、中身はそのまま。直すのは各部):
-- デザイン state/for-share/craft-stage-shelf.ts: price-keys.json → `PRICE_KEYS`、vendor essences.json → `ESSENCE_TABLE` (engine.ts)
-- デザイン components/for-share/mod-list/stage-mod-list-look.ts: essence-keys.json → `ESSENCE_KEYS` (json だけだと写した鍵が抜ける)
-- モンキー scripts/_monkey-engine-entry.ts の load(): mods.json・base_items.json・extra-bases・jewel-bases を自前で組む → `await loadHtcPatch()` (同じ物を返すのは上で確かめた)
+入口へ付け替える物: 今は 0 (10-25 に挙げた 3 件 = 棚の price-keys / essences・MOD 一覧の essence-keys・モンキーの自前の組みは、11-11 の洗いで見た時にはもう直に読んでいなかった)。
+
+データの作り直しと見張り (11-12):
+- 作り直しの順の全部は `pnpm data:all` (scripts/data-all.mjs、一覧だけ)・`--run` で手元の写しから順に。クライアント由来の前半は今まで通り `pnpm data:client`
+- 直しが当て先を失っていないかは `pnpm check:data-fixes` (設計図 E-06。読み込みが飛ばした直しを `htc/fix-misses.ts` に残す)
+- 置き場の直しは 2 つ: 台本の出力 `poe2db-pool-fixes.json`・手の足し `poe2db-pool-fixes-hand.json` (手の直しは後の方へ書く)
+- この紙の上の表に無いデータ (10-25 の後に増えた物): `rune-bonded.json`・`stage-runeforged.json`・`spell-tags.json`・`mod-stats.json`・`implicit-stats.json`・`vaal-upgrades.json`・`augment-rules.json`・`element-conversions.json`・`delirium-notables.json`・`defence-data.json`・`item-classes.json`・`removed-bases.json`。作る台本は data-all.mjs の表
 
 ほかは付け替え不要 (直しの入らない表・アプリの凍結の所・スキン部長の持ち物):
 - package.json: アプリ/エミュ/デザイン

@@ -9,6 +9,7 @@
     "build": "node scripts/asset-packs.mjs && vue-tsc --noEmit && vite build",
     "test": "vitest run",
     "data:client": "node scripts/refresh-client-data.mjs",
+    "data:all": "node scripts/data-all.mjs",
     "preview": "vite preview",
     "preview:prod": "node scripts/preview-prod.mjs",
     "dev:web": "vite --config vite.web.config.ts",
