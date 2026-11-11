@@ -235,8 +235,19 @@ function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, h
   if ((oc.out === "hit" && (oc as { hits?: readonly Aim[] }).hits?.length !== 0) || fracFree(doc, h)) return oc;
   // 発現で選ぶ手は打った後に未発現が残らない (③ 見積もりは発現の前の形)
   // 名前の印の MOD が消えた鍵は、残したい MOD を決めていない手の、狙いが消えた以外の結果だけ (決めた手は選んだ MOD が狙い = 消えたら狙いが消えた、選ばなければ外れ。S-27d)
-  const nk = joinKeys(nextKeyOf(before, after, kept, veilPick(h)), !h?.keep && oc.out !== "lost" ? namedGoneKey(doc, before, after, kept) : undefined);
+  const nk = joinKeys(joinKeys(nextKeyOf(before, after, kept, veilPick(h)), !h?.keep && oc.out !== "lost" ? namedGoneKey(doc, before, after, kept) : undefined), oc.out === "lost" ? lostKeyOf(before, after, kept) : undefined);
   return nk ? { ...oc, junkKey: joinKeys(oc.junkKey, nk) } : oc;
+}
+/**
+ * 狙いが消えた結果の、消えた残したい MOD の鍵 `d:<modId>,…` (S-27d (ア)「結果が 2 通り以上なら枠に分ける」)。
+ * 前は側の数 (s:) だけで、同じ側の別の狙い (例 クリティカル / マナコストのエッセンス) が消えた人が 1 箱にまとまり、下の自動の消去 (S-28g) が
+ * 見本の形にしか合わず、もう 1 つの形の人が止まった (11-11 オーナーの木 /r/lefrj8Hz、100 人中 17 人)
+ */
+function lostKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): string | undefined {
+  if (!kept?.size) return undefined;
+  const has = (it: StageItem, id: string): boolean => [...it.prefixes, ...it.suffixes].some((m) => m.modId === id);
+  const gone = [...kept].filter((id) => has(before, id) && !has(after, id)).sort();
+  return gone.length ? `d:${gone.join(",")}` : undefined;
 }
 /**
  * 名前の印の付いた完成形に無い MOD (木の手のエッセンス / 合金で付けた物、S-33c) が消えた数の鍵 `n:<数>` (S-65b)。側の数は同じでも、中身 (名前の印の組) が打つ前と違うので別の枝
