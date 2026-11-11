@@ -91,6 +91,8 @@ export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: s
   d.start!.from = from;
   d.start!.price = 0;
   d.start!.sureFrac = true; // デイリーの印: 「ベースから」のフラクチャーは選んだ MOD が必ず付き、費用は 3 回分 (D-03・S-43a)
+  // フラクチャー無しで始めた木は、手の棚でフラクチャーのオーブを打たせない (S-13b、11-11 オーナー「フラクチャー無しはフラクチャーオーブ無いようにしないとね詰まるから」)
+  if (list.some((a) => a.fractured)) delete d.start!.noFracOrb; else d.start!.noFracOrb = true;
   d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
   d.start!.rarity = startRarity(d);
 }
