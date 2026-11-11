@@ -6,12 +6,15 @@
 import { reactive } from "vue";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { depthRows } from "../../../services/simulator/tree/tree-row-tops";
+import { flag } from "../../../web/release-flags";
 
 const natural = reactive(new Map<string, number>());
 /** 箱の中身だけの高さを置く (変わった時だけ) */
 export function setNatural(id: string, h: number): void { if (natural.get(id) !== h) natural.set(id, h); }
 /** その箱の段で一番高い中身の高さ (段の箱が測れていなければ 0) */
 export function rowFitOf(d: TreeDoc, id: string): number {
+  // 縦幅を無理にそろえない = 箱は中身の高さだけ (S-141c、スイッチ treeOwnHeight。11-11 オーナー「あと別に枠の縦幅そろえなくてもおｋ無理やり」)
+  if (flag("treeOwnHeight")) return 0;
   const rows = depthRows(d), r = rows.get(id);
   if (r == null) return 0;
   let max = 0;

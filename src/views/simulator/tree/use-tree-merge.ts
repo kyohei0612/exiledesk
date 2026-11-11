@@ -7,6 +7,8 @@ import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simu
 import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, roundPath, routeBacks, type BackReq, type Seg } from "./tree-lines";
 import { sideRoute } from "./tree-lines-grid";
 import { joinPath, mergeReqs } from "./tree-merge";
+import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
+import { flag } from "../../../web/release-flags";
 
 /** 合流の線を引き直す前に、入力 (箱の位置・高さ) が変わらないのを待つ時間 */
 const SETTLE_MS = 120;
@@ -46,18 +48,21 @@ export function useTreeMerge(o: {
     const keepOf = (id: string, from: string, to: string): string | undefined => (mv && from !== mv && to !== mv ? before?.paths.get(id) : undefined);
     const pos = (id: string) => ({ ...o.posOf(d.boxes[id]!), w: BOX_W, h: o.heightOf?.(id) || BOX_H });
     const { reqs, lines } = mergeReqs(d, pos);
+    // 避ける箱 = 描く箱。11-11 からまとめた箱も各親の下に描く (S-66) ので、描かないのはヒネコラのハズレの先頭へまとめた箱 (mergedAway) だけ。前は merged を全部外し、
+    // 戻りの線がまとめた箱の上を通った (オーナーの木 lfUrzYOg の b26→b7 と b19、線の見張り L3。S-145、スイッチ treeOwnHeight)
+    const drawnBox = (id: string): boolean => (flag("treeOwnHeight") ? !mergedAway(d, d.boxes[id]!) : !d.boxes[id]!.merged);
     // 統合の線 (当たり → 同じ状態の当たり) は向き合う辺どうしを、ほかの箱を避けて結ぶ (tree-merge の joinPath)
     const joinPaths = new Map<string, string>();
     // 手の札は幅が名前で変わるので広めに見る (札の幅の多くは 200 より狭い)。札は画面の大きさで一定 (倍率が低いと木の座標で広い) なので、
     // 札の最大の幅 (chipRoom、TreeHandChip の maxWidth) で見る (全体表示で合流の線が隣の札を横切った、okPcmPyY の b23→b5 と札 b12、線の見張り L3)
     const chipBoxes = (o.chips?.() ?? []).map((c) => { const w = c.w ? c.w : 200; return { x: c.x - w / 2, y: c.y - CHIP_HALF, w, h: CHIP_HALF * 2 }; });
     const treeSegs = o.segs();
-    const inputKey = !mv ? JSON.stringify([reqs, lines, Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged).map(pos), treeSegs, chipBoxes, o.lanes?.() ?? []]) : null;
+    const inputKey = !mv ? JSON.stringify([reqs, lines, Object.keys(d.boxes).filter(drawnBox).map(pos), treeSegs, chipBoxes, o.lanes?.() ?? []]) : null;
     const memo = inputKey ? drawn.get(inputKey) : undefined;
     if (memo) { before = { paths: memo.paths, marks: new Map(memo.lines.map((l) => [l.id, l.mark])) }; return memo; }
     // 統合の線も横の辺の真ん中どうしを最短で (S-144・S-145)。同じ箱へ 2 本以上入る時は辺の真ん中から 8 ずつずらす。通れなければ前の道 (joinPath)
     // 描く箱だけ (まとめて描かない箱 = merged、S-66 案 A は位置が古いまま残るので、木の端・避ける箱に入れると木の外を回った。10-29 kamasan の b15→b2・b16→b3、S-145)
-    const ids = Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged);
+    const ids = Object.keys(d.boxes).filter(drawnBox);
     const allX = ids.map(pos);
     const X0 = Math.min(...allX.map((b) => b.x)), X1 = Math.max(...allX.map((b) => b.x + b.w));
     const joins = lines.filter((l) => l.kind === "join"), nth = new Map<string, number>();
