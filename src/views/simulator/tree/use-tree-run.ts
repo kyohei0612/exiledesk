@@ -14,7 +14,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf, type CheckRun } from "./use-tree-check";
 import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
-import { runPrice } from "../../../services/simulator/tree/run-price";
+import { capDivOf, runPrice } from "../../../services/simulator/tree/run-price";
 import { tr } from "../../../i18n/lang";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
@@ -38,8 +38,6 @@ export const ODDS_NOTE = (n = RUN_N): string[] => [
 ];
 /** 途中の結果を出す間隔 (人) と、その間の最低の間 (ms)。速い木でも 3 秒ほどかけて数字が増えていくのが見える (オーナー「ヌルヌルとカウントアップ」) */
 const EVERY = 2;
-/** 1 人の打ち止めの費用 (tree-run の既定と同じ) */
-const CAP_DIV = 2000;
 /** 途中の結果を作り直す間隔 (人)。1 人ごとに全員分を集計すると 100 人回しの 1 割以上を使った (S-71b) */
 const PROGRESS_EVERY = 5;
 const PACE_MS = 60;
@@ -110,20 +108,21 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     // スマホ (view) も 1 人目を歩かせる (11-07 オーナー「あの挙動ほしいな回してる感PCの全体表示させて軌跡見れるやつ1人目の」)。飛ばすのは穴チェックだけ
     running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test;
     const d = doc.value;
-    // 精査で回した同じ 30 人を使い回す (S-71b)。走行は 1 人 2,000 神で打ち止めなので、誰も届いていない時だけ同じ結果になる
+    // 精査で回した同じ 30 人を使い回す (S-71b)。走行は 1 人 鏡 2 個分の神で打ち止め (S-71) なので、誰も届いていない時だけ同じ結果になる
     const re = opt.reuse, rig = treeRunRig.value;
+    const priceIn = runPrice(rig?.price ?? priceOf);
+    const capDiv = capDivOf(priceIn);
     // 種・値段を外から持たせている間は使い回さない (精査は種 1・木の相場で回している)
-    if (re && !rig && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
+    if (re && !rig && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost < capDiv)) {
       await nextTick();
       if (my === token) { raw.value = re.run; running.value = false; logRun(); }
       return;
     }
-    const priceIn = runPrice(rig?.price ?? priceOf);
     let last: TreeRunResult | null = null;
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, perBox: rig?.perBox, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, perBox: rig?.perBox, price: priceIn, capDiv, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {

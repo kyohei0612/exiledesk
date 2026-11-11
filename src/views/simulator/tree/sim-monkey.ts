@@ -51,6 +51,7 @@ import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tr
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { fillHeldDefaults } from "./tree-held-use";
+import { capDivOf } from "../../../services/simulator/tree/run-price";
 
 type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
@@ -225,10 +226,11 @@ export function installSimMonkey(): () => void {
       if (!d) return null;
       const div = t.treePrice("divine") || 1, memo = new Map<string, number>();
       const price = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = t.treePrice(k) / div; memo.set(k, v); } return v; };
-      const r = runTree(d, t.doc.value, { n, seed, price, startCost: t.startPrice() });
+      const capDiv = capDivOf(price);
+      const r = runTree(d, t.doc.value, { n, seed, price, capDiv, startCost: t.startPrice() });
       return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, failed: r.failed, failAt: r.failAt, unexpected: r.unexpected, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
-        prices: Object.fromEntries(memo), capDiv: 2000, capSteps: 20000 };
+        prices: Object.fromEntries(memo), capDiv, capSteps: 20000 };
     },
     // 箱の中身 (見本の中身の鍵、見本ごとに違えば mixed) と「箱どうし」の判定 (S-50b。見張りが同じ物差しで見る)
     shapeOf(id: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) { const c = [...(j.contents(id) ?? [])].sort(); return t.doc.value.boxes[id] ? { held: c, body: c.length > 1 ? `mixed:${id}` : c[0] ?? null } : null; } return d ? boxShape(d, t.doc.value, id) : null; },
@@ -252,7 +254,7 @@ export function installSimMonkey(): () => void {
       const d = s.data.value;
       if (!d) return null;
       const div = t.treePrice("divine") || 1, out: unknown[] = [];
-      runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, startCost: t.startPrice(), onPerson: (p) => { if (p.end === "capped" && out.length < k) out.push({ cost: Math.round(p.cost), n: p.visits.length, last: p.visits.slice(-30).map((v) => `${v.box}:${Math.round(v.cost)}`), mods: p.why ? [...p.why.item.prefixes, ...p.why.item.suffixes].map((x) => x.modId) : null }); } });
+      runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, capDiv: capDivOf((x) => t.treePrice(x) / div), startCost: t.startPrice(), onPerson: (p) => { if (p.end === "capped" && out.length < k) out.push({ cost: Math.round(p.cost), n: p.visits.length, last: p.visits.slice(-30).map((v) => `${v.box}:${Math.round(v.cost)}`), mods: p.why ? [...p.why.item.prefixes, ...p.why.item.suffixes].map((x) => x.modId) : null }); } });
       return out;
     },
     /** 終わり方 end の人の道 (↩ の箱を通ったか)・止まった訳・最後のアイテム (止まりを人ごとに分けて数える台本用) */
@@ -260,7 +262,7 @@ export function installSimMonkey(): () => void {
       const d = s.data.value;
       if (!d) return null;
       const div = t.treePrice("divine") || 1, out: unknown[] = [];
-      runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, startCost: t.startPrice(), onPerson: (p) => {
+      runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, capDiv: capDivOf((x) => t.treePrice(x) / div), startCost: t.startPrice(), onPerson: (p) => {
         if (p.end !== end) return;
         const it = p.why?.item;
         out.push({ at: p.at, reason: p.why?.reason ?? null, path: p.visits.map((v) => v.box + (v.pass ? "~" : "")), backs: p.visits.filter((v) => !!t.doc.value.boxes[v.box]?.back).map((v) => v.box),
