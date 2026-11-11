@@ -37,6 +37,8 @@
     "check:data-fixes": "node scripts/check-data-fixes.mjs",
     "check:mods": "node scripts/check-mod-values.mjs",
     "check:release-tidy": "node scripts/check-release-tidy.mjs",
+    "check:spec-guards": "node scripts/check-spec-guards.mjs",
+    "count:growth": "node scripts/count-growth.mjs",
     "build:stat-scale": "node scripts/build-stat-scale-from-client.mjs",
     "build:htc-bases": "node scripts/build-granted-skills-poe2db.mjs --offline && node scripts/build-htc-bases-from-client.mjs",
     "build:htc-granted": "node scripts/build-granted-skills-poe2db.mjs"
