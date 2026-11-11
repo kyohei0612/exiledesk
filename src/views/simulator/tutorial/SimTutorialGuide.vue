@@ -90,8 +90,14 @@ function placePhone(r: { y: number; h: number } | null, W: number, H: number, ch
   pos.value = { left: m, top: Math.round(Math.max(m, top)) };
   void W;
 }
-/** 画面の幅で html に掛かる zoom (1440 幅で 0.87 など)。getBoundingClientRect は zoom の後の値なので、fixed の left / top に入れる時は割る */
-const zoomOf = (): number => Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+/**
+ * 画面の幅で html に掛かる zoom (1440 幅で 0.87 など)。getBoundingClientRect は zoom の後の値なので、fixed の left / top に入れる時は割る。
+ * 読むのは画面の大きさが変わった時とチュートリアルを始めた時だけ (毎コマ getComputedStyle を読むと、木を変えるたびに見た目の計算をやり直させ、
+ * 箱 70 の木で 1 手 2.3 秒止まった = 要望 88df3901、11-11 オーナー「めっちゃ途中重かったぞ」)
+ */
+let zoomNow = 1;
+const readZoom = (): void => { zoomNow = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1; };
+const zoomOf = (): number => zoomNow;
 /** 幕から抜く結果 (最終チェックの ✓・100 人のまとめ) */
 const LIT_RESULTS = "[data-tree-test-ok], [data-tree-run-report]";
 /**
@@ -134,7 +140,9 @@ function holes(el: HTMLElement | null, z: number): { clear: Rect[]; soft: Rect[]
   return { clear, soft: out };
 }
 function frame(): void {
-  const el = tutOn.value ? targetEl(tut.target.value) : null;
+  // 毎コマ回すのはチュートリアルの間だけ (使っていない時は回しを止め、始めた時に watch で回し直す。重さの元、要望 88df3901)
+  if (!tutOn.value) { raf = 0; ring.value = null; mask.value = null; return; }
+  const el = targetEl(tut.target.value);
   // 光る所が画面の外 (棚・窓の中を送らないと見えない) なら、場面が変わった時に 1 回だけ見える所へ送る (木の枠は送りでなく寄せなので動かない)
   // 下に出る帯 (持っている・決める) に覆われた時も送る (違う物を持つと棚の下が帯に隠れた)。覆われたままなら 1 秒おきまで
   const key = tut.now.value?.key ?? "";
@@ -154,8 +162,13 @@ function frame(): void {
   place(ring.value, hs ? [...hs.clear.slice(el ? 1 : 0), ...hs.soft] : []);
   raf = requestAnimationFrame(frame);
 }
+/** 回しを始める (チュートリアルの間だけ。倍率もここで読み直す) */
+function startFrames(): void { if (raf || !tutOn.value) return; readZoom(); raf = requestAnimationFrame(frame); }
+watch(tutOn, (on) => { if (on) startFrames(); });
 onMounted(() => {
-  raf = requestAnimationFrame(frame);
+  readZoom();
+  window.addEventListener("resize", readZoom);
+  startFrames();
   // 窓・棚の中の変わり目 (持った・お告げを掛けた) は木の中身に出ないので、刻みで求め直す
   timer = window.setInterval(() => {
     narrow.value = isPhoneWidth();
@@ -167,7 +180,7 @@ onMounted(() => {
   // 帯の「次へ」・穴チェックを押したか (木に出ないので押しを拾う。capture = 押しは止めない)
   document.addEventListener("click", noteClick, true);
 });
-onBeforeUnmount(() => { cancelAnimationFrame(raf); clearInterval(timer); document.removeEventListener("click", noteClick, true); });
+onBeforeUnmount(() => { cancelAnimationFrame(raf); raf = 0; window.removeEventListener("resize", readZoom); clearInterval(timer); document.removeEventListener("click", noteClick, true); });
 // 何手目まで進んだかの記録 (1 手進むたびに 1 回)
 watch(() => (tutOn.value ? tut.pos.value : -1), (i) => { if (i >= 0) simOp("tutorial-step", i); });
 /** 木がチュートリアルの木でなくなった (別のレシピを開いた・ベースを替えた) */
