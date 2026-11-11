@@ -13,11 +13,9 @@ import { bothOf, boxAims, fractureMarks, startRarity, startsFractured, type Hand
 import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
-import { isSideKey, isStripKey, namedGoneOf, sideKeyLabel, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
+import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { swapGoneOf } from "../../../services/simulator/tree/tree-keep";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
 import { tr } from "../../../i18n/lang";import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
@@ -137,25 +135,13 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 木の手で付けたエッセンス / 合金の MOD が消えた枝 (鍵 n:、S-65b): MOD の名前は出さず「エッセンスの MOD が消えた」とだけ付ける (S-33c の MOD 名の題は作らないまま)
   // 合金で付けた MOD なら「合金の MOD が消えた」(11-11 オーナー「おけ」)。種類は親の見本にあってこの箱の見本に無いクラフト MOD をエンジンの craftedKindOf で
   const base = namedGoneOf(k) ? (goneAlloy(b) ? tr(`${base0} (合金の MOD が消えた)`, `${base0} (alloy mod removed)`) : tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`)) : base0;
-  // 側で分けた箱 (S-65): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
   // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
   // 削減の手前の枠 (S-65c): 外れの MOD レベルの組はいつも付ける
   const lk = lvPart(k), rk = k && b.parent ? (lk ? lvLabel(lk) : null) ?? rankLabel(k) ?? swl : null;
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
   // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
   if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.out === b.out).length > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }
-  // 数え上げられない手の側の鍵の無い箱 (S-21): ほかの形の箱が足されたら、この箱の形も題に出す
-  if (!k && b.parent && (b.out === "any" || b.out === "junk")) {
-    const doc = useTree().doc.value, data = s.data.value, p = doc.boxes[b.parent];
-    if (data && p?.hand && p.outs.some((o) => doc.boxes[o]?.out === b.out && isSideKey(doc.boxes[o]?.junkKey))) {
-      const main = mainSideOf(data, sampleOf(data, doc, p.id, 1).item, p.hand);
-      if (main) { const [ja, en] = sideKeyLabel(main); return tr(`${base} (${ja})`, `${base} (${en})`); }
-    }
-  }
-  if (isSideKey(k) && b.parent) {
-    const doc = useTree().doc.value, many = (doc.boxes[b.parent]?.outs ?? []).filter((o) => doc.boxes[o]?.out === b.out && isSideKey(doc.boxes[o]?.junkKey)).length > 1;
-    if (many) { const [ja, en] = sideKeyLabel(k); return rk ? tr(`${base} (${ja}・${rk[0]})`, `${base} (${en}, ${rk[1]})`) : tr(`${base} (${ja})`, `${base} (${en})`); }
-  }
+  // 側 (S-65 の「プレフィックス → サフィックス」など、S-21 の形の付け足し) は題に付けない (11-11 オーナー「プレフィックスサフィックとかの頭はいらんな」)。側はカードの外れの行で分かる
   return rk ? tr(`${base} (${rk[0]})`, `${base} (${rk[1]})`) : base;
 }
 /**
