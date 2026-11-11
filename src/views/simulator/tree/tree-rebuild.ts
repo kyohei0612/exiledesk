@@ -244,7 +244,9 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   // 枠の鍵の無い前の保存の札は割れた枠の全部へ、保存に無い組の枠は保存のある兄弟の枠 (低い → 同じ → 高い の順の最初) の決めを写す
   const unlv = (t: string): string => t.replace(/;l:(lo|eq|hi)\]/, "]").replace(/\[l:(lo|eq|hi)\]/, "");
   const lvSibs = /l:(lo|eq|hi)\]/.test(tail) ? (["lo", "eq", "hi"] as const).map((c) => at + tail.replace(/l:(lo|eq|hi)\]/, `l:${c}]`)) : [];
-  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + unlv(tail), at + unlv(unrank(tail)), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : []), ...lvSibs];
+  // 未発現が入れ替わって消えた当たり (鍵 e:u、11-11 から分けた形 S-27d (ア)) は前の保存に無い形なので、鍵の無い札 (見本 = 外れが消えた形の決め) を写さない
+  const newVeil = /[[;]e:[^\];]*\bu\b/.test(tail);
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + unlv(tail), at + unlv(unrank(tail)), newVeil ? "\0" : at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : []), ...lvSibs];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 6 || !exact.has(k) || lvSibs.includes(k)));
   if (hit) return hit;
   // 消去の結果の中身の鍵 (`c:<プレ>|<サフィ>~<中身の印>`) は、枠の比べが変わると印だけ変わる (11-04 に品質を枠へ入れた、S-60b)。側の数の同じ札の決めとして読む

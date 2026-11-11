@@ -17,7 +17,7 @@ import { namedGoneOf, nextKeyOf, sideKeyOf } from "./tree-junk-side";
 import { isWhittleHand, joinKeys, lvClassOf, lvPart, rankVariants, stripLv, withLv } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
-import { goalTierOf, gotOf, keptAimedOf, keptAimsOf, swapKeyOf, withGot } from "./tree-keep";
+import { goalTierOf, gotOf, isSwapEssence, keptAimedOf, keptAimsOf, swapKeyOf, veilSwapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
 import { sureFracOn } from "./tree-sure-frac";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
@@ -213,7 +213,8 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   // 数え上げられない手は当たりの人も形で分ける (S-21。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
   const sc = oc.out === "hit" && h && mainSideOf(data, before, h) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
   // ☑ の無いパーフェクトエッセンスは入れ替わって消えた MOD ごとに分ける (S-29 のエッセンスの枝)
-  const sw = swapKeyOf(doc, h, before, after);
+  // ☑ のある入れ替える手の当たりは、未発現が消えた人だけ別の箱 (鍵 e:u、S-27d (ア))
+  const sw = swapKeyOf(doc, h, before, after) ?? (sc.out === "hit" && h && (isSwapEssence(h) || effectOf(h.currency) === "swap") ? veilSwapKeyOf(before, after) : undefined);
   return withBoth(sw ? { ...sc, junkKey: joinKeys(sc.junkKey, sw) } : sc);
 }
 /**

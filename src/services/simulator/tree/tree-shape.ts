@@ -32,7 +32,9 @@ export type SplitBox = TreeBox & { next?: string };
 type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
 /** エッセンスの手の鍵の MOD (読みはエンジンの parseKey。ブリーチは null) */
-const essenceModIdOf = (key: string): string | null => { const k = parseKey(key); return k.type === "essence" ? k.modId : null; };
+/** 入れ替わって消えた MOD の鍵 `e:` を持つか (tree-keep の swapKeyOf・veilSwapKeyOf) */
+const swapKeyed = (k: string | undefined): boolean => !!k?.split(";").some((x) => x.startsWith("e:"));
+const essenceModIdOf =(key: string): string | null => { const k = parseKey(key); return k.type === "essence" ? k.modId : null; };
 export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
   const held = new Set(aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).map(aimKey));
   const junk = junkOf(item, missAims(data, aims));
@@ -164,6 +166,8 @@ function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKi
     // ただし完成の狙いが新しく付いた人は受けない (当たりの箱へ。無ければ行き先が無い = 精査で出す。10-26 オーナー「当たってたら次の回に消去でそれ決めるんやからおかしい」。
     // 前は狙い無しの手の打った後に狙い持ちも入り、次のカオスに「狙いが消えた」が並んだ)。エッセンスの打った後 (付く MOD が狙いに無い) は hits が空なのでそのまま
     if (c.out === "any" || c.out === "pass") return oc.out !== "hit" || !oc.hits.length;
+    // 入れ替わって消えた MOD の鍵 (e:、S-29・S-27d (ア)) の当たりの箱は鍵の合う人だけ (鍵の無い人 = 外れが消えた人を未発現が消えたの箱へ入れない)
+    if (oc.out === "hit" && swapKeyed(c.junkKey) && !swapKeyed(oc.junkKey)) return false;
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
     if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(data, doc, b, c, after);
     // 「2 つとも付いた」の当たりの箱 (鍵 a:、S-22d) は、同じ組が付いた人だけ (鍵の合う人は上の junkKey で入る。片方だけ付いた人を入れない)

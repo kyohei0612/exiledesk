@@ -107,7 +107,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   if (isDivineAim(ph) && (b.out === "any" || b.out === "junk")) return outNameOf(ph, b.out);
   // ☑ の無いパーフェクトエッセンスの枝 (S-29): どの MOD がエッセンスに入れ替わったか
   const sw = swapGoneOf((b as { junkKey?: string }).junkKey), doc0 = useTree().doc.value;
-  const swName = (id: string): string => { if (id === "j") return tr("外れ MOD", "a miss mod"); const a = (doc0.memoAims ?? []).find((g) => g.modId === id); return a ? modShort(aimShort(a)) : id; };
+  const swName = (id: string): string => { if (id === "j") return tr("外れ MOD", "a miss mod"); if (id === "u") return tr("未発現の MOD", "an unrevealed mod"); const a = (doc0.memoAims ?? []).find((g) => g.modId === id); return a ? modShort(aimShort(a)) : id; };
   const swl: [string, string] | null = sw.length ? [`${sw.map(swName).join("・")} と入れ替わり`, `replaced ${sw.map(swName).join(", ")}`] : null;
   if (b.out === "hit" && b.aim && swl && !fixed) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた (${swl[0]})`, `${n} added (${swl[1]})`); }
   // 「2 つとも付いた」の当たりの箱 (鍵 a:、S-22d): 付いた狙いを全部「・」で並べる (11-10 オーナー「偉大って２こつくから」)

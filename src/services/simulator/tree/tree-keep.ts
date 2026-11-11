@@ -68,8 +68,20 @@ export function swapKeyOf(doc: TreeDoc, h: Hand | null | undefined, before: Stag
   const gone = [...before.prefixes, ...before.suffixes].filter((m) => !m.fractured && !left.has(m.modId));
   if (!gone.length) return undefined;
   const aim = new Set((doc.memoAims ?? []).map((a) => a.modId));
-  return `${SWAP}${[...new Set(gone.map((m) => (aim.has(m.modId) ? m.modId : "j")))].sort().join(",")}`;
+  // 未発現の MOD は外れと枠が違うので別の鍵 "u" (S-27d (ア))
+  return `${SWAP}${[...new Set(gone.map((m) => (m.unrevealed ? "u" : aim.has(m.modId) ? m.modId : "j")))].sort().join(",")}`;
 }
+/**
+ * ☑ のある (既定も) 入れ替える手 (パーフェクトエッセンス・カオス) の当たりで、未発現の MOD が入れ替わって消えた人の鍵 `e:u` (無ければ undefined)。
+ * 前は当たりの箱が 1 つで、外れが消えた人と未発現が消えた人が同じ箱に入り、下の手が見本の形にしか合わずにもう 1 つの形の人が止まった
+ * (S-27d (ア)「結果が 2 通り以上なら枠に分ける」、11-11 デイリーの提出 ごめんね 100 人中 41 人)
+ */
+export function veilSwapKeyOf(before: StageItem, after: StageItem): string | undefined {
+  const left = new Set([...after.prefixes, ...after.suffixes].filter((m) => m.unrevealed).map((m) => `${m.side}|${m.modId}`));
+  return [...before.prefixes, ...before.suffixes].some((m) => m.unrevealed && !m.fractured && !left.has(`${m.side}|${m.modId}`)) ? `${SWAP}u` : undefined;
+}
+/** 箱の鍵が入れ替わって消えた MOD の鍵 `e:` を持つか */
+export const hasSwapKey = (key: string | undefined): boolean => swapGoneOf(key).length > 0;
 /** 箱の鍵からエッセンスに入れ替わって消えた MOD (modId、外れは "j"。無ければ []) */
 export const swapGoneOf = (key: string | undefined): string[] => key?.split(";").find((s) => s.startsWith(SWAP))?.slice(SWAP.length).split(",").filter(Boolean) ?? [];
 
