@@ -64,7 +64,7 @@ const CHIP = "flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text
       <span v-if="item" class="g-sec-sub min-w-0" data-mod-win-item>{{ baseNameOf(item) }}</span>
       <!-- 見る品の切り替え (箱を押している時だけ)。押していなければ素の品だけなので出さない -->
       <span v-if="boxItem" role="tablist" class="flex shrink-0 items-center gap-1" data-mod-win-which>
-        <button type="button" role="tab" :aria-selected="!onBox" class="g-tab !min-h-[28px] !px-3 !text-[12px]" :class="!onBox ? 'on' : ''" @click="onBox = false">{{ tr("何も付いていない品", "Blank item") }}</button>
+        <button type="button" role="tab" :aria-selected="!onBox" class="g-tab !min-h-[28px] !px-3 !text-[12px]" :class="!onBox ? 'on' : ''" @click="onBox = false">{{ tr("素の品", "Blank item") }}</button>
         <button type="button" role="tab" :aria-selected="onBox" class="g-tab !min-h-[28px] !px-3 !text-[12px]" :class="onBox ? 'on' : ''" @click="onBox = true">{{ tr("押している箱の品", "Selected box's item") }}</button>
       </span>
       <span v-else class="g-sec-sub shrink-0 opacity-70">{{ tr("何も付いていない状態", "nothing attached") }}</span>
