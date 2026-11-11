@@ -156,8 +156,15 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   if (added.length) { relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); linkLeftovers(data, d); mergeIntoBacked(data, d); }
   if (added.length) for (const id of Object.keys(d.boxes)) foldMisses(d, id); // ↩ で着く人の結果の箱もハズレへ (S-39)
   // 消去の続き (S-28g): つなぎのそろった木で、同じ枠ができた自動の消去を畳み、空いた消去の結果を続ける (手を決める時と同じ)
-  const trimmed = trimAnnul(data, d);
-  if (extendAnnul(data, d) || trimmed) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  // 続けた消去で足した箱に保存の決めがあれば打ち直し、打ち直した人の手と同じ枠になった自動の消去はまた畳む (S-28g ②「保存の決めがある箱は自動の手を外してから置く」・
+  // 「後から木に同じ枠の手のある箱ができたら…畳む」)。前は打ち直しの途中は ↩ で止まっていた箱が終わりの見直しで ↩ が外れて消去が続き、足した箱の保存の決めを読まず、
+  // その決めと同じ枠の別の枝の自動の消去も畳まずに止まった (11-11 デイリーの提出の木、100 人中 44 人。組んだ画面では人が手を置くたびに整理で畳む)
+  for (let n = 0; n < 4; n++) {
+    const trimmed = trimAnnul(data, d), before = new Set(Object.keys(d.boxes));
+    if (!extendAnnul(data, d) && !trimmed) break;
+    yield* replay(Object.keys(d.boxes).filter((id) => !before.has(id)));
+    linkLeftovers(data, d); mergeIntoBacked(data, d);
+  }
   fillHeldHi(d); // ヒネコラで持つ削減の「高い」の枠は既定で打たない (S-39 ②b、11-11)
   linkAllSameHi(d); // 「エッセンスと同じ MOD (同格以上)」は押していなければ既定の統合 (保存・見直しで外れていても、S-33e ⑥)
   for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
