@@ -3,7 +3,7 @@
   スタートは今日のお題だけ、14:50 まで、1 日 1 回 (D-01・D-33)。ニックネームが無ければ先に決める (D-51)。幅 1280 未満は今は挑戦できない (D-70、シミュの PC の木の境)
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
@@ -14,6 +14,8 @@ import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
+import { DEV_BUILD } from "../../web/release-flags";
+import { dailyShare, sendDailyShare, type DailyShare } from "./daily-share";
 
 const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>();
 const phone = usePhone();
@@ -45,6 +47,12 @@ const action = computed(() => {
   if (t.value) return { label: tr("続きから始める", "Resume"), sub: tr(`残り ${clock(left.value)}`, `${clock(left.value)} left`) };
   return props.today && !closed.value && canStartAt(props.now) ? { label: tr("1 時間の挑戦を始める", "Start the 1 hour challenge") } : null;
 });
+/** 提出した挑戦の X シェア (D-38、見た目の OK まで開発版だけ)。完成 0 の提出 (last だけ) もそのまま */
+const share = ref<DailyShare | null>(null);
+watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props.topic.tries] as const, async () => {
+  const r = t.value?.submitted ? (t.value.best ?? t.value.last) : null;
+  share.value = DEV_BUILD && r ? await dailyShare(props.topic.id, t.value!.best ? r.cost : null, r.rate) : null;
+}, { immediate: true });
 </script>
 
 <template>
@@ -64,6 +72,7 @@ const action = computed(() => {
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>
+        <a v-if="share" data-daily-hero-share :href="share.web" target="_blank" rel="noopener" class="g-btn mt-2 self-start" @click="sendDailyShare($event, share, topic.id)">{{ tr("X でシェア", "Share on X") }}</a>
       </template>
       <template v-else>
         <div v-if="action" class="daily-start-row">
@@ -77,6 +86,7 @@ const action = computed(() => {
         <p v-else-if="t.ended && !t.submitted && !t.last" data-daily-gave-up class="daily-sub">{{ tr("今日の挑戦は諦めた。次のお題は 16:00。", "You gave up today's challenge. The next one opens at 16:00.") }}</p>
         <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`提出済み: 完成 1 個あたり ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Submitted: ${t.best.cost} div per finished item (${t.best.rate}% finished)`) }}</p>
         <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`順位に載らない記録: 完成率 ${t.last.rate}%`, `Not ranked: ${t.last.rate}% finished`) }}</p>
+        <a v-if="share" data-daily-hero-share :href="share.web" target="_blank" rel="noopener" class="g-btn mt-2 self-start" @click="sendDailyShare($event, share, topic.id)">{{ tr("X でシェア", "Share on X") }}</a>
       </template>
     </div>
     <DailyRank :topic="topic" />
