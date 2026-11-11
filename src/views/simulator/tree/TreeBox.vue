@@ -18,7 +18,7 @@ import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
 import { CHIP_HALF } from "./tree-lines";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
-import { tr } from "../../../i18n/lang";
+import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
 import { useTree } from "./use-tree";
 import { setSameHiOwn } from "./tree-hand-plan";
 import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
@@ -132,6 +132,8 @@ const legendTitle = computed(() => (props.box.out === "hit" && props.box.aim ? t
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
 /** 失敗 (ここで終わり) の答え  */
 const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : doneShown.value ? "242,210,122" : hold.value || seenOut.value ? "190,160,255" : kind.value.c));
+/** 頭の札を大きく・結果の色で塗る (S-80c 案 A、スイッチ headTagsA) */
+const headA = flag("headTagsA");
 const neon = computed(() => {
   const strong = props.glow || props.selected || !!props.box.done;
   return { borderColor: `rgba(${rgb.value},${strong ? 0.95 : 0.55})`, boxShadow: `0 0 0 1px rgba(${rgb.value},${strong ? 0.5 : 0.18}), 0 0 ${strong ? 22 : 12}px rgba(${rgb.value},${strong ? 0.45 : 0.16})` };
@@ -214,8 +216,8 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。割合 % は出さない (S-76 撤回) -->
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
     <button v-if="unset" type="button" data-tree-unset data-tree-issue class="nodrag absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)] hover:bg-rose-500" :title="tr(`${issue} (押すと未設定の一覧)`, `${issue} (click for the list of unset boxes)`)" @click.stop="emit('issue')">!</button>
-    <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">
-    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
+    <div class="absolute left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap" :class="headA ? 'head-a bottom-[calc(100%-13px)] w-[calc(100%-16px)]' : '-top-[10px]'">
+    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="headA ? { color: '#111', borderColor: `rgb(${rgb})`, background: `rgb(${rgb})`, boxShadow: `0 0 10px rgba(${rgb},0.6)` } : { color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <!-- 開いた時の組み直しで増えた箱 (前の形の木に無かった札、S-107・⑦19 案 A。保存しない) -->
     <span v-if="box.fresh" data-tree-fresh class="shrink-0 rounded-md border border-sky-400/60 bg-sim-panel px-1.5 text-[11px] font-bold leading-[18px] text-sky-300" :title="tr('今の決まりで組み直した時に、前の保存には無かった結果の箱。行き先を確かめて決める', 'A result box that was not in the saved recipe and appeared when rebuilt with the current rules. Check where it goes')">{{ tr("組み直しで増えた", "New after rebuild") }}</span>
     <span v-if="hold || seenOut" data-tree-foresee-frame class="shrink-0 rounded-md border border-violet-300/60 bg-[#15110c] px-1.5 text-[11px] font-bold leading-[18px] text-violet-200" :title="hold ? tr('ヒネコラで予見したアイテム: 次の手の結果が使う前に見える', 'Foreseen with Hinekora: the next craft’s result is visible before use') : tr('予見で見えた結果 (ヒネコラで持った手の結果)', 'A foreseen result (of the craft held after Hinekora)')">{{ hold ? tr("予見", "Foresight") : tr("予見の結果", "Foreseen") }}</span>
@@ -333,3 +335,12 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
   </div>
   </div>
 </template>
+
+<style scoped>
+/* 頭の札の列を大きく (S-80c 案 A、スイッチ headTagsA)。列の子 (結果の名前・予見・来た帯…) をそろえて 15px */
+.head-a > * { font-size: 15px !important; line-height: 26px !important; padding: 0 8px !important; border-radius: 7px !important; }
+.head-a > * :deep(svg) { width: 16px; height: 16px; }
+/* 入らない時は結果の名前の札を縮めず (「…」で切らない)、ほかの札を上の段へ回す (枠の上辺に乗るのは結果の名前の段) */
+.head-a { flex-wrap: wrap-reverse; justify-content: center; row-gap: 3px; }
+.head-a > [data-tree-legend] { flex-shrink: 0; max-width: 100%; }
+</style>
