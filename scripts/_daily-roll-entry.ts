@@ -40,6 +40,8 @@ export type RollInput = {
   now: number; target: string; week: string; closing: string; closed: boolean;
   job: { state: string } | null; items: FetchItem[]; samples: Array<{ id: string; base: string; mods: string; n: number }>; prevSamples: Array<{ id: string; base: string; mods: string; n: number }>;
   plan: PlanRow[]; topics: TopicRow[]; box: BoxRow[]; tries: TryRow[]; results: ResultRow[]; awards: AwardRow[];
+  /** 予定の表に確かめの印の列がある (D-80f)。その週の予定が無い日曜の組み立てでも分かる。古い材料には無い */
+  planMarks?: boolean;
 };
 
 // --- 型 (D-80c): 取った品の英語の文 → エンジンの行の名前と段 ---
@@ -182,6 +184,10 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
 
   // ① 週の予定 (D-06・D-80b ④): その週の予定がまだ無ければ、取れた型 (足りなければ + 前の週、1 つも無ければ手の辞書) から月〜日を組む
   let plan = inp.plan.map((p) => ({ day: p.day, base: p.base, aims: p.aims ? (JSON.parse(p.aims) as GenAim[]) : null, ilvl: p.ilvl ?? TOPIC_ILVL, slot: p.slot, sampleId: p.sample_id }));
+  // 表に確かめの印の列があるか (D-80f)。列の無い D1 では印を送らない (書くと全部が落ちる)
+  const marking = !!inp.planMarks || inp.plan.some((p) => "checked" in p);
+  // その回で組んだ週の予定に付けた印 (日曜の組み立て、11-11)。後の「明日から先」の確かめで二重に直さない
+  const builtMarks = new Map<string, string>();
   if (!plan.length) {
     const fresh = samplesOf(data, inp.items);
     const prev = inp.prevSamples.map((s) => ({ id: s.id, base: s.base, mods: JSON.parse(s.mods), n: s.n }) as DailySample);
@@ -208,7 +214,11 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
       if (!p) return null;
       const g = topicOfPlan(data, p, samples);
       const base = g?.base ?? p.base; // planWeek はフル MOD の人だけ選ぶので、ふつうは予定のまま
-      return { day: p.day, slot: p.slot, itemClass: classOfBase(base), base, baseJa: jaTypeName(base), sampleId: g?.sampleId ?? p.sampleId, ilvl: g?.ilvl ?? TOPIC_ILVL, aims: g?.aims ?? null };
+      const aims = g?.aims ?? null;
+      // 日曜に組んだ時点でフル MOD (段は D-04、generateTopic が付ける) に届いた日に印 (D-80f、オーナー 11-11「おけ」)。台本が回らない日もサーバーが予定どおり出せる
+      const checked = marking && aims && fullMods(data, base, aims) ? RULES_VER : null;
+      if (checked) builtMarks.set(p.day, checked);
+      return { day: p.day, slot: p.slot, itemClass: classOfBase(base), base, baseJa: jaTypeName(base), sampleId: g?.sampleId ?? p.sampleId, ilvl: g?.ilvl ?? TOPIC_ILVL, aims, ...(checked ? { checked } : {}) };
     });
     body.week = { week: inp.week, samples: samples.map((s) => ({ ...s, itemClass: classOfBase(s.base) })), plan: rows.filter(Boolean) };
     log.push(`予定: ${rows.map((r, i) => `${"月火水木金土日"[i]} ${r ? r.base : "—"}`).join("・")}`);
@@ -260,10 +270,9 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
   // 今週の残りの予定 (明日から) も直して Worker の予定を書き換える。台本が回らなかった日の控えもフル MOD になる (お題の出た日は Worker が触らない)
   // D-80f: 表に確かめの印の列があれば、明日から先の予定を全部確かめ、フル MOD (段は D-04) に届いた日に印 (決まりの版) を付けて書き戻す。
   // 届かない日 (どこにも候補が無い) は印を付けず needMore に出す = daily-roll.mjs が忍者から人数を増やして取り直し、もう一度組む。列の無い D1 は変わった日だけ (前のまま)
-  const marking = inp.plan.some((p) => "checked" in p);
   const ahead = plan.filter((p) => noOf(p.day) > no && !inp.topics.some((t) => t.day === p.day)).map((p) => [p, toFull(p)] as const);
   const isFull = (p: PlanDay): boolean => !!p.aims && fullMods(data, p.base, p.aims);
-  const marked = (d: string): string | null => inp.plan.find((p) => p.day === d)?.checked ?? null;
+  const marked = (d: string): string | null => builtMarks.get(d) ?? inp.plan.find((p) => p.day === d)?.checked ?? null;
   const fixes = ahead.filter(([a, b]) => a !== b || (marking && isFull(b) && marked(b.day) !== RULES_VER)).map(([, b]) => b);
   if (fixes.length) body.planFix = fixes.map((p) => ({ day: p.day, slot: p.slot, itemClass: classOfBase(p.base), base: p.base, baseJa: jaTypeName(p.base), sampleId: p.sampleId, ilvl: p.ilvl, aims: p.aims, ...(marking && isFull(p) ? { checked: RULES_VER } : {}) }));
   const short = ahead.filter(([, b]) => !isFull(b)).map(([, b]) => b.day);

@@ -29,7 +29,10 @@ export async function rollJson(db: D1Database, now: number, dayParam: string | n
     all("SELECT * FROM daily_awards"),
   ]);
   const closed = await db.prepare("SELECT 1 FROM daily_results WHERE day = ? LIMIT 1").bind(closing).first();
-  return { now, target, targetId: idOf(no), week, prevWeek, closing, closed: !!closed, job, items, samples, prevSamples, plan, topics, box, tries, results, awards };
+  // 予定の表に確かめの印の列 (checked、D-80f) があるか。その週の予定がまだ無い日曜の組み立てでも分かるよう、どの週でも 1 行見る
+  const anyPlan = await db.prepare("SELECT * FROM daily_plan LIMIT 1").first<Record<string, unknown>>();
+  const planMarks = !!anyPlan && "checked" in anyPlan;
+  return { now, target, targetId: idOf(no), week, prevWeek, closing, closed: !!closed, planMarks, job, items, samples, prevSamples, plan, topics, box, tries, results, awards };
 }
 
 /**
@@ -50,11 +53,16 @@ export async function rollPost(db: D1Database, b: Body, prices: string | null): 
     if (!has) {
       for (const s of arr(w.samples))
         stmts.push(db.prepare("INSERT OR REPLACE INTO daily_samples (week, id, item_class, base, mods, n) VALUES (?, ?, ?, ?, ?, ?)").bind(week, str(s.id), str(s.itemClass), str(s.base), js(s.mods), num(s.n) ?? 1));
+      // checked = 組んだ時に台本がフル MOD・段 (D-04) を確かめた印 (D-80f、11-11)。台本は表に列がある時だけ送る
       for (const p of arr(w.plan))
         stmts.push(
-          db
-            .prepare("INSERT OR IGNORE INTO daily_plan (day, week, slot, item_class, base, base_ja, sample_id, ilvl, aims) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-            .bind(str(p.day), week, num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims)),
+          str(p.checked)
+            ? db
+                .prepare("INSERT OR IGNORE INTO daily_plan (day, week, slot, item_class, base, base_ja, sample_id, ilvl, aims, checked) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                .bind(str(p.day), week, num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims), str(p.checked))
+            : db
+                .prepare("INSERT OR IGNORE INTO daily_plan (day, week, slot, item_class, base, base_ja, sample_id, ilvl, aims) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                .bind(str(p.day), week, num(p.slot) ?? 0, str(p.itemClass), str(p.base), str(p.baseJa), str(p.sampleId), num(p.ilvl), js(p.aims)),
         );
       done.push("week");
     }
