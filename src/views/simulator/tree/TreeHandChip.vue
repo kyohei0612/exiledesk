@@ -12,6 +12,7 @@ import { useTree } from "./use-tree";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { parseRuneKey } from "../../../services/craft-stage/engine";
+import { isWhittleHand } from "../../../services/simulator/tree/tree-whittle";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
@@ -33,6 +34,14 @@ const runeOn = computed((): string | null => {
 const t = useTree();
 const hold = computed(() => !!props.hand && holdsAt(t.doc.value, props.id));
 const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
+/**
+ * 削減の手 (削減のお告げ付き) で ☑ が無い = 当たりの箱が無い時も「狙い無し」(S-23。11-11 オーナー「狙い無しなら削減のカレンシーの枝の途中の枠に狙い無しってかかれるはず」)。
+ * 削減の手は狙い無しの印 free を持たない作り (付く MOD を選べない手の表 FREE_EFFECTS の外) なので、前から札に出ていなかった
+ */
+const whittleNoAim = computed(() => {
+  const h = props.hand, b = t.doc.value.boxes[props.id];
+  return !!h && !h.free && isWhittleHand(h) && !!b?.outs.length && !b.outs.some((o) => t.doc.value.boxes[o]?.out === "hit");
+});
 </script>
 
 <template>
@@ -50,7 +59,7 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
     <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
     <!-- 骨は 3 択 (S-37、11-07): 未発現のままは「未発現」、発現させて狙い無しは「発現・狙い無し」 -->
-    <span v-if="hand.free || veilKeep(hand)" data-tree-hand-free-tag class="shrink-0 rounded-sm bg-white/15 px-1 text-[10px]">{{ veilKeep(hand) ? tr("未発現", "unrevealed") : veilPick(hand) && !isRevealHand(hand.currency) ? tr("発現・狙い無し", "reveal, no target") : tr("狙い無し", "no target") }}</span>
+    <span v-if="hand.free || veilKeep(hand) || whittleNoAim" data-tree-hand-free-tag class="shrink-0 rounded-sm bg-white/15 px-1 text-[10px]">{{ veilKeep(hand) ? tr("未発現", "unrevealed") : veilPick(hand) && !isRevealHand(hand.currency) ? tr("発現・狙い無し", "reveal, no target") : tr("狙い無し", "no target") }}</span>
     <span v-if="runeOn" data-tree-hand-rune class="shrink-0 rounded-sm bg-sky-400/20 px-1 text-[10px] text-sky-100" :title="tr(`この手でルーンが嵌まる: ${runeOn} (一度嵌まったら戻っても嵌まったまま)`, `A rune is socketed at this step: ${runeOn} (stays socketed on return paths)`)">{{ tr("ルーン", "Rune") }}</span>
     <span v-if="choice" data-tree-hand-choice class="min-w-0 whitespace-normal break-words rounded-sm bg-amber-400/20 px-1 leading-tight text-amber-200">{{ choice }} ▾</span>
   </button>
