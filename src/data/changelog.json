@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.711",
+  "date": "2026-11-11",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦の画面 (PC) で、木を組む所が細く押し込まれていたのを直しました",
+    "en": "Daily: fixed the tree area on the challenge screen (PC) being squeezed into a narrow column"
+   }
+  ]
+ },
+ {
   "v": "0.1.710",
   "date": "2026-11-11",
   "items": [
@@ -892,24 +904,6 @@
     "area": "",
     "text": "ブログ: 深淵のエッセンスの記事を今の決まりに直しました",
     "en": "Blog: updated the Essence of the Abyss article to the current rules"
-   }
-  ]
- },
- {
-  "v": "0.1.671",
-  "date": "2026-11-06",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター・シミュレーター: グラスピングメイルにエッセンスが 1 つも打てなかった不具合と、触媒の高貴のお告げが打てなかった不具合を直しました。暗黙の「指輪の MOD も付く」どおり、指輪の MOD も全部付くようにしました",
-    "en": "Emulator and Simulator: fixed Essences and the Omen of Catalysing Exaltation not working on Grasping Mail. As its implicit says, it can now roll all Ring mods too"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター・シミュレーター: 深淵のエッセンスは未発現の冒涜 MOD を必ず消していたのを、普通のエッセンスと同じく消せる MOD からランダムに 1 つ消すように直しました",
-    "en": "Emulator and Simulator: Essence of the Abyss always removed the Unrevealed Desecrated mod; it now removes a random removable mod, like other Essences"
    }
   ]
  }
