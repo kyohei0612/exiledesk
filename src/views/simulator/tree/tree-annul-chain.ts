@@ -30,7 +30,7 @@ const open = (b: TreeBox | undefined): b is TreeBox => !!b && !b.hand && !b.back
  */
 export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string[], toward?: (id: string) => boolean): number {
   // (スイッチ treeNoAnnulAuto、S-28g ⑤。11-12 オーナー「消去自動は無しだな…すべて削除の奴だけ自動でいいかもね残しMODがある時は自動はやめた方が良いかもね」)
-  // 残したい MOD (☑) のある消去は続けない = 置いた手の結果の箱だけ。☑ の無い消去 (全部消えてよい) だけ今までどおり止まる所まで続ける。
+  // 残したい MOD (☑) のある消去は、狙いの残る結果の箱では続けない = 置いた手の結果の箱だけ (全部外れになった箱からは続ける)。☑ の無い消去 (全部消えてよい) は今までどおり止まる所まで続ける。
   // 開く時 (toward) は 1 回に 1 段だけ続け、呼ぶ側がそのたびに保存の決めを置く (まとめて続けてから置くと、続きの下の保存の決めが置かれない木があった = オーナーの木の 11 個)。
   // ☑ のある消去は開く時だけ、前に保存した決めへ着くのに要る箱に限って続ける (自動の消去は保存していないので、続けないと下の人の決めの置き場が無くなる)
   const stop = flag("treeNoAnnulAuto");
@@ -50,7 +50,11 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
     mergeOpenSame(d, kids, j);
     const go = kids.flatMap((id) => {
       const b = d.boxes[id], f = frames.get(id), h = b?.parent ? d.boxes[b.parent]?.hand : null;
-      if (!open(b) || !f || f.note || !isAnnulHand(h) || (stop && (toward ? !toward(id) : keeps(h)))) return [];
+      // ☑ のある消去でも、結果の箱の品が全部外れ (狙いが 1 つも残っていない。フラクチャーは数えない = holdsAim) になったら、その箱からは自動で続ける
+      // (11-12 オーナー「何か1つでも残ってたら自動で消去は無しで１つずつ手打ち。その中で全部ハズレになる瞬間あるでしょ？その時からは自動って話ね。」)
+      // 残したい MOD に選んだ物 (完成形に無いエッセンスの MOD も選べる、S-27b) が品に残っている間も狙いが残る箱 = 続けない
+      const keptOn = (): boolean => !!f && [...f.item.prefixes, ...f.item.suffixes].some((m) => (h?.keep ?? []).some((a) => sameAimMod(data, a, { modId: m.modId, tier: 1 })));
+      if (!open(b) || !f || f.note || !isAnnulHand(h) || (stop && (toward ? !toward(id) : keeps(h) && (j.holdsAim(id) || keptOn())))) return [];
       // MOD が 1 つ (✦ も数える) になるまで続ける = 最後はプレ 1 つかサフィ 1 つ (11-06 オーナー「0になるまでじゃなくて１MODになるまでな サフィプレ1つずつになるだろ最終」。
       // 前は消去の結果が 1 つの所で止め、全部消えてよい消去が [エッセンス / ✦] で止まった)。消せる MOD が無い (結果 0) 時も止める。
       // 残したい MOD が消える枝は消せる物に数えない (残したい MOD は木の側の物でエンジンは知らない。同じ MOD かはエンジンの当て方 sameAimMod、✦ はエンジンが消さない)。
