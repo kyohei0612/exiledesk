@@ -9,6 +9,8 @@ import { runTree, withStartCost } from "../../services/simulator/tree/tree-run";
 import { runPrice, runShown } from "../../services/simulator/tree/run-price";
 import { aimOpts, sampleOf, targetsOf } from "../../services/simulator/tree/tree-sample";
 import { isAimMod } from "../../services/simulator/tree/tree-aim";
+import { tierNoOf } from "../../services/craft-stage/tier-rank";
+import type { StageMod } from "../../services/craft-stage/engine";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { NO_FRAC, fillTopicDoc } from "./daily-aims";
@@ -30,15 +32,30 @@ export const FOUR_ONLY_FROM = "2026-11-12";
 export const fourOnlyOn = (day: string): boolean => day.replace(/^d/, "") >= FOUR_ONLY_FROM;
 
 /**
+ * その MOD がお題の狙い a に当たるか (D-35b: 完成は MOD の種類と段だけ、付けた手は問わない)。シミュと同じ isAimMod に加え、
+ * エンジンの当たりが別物にするエッセンスの MOD と普通の MOD (どちらの向きも) を、同じ系統で効果の文も同じなら当たりにする。段は段の名前の T で比べる
+ * (エッセンスの MOD の段の名前は普通の MOD の段に合わせてある、apply-essence の normalTierOf)。11-11 オーナー「このデイリーの形で完成にならないわけは」
+ * (スペルクリティカルが上級エッセンスの版で付き、狙いの普通の MOD と別に見て提出を止めた)
+ */
+export function dailyHit(data: PatchData, m: StageMod, a: { modId: string; tier: number }): boolean {
+  if (isAimMod(m, targetsOf(data, [a]), aimOpts(data))) return true;
+  if (m.unrevealed) return false;
+  const want = data.mods.get(a.modId), got = data.mods.get(m.modId);
+  if (!want || !got || !want.family || got.family !== want.family || got.text !== want.text) return false;
+  return tierNoOf(m) <= a.tier;
+}
+const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { modId: string; tier: number }[]): boolean =>
+  aims.every((a) => mods.some((m) => dailyHit(data, m, a)));
+
+/**
  * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。
- * 箱の見本の品 (sampleOf) で見る。当たりの判定はシミュと同じ isAimMod (同じ系統・同じ文も当たり)
+ * 箱の見本の品 (sampleOf) で見る。当たりの判定は dailyHit (シミュの isAimMod + 同じ文のエッセンスの版)
  */
 export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
-  const opts = aimOpts(data);
   return Object.values(doc.boxes).filter((b) => b.done === "main").filter((b) => {
     let mods;
     try { const it = sampleOf(data, doc, b.id, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return true; }
-    return !aims.every((a) => mods.some((m) => isAimMod(m, targetsOf(data, [a]), opts)));
+    return !holdsAll(data, mods, aims);
   }).map((b) => b.id);
 }
 
@@ -48,11 +65,10 @@ export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId:
  * 人が「失敗」を付けた箱は触らない
  */
 export function metBoxes(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
-  const opts = aimOpts(data);
   return Object.values(doc.boxes).filter((b) => b.out !== "start" && b.done == null && !b.hand && !b.back && !b.split?.length).filter((b) => {
     let mods;
     try { const it = sampleOf(data, doc, b.id, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return false; }
-    return aims.every((a) => mods.some((m) => isAimMod(m, targetsOf(data, [a]), opts)));
+    return holdsAll(data, mods, aims);
   }).map((b) => b.id);
 }
 /** 完成形と同じ形の箱に完成の印を付ける (挑戦の木と 16:00 の検算で同じ)。付けた数 */
