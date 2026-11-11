@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "node scripts/asset-packs.mjs && vue-tsc --noEmit && vite build",
     "test": "vitest run",
+    "test:truth": "vitest run tests/coe-rules-2026-10-16.test.ts tests/grasping-mail.test.ts tests/desecrate-reveal-rates.test.ts tests/desecrated-fracture.test.ts tests/desecrated-any-level.test.ts tests/flux-table.test.ts tests/currency-floor-head.test.ts tests/craft-stage-floor.test.ts tests/skill-quality.test.ts tests/poe2db-fixes.test.ts tests/item-classes.test.ts tests/currency-spec-orbs.test.ts tests/currency-spec-essence.test.ts tests/currency-spec-other.test.ts tests/currency-spec-parity.test.ts tests/trade-text-parity.test.ts tests/base-allowed-limits.test.ts tests/breach-quality.test.ts tests/rune-effect-boost.test.ts tests/crafted-family-block.test.ts tests/mod-weights.test.ts tests/augment-rules.test.ts tests/jewel-video-flow.test.ts tests/mod-values.test.ts",
     "data:client": "node scripts/refresh-client-data.mjs",
     "data:all": "node scripts/data-all.mjs",
     "data:status": "node scripts/data-status.mjs",
