@@ -293,7 +293,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   // 削減の手前の枠 (S-65c) を先に。枠に割れたら結果の一覧はその枠の組で数え直す (④、割る前の一覧には枠の組で起こらない結果が入っている)
-  if (data && syncBeforeHand(data, d, at, h) && only) only = onlyOf(data, d, at, h, null, aims);
+  // 数え直す間はこの箱に手を置いた形で (枠の代表の品は枠の削減の手 = frameHandOf で作る。手を置く前だと枠の見本が作れず一覧が空 = 手の種類の既定になり、
+  // 未発現 + 左側の抹消 + 削減の狙い無しが「打った後」1 箱、既定は札の無い当たりの箱になった = 11-11 枝のフルチェック)
+  if (data && syncBeforeHand(data, d, at, h) && only) { const ab = d.boxes[at]!, was = ab.hand; ab.hand = h; only = onlyOf(data, d, at, h, null, aims); ab.hand = was; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (data) fillMissOuts(data, d, at);
   joinSameShape(d, id);
