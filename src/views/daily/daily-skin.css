@@ -10,14 +10,19 @@
 .daily-root[data-daily-page] .daily-board { grid-template-columns: minmax(0, 1fr) 330px minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "head head head" "clock clock clock" "rank hero week" "foot foot foot"; }
 .daily-root[data-daily-page] .daily-board.one { grid-template-columns: 400px minmax(0, 1fr); grid-template-areas: "head head" "hero rank"; }
 /* お題のページで完成形のカードが出る時は、上の絵と名前の札を出さない (カードの頭が名前、11-09 オーナー「アンバランス。アイテムのアイコンは不要」)。左右とも上にそろえる */
-.daily-board.one .daily-veil.has-card .daily-veil-frame,
-.daily-board.one .daily-veil.has-card .daily-plate { display: none; }
-.daily-board.one .daily-veil.has-card { margin-bottom: 8px; }
+/* 一覧でも同じ (挑戦済みのカード D-37e2、11-11 オーナー「これ上の枠いらんだろ」= 名前の札がカードの頭と重なる) */
+.daily-veil.has-card .daily-veil-frame,
+.daily-veil.has-card .daily-plate { display: none; }
+.daily-veil.has-card { margin-bottom: 8px; }
 .daily-board.one .daily-hero-main,
 .daily-board.one [data-daily-rank] { align-self: start; }
 .daily-bottom { grid-area: foot; display: grid; grid-template-columns: minmax(0, 1fr) 216px; column-gap: 24px; }
 [data-daily-week] { grid-area: week; min-width: 0; }
-[data-daily-rank] { grid-area: rank; }
+[data-daily-rank] { grid-area: rank; container-type: inline-size; }
+/* 順位の欄が狭い時 (一覧の 3 列・狭い窓) は時間の列を外して名前を潰さない。機種でなく欄の幅で決める (11-11、一覧の 1920 で名前が縦 1 文字ずつに折れた) */
+@container (max-width: 440px) { .daily-rank-time { display: none; } }
+/* もっと狭い時 (一覧の 3 列の真ん中が品のカードで広がった時など) はスコアの日だけ「1 個あたり」も外す (スコアに含まれる。順位の並びはスコア) */
+@container (max-width: 320px) { .daily-rank-cost { display: none; } }
 
 /* お題の顔。面の格子へ溶ける */
 .daily-hero { display: contents; }
