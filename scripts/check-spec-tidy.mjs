@@ -88,10 +88,10 @@ if (only !== "C") {
       if (!/^\s*- \*\*/.test(ln)) continue;
       const before = po.get(f).items.get(id) || "";
       if (before === ln) continue;
-      const add = sents(ln).filter((s) => !had.has(s) && !/記録の紙/.test(s)); // 「前の形は記録の紙」と指すだけの文は数えない
+      const add = sents(ln).filter((s) => !had.has(s) && !/記録の紙|docs\/spec\/history\//.test(s)); // 「前の形は記録の紙」と指すだけの文は数えない
       if (!add.length) continue;
       // 「前の形 (…) は記録の紙」は、括弧で文が切れても指すだけの文として外す
-      const ptr = ln.match(/前の(?:形|決め)[^。]{0,60}記録の紙/g) || [];
+      const ptr = ln.match(/前の(?:形|決め)[^。]{0,90}(?:記録の紙|docs\/spec\/history\/)/g) || [];
       const txt = add.filter((s) => !ptr.some((p) => p.includes(s.slice(0, 12)))).join(" ");
       const why = [];
       const m1 = txt.match(/前は[^。]{0,24}|以下は[^。]{0,24}(?:形|見方)|前の決め[^。]{0,16}|前の形[^。]{0,16}/);
@@ -100,7 +100,7 @@ if (only !== "C") {
       if (quotes(ln) - quotes(before) >= 2 || (!before && quotes(ln) >= 2)) why.push("オーナーの言葉が 2 つ以上 (出どころは 1 つ)");
       const m2 = txt.match(/\d+ 人中 \d+ 人/);
       if (m2) why.push(`不具合の話「${m2[0]}」`);
-      if (why.length) out.push(`[経緯] ${f}: ${id.replace(/'+$/, "")} に経緯を足している = ${why.join("・")}。項目には今の決まりと出どころ 1 つだけ、経緯は部の記録の紙 (docs/org/<部>/notes/spec-<紙>-history.md) へ (G-29)`);
+      if (why.length) out.push(`[経緯] ${f}: ${id.replace(/'+$/, "")} に経緯を足している = ${why.join("・")}。項目には今の決まりと出どころ 1 つだけ、経緯は記録の紙 (docs/spec/history/<紙>.md) へ (G-29)`);
     }
   }
 }
