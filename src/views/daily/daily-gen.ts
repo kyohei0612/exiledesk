@@ -73,8 +73,14 @@ export const tierFloor = (_tier: number): number => TIER_FLOOR;
  */
 const floorTierOf = (r: ListRow | undefined, ilvl: number, tier: number): { able: ListRow["tiers"]; t: ListRow["tiers"][number] | undefined } => {
   const want = tierFloor(tier), able = (r?.tiers ?? []).filter((x) => x.ilvl <= ilvl).sort((x, y) => x.tier - y.tier);
+  // スキルのレベル系は D-04 の例外: アイテムレベルの中で付く一番上の段を必ず求める (11-11 オーナー「スキルレベル系はt1にしよう強制。マックスやないとなMODでつく中で」)
+  if (r && isSkillLevel(r)) return { able, t: able[0] };
   return { able, t: able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want) ?? able[able.length - 1] };
 };
+/** スキルのレベル系の MOD (全てのスペルスキルのレベル +# など)。行の id の系統名で見る (字は言語で変わるので使わない) */
+export const isSkillLevel = (r: Pick<ListRow, "id" | "family">): boolean => /GemLevel/i.test(r.id) || /GemLevel/i.test(r.family);
+/** 狙いの行 (同じ系統をまとめた行は段ごとに modId が違うので、行の id か段の modId で引く)。段を揃える所とエッセンスの入れ替えで 1 か所 */
+const rowOfAim = (rows: readonly ListRow[], a: Pick<GenAim, "modId">): ListRow | undefined => rows.find((x) => x.id === a.modId || x.tiers.some((t) => t.modId === a.modId));
 
 /**
  * 1 人分の並びをそのままお題にする (D-06・D-82)。段は D-04、付かない並び (D-83) は null。
@@ -106,11 +112,54 @@ export function fullAimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_I
 export function floorAims(data: PatchData, base: string, ilvl: number, aims: readonly GenAim[]): GenAim[] {
   let rows: ListRow[] = [];
   try { rows = modListFor(data, freshItem(data, base, ilvl)); } catch { /* 表が引けなければそのまま */ }
+  const texts = aimTextsOf(data, base, ilvl);
   return aims.map((a) => {
-    const r = rows.find((x) => x.id === a.modId || x.tiers.some((t) => t.modId === a.modId));
+    const r = rowOfAim(rows, a);
+    // エッセンスの MOD (D-04b) は段がエッセンスで決まっているので動かさない
+    if (r && r.group !== "normal") return a;
     const { t } = floorTierOf(r, ilvl, a.tier);
-    return r && t ? { ...a, modId: t.modId ?? r.id, tier: t.tier } : { ...a, tier: tierFloor(a.tier) };
+    if (!r || !t) return { ...a, tier: tierFloor(a.tier) };
+    // 字も揃えた段の物に引き直す (前は段だけ下げて元の段の値の字が残り、T3 のお題に T1 の値が書かれていた、11-11)
+    const modId = t.modId ?? r.id;
+    return { ...a, modId, tier: t.tier, ...(texts(modId, t.tier) ?? {}) };
   });
+}
+
+/**
+ * 完全なエッセンスを必ず 1 つ (D-04b、11-11 オーナー「必ずエッセンス入れるようにしてあげよーか」「変えるのはつく確率が高い方やね」)。
+ * そのベースに付くパーフェクトエッセンス (Perfect Essence of …、ヒステリー・アビス・合金などの特別な物は数えない) の MOD が狙いに無ければ、
+ * エッセンスと同じ側 (プレ / サフィ) の狙いのうち付く確率 (その側の普通の MOD の重みの中の割合) が一番高い物をエッセンスの MOD に替える。
+ * 同じ確率なら忍者の装備 (samples の同じ部位) で持っている人が少ない方を替える。付くエッセンスが複数なら、替える狙いの確率が一番高い物 (同じならエンジンの並び順)。
+ * 替えると付かない組 (goalBlock) は使わない。付くパーフェクトエッセンスが無い品・もう入っている品はそのまま。投稿 (箱) には使わない
+ */
+export function essenceSwap(data: PatchData, base: string, ilvl: number, aims: readonly GenAim[], samples: readonly DailySample[] = []): { aims: GenAim[]; swap: { from: GenAim; to: GenAim; essence: string } | null } {
+  let rows: ListRow[];
+  try { rows = modListFor(data, freshItem(data, base, ilvl)); } catch { return { aims: [...aims], swap: null }; }
+  const perfectTier = (r: ListRow) => r.tiers.find((t) => t.essence?.en.startsWith("Perfect Essence"));
+  const ess = rows.filter((r) => r.group === "perfect_essence" && perfectTier(r));
+  // もう入っている = 狙いがエッセンスの MOD そのもの。同じ系統の普通の MOD (近接スキルのレベルと戦闘のエッセンスのアタックスキルのレベル等) は別の MOD なので数えない
+  // (並べると系統がぶつかるので、その組は下の goalBlock で外れる)
+  const essRows = new Set(ess);
+  if (!ess.length || aims.some((a) => { const r = rowOfAim(rows, a); return !!r && essRows.has(r); })) return { aims: [...aims], swap: null };
+  const norm = rows.filter((r) => r.group === "normal");
+  const sideTotal = (side: string) => norm.filter((r) => r.side === side).reduce((s, r) => s + r.weight, 0) || 1;
+  const cls = classOfBase(base);
+  const holders = (r: ListRow) => samples.filter((s) => classOfBase(s.base) === cls && s.mods.some((m) => m.name === nameOf(r))).length;
+  const texts = aimTextsOf(data, base, ilvl);
+  let best: { i: number; pct: number; held: number; to: GenAim; essence: string } | null = null;
+  for (const e of ess) {
+    const t = perfectTier(e)!, modId = t.modId ?? e.id;
+    const to: GenAim = { modId, tier: t.tier, ...(texts(modId, t.tier) ?? { ja: t.text, en: t.text }) };
+    const cands = aims.map((a, i) => ({ i, r: rowOfAim(rows, a) })).filter((c) => c.r && c.r.group === "normal" && c.r.side === e.side)
+      .map((c) => ({ i: c.i, pct: c.r!.weight / sideTotal(c.r!.side), held: holders(c.r!) }))
+      .filter((c) => !goalBlock(data, base, ilvl, aims.filter((_, j) => j !== c.i).map((a) => ({ modId: a.modId, tier: a.tier })), { modId, tier: t.tier }))
+      .sort((x, y) => y.pct - x.pct || x.held - y.held);
+    const c = cands[0];
+    if (c && (!best || c.pct > best.pct || (c.pct === best.pct && c.held < best.held))) best = { ...c, to, essence: t.essence!.ja };
+  }
+  if (!best) return { aims: [...aims], swap: null };
+  const out = aims.map((a, i) => (i === best!.i ? best!.to : a));
+  return { aims: out, swap: { from: aims[best.i]!, to: best.to, essence: best.essence } };
 }
 
 /** 履歴 = 前に出たお題 (古い順)。部位の山とベースの「まだ出ていない」をここから数える (D-06、別の表を持たない) */
@@ -156,7 +205,8 @@ export function planWeek(data: PatchData, days: readonly string[], samples: read
 /** 予定の 1 日 → お題 (D-82)。予定の 1 人分がフル MOD に届かなければ、同じ部位の次の 1 人へ (nextFullSample) */
 export function topicOfPlan(data: PatchData, p: PlanDay, samples: readonly DailySample[], seen: ReadonlySet<string> = new Set()): GenTopic | null {
   const s = samples.find((x) => x.id === p.sampleId), aims = s ? fullAimsOfSample(data, s) : null;
-  if (s && aims) return { day: p.day, sampleId: s.id, base: s.base, ilvl: TOPIC_ILVL, aims, slot: p.slot };
+  // 完全なエッセンスを 1 つ (D-04b)
+  if (s && aims) return { day: p.day, sampleId: s.id, base: s.base, ilvl: TOPIC_ILVL, aims: essenceSwap(data, s.base, TOPIC_ILVL, aims, samples).aims, slot: p.slot };
   const n = nextFullSample(data, p.day, p.base, samples, seen, p.sampleId);
   return n ? { day: p.day, sampleId: n.s.id, base: n.s.base, ilvl: TOPIC_ILVL, aims: n.aims, slot: p.slot } : null;
 }
@@ -177,7 +227,7 @@ export function nextFullSample(data: PatchData, day: string, base: string | null
     while (pool.length) {
       const s = pool.splice(Math.floor(rng() * pool.length), 1)[0]!;
       const aims = fullAimsOfSample(data, s);
-      if (aims) return { s, aims };
+      if (aims) return { s, aims: essenceSwap(data, s.base, TOPIC_ILVL, aims, samples).aims }; // 完全なエッセンスを 1 つ (D-04b)
       for (let i = pool.length - 1; i >= 0; i--) if (pool[i]!.id === s.id) pool.splice(i, 1);
     }
   }

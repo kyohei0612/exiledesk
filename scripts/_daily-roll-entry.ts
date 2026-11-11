@@ -9,7 +9,7 @@ import { modListFor } from "../src/services/craft-stage/mod-list";
 import { parseItemText } from "../src/services/simulator/paste/item-text";
 import { htcBaseInfo } from "../src/services/htc/patch";
 import { jaTypeName } from "../src/i18n/item-names-ja";
-import { classOfBase, devSamples, floorAims, nextFullSample, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
+import { classOfBase, devSamples, essenceSwap, floorAims,nextFullSample, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
 import { boxCheck, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
 import { runCost, topicPrice } from "../src/views/daily/daily-cost";
@@ -19,7 +19,8 @@ const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
 /** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
 const SOLVE_RATE = 1;
 /** D-05 の部位の表・D-04 の段の決まりの版 (変えたら上げる)。11-10 に D-04 を全部 T3 以上に、予定の確かめの印 (D-80f) もこの版 */
-export const RULES_VER = "D04T3-D05-2026-11-10";
+// 11-11: スキルレベル T1・完全なエッセンス 1 つ (D-04b) を足した版。前は "D04T3-D05-2026-11-10"
+export const RULES_VER = "D04T3L1-D04bE-D05-2026-11-11";
 
 const noOf = (day: string): number => Math.round(Date.parse(`${day}T00:00:00Z`) / DAY);
 const nameOf = (no: number): string => new Date(no * DAY).toISOString().slice(0, 10);
@@ -255,8 +256,10 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
   const toFull = (day: PlanDay): PlanDay => {
     // 段は D-04 (全部 T3 以上、11-10)。前の決まりで組んだ予定の段もここで揃える (変わった時だけ新しい物 = planFix で書き戻す)
     if (day.aims && fullMods(data, day.base, day.aims)) {
-      const fl = floorAims(data, day.base, day.ilvl ?? TOPIC_ILVL, day.aims);
-      return fl.some((a, i) => a.modId !== day.aims![i]!.modId || a.tier !== day.aims![i]!.tier) ? { ...day, aims: fl } : day;
+      // 完全なエッセンスを 1 つ (D-04b、11-11)。もう入っていればそのまま
+      const fl = essenceSwap(data, day.base, day.ilvl ?? TOPIC_ILVL, floorAims(data, day.base, day.ilvl ?? TOPIC_ILVL, day.aims), weekSamples).aims;
+      // 字も比べる (段を揃えた時に元の段の字が残っていた予定を、引き直した字で書き戻す、11-11)
+      return fl.some((a, i) => a.modId !== day.aims![i]!.modId || a.tier !== day.aims![i]!.tier || a.ja !== day.aims![i]!.ja) ? { ...day, aims: fl } : day;
     }
     const seen = new Set(historyBefore(noOf(day.day)).map((h) => h.base));
     // 同じ部位 (今週と前の週の型 → 手の辞書の見本) → 部位を問わず (同じ順)。部位を問わず引いた時は出す部位の札も品に合わせる
