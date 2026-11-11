@@ -11,6 +11,8 @@
  * ページの写しは data-cache/poe2db-pages (audit-poe2db.mjs --refresh で取り直す)。
  *
  *   node scripts/audit-poe2db-tags.mjs           照らし合わせだけ (直しを当てた後のデータ。0 なら合っている)
+ *   node scripts/audit-poe2db-tags.mjs --check   控え (scripts/audit-poe2db.baseline.json の tags) に無い食い違い・決まらない MOD・比べられなかった MOD が出たら落ちる (exit 1)。写しが無ければ「回らなかった」で落ちる
+ *   node scripts/audit-poe2db-tags.mjs --save    今の食い違いを控えに取り直す (減った時・わざと残す時)
  *   node scripts/audit-poe2db-tags.mjs --write   直しを作り直す (当てる前のデータで比べて src/services/htc/poe2db-tag-fixes.json に書く。patch.ts が読み込み時に当てる)
  * 結果: data-cache/poe2db-tag-audit.json と標準出力の集計
  */
@@ -24,6 +26,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
 const OUT = resolve(ROOT, "src/services/htc/poe2db-tag-fixes.json");
 const WRITE = process.argv.includes("--write");
+const CHECK = process.argv.includes("--check");
+const SAVE = process.argv.includes("--save");
+const BASELINE = resolve(ROOT, "scripts/audit-poe2db.baseline.json");
+// 写しが無い作業場では比べる物が無い。0 件を「合っている」と数えない
+if (!existsSync(CACHE)) { console.log(`回らなかった: poe2db の写しが無い (${CACHE}。audit-poe2db.mjs --refresh で取るか、本体の data-cache/poe2db-pages を写す)`); process.exit(1); }
+if (WRITE && (CHECK || SAVE)) { console.log("--write は --check・--save と一緒に使わない (当てる前のデータで比べるので控えと合わない)"); process.exit(1); }
 // 直しを作る時は当てる前のデータで比べる (当てた後だと食い違いが 0 になって直しが消える)
 if (WRITE || !existsSync(OUT)) writeFileSync(OUT, JSON.stringify({ generated: "", tags: {} }));
 const { loadPatchSync, jaOfMod, shownTags } = await bundleEntry("scripts/_audit-poe2db-tags-entry.ts");
@@ -65,6 +73,8 @@ const GROUPS = { normal: ["normal"], desecrated: ["desecrated"], essence: ["esse
 
 /** こちらの MOD ごとに、突き合わせた poe2db の行 (タグ・陣営・文) */
 const rows = new Map();
+/** 比べる場に出たこちらの MOD (poe2db の行が 1 つも当たらなかった物を後で数える) */
+const seenOurs = new Map();
 let compared = 0, missing = 0;
 for (const [pg, classes] of pages) {
   const path = resolve(CACHE, `${pg}.html`);
@@ -74,6 +84,7 @@ for (const [pg, classes] of pages) {
   for (const [group, dbGroups] of Object.entries(GROUPS)) {
     const db = dbGroups.flatMap((g) => mv[g] ?? []).filter((e) => sideOf(e.ModGenerationTypeID) && e.ModFamilyList?.length);
     const ours = classes.flatMap((c) => ourTiers(data.bases.get(c), group).map((x) => ({ ...x, cls: c })));
+    for (const o of ours) if (!seenOurs.has(o.m.id)) seenOurs.set(o.m.id, group);
     for (const e of db) {
       const side = sideOf(e.ModGenerationTypeID);
       const k = famKey(e.ModFamilyList);
@@ -86,11 +97,18 @@ for (const [pg, classes] of pages) {
       // 候補が複数ある時は、タグと陣営の合う方 → 数値と陣営の合う方 → 数値の合う方
       const same = (o) => ourTags(o.m).join(",") === want.join(",") && ourFaction(o.m).join(",") === wantFaction.join(",");
       const n = dbNums(e.str);
-      const hit = cand.find(same) ?? cand.find((o) => sameNums(ourNums(o.t), n) && ourFaction(o.m).join(",") === wantFaction.join(",")) ?? cand.find((o) => sameNums(ourNums(o.t), n)) ?? cand[0];
+      // 2 番目に文の合う方: 同じ系統・同じレベルの MOD が分かれている時 (冒涜の「チャージを消費していれば」の発火・凍結・感電)、
+      // 数値だけで選ぶと poe2db の行が全部 1 つ目に寄り、残りが 1 度も比べられなかった (2026-11-12、グラスピングメイルの勢力のタグ)
+      const text = norm(e.str);
       compared++;
-      const r = rows.get(hit.m.id) ?? { m: hit.m, cls: hit.cls, group, list: [] };
-      r.list.push({ tags: want, faction: wantFaction, text: norm(e.str), plain: plain(e.str), lvl });
-      rows.set(hit.m.id, r);
+      // 同じページを分け合う行 (ワンド・スタッフの属性違い・クロスボウとキャノン) は、行ごとに 1 つずつ当てる (前はページで 1 つだけで、ほかの行の同じ MOD は 1 度も比べなかった)
+      for (const cls of new Set(cand.map((o) => o.cls))) {
+        const mine = cand.filter((o) => o.cls === cls);
+        const hit = mine.find(same) ?? mine.find((o) => norm(jaOfMod(o.m)) === text) ?? mine.find((o) => sameNums(ourNums(o.t), n) && ourFaction(o.m).join(",") === wantFaction.join(",")) ?? mine.find((o) => sameNums(ourNums(o.t), n)) ?? mine[0];
+        const r = rows.get(hit.m.id) ?? { m: hit.m, cls: hit.cls, group, list: [] };
+        r.list.push({ tags: want, faction: wantFaction, text, plain: plain(e.str), lvl });
+        rows.set(hit.m.id, r);
+      }
     }
   }
 }
@@ -113,13 +131,37 @@ for (const [id, r] of rows) {
   fixes[id] = [...pick[0].tags, ...pick[0].faction];
 }
 diffs.sort((a, b) => a.group.localeCompare(b.group) || a.id.localeCompare(b.id));
-writeFileSync(resolve(ROOT, "data-cache/poe2db-tag-audit.json"), JSON.stringify({ generated: new Date().toISOString(), compared, missing, diffs, ambiguous }, null, 1));
+if (!compared) { console.log("回らなかった: 比べた段が 0 (写しの中身が読めない)"); process.exit(1); }
+/** poe2db の行が 1 つも当たらず、タグを 1 度も比べていないこちらの MOD (黙って「違い 0」に入れない) */
+const uncompared = [...seenOurs].filter(([id]) => !rows.has(id)).map(([id, group]) => ({ id, group })).sort((a, b) => a.id.localeCompare(b.id));
+writeFileSync(resolve(ROOT, "data-cache/poe2db-tag-audit.json"), JSON.stringify({ generated: new Date().toISOString(), compared, missing, diffs, ambiguous, uncompared }, null, 1));
 for (const d of diffs) console.log(`${d.group.padEnd(10)} ${d.id.padEnd(52)} db [${d.db[0].join(",")}] / こちら [${d.ours.join(",")}]  ${d.ja}`);
 for (const d of ambiguous) console.log(`曖昧       ${d.id.padEnd(52)} db ${d.db.map((x) => `[${x.join(",")}]`).join(" ")} / こちら [${d.ours.join(",")}]  ${d.ja}`);
-console.log(`\n比べた段 ${compared} (こちらに無い段 ${missing}) / タグが違う MOD ${diffs.length} / 決まらない MOD ${ambiguous.length}`);
+console.log(`\n比べた段 ${compared} (こちらに無い段 ${missing}) / タグが違う MOD ${diffs.length} / 決まらない MOD ${ambiguous.length} / 比べられなかったこちらの MOD ${uncompared.length} (一覧は結果の uncompared)`);
 if (WRITE) {
   const sorted = Object.fromEntries(Object.entries(fixes).sort(([a], [b]) => a.localeCompare(b)));
   writeFileSync(OUT, JSON.stringify({ generated: new Date().toISOString().slice(0, 10), tags: sorted }, null, 1) + "\n");
   console.log(`→ ${OUT} (${Object.keys(sorted).length} MOD)`);
 }
 console.log("→ data-cache/poe2db-tag-audit.json");
+// 控え: 今ある食い違いは控えに入れ、控えに無い物が出たら落ちる (E-16。増えた分だけ止める)
+const now = { diffs: diffs.map((d) => d.id).sort(), ambiguous: ambiguous.map((d) => d.id).sort(), uncompared: uncompared.map((d) => d.id) };
+if (SAVE) {
+  const all = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, "utf8")) : {};
+  writeFileSync(BASELINE, JSON.stringify({ ...all, tags: { saved: new Date().toISOString().slice(0, 10), ...now } }, null, 1) + "\n");
+  console.log(`控えを取り直した → scripts/audit-poe2db.baseline.json の tags (違う ${now.diffs.length}・決まらない ${now.ambiguous.length}・比べられない ${now.uncompared.length})`);
+}
+if (CHECK) {
+  const base = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, "utf8")).tags : null;
+  if (!base) { console.log("回らなかった: 控え scripts/audit-poe2db.baseline.json の tags が無い (--save で取る)"); process.exit(1); }
+  const names = { diffs: "タグが違う", ambiguous: "決まらない", uncompared: "比べられなかった" };
+  let bad = 0, gone = 0;
+  for (const k of Object.keys(names)) {
+    const was = new Set(base[k] ?? []), is = new Set(now[k]);
+    for (const id of now[k]) if (!was.has(id)) { console.log(`控えに無い (${names[k]}): ${id}`); bad++; }
+    for (const id of was) if (!is.has(id)) gone++;
+  }
+  if (gone) console.log(`控えから減った物 ${gone} 件 (直った。--save で控えを取り直す)`);
+  if (bad) { console.log(`NG: 控えに無い食い違い ${bad} 件`); process.exit(1); }
+  console.log("OK: 控えに無い食い違いは 0");
+}

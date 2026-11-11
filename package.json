@@ -36,6 +36,7 @@
     "check:htc-bases": "node scripts/build-htc-bases-from-client.mjs --verify",
     "check:base-shelves": "node scripts/check-base-shelves.mjs",
     "check:data-fixes": "node scripts/check-data-fixes.mjs",
+    "check:truth": "pnpm -s test:truth && pnpm -s check:data-fixes && node scripts/audit-poe2db-tags.mjs --check && node scripts/audit-poe2db-mods.mjs --check",
     "check:mods": "node scripts/check-mod-values.mjs",
     "check:release-tidy": "node scripts/check-release-tidy.mjs",
     "check:spec-guards": "node scripts/check-spec-guards.mjs",

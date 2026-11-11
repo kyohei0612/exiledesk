@@ -11,6 +11,8 @@
  * ページは audit-poe2db.mjs と同じ写し (data-cache/poe2db-pages)。無ければそちらを先に回す。
  *
  *   node scripts/audit-poe2db-mods.mjs
+ *   node scripts/audit-poe2db-mods.mjs --check   控え (scripts/audit-poe2db.baseline.json の mods = ページ・置き場・種類ごとの数) より増えた所があれば落ちる (exit 1)。写しが無ければ「回らなかった」で落ちる
+ *   node scripts/audit-poe2db-mods.mjs --save    今の数を控えに取り直す (減った時・わざと残す時)
  * 結果: data-cache/poe2db-mod-audit.json と標準出力の集計
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -22,6 +24,11 @@ import { pageOf, modsView, famKey, sameNumsScaled, argOf } from "./_poe2db-commo
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, argOf("cache", "data-cache/poe2db-pages"));
+const CHECK = process.argv.includes("--check");
+const SAVE = process.argv.includes("--save");
+const BASELINE = resolve(ROOT, "scripts/audit-poe2db.baseline.json");
+// 写しが無い作業場では比べる物が無い。0 件を「合っている」と数えない
+if (!existsSync(CACHE)) { console.log(`回らなかった: poe2db の写しが無い (${CACHE}。audit-poe2db.mjs --refresh で取るか、本体の data-cache/poe2db-pages を写す)`); process.exit(1); }
 const { loadPatchSync, jaOfMod, tierDisplayRanges } = await bundleEntry("scripts/_audit-poe2db-entry.ts");
 const data = loadPatchSync();
 
@@ -64,6 +71,9 @@ for (const cls of data.bases.keys()) { const p = pageOf(cls); pages.set(p, [...(
 const GROUPS = { normal: ["normal"], desecrated: ["desecrated"], essence: ["essence", "perfect_essence"], ...Object.fromEntries(RUNE_POOLS.map((r) => [r.tag, [r.tag]])) };
 
 const report = { generated: new Date().toISOString(), pages: {} };
+/** 控えと比べる数: 「ページ|置き場|種類」ごとの件数 (文は数字が入って変わるので、数で持つ) */
+const counts = {};
+let pagesRead = 0;
 const total = {};
 const bump = (k, n = 1) => (total[k] = (total[k] ?? 0) + n);
 for (const [pg, classes] of pages) {
@@ -71,6 +81,7 @@ for (const [pg, classes] of pages) {
   if (!existsSync(path)) { report.pages[pg] = { error: "写しが無い (audit-poe2db.mjs で取る)" }; continue; }
   const mv = modsView(readFileSync(path, "utf8"));
   if (!mv) continue;
+  pagesRead++;
   const out = {};
   for (const [group, dbGroups] of Object.entries(GROUPS)) {
     const db = dbGroups.flatMap((g) => mv[g] ?? []).filter((e) => sideOf(e.ModGenerationTypeID) && e.ModFamilyList?.length);
@@ -94,7 +105,7 @@ for (const [pg, classes] of pages) {
       if (group !== "desecrated" && Number.isFinite(dw) && dw !== hit.t.weight) issues.weight.push(`${label} | db ${dw} / こちら ${hit.t.weight} (${hit.m.id})`);
     }
     for (const o of ours) if (!used.has(o)) issues.extra.push(`${o.side === "prefix" ? "P" : "S"} ${o.fams.join("+")} Lv${o.t.ilvl} ${o.m.id} (${o.cls}) | ${jaOfMod(o.m)} ${JSON.stringify(o.t.ranges)} w${o.t.weight}`);
-    for (const [k, v] of Object.entries(issues)) { bump(`${group}.${k}`, v.length); if (!v.length) delete issues[k]; }
+    for (const [k, v] of Object.entries(issues)) { bump(`${group}.${k}`, v.length); if (v.length) counts[`${pg}|${group}|${k}`] = v.length; else delete issues[k]; }
     bump(`${group}.db段`, db.length);
     if (Object.keys(issues).length) out[group] = issues;
   }
@@ -107,3 +118,21 @@ const OUT = argOf("out", "data-cache/poe2db-mod-audit.json");
 writeFileSync(resolve(ROOT, OUT), JSON.stringify(report, null, 1));
 console.log("\n合計", total);
 console.log(`→ ${OUT}`);
+// 控え: 今ある食い違いは控えに入れ、控えより増えた所が出たら落ちる (E-01。増えた分だけ止める)
+if (!pagesRead) { console.log("回らなかった: 読めたページが 0 (写しの中身が読めない)"); process.exit(1); }
+if (SAVE) {
+  const all = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, "utf8")) : {};
+  writeFileSync(BASELINE, JSON.stringify({ ...all, mods: { saved: new Date().toISOString().slice(0, 10), pages: pagesRead, counts } }, null, 1) + "\n");
+  console.log(`控えを取り直した → scripts/audit-poe2db.baseline.json の mods (${Object.keys(counts).length} か所、ページ ${pagesRead})`);
+}
+if (CHECK) {
+  const base = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, "utf8")).mods : null;
+  if (!base) { console.log("回らなかった: 控え scripts/audit-poe2db.baseline.json の mods が無い (--save で取る)"); process.exit(1); }
+  let bad = 0, gone = 0;
+  if (pagesRead < base.pages) { console.log(`控えより読めたページが少ない: ${pagesRead} / ${base.pages} (写しが欠けている)`); bad++; }
+  for (const [k, n] of Object.entries(counts)) { const was = base.counts[k] ?? 0; if (n > was) { console.log(`控えより増えた: ${k.replace(/\|/g, " ")} ${was} → ${n}`); bad++; } }
+  for (const [k, was] of Object.entries(base.counts)) if ((counts[k] ?? 0) < was) gone++;
+  if (gone) console.log(`控えから減った所 ${gone} か所 (直った。--save で控えを取り直す)`);
+  if (bad) { console.log(`NG: 控えより増えた所 ${bad} か所 (中身は ${OUT})`); process.exit(1); }
+  console.log("OK: 控えより増えた所は 0");
+}
