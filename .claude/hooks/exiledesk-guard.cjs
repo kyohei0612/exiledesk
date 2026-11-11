@@ -233,6 +233,15 @@ process.stdin.on("end", () => {
     const isRelease = /\bdeploy:web\b/.test(bare) || /bump-version\.mjs/.test(bare);
     if (isRelease && !/deploy:web-dev/.test(bare) && !releaseOk())
       block(`本番の出しは、オーナーの「出して」の後にブラックが置く印 (${MARK}) が要る (G-08・R-02・R-03)`);
+    // サーバーの出しと直の出しも同じ印 (G-38、11-12 オーナー「問い1はア」): server/live・server/web の deploy の口を直に呼ぶ・wrangler deploy を直に打つ。
+    // 手元で立てるだけ (wrangler dev)・--dry-run・d1 / kv / tail / deployments の読みは出しではないので見ない (コマンドの区切りごとに見る)
+    const directDeploy = bare.split(/[;&|\n]+/).some((seg) =>
+      !/--dry-run\b/.test(seg) &&
+      (/\bwrangler(?:\.cmd)?\b[^\n]*?\s(?:versions\s+)?deploy\b/.test(seg) ||
+        /\b(?:pnpm|npm|yarn)\b[^\n]*\brun\s+deploy(?![:\w-])/.test(seg) ||
+        /\bpnpm\b[^\n]*(?:--dir|-C)\s+\S*server[\\/](?:web|live)\S*\s+deploy(?![:\w-])/.test(seg)));
+    if (directDeploy && !releaseOk())
+      block(`サーバーの出し・直の出し (server/live・server/web の deploy、wrangler deploy) も、オーナーの「出して」の後にブラックが置く印 (${MARK}) が要る (G-38・R-07)。手元で形だけ見るなら --dry-run`);
     // 更新内容の文が先 (G-44、オーナー 11-05「フックで」): v0.1.668 は notes を書く前の版上げで git の履歴 1418 件が本番に出た
     if (/\bdeploy:web\b/.test(bare) && !/deploy:web-dev/.test(bare)) {
       const why = changelogMissing(bare, input);
