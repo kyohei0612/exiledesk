@@ -9,14 +9,14 @@ import type { TreeDoc } from "./tree-model";
 import { bandsOn } from "./tree-band";
 import { isWhittleHand, lvPart } from "./tree-whittle";
 import { tr } from "../../../i18n/lang";
-import { flag, type Flag } from "../../../web/release-flags";
+import { flag } from "../../../web/release-flags";
 // MOD が付かない・消えない・入れ替わらない手か (神・ヒネコラなど) はエンジンの keepsMods (sim-engine、11-07 オーナー「ゲームシステムはジンだけ」。前はここに同じ打ち方の写し)
 
 /** 本番でも出す (11-10 オーナー「おｋ」。前は開発版だけ = DEV_BUILD。棚のヒネコラ・予見したアイテムの棚の絞り、紫の枠、ハズレのまとめがこれを見る) */
 export const FORESEE_ON = true;
 
-/** 予見の枠で持つ手を複数 (S-39 ⑧、11-11 オーナー「おｋ」)。スイッチの表はデザインの持ち場なので、名前が無い間は閉じる */
-const multiOn = (): boolean => { try { return flag("heldMulti" as Flag); } catch { return false; } };
+/** 予見の枠で持つ手を複数 (S-39 ⑧、11-11 オーナー「おｋ」、スイッチ heldMulti) */
+const multiOn = (): boolean => flag("heldMulti");
 
 /** 持った手のハズレ箱 (どれも出なかった、まとめ先の先頭) か */
 export function missHubAt(doc: TreeDoc, id: string): boolean {
