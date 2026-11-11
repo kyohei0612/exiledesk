@@ -1,7 +1,8 @@
 <!--
   ModListWin.vue — カレンシーの帯 + MOD の表の窓 (U-12e、スイッチ simModList。オーナー 11-12「ここにMOD一覧って感じでエミュのモッド一覧とカレンシー表示して欲しい」)。
   シミュの帯の「MOD 一覧」とデイリーの挑戦の帯の「MOD 一覧」が同じ窓を開く (渡すのは品と、帯に出さない物だけ)。確率を確かめるだけの窓で、木にもアイテムにも何もしない。
-  上 = 打てるカレンシーの低い横長の帯 (小さい絵 + 名前の札、値段は出さない)。札は「持つ」でなくオン / オフ: 押すとオン (光る)・もう一度でオフ・別の札で替わる (オンは 1 つ)。
+  上 = 打てるカレンシーの低い横長の帯。札はいつもの棚のアイコン (ShelfButton の小さい形 = 四角い絵 + 段の印、名前と説明は乗せた時のカード、値段は出さない。オーナー 11-12「いつものカレンシーアイコンがイイな」)。
+  札は「持つ」でなくオン / オフ: 押すとオン (光る枠)・もう一度でオフ・別の札で替わる (オンは 1 つ)。オンの物の名前は帯の下の行に出す。
   オンの間 = その手で付く MOD・ティアだけと付く確率 (エミュの持った時と同じ useHeldShares = エンジンの heldOdds、付かない物は hideDim で出さない)、オフ = 全部と出やすさ。
   オンの物に掛けられるお告げは、同じ帯の続きに小さい札で (オン / オフ)。下 = エミュの MOD 一覧と同じ表 (プレフィックス / サフィックスが横 2 列)。
   (オーナー 11-12「そのモッド上に横に長い感じでカレンシー打てる奴並べるみたいな感じ」「持つとかじゃなくてオンオフで頼むわ」)
@@ -10,9 +11,11 @@
 import { computed, ref, watch } from "vue";
 import ModalShell from "../../ui/ModalShell.vue";
 import ModTable from "./ModTable.vue";
+import ShelfButton from "../shelf/ShelfButton.vue";
 import { heldOmensOf } from "../shelf/held-omens";
 import { useHeldShares } from "./use-held-shares";
-import { ORBS, bonesFor, essenceShelf, iconOfKey, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { ORBS, bonesFor, essenceShelf, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { provideShelf } from "../../../state/for-share/shelf-context";
 import { craftStage as s } from "../../../state/craft-stage";
 import { omenBlock, toggleOmen as toggleHeld, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { baseNameOf, tr } from "../../../i18n/lang";
@@ -45,9 +48,16 @@ const chips = computed((): string[] => {
   const all = [...ORBS.filter((g) => !NO_ADD.has(g.kind)).flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(d, it).flatMap((g) => g.keys)];
   return all.filter((k) => !props.hidden?.(k, it) && useReason(d, it, k, []) === null);
 });
-/** オンの物に掛けられるお告げ (エミュ・木の手の窓と同じ入口。帯に出さない物は除く) と、掛けられない理由 (エンジンの omenBlock) */
-const omenChips = computed(() => (on.value ? heldOmensOf(on.value).filter((o) => !props.hidden?.(o, item.value)) : []).map((o) => ({ k: o, why: omenBlock(s.data.value, item.value, on.value, omens.value, o) })));
+/** オンの物に掛けられるお告げ (エミュ・木の手の窓と同じ入口。帯に出さない物は除く)。掛けられない物を押せなくするのは札の側 (エンジンの omenBlock) */
+const omenChips = computed(() => (on.value ? heldOmensOf(on.value).filter((o) => !props.hidden?.(o, item.value)) : []));
 function toggleOmen(o: string): void { omens.value = toggleHeld(omens.value, o); }
+// 札はいつもの棚のアイコン (ShelfButton)。棚の文脈 = この窓の品・オンの物・掛けたお告げ (エミュの今の品とは別)
+provideShelf({
+  data: s.data, item, omens, held: on,
+  usable: (k) => { const d = s.data.value, it = item.value; return d && it ? useReason(d, it, k, omens.value) : null; },
+  toggleOmen,
+  omenBlock: (held, om, o) => omenBlock(s.data.value, item.value, held, om, o),
+});
 
 const sh = useHeldShares(() => {
   const d = s.data.value, it = item.value, k = on.value;
@@ -55,9 +65,6 @@ const sh = useHeldShares(() => {
 }, () => s.data.value);
 /** オンの間、その手で付かない MOD・ティアを出さない (U-12d) */
 const MOD_HIDE = flag("modHide");
-/** オンの札の光り方はカレンシーもお告げも同じ強さ (2 つ並んでも両方同じに見える。87 の気付き 11-13) */
-const ON = "border-amber-300 bg-amber-400/25 text-white shadow-[0_0_0_2px_rgba(252,211,77,0.85),0_0_10px_rgba(252,211,77,0.45)]";
-const CHIP ="flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[12px] leading-none transition";
 </script>
 
 <template>
@@ -73,24 +80,19 @@ const CHIP ="flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-
     </template>
     <div v-if="item" data-mod-win class="flex h-full min-h-0 flex-col max-xl:overflow-y-auto" @contextmenu="on && ($event.preventDefault(), off())">
       <!-- 上: 打てるカレンシーの帯 (2 行まで、多い時は帯の中だけ送る)。押す = オン / もう一度でオフ -->
-      <div data-mod-win-shelf role="toolbar" :aria-label="tr('カレンシー (押すとその手で付く MOD だけ)', 'Currency (press to show only what it can roll)')" class="flex max-h-[76px] shrink-0 flex-wrap items-center gap-1.5 overflow-y-auto border-b border-white/10 px-3 py-1.5 max-xl:max-h-none">
-        <button v-for="k in chips" :key="k" type="button" :data-rec="`shelf:${k}`" :aria-pressed="on === k" :title="tr(on === k ? 'もう一度押すと全部の MOD に戻す' : 'この手で付く MOD だけと付く確率を出す', on === k ? 'Press again to show all mods' : 'Show only the mods this can roll, with their chances')"
-          :class="[CHIP, on === k ? ON :'border-white/12 bg-black/30 text-[var(--exile-color-text-secondary)] hover:border-white/30 hover:text-white']" @click="toggle(k)">
-          <img v-if="iconOfKey(k, item)" :src="iconOfKey(k, item) ?? undefined" alt="" class="size-6 object-contain" />
-          <span class="whitespace-nowrap">{{ nameOfKey(k, item) }}</span>
-        </button>
+      <div data-mod-win-shelf role="toolbar" :aria-label="tr('カレンシー (押すとその手で付く MOD だけ)', 'Currency (press to show only what it can roll)')" class="flex max-h-[106px] shrink-0 flex-wrap items-center gap-x-0.5 gap-y-1 overflow-y-auto border-b border-white/10 px-3 py-1.5 max-xl:max-h-none">
+        <ShelfButton v-for="k in chips" :key="k" :k="k" bare :aria-pressed="on === k" @pick="toggle" />
         <span v-if="!chips.length" class="text-[12px] opacity-50">{{ tr("この品に打てるカレンシーが無い", "No currency can be used on this item") }}</span>
       </div>
-      <!-- オンの物に掛けられるお告げ: 帯のすぐ下の 1 行に小さい札 (オン / オフ。帯の中に続けると 3 行目に回って隠れた)。掛けると進めない・意味が無い物は押せない (理由は乗せると出る) -->
-      <div v-if="omenChips.length" class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-white/10 bg-violet-500/[0.04] px-3 py-1.5">
-        <span class="shrink-0 text-[11px] text-violet-200/80">{{ tr("お告げ", "Omens") }}</span>
-        <span data-held-omens class="flex flex-wrap items-center gap-1.5">
-          <button v-for="o in omenChips" :key="o.k" type="button" :data-omen="o.k" :aria-pressed="omens.includes(o.k)" :disabled="!!o.why && !omens.includes(o.k)" :title="o.why ?? undefined"
-            :class="[CHIP, omens.includes(o.k) ? ON :'border-violet-400/25 bg-violet-500/[0.06] text-violet-200/85 hover:border-violet-300/50 hover:text-white', 'disabled:pointer-events-none disabled:opacity-35']" @click="toggleOmen(o.k)">
-            <img v-if="iconOfKey(o.k, item)" :src="iconOfKey(o.k, item) ?? undefined" alt="" class="size-6 object-contain" />
-            <span class="whitespace-nowrap">{{ nameOfKey(o.k, item) }}</span>
-          </button>
-        </span>
+      <!-- オンの間だけ、帯のすぐ下の 1 行: オンの物の名前 (札に名前が無いので) と、掛けられるお告げのいつものアイコン (オン / オフ)。掛けると進めない・意味が無い物は押せない (理由は乗せた時のカード) -->
+      <div v-if="on" class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-white/10 bg-violet-500/[0.04] px-3 py-1">
+        <span data-mod-win-held class="shrink-0 text-[12px] text-[var(--exile-color-text-title)]">{{ nameOfKey(on, item) }}</span>
+        <template v-if="omenChips.length">
+          <span class="shrink-0 text-[11px] text-violet-200/80">{{ tr("お告げ", "Omens") }}</span>
+          <span data-held-omens class="flex flex-wrap items-center gap-x-0.5 gap-y-1">
+            <ShelfButton v-for="o in omenChips" :key="o" :k="o" omen bare :data-omen="o" :aria-pressed="omens.includes(o)" @pick="toggleOmen" />
+          </span>
+        </template>
       </div>
       <!-- 下: エミュの MOD 一覧と同じ表 (同じ % ・同じ判定。窓の幅いっぱいなのでプレフィックス / サフィックスが横 2 列) -->
       <div data-mod-win-table class="min-h-0 flex-1 px-3 pb-3 xl:overflow-y-auto">

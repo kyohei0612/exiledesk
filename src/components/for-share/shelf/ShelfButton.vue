@@ -28,8 +28,8 @@ import StageCurrencyCard from "../../../views/craft-stage/StageCurrencyCard.vue"
 
 defineOptions({ inheritAttrs: false });
 
-/** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
-const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean; corner?: string }>();
+/** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない。bare: 絵と段の印だけの小さい形 (名前・値段・一言は出さず、乗せた時の説明のカードで。MOD 一覧の窓の帯、U-12e) */
+const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean; corner?: string; bare?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
 /**
  * 名前を折る所: 「の」の後ろと「(」の前だけ (日本語はどこでも折れて「ヒネコラの髪 / 束」になっていた。2026-10-18 オーナーの UI 点検)。
@@ -158,8 +158,8 @@ onBeforeUnmount(holdCancel);
   <button
     v-bind="$attrs"
     type="button"
-    class="group relative flex w-[74px] md:w-[80px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
-    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '', infoOn ? 'select-none [-webkit-touch-callout:none]' : '']"
+    class="group relative flex flex-col items-center text-[10px] md:text-[11px] transition max-md:text-[11px]"
+    :class="[bare ? 'w-[58px] shrink-0' : 'w-[74px] md:w-[80px] px-0.5 pb-1 max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px]', on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '', infoOn ? 'select-none [-webkit-touch-callout:none]' : '']"
     :aria-disabled="omenNo && !on ? 'true' : undefined"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
@@ -176,14 +176,15 @@ onBeforeUnmount(holdCancel);
   >
     <!-- 枠はゲームの両替所の枠 (持っている時は光る枠、src/styles/game-ui.css) -->
     <!-- 2026-10-10 オーナー「サイズも小さくしておｋ、ちょっと大きい」: PC は枠 68 → 56px、絵 52 → 42px -->
-    <span class="g-slot grid size-[52px] place-items-center md:size-[56px]" :class="[on ? 'on' : '', on && omen ? 'stage-omen-on' : '']">
-      <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" />
+    <span class="g-slot grid place-items-center" :class="[bare ? 'size-11' : 'size-[52px] md:size-[56px]', on ? 'on' : '', on && omen ? 'stage-omen-on' : '']">
+      <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="object-contain" :class="bare ? 'h-[34px] w-[34px]' : 'h-9 w-9 md:h-[42px] md:w-[42px]'" draggable="false" />
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
-    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(shownName)" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
+    <span v-if="!bare" class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(shownName)" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
     <span v-if="corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200 max-md:text-[10px]">{{ corner }}</span>
-    <span v-if="badge && badgeShown" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
+    <span v-if="badge && badgeShown" class="absolute rounded bg-black/60 px-1" :class="[badge[2], bare ? 'right-0 top-0 whitespace-nowrap text-[8px] leading-[1.3]' : 'right-0.5 top-0.5 text-[9px] max-md:text-[10px]']">{{ tr(badge[1][0], badge[1][1]) }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
+    <template v-if="!bare">
     <span v-if="omenTag" class="mt-px block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
     <span v-if="omenWarn" class="block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
     <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">{{ tr("お告げで打てない", "Blocked by omen") }}</span>
@@ -191,6 +192,7 @@ onBeforeUnmount(holdCancel);
       <span v-for="(t, i) in tag" :key="i" class="block line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300" :title="t"><!-- PC は 2 行まで (1 行で「・クリティカ…」と切れていた。2026-10-19 テスト走行)、スマホは切らずに全文 (2026-10-26 オーナー「基本スマホは省略したらダメ」) -->{{ tr("・", "· ") }}{{ t }}</span>
     </span>
     <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
+    </template>
   </button>
   <!-- still は StageCurrencyCard の外の枠 (GameItemCard) へそのまま届く (Vue の attrs の受け渡し) -->
   <ModalShell v-if="infoOn" :open="infoOpen" sheet :label="nameOf(k)" panel-class="border-t border-white/15 bg-[var(--exile-color-card-bg)]" body-class="px-3 pt-2 pb-3" @close="infoOpen = false">
