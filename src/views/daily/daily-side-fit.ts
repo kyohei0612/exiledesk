@@ -35,7 +35,8 @@ export function fitDailySide(side: HTMLElement): () => void {
     const fixed = (cr.top - sr.top) + mid + tools + GAP;
     const natural = cr.height / zNow;
     if (natural <= 0) return;
-    const z = Math.max(Z_MIN, Math.min(zMax, (sr.height - fixed) / natural));
+    const zMin = Number(cs.getPropertyValue("--daily-card-zmin")) || Z_MIN; // 下限は CSS の値で替えられる (無ければ Z_MIN)
+    const z = Math.max(Math.min(zMin, zMax), Math.min(zMax, (sr.height - fixed) / natural));
     if (Math.abs(z - zNow) > 0.005) root.style.setProperty("--daily-card-z", z.toFixed(3));
     const tight = sr.height - fixed - natural * z < MAP_MIN;
     if (tight !== side.hasAttribute("data-daily-side-tight")) side.toggleAttribute("data-daily-side-tight", tight);
