@@ -14,6 +14,7 @@ import { usePhone } from "../../utils/use-phone";
 import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
+import { fitDailySide } from "./daily-side-fit";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
@@ -209,8 +210,9 @@ function submitted(): void {
 const sideShut = ref(false);
 const giving = ref(false);
 let sideObs: MutationObserver | null = null;
+let sideFit: (() => void) | null = null;
 watch(treeOn, (on) => {
-  sideObs?.disconnect(); sideObs = null;
+  sideObs?.disconnect(); sideObs = null; sideFit?.(); sideFit = null;
   if (!on) return;
   void nextTick(() => {
     const side = document.querySelector<HTMLElement>("[data-daily-play] [data-tree-side]");
@@ -219,9 +221,10 @@ watch(treeOn, (on) => {
     look();
     sideObs = new MutationObserver(look);
     sideObs.observe(side, { attributes: true, attributeFilter: ["style"] });
+    sideFit = fitDailySide(side); // 欄の高さに収める (カードの倍率・ミニマップ、D-37m)
   });
 }, { immediate: true, flush: "post" });
-onBeforeUnmount(() => sideObs?.disconnect());
+onBeforeUnmount(() => { sideObs?.disconnect(); sideFit?.(); });
 const actsTo = computed(() => (sideShut.value ? "[data-daily-play] [data-tree-frame]" : "[data-daily-play] [data-tree-side]"));
 /** 上の切り替えタブ (D-37g、11-09)。エミュは木のページを閉じた後にデイリーのページも閉じる。シミュ β・デイリーはタブが自分で移る (どれも離れる時の窓 D-36c を通る) */
 function onTab(m: "hand" | "sim"): void { if (m === "hand") closeDailyPage(); }
