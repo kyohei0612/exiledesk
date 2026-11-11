@@ -39,6 +39,8 @@ const props = withDefaults(defineProps<{
   /** 行・段を薄くする (既定 = 同じ系統が付いている・差していないルーン) */
   rowDim?: (r: ListRow) => boolean;
   tierDim?: (r: ListRow, t: ListTier) => boolean;
+  /** 薄くする行・段 (rowDim・tierDim の答え) を薄くせず出さない。行が 0 の節は見出しごと出さない (U-12d、スイッチ modHide は渡す側で見る) */
+  hideDim?: boolean;
   rowTitle?: (r: ListRow) => string | undefined;
   tierTitle?: (r: ListRow, t: ListTier) => string | undefined;
   shareTitle?: (r: ListRow) => string;
@@ -73,7 +75,10 @@ const rows = computed(() => (props.data && props.item ? modListFor(props.data, p
 const cannowBase = (r: ListRow): boolean => canRollNow(r, false);
 const shareOf = (r: ListRow): number => (props.share ? props.share(r) : cannowBase(r) ? r.share : 0);
 const dimOf = (r: ListRow): boolean => (props.rowDim ? props.rowDim(r) : r.blocked || (r.group === "rune" && !r.socketed));
-const tierShareText = (r: ListRow, t: ListTier): string => (props.tierShare ? props.tierShare(r, t) : !cannowBase(r) ? "0%" : tierFreeShare(r, t));
+const tierDimOf = (r: ListRow, t: ListTier): boolean => (props.tierDim ? props.tierDim(r, t) : !!t.blockedBy);
+/** 出す段 (hideDim の時は薄くする段を外す、U-12d) */
+const tiersOf = (r: ListRow): ListTier[] => (props.hideDim ? r.tiers.filter((t) => !tierDimOf(r, t)) : r.tiers);
+const tierShareText =(r: ListRow, t: ListTier): string => (props.tierShare ? props.tierShare(r, t) : !cannowBase(r) ? "0%" : tierFreeShare(r, t));
 const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
 const pct = (x: number): string => fmtPct(x);
 
@@ -100,7 +105,7 @@ const SHOWN_TIERS = 3;
 const moreOpen = ref<string | null>(null);
 watch(expanded, () => { moreOpen.value = null; });
 function tierView(key: string, r: ListRow): { shown: ListTier[]; rest: number; forced: boolean } {
-  const all = r.tiers;
+  const all = tiersOf(r);
   if (!TIER_MORE) return { shown: all, rest: 0, forced: false };
   const deep = all.filter((t) => t.tier > SHOWN_TIERS);
   const forced = deep.some((t) => props.tierOn?.(r, t) || isJumpTier(key, t.modId ?? r.id, t.rank));
@@ -138,16 +143,16 @@ const sections = computed((): ModSection[] => {
   );
   return parts.map(({ g, sid, label, rune }): ModSection => {
     const all = rows.value.filter((r) => inGroup(r, g) && (rune == null || r.runeJa === rune));
-    const list = all.filter((r) => !q || r.text.toLowerCase().includes(q.toLowerCase()) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q) || t.replace(/_/g, " ").includes(q.toLowerCase())));
+    const list = all.filter((r) => !(props.hideDim && dimOf(r)) && (!q || r.text.toLowerCase().includes(q.toLowerCase()) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q) || t.replace(/_/g, " ").includes(q.toLowerCase()))));
     const columns = (["prefix", "suffix"] as const).map((side) => {
       const items = list.filter((r) => r.side === side).sort((a, b) => b.share - a.share || b.topLevel - a.topLevel);
       return { side, title: side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix"), items, top: Math.max(0.0001, ...items.map((r) => r.share)) };
     });
     const socketed = rune != null && all.some((r) => r.socketed);
-    return { g, sid, label, rune, socketed, count: SEARCH_FIT ? list.length : all.length, columns };
+    return { g, sid, label, rune, socketed, count: SEARCH_FIT || props.hideDim ? list.length : all.length, columns };
   })
-    // 検索で 0 件の節は出さない
-    .filter((sec) => !SEARCH_FIT || !q || sec.count)
+    // 検索で 0 件の節は出さない。hideDim で行が 0 になった節も出さない (U-12d)
+    .filter((sec) => (!SEARCH_FIT || !q || sec.count) && (!props.hideDim || sec.count))
     // 既定は GROUPS の並び。下へ回す節 (sectionLate) は一番下へ
     .map((sec, i) => ({ sec, i, off: props.sectionLate ? props.sectionLate(sec) : sec.rune != null && !sec.socketed }))
     .sort((a, b) => Number(a.off) - Number(b.off) || a.i - b.i)
@@ -308,7 +313,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                 <span class="flex shrink-0 items-center gap-1 tabular-nums">
                   <slot name="row-badge" :row="r" />
                   <span class="w-14 text-[13px] font-bold" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : 'text-amber-100']" :title="props.shareTitle ? props.shareTitle(r) : (r.group === 'desecrated' || r.group === 'otherworldly') ? tr('骨を使わないと付かない', 'Only rolls via a Bone') : tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(shareOf(r)) }}</span>
-                  <span class="text-[12px] text-[var(--exile-color-text-secondary)]" :class="[COL, tierW]" :title="tr(`${TIER}の数 ${r.tiers.length}`, `Tiers: ${r.tiers.length}`)">{{ r.tiers.length }}</span>
+                  <span class="text-[12px] text-[var(--exile-color-text-secondary)]" :class="[COL, tierW]" :title="tr(`${TIER}の数 ${tiersOf(r).length}`, `Tiers: ${tiersOf(r).length}`)">{{ tiersOf(r).length }}</span>
                   <span class="w-7 text-[12px] text-[var(--exile-color-text-tertiary)]" :class="COL" :title="tr(`T1 の MOD レベル ${r.topLevel}`, `T1 mod level: ${r.topLevel}`)">{{ r.topLevel }}</span>
                 </span>
               </span>
@@ -318,7 +323,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <slot name="row-open" :row="r" />
               <table class="mt-1 w-full text-[11px]">
                 <tbody>
-                  <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', (props.tierDim ? props.tierDim(r, t) : !!t.blockedBy) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
+                  <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', tierDimOf(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
                     <td class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
