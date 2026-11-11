@@ -5,6 +5,7 @@
 // 中身 (URL の ?): l=ja|en, b=ベースの英語名, bn=ベースの表示名, a=ベースの絵のファイル名, m=狙った MOD, k=カオスの名前,
 //                  n=何回目で付いたか, r=100 人中の順位 (1〜100、小さいほど早い), md=半分の人, u=運が悪い 10 人に 1 人, c=費用
 import { ImageResponse } from "workers-og";
+import { readDaily, dailySharePage, dailyCardImage } from "./daily-card.js";
 
 const CHAOS_ICON = "https://web.poecdn.com//gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lSZXJvbGxSYXJlIiwic2NhbGUiOjEsInJlYWxtIjoicG9lMiJ9XQ/c0ca392a78/CurrencyRerollRare.png";
 const PEOPLE = 100;
@@ -22,7 +23,8 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 // 12・13 番目 (h = 題、o = 主のカレンシーの絵の URL) はスパムシミュレーターの運試し (2026-10-19)。無ければカオススパム計算機
 // 14 番目 (p) は比べた人数 (スマホは 10 人。2026-10-19)。無ければ 100
 // 15 番目 (q) は何位 (人数が少ない時。自分を入れて p + 1 人の中)。あれば % ではなく「何位」で出す (2026-10-19 オーナー「スマホは何位、% やなくて」)
-const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q"];
+// 16〜20 番目 (kd = "daily"・dy = お題の id・rt = 完成率・pl = 順位・pe = 挑戦した人数) はデイリーの提出の後のシェア (D-38、2026-11-11)。カードは daily-card.js
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q", "kd", "dy", "rt", "pl", "pe"];
 export async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
@@ -241,7 +243,9 @@ async function codeOf(token, env) {
   return row ? String(row.code) : null;
 }
 async function renderPng(url, env, code) {
-  return new Response(await cardImage(url, env, readCard(await unpack(code))), { headers: PNG_HEADERS });
+  const get = await unpack(code);
+  const png = get("kd") === "daily" ? await dailyCardImage(url, env, readDaily(get)) : await cardImage(url, env, readCard(get));
+  return new Response(png, { headers: PNG_HEADERS });
 }
 
 /** /s/<code|id> (と古い形の /s/spam?…)、/og/<code|id>.png (/og/spam.png?…)、POST /s/new だけ受ける。違えば null (呼んだ側が今まで通りに続ける) */
@@ -272,6 +276,7 @@ export async function ogCard(request, env, ctx) {
   if (page) {
     let get, code;
     try { code = await codeOf(page[1], env); if (!code) throw new Error("none"); get = await unpack(code); } catch { return Response.redirect(`${url.origin}/`, 302); }
+    if (get("kd") === "daily") return dailySharePage(url, readDaily(get), `${url.origin}/og/${page[1]}.png`);
     return sharePage(url, readCard(get), `${url.origin}/og/${page[1]}.png`, code);
   }
   if (url.pathname !== "/og/spam.png" && !pic) return null;
