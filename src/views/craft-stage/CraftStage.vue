@@ -115,7 +115,10 @@ function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
 const shelfEl = ref<HTMLElement | null>(null);
 // 隠れている時は離さない: 持つ物は全部のエミュで共通で、デイリーの投稿の中のエミュ (D-12) の品を押すと、隠れた上のタブのエミュが「外」と数えて打つ前に離していた (2026-11-09)
 // 「1 手戻す」も外に数えない = 持ったまま戻す (M-14、スイッチ undoKeepHeld。オーナー 10-29「どうせもっかい打つ人多いだろうからね」)
-useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => { if (shown()) s.hold(null); }, { swallow: false, keep: `[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]${flag("undoKeepHeld") ? ", [data-rec=undo]" : ""}` });
+// 押せる物 (ボタン・入力・選び箱・リンク・タブ) も外に数えない = 持ったまま押せて、その動きだけする。放すのは何も無い所・右クリック・Esc (M-12b、スイッチ heldKeepOnButtons。
+// オーナー 11-12「持ったまま色々いじれるようにしてくれ。ボタンじゃないところで放しておｋ」)。次の手で狙うの欄 (行・「回す」) は今までどおり外に数える (行は持ち替え、M-12・M-32)
+const HELD_KEEP = flag("heldKeepOnButtons") ? ", :is(button, a[href], input, select, textarea, label, summary, [role=button], [role=tab]):not([data-aim-panel] *)" : "";
+useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => { if (shown()) s.hold(null); }, { swallow: false, keep: `[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]${flag("undoKeepHeld") ? ", [data-rec=undo]" : ""}${HELD_KEEP}` });
 /** 持っている物に掛けられるお告げ (欄は HeldOmens.vue。ここは slot を出すかだけ) */
 const heldOmens = computed(() => heldOmensOf(s.held.value));
 /** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
