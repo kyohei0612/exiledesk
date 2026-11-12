@@ -8,6 +8,7 @@ import { triggerRef, watch, type Ref } from "vue";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { EST_H } from "../../../services/simulator/tree/tree-row-tops";
 import { placeTree } from "../../../services/simulator/tree/tree-place";
+import type { KeptOrder } from "../../../services/simulator/tree/tree-place-order";
 import { stripFoldKey } from "../../../services/simulator/tree/tree-strip-fold";
 
 /** 箱の高さ (画面が測った値、まだなら見込み) */
@@ -21,7 +22,17 @@ const docNo = new WeakMap<TreeDoc, number>();
 let docSeq = 0;
 const noOf = (d: TreeDoc): number => { let n = docNo.get(d); if (n === undefined) { n = ++docSeq; docNo.set(d, n); } return n; };
 
-export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined): void {
+/**
+ * 組んでいる間の兄弟の順の控え (S-142g): 手を置く・戻す・打ち直すで、もう並んでいる兄弟の横の順を入れ替えない
+ * (11-12 オーナー「今ついてる親の枠から子を設定した時に順番ごちゃつくのいやかも」)。木を開いた時 (レシピを開く・タブを替える・読み込み中) だけ空にして並べ直す
+ */
+export const placeKept: KeptOrder = new Map();
+
+export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined, open?: { opened: Ref<number>; loading: Ref<boolean> }): void {
   const heightOf = boxHeightOf(measure);
-  watch(() => `${noOf(doc.value)}#` + Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.merged ? 1 : 0}:${b.hand ? 1 : 0}`).join(",") + `|${stripFoldKey(doc.value)}`, () => { if (placeTree(doc.value, heightOf, chipW)) triggerRef(doc); }, { flush: "post", immediate: true });
+  let seenOpen = open?.opened.value;
+  watch(() => `${noOf(doc.value)}#` + Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.merged ? 1 : 0}:${b.hand ? 1 : 0}`).join(",") + `|${stripFoldKey(doc.value)}`, () => {
+    if (!open || open.loading.value || open.opened.value !== seenOpen) { seenOpen = open?.opened.value; placeKept.clear(); }
+    if (placeTree(doc.value, heightOf, chipW, placeKept)) triggerRef(doc);
+  }, { flush: "post", immediate: true });
 }

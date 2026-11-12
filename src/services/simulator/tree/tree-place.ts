@@ -13,7 +13,7 @@ import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-t
 import { outRank } from "./tree-layout";
 import { bandAway } from "./tree-band";
 import { flag } from "../../../web/release-flags";
-import { doneLeftOrder } from "./tree-place-order";
+import { doneLeftOrder, keepOrder, type KeptOrder } from "./tree-place-order";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -21,7 +21,7 @@ const GAP_LEAF = 24, GAP_DEEP = 72;
 /** 帯の各段を 1 つ下の段の幅まで広げた物 (S-142f の比べ用) */
 const withNext = (c: ReadonlyArray<[number, number]>): Array<[number, number]> => c.map((x, j): [number, number] => { const y = c[j + 1]; return y ? [Math.min(x[0], y[0]), Math.max(x[1], y[1])] : [x[0], x[1]]; });
 
-export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: (id: string) => number | undefined): boolean {
+export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: (id: string) => number | undefined, kept?: KeptOrder): boolean {
   const start = d.boxes.start;
   if (!start) return false;
   const before = new Map(Object.values(d.boxes).map((b) => [b.id, `${b.x},${b.y}`]));
@@ -30,7 +30,17 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   /** (S-142f) 箱のすぐ下の段にはその箱の続きだけ、1 段以上空いていればほかの枝を詰める (スイッチ treeKidsBelow) */
   const below = flag("treeKidsBelow");
   const reorder = flag("treeDoneLeft") ? doneLeftOrder(d) : null;
-  const kidsOf = (id: string): string[] => { const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o); return reorder ? reorder(l) : l; };
+  // 組んでいる間は、もう並んでいる兄弟の順を入れ替えない (S-142g、kept = 画面が持つ控え。無ければ毎回決まりどおり)
+  const memo = new Map<string, string[]>();
+  const kidsOf = (id: string): string[] => {
+    let ks = memo.get(id);
+    if (ks) return ks;
+    const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
+    ks = reorder ? reorder(l) : l;
+    if (kept) ks = keepOrder(kept, id, ks);
+    memo.set(id, ks);
+    return ks;
+  };
   /** 子の箱の x (親の箱の x からの差) */
   const rel = new Map<string, number>();
   /**

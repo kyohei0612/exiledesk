@@ -22,7 +22,7 @@ import TreeLoadingCover from "./TreeLoadingCover.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
-import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
+import { boxHeightOf, placeKept, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
@@ -311,8 +311,8 @@ const chipNatural = (id: string): number | undefined => {
 };
 // 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す)
 const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
-const tidyOf = (d: typeof doc.value): void => void placeTree(d, boxHeightOf(measureBox), chipNatural);
-useRowSettle(doc, measureBox, chipNatural);
+const tidyOf = (d: typeof doc.value): void => void placeTree(d, boxHeightOf(measureBox), chipNatural, placeKept);
+useRowSettle(doc, measureBox, chipNatural, { opened: t.opened, loading: t.loading });
 /** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
 /** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ、S-85b) */
 const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
