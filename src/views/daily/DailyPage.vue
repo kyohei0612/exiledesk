@@ -18,9 +18,7 @@ import { daily, dayNoOf, getTry, myAwards, myBox, myNick, myTitlePick, refreshDa
 import { baseArt } from "../../components/art/base-art";
 import { goDaily, seatListUnder, useRankRecipe } from "./daily-open";
 import { DAILY_SKIN_KEY, skinById, skinOfDay, skinVars } from "./skin/skin";
-import { flag } from "../../web/release-flags";
 import DailyHero from "./DailyHero.vue";
-import DailyLink from "./DailyLink.vue";
 import DailyName from "./DailyName.vue";
 import DailyPlay from "./DailyPlay.vue";
 import DailyPost from "./DailyPost.vue";
@@ -56,9 +54,6 @@ const boxText = (b: DailyBoxItem): string =>
   : b.status === "wait" ? tr("箱に入った。16:00 に確かめる", "In the box. Checked at 16:00 JST")
   : tr(`落ちた: ${boxWhy(b)}`, `Rejected: ${boxWhy(b)}`);
 const nick = computed(() => myNick());
-/** リンクの番号の窓 (D-52b、スイッチ dailyLinkNum)。show = 番号を出す、enter = 番号を入れる */
-const linkOn = flag("dailyLinkNum");
-const linking = ref<"show" | "enter" | null>(null);
 /** 卓の右 = 昨日の上位 3 人と札 (D-60d) */
 const top3 = computed(() => yesterdayTop());
 /** 昨日の上位がどの品の順位か (D-50b) */
@@ -119,8 +114,6 @@ provide(DAILY_SKIN_KEY, computed(() => skin.value.id));
         <div data-daily-clock class="daily-clock">
           <p><span :title="tr('毎日 16:00 に替わる', 'Changes daily at 16:00 JST')">{{ tr(`次のお題まで ${hm(left.next)}`, `Next challenge in ${hm(left.next)}`) }}</span><span data-daily-close :title="tr('スタートは毎日 14:50 まで', 'Starts close daily at 14:50 JST')">{{ left.close ? tr(`締め切りまで ${hm(left.close)}`, `Start closes in ${hm(left.close)}`) : tr("今日のスタートは締めた", "Today's start is closed") }}</span></p>
           <p><span v-if="nick" data-daily-me>{{ tr("名前:", "Name:") }} <DailyName :name="nick.name" :stamp="stamp" /></span>
-            <!-- リンクの番号 (D-52b): 名前を持つ端末は番号を出す、まだ名前の無い端末は番号を入れる -->
-            <button v-if="linkOn" type="button" class="daily-link-open" :data-daily-link-open="nick ? 'show' : 'enter'" @click="linking = nick ? 'show' : 'enter'">{{ nick ? tr("ほかの端末とリンク", "Link another device") : tr("リンクの番号を入れる", "Enter a link number") }}</button>
             <label v-if="awards.length" data-daily-title-pick>{{ tr("札:", "Title:") }} <select v-model="pick" class="g-input sm"><option value="">{{ tr("一番格上", "Highest") }}</option><option v-for="a in awards" :key="a.id" :value="a.id">{{ tr(a.ja, a.en) }}{{ a.retired ? tr(" (昔の称号)", " (retired)") : "" }}</option></select></label><button type="button" class="underline inline-block py-1 -my-1" data-daily-skins-open @click="goDaily({ view: 'detail', q: 'skins' })">{{ tr(`今日の色: ${skin.ja}`, `Today's colors: ${skin.en}`) }}</button></p>
         </div>
         <section data-daily-week data-daily-yesterday>
@@ -172,6 +165,5 @@ provide(DAILY_SKIN_KEY, computed(() => skin.value.id));
       </div>
       <p v-else class="daily-note">{{ tr("このお題はまだ無い。お題は毎日 16:00 に出る。", "This challenge isn't out yet. A new one opens every day at 16:00 JST.") }} <button type="button" class="g-btn sm" @click="goDaily({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></p>
     </template>
-    <DailyLink v-if="linking" :mode="linking" @close="linking = null" @linked="stamp++" />
   </section>
 </template>

@@ -292,30 +292,6 @@ export const createNick = (name: string): Promise<DailyNick | NickError> => nick
 /** POST /daily/nick (引き継ぎコードで戻す) */
 export const restoreNick = (name: string, code: string): Promise<DailyNick | NickError> => nickPost({ name, code });
 
-/** リンクの番号の断りの訳 (D-52b、server/live/src/daily/link.ts の LinkError と同じ)。off = サーバーがまだ受けない、net = つながらない */
-export type LinkError = "nick" | "busy" | "wrong" | "off" | "net";
-/** POST /daily/link/new: この端末の名前の番号 (6 桁) を出す。until = 切れる時刻 (サーバーの時計)、left = 今から切れるまでの ms */
-export async function linkNew(): Promise<{ num: string; until: number } | LinkError> {
-  const a = auth();
-  if (!a) return "nick";
-  const r = await call<{ num: string; until: number } | { error: LinkError }>("/daily/link/new", a);
-  return !r ? "net" : "error" in r ? r.error : r;
-}
-/**
- * POST /daily/link/use: 番号を打って、この端末をその名前にする。前に別の名前を持っていたら入れ替え (前の名前の記録はサーバーに残り、合わさらない)。
- * 名前が替わった時は、端末に覚えた挑戦の控え・札の選びは前の名前の物なので捨てる (自分の投稿の一覧はこの端末の物として残す)
- */
-export async function linkUse(num: string): Promise<DailyNick | LinkError> {
-  const r = await call<DailyNick | { error: LinkError }>("/daily/link/use", { num });
-  if (!r) return "net";
-  if ("error" in r) return r.error;
-  if (daily.local.nick?.id !== r.id) daily.local = { tries: {}, box: daily.local.box };
-  daily.local.nick = r;
-  save();
-  void refreshDaily();
-  return r;
-}
-
 // --- 投稿 (D-11〜D-15・D-20) ---
 
 /** 投稿の断りの訳。item・large = 形が悪い、busy = 1 時間 5 件を越えた、net = つながらない */
