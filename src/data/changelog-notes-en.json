@@ -1,4 +1,12 @@
 {
+  "0.1.722": [
+    "Daily: added a Views column to the ranking table. It shows how many people opened that recipe (opening your own is not counted, and who opened it is never shown on screen)",
+    "Daily: the N in \"rank / N players\" in the share text and image is now the number of players listed in the ranking table (previously it also counted players still in progress or who gave up)",
+    "Daily: in a \"from base\" tree, a Fracturing Orb can no longer be placed on an item that does not yet have the chosen mod (fixed items with only a desecrated placeholder being treated as fractured)",
+    "Japanese only: the mod line for Strength or Intelligence added by an Essence of the Infinite now shows just the attribute that was added (English was already correct)",
+    "The Essence of the Infinite tile on the shelf now lists every attribute it can add (Strength, Dexterity, Intelligence; ones already on the item are left out)",
+    "Simulator: removed the pencil (note) button next to a box's title"
+  ],
   "0.1.721": [
     "Simulator: changed how the tree is laid out. New boxes are only added to the right, and a parent box sits directly above its leftmost child. When placing a move adds boxes, the box you placed it on and the branches to its left no longer move",
     "Simulator: in a zoomed-out tree you can now click the frames split by a whittle move (lower, same, higher) to choose the next move for them. The enlarged box shown when you click a box also shows those frames (fixed being unable to set an unset frame while zoomed out)",
