@@ -107,8 +107,8 @@ const failText = (e: BoxError): string =>
     <template v-if="sent">
       <h2 class="g-brush daily-post-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
       <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "not-full" ? notFull() : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why === "genesis-2" ? genesisWhy() : sent.why }}</p>
-      <p v-else-if="sent.status === 'wait'" data-daily-post-wait class="mb-4 text-[15px]">{{ tr("16:00 に機械が確かめて、通れば箱のお題になる。段の下限は全部 T3 以上になる。", "It's checked at 16:00 JST, and if it passes it becomes a challenge from the box. Every mod's tier floor becomes T3+.") }}</p>
-      <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は全部 T3 以上になる。", "Posts in the box are used first for the 16:00 challenge. Every mod's tier floor becomes T3+.") }}</p>
+      <p v-else-if="sent.status === 'wait'" data-daily-post-wait class="mb-4 text-[15px]">{{ tr("16:00 に機械が確かめて、通れば箱のお題になる。段の下限は全部 T2 以上になる。", "It's checked at 16:00 JST, and if it passes it becomes a challenge from the box. Every mod's tier floor becomes T2+.") }}</p>
+      <p v-else class="mb-4 text-[15px]">{{ tr("箱の投稿は 16:00 のお題に先に使われる。段の下限は全部 T2 以上になる。", "Posts in the box are used first for the 16:00 challenge. Every mod's tier floor becomes T2+.") }}</p>
       <button type="button" class="g-btn" data-daily-post-back @click="goDaily({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button>
     </template>
     <template v-else-if="item">
