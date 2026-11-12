@@ -8,6 +8,7 @@ import { NOTICE_KINDS, type CheckIssue } from "../../../services/simulator/tree/
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tidyJunk } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
+import { idealPath } from "../../../services/simulator/tree/tree-ideal-first";
 
 export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) => void, go: (id: string) => void, issues: Ref<CheckIssue[] | null>, passed: Ref<boolean>) {
   const on = computed(() => tidyOn());
@@ -25,8 +26,11 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   const stuck = computed(() => [...new Set((issues.value ?? []).filter((x) => !NOTICE_KINDS.includes(x.kind) && doc.value.boxes[x.boxId]).map((x) => x.boxId))]);
   /** 光る箱 */
   const targets = computed(() => new Set(!guide.value ? [] : raw.value === "unset" ? unset.value : raw.value === "check" ? stuck.value : []));
+  /** 完成を押すまで灰色の箱 (組んでいる道の横の枝、S-142i、スイッチ treeIdealFirst)。未設定に数えず「次へ」でも寄らない */
+  const ideal = computed(() => idealPath(doc.value));
+  const idealGrayOf = (b: TreeBox): boolean => !!ideal.value?.gray.has(b.id);
   /** 帯の数も光る箱と同じ物差し (S-89b) */
-  const shownIssues = computed(() => (guide.value ? (issues.value ?? []).filter((x) => targets.value.has(x.boxId)) : issues.value));
+  const shownIssues = computed(() => (guide.value ? (issues.value ?? []).filter((x) => targets.value.has(x.boxId)) : ideal.value ? issues.value?.filter((x) => !ideal.value!.gray.has(x.boxId)) ?? null : issues.value));
   /** 完成を押し直したら案内へ戻る */
   // noTidyBtn: 完成の箱の数で見る (前は押した印 doneNow の数で、完成を外して押し直しても印が残って数が増えず戻らなかった。戻る道は名残の「ハズレ整理」だけだった)
   watch(() => Object.values(doc.value.boxes).filter((b) => (flag("noTidyBtn") ? b.done === "main" : b.doneNow)).length, (n, was) => { if (n > was) paused.value = false; });
@@ -44,6 +48,6 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
     return l.length > 0;
   }
   const settledOf = (b: TreeBox): boolean => guide.value && !!b.back && !!b.autoBack && !targets.value.has(b.id);
-  const dimOf = (b: TreeBox): boolean => guide.value && !targets.value.has(b.id) && !settledOf(b);
-  return { on, step, unset, guide, busy, empty, sort, shownIssues, press: (): void => { if (step.value === "tidy") void sort(); }, back: () => { paused.value = true; }, grayOf: (b: TreeBox) => isGrayBox(b), dimOf, settledOf, targetOf: (b: TreeBox) => targets.value.has(b.id), finalLit: computed(() => guide.value && raw.value === "check" && !targets.value.size) };
+  const dimOf = (b: TreeBox): boolean => (guide.value && !targets.value.has(b.id) && !settledOf(b)) || idealGrayOf(b);
+  return { idealGrayOf, on, step, unset, guide, busy, empty, sort, shownIssues, press: (): void => { if (step.value === "tidy") void sort(); }, back: () => { paused.value = true; }, grayOf: (b: TreeBox) => isGrayBox(b), dimOf, settledOf, targetOf: (b: TreeBox) => targets.value.has(b.id), finalLit: computed(() => guide.value && raw.value === "check" && !targets.value.size) };
 }

@@ -8,6 +8,7 @@
  */
 import { BOX_W, type TreeBox, type TreeDoc } from "./tree-model";
 import { foldOuts, stopToHead, stripFolds, stripHidden } from "./tree-strip-fold";
+import { flag } from "../../../web/release-flags";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
 export const LINE_Y = 48;
@@ -55,7 +56,18 @@ export function rowTops(rows: ReadonlyMap<string, number>, heightOf: (id: string
 /** 前の作りの名残 (整列が呼ぶ。今は何もしない) */
 export function noteLaid(_start: number, _tops: number[]): void { /* settleRows が親ごとに掛け直す */ }
 /** 段ごとの決め: 上の枠の高さ・一番下の枠・枝分かれがあるか (同じ段の札も揃える) */
-export interface RowLayout { rows: Map<string, number>; top: number[]; bottom: number[]; branch: boolean[] }
+export interface RowLayout { rows: Map<string, number>; top: number[]; bottom: number[]; branch: boolean[]; /** 縦に積んだ箱の、段の上の枠からの下げ幅 (S-142j) */ off: Map<string, number> }
+/** 縦に積む箱どうしの間 (S-142j) */
+export const STACK_GAP = 28;
+/**
+ * (S-142j、スイッチ treeWideFit) 縦に積む子: 1 つの手の結果のうち ↩ で戻るだけの箱 (完成でない・下に何も無い) が 2 つ以上ある時のその箱たち (作った順)。
+ * 並べ方では 1 つ目だけを数え、残りは同じ x で段の中に縦に積む (11-13 オーナー「スッカスカやん」、横幅を詰める)
+ */
+export const stackEnds = (d: TreeDoc, b: TreeBox): string[] => {
+  if (!flag("treeWideFit")) return [];
+  const ends = drawnKids(d, b).filter((k) => { const c = d.boxes[k]!; return !!c.back && !c.done && c.out !== "pass" && !drawnKids(d, c).length; });
+  return ends.length >= 2 ? ends : [];
+};
 /**
  * 段を揃える (10-28 夜オーナー「段を合わせて欲しいな今横のラインが気持ちよくない…一番下枠が出ているものに合わせてそこを起点として次の段の位置を決める。
  * 決め方は枠の上枠で決めて線を調整・オーブの位置までそろえたい」): 同じ段 (深さ) の箱は上の枠を揃え、次の段の上の枠 = その段の一番下の枠 + 48 + 札 + 48
@@ -66,13 +78,16 @@ export function rowLayout(d: TreeDoc, heightOf: (id: string) => number): RowLayo
   const by: string[][] = [];
   for (const [id, r] of rows) (by[r] ??= []).push(id);
   top[0] = d.boxes.start?.y ?? 0;
+  // 縦に積む箱の下げ幅 (S-142j)。段はその分だけ背が高くなる
+  const off = new Map<string, number>();
+  for (const id of rows.keys()) { let y = 0; for (const k of stackEnds(d, d.boxes[id]!)) { if (!rows.has(k)) continue; off.set(k, y); y += heightOf(k) + STACK_GAP; } }
   for (let r = 0; r < by.length; r++) {
     const ids = by[r] ?? [];
-    bottom[r] = Math.max(top[r]!, ...ids.map((id) => top[r]! + (d.boxes[id]!.out === "pass" ? 0 : heightOf(id))));
+    bottom[r] = Math.max(top[r]!, ...ids.map((id) => top[r]! + (off.get(id) ?? 0) + (d.boxes[id]!.out === "pass" ? 0 : heightOf(id))));
     branch[r] = ids.some((id) => d.boxes[id]!.out !== "pass" && branches(d, d.boxes[id]!));
     top[r + 1] = Math.round(bottom[r]! + LINE_Y + CHIP_Y + LINE_Y + (branch[r] ? LINE_Y : 0));
   }
-  return { rows, top, bottom, branch };
+  return { rows, top, bottom, branch, off };
 }
 /** 描く段の番号 (「n 段目」と同じ 深さ + 1。畳みで 1 つの段に違う深さが混ざる時は「小〜大」、S-147f) */
 export function laneTexts(d: TreeDoc, drawRows: ReadonlyMap<string, number>): string[] {

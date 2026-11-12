@@ -25,6 +25,8 @@ const PASS_R = 16;
 const BUS_DY = HAND_DY - CHIP_HALF;
 /** 横の棒が別の縦の線を跨ぐ橋の半径 */
 const HOP = 6;
+/** 縦に積んだ下の箱への線 (S-142j): 列の左の脇の x (箱の左の端から) と、箱の横から入る高さ (箱の上の端から) */
+const STACK_SIDE = 20, STACK_IN = 24;
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
 const CHIP_MAX = 340;
 
@@ -87,18 +89,21 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const busY = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(lead) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
+    // 縦に積んだ箱 (S-142j): 同じ x の兄弟の下の箱は、列の左の脇 (STACK_SIDE) を下りて箱の横から入る (上の箱の裏を通ると上の箱の続きに見える)
+    const under = (k: (typeof kids)[number]): boolean => kids.some((o) => o !== k && o.q.x === k.q.x && o.q.y < k.q.y);
     const to = kids.map((k) => {
-      const cx = midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 0), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
+      const side = under(k), cx = side ? k.q.x - STACK_SIDE : midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 0), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
+      const ey = k.q.y + STACK_IN;
       // hops = 横の棒が通り過ぎる別の札の縦の線の x (そこに半円の橋を掛ける、下の hopped)
       const mk = (hops: readonly number[]): string => !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
         : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} `
           + [...hops].sort((a, z) => s * (a - z)).map((x) => `L ${x - s * HOP} ${busY} A ${HOP} ${HOP} 0 0 ${s > 0 ? 1 : 0} ${x + s * HOP} ${busY} `).join("")
-          + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
+          + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} ` + (side ? `L ${cx} ${ey - 8} Q ${cx} ${ey} ${cx + 8} ${ey} L ${k.q.x} ${ey}` : `L ${cx} ${cy}`);
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
       return { id: k.id, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null };
     }).sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
-    const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
+    const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; })];
     return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, chip: lead === b.id, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
   }));
   /**

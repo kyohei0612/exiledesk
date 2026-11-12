@@ -9,11 +9,13 @@
  * 始まりの箱の位置は動かさない (木ごと合わせる)。動かしたら true
  */
 import { BOX_W, type TreeDoc } from "./tree-model";
-import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-tops";
+import { centerMerged, drawnKids, rowLayout, stackEnds, type RowLayout } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
 import { bandAway, bandsTogether } from "./tree-band";
 import { flag } from "../../../web/release-flags";
 import { doneLeftOrder, keepOrder, type KeptOrder } from "./tree-place-order";
+import { wideOrder, wideX } from "./tree-place-wide";
+import { idealPath } from "./tree-ideal-first";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -31,7 +33,13 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const below = flag("treeKidsBelow");
   /** (S-142h) 新しい子は右へだけ: 親は一番左の子の真上、左の兄弟との間は左の兄弟だけで決める = 手を置いた箱と左側は動かない (スイッチ treeGrowRight) */
   const grow = below && flag("treeGrowRight");
-  const reorder = flag("treeDoneLeft") ? doneLeftOrder(d) : null;
+  // (S-142j、スイッチ treeWideFit) 完成への枝 (完成の印の前は組んでいる道、treeIdealFirst) を左端、ほかは結果の順のまま (S-142e の未設定を寄せる・続く枝を先は使わない)
+  const wide = flag("treeWideFit");
+  const reorder = wide ? wideOrder(d) : flag("treeDoneLeft") ? doneLeftOrder(d) : null;
+  /** (S-142i) 組んでいる道の箱。組んでいる間 (控えがある時) も、道の箱は兄弟の左端へ移す (動くのは手の無い兄弟だけ) */
+  const ip = wide ? idealPath(d) : null;
+  /** (S-142j) 縦に積んだ箱 → 並べ方で数える 1 つ目の箱 (同じ x に置く) */
+  const stacked = new Map<string, string>();
   // 組んでいる間は、もう並んでいる兄弟の順を入れ替えない (S-142g、kept = 画面が持つ控え。無ければ毎回決まりどおり)
   const memo = new Map<string, string[]>();
   const kidsOf = (id: string): string[] => {
@@ -40,7 +48,11 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
     ks = reorder ? reorder(l) : l;
     if (kept) ks = keepOrder(kept, id, ks);
+    if (ip && kept) { const on = ks.filter((k) => ip.path.has(k)); if (on.length) { ks = [...on, ...ks.filter((k) => !ip.path.has(k))]; kept.set(id, [...ks]); } }
     ks = bandsTogether(d, ks); // 帯の枠は帯の頭のすぐ右に (S-65c ⑫、スイッチ treeLaneOwnHand)
+    // (S-142j) ↩ で戻るだけの箱が 2 つ以上なら 1 列に縦に積む: 並べ方では一番左の 1 つだけを数え、残りは同じ x に置く
+    const ends = new Set(stackEnds(d, d.boxes[id]!));
+    if (ends.size) { const head = ks.find((k) => ends.has(k)); if (head) { for (const k of ks) if (k !== head && ends.has(k)) stacked.set(k, head); ks = ks.filter((k) => k === head || !ends.has(k)); } }
     memo.set(id, ks);
     return ks;
   };
@@ -81,13 +93,16 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     return [[Math.min(own[0], offs[0]! - px), Math.max(own[1], offs[n - 1]! + BOX_W - px)], ...acc.map(([l, r]): [number, number] => [l - px, r - px])];
   };
   const L = rowLayout(d, heightOf);
-  const xs = below ? null : near(d, L, kidsOf, chipW);
+  const xs = wide ? wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF, deep: GAP_DEEP }, (id) => [...stacked.values()].includes(id)) : below ? null : near(d, L, kidsOf, chipW);
+  /** (S-142j) 縦に積んだ箱を 1 つ目の箱と同じ x、段の上の枠 + 下げ幅に置く */
+  const putStacked = (): void => { for (const [k, head] of stacked) { const b = d.boxes[k]!, r = L.rows.get(k); b.x = d.boxes[head]!.x; if (r != null) b.y = L.top[r]! + (L.off.get(k) ?? 0); } };
   if (xs) {
     for (const [id, x] of xs) {
       const b = d.boxes[id]!, r = L.rows.get(id);
       b.x = Math.round(x);
-      if (id !== "start" && r != null) b.y = L.top[r]!;
+      if (id !== "start" && r != null) b.y = L.top[r]! + (L.off.get(id) ?? 0);
     }
+    putStacked();
     centerMerged(d);
     return Object.values(d.boxes).some((b) => before.get(b.id) !== `${b.x},${b.y}`);
   }
