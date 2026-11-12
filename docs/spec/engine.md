@@ -222,7 +222,7 @@
   - 手の名前 (指名・発現・品質の欄・ルーンのソケットなど棚に無い手を含む): `craft-stage/run-plan.ts` の `stepJa(key, item)` / `stepEn(key)`
   — 有効 / G-05、オーナー 09-22 (「黒血のお告げ」事故)・10-28「名前はエンジンのデータベース参照で固定」 / 確かめ: 画面
 - **E-91 名前を使う側は E-90 の関数を通し、カレンシー・お告げ・エッセンス・ルーンの名前を直書きしない。** 言語で振り分ける口の置き場と、棚の見出しの扱いは共通の部品の紙 (棚の項目)。 — 有効 / G-05、オーナー 10-28 / 確かめ: 画面 (英語も)
-- **E-92 MOD の文はエンジンが作る。** `craft-stage/stage-core.ts` の `makeStageMod`・`withValues`・`retext`・`boostedMod` が `textJa`/`textEn` を埋め、画面は `i18n/lang.ts` の `modText(m)` で出す。画面で # を埋めない。説明文のまま入っている MOD (無限のエッセンスの「筋力、器用さまたは知性」) は付いた 1 つの文で出す (`ONE_OF_TEXT`)。日本語の文はほかの MOD と同じ引き方 (`jaOfModLine`) で引く (スイッチ `infiniteOneText`、開発版だけ)。値が負の「減少する」「低下する」(日本語) と「reduced」「less」(英語) の文は、ゲームの表示と同じく数字を正で出す (`NEGATIVE_WORDS`・`NEGATIVE_WORDS_EN`、値 `values` は負のまま)。 — 有効 (英語の正の数は 0967dfa33、v0.1.638 で本番) / G-06、日本語 09-30 (要望 ㉑)・英語 10-28 (⑦8、「-24% reduced」が 81 MOD) / 見張り: `check-engine-entry` E (文の # を自分で埋める)、確かめ: 10-28 ジンの台本 (全 MOD × 全段で「-数 reduced / less」が 81 → 0)
+- **E-92 MOD の文はエンジンが作る。** `craft-stage/stage-core.ts` の `makeStageMod`・`withValues`・`retext`・`boostedMod` が `textJa`/`textEn` を埋め、画面は `i18n/lang.ts` の `modText(m)` で出す。画面で # を埋めない。説明文のまま入っている MOD (無限のエッセンスの「筋力、器用さまたは知性」) は付いた 1 つの文で出す (`ONE_OF_TEXT`)。日本語の文はほかの MOD と同じ引き方 (`jaOfModLine`) で引く (スイッチ `infiniteOneText`、v0.1.722 で本番)。値が負の「減少する」「低下する」(日本語) と「reduced」「less」(英語) の文は、ゲームの表示と同じく数字を正で出す (`NEGATIVE_WORDS`・`NEGATIVE_WORDS_EN`、値 `values` は負のまま)。 — 有効 (英語の正の数は 0967dfa33、v0.1.638 で本番) / G-06、日本語 09-30 (要望 ㉑)・英語 10-28 (⑦8、「-24% reduced」が 81 MOD) / 見張り: `check-engine-entry` E (文の # を自分で埋める)、確かめ: 10-28 ジンの台本 (全 MOD × 全段で「-数 reduced / less」が 81 → 0)
 - **E-93 英語は poe2db の英語のページ (/us/) の同じ物から。推測で訳さない。名前・文が食い違ったら poe2db に合わせる。** — 有効 / オーナー 10-10・10-17 / 外の正解: poe2db
 
 ## ④ 表示の決まり (エンジンが返す物の形)
