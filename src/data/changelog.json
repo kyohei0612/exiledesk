@@ -33,7 +33,8 @@
     "text": "シミュレーター: 無限のエッセンスの手で、狙う能力値を ☑ で選ぶか「狙い無し」にするかを選べるようにしました。木を縮めて箱を押した時の大きい窓が枠の下にはみ出さないようにし、手の窓で ☑ を替えた時に欄が揺れないようにしました。保存した木を開き直した時に数が変わる事があったのを直しました。データ: グラスピングメイルとワンドの冒涜専用 MOD の勢力を直しました",
     "en": "Simulator: for Essence of the Infinite moves you can now tick the attribute to aim for, or choose “No target”. The enlarged box shown when you click a box in a zoomed-out tree no longer runs past the bottom of the frame, and the move window no longer jumps when you change a tick. Fixed counts changing in some reopened saved trees. Data: fixed the faction of Desecrated-only mods on Grasping Mail and wands"
    }
-  ]
+  ],
+  "pop": true
  },
  {
   "v": "0.1.717",
