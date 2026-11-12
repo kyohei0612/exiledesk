@@ -10,13 +10,17 @@ import type { PatchData } from "../../services/craft-stage/engine";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 
 type ModOf = NonNullable<ReturnType<PatchData["mods"]["get"]>>;
-/** 文の 1 行: 数字を抜いた形・値の下の端 (出てきた順)・守りの種類 (アーマー / 回避 / ES) の集まり */
-type Row = { shape: string; lows: number[]; defs: string[] };
+/** 文の 1 行: 数字を抜いた形・値の下の端 (出てきた順)・守りの種類 (アーマー / 回避 / ES) の集まり・能力値を 1 つに畳んだ形 */
+type Row = { shape: string; lows: number[]; defs: string[]; attr: string; attrAny: boolean };
 
 const NUM = /\((-?\d+(?:\.\d+)?)[-–](-?\d+(?:\.\d+)?)\)|\d+(?:\.\d+)?|#/g;
 const DEF_WORD = "(?:Armour|Evasion Rating|Evasion|Energy Shield)";
 /** 守りの種類の並び (「Armour, Evasion and Energy Shield」「Evasion and Energy Shield」「Energy Shield」) */
 const DEF_LIST = new RegExp(`${DEF_WORD}(?:(?:, | and | or )${DEF_WORD})*`, "g");
+const ATTR_WORD = "(?:Strength|Dexterity|Intelligence)";
+/** 「または」で並べた能力値 (無限のエッセンスの「Strength, Dexterity or Intelligence」)。付く能力値は MOD ごとに 1 つで、どれかは系統で決まる。「and」の並び (両方付く別の MOD) は入れない */
+const ATTR_ANY = new RegExp(`${ATTR_WORD}(?:, ${ATTR_WORD})* or ${ATTR_WORD}`);
+const ATTR_ONE = new RegExp(ATTR_WORD, "g");
 /** 幅の弱い方の端 (0 に近い方。減少の MOD は負の数で持つ) */
 const weak = (a: number, b: number): number => (Math.abs(a) <= Math.abs(b) ? a : b);
 
@@ -34,7 +38,10 @@ function rowsOf(mod: ModOf, tier: ModOf["tiers"][number]): Row[] | null {
       return "#";
     });
     const defs = [...new Set((shape.match(DEF_LIST) ?? []).flatMap((s) => s.match(new RegExp(DEF_WORD, "g")) ?? []).map((s) => s.replace(" Rating", "")))];
-    return { shape: shape.replace(DEF_LIST, "<守り>").trim(), lows, defs };
+    const s = shape.replace(DEF_LIST, "<守り>").trim();
+    // 能力値: 「または」の並びは 1 つに畳む。能力値の語がちょうど 1 つの行 (普通の「+# to Dexterity」) も同じ形に畳んで、並びの行と比べられるようにする
+    const attrAny = ATTR_ANY.test(s), one = (s.match(ATTR_ONE) ?? []).length === 1;
+    return { shape: s, lows, defs, attr: attrAny ? s.replace(ATTR_ANY, "<能力値>") : one ? s.replace(ATTR_ONE, "<能力値>") : s, attrAny };
   });
   return bad || lows0(rows) ? null : rows;
 }
@@ -43,10 +50,11 @@ const lows0 = (rows: Row[]): boolean => rows.some((x) => x.lows.some((v) => Numb
 /**
  * 狙いの行 w を、付いた MOD の行 g が満たすか: 形が同じ・下の端が全部届く。
  * 守りの種類を並べた共通の文 (強化のエッセンスの「アーマー、回避力およびエナジーシールド」) は、狙いの守りの種類を全部含む時だけ同じ形と見る
- * (フォーカスの「エナジーシールド %」に当たる。アーマーの狙いに回避だけの MOD は当たらない)
+ * (フォーカスの「エナジーシールド %」に当たる。アーマーの狙いに回避だけの MOD は当たらない)。
+ * 「または」で並べた能力値の共通の文 (無限のエッセンス) は、能力値を畳んだ形が同じなら同じ形と見る (付いた能力値が狙いと同じかは、呼ぶ側の系統の比べで決まっている)
  */
 const meets = (w: Row, g: Row): boolean =>
-  w.shape === g.shape && w.lows.length === g.lows.length && w.defs.every((d) => g.defs.includes(d))
+  (w.shape === g.shape || (g.attrAny && !w.attrAny && w.attr === g.attr)) && w.lows.length === g.lows.length && w.defs.every((d) => g.defs.includes(d))
   && w.lows.every((v, i) => { const x = g.lows[i]!; return v === 0 ? true : Math.sign(x) === Math.sign(v) && Math.abs(x) >= Math.abs(v); });
 
 /**
