@@ -193,7 +193,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-done-note { display: flex; align-items: baseline; gap: 10px; border-left: 3px solid var(--skin-title); background: var(--skin-raise); line-height: 1.6; color: var(--skin-text); }
 .daily-done-note > span:first-child { color: var(--skin-title); font-size: 17px; }
 /* 投稿のページの中のエミュ (D-12): 上にデイリーの帯 1 本 (送っても上に残る)、下はいつものエミュ */
-.daily-post-emu-bar { position: sticky; top: 0; z-index: 30; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.7); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; margin-bottom: 12px; background: var(--skin-panel); font-size: 14px; color: var(--skin-dim); }
+.daily-post-emu-bar { position: sticky; top: 0; z-index: 30; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.7); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; margin-bottom: 12px; background: var(--skin-panel, #14110e); font-size: 14px; color: var(--skin-dim, var(--exile-color-text-secondary)); }
 /* 中のエミュの上のタブはデイリーの上のタブと 2 重になるので隠す (移るのは帯の「投稿へ戻る」と上のタブから) */
 [data-daily-post-emu] [data-mode-tabs] { display: none; }
 /* 遊び方の 1 行 (D-10c): 卓の上に静かに。字は薄い字の色のまま */

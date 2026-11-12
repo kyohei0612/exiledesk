@@ -28,6 +28,8 @@ import { genesisWhy } from "./daily-check";
 const view = computed(() => dailyPage.value?.view ?? "list");
 const q = computed(() => dailyPage.value?.q ?? null);
 const post = computed(() => view.value === "detail" && (q.value === "post" || q.value === "post-emu"));
+/** 投稿の中のエミュ (D-12)。中はエミュのタブと全く同じ見た目にするので、この間は外枠からデイリーの皮を外す (皮の枠の絵が中のエミュの面に重なり、工程と MOD 一覧の見出しを潰していた。オーナー 11-12「この投稿ページはエミュと全く同じデザインで作っておk」) */
+const postEmu = computed(() => view.value === "detail" && q.value === "post-emu");
 const skins = computed(() => view.value === "detail" && q.value === "skins");
 // 挑戦の URL を直に開いた時は戻るで一覧へ (D-37k)
 seatListUnder();
@@ -92,7 +94,7 @@ provide(DAILY_SKIN_KEY, computed(() => skin.value.id));
 </script>
 
 <template>
-  <section data-daily-page data-skinned :data-daily-skin="skin.id" :data-daily-view="post ? 'post' : skins ? 'skins' : view" class="daily-root min-w-0 flex-1" :style="skinVars(skin)">
+  <section data-daily-page :data-skinned="postEmu ? null : ''" :data-daily-skin="postEmu ? null : skin.id" :data-daily-view="post ? 'post' : skins ? 'skins' : view" class="daily-root min-w-0 flex-1" :style="postEmu ? undefined : skinVars(skin)">
     <DailyPlay v-if="view === 'start' && topic" :key="topic.id" :topic="topic" />
     <template v-else>
       <ModeTabs class="mb-3" :active="null" @pick="closeDailyPage" />

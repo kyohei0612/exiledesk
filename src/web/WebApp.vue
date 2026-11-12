@@ -83,8 +83,8 @@ const craftPage = computed(() => page.value === "");
 /** スマホのヘッダーのアイコンのボタン (ブログ・使い方・要望。1 段に収める、2026-10-25)。絵の下に小さな名前 (絵だけだと押すまで分からない、モンキー 10-26 の 14・オーナー「直して」) */
 const PHONE_ICON = "!flex !h-10 !min-h-0 !w-9 max-[374px]:!w-[32px] max-[374px]:![border-inline-width:16px] max-[374px]:![border-image-width:0_16px] !min-w-0 shrink-0 flex-col items-center justify-center !gap-0.5 !p-0"; // 幅は前と同じ決め打ち (g-btn sm の左右の枠 18px ずつで中身の幅は 0、絵と名前は真ん中に寄せてはみ出させる)。375 未満は枠を 16px ずつにして 32px (320 で帯からはみ出した、10-26 夜)
 const PHONE_LABEL = "whitespace-nowrap text-[9px] leading-none";
-// デイリーの挑戦 (フラクチャー選び・木) は操作の画面なので枠を置かない (D-61)。一覧・お題・投稿は文章のページ
-const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || (!!dailyPage.value && dailyPage.value.view !== "start") || skinsPage.value);
+// デイリーの挑戦 (フラクチャー選び・木) は操作の画面なので枠を置かない (D-61)。一覧・お題・投稿は文章のページ。投稿の中のエミュ (q=post-emu、D-12) もエミュと同じ操作の画面なので置かない (オーナー 11-12「一旦広告審査まだだから広告なしで表示しておk」)
+const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || (!!dailyPage.value && dailyPage.value.view !== "start" && dailyPage.value.q !== "post-emu") || skinsPage.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
