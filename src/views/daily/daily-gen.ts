@@ -64,13 +64,13 @@ const pickOf = <T>(a: readonly T[], rng: () => number): T => a[Math.floor(rng() 
 const nameOf = (r: ListRow): string => r.id.slice(r.id.indexOf("/") + 1);
 
 /**
- * 段の下限 (D-04): 元の段に関係なく全部 T2 以上 (11-12 のお題から、オーナー 11-12「デイリーのｔ３をｔ２にしてくれ」)。
- * 前の「全部 T3 以上」(11-10〜11-11 のお題)・「元が T1 なら T1、ほかは T2 以上」(11-05) はやめ。引数は前の形のまま残す (呼ぶ所を変えない)
+ * 段の下限 (D-04): 元の段に関係なく全部 T3 以上 (11-13 のお題から T3 に戻した、オーナー 11-12「即出して欲しいなT3に変えて」)。
+ * 前の「全部 T2 以上」(11-12 のお題の 1 日だけ)・「元が T1 なら T1、ほかは T2 以上」(11-05) はやめ。引数は前の形のまま残す (呼ぶ所を変えない)
  */
-export const TIER_FLOOR = 2;
+export const TIER_FLOOR = 3;
 export const tierFloor = (_tier: number): number => TIER_FLOOR;
 /**
- * 行の段のうちアイテムレベルで出る物から、下限 (D-04 = T2) の段。無ければその下の段の一番近い物、それも無ければ持っている中で一番下の段
+ * 行の段のうちアイテムレベルで出る物から、下限 (D-04 = T3) の段。無ければその下の段の一番近い物、それも無ければ持っている中で一番下の段
  * (下限の段を持たない MOD は「持っている中で一番下」= どれが付いても達成)。段が 1 つも無ければ undefined
  */
 const floorTierOf = (r: ListRow | undefined, ilvl: number, tier: number): { able: ListRow["tiers"]; t: ListRow["tiers"][number] | undefined } => {
