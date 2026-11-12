@@ -15,6 +15,7 @@ import { flag } from "../../web/release-flags";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { NO_FRAC, fillTopicDoc } from "./daily-aims";
+import { lowHitOf } from "./daily-hit";
 import type { GenAim } from "./daily-gen";
 import { freshItem } from "../../services/craft-stage/engine";
 import { marketStore } from "../../state/market-store";
@@ -41,6 +42,9 @@ export const fourOnlyOn = (day: string): boolean => day.replace(/^d/, "") >= FOU
 export function dailyHit(data: PatchData, m: StageMod, a: { modId: string; tier: number }): boolean {
   if (isAimMod(m, targetsOf(data, [a]), aimOpts(data))) return true;
   if (m.unrevealed) return false;
+  // 値の下の端で比べる (D-35b ⑤、スイッチ dailyLowHit): 合金の 2 行の MOD・値が文に直に書かれた完全なエッセンス・共通の文の強化のエッセンスも、
+  // 段の幅の下の端がお題の段に届けば当たり。値の幅が普通の段と合わず自分の番号で読まれていたエッセンスは、届かなければ外れ。比べられない時だけ下の前の比べ方
+  if (flag("dailyLowHit")) { const low = lowHitOf(data, a, m.modId, m.tierIndex); if (low !== null) return low; }
   const want = data.mods.get(a.modId), got = data.mods.get(m.modId);
   if (!want || !got || !want.family || got.family !== want.family || got.text !== want.text) return false;
   return tierNoOf(m) <= a.tier;
