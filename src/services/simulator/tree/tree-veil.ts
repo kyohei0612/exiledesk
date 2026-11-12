@@ -6,7 +6,7 @@
  * 付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
  */
 import { aimHits, parseKey, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { isInfiniteEssence } from "../../craft-stage/apply-essence"; import { flag } from "../../../web/release-flags";
 import { isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
 import { docHeld } from "./tree-sample";
@@ -47,9 +47,11 @@ const onceHeld = (m: WeakMap<TreeDoc, [number, Aim[]]>, doc: TreeDoc, make: () =
 export const placedAims = (data: PatchData, doc: TreeDoc): Aim[] => onceHeld(PLACED, doc, () => placedRaw(data, doc));
 function placedRaw(data: PatchData, doc: TreeDoc): Aim[] {
   const goals = doc.memoAims ?? [];
-  const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && veilPick(doc.boxes[b.parent]?.hand) && !goals.some((g) => sameAimMod(data, g, b.aim!)) ? [b.aim] : []));
+  const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || infinitePicked(doc.boxes[b.parent]?.hand?.currency)) && !goals.some((g) => sameAimMod(data, g, b.aim!)) ? [b.aim] : []));
   return plain;
 }
+/** 無限のエッセンスの窓で ☑ した能力値の当たりの箱か (完成形に無くても選べる = 置き石と同じ扱い、S-33d。スイッチ treeInfinitePick) */
+const infinitePicked = (key: string | undefined): boolean => !!key && flag("treeInfinitePick") && isInfiniteEssence(key);
 /** 置き石 = 発現で選んだ MOD。残したい MOD の既定に入らず、消えても「狙いが消えた」にしない (S-33) */
 export const stoneAims = (data: PatchData, doc: TreeDoc): Aim[] => placedAims(data, doc);
 /** 手で付ける MOD が 1 つに決まるエッセンスの MOD (無限のエッセンスは決まらないので無し) */

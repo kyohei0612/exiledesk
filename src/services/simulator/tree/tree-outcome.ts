@@ -10,7 +10,7 @@ import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./t
 import { bothKeyOf, boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
-import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence"; import { flag } from "../../../web/release-flags";
 import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { namedGoneOf, nextKeyOf, sideKeyOf } from "./tree-junk-side";
@@ -305,11 +305,17 @@ const ownHits = (data: PatchData, oc: Outcome, own: readonly Aim[]): Outcome => 
   const hits = oc.hits.filter((a) => own.some((x) => sameAim(data, x, a)));
   return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
 };
+/** 無限のエッセンス (S-33d): 新しく付いた MOD が ☑ の札の MOD なら当たり、ほかは外れ (☑ は完成形に無い能力値でもよいので、木の狙いでは見ない) */
+const infiniteHit = (data: PatchData, oc: Outcome, own: readonly Aim[], before: StageItem, after: StageItem, key: string): Outcome => {
+  if (oc.out !== "hit") return oc;
+  const hits = outcomeOf(data, before, after, own, key).hits; // 新しく付いた ☑ の札 (付いたかはエンジンの aimDiff)
+  return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
+};
 function boxOutcomeRaw(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, own: readonly Aim[], before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
   const key = h?.currency;
   // ルーンの手は確定の手: はめた人は全員「打った後」の 1 箱へ (当たり / 外れに分けない、S-31e)
   if (key && isRuneHand(key)) return { out: "any", hits: [] };
-  if (key && infiniteAim(key)) return ownHits(data, outcomeOf(data, before, after, aims, key), own);
+  if (key && infiniteAim(key)) return flag("treeInfinitePick") ? infiniteHit(data, outcomeOf(data, before, after, aims, key), own, before, after, key) : ownHits(data, outcomeOf(data, before, after, aims, key), own);
   // 印の無い木の狙い無しのフラクチャー: 固定された MOD の箱 (スイッチ fracPick)
   if (fracFree(doc, h)) {
     const m = newlyFractured(before, after), hit = fracFreeHit(data, m, own);

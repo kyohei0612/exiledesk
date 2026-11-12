@@ -16,7 +16,7 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
-import { needsSameHiUnder, needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
+import { infiniteAim, needsSameHiUnder, needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { aimedList } from "../../../services/simulator/tree/tree-miss";
@@ -167,7 +167,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     // 当たりにするのは完成の狙いの MOD だけ。狙いで無い MOD が付くだけのエッセンス (冒涜の外れを無限のエッセンスで置き換える等) は当たりを作らず、
     // applyPick が結果を「付いた」の箱 1 つにする (10-25 オーナー「ここに関してはあたりなんてもんは存在しない」、前は筋力・器用さ・知性の当たり 3 つ + 狙いが消えたで 4 つ出た)
     const goals = [...(doc.memoAims ?? []), ...aimsOf(data, doc)];
-    return out.filter((a) => goals.some((g) => sameAimMod(data, g, a)));
+    return flag("treeInfinitePick") && infiniteAim(h.currency) ? out : out.filter((a) => goals.some((g) => sameAimMod(data, g, a))); // 無限は完成形に無くても選べる (S-33d)
   }
   // 液化した感情 = 付く MOD は感情ごとに決まっている (版は空きのある側から等しく、E-73)。エッセンスと同じくエンジンの結果で新しく付いた完成の狙いを札に
   // (11-03 シミュ部長 68: 確率の表 reachableAims は感情の MOD を知らず、軽蔑・獰猛の ☑ が空で当たりの箱が作れなかった)
