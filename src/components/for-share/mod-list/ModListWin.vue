@@ -25,8 +25,9 @@ import { flag } from "../../../web/release-flags";
  * blank = 何も付いていない素の品 (開いた時はいつもこれ。オーナー 11-12「アイテムカードに何もついてない状態で見たいな話し」)。
  * boxItem = 押している箱の品 (渡した時だけ上に切り替え「素の品 / 箱の品」を出す。箱の品ではエミュと同じく、付いている MOD と同じ系統は付かないので消える)。
  * hidden = 帯に出さない物 (シミュの木の棚と同じ物を渡す)
+ * startBox = 開いた時に箱の品から始める (箱の側のボタンから開く時、S-145h。渡さなければ今までどおり素の品から)
  */
-const props = defineProps<{ open: boolean; blank: StageItem | null; boxItem?: StageItem | null; hidden?: (key: string, item: StageItem | null) => boolean }>();
+const props = defineProps<{ open: boolean; blank: StageItem | null; boxItem?: StageItem | null; startBox?: boolean; hidden?: (key: string, item: StageItem | null) => boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const onBox = ref(false);
 const item = computed(() => (onBox.value && props.boxItem ? props.boxItem : props.blank));
@@ -37,8 +38,8 @@ function off(): void { on.value = null; omens.value = []; }
 function toggle(k: string): void { if (on.value === k) off(); else if (canUse(k)) { on.value = k; omens.value = []; } }
 /** 今の品に打てるか (エンジンの useReason、棚の「使用可能」と同じ判定)。打てない札は薄くして押せない (場所は残す) */
 const canUse = (k: string): boolean => { const d = s.data.value, it = item.value; return !!d && !!it && useReason(d, it, k, []) === null; };
-// 開くたびに素の品・オフから。品が替わった時もオフ (前の品でオンにした物を持ち越さない)
-watch(() => props.open, () => { onBox.value = false; off(); });
+// 開くたびに素の品 (startBox なら箱の品)・オフから。品が替わった時もオフ (前の品でオンにした物を持ち越さない)
+watch(() => props.open, (v) => { onBox.value = v && !!props.startBox; off(); });
 watch(item, () => off());
 
 /**
