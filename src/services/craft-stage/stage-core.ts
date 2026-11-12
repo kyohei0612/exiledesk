@@ -12,7 +12,7 @@ import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
 import { occupiedKeysOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
-import { jaOfModAlways } from "../htc/mod-text";
+import { jaOfModAlways, jaOfModLine } from "../htc/mod-text";
 import { filledStatsOf, htcBaseLimits, implicitStatsOf } from "../htc/patch";
 import { MOD_TEXT_JA as modTextJa } from "../htc/mod-text";
 import { flag } from "../../web/release-flags";
@@ -372,7 +372,8 @@ const ONE_OF_TEXT: Record<string, string> = {
 const ONE_OF_SOURCE = new Set(["#% increased Strength, Dexterity or Intelligence", "+# to Strength, Dexterity or Intelligence"]);
 /** 説明文のまま (「筋力、器用さまたは知性」) の MOD を、付いた 1 つの文の MOD にする。一覧で 3 行が同じ文に見えないように */
 export const oneOfMod = (mod: Mod): Mod => (ONE_OF_TEXT[mod.family] && ONE_OF_SOURCE.has(mod.text ?? "") ? { ...mod, text: ONE_OF_TEXT[mod.family]! } : mod);
-const jaOfText = (en: string): string | undefined => (modTextJa as Record<string, string>)[en];
+/** 付いた 1 つの文の日本語。表の鍵は「# to Intelligence」で「+# to Intelligence」の字そのままでは引けないので、ほかの MOD と同じ引き方 (jaOfModLine) で引く (スイッチ infiniteOneText、閉じている間は前の字そのまま引き = 筋力・知性は説明文に落ちる) */
+const jaOfText = (en: string): string | undefined => (flag("infiniteOneText") ? jaOfModLine(en) ?? undefined : (modTextJa as Record<string, string>)[en]);
 /**
  * 段はそのままで数値だけ転がし直す (神のオーブ)。段の範囲はデータから引き直す。
  * データの値の単位 → 画面の単位 (リーチ・クリティカル率は 1 万分率 645 → 6.45%、再生は毎分 60 → 毎秒 1) の決まりは
