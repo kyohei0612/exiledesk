@@ -2,13 +2,15 @@
  * craft-stage-help-mods.ts — 棚のカードの「付く MOD」・短い名前・特別なエッセンス。craft-stage-help.ts から分けた (2026-10-16、500 行の決まり)
  */
 import { fillModText, tierDisplayRanges, essenceLevelOf, isRune, runeEffectFor, runeOf, parseKey, essencePartsOf, type Mod, type PatchData, CATALYSTS as HTC_CATALYSTS, type StageItem, isEmotion } from "../../services/craft-stage/engine";
-import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
+import { ABYSS_FAMILY, essenceTarget, infiniteChoices, isInfiniteEssence } from "../../services/craft-stage/apply-essence";
 import { hasRawFamily, sharesRawFamily } from "../../services/mods/mod-rules";
+import { oneOfMod } from "../../services/craft-stage/stage-core";
 import { enOf } from "./craft-stage-shelf";
 import { lang, tr } from "../../i18n/lang";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
 import { jewelEmotionsOf } from "../../services/htc/patch";
 import { TIER } from "./tier-word";
+import { flag } from "../../web/release-flags";
 
 /** エッセンスで付く段 (完全は一番上、ほかはエッセンスの等級の段。無ければ一番上)。craft-stage-help.ts も使う */
 export const essenceTierOf = (t: { level: string; mod: Mod }): Mod["tiers"][number] | undefined =>
@@ -211,11 +213,21 @@ export function specialEssence(key: string, item: StageItem | null) {
   return ps.length ? { ...sp, notes: [tr(`使える部位: **${ps.map((w) => w.ja).join("・")}**`, `Usable on: **${ps.map((w) => w.en).join(", ")}**`), ...sp.notes] } : sp;
 }
 
+const INFINITE_TAG_ALL = flag("infiniteTagAll");
 /** 棚のボタンの値段の代わりに出す、付く MOD の短い名前 (エッセンス・カタリスト)。無い物は null (値段のまま) */
 export function shelfTag(key: string, data: PatchData | null, item: StageItem | null): string[] | null {
   const sp = specialEssence(key, item);
   if (sp?.short) return [sp.short];
   if (key.startsWith("essence:")) {
+    // 無限のエッセンス: 付きうる能力値を全部 (エンジンが打つ時に等しく 1 つ引く元の一覧 infiniteChoices = もう付いている系統は外れている、E-50)。
+    // 文は付いた 1 つの文に直してから短くする (oneOfMod = MOD 一覧と同じ。データの文は 3 つとも説明文「筋力、器用さまたは知性」のまま)。
+    // 前は鍵の MOD 1 つだけ聞いて説明文のまま 1 行で出していた (開発版の画面では「・筋力、器用さまたは知性」) (U-13e、スイッチ infiniteTagAll。オーナー 11-12「アだけど、知性選んでも器用さって出るのバグだろ」)
+    if (INFINITE_TAG_ALL && data && item && isInfiniteEssence(key)) {
+      const pk = parseKey(key);
+      const level = pk.type === "essence" ? pk.tier : null;
+      const names = level ? infiniteChoices(data, item, key).map((c) => { const t = essenceTierOf({ level, mod: c.mod }); return shortMod(fillModText(oneOfMod(c.mod), t ? tierDisplayRanges(t) : [])); }).filter(Boolean) : [];
+      if (names.length) return names;
+    }
     const a = stageAdds(key, data, item);
     return a ? a.lines.map(shortMod) : null;
   }
