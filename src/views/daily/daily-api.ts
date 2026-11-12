@@ -283,7 +283,7 @@ export const restoreNick = (name: string, code: string): Promise<DailyNick | Nic
 /** 投稿の断りの訳。item・large = 形が悪い、busy = 1 時間 5 件を越えた、net = つながらない */
 export type BoxError = "item" | "large" | "busy" | "net";
 /**
- * POST /daily/box。段の下限は D-04 (全部 T3 以上) に揃え、先にこの端末で機械の確かめ (D-20) をする。
+ * POST /daily/box。段の下限は D-04 (全部 T2 以上) に揃え、先にこの端末で機械の確かめ (D-20) をする。
  * 落ちた物は送らずに訳を付けて残し、通った物は送る (サーバーは wait で受け、16:00 の台本がもう一度確かめて ok / no にする)
  */
 export async function postBox(data: PatchData, item: Omit<DailyBoxItem, "id" | "at" | "status" | "why">): Promise<DailyBoxItem | BoxError> {

@@ -21,7 +21,8 @@ const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
 const SOLVE_RATE = 1;
 /** D-05 の部位の表・D-04 の段の決まりの版 (変えたら上げる)。11-10 に D-04 を全部 T3 以上に、予定の確かめの印 (D-80f) もこの版 */
 // 11-11: スキルレベル T1・完全なエッセンス 1 つ (D-04b) を足した版。前は "D04T3-D05-2026-11-10"
-export const RULES_VER = "D04T3L1-D04bE-D05-2026-11-11";
+// 11-12: 段の下限を T3 → T2 (D-04、11-12 のお題から)。前は "D04T3L1-D04bE-D05-2026-11-11"
+export const RULES_VER = "D04T2L1-D04bE-D05-2026-11-12";
 
 const noOf = (day: string): number => Math.round(Date.parse(`${day}T00:00:00Z`) / DAY);
 const nameOf = (no: number): string => new Date(no * DAY).toISOString().slice(0, 10);
@@ -259,7 +260,7 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
   type PlanDay = (typeof plan)[number];
   const weekSamples = [...inp.samples, ...inp.prevSamples].map((x) => ({ id: x.id, base: x.base, mods: JSON.parse(x.mods), n: x.n }) as DailySample);
   const toFull = (day: PlanDay): PlanDay => {
-    // 段は D-04 (全部 T3 以上、11-10)。前の決まりで組んだ予定の段もここで揃える (変わった時だけ新しい物 = planFix で書き戻す)
+    // 段は D-04 (全部 T2 以上、11-12。前は T3 以上)。前の決まりで組んだ予定の段もここで揃える (変わった時だけ新しい物 = planFix で書き戻す)
     if (day.aims && fullMods(data, day.base, day.aims)) {
       // 完全なエッセンスを 1 つ (D-04b、11-11)。もう入っていればそのまま
       const fl = essenceSwap(data, day.base, day.ilvl ?? TOPIC_ILVL, floorAims(data, day.base, day.ilvl ?? TOPIC_ILVL, day.aims), weekSamples).aims;
