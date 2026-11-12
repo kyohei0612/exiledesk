@@ -226,6 +226,10 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-frac-none { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--skin-line); }
 .daily-frac-none-or { width: 100%; font-size: 13px; color: var(--skin-dim); }
 .daily-frac-none small { font-size: 13px; color: var(--skin-dim); }
+/* フラクチャー無しの注意書き (D-37j、スイッチ dailyNoFracNote): ボタンの下に幅いっぱい、金の縦線・一段明るい地・大きめの字。赤は使わない (D-60b) */
+.daily-frac-none-note { display: flex; align-items: baseline; gap: 10px; width: 100%; max-width: 560px; margin: 4px 0 0; padding: 10px 14px; border-left: 3px solid var(--skin-title); background: var(--skin-raise); font-size: 15px; line-height: 1.6; color: var(--skin-text); }
+.daily-frac-none-note > span:first-child { color: var(--skin-title); font-size: 17px; }
+.daily-frac-none-note b { font-weight: 700; color: var(--skin-title); }
 
 /* 皮の見比べ */
 .daily-skin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }

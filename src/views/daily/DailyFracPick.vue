@@ -16,6 +16,7 @@ import STAT_ORDER from "../../data/stat-order.json";
 import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
 import { NO_FRAC } from "./daily-aims";
+import { flag } from "../../web/release-flags";
 
 const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
@@ -93,7 +94,15 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
         <div v-if="fourOnly" class="daily-frac-none">
           <span class="daily-frac-none-or">{{ tr("または", "or") }}</span>
           <button type="button" class="g-btn" data-daily-frac-none :data-mod="NO_FRAC" @click="emit('pick', NO_FRAC, 'four')">{{ tr("フラクチャー無しで始める", "Start without fracturing") }}</button>
-          <small>{{ tr("MOD の無い白い品のまま始める (フラクチャーの費用は 0)", "Start from the plain base with no mods (no fracture cost)") }}</small>
+          <template v-if="flag('dailyNoFracNote')">
+            <small>{{ tr("MOD の無い白い品のまま始める", "Start from the plain base with no mods") }}</small>
+            <!-- 注意書き (D-37j、11-12 オーナー「目立たせて注意書き的な」): 金の縦線と一段明るい地。赤い光は残り時間だけ (D-60b) なので使わない -->
+            <p class="daily-frac-none-note" data-daily-frac-none-note role="note">
+              <span aria-hidden="true">⚠</span>
+              <span>{{ tr("フラクチャーの費用は 0。", "Fracture cost is 0.") }}<b>{{ tr("代わりにフラクチャーオーブは打てません。", " In exchange, you cannot use a Fracturing Orb.") }}</b></span>
+            </p>
+          </template>
+          <small v-else>{{ tr("MOD の無い白い品のまま始める (フラクチャーの費用は 0)", "Start from the plain base with no mods (no fracture cost)") }}</small>
         </div>
       </div>
     </div>
