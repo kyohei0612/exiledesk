@@ -2,10 +2,10 @@
   DailyFracPick.vue — 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j)。
   1 段目 = どこから始めるか: (a) フラクチャー付きのレアから / (b) ベースから (選んだ MOD は必ず付き、費用は 3 回に 1 回成功として数える、D-03)。
   2 段目 = フラクチャー予定の MOD。どちらの段も左にシミュ / エミュと同じ完成形のカード (StageItemCard、use-tree の goalItem)、右 (狭い幅は下) に選ぶ物 (D-37l)。
-  カードや行の強調 (行に乗せるとカードの MOD が光る等) は付けない (11-09 オーナー「ハイライトいらんかもな」)。始めの値段はどちらも数えない (D-03)
+  右の MOD に乗せている間だけ、左のカードの同じ行をフラクチャーの色で見せる (下見、スイッチ dailyNoFracNote、11-12。その前は 11-09 オーナー「ハイライトいらんかもな」で強調なし)。始めの値段はどちらも数えない (D-03)
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { useTree } from "../simulator/tree/use-tree";
@@ -56,10 +56,23 @@ const ordered = computed<readonly DailyAim[]>(() => {
   return [...props.aims].sort((x, y) => at(x) - at(y));
 });
 const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
+/**
+ * 右の MOD に乗せている間 (キーボードで選んでいる間も)、左のカードの同じ MOD の行をフラクチャーの色で見せる = 「これを選ぶとこの行がフラクチャーになる」の下見。
+ * 離したら戻る (D-37j、スイッチ dailyNoFracNote。11-12 オーナー「右のMODホバー時にカードではフラクチャーの色で合わせて表示してあげたらいい感じ」、11-09 の「ハイライトいらんかもな」はこの形に替えた)。
+ * 共有のカード (StageItemCard) は触らず、行の印 data-card-mod に色の印を付け外しするだけ
+ */
+const peek = ref<string | null>(null);
+const root = ref<HTMLElement | null>(null);
+watch(peek, (id) => {
+  const card = root.value?.querySelector("[data-daily-frac-card]");
+  if (!card) return;
+  for (const el of card.querySelectorAll("[data-frac-peek]")) el.removeAttribute("data-frac-peek");
+  if (id && flag("dailyNoFracNote")) for (const el of card.querySelectorAll(`[data-card-mod="${CSS.escape(id)}"]`)) el.setAttribute("data-frac-peek", "");
+});
 </script>
 
 <template>
-  <section data-daily-frac :data-daily-frac-step="from ? 'mod' : 'from'" class="daily-frac">
+  <section ref="root" data-daily-frac :data-daily-frac-step="from ? 'mod' : 'from'" class="daily-frac">
     <h2 class="daily-frac-title">{{ chosen ? tr("フラクチャー予定の MOD を選択してください", "Choose the mod you plan to fracture") : tr("どこから始めるか", "Where to start") }}</h2>
     <div class="daily-frac-body">
       <!-- 完成形のカード (両方の段で同じ、D-37l) -->
@@ -82,10 +95,15 @@ const chosen = computed(() => FROMS.find((o) => o.k === from.value) ?? null);
           <span data-daily-frac-chosen>{{ tr(`始め方: ${SHORT[chosen.k].title[0]}`, `Start: ${SHORT[chosen.k].title[1]}`) }}</span>
           <button v-if="!fourOnly" type="button" class="g-btn sm" data-daily-frac-back @click="from = null">{{ tr("始め方を選び直す", "Change how to start") }}</button>
         </p>
-        <p v-if="fourOnly" class="mb-3 text-[13px] opacity-70" data-daily-frac-four-note>{{ tr(...SHORT.four.sub) }}</p>
+        <!-- 上の説明も下と同じ注意書きの枠で (D-37j、11-12 オーナー「を注意書きで表示させてくれ」。「MOD の無い品から始める」は外した) -->
+        <p v-if="fourOnly && flag('dailyNoFracNote')" class="daily-frac-none-note daily-frac-top-note" data-daily-frac-four-note role="note">
+          <span aria-hidden="true">⚠</span>
+          <span>{{ tr("下記で選んだ MOD が、", "The mod you pick below ") }}<b>{{ tr("フラクチャーの時に必ず付与されます。", "is always applied when you fracture.") }}</b>{{ tr("費用は 3 回に 1 回成功 (33%) として数えます。", " Its cost counts as 1 success in 3 tries (33%).") }}</span>
+        </p>
+        <p v-else-if="fourOnly" class="mb-3 text-[13px] opacity-70" data-daily-frac-four-note>{{ tr(...SHORT.four.sub) }}</p>
         <ul class="daily-frac-list" :aria-label="tr('フラクチャー予定の MOD', 'Mod to fracture')">
           <li v-for="a in ordered" :key="a.modId">
-            <button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @click="emit('pick', a.modId, chosen.k)">
+            <button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @mouseenter="peek = a.modId" @mouseleave="peek = null" @focus="peek = a.modId" @blur="peek = null" @click="emit('pick', a.modId, chosen.k)">
               <span>{{ aimText(a) }}</span><small>{{ tierRankLabel(a.tier) }}</small>
             </button>
           </li>

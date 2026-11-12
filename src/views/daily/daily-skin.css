@@ -228,6 +228,9 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-frac-none small { font-size: 13px; color: var(--skin-dim); }
 /* フラクチャー無しの注意書き (D-37j、スイッチ dailyNoFracNote): ボタンの下に幅いっぱい、金の縦線・一段明るい地・大きめの字。赤は使わない (D-60b) */
 .daily-frac-none-note { display: flex; align-items: baseline; gap: 10px; width: 100%; max-width: 560px; margin: 4px 0 0; padding: 10px 14px; border-left: 3px solid var(--skin-title); background: var(--skin-raise); font-size: 15px; line-height: 1.6; color: var(--skin-text); }
+/* 上の説明の注意書き (一覧の上) と、右の MOD に乗せている間の左のカードの行 = フラクチャーの色 (下見、D-37j) */
+.daily-frac-top-note { max-width: none; margin: 0 0 12px; }
+.daily-frac-card [data-frac-peek], .daily-frac-card [data-frac-peek] * { color: var(--color-mod-fractured) !important; }
 .daily-frac-none-note > span:first-child { color: var(--skin-title); font-size: 17px; }
 .daily-frac-none-note b { font-weight: 700; color: var(--skin-title); }
 
