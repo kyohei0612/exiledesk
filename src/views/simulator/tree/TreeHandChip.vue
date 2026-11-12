@@ -12,12 +12,16 @@ import { useTree } from "./use-tree";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { parseRuneKey } from "../../../services/craft-stage/engine";
-import { isWhittleHand } from "../../../services/simulator/tree/tree-whittle";
+import { isWhittleHand, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { lvLook } from "./tree-whittle-marks";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
 /** choice = スマホの道で選んだ枝の MOD (札の中に出す、S-94h) */
-const props = defineProps<{ hand: Hand | null; split?: number; id: string; x: number; y: number; inv: number; off: boolean; room: number; choice?: string }>();
+/** lane = 削減の手前の枠の枝の札 (S-65c ⑫、スイッチ treeLaneOwnHand): 縁を枠の色に、頭に ▼ 低い / ＝ 同じ / ▲ 高い の印 (どの枠の手かを札で読める) */
+const props = defineProps<{ hand: Hand | null; split?: number; id: string; x: number; y: number; inv: number; off: boolean; room: number; choice?: string; lane?: LvClass | null }>();
+const LANE: Record<LvClass, [string, string]> = { lo: ["▼ 低い", "▼ Lower"], eq: ["＝ 同じ", "= Same"], hi: ["▲ 高い", "▲ Higher"] };
+const laneRgb = computed(() => (props.lane ? lvLook(props.lane).rgb : null));
 defineEmits<{ open: [] }>();
 /** アイコンの列 (カレンシー → お告げ) */
 const icons = computed(() => (props.hand ? [props.hand.currency, ...props.hand.omens] : []).filter((k) => !!iconOf(k)));
@@ -51,7 +55,8 @@ const whittleNoAim = computed(() => {
     ◇ {{ tr(`分かれ目 (${split ?? 0} 行)`, `Split (${split ?? 0} rows)`) }}<span v-if="choice" data-tree-hand-choice class="text-amber-200">→ {{ choice }} ▾</span>
   </button>
   <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-2xl border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
-    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW }" :title="handLabel(hand)" @click="$emit('open')">
+    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW, ...(laneRgb ? { borderColor: `rgb(${laneRgb})` } : {}) }" :data-hand-lane="lane || undefined" :title="handLabel(hand)" @click="$emit('open')">
+    <span v-if="lane && laneRgb" data-tree-hand-lane class="shrink-0 rounded-sm px-1 text-[10px] font-bold text-black" :style="{ background: `rgb(${laneRgb})` }">{{ tr(LANE[lane][0], LANE[lane][1]) }}</span>
     <span v-if="hold" data-tree-hand-hold class="shrink-0 rounded-sm bg-violet-400/25 px-1 text-[10px] text-violet-100" :title="tr('予見の枠: まだ使わずに持って結果を見る', 'Foresight: held, not used yet')">{{ tr("持つ", "Hold") }}</span>
     <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->

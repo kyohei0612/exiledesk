@@ -49,9 +49,20 @@ const handKey = (b: TreeBox): string | null => {
  */
 export function bandGroup(d: TreeDoc, id: string): string[] {
   const b = d.boxes[id], k = b ? handKey(b) : null;
-  if (!k) return [id];
+  // 同じ手でもまとめず枠ごとに 1 本ずつ (S-65c ⑫、11-12 オーナー「この枠からでる削減をまとめずに枝だけわけるっていみ」、スイッチ treeLaneOwnHand)
+  if (!k || flag("treeLaneOwnHand")) return [id];
   const bs = headBands(d, bandHead(d, id));
   return bs.length > 1 ? bs.map((x) => x.id).filter((x) => handKey(d.boxes[x]!) === k) : [id];
+}
+/**
+ * 兄弟の並びで、帯の枠を帯の頭のすぐ右に 低い → 同じ → 高い の順で寄せる (S-65c ⑫、スイッチ treeLaneOwnHand)。
+ * 1 つの箱 + 帯で見せる枠どうしが、兄弟の並べ替え (完成へ続く枝を左へ = S-142e、組んでいる間の順 = S-142g) で離れると、
+ * 枠ごとの手の札と結果の箱が帯から箱いくつ分も遠くに出た (オーナーの木で 同じ・高い の結果が帯の箱の 2,000 以上左)。帯の無い並びはそのまま返す
+ */
+export function bandsTogether(d: TreeDoc, ks: string[]): string[] {
+  if (!flag("treeLaneOwnHand") || !ks.some((k) => headBands(d, k).length > 1)) return ks;
+  const away = new Set(ks.filter((k) => bandAway(d, d.boxes[k])));
+  return ks.filter((k) => !away.has(k)).flatMap((k) => { const bs = headBands(d, k).map((x) => x.id).filter((x) => x === k || away.has(x)); return bs.length > 1 ? bs : [k]; });
 }
 /** 結果の箱がどの帯から来たか (まとめた箱の分も、低い → 高い の順)。帯から来ていなければ空 (追い 6「結果の箱にどの帯から来たかは読めるように」) */
 export function bandsInto(d: TreeDoc, id: string, mergedFrom: (d: TreeDoc, b: TreeBox) => boolean): LvClass[] {

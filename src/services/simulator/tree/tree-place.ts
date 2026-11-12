@@ -11,7 +11,7 @@
 import { BOX_W, type TreeDoc } from "./tree-model";
 import { centerMerged, drawnKids, rowLayout, type RowLayout } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
-import { bandAway } from "./tree-band";
+import { bandAway, bandsTogether } from "./tree-band";
 import { flag } from "../../../web/release-flags";
 import { doneLeftOrder, keepOrder, type KeptOrder } from "./tree-place-order";
 
@@ -40,6 +40,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
     ks = reorder ? reorder(l) : l;
     if (kept) ks = keepOrder(kept, id, ks);
+    ks = bandsTogether(d, ks); // 帯の枠は帯の頭のすぐ右に (S-65c ⑫、スイッチ treeLaneOwnHand)
     memo.set(id, ks);
     return ks;
   };
