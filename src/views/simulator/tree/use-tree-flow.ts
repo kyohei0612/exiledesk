@@ -398,6 +398,18 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const o = best ? was.get(best)! : null, n = best ? now.get(best)! : null;
     if (o && n && (o.x !== n.x || o.y !== n.y)) void f.setViewport({ x: x - (n.x - o.x) * z, y: y - (n.y - o.y) * z, zoom: z });
   });
+  /**
+   * 木を送れる範囲の左と上の端 (S-142h、スイッチ treeOpenStartLeft): 木は始まりの箱から右と下へだけ伸びるので、始まりの箱が開いた時の位置 (横に入らない木 = 木の面の左上、
+   * 入る木 = 木が真ん中に来る所) より右・下へは送れない = 左と上の空きを見せない。手で左へ引っ張った箱がある時はその箱まで。スマホの形 (U-53) は今のまま
+   */
+  watch(() => `${f.viewport.value.x}|${f.viewport.value.y}|${f.viewport.value.zoom}`, () => {
+    const d = doc.value, { x, y, zoom: z } = f.viewport.value, lw = laneW(), w = f.dimensions.value.width - lw;
+    if (!flag("treeOpenStartLeft") || innerWidth < VIEW_ONLY_MAX || !d.boxes.start || w <= 0) return;
+    const b = openBounds(), ns = f.getNodes.value;
+    const x0 = Math.min(b.x, ...ns.map((n) => n.position.x)), y0 = Math.min(b.y, ...ns.map((n) => n.position.y));
+    const mx = Math.max(lw + LEFT_PAD, lw + w / 2 - 0.5 * (b.x + b.w - x0) * z) - x0 * z, my = topY() - y0 * z;
+    if (x > mx + 0.5 || y > my + 0.5) void f.setViewport({ x: Math.min(x, mx), y: Math.min(y, my), zoom: z });
+  }, { flush: "sync" });
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
   function rectOf(b: { x: number; y: number }, w = BOX_W, h = BOX_H): { left: number; top: number; right: number; bottom: number; W: number; H: number } {
