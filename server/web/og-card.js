@@ -6,6 +6,7 @@
 //                  n=何回目で付いたか, r=100 人中の順位 (1〜100、小さいほど早い), md=半分の人, u=運が悪い 10 人に 1 人, c=費用
 import { ImageResponse } from "workers-og";
 import { readDaily, dailySharePage, dailyCardImage } from "./daily-card.js";
+import { readBox, boxCardImage } from "./box-card.js";
 
 const CHAOS_ICON = "https://web.poecdn.com//gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lSZXJvbGxSYXJlIiwic2NhbGUiOjEsInJlYWxtIjoicG9lMiJ9XQ/c0ca392a78/CurrencyRerollRare.png";
 const PEOPLE = 100;
@@ -24,7 +25,8 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 // 14 番目 (p) は比べた人数 (スマホは 10 人。2026-10-19)。無ければ 100
 // 15 番目 (q) は何位 (人数が少ない時。自分を入れて p + 1 人の中)。あれば % ではなく「何位」で出す (2026-10-19 オーナー「スマホは何位、% やなくて」)
 // 16〜21 番目 (kd = "daily"・dy = お題の id・rt = 完成率・pl = 順位・pe = 挑戦した人数・sk = シェアした人の皮) はデイリーの提出の後のシェア (D-38、2026-11-11)。カードは daily-card.js
-const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q", "kd", "dy", "rt", "pl", "pe", "sk"];
+// 22 番目 (bx) は kd = "box" の時の中身 = デイリーのクラフト箱の投稿の品の絵 (daily.md D-20c、2026-11-12)。受け口が Discord の知らせに付ける絵で、シェアのページ (/s/) は無い。カードは box-card.js
+const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q", "kd", "dy", "rt", "pl", "pe", "sk", "bx"];
 export async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
@@ -244,6 +246,12 @@ async function codeOf(token, env) {
 }
 async function renderPng(url, env, code) {
   const get = await unpack(code);
+  if (get("kd") === "box") {
+    // 箱の投稿の絵は、読めない・作れない時にサイトの共通の絵を返さない (受け口が Discord に違う絵を付けないよう 404 / 500。下で覚えもしない)
+    const box = readBox(get);
+    if (!box) return new Response("box", { status: 404, headers: { "cache-control": "no-store" } });
+    try { return new Response(await boxCardImage(url, env, box), { headers: PNG_HEADERS }); } catch { return new Response("box", { status: 500, headers: { "cache-control": "no-store" } }); }
+  }
   const png = get("kd") === "daily" ? await dailyCardImage(url, env, readDaily(get)) : await cardImage(url, env, readCard(get));
   return new Response(png, { headers: PNG_HEADERS });
 }
@@ -293,6 +301,7 @@ export async function ogCard(request, env, ctx) {
     // 作れなかった時はサイトの共通の絵 (キャッシュしない)
     return env.ASSETS.fetch(new Request(new URL("/web/og.png", url.origin)));
   }
+  if (!res.ok) return res; // 作れなかった箱の絵 (404 / 500) は覚えない
   ctx?.waitUntil?.(cache.put(key, res.clone()));
   return res;
 }
