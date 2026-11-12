@@ -43,6 +43,8 @@ const PHONE_MIN = 0.5;
 const OPEN_MIN = VIEW_ONLY;
 /** 木を変えた後の大きさの境目 (S-147h、スイッチ treeCalmCamera): これより大きければここへ縮め、以下ならそのまま */
 const CALM_Z = 0.5;
+/** 開いた時の寄りの後、箱の背が測れて並べ直しが済むまでの間 (この間は見ていた箱を軸に視点を送らない、S-147h) と、手を決めた箱を軸にする間 */
+const OPEN_QUIET = 1500, HELD_MS = 3000;
 /** 「全体を表示」の一番小さい段 (これより大きい木は下が枠の外に出てよい。10-26 夜ブラック 13「全体表示は下限 25%」) */
 const FIT_MIN = 0.25;
 /** 全体に合わせる時の余白の下限 */
@@ -176,11 +178,15 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    */
   /** 開いた時の寄りを呼んだ回数 (S-147h: 木を変えた後の縮めが、木を開く・タブを替える時の寄りを上書きしないように見る) */
   let opens = 0;
+  /** 最後に開いた時の寄りを掛けた時刻 (その直後の並べ直しでは視点を動かさない) と、最後に手を決めた箱 (S-147h の軸) */
+  let openAt = -OPEN_QUIET, held: { id: string; at: number } | null = null;
   async function openView(): Promise<void> {
     opens++;
+    openAt = performance.now();
     const lv = fitLevel();
     if (lv == null) { await goHome(); return; }
     await startTop(Math.max(lv, OPEN_MIN));
+    openAt = performance.now();
   }
   /** 完成形の設定などを見に行く前の寄りと位置 (戻ったらそのまま。10-26 モンキー 7 の 10、メモ feedback-basic-flow「閉じたら前の位置」) */
   let kept: { x: number; y: number; zoom: number; key: string } | null = null;
@@ -284,6 +290,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     holding = true;
     try {
       const to = edit();
+      noteHeld(to);
       // S-147h: 50% より大きい時は 50% へ縮めて、触った箱を同じ場所に (50% 以下ならその大きさのまま)
       const zc = flag("treeCalmCamera") && z > CALM_Z * pageZ.value + 1e-3 ? CALM_Z * pageZ.value : z;
       const put = async (): Promise<void> => { const b = doc.value.boxes[to]; if (b) await f.setViewport({ x: sx - b.x * zc, y: sy - b.y * zc, zoom: zc }); };
@@ -309,6 +316,10 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
       if (nx !== x || ny !== y) await f.setViewport({ x: nx, y: ny, zoom: z });
     } finally { holding = false; }
   }
+  /** 手を決めた箱を、その後しばらくの並べ直しの軸にする (S-147h) */
+  function noteHeld(id: string): void {
+    held = { id, at: performance.now() };
+  }
   /**
    * 箱の背や置き場が変わった (言葉の切り替え・中身の変わり。箱は同じ) 時、変わる前に＋まで全部見えていた箱は、＋が木の面の下へ出たら見える所まで最小限だけ上へ寄せる
    * (上端は見えたまま)。どの幅・高さでも同じ (11-10 最終チェック: 英語にすると箱の背が伸び、＋が木の面の下へ出て「未設定 → 次へ」の札の裏で押せなかった)
@@ -326,6 +337,28 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const bottom = Math.max(...over.map((o) => o.y + o.h + NEXT_H)), top = Math.min(...over.map((o) => o.y));
     const ny = Math.max(h - m - bottom * z, m - top * z);
     if (ny < y) await f.setViewport({ x, y: ny, zoom: z });
+  });
+  /**
+   * 木を変えて並びが動いた時 (1 つ戻す・やり直し・手を消す・箱の背が変わった後の並べ直し) も、見ていた箱を画面の同じ場所に (S-147h)。
+   * 並べ方は始まりの箱を動かさず親を子の真ん中に置くので、視点をそのままにすると見ていた枝が横へずれた (11-12 オーナー「特にツリーがどっかいくしカメラもキモイ」)。
+   * 軸 = 手を決めた直後はその箱、そのほかは画面の真ん中に一番近い見えていた箱 (前にも今にもある箱)。手を決めている間は holdBox、木を開いた直後は開いた時の寄りが決める
+   */
+  let posWas = new Map<string, { x: number; y: number }>();
+  watch(() => f.getNodes.value.map((n) => `${n.id}:${n.position.x}:${n.position.y}`).join("|"), () => {
+    const was = posWas, now = new Map(f.getNodes.value.map((n) => [n.id, { x: n.position.x, y: n.position.y }] as const));
+    posWas = now;
+    const t = performance.now(), { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
+    if (holding || !flag("treeCalmCamera") || !was.size || !w || !h || t - openAt < OPEN_QUIET || f.getNodes.value.some((n) => n.dragging)) return;
+    let best: string | null = null, near = Infinity;
+    for (const [id, o] of was) {
+      if (!now.has(id)) continue;
+      const sx = (o.x + BOX_W / 2) * z + x, sy = (o.y + BOX_H / 2) * z + y;
+      if (sx < 0 || sy < 0 || sx > w || sy > h) continue;
+      const far = id === held?.id && t - held.at < HELD_MS ? -1 : Math.hypot(sx - w / 2, sy - h / 2);
+      if (far < near) { near = far; best = id; }
+    }
+    const o = best ? was.get(best)! : null, n = best ? now.get(best)! : null;
+    if (o && n && (o.x !== n.x || o.y !== n.y)) void f.setViewport({ x: x - (n.x - o.x) * z, y: y - (n.y - o.y) * z, zoom: z });
   });
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
