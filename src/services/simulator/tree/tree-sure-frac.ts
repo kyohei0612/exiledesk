@@ -4,7 +4,7 @@
  * エンジンの起こりうる結果 (stepOutcomes) のうち ✦ の印の MOD が固定された物だけを残す (外れの枝なし)。費用はその手を FRACTURE_POOL (3) 回分。
  * エンジンは変えない。印の無いシミュの木は今のまま (S-43 は 11-05 に撤回、11-05 オーナー「ツリーに勝手に足しやがって2度とすんなまじで」)
  */
-import { aimHits, tierIndexOf, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { aimHits, allMods, tierIndexOf, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../sim-engine";
 import { FRACTURE_POOL } from "../sim-odds";
 import { newlyFractured } from "./tree-frac-pick";
@@ -40,6 +40,17 @@ export function sureFracture(data: PatchData, doc: TreeDoc, item: StageItem, h: 
  */
 export const sureFracMissing = (data: PatchData, doc: TreeDoc, item: StageItem, h: Hand | null | undefined): boolean =>
   flag("treeSureFracNeedMod") && sureFracOn(doc, h) && !!stepOutcomes(data, item, h!.currency, engineOmens(h!))?.some((o) => !o.void) && !sureFracture(data, doc, item, h!);
+
+/**
+ * 確定フラクチャーが置けない訳 (sureFracMissing の時だけ): "desecrated" = ✦ の MOD が冒涜で付いた物として品にある (E-41 で固定されない)、
+ * "none" = ✦ の MOD が品に無い (未発現の行だけの時も)。置ける時は null。手の窓はこの訳ごとの短い文をポップアップで出す
+ */
+export function sureFracWhy(data: PatchData, doc: TreeDoc, item: StageItem, h: Hand | null | undefined): "desecrated" | "none" | null {
+  if (!sureFracMissing(data, doc, item, h)) return null;
+  const marks = fractureMarks(doc);
+  const des = allMods(item).some((m) => !m.unrevealed && !!m.desecrated && marks.some((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })));
+  return des ? "desecrated" : "none";
+}
 
 /** 確定フラクチャーで使う物: カレンシーとお告げを FRACTURE_POOL 回分 (3 回に 1 回成功 = 33%、文は tree-names の sureFracText と同じ数) */
 export function useSureFrac(h: Hand, use: (key: string, n: number) => void): void {

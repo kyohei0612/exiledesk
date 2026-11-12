@@ -8,6 +8,7 @@ import TreeGoalPage from "./TreeGoalPage.vue";
 import TreeStartPage from "./TreeStartPage.vue";
 import TreeBoxModList from "./TreeBoxModList.vue";
 import TreeLaneAsk from "./TreeLaneAsk.vue";
+import TreeFracStop from "./TreeFracStop.vue";
 import { useTree } from "./use-tree";
 import { usePasteAnywhere } from "./tree-paste";
 
@@ -22,4 +23,6 @@ usePasteAnywhere();
   <TreeBoxModList />
   <!-- 削減の手を消す・打ち直す前の一言 (S-65c4、ほかの枠の手が消える時だけ) -->
   <TreeLaneAsk />
+  <!-- 確定フラクチャーが置けない時のポップアップ (S-43a、選んだ MOD が冒涜で付いた / 品に無い) -->
+  <TreeFracStop />
 </template>
