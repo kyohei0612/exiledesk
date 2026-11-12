@@ -1,5 +1,48 @@
 [
  {
+  "v": "0.1.719",
+  "date": "2026-11-12",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (木の並べ方): 完成の箱へ続く枝を一番左に、未設定の箱をその次に並べるようにしました。箱のすぐ下の段にはその箱の続きだけを置き、空いている段にはほかの枝を詰めます。箱の高さは段でそろえず中身の高さだけにし、箱をつかんで動かす動きは無くしました",
+    "en": "Simulator (tree layout): branches that lead to a done box are now placed leftmost, followed by unset boxes. The row right under a box only holds that box's own continuation, and other branches are packed into free rows. Boxes are as tall as their content instead of matching the row, and boxes can no longer be dragged"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (木の見た目と動き): 同じ枠への線は、箱に乗せた時だけ出すようにしました。手を置いた後や 1 つ戻した後にカメラが勝手に動かないようにし、ホイールでの拡大・縮小を細かくしました。畳んだ消去の札の横に、線のつながらない箱が浮いて見えるのを直しました。帯の「線」「メモ」と、名残の「ハズレ整理」のボタンを外しました",
+    "en": "Simulator (tree look and feel): lines to the same frame are now shown only while you hover a box. The camera no longer moves by itself after you place a move or undo, and wheel zoom is finer. Fixed boxes with no line floating next to a folded Annulment tag. Removed the “Lines” and “Memo” buttons from the bar, and the leftover “Tidy junk” button"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (手): 消去の自動の続きは、「全部消えてよい」消去と、結果が全部外れ MOD になった箱からだけにしました (狙いや残したい MOD が残る箱は 1 つずつ手で置きます)。当たりの箱・完成にした箱でも「失敗」を選べるようにしました。木の手の棚から腐食のお告げと錬金術のオーブを外しました (もう置いてある錬金の手はそのまま使えます)",
+    "en": "Simulator (moves): Annulment only continues automatically for “anything may be removed” Annulments and from boxes where everything left is a junk mod (boxes that still have an aim or a mod to keep are placed one by one). You can now choose “Fail” on hit boxes and done boxes too. Omen of Putrefaction and Orb of Alchemy were removed from the tree's move shelf (Alchemy moves already placed still work)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター・デイリー: 帯に「MOD 一覧」を足しました。カレンシーを選ぶと、その手で付く MOD とティアだけを確率つきで見られます",
+    "en": "Simulator and Daily: added “Mod list” to the bar. Pick a currency to see only the mods and tiers that move can add, with their odds"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: カレンシーを持っている間、その手で付かない MOD・ティアは灰色でなく表示しないようにしました。持ったままボタンや設定を押しても放さないようにしました (何も無い所を押す・右クリック・Esc で放します)。棚のカレンシーの格 (上級・完全) を縦の棒の印にしました。錬金術のオーブの確率の表で、付く候補にあるのに 1 度も出なかった MOD は 0% でなく <0.1% と出します",
+    "en": "Emulator: while you hold a currency, mods and tiers it can't add are now hidden instead of greyed out. Holding a currency is kept when you press buttons or settings (click empty space, right-click or press Esc to release). Currency tiers on the shelf (Greater, Perfect) are now shown as vertical bars. In the Orb of Alchemy odds table, a mod that can be added but never came up shows <0.1% instead of 0%"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 始め方の画面で、「フラクチャー無しで始める」の下に注意書き (フラクチャーの費用は 0。代わりにフラクチャーオーブは打てません) を出し、MOD の一覧の上に「フラクチャー予定の MOD」の見出しを付けました",
+    "en": "Daily: the start screen now shows a note under “Start without fracture” (the fracture cost is 0, but Fracturing Orbs can't be used), and a “Mods to be fractured” heading above the mod list"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.718",
   "date": "2026-11-12",
   "items": [
@@ -833,78 +876,6 @@
     "area": "",
     "text": "シミュレーター: 完成形のエッセンス・合金の MOD の「途中で消える / 残る」の切り替えを無くしました。完成形に入れた MOD は全部狙いになり、入りきらない時は「どれか n つ残る」でまとめます",
     "en": "Simulator: removed the \"lost partway / kept\" switch for Essence and Alloy mods in the final item. Every mod you add is now an aim, and when they don't all fit they're grouped as \"Any n stay\""
-   }
-  ]
- },
- {
-  "v": "0.1.679",
-  "date": "2026-11-07",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 「次の手で狙う」に、反響のお告げを使わない骨・触媒の高貴・削減と抹消の組み合わせの行を足しました",
-    "en": "Emulator: Aim next move now also lists Bones without Omen of Abyssal Echoes, Omen of Catalysing Exaltation, and Omen of Whittling with Annulment Omens"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: カレンシーの説明の「使える時」を、今のアイテムの部位どおりに出すようにしました (骨・特殊なエッセンス・合金)",
-    "en": "Emulator: the \"Usable when\" line in currency help now follows the current item's slot (Bones, special Essences, Alloys)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター: 品質の設定で選べるカタリストを、そのアイテムに使える物だけにしました (ジュエルは精製されたカタリスト)",
-    "en": "Emulator: the quality setting now only lists Catalysts usable on the item (Jewels show Refined Catalysts)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "共通: スマホで棚のカレンシーを長押しすると説明が出るようにし、棚の名前から「(上級)」「(完全)」を外しました",
-    "en": "Shared: on phones, long-press a currency on the shelf to see its help, and shelf names no longer include Greater / Perfect"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアル: 動画の段の表の出やすさを % だけで出し、下限の注に上級・完全のカオスも入れました",
-    "en": "Tutorial: the video tier table now shows chances as % only, and the tier-floor note includes Greater and Perfect Chaos Orbs"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の枝を作り直しました。配置でも MOD レベルどおりに分け、残したい MOD は標的が 2 つ以上の時だけ聞きます",
-    "en": "Simulator: rebuilt Omen of Whittling branches; placements now split by mod level, and mods to keep are only asked when there are 2 or more targets"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホでも PC と同じく 100 人回し、全体表示で 1 人目の軌跡を見せるようにしました",
-    "en": "Simulator: phones now run 100 like PC and zoom out to show the first run's path"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 画面が中くらいの幅の時の窓を、下から出る形にそろえました",
-    "en": "Simulator: windows at medium screen widths now open from the bottom"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形のカードと木の箱の MOD の並びを、プレフィックスを先・サフィックスを後にそろえました",
-    "en": "Simulator: mods on the final-item card and tree boxes are now ordered Prefixes first, then Suffixes"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形に無いエッセンスの MOD は外れとして数え、カードには MOD の文のまま出すようにしました",
-    "en": "Simulator: Essence mods not in the final item now count as misses and show as the mod text on cards"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 神のオーブの窓で、光った枠の外を押すか右クリックで手放せるようにしました",
-    "en": "Simulator: in the Divine Orb window, click outside the highlighted frame or right-click to put the Divine Orb down"
    }
   ]
  }

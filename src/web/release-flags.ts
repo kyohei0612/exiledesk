@@ -156,6 +156,9 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.719 開発版だけだった 21 個を全部 (シミュの木の並べ方・線・カメラ・ホイール・消去の自動・どの箱でも失敗・棚から腐食と錬金を外す・帯の MOD 一覧、エミュの付かない MOD を出さない・持ったままボタン・棚の格の棒・<0.1%、デイリーの始め方の注意書き・挑戦中の控え。オーナー 11-12「21個全部出して」、ブラック 91 の頼み)。閉じたままは無し
+  "treeNoPutrefaction", "treeDoneLeft", "treeOwnHeight", "noTidyBtn", "boxFixed", "oddsUnder01", "modHide", "simNoLineMemo", "simModList", "heldKeepOnButtons",
+  "treeNoAnnulAuto", "treeNoAlchemy", "treeLinesOnHover", "treeFoldMerged", "treeCalmCamera", "treeFineWheel", "treeFailAny", "dailyNoFracNote", "treeKidsBelow", "tierBars", "dailyLive",
   // 0.1.718 デイリーの完成の判定 (値の下限・完成を押した時に比べる、11-13 のお題から)・完成の仕組みの注意書き・エミュから「デイリーに投稿 →」・投稿の中のエミュは別の品・投稿を止めるのは MOD の数が足りない時だけ・貼った品の 2 行で 1 つの MOD・無限のエッセンスの手の窓・縮めた木の写しの窓・開き直しの決めの写し・クラフト箱の知らせの品の絵と貼った文の控え (オーナー 11-12「全部実装終わったら出していいよリリース今やってるやつ」、ブラック 90 の合図)
   "dailyDoneCheck", "dailyEssNote", "dailyRuleNote", "dailyLowHit", "emuToDaily", "dailyPostOwnItem", "dailyPostLoose", "pasteHybridPair",
   "treeInfinitePick", "treePopFit", "treeBothNoCopy", "dailyPostSrc", "dailyBoxCard",
