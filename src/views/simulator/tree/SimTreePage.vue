@@ -57,7 +57,7 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { applyPick, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand";
+import { applyPick, drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -180,9 +180,9 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
-  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); tidyOf(d); }); return at; });
-  panel.value = null;
-  // 視点は holdBox (S-147e)
+  // 視点は holdBox (S-147e)。削減の手を打ち直してほかの枠の手が消える時、手の窓の確かめ「この手以降は削除されます」(下の箱が消える時に出る) で伝えていなければ先に聞く (S-65c4)
+  askLane(doc.value, id, (d) => { applyPick(d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); tidyOf(d); }); return at; });
+    panel.value = null; }, drawnBelow(doc.value, id).length > 0);
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
@@ -213,7 +213,7 @@ function startDrag(b: Box, e: PointerEvent): void {
 function closeHand(): void { simOp("cancel", "hand-pick"); panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
 /** 箱の × = この箱を作った手 (親の手) を消す。結果の箱すべてとその下も消え、親は手を選び直せる形に (10-27 オーナー、TreeBox の rm) */
-function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; simOp("remove-hand"); t.edit((d) => clearHandAt(d, p)); }
+function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; askLane(doc.value, p, (d) => clearHandAt(d, p), () => { simOp("remove-hand"); t.edit((d) => clearHandAt(d, p)); }); }
 function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 /** 縮めて見ている時に押した箱の編集のポップアップ (use-tree-pop.ts) */
 const { pop, popEl, popStyle, popDo, popBoxH } = useTreePop(doc, v);
@@ -224,7 +224,7 @@ watch(() => panel.value?.kind, (k) => { if (k === "hand") simOp("hand-open"); })
  * 押した物には届ける。ツリーの枠の中は数えない (空き所は押した時だけ閉じ、引っ張って画面を動かしても閉じない = onPaneClick、箱・札は開き直す)。メモの窓・窓から出した小窓も中に数える
  */
 useDismiss(() => !!panel.value, [], closeHand, { swallow: false, keep: "[data-tree-canvas], [data-tree-mode-pill], [data-tree-memo-float], [role=dialog], [data-helptip-pop], [data-mod-list], [data-mod-add-menu]" });
-function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHandAt(d, id)); panel.value = null; }
+function clearHandOf(): void { const id = panel.value!.id; askLane(doc.value, id, (d) => clearHandAt(d, id), () => { t.edit((d) => clearHandAt(d, id)); panel.value = null; }); }
 function pickAim(a: Aim): void {
   const p = panel.value!;
   panel.value = null;

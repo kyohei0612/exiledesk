@@ -31,7 +31,7 @@ import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags";
 import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
-import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan"; import { laneNoteOf } from "./tree-lane-ask";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { useViewOnlyWidth } from "../../../utils/use-phone";
@@ -498,7 +498,7 @@ function ok(): void {
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
         <p class="text-[16px] font-bold text-rose-100">{{ tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->
-        <p data-tree-hand-warn-n :data-n="goneNow" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ tr(`続けるとこの箱から下の ${goneNow} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(goneNow)} below this one (Undo restores them)`) }}</p>
+        <p data-tree-hand-warn-n :data-n="goneNow" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ tr(`続けるとこの箱から下の ${goneNow} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(goneNow)} below this one (Undo restores them)`) }}<span data-tree-hand-warn-lane class="mt-1 block empty:hidden">{{ laneNoteOf(t.doc.value, boxId, hand, kind, hitAims, preCat, onlyNow) }}</span></p>
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnOpen = false">{{ tr("やめる", "Cancel") }}</button>
           <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnOpen = false; use()">{{ tr("続ける", "Continue") }}</button>

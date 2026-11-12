@@ -7,6 +7,7 @@
 import TreeGoalPage from "./TreeGoalPage.vue";
 import TreeStartPage from "./TreeStartPage.vue";
 import TreeBoxModList from "./TreeBoxModList.vue";
+import TreeLaneAsk from "./TreeLaneAsk.vue";
 import { useTree } from "./use-tree";
 import { usePasteAnywhere } from "./tree-paste";
 
@@ -19,4 +20,6 @@ usePasteAnywhere();
   <TreeStartPage v-else-if="t.startPage.value" />
   <!-- 箱から開く「MOD 一覧」の窓 (S-145h。ボタンは次に打つ手の窓と箱の大きい写しの窓) -->
   <TreeBoxModList />
+  <!-- 削減の手を消す・打ち直す前の一言 (S-65c4、ほかの枠の手が消える時だけ) -->
+  <TreeLaneAsk />
 </template>
