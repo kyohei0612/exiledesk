@@ -12,7 +12,14 @@ import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
 import { genesisOver, genesisWhy, isGenesis, isGenesisLine } from "./daily-check";
 
-export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: Array<{ line: string; why: string }>; /** 狙いと同じ順の「始めの MOD」(エンジンの Force)。投稿には送らず、確かめの品を投稿の中のエミュに載せる時に渡す (D-12b)。フラクチャーの印は読んだ品の物をそのまま流す */ start: Force[] };
+/**
+ * 狙いに入らなかった行。soft = 読めなかった行ではない (2 行で 1 つの MOD のもう 1 行 = もう数えてある・トレードの合計の行 = MOD ではない)。
+ * スイッチ dailyPostLoose の下では soft の行を赤字に出さない (D-14b)
+ */
+export type PostBad = { line: string; why: string; soft?: boolean };
+/** 読みが飛ばした行のうち、読めなかった行に数えない物 (D-14b) */
+const SOFT_SKIP: ReadonlySet<string> = new Set(["hybridPart", "pseudoTotal"]);
+export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: PostBad[]; /** 狙いと同じ順の「始めの MOD」(エンジンの Force)。投稿には送らず、確かめの品を投稿の中のエミュに載せる時に渡す (D-12b)。フラクチャーの印は読んだ品の物をそのまま流す */ start: Force[] };
 
 const tierOf = (m: ItemTextMod): number => Number(m.tier!.label.replace(/^T/, ""));
 
@@ -42,7 +49,7 @@ export function itemFromText(data: PatchData, text: string): PostItem | string {
   if (!r.base) return r.skipped[0] ? tr(r.skipped[0].reason.ja, r.skipped[0].reason.en) : tr("ベースが読めない", "Couldn't read the base");
   if (r.rarity === "unique") return tr("ユニークはお題にできない", "Uniques can't be used");
   const reading = r.readings?.[0] ?? { mods: r.mods, skipped: r.skipped };
-  const p = take(data, r.base, r.itemLevel ?? 82, reading.mods, reading.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en) })));
+  const p = take(data, r.base, r.itemLevel ?? 82, reading.mods, reading.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en), ...(SOFT_SKIP.has(x.code) ? { soft: true } : {}) })));
   return genesisLines(data, p, text);
 }
 
@@ -72,12 +79,21 @@ export function itemFromEmu(data: PatchData, item: StageItem): PostItem {
   return take(data, { en: item.base, ja: item.baseJa }, item.itemLevel, mods, []);
 }
 
-/** 投稿で弾く時の訳 (D-14)。無ければ null */
-export function postBlock(p: PostItem): string | null {
+/**
+ * 投稿で弾く時の訳 (D-14)。無ければ null。
+ * loose (D-14b、スイッチ dailyPostLoose): 狙いに入らなかった行があっても止めない = 止めるのはお題にできる MOD が 0 の時だけ
+ * (MOD の数が足りない時は呼ぶ側 DailyPost が fullMods で止める)。オーナー 11-12「これ弾くタイミングは６MODじゃないとき以外は弾かなくてよくねって思うし」
+ */
+export function postBlock(p: PostItem, loose = false): string | null {
   if (!p.aims.length) return tr("お題にできる MOD が 1 つも無い", "No usable mods");
-  if (p.bad.length) return tr("読めなかった行があるので、この形では投稿できない", "Some lines couldn't be read, so this can't be posted");
+  if (!loose && p.bad.length) return tr("読めなかった行があるので、この形では投稿できない", "Some lines couldn't be read, so this can't be posted");
   return null;
 }
+
+/** 確かめの画面に赤字で出す行 (D-14b): loose の時は読めなかった行だけ (soft を除く)、そうでなければ今までどおり全部 */
+export const shownBad = (p: PostItem, loose: boolean): PostBad[] => (loose ? p.bad.filter((b) => !b.soft) : p.bad);
+/** 読んだ品のフラクチャーの印を、狙いと同じ順で (確かめのカードに出すだけ。お題には引き継がない = フラクチャーは挑戦する人が選ぶ、D-03) */
+export const postFractured = (p: PostItem): boolean[] => p.start.map((f) => !!f.fractured);
 
 /** 「フラクチャー無し」を選んだ印 (DailyTry.fractured に入れる。どの狙いにも当たらないので ✦ は付かず、白い品から始まる。D-03・D-37j、11-12 のお題から) */
 export const NO_FRAC = "none";

@@ -10,7 +10,8 @@ import { craftStage as s } from "../../state/craft-stage";
 import { emuPostAsk } from "../../state/emulator/to-daily";
 import { clearPostItem, loadPostItem, POST_OWN, postItem } from "../../state/emulator/post-slot";
 import { goDaily } from "./daily-open";
-import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
+import { itemFromEmu, itemFromText, postBlock, postFractured, shownBad, type PostItem } from "./daily-aims";
+import { flag } from "../../web/release-flags";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
 import { fullMods, genesisWhy } from "./daily-check";
 import { allMods } from "../../services/craft-stage/engine";
@@ -36,8 +37,14 @@ const emu = computed(() => { const i = POST_OWN ? postItem.value : s.item.value;
 const block = computed(() => {
   const p = item.value, d = s.data.value;
   if (!p) return null;
-  return postBlock(p) ?? (d && !fullMods(d, p.base, p.aims) ? notFull() : null);
+  return postBlock(p, LOOSE) ?? (d && !fullMods(d, p.base, p.aims) ? notFull() : null);
 });
+/** 止めるのは MOD の数が足りない時と MOD が 0 の時だけ (D-14b、スイッチ dailyPostLoose)。狙いに入らなかった行は赤字で見せるだけ */
+const LOOSE = flag("dailyPostLoose");
+/** 赤字で出す行 (LOOSE の時は読めなかった行だけ = 2 行で 1 つの MOD のもう 1 行・トレードの合計の行は出さない) */
+const bads = computed(() => (item.value ? shownBad(item.value, LOOSE) : []));
+/** 読んだ品のフラクチャーの印 (狙いと同じ順。確かめのカードに出すだけ、お題には引き継がない。D-14b) */
+const fracs = computed(() => (LOOSE && item.value ? postFractured(item.value) : []));
 /** 中のエミュの品を持って確かめの画面へ (D-12) */
 const takeEmu = (): void => { useEmu(); goDaily({ view: "detail", q: "post" }); };
 const useEmu = (it = emu.value): void => { const d = s.data.value; if (d && it) { why.value = null; redoWhy.value = null; item.value = itemFromEmu(d, it); } };
@@ -106,10 +113,12 @@ const failText = (e: BoxError): string =>
         </div>
       </div>
       <!-- 狙いは完成形のカード (D-37e)。読めなかった行だけ文で下に -->
-      <DailyAimCard v-if="item.aims.length" data-daily-post-aims class="mb-3" :base="item.base" :ilvl="item.ilvl" :aims="item.aims" />
-      <ul v-if="item.bad.length" class="mb-3 text-[15px]">
-        <li v-for="b in item.bad" :key="b.line" data-daily-post-bad class="py-0.5 text-[var(--exile-color-signal-down)]">{{ b.line }} ({{ b.why }})</li>
+      <DailyAimCard v-if="item.aims.length" data-daily-post-aims class="mb-3" :base="item.base" :ilvl="item.ilvl" :aims="item.aims" :fractured="fracs" />
+      <p v-if="fracs.some(Boolean)" data-daily-post-frac-note class="mb-3 text-[14px] opacity-80">{{ tr("フラクチャーはお題には引き継がれません (挑戦する人が選びます)。", "Fractured mods aren't carried into the challenge (each challenger picks their own).") }}</p>
+      <ul v-if="bads.length" class="mb-3 text-[15px]">
+        <li v-for="b in bads" :key="b.line" data-daily-post-bad class="py-0.5 text-[var(--exile-color-signal-down)]">{{ b.line }} ({{ b.why }})</li>
       </ul>
+      <p v-if="LOOSE && bads.length && item.aims.length" data-daily-post-bad-note class="mb-3 text-[14px] opacity-80">{{ tr("赤字の行はお題に入りません (読めた MOD だけがお題になります)。", "The lines in red won't be part of the challenge (only the mods that were read are used).") }}</p>
       <label class="mb-3 block text-[14px]">{{ tr("ひと言 (なくてもよい)", "A short note (optional)") }}
         <input v-model="note" data-daily-post-note type="text" maxlength="80" class="daily-input mt-1 w-full" />
       </label>

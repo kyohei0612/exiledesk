@@ -15,12 +15,15 @@ import DailyEssNote from "./DailyEssNote.vue";
 
 /** width = カードの幅 (無ければ PC 400・スマホ 340) */
 /** essNote = カードの下に「エッセンスで代用可」の注意書きを出す (お題の完成形の時だけ。投稿の確かめでは出さない、D-37e3) */
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean }>();
+/** fractured = 狙いと同じ順のフラクチャーの印 (投稿の確かめで、読んだ品の印を見せるだけ。D-14b) */
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean; fractured?: readonly boolean[] }>();
 const phone = usePhone();
 const placed = computed(() => {
   const data = s.data.value;
   if (!data) return null;
-  return placeWithSlots(data, props.base, props.ilvl, props.aims.map((a) => ({ modId: a.modId, tier: a.tier })), [], () => 0.5);
+  // 読んだ品のフラクチャーの印 (狙いと同じ順) はそのままエンジンの口へ流す (印の付いた MOD として置くのはエンジン、画面の側で品を書き換えない)
+  const fr = props.fractured;
+  return placeWithSlots(data, props.base, props.ilvl, props.aims.map((a, i) => ({ modId: a.modId, tier: a.tier, fractured: !!fr?.[i] })), [], () => 0.5);
 });
 const item = computed(() => placed.value?.item ?? null);
 /** カードに乗らなかった狙い (枠が足りない等)。黙って消さず文で下に出す */
