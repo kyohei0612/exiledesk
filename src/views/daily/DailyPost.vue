@@ -3,10 +3,11 @@
   どちらも同じ確かめの画面へ。投稿は機械が確かめて、通れば箱へ、落ちれば訳を出す (D-20)。サーバーの口 (daily-api → POST /daily/box) へ送り、16:00 の台本がもう一度確かめる
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
+import { emuPostAsk } from "../../state/emulator/to-daily";
 import { goDaily } from "./daily-open";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
@@ -38,6 +39,8 @@ const block = computed(() => {
 /** 中のエミュの品を持って確かめの画面へ (D-12) */
 const takeEmu = (): void => { useEmu(); goDaily({ view: "detail", q: "post" }); };
 const useEmu = (): void => { const d = s.data.value; if (d && emu.value) { why.value = null; item.value = itemFromEmu(d, emu.value); } };
+/** エミュの「デイリーに投稿 →」から来た時は、今の品で確かめの画面へ直行 (D-10)。合図はここで下ろす */
+watch(emuPostAsk, (v) => { if (v) { emuPostAsk.value = false; if (!props.inEmu) useEmu(); } }, { immediate: true });
 function read(raw: string): void {
   const d = s.data.value;
   if (!d || !raw.trim()) return;
