@@ -8,6 +8,7 @@ import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
 import { emuPostAsk } from "../../state/emulator/to-daily";
+import { clearPostItem, loadPostItem, POST_OWN, postItem } from "../../state/emulator/post-slot";
 import { goDaily } from "./daily-open";
 import { itemFromEmu, itemFromText, postBlock, type PostItem } from "./daily-aims";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
@@ -29,7 +30,8 @@ const asking = ref(false);
 
 /** フル MOD でない品の断り (送る前の block と、サーバーの not-full の返りで同じ文) */
 const notFull = (): string => tr("MOD の数がそのベースのプレ・サフィの上限の合計以上の品だけ投稿できる", "Only items with at least as many mods as the base allows (prefix + suffix limits) can be posted");
-const emu = computed(() => { const i = s.item.value; return i && allMods(i).length ? i : null; });
+/** ① の口の品。スイッチ dailyPostOwnItem の下では投稿の中のエミュで作った品 (エミュのタブとは別の品、D-12b)、閉じている間はエミュのタブの品 */
+const emu = computed(() => { const i = POST_OWN ? postItem.value : s.item.value; return i && allMods(i).length ? i : null; });
 /** 弾く訳 (D-14)。フル MOD でない品も送る前に止める (D-84、確かめの boxCheck と同じ fullMods) */
 const block = computed(() => {
   const p = item.value, d = s.data.value;
@@ -38,9 +40,19 @@ const block = computed(() => {
 });
 /** 中のエミュの品を持って確かめの画面へ (D-12) */
 const takeEmu = (): void => { useEmu(); goDaily({ view: "detail", q: "post" }); };
-const useEmu = (): void => { const d = s.data.value; if (d && emu.value) { why.value = null; item.value = itemFromEmu(d, emu.value); } };
+const useEmu = (it = emu.value): void => { const d = s.data.value; if (d && it) { why.value = null; redoWhy.value = null; item.value = itemFromEmu(d, it); } };
+/** 確かめの画面の品を投稿の中のエミュに載せて作り直す (D-12b)。段は同じ・値は振り直し・工程は空から。載せられない組は訳を出して動かない */
+const redoWhy = ref<string | null>(null);
+function redo(): void {
+  const p = item.value;
+  if (!p) return;
+  const r = loadPostItem(p.base, p.ilvl, p.start);
+  if (r) { redoWhy.value = tr(`この形はエミュレーターに載せられない (${r})`, `This item can't be loaded into the Emulator (${r})`); return; }
+  redoWhy.value = null;
+  goDaily({ view: "detail", q: "post-emu" });
+}
 /** エミュの「デイリーに投稿 →」から来た時は、今の品で確かめの画面へ直行 (D-10)。合図はここで下ろす */
-watch(emuPostAsk, (v) => { if (v) { emuPostAsk.value = false; if (!props.inEmu) useEmu(); } }, { immediate: true });
+watch(emuPostAsk, (v) => { if (v) { emuPostAsk.value = false; if (!props.inEmu) { const t = s.item.value; useEmu(POST_OWN ? (t && allMods(t).length ? t : null) : emu.value); } } }, { immediate: true }); // 合図の時はエミュのタブの品 (置き場はまだ emu)
 function read(raw: string): void {
   const d = s.data.value;
   if (!d || !raw.trim()) return;
@@ -58,7 +70,7 @@ async function send(): Promise<void> {
   sending.value = true;
   const r = await postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims });
   sending.value = false;
-  if (typeof r === "string") sendFail.value = r; else { sendFail.value = null; sent.value = r; void nextTick(() => window.scrollTo(0, 0)); } // 送れた後の文は頭に出るので、頭へ送る (D-15b)
+  if (typeof r === "string") sendFail.value = r; else { sendFail.value = null; sent.value = r; if (POST_OWN) clearPostItem(); void nextTick(() => window.scrollTo(0, 0)); } // 送れた後の文は頭に出るので、頭へ送る (D-15b)
 }
 const failText = (e: BoxError): string =>
   e === "busy" ? tr("投稿は 1 時間に 5 件まで。少し待って投稿し直す。", "Up to 5 posts per hour. Wait a bit and post again.")
@@ -71,12 +83,12 @@ const failText = (e: BoxError): string =>
     <div class="daily-post-emu-bar">
       <p class="min-w-0 flex-1">{{ tr("投稿する品をエミュレーターで作る。MOD を付けたら「この品で投稿へ」。", "Craft the item to post in the Emulator. Once it has mods, press \"Post this item\".") }}</p>
       <button type="button" class="g-btn sm" data-daily-post-emu-back @click="goDaily({ view: 'detail', q: 'post' })">{{ tr("投稿へ戻る", "Back to posting") }}</button>
-      <button type="button" class="g-btn-red sm" data-daily-post-emu-take :disabled="!emu" :title="emu ? undefined : tr('MOD を付けると押せる', 'Add mods first')" @click="takeEmu">{{ tr("この品で投稿へ", "Post this item") }}</button>
+      <button type="button" class="g-btn-red sm" data-daily-post-emu-take :disabled="!emu" :title="emu ? undefined : tr('MOD を付けると押せる', 'Add mods first')" @click="takeEmu()">{{ tr("この品で投稿へ", "Post this item") }}</button>
     </div>
     <CraftStage class="min-w-0 !h-auto !overflow-visible" />
   </div>
   <div v-else data-daily-post class="daily-post">
-    <button v-if="!sent" type="button" class="g-btn sm daily-post-back" data-daily-back @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+    <button v-if="!sent && !(POST_OWN && item)" type="button" class="g-btn sm daily-post-back" data-daily-back @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
     <template v-if="sent">
       <h2 class="g-brush daily-post-title">{{ sent.status === "no" ? tr("投稿は通らなかった", "The post was rejected") : tr("箱に入った", "Added to the craft box") }}</h2>
       <p v-if="sent.status === 'no'" data-daily-post-why class="mb-4 text-[15px]">{{ sent.why === "bad-word" ? tr("名前か一言に使えない言葉がある。言葉を直して投稿し直す。", "The name or note has a banned word. Change it and post again.") : sent.why === "not-full" ? notFull() : sent.why === "no-mods" ? tr("お題にできる MOD が無い。", "No usable mods.") : sent.why === "genesis-2" ? genesisWhy() : sent.why }}</p>
@@ -103,8 +115,11 @@ const failText = (e: BoxError): string =>
       </label>
       <p v-if="sendFail" data-daily-post-fail class="mb-3 text-[14px] text-[var(--exile-color-signal-down)]">{{ failText(sendFail) }}</p>
       <p v-if="block" data-daily-post-block class="mb-3 text-[14px] text-[var(--exile-color-signal-down)]">{{ block }}</p>
-      <div class="flex gap-2">
-        <button type="button" class="g-btn" @click="item = null">{{ tr("選び直す", "Choose again") }}</button>
+      <p v-if="redoWhy" data-daily-post-redo-why class="mb-3 text-[14px] text-[var(--exile-color-signal-down)]">{{ redoWhy }}</p>
+      <div class="flex flex-wrap gap-2">
+        <button v-if="!POST_OWN" type="button" class="g-btn" @click="item = null">{{ tr("選び直す", "Choose again") }}</button>
+        <button v-if="POST_OWN" type="button" class="g-btn" data-daily-back @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
+        <button v-if="POST_OWN" type="button" class="g-btn" data-daily-post-redo :title="tr('この品をデイリーの中のエミュレーターに載せて作り替える (エミュレーターのタブの品は変わらない)', 'Load this item into the Emulator inside Daily and rework it (your Emulator tab item is untouched)')" @click="redo">{{ tr("エミュレーターで作り直す", "Rework in the Emulator") }}</button>
         <button type="button" class="g-btn-red" data-daily-post-send :disabled="!!block || sending" @click="send">{{ tr("投稿する", "Post") }}</button>
       </div>
     </template>
@@ -117,7 +132,7 @@ const failText = (e: BoxError): string =>
           <template v-if="emu">
             <p class="mb-3 text-[14px]">{{ tr(`${emu.baseJa}、MOD ${allMods(emu).length} つ`, `${emu.base}, ${allMods(emu).length} mods`) }}</p>
             <div class="flex flex-wrap gap-2">
-              <button type="button" class="g-btn" data-daily-use-emu @click="useEmu">{{ tr("このアイテムを使う", "Use this item") }}</button>
+              <button type="button" class="g-btn" data-daily-use-emu @click="useEmu()">{{ tr("このアイテムを使う", "Use this item") }}</button>
               <button type="button" class="g-btn" data-daily-go-emu @click="goDaily({ view: 'detail', q: 'post-emu' })">{{ tr("エミュレーターで作り直す", "Craft more in the Emulator") }}</button>
             </div>
           </template>
