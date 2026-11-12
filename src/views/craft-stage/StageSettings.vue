@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { itemLevelKey } from "../../services/emulator/emu-engine";
-import { inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft-stage/engine";
+import { allMods, inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft-stage/engine";
 import { useViewOnlyWidth } from "../../utils/use-phone";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
@@ -14,7 +14,8 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
-import { PAGES_ON, TREE_ON, basePage } from "../../state/web-page";
+import { DAILY_ON, PAGES_ON, TREE_ON, basePage, dailyPage } from "../../state/web-page";
+import { openDailyPost } from "../../state/emulator/to-daily";
 import { openSimWithItem, openTreeWith } from "../../state/for-share/sim-links";
 import { flag } from "../../web/release-flags";
 import { craftStage } from "../../state/craft-stage";
@@ -30,6 +31,9 @@ const EMU_TO_SIM = flag("emuToSim");
 /** シミュへ持っていく入口はシミュを見るだけの幅 (768 未満) では出さない (M-06、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
 const viewOnly = useViewOnlyWidth();
 const TO_SIM_ON = computed(() => TREE_ON && !viewOnly.value && s.mode.value === "hand" && !!s.item.value);
+/** 「デイリーに投稿 →」(D-10・M-06b、スイッチ emuToDaily)。スマホの幅でも出す。投稿の中のエミュ (D-12) では帯の「この品で投稿へ」と 2 重になるので出さない */
+const TO_DAILY_ON = computed(() => flag("emuToDaily") && DAILY_ON && s.mode.value === "hand" && !!s.item.value && dailyPage.value?.q !== "post-emu");
+const hasMods = computed(() => !!s.item.value && allMods(s.item.value).length > 0);
 const { handNoBase, pickSimBase } = useStageBase();
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
@@ -114,6 +118,8 @@ function armReset(): void {
     <button v-if="TO_SIM_ON && !EMU_TO_SIM && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="void openTreeWith(s.item.value.base, curIlvl ?? 82)">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
     <!-- 持っているアイテムをそのままシミュへ (MOD を全部その段以上の完成の狙いに、フラクチャー済みは ✦ の印のまま。2026-10-26 夜オーナー「忍者コピーに似てる」、印は 10-27、スイッチ emuToSim) -->
     <button v-if="TO_SIM_ON && EMU_TO_SIM && s.item.value" type="button" data-sim-from-stage :class="btn" :title="tr(`このアイテム (ベース・アイテムレベル・付いている MOD 全部) をシミュレーターへ。MOD はその${TIER}以上の完成の狙いに入る`, 'Send this item (base, item level and all its mods) to the simulator. Its mods become final targets at that tier or better')" @click="void openSimWithItem(s.item.value)">{{ tr("シミュレーターへ →", "To the simulator →") }}</button>
+    <!-- 今の品をデイリーのクラフトボックスの投稿へ (確かめの画面へ直行。MOD が 1 つ以上で押せる。D-10・M-06b、スイッチ emuToDaily) -->
+    <button v-if="TO_DAILY_ON" type="button" data-daily-from-stage :class="btn" :disabled="!hasMods" :title="hasMods ? tr('このアイテムをデイリーのクラフトボックスに投稿する (確かめの画面へ)', 'Post this item to the Daily craft box (opens the confirm screen)') : tr('MOD を付けると押せる', 'Add mods first')" @click="openDailyPost()">{{ tr("デイリーに投稿 →", "Post to Daily →") }}</button>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)', 'Steps so far as plan JSON (same seed, so craft-stage-run.mjs gives the same result)')" @click="copy(tr('手順 JSON', 'plan JSON'), s.plan())">{{ tr("手順 JSON", "Plan JSON") }}</button>
