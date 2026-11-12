@@ -166,6 +166,13 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.722 無限のエッセンスの行の字と札の字・箱の鉛筆なし・確定フラクチャーの断り・シェアの人数・順位の閲覧 (E-92・U-13e・S-145e2・S-43a・D-38・D-50e、オーナー 11-12 絵を見て「スナップオッケー」→「削減まだだからそれ以外出しておけ」、ブラック 93 の頼み)。閉じたままは treeLaneAsk・treeLaneExample (削減の手を替える時の形が決まってから)
+  "infiniteOneText",
+  "infiniteTagAll",
+  "treeNoBoxNote",
+  "treeSureFracNeedMod",
+  "dailyShareRanked",
+  "dailyViews",
   // 0.1.721 シミュの木で新しい子は右へだけ並べる (S-142h、オーナー 11-12 対の絵を見て「おｋ出しておｋ一旦すべて」、ブラック 91 の頼み)。閉じたままは無し
   "treeGrowRight",
   // 0.1.720 シミュの木の箱から開く「MOD 一覧」(S-145h、オーナー 11-12 開発版で触って「他全て合格だから即リリース準備で」、ブラック 91 の頼み)。閉じたままは treeGrowRight
