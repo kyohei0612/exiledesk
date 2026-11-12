@@ -324,3 +324,22 @@ export function pairLines<B extends { line: string; text: string; template: stri
   const all = slot as B[];
   return { body: { ...main, line: all.map((b) => b.line).join(" / "), text: all.map((b) => b.text).join(" / "), values: all.flatMap((b) => b.values) }, used };
 }
+
+/**
+ * 束ねた行 (pairLines) の値が 1 つの段に収まらない時の段 (S-08h): 値ごとに入る段 (上から見て最初に幅へ入る段) を探し、その中で低い方 (番号の大きい方) の段。
+ * どれかの値がどの段にも入らなければ null (読めなかった行のまま)。pct > 0 の表示は切り捨てなので tierOf と同じ帯で比べる
+ */
+export function lowTierOf(mod: Mod, shown: readonly number[], pct: number, level: number): number | null {
+  let low: number | null = null;
+  for (let k = 0; k < shown.length; k++) {
+    const a = rawValue(shown[k]!, pct), b = pct > 0 ? rawValue(shown[k]! + 1, pct) - 1e-9 : a;
+    let at = -1;
+    for (let i = mod.tiers.length - 1; i >= 0 && at < 0; i--) {
+      const r = mod.tiers[i]!.ilvl > level ? undefined : tierDisplayRanges(mod.tiers[i]!)[k];
+      if (r && b >= Number(r[0]) && a <= Number(r[1])) at = i;
+    }
+    if (at < 0) return null;
+    low = low === null ? at : Math.min(low, at);
+  }
+  return low;
+}

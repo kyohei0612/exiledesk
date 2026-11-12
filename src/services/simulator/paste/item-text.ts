@@ -24,7 +24,7 @@ import { unboost } from "../../craft-stage/boosts";
 import type { StageItem } from "../../craft-stage/types";
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
-import { pairLines, solveLines, splitSums, tierOf, type SolveLine, type Solution } from "./item-text-solve"; import { flag } from "../../../web/release-flags";
+import { lowTierOf, pairLines, solveLines, splitSums, tierOf, type SolveLine, type Solution } from "./item-text-solve"; import { flag } from "../../../web/release-flags";
 import { SANCTIFY_MAX, SANCTIFY_MIN } from "../../craft-stage/stage-tuning";
 import { addPoolRunes, readRuneSockets, runePoolMods } from "./item-text-runes";
 
@@ -65,7 +65,7 @@ interface Body {
   template: string | null; values: number[];
   side?: "prefix" | "suffix"; group?: "implicit" | "enchant" | "rune"; tierName?: string;
   /** トレードのサイトの段の表記 (行頭の「P6 」「S0 」、または P6 だけの行の次の行)。0 はエッセンス・完全エッセンス・合金 */
-  tradeTier?: number;
+  tradeTier?: number; /** 2 行以上で 1 つの MOD の行を束ねた行 (S-08h) */ paired?: boolean;
 }
 /** トレードのサイトの段の表記: 「P6 文」「S0 文」、または「P6」だけの行 (2026-10-24 オーナーの見本、jp.pathofexile.com の画面) */
 const TRADE_TIER = /^([PS])(\d+)(?:\s+(.+))?$/;
@@ -326,7 +326,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   // 2 行以上で 1 つの MOD の「もう 1 行」は、その MOD に当たった行と束ねて値を全部使う (S-08h、スイッチ pasteHybridPair)。束ねられなかった行は今までどおり 1 つに数えた行
   if (flag("pasteHybridPair")) for (const p of picked) {
     const got = p.fixed ? null : pairLines(p.mod, p.b, parts, matchKey);
-    if (got) { used[used.indexOf(p.b)] = got.body; p.b = got.body; for (const b of got.used) parts.splice(parts.indexOf(b), 1); }
+    if (got) { const b2: Body = { ...got.body, paired: true }; used[used.indexOf(p.b)] = b2; p.b = b2; for (const b of got.used) parts.splice(parts.indexOf(b), 1); }
   }
   for (const b of parts) out.skipped.push(skip(b.line, "hybridPart"));
 
@@ -402,7 +402,10 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     free.forEach((p, i) => { if (per[i]! > 0 && !primary.has(i)) skipped.push(skip(p.b.line, "hybridPart")); });
     // どの組み合わせでも説明できない行: コラプトした物は今までどおり段に収まらないの印 (コラプトで値が変わったかは推し量らない)、ほかは読めなかった行
     for (const i of sol.unexplained) {
-      if (out.corrupted > 0) list.push({ ...free[i]!, at: used.indexOf(free[i]!.b) });
+      // 束ねた行の値が 1 つの段に収まらない時は、値ごとに入る段の低い方で読んで通す (S-08h)
+      const f = free[i]!, low = f.b.paired ? lowTierOf(f.mod, signed(f.mod, f.b.values), linePct(i, f.mod), level) : null;
+      if (low !== null) list.push({ ...f, fixed: { index: low, fits: true }, at: used.indexOf(f.b) });
+      else if (out.corrupted > 0) list.push({ ...free[i]!, at: used.indexOf(free[i]!.b) });
       else skipped.push(skip(free[i]!.b.line, "unexplained"));
     }
     return { list: list.sort((a, c) => a.at - c.at), skipped };
