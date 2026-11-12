@@ -3,9 +3,11 @@
   別の PC では「引き継ぎコードで名前を戻す」から戻す。保存はサーバーの口 (daily-api) の形で。
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
+import { flag } from "../../web/release-flags";
+import DailyLink from "./DailyLink.vue";
 import { createNick, NICK_MAX, restoreNick, type DailyNick, type NickError } from "./daily-api";
 
 const emit = defineEmits<{ done: [DailyNick]; close: [] }>();
@@ -45,10 +47,17 @@ async function copy(): Promise<void> {
   copied.value = true;
 }
 const setMode = (m: "new" | "back"): void => { mode.value = m; fail.value = null; };
+/** リンクの番号で名前を持って来る (D-52b、スイッチ dailyLinkNum)。linked = 番号が通った名前 (窓を閉じた時に done を出す) */
+const linkOn = flag("dailyLinkNum");
+const linking = ref(false);
+const linked = ref<DailyNick | null>(null);
+watch(linking, (v) => { if (!v && linked.value) emit("done", linked.value); });
 </script>
 
 <template>
-  <ModalShell :open="true" :title="tr('ニックネーム', 'Nickname')" width="w-[440px] max-w-[94vw]" :closable="!made" @close="emit('close')">
+  <!-- 番号でリンクできたら、名前が決まった時と同じ合図で先へ進む。やめたら名前の窓に戻る -->
+  <DailyLink v-if="linking" mode="enter" @close="linking = false" @linked="(n) => (linked = n)" />
+  <ModalShell v-else :open="true" :title="tr('ニックネーム', 'Nickname')" width="w-[440px] max-w-[94vw]" :closable="!made" @close="emit('close')">
     <div data-daily-nick class="flex flex-col gap-3 p-4 text-[14px]">
       <template v-if="made">
         <p>{{ tr(`「${made.name}」に決まった。別の PC で同じ名前を使う時は、この引き継ぎコードを入れる。`, `"${made.name}" is yours. Enter this transfer code to use the same name on another PC.`) }}</p>
@@ -64,6 +73,8 @@ const setMode = (m: "new" | "back"): void => { mode.value = m; fail.value = null
         <input v-model="name" data-daily-nick-name type="text" :maxlength="NICK_MAX + 4" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('ニックネーム', 'Nickname')" :placeholder="tr('ニックネーム', 'Nickname')" @input="fail = null" @keydown.enter.prevent="mode === 'new' ? decide() : back()" />
         <input v-if="mode === 'back'" v-model="code" data-daily-nick-pass type="text" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('引き継ぎコード', 'Transfer code')" :placeholder="tr('引き継ぎコード', 'Transfer code')" @input="fail = null" @keydown.enter.prevent="back" />
         <p v-if="why" data-daily-nick-why class="text-[13px] text-[var(--exile-color-signal-down)]">{{ why }}</p>
+        <!-- もう 1 台に名前がある人は、番号で同じ名前にできる (D-52b)。押すと番号を入れる窓に替わる -->
+        <button v-if="linkOn" type="button" class="daily-link-open self-start" data-daily-nick-link @click="linking = true">{{ tr("ほかの端末の名前を使う (リンクの番号を入れる)", "Use the name from another device (enter a link number)") }}</button>
         <div class="flex items-center justify-between gap-2">
           <button type="button" class="text-[13px] underline opacity-70 hover:opacity-100" data-daily-nick-mode @click="setMode(mode === 'new' ? 'back' : 'new')">{{ mode === "new" ? tr("引き継ぎコードで名前を戻す", "Restore a name") : tr("新しい名前を決める", "Choose a new name") }}</button>
           <button type="button" class="g-btn-red sm" data-daily-nick-ok @click="mode === 'new' ? decide() : back()">{{ mode === "new" ? tr("この名前にする", "Use this name") : tr("名前を戻す", "Restore name") }}</button>
