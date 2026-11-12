@@ -14,7 +14,7 @@ import { flag } from "../../../web/release-flags";
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
 /** 畳んだ続き: head = 札に描く箱 (根の最初の自動の消去の箱)、mids = 自動の消去の箱全部 (head 込み)、stops = 札の下に並べる止まった箱、steps = 消去の段の数 (根を含む) */
-export interface StripFold { head: string; mids: string[]; stops: string[]; steps: number }
+export interface StripFold { head: string; mids: string[]; stops: string[]; steps: number; /** 札の中の箱へまとめた箱 (S-66)。止まった箱に数えず、スイッチ treeFoldMerged の下は畳んでいる間描かない */ tucked: string[] }
 
 /** 開いた続き (head の id)。保存しない */
 export const stripOpen = ref<ReadonlySet<string>>(new Set());
@@ -59,7 +59,8 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
     if (steps < 2 && !oneBranch()) continue;
     // 畳んだ中の箱へまとめた箱 (同じ段のまとめ S-66) は札の中 = 止まった箱にしない。線の先に描かない箱が混ざると札の線ごと消えた (11-06 MISV6HZL、オーナー「普通に線が消えてね」)
     const inside = new Set(mids);
-    out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => { const b = d.boxes[id]!; return !(b.merged && b.back && inside.has(b.back)); }), steps });
+    const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };
+    out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => !tuck(id)), steps, tucked: stops.filter(tuck) });
   }
   return out;
 }
@@ -73,6 +74,8 @@ export const stripFolds = (d: TreeDoc): Map<string, StripFold> => {
 export function stripHidden(d: TreeDoc, folds = stripFolds(d)): Set<string> {
   const s = new Set<string>();
   for (const f of folds.values()) for (const id of f.mids) if (id !== f.head) s.add(id);
+  // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
+  if (flag("treeFoldMerged")) for (const f of folds.values()) for (const id of f.tucked) s.add(id);
   return s;
 }
 /** 描く子 (札は止まった箱全部、描かない箱は子無し。札の親はそのまま = 札は親の子の箱の場所) */
@@ -83,6 +86,6 @@ export function foldOuts(d: TreeDoc, b: TreeBox, folds = stripFolds(d), hidden =
 /** 止まった箱 → 札 (線を札から引く。スマホの全体図) */
 export const stopToHead = (folds: ReadonlyMap<string, StripFold>): Map<string, string> => new Map([...folds.values()].flatMap((f) => f.stops.map((s) => [s, f.head] as const)));
 /** その箱を隠している畳んだ続き (寄る前に開く用) */
-export const foldOf = (d: TreeDoc, id: string): StripFold | null => [...stripFolds(d).values()].find((f) => f.mids.includes(id) && f.head !== id) ?? null;
+export const foldOf = (d: TreeDoc, id: string): StripFold | null => [...stripFolds(d).values()].find((f) => (f.mids.includes(id) && f.head !== id) || (flag("treeFoldMerged") && f.tucked.includes(id))) ?? null;
 /** 並べ方の変わる時に掛け直す鍵 (開いた / 畳んだを含む) */
 export const stripFoldKey = (d: TreeDoc): string => [...stripFolds(d).keys()].join("+");
