@@ -15,7 +15,7 @@
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_d3758d92-a4bd-4cb7-afb1-85b4f2469761 (16 sim-lead16、11-12 に 15 = local_af154dca が 2,000 件超えで交代、引き継ぎ = 共有ノート progress/sim-lead15.md) | 今: 待機 (揺れ止め・線と鎖の印を乗せた時だけ treeLinesOnHover・畳んだ札 treeFoldMerged・カメラ treeCalmCamera・ホイール treeFineWheel・視点の表 S-147a は入れた = オーナーが 1440 で触っている最中、違う所が来たら直す)。次: カメラのコードの寄せ (treeCalmCamera を本番にするか決まってから)。並べ方 treeKidsBelow は開発版のまま保留 |
 | デザイン部長 | local_0f6a5cb7-419e-4a6e-b1f1-a541d5ff2670 (11-12 深夜に local_105f1834 が 2,000 件超えで交代。作業場 .claude/worktrees/magical-mahavira-11bf34、引き継ぎ = 共有ノート progress/design-modlist.md、板 = progress/design-lead2.md) | 今: MOD 一覧の窓 (シミュ・デイリー、simModList) の残りの確かめ = 押している箱の品の切り替え・オンの札の光り方・次の手で狙うの行の持ち替え・窓のスマホの幅と発現の窓。どれも開発版だけ・オーナーの見た目の返事待ち |
-| エミュ部長 | — (emu-back は 01171d809 の後 11-03 にアーカイブ) | 仕事が来たらブラックが立てる |
+| エミュ部長 | local_b7f1334c-7513-4f8d-b274-b19e6ab7cdff (11-12 昼にブラック 89 が立てた。作業場 .claude/worktrees/unruffled-kepler-17b9f1。前の emu-back は 11-03 にアーカイブ) | 今: エミュから「デイリーに投稿 →」のボタン (D-10・M-05、作る前の案と絵を 89 へ → go の後にスイッチの下で作る) |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | — (11-10 棚卸しで前の行を閉じた) | 仕事が来たらブラックが立てる |
 | スキン部長 | — (2 本目は 10-26 に閉じた。ページは本番、決まりと地図は skins/README.md) | 眠り |
