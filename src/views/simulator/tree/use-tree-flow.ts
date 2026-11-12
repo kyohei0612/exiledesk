@@ -39,6 +39,8 @@ const PHONE_MIN = 0.5;
  * (50% にしていた時は 5 箱の木でも 67% = 見るだけで開き、箱の ＋ が隠れた。10-25 ブラック「＋ が隠れない事を優先」)
  */
 const OPEN_MIN = VIEW_ONLY;
+/** 木を変えた後の大きさの境目 (S-147h、スイッチ treeCalmCamera): これより大きければここへ縮め、以下ならそのまま */
+const CALM_Z = 0.5;
 /** 「全体を表示」の一番小さい段 (これより大きい木は下が枠の外に出てよい。10-26 夜ブラック 13「全体表示は下限 25%」) */
 const FIT_MIN = 0.25;
 /** 全体に合わせる時の余白の下限 */
@@ -164,7 +166,10 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 75% (OPEN_MIN) 未満でしか収まらない時は 75% (前は 100% で始まりを上の真ん中にしていて、木の下が枠の外にあった)。
    * どちらも始まりの箱は横の真ん中・一番上 (10-26 オーナー)
    */
+  /** 開いた時の寄りを呼んだ回数 (S-147h: 木を変えた後の縮めが、木を開く・タブを替える時の寄りを上書きしないように見る) */
+  let opens = 0;
   async function openView(): Promise<void> {
+    opens++;
     const lv = fitLevel();
     if (lv == null) { await goHome(); return; }
     await startTop(Math.max(lv, OPEN_MIN));
@@ -211,8 +216,10 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   watch(() => Object.keys(doc.value.boxes).length, async () => {
     const now = Object.keys(doc.value.boxes), fresh = now.filter((id) => !seen.has(id));
     seen = new Set(now);
-    // スイッチ treeCalmCamera (S-147h): 木を変えた後は視点を動かさない (1 つ戻す・打ち直しで木の頭へ飛んで見失った)
-    if (!fresh.length || holding || flag("treeCalmCamera")) return;
+    // スイッチ treeCalmCamera (S-147h): 木を変えた後は視点を動かさない (1 つ戻す・打ち直しで木の頭へ飛んで見失った)。大きさだけ、50% より大きければ今見ている真ん中を軸に 50% へ
+    // (木を開く・タブを替えるで箱の数が変わった時は開いた時の寄りが決めるので、その間に openView が呼ばれたら触らない)
+    if (flag("treeCalmCamera")) { const o = opens; if (!holding) { await nextTick(); await nextTick(); if (o === opens && !holding && f.viewport.value.zoom > CALM_Z * pageZ.value + 1e-3) await setZoom(CALM_Z); } return; }
+    if (!fresh.length || holding) return;
     await nextTick(); await nextTick();
     // スイッチ nextInView (S-147c): 箱の高さが測れて並べ直し (use-row-settle) が済むまで待つ (新しい箱の位置と高さが 2 コマ続けて同じ、最長 30 コマ)
     {
@@ -269,7 +276,9 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     holding = true;
     try {
       const to = edit();
-      const put = async (): Promise<void> => { const b = doc.value.boxes[to]; if (b) await f.setViewport({ x: sx - b.x * z, y: sy - b.y * z, zoom: z }); };
+      // S-147h: 50% より大きい時は 50% へ縮めて、触った箱を同じ場所に (50% 以下ならその大きさのまま)
+      const zc = flag("treeCalmCamera") && z > CALM_Z * pageZ.value + 1e-3 ? CALM_Z * pageZ.value : z;
+      const put = async (): Promise<void> => { const b = doc.value.boxes[to]; if (b) await f.setViewport({ x: sx - b.x * zc, y: sy - b.y * zc, zoom: zc }); };
       const kidsOf = (): NonNullable<typeof was>[] => (doc.value.boxes[to]?.outs ?? []).flatMap((k) => doc.value.boxes[k] ?? []);
       await put();
       await nextTick(); await nextTick();
