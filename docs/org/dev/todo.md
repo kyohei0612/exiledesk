@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_77b3e77a-b09b-449f-9cf6-adfc1ceed7f1 (20 sim-lead20、11-12 夜に 19 = local_6ec5d645 が 2,000 件超えで交代。作業場 .claude/worktrees/sim-lead20、引き継ぎ = 共有ノート progress/sim-lead19.md の頭、板 = progress/sim-lead20.md) | 今: オーナーの見た目の返事待ち (どれも開発版だけ) = 削減の手を消す前の一言 (スイッチ treeLaneAsk)・確定フラクチャーの断り一式 (treeSureFracNeedMod)・箱の鉛筆を出さない (treeNoBoxNote)・開き直しの枠の見本 (treeLaneExample)。並びとカメラの直しも受ける。次: カメラのコードの寄せ (挙動は変えない、始める前にブラックへ 2〜3 行)。並べ方 treeKidsBelow は開発版のまま保留 |
-| デザイン部長 | local_0f6a5cb7-419e-4a6e-b1f1-a541d5ff2670 (11-12 深夜に local_105f1834 が 2,000 件超えで交代。作業場 .claude/worktrees/magical-mahavira-11bf34、引き継ぎ = 共有ノート progress/design-modlist.md、板 = progress/design-lead2.md) | 今: MOD 一覧の窓 (シミュ・デイリー、simModList) の残りの確かめ = 押している箱の品の切り替え・オンの札の光り方・次の手で狙うの行の持ち替え・窓のスマホの幅と発現の窓。どれも開発版だけ・オーナーの見た目の返事待ち |
+| デザイン部長 | local_38ad5d1c-ac29-4595-a8be-fabe9c8eec0f (11-12 夕方に local_0f6a5cb7 が 2,000 件超えで交代。作業場 .claude/worktrees/design-lead3、引き継ぎ = 共有ノート progress/design-lead2-handover.md、板 = progress/design-lead3.md) | 今: オーナーの見た目の返事待ち 3 つ = MOD 一覧の窓の帯 (simModList)・棒の印を全部の棚に (tierBars)・無限のエッセンスの札の字を 3 行に (infiniteTagAll、開発版だけ)。作りかけ 0 |
 | エミュ部長 | local_b7f1334c-7513-4f8d-b274-b19e6ab7cdff (11-12 昼にブラック 89 が立てた。作業場 .claude/worktrees/unruffled-kepler-17b9f1。前の emu-back は 11-03 にアーカイブ) | 今: エミュから「デイリーに投稿 →」のボタン (D-10・M-05、作る前の案と絵を 89 へ → go の後にスイッチの下で作る) |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | — (11-10 棚卸しで前の行を閉じた) | 仕事が来たらブラックが立てる |
