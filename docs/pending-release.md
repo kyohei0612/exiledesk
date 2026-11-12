@@ -6,7 +6,6 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| シミュ: ツリーの右の完成形カードの「MOD」札を MOD の上の区切り線の右へ (区切り線の上下を札の高さだけ空ける、S-78)。前は 1 行目の MOD の右に重ねて長い文 (物理ダメージ追加など) の終わりを隠した (11-05 猿 monkey-670 ①、TreeGoalCard.vue、スイッチ無し。390 は別の部品で変わらず)。UI なのでオーナーの OK 待ち | sim-670-fix (この行と同じ commit) | ツリーの完成形のカードで「MOD」ボタンが 1 行目の MOD の文を隠さないようにしました | The Mods button on the tree's final-item card no longer covers the first mod line |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
