@@ -6,6 +6,7 @@
 import { mulberry32, type PatchData } from "../../craft-stage/engine";
 import { frameOfDoc } from "./tree-frame";
 import { handProblem, playHand } from "./tree-sample";
+import { sureFracWhy, sureFracWhyText } from "./tree-sure-frac";
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 
@@ -19,7 +20,10 @@ export function cantHandOf(data: PatchData, doc: TreeDoc, id: string): string | 
   const b = doc.boxes[id], f = b?.hand ? frameOfDoc(data, doc).frames.get(id) : undefined;
   if (!b?.hand || !f || f.note) return null;
   const why = handProblem(data, f.item, b.hand);
-  return why && !playHand(data, f.item, { ...b.hand, repeat: null }, mulberry32(1)).applied ? why : null;
+  if (why && !playHand(data, f.item, { ...b.hand, repeat: null }, mulberry32(1)).applied) return why;
+  // デイリーの確定フラクチャーが置けない品 (選んだ MOD が無い・冒涜で付いた) に残っている手 = 直す前に置いた木を開いた時 (S-43a)
+  const sf = sureFracWhy(data, doc, f.item, b.hand);
+  return sf ? sureFracWhyText(sf) : null;
 }
 
 const OUT_JA: Record<string, string> = { hit: "当たり", junk: "外れ", lost: "狙いが消えた", any: "打った後", junkGone: "外れが消えた" };

@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from "vue";
 import { tr } from "../../../i18n/lang";
+import { sureFracWhyText } from "../../../services/simulator/tree/tree-sure-frac";
 import { fracStop } from "./tree-frac-stop";
 
 const close = (): void => { fracStop.value = null; };
@@ -17,10 +18,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div v-if="fracStop" data-tree-frac-stop :data-why="fracStop" role="dialog" aria-modal="true" class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4" @click.self="close">
-    <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
-      <p data-tree-frac-stop-text class="text-[16px] font-bold text-rose-100">
-        {{ fracStop === "desecrated" ? tr("冒涜で付いた MOD にはフラクチャーを打てません。", "Desecrated mods can't be fractured.") : tr("フラクチャー予定の MOD がまだ付いていません。", "The mod you chose to fracture isn't on this item yet.") }}
-      </p>
+    <!-- 字は 1 行に収める (枠は字の幅に合わせる。狭い画面だけ折り返す) -->
+    <div class="w-fit max-w-full rounded-xl border border-rose-400/60 bg-[#1d0f10] px-5 py-3 text-center">
+      <p data-tree-frac-stop-text class="whitespace-nowrap text-[16px] font-bold text-rose-100 max-[34rem]:whitespace-normal">{{ fracStop ? sureFracWhyText(fracStop) : "" }}</p>
       <div class="mt-3 flex">
         <button type="button" data-tree-frac-stop-close class="g-btn !min-h-11 flex-1" @click="close">{{ tr("閉じる", "Close") }}</button>
       </div>

@@ -11,6 +11,7 @@ import { newlyFractured } from "./tree-frac-pick";
 import { effectOf, engineOmens } from "./tree-hands";
 import { fractureMarks, startsFractured, type Hand, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
+import { tr } from "../../../i18n/lang";
 
 /** この木のこの手が確定フラクチャーか (デイリーの印・ベースから・フラクチャーの手・✦ の印がある) */
 export const sureFracOn = (doc: TreeDoc, h: Hand | null | undefined): boolean =>
@@ -51,6 +52,10 @@ export function sureFracWhy(data: PatchData, doc: TreeDoc, item: StageItem, h: H
   const des = allMods(item).some((m) => !m.unrevealed && !!m.desecrated && marks.some((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })));
   return des ? "desecrated" : "none";
 }
+
+/** 置けない訳の字 (ポップアップ・手の窓の一言・開いた木の箱の「打てない手」の印で同じ 1 つ) */
+export const sureFracWhyText = (why: "desecrated" | "none"): string =>
+  why === "desecrated" ? tr("冒涜で付いた MOD にはフラクチャーを打てません。", "Desecrated mods can't be fractured.") : tr("フラクチャー予定の MOD がまだ付いていません。", "The mod you chose to fracture isn't on this item yet.");
 
 /** 確定フラクチャーで使う物: カレンシーとお告げを FRACTURE_POOL 回分 (3 回に 1 回成功 = 33%、文は tree-names の sureFracText と同じ数) */
 export function useSureFrac(h: Hand, use: (key: string, n: number) => void): void {

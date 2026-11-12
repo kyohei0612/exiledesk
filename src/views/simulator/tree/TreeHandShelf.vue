@@ -29,7 +29,7 @@ import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from 
 import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
-import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { stopSureFrac } from "./tree-frac-stop";
+import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { fracStopNote, stopSureFrac } from "./tree-frac-stop";
 import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
 import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan"; import { laneNoteOf } from "./tree-lane-ask";
 import { modText, tr } from "../../../i18n/lang";
@@ -396,7 +396,7 @@ function ok(): void {
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
       <!-- フラクチャー: デイリーの印の時は確定・オーブ 3 個分 (D-03)、ほかはエンジンの乱数のまま (S-42、S-43 は 11-05 に撤回) -->
-      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ sureFrac ? tr("選んだ MOD が必ず固定される。費用はフラクチャーのオーブ 3 個分", "The chosen mod is always fractured. Costs 3 Fracturing Orbs") : tr("固定できる MOD のどれか 1 つがゲームと同じ乱数で固定される。印の狙いが ✦ になれば当たり、ほかの MOD なら外れ。オーブは 1 回 1 個", "One of the mods that can be fractured is picked at random, as in the game. The marked mod becomes a hit; any other mod is a miss. 1 orb per use") }}</p>
+      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ fracStopNote(s.data.value, t.doc.value, item, hand) ?? (sureFrac ? tr("選んだ MOD が必ず固定される。費用はフラクチャーのオーブ 3 個分", "The chosen mod is always fractured. Costs 3 Fracturing Orbs") : tr("固定できる MOD のどれか 1 つがゲームと同じ乱数で固定される。印の狙いが ✦ になれば当たり、ほかの MOD なら外れ。オーブは 1 回 1 個", "One of the mods that can be fractured is picked at random, as in the game. The marked mod becomes a hit; any other mod is a miss. 1 orb per use")) }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <TreeDivinePick v-if="divOn && item" :item="item" :aims="t.goals.value" :targets="divTargets" :fore-reset="divReset" :problem="problem" :start="(modId, vi) => (item ? divineStart(t.doc.value, boxId, item, { modId, vi }) : null)" @targets="divTargets = $event" @fore-reset="divReset = $event" @decide="ok" @cancel="release()" /> <TreeHeldPick v-if="hand && item" :box-id="boxId" :hand="hand" :item="item" />
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
