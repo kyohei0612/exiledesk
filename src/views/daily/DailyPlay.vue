@@ -18,6 +18,7 @@ import { fitDailySide } from "./daily-side-fit";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
+import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
 import { fourOnlyOn, metBoxes, markMet, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
@@ -104,6 +105,8 @@ function openTree(): void {
   if (saved) t.open(saved);
   else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from)); }
   treeOn.value = true;
+  // 挑戦中の木と動作の控えをサーバーへ (D-57b)。見本・終わった挑戦では送らない
+  if (!dev && !x.ended) liveStart(props.topic.id, x.startedAt);
 }
 /**
  * スタートからやり直す (D-37j、11-10 オーナー「タイマーは進むけどスタートのやり直しができるボタンを最初のカードに」)。
@@ -127,6 +130,7 @@ function restart(): void {
   restarting.value = false;
   if (!tryOf.value || over.value) return;
   clearTimeout(saveT);
+  liveAct("restart");
   treeOn.value = false;
   if (dev) { tryOf.value = { ...tryOf.value, fractured: undefined, from: undefined, tree: undefined }; return; }
   updateTry(props.topic.id, { fractured: undefined, from: undefined, tree: undefined });
@@ -138,6 +142,7 @@ function pick(modId: string, from: StartFrom): void {
   updateTry(props.topic.id, { fractured: modId, from });
   tryOf.value = getTry(props.topic.id);
   openTree();
+  liveAct("pick", { mod: modId, from });
 }
 
 // 完成形のカードはいつも開く (デイリーでは畳むボタンを隠しているので、畳んだまま開けなくなっていた、11-09)。開く物はシミュのカードの畳みの印 (この端末の覚え) を押すだけ
@@ -154,6 +159,7 @@ watch(() => t.doc.value, (d) => {
   if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims); }); return; }
   clearTimeout(saveT);
   if (!dev) saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
+  if (!dev) liveDoc(d);
 });
 let rigKey = "";
 // 100 人回す・穴チェックはお題に固定した種と相場の写しで、始めの値段は 0 (D-34・D-58、シミュの S-70c)。16:00 の検算 (runCost) と同じ数になる。写しが無い開発の見本は普段のまま
@@ -177,7 +183,7 @@ onMounted(() => setLayerLeaveGuard({
   ask: (to) => to !== here && treeOn.value && left.value > 0 && !getTry(props.topic.id)?.ended && dailyUnsaved(props.topic.id, t.doc.value),
   save: () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value),
 }));
-onBeforeUnmount(() => { clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); setLayerLeaveGuard(null); });
+onBeforeUnmount(() => { liveStop(true); clearInterval(tick); clearTimeout(saveT); window.removeEventListener("paste", noPaste, true); setLayerLeaveGuard(null); });
 
 /** 今の木の 100 人の結果 (recipe-card の控え。組み替えると消える) */
 const run = computed((): { rate: number; cost: number | null } | null => {
@@ -188,6 +194,8 @@ const run = computed((): { rate: number; cost: number | null } | null => {
   // 完成 0 人は費用が無い (—) が、そのまま提出できる (D-35d、11-10 オーナー「完成率０でも別にいいと思う」)。順位には載らない
   return flag("dailyZero") && c.p === 0 ? { rate: 0, cost: null } : null;
 });
+// 100 人回した結果も動作の列へ (D-57b)
+watch(run, (r) => { if (r && !dev) liveAct("run", { rate: r.rate, cost: r.cost }); });
 /** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーで完成に数えるのは狙いを満たした品だけ) */
 const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims) : []));
 /** 提出の確かめと結果の窓 (D-35c)。出したら挑戦は終わり */

@@ -4,6 +4,7 @@
  * お題は 16:00 の台本 (scripts/daily-roll.mjs → POST /daily/topic) が書く。台本が回らなかった日は、ここで週の予定 (daily_plan) からそのまま出す (D-84 の ③)
  */
 import { authNick, hasBadWord, ipHash } from "./nick";
+import type { BoxPost } from "./box-notify";
 import { byScore, rankOrderSql } from "../../../../src/views/daily/daily-score";
 import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
@@ -198,7 +199,7 @@ export async function dailyTitle(db: D1Database, b: Body): Promise<unknown> {
 }
 
 /** POST /daily/box: 投稿は待ち (wait) で受け、機械の確かめ (D-20、エンジン) は 16:00 の台本が ok / no にする。名前を決めていなくても投稿できる */
-export async function dailyBox(db: D1Database, b: Body, ip: string, now: number): Promise<unknown> {
+export async function dailyBox(db: D1Database, b: Body, ip: string, now: number): Promise<{ error: string } | (BoxPost & { /** 投稿した人の名前 (Discord の通知だけに使う、画面には返さない。routes.ts が外す) */ by: string | null })> {
   const nick = b.nickId ? await authNick(db, b.nickId, b.code) : null;
   const note = typeof b.note === "string" ? b.note.slice(0, NOTE_MAX) : "";
   const aims = Array.isArray(b.aims) ? b.aims : [];
@@ -212,7 +213,7 @@ export async function dailyBox(db: D1Database, b: Body, ip: string, now: number)
   const bad = hasBadWord(note) || (nick ? hasBadWord(nick.name) : false);
   const id = `p${now.toString(36)}${crypto.randomUUID().slice(0, 4)}`;
   await db.prepare("INSERT INTO daily_box (id, created, ip_hash, nick_id, note, item, status, why) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(id, now, ih, nick?.id ?? null, note, item, bad ? "no" : "wait", bad ? "bad-word" : null).run();
-  return { id, at: now, note, base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims, status: bad ? "no" : "wait", ...(bad ? { why: "bad-word" } : {}) };
+  return { id, at: now, note, base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims, status: bad ? "no" : "wait", ...(bad ? { why: "bad-word" } : {}), by: nick?.name ?? null };
 }
 
 /** 自分の投稿の状態 (GET /daily/box.json?ids=、このブラウザが覚えた id だけ。D-15) */

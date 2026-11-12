@@ -184,6 +184,20 @@ export async function submitTry(id: string, cost: number, rate: number, now = Da
   save();
   return { ok: true, best: t.best ?? null };
 }
+/**
+ * POST /daily/live (D-57b): 挑戦中の最新の木 (端末の控えの tree = 提出と同じ形) と動作の列をサーバーへ置く。呼ぶのは daily-live.ts だけ (15 秒まとめ・離れる時)。
+ * last = 離れる時 (ページが閉じても届くよう keepalive)。返り: true = 置けた、false = もう受けない (終わった挑戦・名前が違う)、null = つながらない・古いサーバー
+ */
+export async function livePost(id: string, acts: readonly object[], last = false): Promise<boolean | null> {
+  const a = auth(), t = daily.local.tries[id];
+  if (!a || !t || t.ended) return false;
+  try {
+    const r = await fetch(`${API}/daily/live`, { method: "POST", credentials: "omit", keepalive: last, headers: { "content-type": "text/plain;charset=UTF-8" }, body: JSON.stringify({ ...a, id, tree: t.tree ?? null, acts }) });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { ok?: boolean; ended?: boolean; error?: string };
+    return j.ended || j.error === "nick" || j.error === "notStarted" ? false : j.ok ? true : null;
+  } catch { return null; }
+}
 
 // --- 順位と称号 (D-50・D-54・D-100〜103) ---
 

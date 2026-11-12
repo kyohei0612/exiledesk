@@ -4,6 +4,8 @@
  */
 import type { Env } from "../types";
 import { dailyBox, dailyBoxStatus, dailyGiveup, dailyJson, dailyMine, dailyRecipe, dailyStart, dailySubmit, dailyTitle } from "./api";
+import { notifyBox } from "./box-notify";
+import { dailyLive, pruneDailyLive } from "./live";
 import { nickPost } from "./nick";
 import { dayNoOf, noOfId } from "./time";
 import { rollJson, rollPost } from "./roll";
@@ -70,8 +72,16 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
       return json(await dailyGiveup(db, body, now));
     case "/daily/title":
       return json(await dailyTitle(db, body));
-    case "/daily/box":
-      return json(await dailyBox(db, body, ip, now));
+    case "/daily/box": {
+      const out = await dailyBox(db, body, ip, now);
+      if ("error" in out) return json(out);
+      // 届いた投稿を Discord に 1 件 (D-20b)。行き先はクラフト箱のチャンネル (秘密 BOX_WEBHOOK)、無ければ要望と同じ。投稿した人の名前は画面には返さない
+      const { by, ...pub } = out;
+      ctx.waitUntil(notifyBox((env as { BOX_WEBHOOK?: string }).BOX_WEBHOOK || env.DISCORD_WEBHOOK, pub, by).then(() => undefined));
+      return json(pub);
+    }
+    case "/daily/live":
+      return json(await dailyLive(db, body, now));
     case "/daily/topic":
       if (!keyOk()) return json({ error: "key が違う" }, 403);
       {
@@ -79,6 +89,8 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
         // お題・締めを書いたら、覚えていた GET /daily.json を捨てる (16:00 直後に前の形が 60 秒残らないように)
         const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
         if (cache) ctx.waitUntil(cache.delete(new Request(`${url.origin}/daily.json`, { method: "GET" })).then(() => undefined));
+        // 16:00 の台本のついでに、30 日より前の挑戦中の動作の列を空にする (D-57b。表がまだ無いサーバーでは何もしない)
+        ctx.waitUntil(pruneDailyLive(db, now).catch(() => undefined));
         return json(out);
       }
   }
