@@ -13,7 +13,7 @@
 | ジン部長 | local_e283feed-b3dd-480c-9014-2f4f3981b0de (11-12 に local_6602c6d4 が 2,483 件で交代。作業場 .claude/worktrees/wizardly-gould-f36ecf、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: 古いテスト 10 件を設計図どおりに → グラスピングメイルの冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト (錬金の表の 0% はオーナーの選び待ち) |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_af154dca-c058-472f-bb0f-370c9a20d9a9 (15 sim-lead15、11-12 に 14 = local_f259e486 が 2,000 件超えで交代、引き継ぎ = 共有ノート progress/sim-lead14.md) | 今: 待機 (消去の自動 treeNoAnnulAuto・錬金を棚から外す treeNoAlchemy・押している箱を帯から読む口 は入れた = オーナーの見た目の返事待ち)。次: 帯の MOD 一覧の「箱の品」の切り替えが当たったら作業場へ本線を取り込んで 1440 で見る。並べ方 treeKidsBelow は開発版のまま保留 |
+| シミュ部長 | local_d3758d92-a4bd-4cb7-afb1-85b4f2469761 (16 sim-lead16、11-12 に 15 = local_af154dca が 2,000 件超えで交代、引き継ぎ = 共有ノート progress/sim-lead15.md) | 今: 待機 (揺れ止め・線と鎖の印を乗せた時だけ treeLinesOnHover・畳んだ札 treeFoldMerged・カメラ treeCalmCamera・ホイール treeFineWheel・視点の表 S-147a は入れた = オーナーが 1440 で触っている最中、違う所が来たら直す)。次: カメラのコードの寄せ (treeCalmCamera を本番にするか決まってから)。並べ方 treeKidsBelow は開発版のまま保留 |
 | デザイン部長 | local_0f6a5cb7-419e-4a6e-b1f1-a541d5ff2670 (11-12 深夜に local_105f1834 が 2,000 件超えで交代。作業場 .claude/worktrees/magical-mahavira-11bf34、引き継ぎ = 共有ノート progress/design-modlist.md、板 = progress/design-lead2.md) | 今: MOD 一覧の窓 (シミュ・デイリー、simModList) の残りの確かめ = 押している箱の品の切り替え・オンの札の光り方・次の手で狙うの行の持ち替え・窓のスマホの幅と発現の窓。どれも開発版だけ・オーナーの見た目の返事待ち |
 | エミュ部長 | — (emu-back は 01171d809 の後 11-03 にアーカイブ) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
