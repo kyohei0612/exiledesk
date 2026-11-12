@@ -304,3 +304,23 @@ export function tierOf(mod: Mod, shown: readonly number[], pct: number, level: n
   for (let i = mod.tiers.length - 1; i >= 0; i--) if ((mod.tiers[i]?.ilvl ?? 0) <= level) return { index: i, fits: false };
   return { index: mod.tiers.length - 1, fits: false };
 }
+
+/**
+ * 2 行以上で 1 つの MOD (アーマー / 最大 ES など) の行を、MOD の文の行の順 (= 能力値の順) に束ねて 1 つの行にする (S-08h)。
+ * main = その MOD に当たった行、parts = 「もう 1 行」と読まれた行。MOD の文の行が全部そろい、# の数が能力値の数と合う時だけ束ねる (そろわなければ null = 今までどおり)。
+ * 束ねた行は値が能力値の数だけあるので、solveLines が全部の値の入る段を探す (同じ段に収まらない組は unexplained のまま)
+ */
+export function pairLines<B extends { line: string; text: string; template: string | null; values: number[] }>(mod: Mod, main: B, parts: readonly B[], key: (s: string) => string): { body: B; used: B[] } | null {
+  const ls = (mod.text ?? "").split("\n"), need = ls.map((l) => (l.match(/#/g) ?? []).length);
+  if (ls.length < 2 || !main.template || need.reduce((a, n) => a + n, 0) !== ownStats(mod).length) return null;
+  // 貼った行の型は符号を落としている (「# to Armour」)、MOD の文は「+# to Armour」= 符号を外して比べる
+  const k = (s: string): string => key(s).replace(/[+-]/g, "");
+  const fits = (b: B, j: number): boolean => !!b.template && k(ls[j]!) === k(b.template) && b.values.length === need[j];
+  const at = ls.findIndex((_, j) => fits(main, j));
+  if (at < 0) return null;
+  const slot: Array<B | undefined> = ls.map((_, j) => (j === at ? main : undefined)), used: B[] = [];
+  for (const b of parts) { const j = ls.findIndex((_, i) => !slot[i] && fits(b, i)); if (j >= 0) { slot[j] = b; used.push(b); } }
+  if (slot.some((s) => !s)) return null;
+  const all = slot as B[];
+  return { body: { ...main, line: all.map((b) => b.line).join(" / "), text: all.map((b) => b.text).join(" / "), values: all.flatMap((b) => b.values) }, used };
+}

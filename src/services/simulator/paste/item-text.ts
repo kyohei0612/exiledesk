@@ -24,7 +24,7 @@ import { unboost } from "../../craft-stage/boosts";
 import type { StageItem } from "../../craft-stage/types";
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
-import { solveLines, splitSums, tierOf, type SolveLine, type Solution } from "./item-text-solve";
+import { pairLines, solveLines, splitSums, tierOf, type SolveLine, type Solution } from "./item-text-solve"; import { flag } from "../../../web/release-flags";
 import { SANCTIFY_MAX, SANCTIFY_MIN } from "../../craft-stage/stage-tuning";
 import { addPoolRunes, readRuneSockets, runePoolMods } from "./item-text-runes";
 
@@ -288,7 +288,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const t = targetsFor(data, item);
   const taken = new Set<number>();
   const dropOnly = new Set(t.dropOnly.map((d) => d.text));
-  const picked: { b: Body; mod: Mod; fixed?: { index: number; fits: boolean } }[] = [];
+  const picked: { b: Body; mod: Mod; fixed?: { index: number; fits: boolean } }[] = [], parts: Body[] = [];
   const pick = (b: Body, i: number, aldur: boolean): void => {
     taken.add(i);
     const target = t.targets[i]!;
@@ -311,7 +311,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       continue;
     }
     if (dropOnly.has(b.text)) { out.skipped.push(skip(b.line, "dropOnly")); continue; }
-    if (!t.skipped.includes(b.text)) { out.skipped.push(skip(b.line, "hybridPart")); continue; }
+    if (!t.skipped.includes(b.text)) { parts.push(b); continue; }
     // 置き場の索引に無い (液化した感情の MOD など、プールではなく別の表で付く物)。同じクラスのエンジンの MOD を文で引く
     const k = matchKey(b.template!);
     const any = modCls ? [...data.mods.values()].find((m) => m.id.startsWith(modCls + "/") && matchKey(m.text ?? "") === k) : undefined;
@@ -323,6 +323,12 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       else out.skipped.push(skip(b.line, "corruptionUnknown"));
     } else out.skipped.push(skip(b.line, "notInPool"));
   }
+  // 2 行以上で 1 つの MOD の「もう 1 行」は、その MOD に当たった行と束ねて値を全部使う (S-08h、スイッチ pasteHybridPair)。束ねられなかった行は今までどおり 1 つに数えた行
+  if (flag("pasteHybridPair")) for (const p of picked) {
+    const got = p.fixed ? null : pairLines(p.mod, p.b, parts, matchKey);
+    if (got) { used[used.indexOf(p.b)] = got.body; p.b = got.body; for (const b of got.used) parts.splice(parts.indexOf(b), 1); }
+  }
+  for (const b of parts) out.skipped.push(skip(b.line, "hybridPart"));
 
   const level = out.itemLevel ?? 100;
   // 聖別の品は ✦ 以外の MOD が 0.78〜1.22 倍 (E-35、段の上限を超える)。段は倍率の幅で引き、値は段の幅に収めて素とする (E-96)
