@@ -1,4 +1,9 @@
 {
+  "0.1.723": [
+    "Simulator: steps under the lanes split by a Whittling step (Lower / Same / Higher) are no longer merged even when they are the same step. Each lane gets its own branch, drawn in the lane's color from the lane to the step tag and its result boxes, and the step tag is marked ▼ Lower / = Same / ▲ Higher",
+    "Simulator: when deleting or redoing a Whittling step would also remove steps placed on its other lanes, a confirmation dialog now appears first",
+    "Simulator: when a saved tree is reopened, the sample item shown for each lane split by a Whittling step now matches what you saw while building (it could show impossible values before)"
+  ],
   "0.1.722": [
     "Daily: added a Views column to the ranking table. It shows how many people opened that recipe (opening your own is not counted, and who opened it is never shown on screen)",
     "Daily: the N in \"rank / N players\" in the share text and image is now the number of players listed in the ranking table (previously it also counted players still in progress or who gave up)",

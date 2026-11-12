@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.723",
+  "date": "2026-11-12",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減の手で分かれた枠 (低い・同じ・高い) の下の手を、同じ手でもまとめず、枠ごとに 1 本ずつの枝で出すようにしました。枠から手の札・結果の箱までを枠の色の線でつなぎ、手の札に ▼ 低い / ＝ 同じ / ▲ 高い の印が付きます",
+    "en": "Simulator: steps under the lanes split by a Whittling step (Lower / Same / Higher) are no longer merged even when they are the same step. Each lane gets its own branch, drawn in the lane's color from the lane to the step tag and its result boxes, and the step tag is marked ▼ Lower / = Same / ▲ Higher"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減の手を消す・打ち直す時、ほかの枠に置いた手も一緒に消える場合は、消す前に確認の窓を出すようにしました",
+    "en": "Simulator: when deleting or redoing a Whittling step would also remove steps placed on its other lanes, a confirmation dialog now appears first"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存した木を開き直した時、削減の手で分かれた枠の見本の品が、組んだ時と同じ絵で出るようにしました (あり得ない値の見本が出る事がありました)",
+    "en": "Simulator: when a saved tree is reopened, the sample item shown for each lane split by a Whittling step now matches what you saw while building (it could show impossible values before)"
+   }
+  ]
+ },
+ {
   "v": "0.1.722",
   "date": "2026-11-12",
   "items": [
@@ -850,31 +874,6 @@
     "area": "",
     "text": "シミュレーター: 完成形の設定の「決めた (ツリーへ)」を説明の上に移し、説明は畳みました。スタートの ＋MOD で付いたルーンはルーンの欄に残り、ツリーの左の段の札がずれないようにしました",
     "en": "Simulator: \"Done (back to the tree)\" in the final item setup now sits above the help, which starts folded. Runes brought in by a start mod stay in the rune list, and the step labels on the left of the tree no longer drift"
-   }
-  ],
-  "pop": true
- },
- {
-  "v": "0.1.683",
-  "date": "2026-11-08",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 11/8 のツリーの直しをまとめて入れました (品質を見ない・戻り先は自動・未設定の一覧から箱へ移る・作りかけのツリーから続ける・右の列を閉じて広げる・エッセンスと同じ MOD の箱・「✓ 保存しました」など)",
-    "en": "Simulator: the Nov 8 tree fixes are in (quality is ignored, returns are picked automatically, the Unset list moves to each box, you can continue an in-progress tree, the side column can be hidden, a box for mods that match an Essence, a \"✓ Saved\" mark, and more)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: チュートリアルを今のツリーに合わせました (無くなった「ハズレ整理」の手順を外し、未設定の箱の決め方の説明を直しました)",
-    "en": "Simulator: the tutorial now matches the current tree: the removed \"Sort misses\" step is gone and the steps for deciding unset boxes are updated"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの左の「n 段目」の札が箱に重ならないようにしました。棚のカレンシーの名前に「(上級)」「(完全)」を戻しました",
-    "en": "Simulator: the \"Step n\" labels on the left of the tree no longer cover boxes, and currency names on the shelf show \"(Greater)\" / \"(Perfect)\" again"
    }
   ],
   "pop": true
