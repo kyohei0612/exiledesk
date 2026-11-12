@@ -30,6 +30,8 @@ const snapTo = (levels: readonly number[], z: number): number => levels.reduce((
 const WHOLE_STEPS = [0.15, 0.1] as const;
 /** ホイールの量をためてから 1 段動かす (マウスの 1 目盛り ≒ 100、タッチパッドは細かく来る) */
 const WHEEL_STEP = 60;
+/** ホイール 1 回の倍率 (S-147i、スイッチ treeFineWheel) */
+const WHEEL_RATE = 1.1;
 /** これ未満は箱の中の物を押させず、箱を押すと等倍の編集のポップアップ (ボタンが 24px の 3/4 = 18px を切る。10-22 オーナー「75% 未満の見るだけをやめる」) */
 const VIEW_ONLY = 0.75;
 /** スマホの全体表示の一番小さい段 */
@@ -103,6 +105,12 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (Math.abs(wheelAcc) < WHEEL_STEP) return;
     const dir = wheelAcc < 0 ? 1 : -1;
     wheelAcc = 0;
+    // スイッチ treeFineWheel (S-147i): 1 回で今の大きさの 1 割 (段に吸い付かない)。マウスの下の点を軸に、下限・上限で止める
+    if (flag("treeFineWheel")) {
+      const vp = f.viewport.value, to = Math.min(maxZoom.value, Math.max(minZoom.value, vp.zoom * (dir > 0 ? WHEEL_RATE : 1 / WHEEL_RATE))), w = f.screenToFlowCoordinate({ x: e.clientX, y: e.clientY });
+      if (to !== vp.zoom) void f.setViewport({ x: w.x * vp.zoom + vp.x - w.x * to, y: w.y * vp.zoom + vp.y - w.y * to, zoom: to });
+      return;
+    }
     void stepZoom(dir, { x: e.clientX, y: e.clientY });
   }
   /** 一番上の箱を置く高さ (0 完成形の設定は枠の左上の札、10-23。スマホは札 (高さ約 110px) の下へ) */
