@@ -1,4 +1,7 @@
 {
+  "0.1.724": [
+    "Simulator: you can now stop a Whittling step all at once. Click \"Stop Whittling\" to the right of the lane band (Lower / Same / Higher); after a confirmation the lanes go back to one box and you can choose the next step. The confirmation dialog shown when replacing a Whittling step with another step also gets a \"Stop all Whittling\" option (before, you had to repeat the same change for every lane)"
+  ],
   "0.1.723": [
     "Simulator: steps under the lanes split by a Whittling step (Lower / Same / Higher) are no longer merged even when they are the same step. Each lane gets its own branch, drawn in the lane's color from the lane to the step tag and its result boxes, and the step tag is marked ▼ Lower / = Same / ▲ Higher",
     "Simulator: when deleting or redoing a Whittling step would also remove steps placed on its other lanes, a confirmation dialog now appears first",

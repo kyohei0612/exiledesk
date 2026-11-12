@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.724",
+  "date": "2026-11-12",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減の手をまとめてやめられるようにしました。枠 (低い・同じ・高い) の帯の右の「削減をやめる」を押すと、確認の後に枠を 1 つの箱に戻して次に打つ手を選べます。削減の手を別の手に替える時の確認の窓にも「削減を全部やめる」を足しました (これまでは枠の数だけ同じ替えを繰り返す必要がありました)",
+    "en": "Simulator: you can now stop a Whittling step all at once. Click \"Stop Whittling\" to the right of the lane band (Lower / Same / Higher); after a confirmation the lanes go back to one box and you can choose the next step. The confirmation dialog shown when replacing a Whittling step with another step also gets a \"Stop all Whittling\" option (before, you had to repeat the same change for every lane)"
+   }
+  ]
+ },
+ {
   "v": "0.1.723",
   "date": "2026-11-12",
   "items": [
@@ -852,30 +864,5 @@
     "en": "Simulator: the tutorial is now available (PC only). Open it from \"Tutorial\" on the base selection page and build a sample tree in 18 steps"
    }
   ]
- },
- {
-  "v": "0.1.684",
-  "date": "2026-11-09",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: チュートリアルを作り直しました。完成形の MOD 一覧から 4 つを付け方 (ふつう・フラクチャー・冒涜) ごとに選び、見本のツリーを 18 の手順で組みます",
-    "en": "Simulator: the tutorial has been rebuilt. You pick 4 mods from the final item's mod list by how they are added (Normal / Fracture / Desecrate) and build a sample tree in 18 steps"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 次に打つ手の窓に完成形の狙いを全部並べ、今その箱で付けられない物はグレーにして、乗せると理由を出すようにしました",
-    "en": "Simulator: the next-step window now lists all your target mods; ones that can't be added to that box right now are greyed out, and hovering shows why"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の設定の「決めた (ツリーへ)」を説明の上に移し、説明は畳みました。スタートの ＋MOD で付いたルーンはルーンの欄に残り、ツリーの左の段の札がずれないようにしました",
-    "en": "Simulator: \"Done (back to the tree)\" in the final item setup now sits above the help, which starts folded. Runes brought in by a start mod stay in the rune list, and the step labels on the left of the tree no longer drift"
-   }
-  ],
-  "pop": true
  }
 ]
