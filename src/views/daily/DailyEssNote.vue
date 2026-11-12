@@ -7,15 +7,21 @@
 -->
 <script setup lang="ts">
 import { tr } from "../../i18n/lang";
+import { computed } from "vue";
 import { flag } from "../../web/release-flags";
+import { newJudgeOn } from "./daily-judge-day";
+
+/** day = そのカードのお題の id。値の下限の言い方は、新しい完成の物差しが効く日のお題 (日の門、daily-cost.ts の NEW_JUDGE_FROM) の時だけ。前の日のお題はエッセンスの言い方のまま */
+const props = defineProps<{ day?: string }>();
+const low = computed(() => flag("dailyLowHit") && newJudgeOn(props.day));
 </script>
 
 <template>
   <p v-if="flag('dailyRuleNote')" class="daily-ess-note" data-daily-ess-note data-daily-rule-note role="note">
-    <b>{{ tr("完成形の MOD を全部、表示の段以上で持てば完成", "Finished when the item has every target mod at the shown tier or better") }}</b>{{ tr(" (ほかの MOD は付いていてよい)。", " (extra mods are fine). ") }}<template v-if="flag('dailyLowHit')">{{ tr("付け方は自由で、エッセンス・合金も値の下限がお題の段の下限以上なら完成になります。", "Any method works: mods from Essences or Alloys count when their minimum value reaches the minimum of the required tier.") }}</template><template v-else>{{ tr("付け方は自由で、同じ MOD がエッセンスにある時は、エッセンスで付けても完成になります。", "Any method works: if an Essence gives the same mod, applying it that way also counts.") }}</template>
+    <b>{{ tr("完成形の MOD を全部、表示の段以上で持てば完成", "Finished when the item has every target mod at the shown tier or better") }}</b>{{ tr(" (ほかの MOD は付いていてよい)。", " (extra mods are fine). ") }}<template v-if="low">{{ tr("付け方は自由で、エッセンス・合金も値の下限がお題の段の下限以上なら完成になります。", "Any method works: mods from Essences or Alloys count when their minimum value reaches the minimum of the required tier.") }}</template><template v-else>{{ tr("付け方は自由で、同じ MOD がエッセンスにある時は、エッセンスで付けても完成になります。", "Any method works: if an Essence gives the same mod, applying it that way also counts.") }}</template>
   </p>
   <p v-else-if="flag('dailyEssNote')" class="daily-ess-note" data-daily-ess-note role="note">
-    <template v-if="flag('dailyLowHit')"><b>{{ tr("エッセンス・合金で代用可。", "Essences and Alloys are allowed.") }}</b>{{ tr("同じ MOD なら、値の下限がお題の段の下限以上で完成になります。", " The same mod counts when its minimum value is at least the minimum of the required tier.") }}</template>
+    <template v-if="low"><b>{{ tr("エッセンス・合金で代用可。", "Essences and Alloys are allowed.") }}</b>{{ tr("同じ MOD なら、値の下限がお題の段の下限以上で完成になります。", " The same mod counts when its minimum value is at least the minimum of the required tier.") }}</template>
     <template v-else><b>{{ tr("エッセンスで代用可。", "Essences are allowed.") }}</b>{{ tr("同じ MOD がエッセンスにある時は、エッセンスで付けても完成になります。", " If an Essence gives the same mod, applying it that way also counts.") }}</template>
   </p>
 </template>

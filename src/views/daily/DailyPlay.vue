@@ -20,7 +20,7 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
-import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
+import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
 import { tierRankLabel, type StageItem } from "../../services/craft-stage/engine";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
@@ -39,6 +39,8 @@ import "./daily-play.css";
 import { getTry, leftMs, SOLVE_RATE, startTry, TIME_LIMIT_MS, updateTry, type DailyTopic, type DailyTry, type StartError } from "./daily-api";
 
 const props = defineProps<{ topic: DailyTopic }>();
+// 完成の物差しの日の門 (D-35b ④⑤): 今開いているお題の日を物差しに知らせる (新しい物差しは NEW_JUDGE_FROM の日のお題から。開発版はどの日でも)
+watch(() => props.topic.id, (id) => setJudgeDay(id), { immediate: true });
 const t = useTree();
 /** 開発版だけ: 状態ごとに開く見本 (daily-dev-states.ts)。この間はサーバーにも端末の控えにも書かない */
 const dev = devState();
@@ -330,12 +332,12 @@ const REFUSED: Record<StartError, () => string> = {
 
     <DailySubmitAsk v-if="asking" :id="topic.id" :open="!!asking" :cost="asking.cost" :rate="asking.rate" :shown="doneShown" :dev="!!dev" @close="asking = null" @done="submitted" />
     <p v-if="devNoAims" class="daily-note">{{ tr("開発の見本: このお題の狙いが見えない (締めた日のお題か、この端末で始めたお題の id を q に)。", "Dev sample: this topic's targets aren't visible (use a closed day's id or one you started here).") }}</p>
-    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyHere(topic.id)" @pick="pick" />
+    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyHere(topic.id)" :day="topic.id" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
     <Teleport v-if="treeOn && !picking" defer :to="actsTo">
-      <DailyEssNote v-if="!sideShut" />
+      <DailyEssNote v-if="!sideShut" :day="topic.id" />
       <div class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
         <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
         <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>

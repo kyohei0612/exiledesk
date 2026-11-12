@@ -19,7 +19,7 @@ import { NO_FRAC } from "./daily-aims";
 import { flag } from "../../web/release-flags";
 import DailyEssNote from "./DailyEssNote.vue";
 
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean }>();
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
 const t = useTree();
 /** 1 段目で選んだ始め方 (null = まだ選んでいない) */
@@ -80,7 +80,7 @@ watch(peek, (id) => {
       <div class="daily-frac-card" data-daily-frac-card>
         <StageItemCard v-if="card" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="400" compact tier-at-least />
         <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
-        <DailyEssNote v-if="card" style="max-width: 400px" />
+        <DailyEssNote v-if="card" :day="day" style="max-width: 400px" />
       </div>
       <div v-if="!chosen" class="min-w-0">
         <ul class="daily-frac-from" :aria-label="tr('始め方', 'How to start')">

@@ -16,7 +16,7 @@ import DailyEssNote from "./DailyEssNote.vue";
 /** width = カードの幅 (無ければ PC 400・スマホ 340) */
 /** essNote = カードの下に「エッセンスで代用可」の注意書きを出す (お題の完成形の時だけ。投稿の確かめでは出さない、D-37e3) */
 /** fractured = 狙いと同じ順のフラクチャーの印 (投稿の確かめで、読んだ品の印を見せるだけ。D-14b) */
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean; fractured?: readonly boolean[] }>();
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean; fractured?: readonly boolean[]; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string }>();
 const phone = usePhone();
 const placed = computed(() => {
   const data = s.data.value;
@@ -34,7 +34,7 @@ const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.fin
   <div data-daily-aim-card class="daily-aim-card">
     <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="width ?? (phone ? 340 : 400)" compact tier-at-least />
     <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
-    <DailyEssNote v-if="essNote && item" :style="{ width: '100%', maxWidth: `${width ?? (phone ? 340 : 400)}px` }" />
+    <DailyEssNote v-if="essNote && item" :day="day" :style="{ width: '100%', maxWidth: `${width ?? (phone ? 340 : 400)}px` }" />
     <ul v-if="left.length" data-daily-aim-left class="mt-2 text-[14px]">
       <li v-for="a in left" :key="a.modId">{{ tr(`カードに乗らない狙い: ${a.ja}`, `Not on the card: ${a.en}`) }} <small>{{ tierRankLabel(a.tier) }}</small></li>
     </ul>

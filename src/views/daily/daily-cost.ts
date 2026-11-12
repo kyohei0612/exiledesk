@@ -12,6 +12,7 @@ import { isAimMod } from "../../services/simulator/tree/tree-aim";
 import { tierNoOf } from "../../services/craft-stage/tier-rank";
 import type { StageItem, StageMod } from "../../services/craft-stage/engine";
 import { flag } from "../../web/release-flags";
+import { newJudgeNow, setJudgeDay } from "./daily-judge-day";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { NO_FRAC, fillTopicDoc } from "./daily-aims";
@@ -32,6 +33,8 @@ export const perBoxOn = (day: string): boolean => day.replace(/^d/, "") >= BOX_S
 export const FOUR_ONLY_FROM = "2026-11-12";
 /** その日のお題が (b) だけか (始め方の窓は (a) を出さない) */
 export const fourOnlyOn = (day: string): boolean => day.replace(/^d/, "") >= FOUR_ONLY_FROM;
+/** 完成の物差しの日の門 (新しい物差しは NEW_JUDGE_FROM の日のお題から。中身は daily-judge-day.ts) */
+export { NEW_JUDGE_FROM, newJudgeOn, setJudgeDay } from "./daily-judge-day";
 
 /**
  * その MOD がお題の狙い a に当たるか (D-35b: 完成は MOD の種類と段だけ、付けた手は問わない)。シミュと同じ isAimMod に加え、
@@ -44,7 +47,8 @@ export function dailyHit(data: PatchData, m: StageMod, a: { modId: string; tier:
   if (m.unrevealed) return false;
   // 値の下の端で比べる (D-35b ⑤、スイッチ dailyLowHit): 合金の 2 行の MOD・値が文に直に書かれた完全なエッセンス・共通の文の強化のエッセンスも、
   // 段の幅の下の端がお題の段に届けば当たり。値の幅が普通の段と合わず自分の番号で読まれていたエッセンスは、届かなければ外れ。比べられない時だけ下の前の比べ方
-  if (flag("dailyLowHit")) { const low = lowHitOf(data, a, m.modId, m.tierIndex); if (low !== null) return low; }
+  // 効くのは日の門の日のお題から (NEW_JUDGE_FROM。前の日のお題は下の前の比べ方のまま)
+  if (flag("dailyLowHit") && newJudgeNow()) { const low = lowHitOf(data, a, m.modId, m.tierIndex); if (low !== null) return low; }
   const want = data.mods.get(a.modId), got = data.mods.get(m.modId);
   if (!want || !got || !want.family || got.family !== want.family || got.text !== want.text) return false;
   return tierNoOf(m) <= a.tier;
@@ -56,10 +60,10 @@ const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { m
  * 回す時に完成の箱へ着いた人の品を見る物差し (D-35b ④、スイッチ dailyDoneCheck。シミュの回しの口 doneOk = S-05b へ渡す)。
  * お題の狙いを段の下限まで全部持つ人だけ完成に数え、足りない人はその箱の失敗と同じ数え (そこで終わり・費用は合計に入る)。
  * 完成の精査 (missingAims) は箱の見本の品 1 つを見るので、見本は満たすが着く人の一部は満たさない箱 (最後の手の ☑ の段がお題より緩い時など) を回す所で受ける。
- * 挑戦の画面 (DailyPlay の treeRunRig) と 16:00 の検算 (runCost) が同じここを呼ぶ。スイッチが切れている間は undefined = 今までどおり全員完成
+ * 挑戦の画面 (DailyPlay の treeRunRig) と 16:00 の検算 (runCost) が同じここを呼ぶ。スイッチが切れている間と、日の門 (NEW_JUDGE_FROM) より前の日のお題は undefined = 今までどおり全員完成
  */
 export const doneOkOf = (data: PatchData, aims: readonly { modId: string; tier: number }[]): ((item: StageItem) => boolean) | undefined =>
-  flag("dailyDoneCheck") ? (item) => holdsAll(data, [...item.prefixes, ...item.suffixes], aims) : undefined;
+  flag("dailyDoneCheck") && newJudgeNow() ? (item) => holdsAll(data, [...item.prefixes, ...item.suffixes], aims) : undefined;
 
 /**
  * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。
@@ -102,7 +106,8 @@ export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: s
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
-export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
+export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
+  setJudgeDay(topic.day);
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
   const doc = rebuildTree(data, healRecipeV1(raw));
   const frac = doc.memoAims?.find((a) => a.fractured)?.modId;
