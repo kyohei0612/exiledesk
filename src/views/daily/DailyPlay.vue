@@ -15,6 +15,7 @@ import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
 import { fitDailySide } from "./daily-side-fit";
+import DailyEssNote from "./DailyEssNote.vue";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
@@ -334,6 +335,7 @@ const REFUSED: Record<StartError, () => string> = {
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
     <Teleport v-if="treeOn && !picking" defer :to="actsTo">
+      <DailyEssNote v-if="!sideShut" />
       <div class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
         <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
         <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>

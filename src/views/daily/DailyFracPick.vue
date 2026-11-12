@@ -17,6 +17,7 @@ import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import type { DailyAim } from "./daily-api";
 import { NO_FRAC } from "./daily-aims";
 import { flag } from "../../web/release-flags";
+import DailyEssNote from "./DailyEssNote.vue";
 
 const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
@@ -79,6 +80,7 @@ watch(peek, (id) => {
       <div class="daily-frac-card" data-daily-frac-card>
         <StageItemCard v-if="card" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="400" compact tier-at-least />
         <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
+        <DailyEssNote v-if="card" style="max-width: 400px" />
       </div>
       <div v-if="!chosen" class="min-w-0">
         <ul class="daily-frac-from" :aria-label="tr('始め方', 'How to start')">

@@ -11,9 +11,11 @@ import { usePhone } from "../../utils/use-phone";
 import { tierRankLabel } from "../../services/craft-stage/engine";
 import { placeWithSlots } from "../simulator/tree/tree-slot-mods";
 import type { DailyAim } from "./daily-api";
+import DailyEssNote from "./DailyEssNote.vue";
 
 /** width = カードの幅 (無ければ PC 400・スマホ 340) */
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number }>();
+/** essNote = カードの下に「エッセンスで代用可」の注意書きを出す (お題の完成形の時だけ。投稿の確かめでは出さない、D-37e3) */
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean }>();
 const phone = usePhone();
 const placed = computed(() => {
   const data = s.data.value;
@@ -29,6 +31,7 @@ const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.fin
   <div data-daily-aim-card class="daily-aim-card">
     <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="width ?? (phone ? 340 : 400)" compact tier-at-least />
     <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
+    <DailyEssNote v-if="essNote && item" :style="{ width: '100%', maxWidth: `${width ?? (phone ? 340 : 400)}px` }" />
     <ul v-if="left.length" data-daily-aim-left class="mt-2 text-[14px]">
       <li v-for="a in left" :key="a.modId">{{ tr(`カードに乗らない狙い: ${a.ja}`, `Not on the card: ${a.en}`) }} <small>{{ tierRankLabel(a.tier) }}</small></li>
     </ul>

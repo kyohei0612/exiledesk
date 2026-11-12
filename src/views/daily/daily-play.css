@@ -62,6 +62,8 @@
 
 /* 提出・諦める (D-37m、11-10): 完成形のカードのすぐ下。提出が主 (赤・幅いっぱい)、諦めるは控えめ (字だけの小さな物を右に) */
 [data-daily-play] [data-tree-side] > [data-daily-acts] { order: -1; }
+/* 「エッセンスで代用可」の注意書き (D-37e3): カードと提出の間。左右はカードの見える枠にそろえ、欄が狭いので字は一段小さく */
+[data-daily-play] [data-tree-side] > .daily-ess-note { order: -1; margin: 0 calc(var(--daily-card-z) * 12.5px) 4px calc(var(--daily-card-z) * 7px); padding: 6px 10px; font-size: 12px; line-height: 1.5; }
 [data-daily-play] .daily-acts { display: flex; align-items: center; gap: 10px; margin: 2px 0 0; }
 /* 欄の中ではカードの見える枠 (data-stage-card) の左右の端にそろえる = 枠は欄の左から カードの倍率 × 7px、右から × 12.5px 内側 (11-10 に 1280 で測った) */
 [data-daily-play] [data-tree-side] > .daily-acts { margin: 2px calc(var(--daily-card-z) * 12.5px) 0 calc(var(--daily-card-z) * 7px); }

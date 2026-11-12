@@ -73,7 +73,7 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
         </div>
       </div>
       <!-- 締めた日・挑戦済みの人は狙いを完成形のカードで (D-37e・D-37e2)。挑戦前・挑戦中の今日のお題は伏せたまま (D-32b) -->
-      <DailyAimCard v-if="cardAims" data-daily-aims :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" />
+      <DailyAimCard v-if="cardAims" data-daily-aims ess-note :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" />
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>

@@ -236,6 +236,9 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-frac-card [data-frac-peek], .daily-frac-card [data-frac-peek] * { color: var(--color-mod-fractured) !important; }
 .daily-frac-none-note > span:first-child { color: var(--skin-title); font-size: 17px; }
 .daily-frac-none-note b { font-weight: 700; color: var(--skin-title); }
+/* 完成形のカードの下の注意書き「エッセンスで代用可」(D-37e3)。上の注意書きと同じ金の縦線と一段明るい地、カードの幅にそろえる */
+.daily-ess-note { box-sizing: border-box; margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--skin-title); background: var(--skin-raise); font-size: 14px; line-height: 1.6; color: var(--skin-text); text-align: left; }
+.daily-ess-note b { font-weight: 700; color: var(--skin-title); }
 
 /* 皮の見比べ */
 .daily-skin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
