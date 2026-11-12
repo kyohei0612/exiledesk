@@ -49,6 +49,8 @@ const OPEN_QUIET = 1500, HELD_MS = 3000;
 const FIT_MIN = 0.25;
 /** 全体に合わせる時の余白の下限 */
 const PAD_MIN = 12;
+/** 右へ伸びる木 (S-142h) が枠に入らない時の左の余白 */
+const LEFT_PAD = 24;
 /** 箱の下の外の＋ (TreeBox の data-tree-next、真ん中が箱の 68px 下・28px) の分 */
 const NEXT_H = 88;
 
@@ -68,7 +70,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   function wholeZoom(): number | null {
     const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (!w || !h) return null;
-    const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2, half = Math.max(sx - b.x, b.x + b.w - sx);
+    const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2, half = flag("treeGrowRight") ? 0.5 * b.w : Math.max(sx - b.x, b.x + b.w - sx);
     return Math.min((w / 2 - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
   }
   /**
@@ -135,7 +137,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width - laneW(), h = f.dimensions.value.height;
     if (!w || !h) return null;
     const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
-    const half = Math.max(sx - b.x, b.x + b.w - sx);
+    // S-142h (スイッチ treeGrowRight): 木は右へだけ伸びるので、幅は木の幅そのまま (始まりを真ん中に置かない)
+    const half = flag("treeGrowRight") ? 0.5 * b.w : Math.max(sx - b.x, b.x + b.w - sx);
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom。部品は 11-02 に消した) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     // 段の目印を出さない時 (スイッチ noBand、10-28 夜オーナー「これいらんなもう　消してくれわかりづらいし」) は左を空けない
     const fz = Math.min((w / 2 - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
@@ -148,7 +151,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   function placeOf(lv: number): { x: number; y: number; z: number } {
     const b = bounds.value, st = doc.value.boxes.start, lw = laneW(), w = f.dimensions.value.width - lw;
     const z = lv * pageZ.value, sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
-    const x = lw + w / 2 - sx * z;
+    // S-142h (スイッチ treeGrowRight): 木が枠に入るなら木の真ん中を枠の真ん中へ、入らなければ木の左端 (始まりの箱) を枠の左へ
+    const x = flag("treeGrowRight") ? (b.w * z <= w - 2 * LEFT_PAD ? lw + w / 2 - (b.x + 0.5 * b.w) * z : lw + LEFT_PAD - b.x * z) : lw + w / 2 - sx * z;
     const y = topY() - b.y * z;
     return { x, y, z };
   }
@@ -349,11 +353,15 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     posWas = now;
     const t = performance.now(), { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (holding || !flag("treeCalmCamera") || !was.size || !w || !h || t - openAt < OPEN_QUIET || f.getNodes.value.some((n) => n.dragging)) return;
+    // S-142h (スイッチ treeGrowRight): 右へだけ広がるので、見えていた箱のどれかが動いていなければ視点はそのまま (右へ送られた箱を軸にしない)
+    const grow = flag("treeGrowRight");
     let best: string | null = null, near = Infinity;
     for (const [id, o] of was) {
-      if (!now.has(id)) continue;
+      const p = now.get(id);
+      if (!p) continue;
       const sx = (o.x + BOX_W / 2) * z + x, sy = (o.y + BOX_H / 2) * z + y;
       if (sx < 0 || sy < 0 || sx > w || sy > h) continue;
+      if (grow && p.x === o.x && p.y === o.y) return;
       const far = id === held?.id && t - held.at < HELD_MS ? -1 : Math.hypot(sx - w / 2, sy - h / 2);
       if (far < near) { near = far; best = id; }
     }

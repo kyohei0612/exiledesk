@@ -29,6 +29,8 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   // 完成の箱を下に持つ枝を左端 → 下に手が続く枝 → 矢印で戻るだけの箱を右 (S-142e、スイッチ treeDoneLeft)
   /** (S-142f) 箱のすぐ下の段にはその箱の続きだけ、1 段以上空いていればほかの枝を詰める (スイッチ treeKidsBelow) */
   const below = flag("treeKidsBelow");
+  /** (S-142h) 新しい子は右へだけ: 親は一番左の子の真上、左の兄弟との間は左の兄弟だけで決める = 手を置いた箱と左側は動かない (スイッチ treeGrowRight) */
+  const grow = below && flag("treeGrowRight");
   const reorder = flag("treeDoneLeft") ? doneLeftOrder(d) : null;
   // 組んでいる間は、もう並んでいる兄弟の順を入れ替えない (S-142g、kept = 画面が持つ控え。無ければ毎回決まりどおり)
   const memo = new Map<string, string[]>();
@@ -61,7 +63,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
       const c = cs[i]!;
       let off = 0;
       if (i) {
-        const gap = kidsOf(ks[i - 1]!).length || kidsOf(k).length ? GAP_DEEP : GAP_LEAF;
+        const gap = kidsOf(ks[i - 1]!).length || (!grow && kidsOf(k).length) ? GAP_DEEP : GAP_LEAF;
         off = -Infinity;
         const a = below ? withNext(acc) : acc, x = cmp[i]!;
         for (let r = 0; r < Math.min(a.length, x.length); r++) off = Math.max(off, a[r]![1] + gap - x[r]![0]);
@@ -73,7 +75,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     });
     const n = ks.length, h = Math.floor(n / 2);
     // 親は子の並びの真ん中 (S-142f)。スイッチの外は真ん中の子の真上
-    const px = below ? (offs[0]! + offs[n - 1]!) / 2 : n % 2 ? offs[h]! : (offs[h - 1]! + offs[h]!) / 2;
+    const px = grow ? offs[0]! : below ? (offs[0]! + offs[n - 1]!) / 2 : n % 2 ? offs[h]! : (offs[h - 1]! + offs[h]!) / 2;
     ks.forEach((k, i) => rel.set(k, offs[i]! - px));
     return [[Math.min(own[0], offs[0]! - px), Math.max(own[1], offs[n - 1]! + BOX_W - px)], ...acc.map(([l, r]): [number, number] => [l - px, r - px])];
   };
