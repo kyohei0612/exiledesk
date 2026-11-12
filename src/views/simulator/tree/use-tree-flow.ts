@@ -13,6 +13,7 @@ import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pageZoom } from "../../../utils/zoom";
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
+import { flag } from "../../../web/release-flags";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -210,7 +211,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   watch(() => Object.keys(doc.value.boxes).length, async () => {
     const now = Object.keys(doc.value.boxes), fresh = now.filter((id) => !seen.has(id));
     seen = new Set(now);
-    if (!fresh.length || holding) return;
+    // スイッチ treeCalmCamera (S-147h): 木を変えた後は視点を動かさない (1 つ戻す・打ち直しで木の頭へ飛んで見失った)
+    if (!fresh.length || holding || flag("treeCalmCamera")) return;
     await nextTick(); await nextTick();
     // スイッチ nextInView (S-147c): 箱の高さが測れて並べ直し (use-row-settle) が済むまで待つ (新しい箱の位置と高さが 2 コマ続けて同じ、最長 30 コマ)
     {
@@ -277,7 +279,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
       for (let i = 0; i < 30 && same < 2; i++) { await new Promise((r) => requestAnimationFrame(r)); const s = sig(); same = s === last ? same + 1 : 0; last = s; }
       await put();
       const kids = kidsOf();
-      if (!kids.length) return;
+      if (!kids.length || flag("treeCalmCamera")) return; // S-147h: 触った箱を同じ場所に保つだけ (結果の箱へは寄せない)
       // 未設定の帯は 0 の時も置くので (TreeUnsetBar)、木の面の高さは札が出ても変わらない (前は札の無い時に先に 44px 引いていた)
       // 11-11 から札は木の面の上に浮くので、帯の高さ 44 を下に空けて数える
       const { x, y } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - 44 * pageZ.value, m = 8;
@@ -298,7 +300,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   watch(() => f.getNodes.value.map((n) => `${n.id}:${n.position.y}:${n.dimensions.height}`).join("|"), async () => {
     const was = laid, now = new Map(f.getNodes.value.map((n) => [n.id, { y: n.position.y, h: n.dimensions.height || BOX_H }] as const));
     laid = now;
-    if (holding || !was.size || was.size !== now.size || [...now.keys()].some((k) => !was.has(k))) return;
+    if (holding || flag("treeCalmCamera") || !was.size || was.size !== now.size || [...now.keys()].some((k) => !was.has(k))) return;
     const { x, y, zoom: z } = f.viewport.value, h = f.dimensions.value.height, m = 8;
     // はみ出した箱 (前は＋まで見えていて、今は＋が木の面の下へ出た) だけで寄せる。上限はその箱の上端 (ほかの見えていた箱の上端では止めない = 1920 で上の段の箱が止めていた)
     // 見えていたかは木の面の中にあれば良い (余白 0。NEXT_H は＋の下端より数 px 大きいので、余白を取ると下端ぎりぎりの＋が漏れた = 1660・1920 の試し)
