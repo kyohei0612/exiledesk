@@ -478,7 +478,7 @@ const glowOf = (b: Box): boolean => {
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${popBoxH}px` }">
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
-              @clear-back="t.edit((d) => clearBack(d, pop!))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
+              @clear-back="t.edit((d) => clearBack(d, pop!))" @done="popDo((_, b) => onDone(b))" @fail="popDo((_, b) => onFail(b))"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div><TreeBoxModBtn :box-id="pop" class="absolute bottom-2 right-2" @opened="pop = null" />
         </div>
