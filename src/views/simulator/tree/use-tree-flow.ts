@@ -11,6 +11,7 @@
 import { computed, ref, watch, type Ref, nextTick } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { drawnKids } from "../../../services/simulator/tree/tree-row-tops";
 import { pageZoom } from "../../../utils/zoom";
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import { flag } from "../../../web/release-flags";
@@ -133,8 +134,21 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 左端の箱が「n 段目」の下に入らないように (11-11 オーナー「この点線をツリー中として」で帯を木の面の中へ移した)
    */
   const laneW = (): number => document.querySelector("[data-tree-frame] [data-tree-lane-band]")?.getBoundingClientRect().width ?? 0;
+  /**
+   * 開いた時・全体表示の合わせに使う木の範囲 (S-142h、スイッチ treeOpenStartLeft): 描く箱だけで数え (畳んで描かない消去の続きの箱は古い位置のまま)、
+   * 左の端は始まりの箱そのもの (木は始まりから右と下へだけ伸びる)。スイッチの外は全部の箱
+   */
+  function openBounds(): { x: number; y: number; w: number; h: number } {
+    const d = doc.value, st = d.boxes.start;
+    if (!st || !flag("treeOpenStartLeft")) return bounds.value;
+    const seen = new Set<string>();
+    const go = (id: string): void => { const b = d.boxes[id]; if (!b || seen.has(id)) return; seen.add(id); for (const k of drawnKids(d, b)) go(k); };
+    go("start");
+    const bs = [...seen].map((id) => d.boxes[id]!), y0 = Math.min(...bs.map((b) => b.y));
+    return { x: st.x, y: y0, w: Math.max(...bs.map((b) => b.x + BOX_W)) - st.x, h: Math.max(...bs.map((b) => b.y + BOX_H)) - y0 };
+  }
   function fitLevel(): number | null {
-    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width - laneW(), h = f.dimensions.value.height;
+    const b = openBounds(), st = doc.value.boxes.start, w = f.dimensions.value.width - laneW(), h = f.dimensions.value.height;
     if (!w || !h) return null;
     const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     // S-142h (スイッチ treeGrowRight): 木は右へだけ伸びるので、幅は木の幅そのまま (始まりを真ん中に置かない)
@@ -148,11 +162,11 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 始まりの箱を枠の横の真ん中・木の一番上を上の端 (topY) に、段 lv で。
    * (10-26 オーナー「スタートは必ずツリーを真ん中に配置して開始、それも一番上ね」)。完成形の窓は木の枠の外の右の列へ移したので、窓を避けて下げる処理は外した (10-26 夜)
    */
-  function placeOf(lv: number): { x: number; y: number; z: number } {
-    const b = bounds.value, st = doc.value.boxes.start, lw = laneW(), w = f.dimensions.value.width - lw;
+  function placeOf(lv: number, left = false): { x: number; y: number; z: number } {
+    const b = openBounds(), st = doc.value.boxes.start, lw = laneW(), w = f.dimensions.value.width - lw;
     const z = lv * pageZ.value, sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     // S-142h (スイッチ treeGrowRight): 木が枠に入るなら木の真ん中を枠の真ん中へ、入らなければ木の左端 (始まりの箱) を枠の左へ
-    const x = flag("treeGrowRight") ? (b.w * z <= w - 2 * LEFT_PAD ? lw + w / 2 - (b.x + 0.5 * b.w) * z : lw + LEFT_PAD - b.x * z) : lw + w / 2 - sx * z;
+    const x = flag("treeGrowRight") ? (!left && b.w * z <= w - 2 * LEFT_PAD ? lw + w / 2 - (b.x + 0.5 * b.w) * z : lw + LEFT_PAD - b.x * z) : lw + w / 2 - sx * z;
     const y = topY() - b.y * z;
     return { x, y, z };
   }
@@ -160,8 +174,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * fitAll = 下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示だけ。PC は木の全体が入る倍率まで S-147d、スマホは FIT_MIN まで)。
    * 開いた時・整列の後は下げるだけで縮めない (10-26 夜ブラック 13: 縮めて 10% になった)
    */
-  async function startTop(lv: number, fitAll = false): Promise<void> {
-    let p = placeOf(lv);
+  async function startTop(lv: number, fitAll = false, left = false): Promise<void> {
+    let p = placeOf(lv, left);
     const h = f.dimensions.value.height;
     const ls = levels(), low = innerWidth < VIEW_ONLY_MAX ? FIT_MIN : 0;
     for (let i = ls.indexOf(lv); fitAll && i > 0 && ls[i - 1]! >= low && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ls[i - 1]!);
@@ -187,9 +201,25 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   async function openView(): Promise<void> {
     opens++;
     openAt = performance.now();
+    // スイッチ treeOpenStartLeft (S-142h): 箱の並べ直し (use-row-settle、同じ番の後ろで動く) が済んでから置く。前は並べ直す前の位置 (枝が左へ伸びた形) で置き、始まりの箱が右端に出た。
+    // 横に入らない木 (今までの開く大きさ = 75% 以上で横が枠に入らない) は 50% で始まりの箱を左上へ、入る木は今までどおり (その大きさで真ん中)
+    const late = flag("treeOpenStartLeft") && innerWidth >= VIEW_ONLY_MAX, mine = opens; // スマホの形 (U-53) は今のまま
+    if (late) { await nextTick(); if (mine !== opens) return; }
     const lv = fitLevel();
     if (lv == null) { await goHome(); return; }
-    await startTop(Math.max(lv, OPEN_MIN));
+    /** 今までの開く大きさで横が枠に入らない木か (スイッチ treeOpenStartLeft の時だけ見る) */
+    const wide = (l: number): boolean => late && openBounds().w * Math.max(l, OPEN_MIN) * pageZ.value > f.dimensions.value.width - laneW() - 2 * LEFT_PAD;
+    const put = (l: number): Promise<void> => (wide(l) ? startTop(CALM_Z, false, true) : startTop(Math.max(l, OPEN_MIN)));
+    await put(lv);
+    openAt = performance.now();
+    if (!late) return;
+    // 箱の背が測れた後の並べ直しで木の幅が変わった時だけ、人が動かしていなければ置き直す
+    const set = { ...f.viewport.value };
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const now = f.viewport.value;
+    if (mine !== opens || now.x !== set.x || now.y !== set.y || now.zoom !== set.zoom) return;
+    const lv2 = fitLevel();
+    if (lv2 != null) await put(lv2);
     openAt = performance.now();
   }
   /** 完成形の設定などを見に行く前の寄りと位置 (戻ったらそのまま。10-26 モンキー 7 の 10、メモ feedback-basic-flow「閉じたら前の位置」) */
@@ -236,7 +266,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     seen = new Set(now);
     // スイッチ treeCalmCamera (S-147h): 木を変えた後は視点を動かさない (1 つ戻す・打ち直しで木の頭へ飛んで見失った)。大きさだけ、50% より大きければ今見ている真ん中を軸に 50% へ
     // (木を開く・タブを替えるで箱の数が変わった時は開いた時の寄りが決めるので、その間に openView が呼ばれたら触らない)
-    if (flag("treeCalmCamera")) { const o = opens; if (!holding) { await nextTick(); await nextTick(); if (o === opens && !holding && f.viewport.value.zoom > CALM_Z * pageZ.value + 1e-3) await setZoom(CALM_Z); } return; }
+    if (flag("treeCalmCamera")) { const o = opens; if (!holding) { await nextTick(); await nextTick(); if (o === opens && !holding && !(flag("treeOpenStartLeft") && performance.now() - openAt < OPEN_QUIET) && f.viewport.value.zoom > CALM_Z * pageZ.value + 1e-3) await setZoom(CALM_Z); } return; }
     if (!fresh.length || holding) return;
     await nextTick(); await nextTick();
     // スイッチ nextInView (S-147c): 箱の高さが測れて並べ直し (use-row-settle) が済むまで待つ (新しい箱の位置と高さが 2 コマ続けて同じ、最長 30 コマ)
