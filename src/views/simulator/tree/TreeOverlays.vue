@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import TreeGoalPage from "./TreeGoalPage.vue";
 import TreeStartPage from "./TreeStartPage.vue";
+import TreeBoxModList from "./TreeBoxModList.vue";
 import { useTree } from "./use-tree";
 import { usePasteAnywhere } from "./tree-paste";
 
@@ -16,4 +17,6 @@ usePasteAnywhere();
 <template>
   <TreeGoalPage v-if="t.goalPage.value" />
   <TreeStartPage v-else-if="t.startPage.value" />
+  <!-- 箱から開く「MOD 一覧」の窓 (S-145h。ボタンは次に打つ手の窓と箱の大きい写しの窓) -->
+  <TreeBoxModList />
 </template>

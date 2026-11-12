@@ -23,7 +23,7 @@ import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./t
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
 import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import TreeHeldPick from "./TreeHeldPick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine"; import TreeAimLocked from "./TreeAimLocked.vue"; import { lockedAimRows } from "./tree-aim-why";
-import { useHandKeep } from "./use-hand-keep";
+import { useHandKeep } from "./use-hand-keep"; import TreeBoxModBtn from "./TreeBoxModBtn.vue";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import { lvRowTags } from "./tree-whittle-marks"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
@@ -378,7 +378,7 @@ function ok(): void {
     <div class="flex min-w-0 flex-col gap-8 min-[48rem]:w-[480px]">
       <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard :row-group="null" v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :note="runeNote" @socket="onSocket" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
-        <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
+        <TreeBoxModBtn :box-id="boxId" class="self-start" /><p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
         <p v-if="delirHidden" data-tree-hand-delirium-off class="text-[12px] text-rose-200/90">{{ handName(DELIRIUM) }}: {{ tr("シミュでは使えない (付くノータブルがランダム)", "not usable in the simulator (the notable is random)") }}</p>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>

@@ -26,7 +26,7 @@ import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree
 import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
-import TreeHandPage from "./TreeHandPage.vue";
+import TreeHandPage from "./TreeHandPage.vue"; import TreeBoxModBtn from "./TreeBoxModBtn.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { useTreePop } from "./use-tree-pop";
@@ -480,7 +480,7 @@ const glowOf = (b: Box): boolean => {
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
               @clear-back="t.edit((d) => clearBack(d, pop!))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
-          </div>
+          </div><TreeBoxModBtn :box-id="pop" class="absolute bottom-2 right-2" @opened="pop = null" />
         </div>
         <!-- 箱に乗せた時のアイテムのカードは出さない (TreeHoverCard は 11-02 に消した): 箱の中にアイテムの枠があるので意味が無く、浮いて箱を隠した (10-27 オーナー「ホバーのカードも一旦出さなくていい」、モンキー 9) -->
         </div>
