@@ -156,6 +156,9 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.718 デイリーの完成の判定 (値の下限・完成を押した時に比べる、11-13 のお題から)・完成の仕組みの注意書き・エミュから「デイリーに投稿 →」・投稿の中のエミュは別の品・投稿を止めるのは MOD の数が足りない時だけ・貼った品の 2 行で 1 つの MOD・無限のエッセンスの手の窓・縮めた木の写しの窓・開き直しの決めの写し・クラフト箱の知らせの品の絵と貼った文の控え (オーナー 11-12「全部実装終わったら出していいよリリース今やってるやつ」、ブラック 90 の合図)
+  "dailyDoneCheck", "dailyEssNote", "dailyRuleNote", "dailyLowHit", "emuToDaily", "dailyPostOwnItem", "dailyPostLoose", "pasteHybridPair",
+  "treeInfinitePick", "treePopFit", "treeBothNoCopy", "dailyPostSrc", "dailyBoxCard",
   // シミュの木の並べで親の間を広げない (S-142c) と高貴・カオスの格だけ替えた時は木を残す (S-57d) (オーナー 11-11 見た目 OK・「一旦決まったやつ全部出してくれ」、ブラック 84 の頼み、v0.1.717)
   "treeNoWiden", "gradeKeep",
   // シミュの箱の頭の札 A (S-80c) とヒネコラの予見の枠で持つ手を複数 (S-39 ⑧) (オーナー 11-11 見た目 OK・「だしておｋ」、ブラック 83 の頼み、v0.1.715)

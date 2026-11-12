@@ -1,4 +1,11 @@
 {
+  "0.1.718": [
+    "Daily: from the 11/13 challenge, the finish check is revised. If a mod is the same as the challenge's, it counts when the low end of its value range is at least the low end of the challenge tier (this also applies to mods added with Essences or Alloys, and to the attribute from an Essence of the Infinite). A note under the finished item card now explains how finishing works. Challenge tiers are now T2 or higher",
+    "Daily: pressing “Mark done” in the tree now compares that box with the finished item; a box that is missing a mod is not marked and the reason is shown. From the 11/13 challenge, runs also compare the items that reach a done box. The right column on the challenge screen no longer gets cut off at the bottom",
+    "Daily posts: added “Post to Daily →” to the Emulator settings. The Emulator inside the post page now keeps its own item, separate from the Emulator tab, and “Rework in the Emulator” on the confirm screen lets you rework that item. Posting is only blocked when the item has too few mods, and Fractured mods on a pasted item are now marked. Fixed the broken layout of the Emulator inside the post page, and the item card overlapping the top bar on phones",
+    "Paste (Simulator and Daily posts): a mod that spans two lines, such as Armour and maximum Energy Shield, is now read as one mod with the correct tier. Previously it always became the top tier regardless of its values",
+    "Simulator: for Essence of the Infinite moves you can now tick the attribute to aim for, or choose “No target”. The enlarged box shown when you click a box in a zoomed-out tree no longer runs past the bottom of the frame, and the move window no longer jumps when you change a tick. Fixed counts changing in some reopened saved trees. Data: fixed the faction of Desecrated-only mods on Grasping Mail and wands"
+  ],
   "0.1.717": [
     "Daily: from the 11/12 challenge, besides starting from a white base with a guaranteed fracture, you can choose “Start without fracture” (Fracturing Orbs can't be used in that tree). Simulator: tree layout no longer spreads parents apart unnecessarily, and changing only the tier of an Exalted or Chaos move now keeps the tree below"
   ],

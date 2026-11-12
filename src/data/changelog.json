@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.718",
+  "date": "2026-11-12",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 11/13 のお題から、完成の判定を見直します。お題と同じ MOD なら、値の下限がお題のティアの下限以上で完成になります (エッセンス・合金で付けた MOD、無限のエッセンスで付いた能力値も同じ)。完成形のカードの下に、完成の仕組みの説明を出すようにしました。お題のティアは T2 以上になりました",
+    "en": "Daily: from the 11/13 challenge, the finish check is revised. If a mod is the same as the challenge's, it counts when the low end of its value range is at least the low end of the challenge tier (this also applies to mods added with Essences or Alloys, and to the attribute from an Essence of the Infinite). A note under the finished item card now explains how finishing works. Challenge tiers are now T2 or higher"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 木で「完成にする」を押した時に完成形と比べ、足りない MOD がある箱は完成にせず訳を出すようにしました。11/13 のお題からは、回す時も完成の箱に着いた品を完成形と比べます。挑戦の画面の右の欄が下に見切れないようにしました",
+    "en": "Daily: pressing “Mark done” in the tree now compares that box with the finished item; a box that is missing a mod is not marked and the reason is shown. From the 11/13 challenge, runs also compare the items that reach a done box. The right column on the challenge screen no longer gets cut off at the bottom"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーの投稿: エミュレーターの設定の欄に「デイリーに投稿 →」を足しました。投稿の中のエミュレーターはエミュレーターのタブと別の品を持ち、確かめの画面の「エミュレーターで作り直す」でその品を作り替えられます。投稿できないのは MOD の数が足りない時だけにし、貼った品のフラクチャーの印も出すようにしました。投稿の中のエミュレーターの表示の崩れと、スマホで品のカードが上の帯に重なるのを直しました",
+    "en": "Daily posts: added “Post to Daily →” to the Emulator settings. The Emulator inside the post page now keeps its own item, separate from the Emulator tab, and “Rework in the Emulator” on the confirm screen lets you rework that item. Posting is only blocked when the item has too few mods, and Fractured mods on a pasted item are now marked. Fixed the broken layout of the Emulator inside the post page, and the item card overlapping the top bar on phones"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "貼り付け (シミュレーター・デイリーの投稿): アーマーと最大エナジーシールドのように 2 行で 1 つの MOD を、2 行まとめて正しいティアで読むようにしました。前は値に関わらず一番上のティアになっていました",
+    "en": "Paste (Simulator and Daily posts): a mod that spans two lines, such as Armour and maximum Energy Shield, is now read as one mod with the correct tier. Previously it always became the top tier regardless of its values"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 無限のエッセンスの手で、狙う能力値を ☑ で選ぶか「狙い無し」にするかを選べるようにしました。木を縮めて箱を押した時の大きい窓が枠の下にはみ出さないようにし、手の窓で ☑ を替えた時に欄が揺れないようにしました。保存した木を開き直した時に数が変わる事があったのを直しました。データ: グラスピングメイルとワンドの冒涜専用 MOD の勢力を直しました",
+    "en": "Simulator: for Essence of the Infinite moves you can now tick the attribute to aim for, or choose “No target”. The enlarged box shown when you click a box in a zoomed-out tree no longer runs past the bottom of the frame, and the move window no longer jumps when you change a tick. Fixed counts changing in some reopened saved trees. Data: fixed the faction of Desecrated-only mods on Grasping Mail and wands"
+   }
+  ]
+ },
+ {
   "v": "0.1.717",
   "date": "2026-11-11",
   "items": [
@@ -868,60 +904,6 @@
     "area": "",
     "text": "シミュレーター: 神のオーブの窓で、光った枠の外を押すか右クリックで手放せるようにしました",
     "en": "Simulator: in the Divine Orb window, click outside the highlighted frame or right-click to put the Divine Orb down"
-   }
-  ]
- },
- {
-  "v": "0.1.678",
-  "date": "2026-11-07",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木で中身が同じ箱を 1 つにまとめ、刺さったルーンとソケットも箱の中身として見分けるようにしました",
-    "en": "Simulator: boxes with the same contents in the tree are now merged into one, and socketed Runes count as part of a box's contents"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 骨の手を「発現 / 狙い無し / 未発現」の 3 つから選べるようにしました",
-    "en": "Simulator: Bone crafts now let you choose Reveal, No target, or Unrevealed"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ルーンを持ってはまったソケットを押すと、そのルーンと入れ替えるようにしました",
-    "en": "Simulator: holding a Rune and clicking a filled socket now swaps that socket's Rune"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 開いた木に残ったその品に打てない手を、箱に赤字で出すようにしました",
-    "en": "Simulator: crafts that can't be used on a box's item now show a red note on that box"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホの詳細で完成形のカードを閉じて、木を広く見られるようにしました",
-    "en": "Simulator: on phones, you can now close the final-item card in the detail view to see more of the tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 発現で選ぶ MOD の窓を一般の MOD から開くようにしました",
-    "en": "Simulator: the mod picker for Reveal now opens on regular mods"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 100 人回す・最終チェックが途中で止まることがあったのを直しました。止まった人がいても最後まで回して数を出します",
-    "en": "Simulator: fixed Run 100 and Final check sometimes stopping partway; runs now finish and show the count even if some get stuck"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減のお告げの結果の箱・箱の題の MOD の短い名前・スタートの箱の字の重なり・エッセンスの残したい MOD の既定のチェックなどを直しました",
-    "en": "Simulator: fixed Omen of Whittling result boxes, short mod names in box titles, overlapping text on the Start box, default checks for mods to keep with Essences, and more"
    }
   ]
  }
