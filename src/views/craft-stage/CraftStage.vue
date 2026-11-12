@@ -15,6 +15,7 @@ import { baseNameOf, tr } from "../../i18n/lang";
 import { LOG_KEEP, TUTORIAL_LOCKED } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { usePinTop } from "./use-pin-top";
 import { usePhone } from "../../utils/use-phone";
 import { useDismiss } from "../../utils/use-dismiss";
 import { toCss } from "../../utils/zoom";
@@ -64,6 +65,9 @@ function useAtSocket(n: number): void {
   else s.use();
 }
 onMounted(() => void s.init());
+/** スマホで上に貼るカードは、この画面のすぐ前に貼り付く帯があればその下に貼る (M-72b、use-pin-top.ts) */
+const rootEl = ref<HTMLElement | null>(null);
+usePinTop(rootEl);
 // シミュレーターのレシピの URL (#recipe=、recipe-share.ts) から来た時・同じタブに貼った時は、そのレシピで始める
 // ジェムコラプトの画面を開いていたら閉じる (開いたままだと上に残り、URL はシミュレーターなのにジェムコラプトが見えていた。2026-10-19 モンキーテスト)
 const openRecipeUrl = (): void => { if (location.hash.startsWith("#recipe=")) openSharedRecipe(); };
@@ -213,7 +217,7 @@ function pickMode(m: typeof s.mode.value): void {
 
 <template>
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
-  <div data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div ref="rootEl" data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す (StagePhoneBar.vue) -->
     <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" @scroll-to-reveal="scrollToReveal" />
     <div v-show="!subPage"><!-- ベース選びのページの間は中身を隠す (消さないので戻ると元のまま) -->
@@ -289,7 +293,7 @@ function pickMode(m: typeof s.mode.value): void {
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
         <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px] max-md:-mb-2"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
         <!-- スマホはカードそのものを上に貼る (下へ送っても打っている物が見える。前の文字だけの要約の帯の代わり、オーナー 11-10「今打ってるアイテムカードから固定に」) -->
-        <div ref="cardEl" data-stage-well data-item-pin class="relative max-md:sticky max-md:top-0 max-md:z-30" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
+        <div ref="cardEl" data-stage-well data-item-pin class="relative max-md:sticky max-md:top-[var(--stage-pin-top,0px)] max-md:z-30" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"
           :item="sanctifySample ?? s.item.value!"
