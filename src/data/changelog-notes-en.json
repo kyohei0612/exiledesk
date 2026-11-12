@@ -1,4 +1,9 @@
 {
+  "0.1.721": [
+    "Simulator: changed how the tree is laid out. New boxes are only added to the right, and a parent box sits directly above its leftmost child. When placing a move adds boxes, the box you placed it on and the branches to its left no longer move",
+    "Simulator: in a zoomed-out tree you can now click the frames split by a whittle move (lower, same, higher) to choose the next move for them. The enlarged box shown when you click a box also shows those frames (fixed being unable to set an unset frame while zoomed out)",
+    "Daily: from the 11/13 challenge, challenge tiers are T3 or higher (previously T2 or higher)"
+  ],
   "0.1.720": [
     "Simulator: while you build a tree (placing or changing a move, undo, redo), boxes that are already laid out no longer swap their left-to-right order. The tree is only re-sorted when it is opened",
     "Simulator: when undo, redo or removing a move shifts the layout, the box you were looking at now stays in the same place on screen (fixed the tree drifting away)",

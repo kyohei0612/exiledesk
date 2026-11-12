@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.721",
+  "date": "2026-11-12",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木の並べ方を変えました。新しい箱は右へだけ並び、親の箱は一番左の子の真上に来ます。手を置いて箱が増えても、手を置いた箱とその左側の枝は動きません",
+    "en": "Simulator: changed how the tree is laid out. New boxes are only added to the right, and a parent box sits directly above its leftmost child. When placing a move adds boxes, the box you placed it on and the branches to its left no longer move"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木を縮めて見ている時も、削減の手で分かれた枠 (低い・同じ・高い) を押して次に打つ手を選べるようにしました。箱を押した時の大きい窓にも同じ枠を出します (縮めたままだと未設定の枠に手を置けなかったのを直しました)",
+    "en": "Simulator: in a zoomed-out tree you can now click the frames split by a whittle move (lower, same, higher) to choose the next move for them. The enlarged box shown when you click a box also shows those frames (fixed being unable to set an unset frame while zoomed out)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 11/13 のお題から、お題のティアを T3 以上にしました (前は T2 以上)",
+    "en": "Daily: from the 11/13 challenge, challenge tiers are T3 or higher (previously T2 or higher)"
+   }
+  ]
+ },
+ {
   "v": "0.1.720",
   "date": "2026-11-12",
   "items": [
@@ -870,18 +894,6 @@
     "area": "",
     "text": "シミュレーター: 未設定一覧の「要望・バグを送る」で開いた窓を閉じると、未設定一覧が開いたまま戻るようにしました",
     "en": "Simulator: closing the window opened from \"Send feedback / bug\" in the Unset list now returns you to the Unset list, still open"
-   }
-  ]
- },
- {
-  "v": "0.1.681",
-  "date": "2026-11-08",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーで消去など残す MOD を選ぶ手を通った後は、☑ しなかった完成形に無いエッセンスの MOD (ブリーチなど) も「外れ MOD」と出すようにしました。手の窓で消去を持った時も同じです",
-    "en": "Simulator: after a step where you pick which mods to keep (such as Orb of Annulment), Essence mods that aren't in the final item (like Breach) and weren't checked now show as Miss, including when holding Annulment in the hand window"
    }
   ]
  }
