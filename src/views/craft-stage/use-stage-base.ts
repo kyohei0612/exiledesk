@@ -2,7 +2,8 @@
  * use-stage-base.ts — クラフトステージでベースを選んだか・選ぶ (CraftStage.vue と設定の欄 StageSettings.vue で共通、2026-10-16 500 行の決まりで分けた)。
  * 1 つの画面で 1 回だけ作る (最初に呼んだ所の物をあとの呼び出しでも返す)
  */
-import { nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
+import { postNoBase } from "../../state/emulator/post-slot";
 import { craftStage as s, URL_BASE } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
@@ -36,13 +37,15 @@ function create() {
    * ベースの読み物のページから ?base= で来た時は、選ぶ所を飛ばしてそのベースから
    */
   // スイッチ emuFresh (10-25 オーナー「エミュもリロードしたら基本最初から」): スマホの選んだ事のある人もベース選びから (ベースは覚えていないので、前は既定の金の指輪のクラフトの画面になっていた)
-  const handNoBase = ref(!inApp && !URL_BASE && (!phone.value || !picked || flag("emuFresh")) && s.mode.value === "hand" && !s.log.value.length);
+  const emuNoBase = ref(!inApp && !URL_BASE && (!phone.value || !picked || flag("emuFresh")) && s.mode.value === "hand" && !s.log.value.length);
   // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
-  watch(() => s.recPreset.value, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
+  watch(() => s.recPreset.value, (v) => { if (v) emuNoBase.value = false; }, { immediate: true });
   // 記事などから戻って写しから戻した時: 戻したベースが人の選んだ物の時だけクラフトの画面へ (既定の金の指輪の写しならベース選びのまま、2026-10-23)
-  watch(() => restoredFromSession.value, (v) => { if (v && (!CHOSEN_ON || chosenBase.value === s.base.value)) handNoBase.value = false; }, { immediate: true });
+  watch(() => restoredFromSession.value, (v) => { if (v && (!CHOSEN_ON || chosenBase.value === s.base.value)) emuNoBase.value = false; }, { immediate: true });
   // クラフトのコースを始めた時もベースは決まっている (2026-10-17)
-  watch(() => course.value ?? topic.value, (c) => { if (c) handNoBase.value = false; }, { immediate: true });
+  watch(() => course.value ?? topic.value, (c) => { if (c) emuNoBase.value = false; }, { immediate: true });
+  // 投稿の中のエミュ (置き場 post、M-06c) は自分の印を持つ (エミュのタブでベースを選んでいても、投稿の中はベース選びから)
+  const handNoBase = computed({ get: () => (s.play.value === "post" ? postNoBase : emuNoBase).value, set: (v) => { (s.play.value === "post" ? postNoBase : emuNoBase).value = v; } });
   /** 人が選んだ印だけ付ける (今のベースを押し直した時はアイテムはそのまま) */
   function markChosen(en: string): void {
     chosenBase.value = en;
@@ -51,7 +54,7 @@ function create() {
   /** ベースを選ぶ (クラフト台。旧シミュレーターの狙い・順番などを空に戻す所は 10-23 に消した、ツリー特化) */
   function pickSimBase(en: string): void {
     handNoBase.value = false;
-    markChosen(en);
+    if (s.play.value !== "post") markChosen(en); // 投稿の中で選んだベースは、エミュのタブの「選んだベース」に覚えない
     s.base.value = en;
     s.reset();
     // スマホ: 選んだ所 (下の方) から一番上の見出しまで飛ばず、ベースの欄 (次に決めるアイテムレベル・始め方) を画面の上に (2026-10-09)

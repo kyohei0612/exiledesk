@@ -57,10 +57,11 @@ const data = shallowRef<PatchData | null>(null);
  * アイテム・工程・ベース・持っている物・お告げ・乱数などは 2 組あり、外からは今の置き場の方を読み書きする (dual)。
  * データ・モードのタブ・表示の設定・シミュレーターは 1 つ (共通)。チュートリアルの間は emu_use と履歴を記録しない
  */
-const play = ref<"emu" | "lesson">("emu");
+// post = デイリーの投稿の中のエミュ (D-12b・M-06c、スイッチ dailyPostOwnItem)。エミュのタブとは別の品で、切り替えは state/emulator/post-slot.ts だけ。emu_use・履歴・写しは emu だけ
+const play = ref<"emu" | "lesson" | "post">("emu");
 function dual<T>(make: () => Ref<T>): WritableComputedRef<T> {
-  const emu = make(), lesson = make();
-  return computed({ get: () => (play.value === "lesson" ? lesson : emu).value, set: (v) => { (play.value === "lesson" ? lesson : emu).value = v; } });
+  const slot = { emu: make(), lesson: make(), post: make() };
+  return computed({ get: () => slot[play.value].value, set: (v) => { slot[play.value].value = v; } });
 }
 const item = dual(() => shallowRef<StageItem | null>(null));
 const log = dual(() => shallowRef<PlayedStep[]>([]));
@@ -273,6 +274,23 @@ export const craftStage = {
       startMods.value = next;
     } catch (e) {
       miss.value = { n: (miss.value?.n ?? 0) + 1, reason: e instanceof Error ? e.message.replace(/^始めの状態の MOD \d+ つ目: /, "") : String(e) };
+    }
+  },
+  /**
+   * ベース・アイテムレベル・始めの MOD をまとめて入れ、工程なしの品から始める (投稿の確かめの品を投稿の中のエミュに載せる、M-06c)。
+   * 付かない組ならエンジンの訳を返し、今の品は変えない。載せたら null
+   */
+  startWith(b: string, lv: number, mods: Force[]): string | null {
+    if (!data.value || replay.value) return tr("読み込み中…", "Loading…");
+    try {
+      const sd = newSeed();
+      const it = fullSockets(startFrom(data.value, b, lv, { mods }, sd - 1));
+      base.value = b; itemLevel.value = lv; startMods.value = [...mods];
+      log.value = []; dropped.value = []; omens.value = []; held.value = null;
+      seed.value = sd; item.value = it; error.value = null;
+      return null;
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
     }
   },
   /** 白の新品から (ベース・アイテムレベルを変えた時も)。始めの MOD も外す */
