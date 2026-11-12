@@ -32,7 +32,7 @@ import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { useTreePop } from "./use-tree-pop";
 import { openTreeFirst } from "./tree-open-first";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_W, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
@@ -216,7 +216,7 @@ function closeHand(): void { simOp("cancel", "hand-pick"); panel.value = null; }
 function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; simOp("remove-hand"); t.edit((d) => clearHandAt(d, p)); }
 function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 /** 縮めて見ている時に押した箱の編集のポップアップ (use-tree-pop.ts) */
-const { pop, popEl, popStyle, popDo } = useTreePop(doc, v);
+const { pop, popEl, popStyle, popDo, popBoxH } = useTreePop(doc, v);
 // シミュの操作の流れ (オーナー「シミュは全部監視」、web/sim-trail): 手の窓を開いた (下の ＋・打つ手の札のどちらからでも)
 watch(() => panel.value?.kind, (k) => { if (k === "hand") simOp("hand-open"); });
 /**
@@ -475,7 +475,7 @@ const glowOf = (b: Box): boolean => {
         </p>
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
-          <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
+          <div class="relative" :style="{ width: `${BOX_W}px`, height: `${popBoxH}px` }">
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
               @clear-back="t.edit((d) => clearBack(d, pop!))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
