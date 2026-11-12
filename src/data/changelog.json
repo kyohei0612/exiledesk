@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.720",
+  "date": "2026-11-12",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木を組んでいる間 (手を置く・替える・1 つ戻す・やり直す)、もう並んでいる箱の横の順が入れ替わらないようにしました。並べ直すのは木を開いた時だけです",
+    "en": "Simulator: while you build a tree (placing or changing a move, undo, redo), boxes that are already laid out no longer swap their left-to-right order. The tree is only re-sorted when it is opened"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 1 つ戻す・やり直す・手を消すで木の並びが動いても、見ていた箱が画面の同じ場所に残るようにしました (木がどこかへ行ってしまうのを直しました)",
+    "en": "Simulator: when undo, redo or removing a move shifts the layout, the box you were looking at now stays in the same place on screen (fixed the tree drifting away)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木を縮めて箱を押した時の大きい窓で「完成」「失敗」を押すと、窓が閉じるようにしました。統合の札の言葉を「→ 同じ中身の箱の続きへ」に替えました",
+    "en": "Simulator: in the enlarged box shown when you click a box in a zoomed-out tree, pressing “Done” or “Fail” now closes it. The merge tag now reads “→ continues at the box with the same contents”"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓と、縮めて見ている時の箱の大きい窓に「MOD 一覧」のボタンを足しました。押すと、その箱の品で MOD 一覧が開きます",
+    "en": "Simulator: added a “Mod list” button to the next-move window and to the enlarged box in a zoomed-out tree. It opens the mod list for that box's item"
+   }
+  ]
+ },
+ {
   "v": "0.1.719",
   "date": "2026-11-12",
   "items": [
@@ -852,30 +882,6 @@
     "area": "",
     "text": "シミュレーター: ツリーで消去など残す MOD を選ぶ手を通った後は、☑ しなかった完成形に無いエッセンスの MOD (ブリーチなど) も「外れ MOD」と出すようにしました。手の窓で消去を持った時も同じです",
     "en": "Simulator: after a step where you pick which mods to keep (such as Orb of Annulment), Essence mods that aren't in the final item (like Breach) and weren't checked now show as Miss, including when holding Annulment in the hand window"
-   }
-  ]
- },
- {
-  "v": "0.1.680",
-  "date": "2026-11-07",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形のカードに、品質のためのブリーチのエッセンスの行を自動で足さないようにしました。上限を大きく超える品質は、ツリーでブリーチのエッセンスを打って上げます",
-    "en": "Simulator: the final-item card no longer adds an Essence of the Breach line for quality on its own. For quality well above the cap, use Perfect Essence of the Breach in the tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形の窓の「決めた (ツリーへ)」を、浮かせず説明の下に置きました",
-    "en": "Simulator: Done (back to the tree) in the final-item window now sits below the notes instead of floating"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形のエッセンス・合金の MOD の「途中で消える / 残る」の切り替えを無くしました。完成形に入れた MOD は全部狙いになり、入りきらない時は「どれか n つ残る」でまとめます",
-    "en": "Simulator: removed the \"lost partway / kept\" switch for Essence and Alloy mods in the final item. Every mod you add is now an aim, and when they don't all fit they're grouped as \"Any n stay\""
    }
   ]
  }

@@ -1,4 +1,10 @@
 {
+  "0.1.720": [
+    "Simulator: while you build a tree (placing or changing a move, undo, redo), boxes that are already laid out no longer swap their left-to-right order. The tree is only re-sorted when it is opened",
+    "Simulator: when undo, redo or removing a move shifts the layout, the box you were looking at now stays in the same place on screen (fixed the tree drifting away)",
+    "Simulator: in the enlarged box shown when you click a box in a zoomed-out tree, pressing “Done” or “Fail” now closes it. The merge tag now reads “→ continues at the box with the same contents”",
+    "Simulator: added a “Mod list” button to the next-move window and to the enlarged box in a zoomed-out tree. It opens the mod list for that box's item"
+  ],
   "0.1.719": [
     "Simulator (tree layout): branches that lead to a done box are now placed leftmost, followed by unset boxes. The row right under a box only holds that box's own continuation, and other branches are packed into free rows. Boxes are as tall as their content instead of matching the row, and boxes can no longer be dragged",
     "Simulator (tree look and feel): lines to the same frame are now shown only while you hover a box. The camera no longer moves by itself after you place a move or undo, and wheel zoom is finer. Fixed boxes with no line floating next to a folded Annulment tag. Removed the “Lines” and “Memo” buttons from the bar, and the leftover “Tidy junk” button",
