@@ -52,11 +52,16 @@ const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { m
  * 箱の見本の品 (sampleOf) で見る。当たりの判定は dailyHit (シミュの isAimMod + 同じ文のエッセンスの版)
  */
 export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
-  return Object.values(doc.boxes).filter((b) => b.done === "main").filter((b) => {
-    let mods;
-    try { const it = sampleOf(data, doc, b.id, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return true; }
-    return !holdsAll(data, mods, aims);
-  }).map((b) => b.id);
+  return Object.values(doc.boxes).filter((b) => b.done === "main").filter((b) => missingAims(data, doc, b.id, aims).length > 0).map((b) => b.id);
+}
+/**
+ * その箱の見本の品に足りないお題の狙い (D-35b)。完成の判定の物差しはここ 1 つ = unmetDone (提出・16:00 の検算) と、完成を押した時の精査 (D-35b ③、DailyPlay) が同じ物を呼ぶ。
+ * 見本が読めない箱は全部足りない扱い
+ */
+export function missingAims<A extends { modId: string; tier: number }>(data: PatchData, doc: TreeDoc, boxId: string, aims: readonly A[]): A[] {
+  let mods: StageMod[];
+  try { const it = sampleOf(data, doc, boxId, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return [...aims]; }
+  return aims.filter((a) => !mods.some((m) => dailyHit(data, m, a)));
 }
 
 /**

@@ -189,6 +189,9 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-heat="last"] .daily-fuse { height: 5px; }
 
 .daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--skin-panel); font-size: 15px; }
+/* 完成を押した時の精査の訳 (D-35b ③): 始め方の注意書きと同じ金の縦線と一段明るい地 */
+.daily-done-note { display: flex; align-items: baseline; gap: 10px; border-left: 3px solid var(--skin-title); background: var(--skin-raise); line-height: 1.6; color: var(--skin-text); }
+.daily-done-note > span:first-child { color: var(--skin-title); font-size: 17px; }
 /* 投稿のページの中のエミュ (D-12): 上にデイリーの帯 1 本 (送っても上に残る)、下はいつものエミュ */
 .daily-post-emu-bar { position: sticky; top: 0; z-index: 30; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.7); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; margin-bottom: 12px; background: var(--skin-panel); font-size: 14px; color: var(--skin-dim); }
 /* 中のエミュの上のタブはデイリーの上のタブと 2 重になるので隠す (移るのは帯の「投稿へ戻る」と上のタブから) */

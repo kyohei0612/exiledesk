@@ -19,7 +19,8 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
-import { fourOnlyOn, metBoxes, markMet, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
+import { fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
+import { tierRankLabel } from "../../services/craft-stage/engine";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
@@ -58,6 +59,9 @@ const clock = computed(() => { const s2 = Math.max(0, Math.ceil(left.value / 100
 const fuse = computed(() => Math.max(0, Math.min(1, left.value / TIME_LIMIT_MS)));
 const heat = computed(() => (left.value < 60_000 ? "last" : left.value < 600_000 ? "near" : ""));
 
+/** 完成を押した時の精査 (doneGate、D-35b ③) の控え。見本の木は下の begin の中ですぐ開くので、木を開く所より前に置く */
+const doneNote = ref<string | null>(null);
+let doneSeen = new Set<string>(), justOpened = false, keepNote = false;
 /** スタートを押してここへ来た時に挑戦が始まる (POST /daily/start)。データが来るまで待つ。今日でない・14:50 を過ぎた時はサーバーが断る。始めていれば同じ挑戦が返る */
 const refused = ref<StartError | null>(null);
 let starting = false;
@@ -101,6 +105,7 @@ function openTree(): void {
   const x = tryOf.value;
   if (!x?.fractured) return;
   treeStep.value = "tree";
+  justOpened = true; doneSeen = new Set(); doneNote.value = null;
   const saved = x.tree ? (JSON.parse(x.tree) as TreeDoc) : null;
   if (saved) t.open(saved);
   else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from)); }
@@ -150,12 +155,39 @@ watch(treeOn, (on) => { if (on) setTimeout(() => void nextTick(() => document.qu
 // 前提は変えられない (D-34): 完成形・始まりの窓を開かせず、1 つ戻すで白紙へ抜けた時は戻す
 watch(() => t.goalPage.value, (p) => { if (treeOn.value && p) t.goalPage.value = 0; });
 watch(() => t.startPage.value, (p) => { if (treeOn.value && p) t.startPage.value = false; });
+/**
+ * 完成を押した時の精査 (D-35b ③、スイッチ dailyDoneCheck。11-12 オーナー「完成ボタン押したときに精査して、精査はその枠と完成形の枠を比べて合格なら完成とする」)。
+ * 完成の印が新しく付いた箱の見本の品をお題の完成形と比べ (物差しは提出・検算と同じ missingAims)、足りなければその 1 手を戻して訳を 1 行出す。
+ * 開いた時に残っていた満たさない印 (古い挑戦の木) は外して知らせる。ほかの手を替えて後から満たさなくなった印は触らない (今までどおり提出の所で止まる。外すと「戻す」で戻れなくなる)。
+ * 見るだけの木 (提出済み・諦めた・時間切れ) は触らない。シミュの部品は触らない (シミュでは完成は人が決める、S-05)。手を入れたら true
+ */
+function doneGate(d: TreeDoc): boolean {
+  const data = s.data.value, x = tryOf.value;
+  if (!flag("dailyDoneCheck") || !data || !x || over.value) return false;
+  if (keepNote) keepNote = false; else doneNote.value = null;
+  const bad = unmetDone(data, d, x.aims), opened = justOpened;
+  justOpened = false;
+  const fresh = opened ? bad : bad.filter((id) => !doneSeen.has(id));
+  doneSeen = new Set(Object.values(d.boxes).filter((b) => b.done === "main" && !fresh.includes(b.id)).map((b) => b.id));
+  if (!fresh.length) return false;
+  keepNote = true;
+  if (opened || !t.canUndo.value) {
+    doneNote.value = tr(`完成形を満たさない「完成」の印を ${fresh.length} つ外しました。デイリーで完成にできるのは、完成形の MOD を全部持つ箱だけです。`, `Removed ${fresh.length} "finished" mark(s) that don't match the target item. In the daily challenge, only boxes with every target mod can be finished.`);
+    t.edit((doc) => { for (const id of fresh) if (doc.boxes[id]) doc.boxes[id]!.done = null; });
+  } else {
+    const miss = missingAims(data, d, fresh[0]!, x.aims).map((a) => `${t.aimShort({ modId: a.modId, tier: a.tier })} (${tierRankLabel(a.tier)})`);
+    doneNote.value = tr(`完成にできません。完成形に足りない MOD: ${miss.join("・")}`, `Can't mark this as finished. Missing from the target item: ${miss.join(", ")}`);
+    t.undo();
+  }
+  return true;
+}
 let saveT = 0;
 watch(() => t.doc.value, (d) => {
   if (!treeOn.value) return;
   if (d.base !== props.topic.base || !d.memoAims?.length) { openTree(); return; }
-  // 完成形と同じ形の箱は自動で完成 (D-35b ②)。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
   const data = s.data.value;
+  if (doneGate(d)) return;
+  // 完成形と同じ形の箱は自動で完成 (D-35b ②)。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
   if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims); }); return; }
   clearTimeout(saveT);
   if (!dev) saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
@@ -282,6 +314,8 @@ const REFUSED: Record<StartError, () => string> = {
     <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
     <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.submitted ? submittedNote() : tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
     <p v-else-if="unmet.length" data-daily-unmet class="daily-note">{{ tr(`「完成」の箱のうち ${unmet.length} つがお題の狙いを全部は持っていない。デイリーでは狙いを全部満たした箱だけを完成にでき、このままでは提出できない。`, `${unmet.length} finished box(es) don't have every target. In the daily challenge only boxes with all targets count as finished, so you can't submit yet.`) }}</p>
+    <!-- 完成を押した時の精査の訳 (D-35b ③)。注意書きと同じ金の縦線の枠 -->
+    <p v-if="doneNote && treeOn && !over" data-daily-done-note class="daily-note daily-done-note" role="alert"><span aria-hidden="true">⚠</span><span>{{ doneNote }}</span></p>
 
     <DailySubmitAsk v-if="asking" :id="topic.id" :open="!!asking" :cost="asking.cost" :rate="asking.rate" :shown="doneShown" :dev="!!dev" @close="asking = null" @done="submitted" />
     <p v-if="devNoAims" class="daily-note">{{ tr("開発の見本: このお題の狙いが見えない (締めた日のお題か、この端末で始めたお題の id を q に)。", "Dev sample: this topic's targets aren't visible (use a closed day's id or one you started here).") }}</p>
