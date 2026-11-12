@@ -54,7 +54,7 @@ export function isRetry(doc: TreeDoc, id: string): boolean {
 /** 戻りの札の文: 「n 段目へ戻る」、再度挑戦なら「再度挑戦 · n 段目へ戻る」(英語の案は Retry · Back to step n、notes/2026-10-26-failure-behavior.md) */
 export function backText(doc: TreeDoc, id: string, to: string): string {
   // 当たりの箱を別の道の同じ状態の当たりの箱へまとめた (tree-shape の joinSameHit、10-26 夜) は戻りでなく合流
-  if (doc.boxes[id]?.out === "hit" && doc.boxes[id]?.back !== MATCH && doc.boxes[to]?.out === "hit") { const n = stepOf(doc, to); return tr(`同じ MOD 群のため統合 (${n} 段目)`, `Merged: same mod group (step ${n})`); } // 10-27 オーナー「文言は『同じ MOD 群のため統合』と出そうか」
+  if (doc.boxes[id]?.out === "hit" && doc.boxes[id]?.back !== MATCH && doc.boxes[to]?.out === "hit") { const n = stepOf(doc, to); return tr(`同じ中身の箱の続きへ (${n} 段目)`, `Continues from the same-content box (step ${n})`); } // 11-12 に替えた (S-87。前の「同じ MOD 群のため統合」は削減の枠の「同じ」と同じ字で読み違えた)
   // 同じ段の同じ枠へまとめた箱 (S-66、11-11): 親の真下に描き「同じ枠へ (n 段目)」
   if (doc.boxes[id] && mergedSameRow(doc, doc.boxes[id]!)) { const n = stepOf(doc, to); return tr(`同じ枠へ (${n} 段目)`, `Same box (step ${n})`); }
   const step = stepBackText(doc, to, id);
