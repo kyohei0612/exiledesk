@@ -61,6 +61,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   migrateStart(d);
   holdAnnul(d, true); // 保存の手を置き直す間は、手を置くたびの消去の続きを止める (終わりの見直しで 1 段ずつ足す、S-28g ⑤ オ)
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
+  // スイッチ treeBothNoCopy (S-106b): 保存に「2 つとも付いた」の札 (鍵 a:、S-22d) が 1 つでもあれば、決めの無いその箱に隣の「1 つだけ付いた」箱の決めを写さない
+  const noBoth = flag("treeBothNoCopy") && [...picks.keys()].some((k) => BOTH_KEY.test(k));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
   const onPath = new Set([...picks.keys()].flatMap((k) => k.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));
   // 完成の箱とその上の札 (先に打つ)
@@ -100,7 +102,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
     restoreWhittlePre(d, id, at, onPath); // 削減の手前の枠 (S-65c) の決めの札を読めるように、枠を先に作る
     const kids = childKeysOf(d, id, key), exact = new Set(kids.map(([, ck]) => at + ck.slice(key.length)));
-    for (const [cid, ck] of kids) q.push([cid, ck, savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
+    for (const [cid, ck] of kids) q.push([cid, ck, savedKeyOf(at, ck.slice(key.length), onPath, exact, noBoth)]);
   } }
   yield* drain();
   // 前の版で人が選んだ ↩ は付け直す (S-52b の「読めてそのまま回る」)。行き先の札が今の木に無ければ要確認
@@ -115,7 +117,7 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   function* replay(added: readonly string[]): Generator<TreeDoc> {
     for (const id of added) {
       const par = d.boxes[id]!.parent!, [key, at] = placed.get(par) ?? ["", ""], kids = childKeysOf(d, par, key), ck = kids.find(([c]) => c === id)?.[1];
-      if (ck && placed.has(par)) q.push([id, ck, savedKeyOf(at, ck.slice(key.length), onPath, new Set(kids.map(([, k]) => at + k.slice(key.length))))]);
+      if (ck && placed.has(par)) q.push([id, ck, savedKeyOf(at, ck.slice(key.length), onPath, new Set(kids.map(([, k]) => at + k.slice(key.length))), noBoth)]);
     }
     if (added.length) { yield* drain(); flushBacks(); }
   }
@@ -234,7 +236,9 @@ function relinkSameHand(data: PatchData, d: TreeDoc): void {
  * 結果の種類が「打った後」と「外れ」で替わった札 (今の決まりで同じ結果の種類が替わった箱、当たりの MOD と側は同じ。兄弟がぴったり合う札は取らない)。
  * 無ければぴったりの札 (決めの無い新しい箱)
  */
-function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact: ReadonlySet<string>): string {
+/** 「2 つとも付いた」の当たりの箱の鍵 (a:、S-22d) が札にある */
+const BOTH_KEY = /\[(?:[^\]]*;)?a:/;
+function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact: ReadonlySet<string>, noBoth = false): string {
   const bare = (t: string): string => t.replace(/\[[^\]]*\](~\d+)?$/, "");
   const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
   // 狙いの札の無い当たり (打てない見本で 1 通りと読めなかったエッセンス) の決めも、今の「打った後」の箱の決めとして読む 
@@ -254,7 +258,7 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const lvSibs = /l:(lo|eq|hi)\]/.test(tail) ? (["lo", "eq", "hi"] as const).map((c) => at + tail.replace(/l:(lo|eq|hi)\]/, `l:${c}]`)) : [];
   // 未発現が入れ替わって消えた当たり (鍵 e:u、11-11 から分けた形 S-27d (ア)) は前の保存に無い形なので、鍵の無い札 (見本 = 外れが消えた形の決め) を写さない
   const newVeil = /[[;]e:[^\];]*\bu\b/.test(tail);
-  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + unlv(tail), at + unlv(unrank(tail)), newVeil ? "\0" : at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : []), ...lvSibs];
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + unlv(tail), at + unlv(unrank(tail)), newVeil || (noBoth && BOTH_KEY.test(tail)) ? "\0" : at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : []), ...lvSibs];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 6 || !exact.has(k) || lvSibs.includes(k)));
   if (hit) return hit;
   // 消去の結果の中身の鍵 (`c:<プレ>|<サフィ>~<中身の印>`) は、枠の比べが変わると印だけ変わる (11-04 に品質を枠へ入れた、S-60b)。側の数の同じ札の決めとして読む
