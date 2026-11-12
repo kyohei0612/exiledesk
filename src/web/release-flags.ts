@@ -170,6 +170,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.724 シミュの木: 削減の手をまとめてやめる入口 2 つ (S-65c5、オーナー 11-12 絵を見て「削減合格で」→「削減はあげておｋリリースで」、ブラック 95 の頼み)。閉じたままは treeFracKeepTier・treeOpenStartLeft (見た目の返事待ち)
+  "treeWhittleQuit",
   // 0.1.723 シミュの木の削減の枠: 手の札を枠ごとに 1 本ずつ・削減の手を消す前の一言・開き直しの枠の見本 (S-65c、オーナー 11-12 絵を見て「削減おｋ」→「出して」、ブラック 93 の頼み)。閉じたままは無し
   "treeLaneOwnHand",
   "treeLaneAsk",
