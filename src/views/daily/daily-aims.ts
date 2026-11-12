@@ -11,6 +11,7 @@ import { migrateStart, startRarity, type Aim, type StartFrom, type TreeDoc } fro
 import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
 import { genesisOver, genesisWhy, isGenesis, isGenesisLine } from "./daily-check";
+import { logPaste } from "./paste-log";
 
 /**
  * 狙いに入らなかった行。soft = 読めなかった行ではない (2 行で 1 つの MOD のもう 1 行 = もう数えてある・トレードの合計の行 = MOD ではない)。
@@ -46,6 +47,7 @@ function take(data: PatchData, base: { en: string; ja: string }, ilvl: number, m
 /** 貼った文を読む。ベースが読めなければ理由の文字列 */
 export function itemFromText(data: PatchData, text: string): PostItem | string {
   const r: ItemTextResult = parseItemText(data, text);
+  logPaste("daily", text, r); // 貼った文と読んだ結果を組で残す (D-14c)
   if (!r.base) return r.skipped[0] ? tr(r.skipped[0].reason.ja, r.skipped[0].reason.en) : tr("ベースが読めない", "Couldn't read the base");
   if (r.rarity === "unique") return tr("ユニークはお題にできない", "Uniques can't be used");
   const reading = r.readings?.[0] ?? { mods: r.mods, skipped: r.skipped };
