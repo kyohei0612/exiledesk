@@ -34,7 +34,8 @@ import { cantHandOf } from "../../../services/simulator/tree/tree-frame-check";
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
   /** スマホの道の画面: エッセンスの行は MOD の名前で出す (S-94h、tree-row-tags の routeRowTags) */ routeNames?: boolean;
-  /** 削減の手前の枠の帯 (帯の頭の箱だけ、S-65c ⑫) */ bands?: BandView[] }>();
+  /** 削減の手前の枠の帯 (帯の頭の箱だけ、S-65c ⑫) */ bands?: BandView[];
+  /** 見るだけの箱でも帯は押せる (縮めて見ている時。帯を押すとその枠の手の窓、S-147j) */ bandOn?: boolean }>();
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: [];
@@ -325,8 +326,8 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
   <!-- 削減の手前の枠の帯 (S-65c ⑫、11-10 オーナー案 ③): 枠ごとに 1 本、押すとその枠の手の窓 (未設定なら次に打つ手)。線は帯の真下から下へ。帯は枠の外のすぐ下 (追い 8) -->
   <div v-if="bands?.length" data-tree-bands class="mt-1 flex gap-1">
     <button v-for="x in bands" :key="x.id" type="button" data-tree-band :data-band-lv="x.lv" :data-box-id="x.id" class="nodrag relative flex min-w-0 flex-1 flex-col items-stretch gap-0.5 rounded-md border px-1 pb-0.5 pt-1 text-[11px] leading-4 hover:brightness-125"
-      :class="[quiet ? 'pointer-events-none' : '', x.selected ? 'ring-2 ring-amber-200' : '']" :style="{ borderColor: `rgba(${lvLook(x.lv).rgb},0.75)`, background: `linear-gradient(rgba(${lvLook(x.lv).rgb},0.12), rgba(${lvLook(x.lv).rgb},0.12)), #15110c` }"
-      :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="!quiet && emit('band', x.id, $event)" @click.stop>
+      :class="[quiet && !bandOn ? 'pointer-events-none' : '', x.selected ? 'ring-2 ring-amber-200' : '']" :style="{ borderColor: `rgba(${lvLook(x.lv).rgb},0.75)`, background: `linear-gradient(rgba(${lvLook(x.lv).rgb},0.12), rgba(${lvLook(x.lv).rgb},0.12)), #15110c` }"
+      :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="(!quiet || bandOn) && emit('band', x.id, $event)" @click.stop>
       <span class="truncate rounded-sm text-center font-bold text-black" :style="{ background: `rgb(${lvLook(x.lv).rgb})` }">{{ tr(BAND_TXT[x.lv]![0], BAND_TXT[x.lv]![1]) }}</span>
       <span class="truncate text-center text-white/70">{{ tr(BAND_TXT[x.lv]![2], BAND_TXT[x.lv]![3]) }}</span>
       <!-- 手は帯の下の札 (絵と名前、11-11 オーナー「どこに何打って…一ミリも分からん」)。帯の中は未設定の時だけ -->
