@@ -16,6 +16,10 @@
  *     --d1 = 口を通さず、Worker と同じ rollJson・rollPost (server/live/src/daily/roll.ts) を本番の D1 に直に (wrangler d1 execute --remote、オーナーのログイン)。
  *            お題の相場の写しは KV の market を wrangler で読む。覚えていた GET /daily.json (60 秒) は捨てないので、最大 60 秒は前の形が出る
  *     --week-only = 週の予定 (①) だけを書く (日曜 16:05 の週の取得の続き、scripts/daily-fetch-home.mjs)。締め・投稿・お題は書かない
+ *   node scripts/daily-roll.mjs --d1 --redo [--day …] [--dry]   (直す口、D-59、2026-11-12。中身は _daily-redo.mjs)
+ *     置いた次の日のお題を、出る前 (16:00 より前)・挑戦が 0 の時だけ消して、同じ回の中で組み直す (箱から出たお題なら箱の印も戻す)。
+ *     消す前の行は docs/org/daily/notes/redo-<日>-<時刻>.json に控え、組み直しが落ちたら控えから戻す。手で戻すのは --redo-restore <控え>。
+ *     予定のタスクは付けない (人が回す時だけ)。--dry = 消す行と組み直したお題を出すだけで書かない
  *   明日から先にお題に使える人のいない日があれば、書いた後に daily-fetch-home.mjs --more で取り直して、もう 1 回だけ回す (D-80f、--no-more で止める)
  */
 import { readFileSync } from "node:fs";
@@ -47,6 +51,17 @@ const target = dayArg && /^\d{4}-\d{2}-\d{2}$/.test(dayArg) ? dayArg : new Date(
 const headers = { "x-exiledesk-key": KEY, "content-type": "application/json" };
 const R = D1 ? await bundleEntry("server/live/src/daily/roll.ts") : null;
 const db = D1 ? remoteD1() : null;
+// 直す口 (D-59、--redo / --redo-restore <控え>): 置いた次の日のお題を 16:00 より前に消して組み直す。この 2 つを付けた時だけ通る (予定のタスクは付けない)
+const REDO = args.includes("--redo"), restoreAt = args.indexOf("--redo-restore");
+let redo = null;
+if (REDO || restoreAt >= 0) {
+  if (!D1 || WEEK_ONLY || VERIFY) { console.error("--redo / --redo-restore は --d1 と一緒の時だけ (--week-only・--verify とは一緒に使えない)"); process.exit(1); }
+  const X = await import("./_daily-redo.mjs");
+  if (restoreAt >= 0) { console.log(await X.redoRestore(db, args[restoreAt + 1], now, DRY)); process.exit(0); }
+  redo = await X.redoTake(db, now, target, DRY);
+  if (redo.stop) { console.log(`直す口: 何も書かずに終わる — ${redo.stop}`); process.exit(1); }
+  redo.check = () => X.redoCheck(db, redo);
+}
 let inp;
 if (D1) inp = await R.rollJson(db, now, target);
 else {
@@ -63,7 +78,7 @@ const data = M.loadPatchSync();
 const ver = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 // 締めそびれた日を拾う (D-59 ①b、11-11): 締めはふだん「組む日の前の日」1 日だけなので、PC が消えていて回らなかった日は後から締まらなかった。
 // 挑戦があって日の結果が 0 の過去の日 (14 日まで) を古い順に、その日を前の日とする回で締めだけ書く (称号は全部の日から計算し直すので二重にならない)
-if (D1 && !WEEK_ONLY) {
+if (D1 && !WEEK_ONLY && !redo) {
   const DAYMS = 86400e3, nameOfNo = (n) => new Date(n * DAYMS).toISOString().slice(0, 10), noOfName = (s) => Math.round(Date.parse(`${s}T00:00:00Z`) / DAYMS);
   const tNo = noOfName(target);
   const { results: late } = await db.prepare(
@@ -79,7 +94,12 @@ if (D1 && !WEEK_ONLY) {
   // 締めた日の結果を称号の計算に入れるため、組む日の材料を読み直す
   if (late?.length && !DRY) inp = await R.rollJson(db, now, target);
 }
-const { body, log } = M.roll(data, inp, ver, VERIFY);
+// 直す口: --dry は消していないので、読んだ材料から置いたお題を抜いた形で組む。組み直しで書くのは 箱の確かめ・予定の揃え直し・お題 だけ (週・締めは書かない)
+if (redo && DRY) redo.patch(inp);
+let rolled;
+try { rolled = M.roll(data, inp, ver, VERIFY); } catch (e) { if (redo && !DRY) await redo.restore(`組み直しが落ちた (${String(e).slice(0, 120)})`); throw e; }
+const { body, log } = rolled;
+if (redo) { delete body.week; delete body.close; if (!body.topic && !DRY) { await redo.restore("組み直してもお題が出なかった"); process.exit(1); } }
 if (WEEK_ONLY) for (const k of Object.keys(body)) if (k !== "week") delete body[k];
 for (const l of log) console.log(l);
 if (DRY) {
@@ -95,8 +115,10 @@ if (D1) {
   // お題の行は印だけで入れ、同じ書き込みの中で小分けに足す (D-80e)。Worker の口は値を bind するので要らない
   const market = body.topic ? remoteKv("market") : null;
   const big = market ? longValue(db, { table: "daily_topics", col: "prices", id: `d${body.topic.day}`, value: market }) : null;
-  const out = await R.rollPost(big ? big.db : db, body, big ? big.mark : market);
+  let out;
+  try { out = await R.rollPost(big ? big.db : db, body, big ? big.mark : market); } catch (e) { if (redo) await redo.restore(`書き込みが落ちた (${String(e).slice(0, 120)})`); throw e; }
   console.log(`topic (d1): ${JSON.stringify(out)}`);
+  if (redo) process.exit(await redo.check());
   moreAndAgain();
   process.exit(0);
 }
