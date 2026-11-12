@@ -14,7 +14,7 @@ import type { PostSrc } from "./daily-post-src";
 import type { PostCard } from "./daily-post-card";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
 import { byScore, rankCmp } from "./daily-score";
-import { DEV_BUILD } from "../../web/release-flags";
+import { DEV_BUILD, flag } from "../../web/release-flags";
 
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
 /** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
@@ -29,7 +29,8 @@ export type DailyTopic = { id: string; day: string; dayNo: number; base: string;
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
 export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord };
-export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean };
+/** views = そのレシピを開いた人の数 (D-50e、1 人も開いていない行には無い) */
+export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number };
 export type DailyNick = { id: string; name: string; code: string };
 /** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
 export type DailyBoxItem = { id: string; at: number; note: string; base: string; baseJa: string; ilvl: number; aims: DailyAim[]; status: "wait" | "ok" | "no" | "used"; why?: string };
@@ -222,6 +223,17 @@ export function rankOf(id: string): DailyRankRow[] {
 export async function rankRecipe(id: string, name: string): Promise<string | null> {
   const r = await call<{ recipe?: string | null }>(`/daily/recipe.json?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
   return r?.recipe ?? null;
+}
+/** 端末で「記録しない」を選んだか (utils/no-log.ts の控えと同じ鍵)。手元の開発版・録画の時の「送らない」は見ない = 開発版は手元の口に置くだけなので試せる */
+const optedOut = (): boolean => { try { return localStorage.getItem("exiledesk.noLog") === "1"; } catch { return false; } };
+/**
+ * POST /daily/view (D-50e、スイッチ dailyViews): 順位の行を押してレシピが開けた時に 1 回だけ送る (押した時の 1 回 = Y-100 の例外、D-57)。
+ * 名前を決めていれば合言葉つき (運営の側で誰が開いたか分かる)、決めていなければ名前なしで数だけ。自分のレシピは送らない。
+ * 端末で「記録しない」を選んだ人 (Y-63) からは送らない。返りは見ない (届かなくても画面は変わらない)
+ */
+export function viewPost(id: string, name: string): void {
+  if (!flag("dailyViews") || optedOut() || name === daily.local.nick?.name) return;
+  void call("/daily/view", { ...(auth() ?? {}), id, name });
 }
 /** 卓の右 = 昨日の上位 3 人 (D-60d) */
 export const yesterdayTop = (): DailyRankRow[] => (daily.remote ? rankOf(daily.remote.yesterday).slice(0, 3) : []);

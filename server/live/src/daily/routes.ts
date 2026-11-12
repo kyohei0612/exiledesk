@@ -7,6 +7,7 @@ import { dailyBox, dailyBoxStatus, dailyGiveup, dailyJson, dailyMine, dailyRecip
 import { notifyBox } from "./box-notify";
 import { dailyLive, pruneDailyLive } from "./live";
 import { nickPost } from "./nick";
+import { dailyView } from "./views";
 import { dayNoOf, noOfId } from "./time";
 import { rollJson, rollPost } from "./roll";
 
@@ -83,6 +84,9 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
     }
     case "/daily/live":
       return json(await dailyLive(db, body, now));
+    case "/daily/view":
+      // 順位のレシピを開いた記録 (D-50e)。表がまだ無いサーバーでは置かずに返す (画面は返りを見ない)
+      return json(await dailyView(db, body, ip, now).catch(() => ({ ok: false })));
     case "/daily/topic":
       if (!keyOk()) return json({ error: "key が違う" }, 403);
       {

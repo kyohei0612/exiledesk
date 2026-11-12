@@ -7,7 +7,7 @@ import { packJson } from "../../services/craft-stage/share";
 import { openSharedRecipe } from "../../state/for-share/sim-links";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import { dailyPage, type DailyView } from "../../state/web-page";
-import { rankRecipe } from "./daily-api";
+import { rankRecipe, viewPost } from "./daily-api";
 
 /** 開けたら true。今日の分・木が無い・つながらない時は false (画面が一言出す) */
 export async function openRankRecipe(id: string, name: string, day: string): Promise<boolean> {
@@ -15,6 +15,8 @@ export async function openRankRecipe(id: string, name: string, day: string): Pro
   if (!recipe) return false;
   let t: unknown;
   try { t = JSON.parse(recipe); } catch { return false; }
+  // 開けた時に 1 回、開いた記録を置く (D-50e。自分のレシピ・記録しない端末は送らない)
+  viewPost(id, name);
   const code = await packJson({ v: 2, n: `${name} (${day})`, t });
   closeDailyPage();
   history.replaceState(null, "", `${location.pathname}${location.search}#recipe=${code}`);

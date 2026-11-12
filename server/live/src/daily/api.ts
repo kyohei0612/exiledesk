@@ -5,6 +5,7 @@
  */
 import { authNick, hasBadWord, ipHash } from "./nick";
 import type { BoxCard, BoxPost } from "./box-notify";
+import { viewCounts } from "./views";
 import { byScore, rankOrderSql } from "../../../../src/views/daily/daily-score";
 import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
@@ -90,7 +91,12 @@ export async function dailyJson(db: D1Database, now: number, prices: string | nu
   };
   const week = Array.from({ length: 7 }, (_, i) => ({ id: idOf(monday + i), wd: i, md: dayName(monday + i).slice(5).replace("-", "/"), today: monday + i === today, t: monday + i <= today ? out(monday + i) : null }));
   const ranks: Record<string, unknown[]> = {};
-  for (const t of topics) ranks[t.id] = (await db.prepare(rankSql(t.id)).bind(t.id, RANK_TOP).all()).results;
+  for (const t of topics) {
+    const rows = (await db.prepare(rankSql(t.id)).bind(t.id, RANK_TOP).all<{ name: string }>()).results;
+    // レシピを開いた人の数 (D-50e)。1 人も開いていない行には欄を付けない (画面は「—」)
+    const views = rows.length ? await viewCounts(db, t.id) : new Map<string, number>();
+    ranks[t.id] = views.size ? rows.map((r) => (views.has(r.name) ? { ...r, views: views.get(r.name) } : r)) : rows;
+  }
   const yesterday = ranks[idOf(today - 1)]?.slice(0, 3) ?? [];
   const names = [...new Set(Object.values(ranks).flat().map((r) => (r as { name: string }).name))];
   return { now, today: idOf(today), yesterday: idOf(today - 1), week, yesterdayTopic: out(today - 1), ranks, yesterdayTop: yesterday, titles: await titlesOf(db, names) };

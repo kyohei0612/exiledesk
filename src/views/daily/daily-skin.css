@@ -23,6 +23,9 @@
 @container (max-width: 440px) { .daily-rank-time { display: none; } }
 /* もっと狭い時 (一覧の 3 列の真ん中が品のカードで広がった時など) はスコアの日だけ「1 個あたり」も外す (スコアに含まれる。順位の並びはスコア) */
 @container (max-width: 320px) { .daily-rank-cost { display: none; } }
+/* 右端の列「閲覧」(D-50e、スイッチ dailyViews): 3 桁まで入る幅。欄が狭い時 (スマホ・一覧の 3 列) は時間の列と同じく畳んで名前を潰さない */
+.daily-rank-views { width: 40px; flex: none; text-align: right; }
+@container (max-width: 440px) { .daily-rank-views { display: none; } }
 
 /* お題の顔。面の格子へ溶ける */
 .daily-hero { display: contents; }
