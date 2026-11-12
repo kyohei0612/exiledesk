@@ -59,6 +59,11 @@ export interface TreeRunOpts {
    * 無ければ今までどおり全員で 1 本の列を使った順。ある時は 1 人目の箱 b12 の 3 回目は、ほかの箱の手を替えても同じ数を引く (始めの品・作り直しは "start" の列)
    */
   perBox?: boolean;
+  /**
+   * 完成の箱に着いた人の品を見て、完成に数えてよいかを返す (S-05b、デイリーが「お題の狙いを全部持つ品だけ完成」に使う)。
+   * 無ければ今までどおり着いた人は全員完成。false の人はその箱の失敗と同じ数え (そこで終わり・費用は合計に入る・完成に数えない)、箱ごとの人数は結果の unmetAt
+   */
+  doneOk?: (item: StageItem, box: string) => boolean;
 }
 /** 箱ごとの列 (perBox)。種・何人目・箱の名前を混ぜて 1 本ずつ作る */
 function boxStreams(seed: number, i: number): (box: string) => () => number {
@@ -99,6 +104,8 @@ export interface TreeRunResult {
   /** 失敗 (ここで終わり) の箱で止めた人の数と箱ごとの数  */
   failed: number;
   failAt: Record<string, number>;
+  /** 完成の箱に着いたが doneOk が false を返した人の箱ごとの数 (failed・failAt にも入っている。doneOk を渡さない時は空) */
+  unmetAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
   stuckWhy: Record<string, { reason: string; /** 止まり方の 1 行の要約 (10 種、11-08。詳しい文は reason) */ short?: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。穴チェックの走行の「どこでループしたか」、10-27 オーナー) */
@@ -127,7 +134,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -138,7 +145,7 @@ export const stopAimedOf = (item: StageItem): ReadonlySet<string> | null => STOP
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
-function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, pick: ((box: string) => () => number) | null, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand">): Generator<void, Person> {
+function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, pick: ((box: string) => () => number) | null, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand" | "doneOk">): Generator<void, Person> {
   // 輪の早送り (S-71b): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
   const light = !o.onHand;
   let rolls = 0, seenRolls = -1;
@@ -185,6 +192,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail") return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     if (b.done === "main") {
+      if (o.doneOk && !o.doneOk(item, at)) return fin({ end: "failed", unmet: true, cost, at, visits, uses, restarts, odd });
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)。
       // 完成のアイテムも残す (台本で完成図を出す。止まりの集計 stuckWhy には入れない)
       return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
@@ -353,7 +361,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const uses: Record<string, number> = {};
   for (const p of people) for (const [k, v] of Object.entries(p.uses)) uses[k] = (uses[k] ?? 0) + v / (n || 1);
   const stuckAt: Record<string, number> = {}, failAt: Record<string, number> = {};
-  for (const p of people) if (p.end === "failed") failAt[p.at] = (failAt[p.at] ?? 0) + 1;
+  const unmetAt: Record<string, number> = {};
+  for (const p of people) if (p.end === "failed") { failAt[p.at] = (failAt[p.at] ?? 0) + 1; if (p.unmet) unmetAt[p.at] = (unmetAt[p.at] ?? 0) + 1; }
   const stuckWhy: TreeRunResult["stuckWhy"] = {};
   // 止まりは流れ着いた先でなく原因の箱 (体の違う人を ↩ で送り出した箱・移した箱) に付ける (S-72、スイッチ bodyStrict)
   for (const p of people) if (p.end === "stuck" && p.blame && p.blame !== p.at && p.why) p.why = { ...p.why, reason: tr(`ここから外れの側・数の違う人が先へ進み、${boxWord(doc, p.at)}で止まる: ${p.why.reason}`, `Runs with different misses go on from here and stop at ${boxWord(doc, p.at)}: ${p.why.reason}`) };
@@ -398,7 +407,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, failed: people.filter((p) => p.end === "failed").length, failAt, stuckWhy, loopAt, unexpected, moved, perItem,
+    stuckAt, failed: people.filter((p) => p.end === "failed").length, failAt, unmetAt, stuckWhy, loopAt, unexpected, moved, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
@@ -439,7 +448,7 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
  */
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? defaultCapDiv(opts.price), capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, slice: opts.slice ?? 0 };
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? defaultCapDiv(opts.price), capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, slice: opts.slice ?? 0, doneOk: opts.doneOk };
   const aims = opts.aims ?? aimsOf(data, doc);
   const j = judgeMemo(data, doc);
   const rng = mulberry32(opts.seed);
