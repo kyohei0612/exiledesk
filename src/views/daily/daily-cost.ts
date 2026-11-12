@@ -10,7 +10,8 @@ import { runPrice, runShown } from "../../services/simulator/tree/run-price";
 import { aimOpts, sampleOf, targetsOf } from "../../services/simulator/tree/tree-sample";
 import { isAimMod } from "../../services/simulator/tree/tree-aim";
 import { tierNoOf } from "../../services/craft-stage/tier-rank";
-import type { StageMod } from "../../services/craft-stage/engine";
+import type { StageItem, StageMod } from "../../services/craft-stage/engine";
+import { flag } from "../../web/release-flags";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { NO_FRAC, fillTopicDoc } from "./daily-aims";
@@ -46,6 +47,15 @@ export function dailyHit(data: PatchData, m: StageMod, a: { modId: string; tier:
 }
 const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { modId: string; tier: number }[]): boolean =>
   aims.every((a) => mods.some((m) => dailyHit(data, m, a)));
+
+/**
+ * 回す時に完成の箱へ着いた人の品を見る物差し (D-35b ④、スイッチ dailyDoneCheck。シミュの回しの口 doneOk = S-05b へ渡す)。
+ * お題の狙いを段の下限まで全部持つ人だけ完成に数え、足りない人はその箱の失敗と同じ数え (そこで終わり・費用は合計に入る)。
+ * 完成の精査 (missingAims) は箱の見本の品 1 つを見るので、見本は満たすが着く人の一部は満たさない箱 (最後の手の ☑ の段がお題より緩い時など) を回す所で受ける。
+ * 挑戦の画面 (DailyPlay の treeRunRig) と 16:00 の検算 (runCost) が同じここを呼ぶ。スイッチが切れている間は undefined = 今までどおり全員完成
+ */
+export const doneOkOf = (data: PatchData, aims: readonly { modId: string; tier: number }[]): ((item: StageItem) => boolean) | undefined =>
+  flag("dailyDoneCheck") ? (item) => holdsAll(data, [...item.prefixes, ...item.suffixes], aims) : undefined;
 
 /**
  * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。
@@ -98,7 +108,7 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   fillTopicDoc(doc, topic.aims, frac ?? NO_FRAC, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
   markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims).length) return null;
-  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox }), 0));
+  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox, doneOk: doneOkOf(data, topic.aims) }), 0));
 }
 
 /**

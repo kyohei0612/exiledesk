@@ -19,8 +19,8 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
-import { fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
-import { tierRankLabel } from "../../services/craft-stage/engine";
+import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, topicPrice, unmetDone } from "./daily-cost";
+import { tierRankLabel, type StageItem } from "../../services/craft-stage/engine";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
 import DailyFracPick from "./DailyFracPick.vue";
@@ -193,6 +193,7 @@ watch(() => t.doc.value, (d) => {
   if (!dev) saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
   if (!dev) liveDoc(d);
 });
+const runUnmet = ref<ReadonlySet<string>>(new Set());
 let rigKey = "";
 // 100 人回す・穴チェックはお題に固定した種と相場の写しで、始めの値段は 0 (D-34・D-58、シミュの S-70c)。16:00 の検算 (runCost) と同じ数になる。写しが無い開発の見本は普段のまま
 watch([treeOn, tryOf, () => s.data.value], ([on, x, data]) => {
@@ -202,7 +203,10 @@ watch([treeOn, tryOf, () => s.data.value], ([on, x, data]) => {
   const key = `${x!.seed}|${JSON.stringify(x!.prices)}`;
   if (treeRunRig.value && key === rigKey) return;
   rigKey = key;
-  treeRunRig.value = { seed: x!.seed!, price, startCost: 0, perBox: perBoxOn(props.topic.id) }; // 箱ごとの乱数は D-58b の日から (検算と同じ)
+  // 完成の箱に着いた人の品も見る (D-35b ④、検算と同じ物差し doneOkOf)。足りない人の着いた箱を控えて 1 行で知らせる
+  const ok = doneOkOf(data!, x!.aims);
+  const doneOk = ok && ((item: StageItem, box: string): boolean => { const r = ok(item); if (!r && !runUnmet.value.has(box)) runUnmet.value = new Set([...runUnmet.value, box]); return r; });
+  treeRunRig.value = { seed: x!.seed!, price, startCost: 0, perBox: perBoxOn(props.topic.id), doneOk }; // 箱ごとの乱数は D-58b の日から (検算と同じ)
 }, { immediate: true });
 onBeforeUnmount(() => { treeRunRig.value = null; });
 // 別の場所の木を持ち込まない (D-36): 貼り付けは入力欄の外では届かせない
@@ -228,6 +232,10 @@ const run = computed((): { rate: number; cost: number | null } | null => {
 });
 // 100 人回した結果も動作の列へ (D-57b)
 watch(run, (r) => { if (r && !dev) liveAct("run", { rate: r.rate, cost: r.cost }); });
+/** 回した時に、完成形に足りない人が着いた完成の箱 (D-35b ④)。木を組み替えて結果が消えたら空に戻す */
+watch(run, (r) => { if (!r && runUnmet.value.size) runUnmet.value = new Set(); });
+/** 今も完成の印のある箱だけ数える (印を外した・失敗に替えた箱は知らせない) */
+const runUnmetN = computed(() => (run.value ? [...runUnmet.value].filter((id) => t.doc.value.boxes[id]?.done === "main").length : 0));
 /** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーで完成に数えるのは狙いを満たした品だけ) */
 const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims) : []));
 /** 提出の確かめと結果の窓 (D-35c)。出したら挑戦は終わり */
@@ -314,6 +322,8 @@ const REFUSED: Record<StartError, () => string> = {
     <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
     <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.submitted ? submittedNote() : tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
     <p v-else-if="unmet.length" data-daily-unmet class="daily-note">{{ tr(`「完成」の箱のうち ${unmet.length} つがお題の狙いを全部は持っていない。デイリーでは狙いを全部満たした箱だけを完成にでき、このままでは提出できない。`, `${unmet.length} finished box(es) don't have every target. In the daily challenge only boxes with all targets count as finished, so you can't submit yet.`) }}</p>
+    <!-- 回した時に完成の箱へ着いた人の一部が完成形に足りない (D-35b ④)。提出は止めない (数はもう足りない人を除いた物) -->
+    <p v-if="runUnmetN && treeOn && !over" data-daily-run-unmet class="daily-note daily-done-note" role="status"><span aria-hidden="true">⚠</span><span>{{ tr(`「完成」の箱 ${runUnmetN} つに、完成形の MOD が足りない人が着いています。その人は完成に数えていません (費用には入ります)。`, `${runUnmetN} finished box(es) received items that are missing target mods. Those runs are not counted as finished (their cost still counts).`) }}</span></p>
     <!-- 完成を押した時の精査の訳 (D-35b ③)。注意書きと同じ金の縦線の枠 -->
     <p v-if="doneNote && treeOn && !over" data-daily-done-note class="daily-note daily-done-note" role="alert"><span aria-hidden="true">⚠</span><span>{{ doneNote }}</span></p>
 
