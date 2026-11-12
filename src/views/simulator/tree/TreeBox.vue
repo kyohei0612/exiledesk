@@ -53,6 +53,8 @@ const emit = defineEmits<{
   checked: [];
   /** 削減の手前の枠の帯を押した (その枠の箱 id) */
   band: [id: string, e: PointerEvent];
+  /** 帯の右の「削減をやめる」を押した (S-65c5) */
+  quit: [];
 }>();
 const t = useTree();
 /**
@@ -154,6 +156,8 @@ const orphan = computed(() => props.box.out === "hit" && orphanHits(t.doc.value)
 const branchText = computed(() => { const r = props.box.parent ? t.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
 /** 押せる物を隠す時 (一望) */
 const quiet = computed(() => !!props.viewOnly);
+/** 帯の右の「削減をやめる」(S-65c5): 枠が 2 つ以上で、押せる箱の時だけ */
+const quitOn = computed(() => flag("treeWhittleQuit") && !quiet.value && (props.bands?.length ?? 0) > 1);
 /** 箱の地を押した (ボタン以外) = 引っ張る用。押せない時 (一望・手) は Vue Flow に任せる (画面が動く / 押した判定) */
 function down(e: PointerEvent): void {
   // 箱は並べ方が決めた位置に固定: つかんで動かさない (S-140、スイッチ boxFixed。押したまま動かすと画面の送りになる)
@@ -324,7 +328,10 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
       :title="hold ? tr('予見したアイテムで次に持つ手を選ぶ (結果が見える)', 'Choose the next craft to hold on the foreseen item (its result is visible)') : tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)" @click.stop><template v-if="hold">{{ tr("進む", "Next") }}</template><Icon v-else name="plus" class="size-4" /></button>
   </div>
   <!-- 削減の手前の枠の帯 (S-65c ⑫、11-10 オーナー案 ③): 枠ごとに 1 本、押すとその枠の手の窓 (未設定なら次に打つ手)。線は帯の真下から下へ。帯は枠の外のすぐ下 (追い 8) -->
-  <div v-if="bands?.length" data-tree-bands class="mt-1 flex gap-1">
+  <div v-if="bands?.length" data-tree-bands class="relative mt-1 flex gap-1">
+    <!-- 帯の右の「削減をやめる」(S-65c5): 押すと確かめ 1 回 → 枠を 1 つの箱に戻して次に打つ手の窓 -->
+    <button v-if="quitOn" type="button" data-tree-whittle-quit class="nodrag absolute left-full top-0 z-10 ml-2 flex h-full w-max items-center gap-1 whitespace-nowrap rounded-md border border-amber-300/60 bg-[#221a0e] px-2.5 text-[12px] font-bold text-amber-100 hover:brightness-125 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
+      :title="tr('削減の手をまとめてやめる: 枠を 1 つの箱に戻して、次に打つ手を選び直す (押すと確かめ)', 'Stop Whittling: merge the frames back into one box and choose the next craft again (asks first)')" @pointerdown.stop @click.stop="emit('quit')"><Icon name="x" class="size-3.5" />{{ tr("削減をやめる", "Stop Whittling") }}</button>
     <button v-for="x in bands" :key="x.id" type="button" data-tree-band :data-band-lv="x.lv" :data-box-id="x.id" class="nodrag relative flex min-w-0 flex-1 flex-col items-stretch gap-0.5 rounded-md border px-1 pb-0.5 pt-1 text-[11px] leading-4 hover:brightness-125"
       :class="[quiet && !bandOn ? 'pointer-events-none' : '', x.selected ? 'ring-2 ring-amber-200' : '']" :style="{ borderColor: `rgba(${lvLook(x.lv).rgb},0.75)`, background: `linear-gradient(rgba(${lvLook(x.lv).rgb},0.12), rgba(${lvLook(x.lv).rgb},0.12)), #15110c` }"
       :title="`${tr(lvLook(x.lv).tja, lvLook(x.lv).ten)} — ${x.hand ?? tr('未設定 (押して次に打つ手を選ぶ)', 'Unset (click to choose the next craft)')}`" @pointerdown.stop="(!quiet || bandOn) && emit('band', x.id, $event)" @click.stop>

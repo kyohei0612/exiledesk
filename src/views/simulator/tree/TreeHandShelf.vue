@@ -31,7 +31,7 @@ import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { fracStopNote, stopSureFrac } from "./tree-frac-stop";
 import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
-import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan"; import { laneNoteOf } from "./tree-lane-ask";
+import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan"; import { laneNoteOf } from "./tree-lane-ask"; import { armQuitAll, quitChoiceOf } from "./tree-whittle-quit";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { useViewOnlyWidth } from "../../../utils/use-phone";
@@ -337,7 +337,7 @@ const goneNow = computed((): number => {
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
 // 入れ替えるソケットを選ぶ番は、ソケットを押した時にそのソケットで断る (左のソケットの訳を出さない)
 const problem = computed((): string | null => (runePick.value ? null : divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
-const gone = later(handKey, goneNow);
+const gone = later(handKey, goneNow); const quitC = computed(() => quitChoiceOf(toRaw(t.doc.value), props.boxId, hand.value)); // 確かめの窓の「削減を全部やめる」(S-65c5)
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
  * 2 段目 = 「どれが付いたら当たり?」(付きうる狙い aimChoices だけ、既定は狙い無し)。狙い無しのままなら 1 段目の帯の「狙い無しで決める」ですぐ決める。
@@ -498,10 +498,10 @@ function ok(): void {
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
         <p class="text-[16px] font-bold text-rose-100">{{ tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->
-        <p data-tree-hand-warn-n :data-n="goneNow" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ tr(`続けるとこの箱から下の ${goneNow} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(goneNow)} below this one (Undo restores them)`) }}<span data-tree-hand-warn-lane class="mt-1 block empty:hidden">{{ laneNoteOf(t.doc.value, boxId, hand, kind, hitAims, preCat, onlyNow) }}</span></p>
+        <p data-tree-hand-warn-n :data-n="goneNow" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ tr(`続けるとこの箱から下の ${goneNow} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(goneNow)} below this one (Undo restores them)`) }}<span data-tree-hand-warn-lane class="mt-1 block empty:hidden">{{ laneNoteOf(t.doc.value, boxId, hand, kind, hitAims, preCat, onlyNow) }}</span><span v-if="quitC" data-tree-hand-warn-quit-note class="mt-2 block font-bold text-amber-200">{{ tr(`ほかの枠にも削減の手が ${quitC.others} つ残っています。`, quitC.others === 1 ? "1 other frame still has a Whittling craft." : `${quitC.others} other frames still have a Whittling craft.`) }}</span></p>
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnOpen = false">{{ tr("やめる", "Cancel") }}</button>
-          <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnOpen = false; use()">{{ tr("続ける", "Continue") }}</button>
+          <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnOpen = false; use()">{{ quitC ? tr("この枠だけ替える", "Change this frame only") : tr("続ける", "Continue") }}</button><button v-if="quitC" type="button" data-tree-hand-warn-quit class="g-btn-red !min-h-11 basis-full" @click="warnOpen = false; armQuitAll(); use()">{{ tr(`削減を全部やめる (${quitC.frames} つの枠 → 1 つの箱)`, `Stop Whittling everywhere (${quitC.frames} frames → 1 box)`) }}</button>
         </div>
       </div>
     </div>

@@ -57,7 +57,7 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { applyPick, drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask";
+import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -174,15 +174,15 @@ const backLabel = (b: Box): string => backLabelOf(doc.value, b);
  * 新しくできた結果の箱は、同じ形の箱があればそこへ自動でつなぐ (linkSameShape。手の種類が同じで箱を作り直さない時は人が選んだ戻り先のまま)
  */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
-  const id = panel.value!.id;
+  const id = panel.value!.id, q = takeQuitAll(); // q = 確かめの窓で「削減を全部やめる」を選んだ (S-65c5)
   simAct("hand", kind);
   // 外れの箱で打つ前の箱・同じ形の箱と同じ手は applyPick (tree-shape の sameHandReturn) が戻す (S-51。前の sameHandRetry は本番の goalShape で使われなくなったので消した)
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
   // 視点は holdBox (S-147e)。削減の手を打ち直してほかの枠の手が消える時、手の窓の確かめ「この手以降は削除されます」(下の箱が消える時に出る) で伝えていなければ先に聞く (S-65c4)
-  askLane(doc.value, id, (d) => { applyPick(d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); tidyOf(d); }); return at; });
-    panel.value = null; }, drawnBelow(doc.value, id).length > 0);
+  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); tidyOf(d); }); return at; });
+    panel.value = null; }, q || drawnBelow(doc.value, id).length > 0);
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
@@ -322,7 +322,7 @@ const lanes = computed(() => laneMarks(doc.value, rowL.value)); // 段の札は 
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
-const bd = useTreeBands({ doc, selectedId: () => panel.value?.id ?? plus.value?.id ?? null, issueOf, openHand: (id) => (panel.value = { kind: "hand", id }), onPlus: (b, e) => onPlus(b, "next", e) }); // 削減の手前の枠の帯 (S-65c ⑫)
+const bd = useTreeBands({ doc, selectedId: () => panel.value?.id ?? plus.value?.id ?? null, issueOf, openHand: (id) => (panel.value = { kind: "hand", id }), onPlus: (b, e) => onPlus(b, "next", e), edit: t.edit }); // 削減の手前の枠の帯 (S-65c ⑫)
 watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.revealSpot(id), 0); } });
 // 手の窓を選ばずに閉じたら開く前の視点へ (S-147e)。手を決めた時は holdBox が先に場所を使い切る
 watch(panel, (p, was) => { if (!p && was?.kind === "hand") void v.backSpot(); });
@@ -438,7 +438,7 @@ const glowOf = (b: Box): boolean => {
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
               <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
-              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" :band-on="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!)" @band="(x, e) => (viewOnly ? (panel = { kind: 'hand', id: x }) : bd.onBand(x, e))"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
+              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" @quit="bd.onQuit(id)" :band-on="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!)" @band="(x, e) => (viewOnly ? (panel = { kind: 'hand', id: x }) : bd.onBand(x, e))"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
                 @clear-back="t.edit((d) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
@@ -476,7 +476,7 @@ const glowOf = (b: Box): boolean => {
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${popBoxH}px` }">
-            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)" :bands="bd.bandsFor(pop)"
+            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)" :bands="bd.bandsFor(pop)" @quit="popDo((x) => bd.onQuit(x))"
               @drag="() => {}" @band="(id) => popDo(() => (panel = { kind: 'hand', id }))" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
               @clear-back="t.edit((d) => clearBack(d, pop!))" @done="popDo((_, b) => onDone(b))" @fail="popDo((_, b) => onFail(b))"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />

@@ -11,11 +11,12 @@ import { handLabel } from "./tree-names";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { isWhittleHand } from "../../../services/simulator/tree/tree-whittle";
 import { tr } from "../../../i18n/lang";
+import { askQuit, quitWhittle } from "./tree-whittle-quit";
 
 /** 箱の帯 1 本の見せ方 */
 export interface BandView { id: string; lv: LvClass; hand: string | null; issue: string | null; selected: boolean }
 
-export function useTreeBands(o: { doc: Ref<TreeDoc>; selectedId: () => string | null; issueOf: (b: TreeBox) => string | null; openHand: (id: string) => void; onPlus: (b: TreeBox, e: PointerEvent) => void }) {
+export function useTreeBands(o: { doc: Ref<TreeDoc>; selectedId: () => string | null; issueOf: (b: TreeBox) => string | null; openHand: (id: string) => void; onPlus: (b: TreeBox, e: PointerEvent) => void; edit: (fn: (d: TreeDoc) => void) => void }) {
   // 選んでいる箱 (手の窓か ＋ を開いた箱) を、帯から読める置き場へ覚えておく (S-145g、tree-picked)
   watch(o.selectedId, pickBox, { immediate: true });
   /** 帯の頭の箱 id に出す帯 (頭でなければ空) */
@@ -35,5 +36,7 @@ export function useTreeBands(o: { doc: Ref<TreeDoc>; selectedId: () => string | 
   };
   /** 寄る・描くかの判定で使う箱 (帯の中の枠の箱は帯の頭) */
   const drawnId = (id: string): string => bandHead(o.doc.value, id);
-  return { bandsFor, onBand, drawnId };
+  /** 帯の右の「削減をやめる」(S-65c5): 確かめ 1 回 → 枠を帯の頭の 1 つの箱に戻し、その箱の次に打つ手の窓を開く */
+  const onQuit = (id: string): void => askQuit(o.doc.value, id, () => { o.edit((d) => quitWhittle(d, id)); o.openHand(id); });
+  return { bandsFor, onBand, onQuit, drawnId };
 }
