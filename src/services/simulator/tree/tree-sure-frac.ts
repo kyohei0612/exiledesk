@@ -10,6 +10,7 @@ import { FRACTURE_POOL } from "../sim-odds";
 import { newlyFractured } from "./tree-frac-pick";
 import { effectOf, engineOmens } from "./tree-hands";
 import { fractureMarks, startsFractured, type Hand, type TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** この木のこの手が確定フラクチャーか (デイリーの印・ベースから・フラクチャーの手・✦ の印がある) */
 export const sureFracOn = (doc: TreeDoc, h: Hand | null | undefined): boolean =>
@@ -30,6 +31,15 @@ export function sureFracture(data: PatchData, doc: TreeDoc, item: StageItem, h: 
   const best = hits.reduce((x, y) => (y.p > x.p ? y : x));
   return { applied: true, item: best.item, added: [], removed: [] };
 }
+
+/**
+ * 確定フラクチャーなのに、この品には ✦ の印の MOD が固定されえない (まだ付いていない・未発現の行だけ・冒涜で付いた = E-41) か。
+ * true なら「選んだ MOD が固定された」の箱を作らず、手の窓で断る (S-43a、スイッチ treeSureFracNeedMod。
+ * 要望 f38701c1: 未発現の付いた品にフラクチャーを置くと、付いていない選んだ MOD が固定された題の箱が出た)。
+ * フラクチャーそのものが打てない品 (MOD が 4 つ無い等) はエンジンの断りに任せる = false
+ */
+export const sureFracMissing = (data: PatchData, doc: TreeDoc, item: StageItem, h: Hand | null | undefined): boolean =>
+  flag("treeSureFracNeedMod") && sureFracOn(doc, h) && !!stepOutcomes(data, item, h!.currency, engineOmens(h!))?.some((o) => !o.void) && !sureFracture(data, doc, item, h!);
 
 /** 確定フラクチャーで使う物: カレンシーとお告げを FRACTURE_POOL 回分 (3 回に 1 回成功 = 33%、文は tree-names の sureFracText と同じ数) */
 export function useSureFrac(h: Hand, use: (key: string, n: number) => void): void {

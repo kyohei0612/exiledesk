@@ -19,7 +19,7 @@ import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goalTierOf, gotOf, isSwapEssence, keptAimedOf, keptAimsOf, swapKeyOf, veilSwapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
-import { sureFracOn } from "./tree-sure-frac";
+import { sureFracMissing, sureFracOn } from "./tree-sure-frac";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
 
 /**
@@ -356,7 +356,8 @@ function boxOutOf(oc: Outcome, free: boolean): BoxOut {
  */
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): BoxOut[] | null {
   // デイリーの確定フラクチャー (D-03): 箱は「✦ の MOD が固定された」1 つ (外れの枝なし)
-  if (sureFracOn(doc, h)) return [{ out: "hit", aim: fractureMarks(doc)[0]! }];
+  // (選んだ MOD が固定されえない品 = まだ付いていない・未発現だけ・冒涜で付いた は確定の箱を作らず、下のいつもの結果へ。S-43a、スイッチ treeSureFracNeedMod)
+  if (sureFracOn(doc, h) && !sureFracMissing(data, doc, sampleOf(data, doc, boxId, 1).item, h)) return [{ out: "hit", aim: fractureMarks(doc)[0]! }];
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 目標の数値を決めた神 (S-202): 目標の以上 / 未満 (届く割合が 0 か 1 の側は無し)

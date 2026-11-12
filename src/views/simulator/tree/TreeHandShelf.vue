@@ -29,7 +29,7 @@ import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from 
 import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
-import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags";
+import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { sureFracMissing } from "../../../services/simulator/tree/tree-sure-frac";
 import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
 import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan"; import { laneNoteOf } from "./tree-lane-ask";
 import { modText, tr } from "../../../i18n/lang";
@@ -336,7 +336,7 @@ const goneNow = computed((): number => {
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
 // 入れ替えるソケットを選ぶ番は、ソケットを押した時にそのソケットで断る (左のソケットの訳を出さない)
-const problem = computed((): string | null => (runePick.value ? null : divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
+const problem = computed((): string | null => (runePick.value ? null : divOn.value && divTargets.value.length < divNeed.value ? tr("狙いの MOD を全部「完了」にして", "Press Done on every target mod first") : hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) ?? (sureFracMissing(s.data.value, toRaw(t.doc.value), item.value, hand.value) ? tr("選んだ MOD がまだこの品に付いていない。フラクチャーは選んだ MOD がふつうの MOD として付いてから (未発現の行・冒涜で付いた MOD は固定できない)", "The chosen mod isn't on this item yet. Use the Fracturing Orb once it is added as a regular mod (unrevealed and desecrated mods can't be fractured)") : null) : null));
 const gone = later(handKey, goneNow);
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
