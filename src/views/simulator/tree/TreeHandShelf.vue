@@ -414,7 +414,7 @@ function ok(): void {
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepShow && !P27" :k="k" :adds="addLabels" />
-      <p v-if="kind && !(divOn && divTargets.length < divNeed)" class="text-[11px] opacity-70 min-[48rem]:truncate" :title="boxesLine">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
+      <p v-if="kind && !(divOn && divTargets.length < divNeed) && !fracStopNote(s.data.value, t.doc.value, item, hand)" class="text-[11px] opacity-70 min-[48rem]:truncate" :title="boxesLine">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex min-h-[1lh] flex-wrap items-center gap-1.5 text-[11px]"><!-- ☑ を押すたびにこの行が出たり消えたりして窓が上下に揺れたので、1 行ぶんの高さをいつも取る (11-12 オーナー「絶対この2行のせいだろ」) -->
         <span v-if="problem && !divOn" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
@@ -470,7 +470,7 @@ function ok(): void {
             </label>
           </div>
           <div v-if="keepShow && !k.isRemove.value" class="mt-3 text-left"><h3 class="mb-1.5 text-[15px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h3><TreeKeepList big :k="k" /></div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
+          <p v-if="kind && !fracStopNote(s.data.value, t.doc.value, item, hand)" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">
@@ -485,7 +485,7 @@ function ok(): void {
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>
           <p class="mt-1 break-words text-[12px] text-sim-dim">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
           <div class="mt-3"><TreeKeepList big :k="k" :adds="addLabels" /></div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
+          <p v-if="kind && !fracStopNote(s.data.value, t.doc.value, item, hand)" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ boxesLine }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">
