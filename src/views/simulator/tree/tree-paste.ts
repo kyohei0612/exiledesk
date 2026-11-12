@@ -21,6 +21,7 @@ import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { maxQualityOf, tierRankOf } from "../../../services/craft-stage/engine";
 import { markPristine, quickSave, unsaved } from "./tree-save";
+import { logPaste } from "../../daily/paste-log";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
 export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }>; /** 読み方が 2 通り以上の時だけ (先頭 = 仮に選んだ読み) */ readings?: ItemTextReading[]; /** 今の読み方 */ pick: number; /** 段が仮の MOD (1 行に足された値の割り方が決まらない) */ guess: string[]; /** エミュの「シミュレーターへ」から */ emu?: true } | null>(null);
@@ -35,6 +36,8 @@ export function requestPaste(text: string, quiet = false): boolean {
   const data = s.data.value;
   if (!data || !text.trim()) return false;
   const r = parseItemText(data, text);
+  // 貼った文と読んだ結果を組で残す (S-08i)。枠の外の貼り付けでアイテムの文に見えなかった物 (普通の貼り付け) は残さない。importPaste は同じ貼り付けの読み直しなので残さない
+  if (r.base || !quiet) logPaste("sim", text, r);
   if (!r.base) {
     if (quiet) return false;
     pasteWhy.value = r.skipped[0] ? tr(r.skipped[0].reason.ja, r.skipped[0].reason.en) : tr("ベースが読めなかった", "Couldn't read the base");
