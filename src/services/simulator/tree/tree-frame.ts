@@ -27,6 +27,7 @@ import { divineBranches, isDivineAim } from "./tree-divine";
 import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1, type RecipeExample } from "./tree-recipe-v1";
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 import { builtOf, type TreeBuilt } from "./tree-built";
+import { flag } from "../../../web/release-flags";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null; /** 代表のほかにこの箱へ着く枝の品 (重い順、見本の種 2 以降 = 「見本を幾つか見る」所が 1 品の答えにならないように) */ alts?: readonly StageItem[] }
@@ -311,7 +312,12 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
         if (k === o || !x || !brs?.length || frameGroupKey(x) !== g) continue;
         const sib = bestOf(k, brs, f), { wanted, miss, side } = whittleCompare(data, doc, wh, sib.aimed, sib.item);
         const v = rankVariants(data, sib.item, wanted, c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
-        if (v) return { ...sib, item: v.item, p: sib.p * v.p, alts: undefined };
+        if (!v) continue;
+        // 保存の例のアイテム (S-200 ⑦) がこの枠の組・兄弟の枠と同じ中身なら、差し替えた品の代わりに例を代表にする = 開き直しても組んだ時と同じ見本 (スイッチ treeLaneExample。見本の見た目だけ、割合 p は差し替えの物のまま)
+        const ex = flag("treeLaneExample") ? exOf(o) : null;
+        let rep: Pick<Frame, "item" | "aimed" | "key"> = { item: v.item, aimed: sib.aimed, key: sib.key };
+        if (ex) { const am = nextAimed(data, doc, f.aimed, o, ex, f.item), key = frameKeyOf(contentOf(data, doc, ex, am)), w = whittleCompare(data, doc, wh, am, ex); if (key === sib.key && lvClassOf(ex, w.miss, w.side) === want) rep = { item: ex, aimed: am, key }; }
+        return { ...sib, ...rep, p: sib.p * v.p, alts: undefined };
       }
       return null;
     };
