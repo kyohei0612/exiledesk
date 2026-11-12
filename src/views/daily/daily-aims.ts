@@ -11,7 +11,7 @@ import { migrateStart, startRarity, type Aim, type StartFrom, type TreeDoc } fro
 import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
 import { genesisOver, genesisWhy, isGenesis, isGenesisLine } from "./daily-check";
-import { logPaste } from "./paste-log";
+import { logPaste, pasteAfter } from "./paste-log";
 
 /**
  * 狙いに入らなかった行。soft = 読めなかった行ではない (2 行で 1 つの MOD のもう 1 行 = もう数えてある・トレードの合計の行 = MOD ではない)。
@@ -20,7 +20,7 @@ import { logPaste } from "./paste-log";
 export type PostBad = { line: string; why: string; soft?: boolean };
 /** 読みが飛ばした行のうち、読めなかった行に数えない物 (D-14b) */
 const SOFT_SKIP: ReadonlySet<string> = new Set(["hybridPart", "pseudoTotal"]);
-export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: PostBad[]; /** 狙いと同じ順の「始めの MOD」(エンジンの Force)。投稿には送らず、確かめの品を投稿の中のエミュに載せる時に渡す (D-12b)。フラクチャーの印は読んだ品の物をそのまま流す */ start: Force[] };
+export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: PostBad[]; /** 狙いと同じ順の「始めの MOD」(エンジンの Force)。投稿には送らず、確かめの品を投稿の中のエミュに載せる時に渡す (D-12b)。フラクチャーの印は読んだ品の物をそのまま流す */ start: Force[]; /** 貼った文を読んだ結果のまとめ (揃え直す前の段。投稿に添えて残す用、D-14c。エミュから来た品には無い) */ read?: Record<string, unknown> };
 
 const tierOf = (m: ItemTextMod): number => Number(m.tier!.label.replace(/^T/, ""));
 
@@ -52,7 +52,7 @@ export function itemFromText(data: PatchData, text: string): PostItem | string {
   if (r.rarity === "unique") return tr("ユニークはお題にできない", "Uniques can't be used");
   const reading = r.readings?.[0] ?? { mods: r.mods, skipped: r.skipped };
   const p = take(data, r.base, r.itemLevel ?? 82, reading.mods, reading.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en), ...(SOFT_SKIP.has(x.code) ? { soft: true } : {}) })));
-  return genesisLines(data, p, text);
+  return { ...genesisLines(data, p, text), read: pasteAfter(r) };
 }
 
 /**

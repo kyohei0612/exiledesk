@@ -8,6 +8,8 @@
  */
 import type { ItemTextResult } from "../../services/simulator/paste/item-text-types";
 import { devLog } from "../../web/dev-log";
+import { flag } from "../../web/release-flags";
+import { logRecord } from "../../utils/log-record";
 
 export type PasteWhere = "daily" | "sim";
 
@@ -32,7 +34,30 @@ export function pasteAfter(r: ItemTextResult): Record<string, unknown> {
   };
 }
 
-/** 貼って読んだ時に 1 回呼ぶ。開発版は文を全部 (長すぎる物だけ切る) と読んだ結果を手元の記録に残す */
+/** 残す前の掃除: 改行をそろえ、@ で始まる行 (トレードのささやき = キャラの名前が入る) を落とし、上限で切る */
+export const cleanPaste = (raw: string, max: number): string =>
+  raw.replace(/\r\n?/g, "\n").split("\n").filter((l) => !l.trimStart().startsWith("@")).join("\n").trim().slice(0, max);
+/** 品のコピーの形に見えるか (アイテムクラス・レアリティ・アイテムレベルの行がある)。ベースが読めなかった貼りは、この形の時だけサーバーの記録に残す (関係ない文を拾わない) */
+const looksItem = (raw: string): boolean => /Item Class:|Rarity:|Item Level:|アイテムクラス|レアリティ|アイテムレベル/.test(raw);
+
+/** サーバーの分析の記録に残す文の上限 (字)・1 回のページで残す件数 */
+const REC_MAX = 2000, REC_N = 5;
+const seen = new Set<string>();
+
+/**
+ * 貼って読んだ時に 1 回呼ぶ。
+ *  開発版: 文を全部 (長すぎる物だけ切る) と読んだ結果を手元の記録に毎回残す。
+ *  本番 (スイッチ dailyPostSrc): 同じ組を分析の記録に 1 件 (種類 paste-read。画面を離れる時の便に乗る = サーバーへの回数は増えない、Y-60)。
+ *    同じ文は 1 回だけ・1 回のページで REC_N 件まで・文は REC_MAX 字まで・@ の行は落とす。「記録しない」の端末と開発版は送らない (Y-63・Y-64、送る仕組みの側)
+ */
 export function logPaste(where: PasteWhere, raw: string, r: ItemTextResult): void {
-  try { devLog("paste-read", { where, chars: raw.length, text: cut(raw, 12000), after: pasteAfter(r) }); } catch { /* 記録は落としてよい */ }
+  try {
+    const after = pasteAfter(r);
+    devLog("paste-read", { where, chars: raw.length, text: cut(raw, 12000), after });
+    if (!flag("dailyPostSrc") || (!r.base && !looksItem(raw))) return;
+    const text = cleanPaste(raw, REC_MAX);
+    if (!text || seen.has(text) || seen.size >= REC_N) return;
+    seen.add(text);
+    logRecord("paste-read", { where, chars: raw.length, text, after });
+  } catch { /* 記録は落としてよい */ }
 }

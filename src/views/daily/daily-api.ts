@@ -10,6 +10,8 @@ import type { StartFrom } from "../../services/simulator/tree/tree-model";
 import { WEB_API_BASE } from "../../web/config";
 import { floorAims, SLOTS, type GenAim } from "./daily-gen";
 import { boxCheck } from "./daily-check";
+import type { PostSrc } from "./daily-post-src";
+import type { PostCard } from "./daily-post-card";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
 import { byScore, rankCmp } from "./daily-score";
 import { DEV_BUILD } from "../../web/release-flags";
@@ -286,13 +288,13 @@ export type BoxError = "item" | "large" | "busy" | "net";
  * POST /daily/box。段の下限は D-04 (全部 T2 以上) に揃え、先にこの端末で機械の確かめ (D-20) をする。
  * 落ちた物は送らずに訳を付けて残し、通った物は送る (サーバーは wait で受け、16:00 の台本がもう一度確かめて ok / no にする)
  */
-export async function postBox(data: PatchData, item: Omit<DailyBoxItem, "id" | "at" | "status" | "why">): Promise<DailyBoxItem | BoxError> {
+export async function postBox(data: PatchData, item: Omit<DailyBoxItem, "id" | "at" | "status" | "why">, src?: PostSrc, card?: PostCard): Promise<DailyBoxItem | BoxError> {
   const aims = floorAims(data, item.base, item.ilvl, item.aims);
   const why = boxCheck(data, { ...item, aims }, daily.local.nick?.name ?? "");
   let b: DailyBoxItem;
   if (why) b = { ...item, aims, id: `x${Date.now().toString(36)}`, at: Date.now(), status: "no", why };
   else {
-    const r = await call<DailyBoxItem | { error: BoxError }>("/daily/box", { ...(auth() ?? {}), ...item, aims });
+    const r = await call<DailyBoxItem | { error: BoxError }>("/daily/box", { ...(auth() ?? {}), ...item, aims, ...(src ? { src } : {}), ...(card ? { card } : {}) }); // src = 貼った元の文と読んだ結果かエミュから来た印 (D-14c)、card = 確かめのカードの字 = Discord の知らせの絵の元 (D-20c)。サーバーが品の欄の中に残す
     if (!r) return "net";
     if ("error" in r) return r.error;
     b = r;

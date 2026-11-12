@@ -14,6 +14,9 @@ import { itemFromEmu, itemFromText, postBlock, postFractured, shownBad, type Pos
 import { flag } from "../../web/release-flags";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
 import { fullMods, genesisWhy } from "./daily-check";
+import { srcOfEmu, srcOfPaste, type PostSrc } from "./daily-post-src";
+import { cardOfScreen } from "./daily-post-card";
+import { floorAims } from "./daily-gen";
 import { allMods } from "../../services/craft-stage/engine";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyNick from "./DailyNick.vue";
@@ -47,7 +50,9 @@ const bads = computed(() => (item.value ? shownBad(item.value, LOOSE) : []));
 const fracs = computed(() => (LOOSE && item.value ? postFractured(item.value) : []));
 /** 中のエミュの品を持って確かめの画面へ (D-12) */
 const takeEmu = (): void => { useEmu(); goDaily({ view: "detail", q: "post" }); };
-const useEmu = (it = emu.value): void => { const d = s.data.value; if (d && it) { why.value = null; redoWhy.value = null; item.value = itemFromEmu(d, it); } };
+const useEmu = (it = emu.value): void => { const d = s.data.value; if (d && it) { why.value = null; redoWhy.value = null; item.value = itemFromEmu(d, it); src.value = srcOfEmu(); } };
+/** 確かめの品の元 (貼った文か、エミュから来た印)。投稿に添えてサーバーに残す (D-14c、スイッチ dailyPostSrc。閉じている間は無し) */
+const src = ref<PostSrc | undefined>(undefined);
 /** 確かめの画面の品を投稿の中のエミュに載せて作り直す (D-12b)。段は同じ・値は振り直し・工程は空から。載せられない組は訳を出して動かない */
 const redoWhy = ref<string | null>(null);
 function redo(): void {
@@ -64,7 +69,8 @@ function read(raw: string): void {
   const d = s.data.value;
   if (!d || !raw.trim()) return;
   const r = itemFromText(d, raw);
-  if (typeof r === "string") { why.value = r; item.value = null; } else { why.value = null; item.value = r; }
+  if (typeof r === "string") { why.value = r; item.value = null; src.value = undefined; return; }
+  why.value = null; item.value = r; src.value = srcOfPaste(raw, r.read);
 }
 const onPaste = (e: ClipboardEvent): void => { const v = e.clipboardData?.getData("text") ?? ""; if (v) { e.preventDefault(); text.value = v; read(v); } };
 const sendFail = ref<BoxError | null>(null);
@@ -75,7 +81,9 @@ async function send(): Promise<void> {
   if (!p || !d || block.value || sending.value) return;
   if (!myNick()) { asking.value = true; return; }
   sending.value = true;
-  const r = await postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims });
+  // 絵の元 = 今この画面に出ている確かめのカードの字 (札の段だけ、送る時に揃え直した段に。D-20c、スイッチ dailyBoxCard)
+  const card = cardOfScreen(document.querySelector("[data-daily-post]"), p.base, p.aims, floorAims(d, p.base, p.ilvl, p.aims), postFractured(p));
+  const r = await postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims }, src.value, card);
   sending.value = false;
   if (typeof r === "string") sendFail.value = r; else { sendFail.value = null; sent.value = r; if (POST_OWN) clearPostItem(); void nextTick(() => window.scrollTo(0, 0)); } // 送れた後の文は頭に出るので、頭へ送る (D-15b)
 }

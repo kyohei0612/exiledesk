@@ -76,8 +76,9 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
       const out = await dailyBox(db, body, ip, now);
       if ("error" in out) return json(out);
       // 届いた投稿を Discord に 1 件 (D-20b)。行き先はクラフト箱のチャンネル (秘密 BOX_WEBHOOK)、無ければ要望と同じ。投稿した人の名前は画面には返さない
-      const { by, ...pub } = out;
-      ctx.waitUntil(notifyBox((env as { BOX_WEBHOOK?: string }).BOX_WEBHOOK || env.DISCORD_WEBHOOK, pub, by).then(() => undefined));
+      // 絵の元 (card) があれば品の絵を付ける (D-20c)。絵を作る先は配信のサーバー (手元の試しだけ BOX_CARD_ORIGIN で替える)
+      const { by, card, ...pub } = out;
+      ctx.waitUntil(notifyBox((env as { BOX_WEBHOOK?: string }).BOX_WEBHOOK || env.DISCORD_WEBHOOK, pub, by, fetch, card, (env as { BOX_CARD_ORIGIN?: string }).BOX_CARD_ORIGIN || undefined).then(() => undefined));
       return json(pub);
     }
     case "/daily/live":

@@ -4,7 +4,7 @@
  * お題は 16:00 の台本 (scripts/daily-roll.mjs → POST /daily/topic) が書く。台本が回らなかった日は、ここで週の予定 (daily_plan) からそのまま出す (D-84 の ③)
  */
 import { authNick, hasBadWord, ipHash } from "./nick";
-import type { BoxPost } from "./box-notify";
+import type { BoxCard, BoxPost } from "./box-notify";
 import { byScore, rankOrderSql } from "../../../../src/views/daily/daily-score";
 import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
@@ -198,14 +198,50 @@ export async function dailyTitle(db: D1Database, b: Body): Promise<unknown> {
   return { ok: true };
 }
 
+const SRC_MAX = 3000, READ_MAX = 6000;
+/**
+ * 投稿に添えられた元の形 (D-14c): 貼った文 (@ で始まる行 = トレードのささやきは落とし、上限で切る) と読んだ結果 (揃え直す前の段。中身は解かず、大きすぎれば捨てる) か、
+ * エミュから来た印。形が違えば無し
+ */
+function srcOf(v: unknown): { from: "paste"; text: string; read?: unknown } | { from: "emu" } | null {
+  const s = v as { from?: unknown; text?: unknown; read?: unknown } | null;
+  if (!s || typeof s !== "object") return null;
+  if (s.from === "emu") return { from: "emu" };
+  if (s.from !== "paste" || typeof s.text !== "string") return null;
+  const text = s.text.replace(/\r\n?/g, "\n").split("\n").filter((l) => !l.trimStart().startsWith("@")).join("\n").trim().slice(0, SRC_MAX);
+  if (!text) return null;
+  const read = s.read && typeof s.read === "object" && !Array.isArray(s.read) && JSON.stringify(s.read).length <= READ_MAX ? s.read : null;
+  return read ? { from: "paste", text, read } : { from: "paste", text };
+}
+
+/**
+ * 投稿に添えられた絵の元 (D-20c): 確かめの画面のカードの字。Discord の知らせの絵にだけ使う (確かめ・お題には使わない)。
+ * 字は長さで切り、行は 12 行まで。名前か MOD の行が無ければ無し (知らせは字だけ)
+ */
+function cardOf(v: unknown): BoxCard | null {
+  const c = v as { n?: unknown; a?: unknown; h?: unknown; r?: unknown; l?: unknown } | null;
+  if (!c || typeof c !== "object") return null;
+  const str = (x: unknown, n: number): string => (typeof x === "string" ? x : "").replace(/\s+/g, " ").trim().slice(0, n);
+  const n = str(c.n, 60);
+  const r = (Array.isArray(c.r) ? c.r : []).slice(0, 12).map((x) => {
+    const o = (x ?? {}) as { s?: unknown; g?: unknown; t?: unknown; f?: unknown };
+    return { s: o.s === "S" ? ("S" as const) : ("P" as const), g: str(o.g, 12), t: str(o.t, 120), ...(o.f ? { f: 1 as const } : {}) };
+  }).filter((x) => x.t);
+  if (!n || !r.length) return null;
+  return { n, a: typeof c.a === "string" && /^[A-Za-z0-9_]{1,80}$/.test(c.a) ? c.a : null, h: (Array.isArray(c.h) ? c.h : []).slice(0, 8).map((x) => str(x, 60)).filter(Boolean), r, l: c.l === "en" ? "en" : "ja" };
+}
+
 /** POST /daily/box: 投稿は待ち (wait) で受け、機械の確かめ (D-20、エンジン) は 16:00 の台本が ok / no にする。名前を決めていなくても投稿できる */
-export async function dailyBox(db: D1Database, b: Body, ip: string, now: number): Promise<{ error: string } | (BoxPost & { /** 投稿した人の名前 (Discord の通知だけに使う、画面には返さない。routes.ts が外す) */ by: string | null })> {
+export async function dailyBox(db: D1Database, b: Body, ip: string, now: number): Promise<{ error: string } | (BoxPost & { /** 投稿した人の名前 (Discord の通知だけに使う、画面には返さない。routes.ts が外す) */ by: string | null; /** 絵の元 (Discord の知らせの絵だけに使う、画面には返さない。routes.ts が外す) */ card: BoxCard | null })> {
   const nick = b.nickId ? await authNick(db, b.nickId, b.code) : null;
   const note = typeof b.note === "string" ? b.note.slice(0, NOTE_MAX) : "";
   const aims = Array.isArray(b.aims) ? b.aims : [];
-  const item = JSON.stringify({ base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims });
+  const core = { base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims };
   if (typeof b.base !== "string" || !b.base || !Number.isInteger(b.ilvl) || !aims.length) return { error: "item" };
-  if (item.length > ITEM_MAX) return { error: "large" };
+  if (JSON.stringify(core).length > ITEM_MAX) return { error: "large" };
+  // 貼った元の文と読んだ結果かエミュから来た印 (D-14c)・絵の元 (D-20c)。品の欄の中に足して残すだけで、確かめ・お題には使わない。上限は品の上限と別に切る
+  const src = srcOf(b.src), card = cardOf(b.card);
+  const item = JSON.stringify({ ...core, ...(src ? { src } : {}), ...(card ? { card } : {}) });
   const ih = await ipHash(ip);
   const n = await db.prepare("SELECT count(*) AS n FROM daily_box WHERE ip_hash = ? AND created > ?").bind(ih, now - 3600_000).first<{ n: number }>();
   if ((n?.n ?? 0) >= BOX_PER_HOUR) return { error: "busy" };
@@ -213,7 +249,7 @@ export async function dailyBox(db: D1Database, b: Body, ip: string, now: number)
   const bad = hasBadWord(note) || (nick ? hasBadWord(nick.name) : false);
   const id = `p${now.toString(36)}${crypto.randomUUID().slice(0, 4)}`;
   await db.prepare("INSERT INTO daily_box (id, created, ip_hash, nick_id, note, item, status, why) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(id, now, ih, nick?.id ?? null, note, item, bad ? "no" : "wait", bad ? "bad-word" : null).run();
-  return { id, at: now, note, base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims, status: bad ? "no" : "wait", ...(bad ? { why: "bad-word" } : {}), by: nick?.name ?? null };
+  return { id, at: now, note, base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims, status: bad ? "no" : "wait", ...(bad ? { why: "bad-word" } : {}), by: nick?.name ?? null, card };
 }
 
 /** 自分の投稿の状態 (GET /daily/box.json?ids=、このブラウザが覚えた id だけ。D-15) */

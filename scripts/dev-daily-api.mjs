@@ -62,7 +62,9 @@ const mig = wr(["d1", "migrations", "apply", "exiledesk-logs", "--local", "--per
 if (mig.status !== 0) throw new Error(`migrations: ${(mig.stdout + mig.stderr).slice(-400)}`);
 
 console.log(`[dev:daily-api] server/live を ${BASE} で立てる`);
-const dev = spawn(WR, ["dev", "--local", "--port", String(PORT), "--persist-to", `"${PERSIST}"`, "--var", `REFRESH_KEY:${KEY}`, "-c", `"${CONFIG}"`], { cwd: ROOT, shell: true, stdio: ["ignore", "pipe", "inherit"] });
+// DAILY_DEV_VARS="名前:値,名前:値" で手元の口だけの設定を足せる (部長の確かめ用。例: クラフト箱の知らせの行き先 BOX_WEBHOOK と絵を作る先 BOX_CARD_ORIGIN を手元の受け皿に向ける)
+const extraVars = (process.env.DAILY_DEV_VARS ?? "").split(",").map((s) => s.trim()).filter((s) => /^[A-Z0-9_]+:.+$/.test(s)).flatMap((s) => ["--var", `"${s}"`]);
+const dev = spawn(WR, ["dev", "--local", "--port", String(PORT), "--persist-to", `"${PERSIST}"`, "--var", `REFRESH_KEY:${KEY}`, ...extraVars, "-c", `"${CONFIG}"`], { cwd: ROOT, shell: true, stdio: ["ignore", "pipe", "inherit"] });
 dev.stdout.on("data", () => {});
 const stop = () => { if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(dev.pid), "/t", "/f"]); else dev.kill(); };
 process.on("SIGINT", () => { stop(); process.exit(0); });
