@@ -136,7 +136,7 @@
 | 部品 | デイリー | 持ち主への頼み |
 |---|---|---|
 | TreeBox・TreeOverlays・TreeHandPage・棚・線・並べ方・TreeRunLayer・TreeIssues・TreeUnsetBar | そのまま | SimTreePage (496 行) から木の面を部品に切り出す (D-41) |
-| TreeGoalCard | 読むだけで右に (ティア調整のボタンは出さない = シミュだけ) | 口を足す (編集を閉じる) |
+| TreeGoalCard | 読むだけで右に | 口を足す (編集を閉じる) |
 | 完成形の MOD 一覧 (ModTable) | 窓で見るだけ | そのまま |
 | TreeRunBar・TreeRunSum・TreeRunReport | そのまま、下に「提出」 | slot を足す |
 | TreeFlowSteps (1〜4 の帯)・TreeBasePick・TreeGoalPage・TreePasteBox | 無し | — |
@@ -144,6 +144,9 @@
 | 保存 | レシピへ写しで保存 (D-36b、ボタンはデイリーの並び)・離れる時の窓 (D-36c、LeaveConfirm を使い回す) | デザイン部長: `web/page.ts` に外の層の確かめの口 (setLayerLeaveGuard) を足すだけ (11-09 済み) |
 | メモの窓 (TreeMemoFloat) | 使う (棚の浮かぶ窓を兼ねるので) | そのまま |
 | 上の帯 | デイリーの物 (D-42) | 新しく作る = `views/daily/` |
+| 完成形を変える物 (ティア調整・フラクチャーの ✦ / 普通側の段・エミュで試す・付与スキルの選び) | 無し (お題で決まる) | — |
+
+新しい物は、完成形を変える物はシミュだけ・木の面の物 (箱・手の窓・札・並べ方・回す所) は両方 (11-13 オーナー「おけ」)。
 
 - **D-41 頼む口 (シミュ部長、58 と phone-view の後)**: ① SimTreePage から木の面 (Vue Flow と重ねる層) を `TreeStage` に分け、上・右・下を slot に ② `useTree` に「お題の木を開く」口 (前提を固定、S-67 の窓を出さない、普段のタブの木を壊さない) ③ `tree-paste.ts` の `aimsOfReading` を木に触らない純粋な関数へ (投稿の確かめで使う) ④ `useTreeRun` に種と値段を渡す口。`useTree` は 1 つの共有の状態なので ② が一番の山。
 - **D-42 上の帯**: 左から お題 (ベースの絵・名前) / 残り時間 (大) / 今の結果 (費用・完成率、回す前は —) / 提出。 — 撤回 (11-10 整理・11-09〜10 に絵を外し、残り時間を真ん中の 3 欄、木の画面の提出は完成形のカードの下にした・D-37m)

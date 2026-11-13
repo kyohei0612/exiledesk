@@ -264,7 +264,9 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-play] [data-tree-own],
 [data-daily-play] [data-tree-goal-open],
 [data-daily-play] [data-tree-goal-fold],
-[data-daily-play] [data-tree-goal-tier], /* 完成形のカードのティア調整 (tierDown) はシミュだけ */
+[data-daily-play] [data-tree-goal-tier], /* 完成形を変える物はシミュだけ (D-40): ティア調整 (tierDown)・エミュで試す (simToEmu)・付与スキルの選び (tradeSkill) */
+[data-daily-play] [data-tree-goal-emu],
+[data-daily-play] [data-granted-skill],
 [data-daily-play] [data-tree-start-under],
 [data-daily-play] [data-tree-note-mark],
 [data-daily-play] [data-tree-run-report-start] { display: none; }
