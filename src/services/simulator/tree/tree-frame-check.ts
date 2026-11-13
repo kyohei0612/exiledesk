@@ -9,6 +9,7 @@ import { handProblem, playHand } from "./tree-sample";
 import { sureFracWhy, sureFracWhyText } from "./tree-sure-frac";
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 export interface FrameIssue { boxId: string; kind: "frameMiss" | "cantUse" | "frameDone" | "frameMix"; text: string }
 
@@ -48,7 +49,9 @@ export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
       : tr("この箱へ来る形の一部で手が打てない (外れが狙い・エッセンスの系統を塞いでいるなど。回すとここで止まる)", "Some shapes reaching this box can't use the craft (a miss blocks the target's or essence's family; runs stop here)") });
   }
   // 1 つの箱に中身 (枠) の違う形が着く = 結果を分けきれていない (S-27d (ア)、11-11 ごめんね 41 人)。合格は止めない知らせ
-  for (const id of fr.mixed) if (doc.boxes[id]) add({ boxId: id, kind: "frameMix", text: tr("この箱に中身の違う形の人が着く (結果が 2 通り以上なのに箱が 1 つ。下の手が片方の形にしか合わないと止まる)", "Runs with different contents arrive at this box (two or more outcomes share one box; the next craft may fit only one of them)") });
+  // スイッチ treeEndNoMix (S-201b): 完成 / 失敗の印の付いた終わりの箱 (下に手も戻りも無い) は、混ざってもその先で打つ手が無く止まらないので出さない (未設定に数えない)
+  const endBox = (id: string): boolean => { const b = doc.boxes[id]; return !!b?.done && !b.hand && !b.back && !b.split; };
+  for (const id of fr.mixed) if (doc.boxes[id] && !(flag("treeEndNoMix") && endBox(id))) add({ boxId: id, kind: "frameMix", text: tr("この箱に中身の違う形の人が着く (結果が 2 通り以上なのに箱が 1 つ。下の手が片方の形にしか合わないと止まる)", "Runs with different contents arrive at this box (two or more outcomes share one box; the next craft may fit only one of them)") });
   for (const b of Object.values(doc.boxes)) {
     const why = cantHandOf(data, doc, b.id);
     if (why) add({ boxId: b.id, kind: "cantUse", text: tr(`この箱の形では手が打てない: ${why}`, `The craft can't be used in this box's shape: ${why}`) });
