@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_1d63a4b1-20a6-4860-8c7b-30efbdb50686 (96 代目、Opus 5.5、11-13 01:43 に入れ替え。95 = local_fd9aa645 が 2,3xx 件で交代) | 司令塔・振り分け・順番 |
+| ブラック | local_8bbc6781-dbf4-4c80-ae8d-6127fc8ee6ee (97 代目、Opus 5.5、11-13 10:51 に入れ替え。96 = local_1d63a4b1 が 2,3xx 件で交代) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_4530bf9e-4456-4cc7-a129-1104706c3c1d (17 daily-lead17、Opus 5.5、11-13 朝にブラック 96 が立てた (オーナー「再度全て立て直し」)。16 = local_2315ffbc は引き継ぎを書いてアーカイブ。頼み = 共有ノート progress/daily-lead17-brief.md、板 = progress/daily-lead17.md) | 今: 11-13 15:13 / 16:33 の見張りの入れ直し・諦めた時の挑戦中の控えが送られない × の直し (開発版へ)・宿題 = 締めに検算を足す前に 11-12 の 4 件が合わない訳。決着 (作らない) = アカウントリンク・ネタバレ止め・縛りの日 |
 | 最終チェック長 | local_8582d063-ce26-4ada-8ec8-6859a4794bf0 (13 release-next13、Opus 5.5、11-13 10 時台にブラック 96 が立てた。12 = local_194048d9 は 0.1.725 を出し終えて 2,3xx 件で交代。頼み = 共有ノート progress/release-next13-brief.md、板 = progress/release-next13.md) | 待機 (0.1.725 は 10:14 に出し終えた、戻す先 0.1.724 = ab507d56c)。本番で見ていない = 完成を押した時の並べ直しの形・フラクチャーの段と値 |
 | サーバー係 | local_124e649c-7108-4061-8b90-c3325233853f (2 代目 server-keeper2、Opus 5.5、11-13 朝にブラック 96 が立てた (オーナー「再度全て立て直し」)。前の local_e7a15311 = 前のブラック 88 はアーカイブ。頼み = 共有ノート progress/server-keeper2-brief.md) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
@@ -13,8 +13,8 @@
 | ジン部長 | local_e283feed-b3dd-480c-9014-2f4f3981b0de (11-12 に local_6602c6d4 が 2,483 件で交代。作業場 .claude/worktrees/wizardly-gould-f36ecf、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: 古いテスト 10 件を設計図どおりに → グラスピングメイルの冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト (錬金の表の 0% はオーナーの選び待ち) |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_d8ad47e8-b282-42e5-b3a1-813e63628bdb (25 sim-lead25、Opus 5.5、11-13 朝にブラック 96 が立てた (オーナー「再度全て立て直し」)。24 = local_d440ffd9 は引き継ぎを書いてアーカイブ。頼み = 共有ノート progress/sim-lead25-brief.md・sim-grey-fix-brief.md、板 = progress/sim-lead25.md) | 今: 木のカメラ (帯の「未設定」から手を置くと箱がずれる、本番の ×) の直し・完成を押すまで灰色 (treeIdealFirst、開発版だけ) の × 2 つ・見張り place.mjs を新しい並べ方に合わせる。残り: 開発版だけ treeWideFit・treeIdealFirst・treeFracKeepTier・treeOpenStartLeft はオーナーの見た目の返事待ち |
-| デザイン部長 | local_38ad5d1c-ac29-4595-a8be-fabe9c8eec0f (11-12 夕方に local_0f6a5cb7 が 2,000 件超えで交代。作業場 .claude/worktrees/design-lead3、引き継ぎ = 共有ノート progress/design-lead2-handover.md、板 = progress/design-lead3.md) | 今: オーナーの見た目の返事待ち 3 つ = MOD 一覧の窓の帯 (simModList)・棒の印を全部の棚に (tierBars)・無限のエッセンスの札の字を 3 行に (infiniteTagAll、開発版だけ)。作りかけ 0 |
+| シミュ部長 | local_4dafe363-ca48-4e9a-bebe-4031efb596e8 (26、Opus 5.5、11-13 昼前にブラック 96 が控えに立てた。25 = local_d8ad47e8 は 2,000 件超えで交代、残りは共有ノート progress/sim-lead26-brief.md) | 今: 25 の残り (手の窓の狙う MOD を完成形の順に・同格以上の箱の調べ・フラクチャーの失敗の箱の直し・pasteDropOnly の本体)、どれも急がない (オーナー「後回しでおｋ」) |
+| デザイン部長 | local_28256afd-041c-4d00-b110-d023f3c6f37e (4、Opus 5.5、11-13 10:44 にブラック 96 が立てた。頼み = 共有ノート progress/design-lead4-brief.md) | 今: MOD 一覧が空の時の一言 (modNone、84e662adb、開発版だけ) を上げて待機 |
 | エミュ部長 | local_b7f1334c-7513-4f8d-b274-b19e6ab7cdff (11-12 昼にブラック 89 が立てた。作業場 .claude/worktrees/unruffled-kepler-17b9f1。前の emu-back は 11-03 にアーカイブ) | 今: エミュから「デイリーに投稿 →」のボタン (D-10・M-05、作る前の案と絵を 89 へ → go の後にスイッチの下で作る) |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | — (11-10 棚卸しで前の行を閉じた) | 仕事が来たらブラックが立てる |
