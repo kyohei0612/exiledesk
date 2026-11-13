@@ -6,6 +6,7 @@
 import { nextTick, watch, type Ref } from "vue";
 import type { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { bandHead } from "../../../services/simulator/tree/tree-band";
 import { flag } from "../../../web/release-flags";
 import { BAR_H, CALM_Z, HELD_MS, NEXT_H, OPEN_MIN, OPEN_QUIET, extentOf, isOut, nudgeInto } from "./tree-cam-math";
 
@@ -31,6 +32,8 @@ export type TreeCam = {
 
 export function useTreeCamFollow(doc: Ref<TreeDoc>, f: ReturnType<typeof useVueFlow>, cam: TreeCam) {
   const { pageZ } = cam;
+  /** 画面に描く箱 (削減の帯の中の箱は帯の頭。帯の中の箱は自分の置き場で描かれないので、場所を控える・戻すは帯の頭で数える。11-13 最終チェック 11: 帯の「未設定 ＋」から手を置くと箱が横にずれたまま) */
+  const drawnBox = (id: string) => doc.value.boxes[bandHead(doc.value, id)];
   const heightOf = (id: string): number => f.findNode(id)?.dimensions.height || BOX_H;
   /** 箱の位置と測った高さの並び (並べ直しが済んだかを見る) */
   const sig = (ids: readonly string[]): string => ids.map((id) => { const b = doc.value.boxes[id]; return b ? `${b.x},${b.y},${f.findNode(id)?.dimensions.height ?? 0}` : ""; }).join("|");
@@ -78,14 +81,14 @@ export function useTreeCamFollow(doc: Ref<TreeDoc>, f: ReturnType<typeof useVueF
   });
   /** 手の窓を開く時の箱の画面の場所 (窓を開く寄せの前。holdBox はここへ戻す) */
   let spot: { id: string; sx: number; sy: number } | null = null;
-  const noteSpot = (id: string): void => { const b = doc.value.boxes[id], { x, y, zoom: z } = f.viewport.value; spot = b ? { id, sx: b.x * z + x, sy: b.y * z + y } : null; };
+  const noteSpot = (id: string): void => { const b = drawnBox(id), { x, y, zoom: z } = f.viewport.value; spot = b ? { id, sx: b.x * z + x, sy: b.y * z + y } : null; };
   /** 窓を開く寄せの後の視点 (閉じる時に人が動かしていないかを見る) */
   let opened: { x: number; y: number; zoom: number } | null = null;
   /** 手の窓を開いた時の寄せ (外れていた箱を見える所へ)。閉じた時に backSpot が戻す */
-  async function revealSpot(id: string): Promise<void> { await cam.reveal(id); opened = { ...f.viewport.value }; }
+  async function revealSpot(id: string): Promise<void> { await cam.reveal(bandHead(doc.value, id)); opened = { ...f.viewport.value }; }
   /** 手の窓を選ばずに閉じた: 窓を開く寄せの分だけ視点を戻す (S-147e)。手を決めた時は holdBox が spot を使う。開いている間に人が動かした視点はそのまま */
   async function backSpot(): Promise<void> {
-    const p = spot, was = opened, b = p ? doc.value.boxes[p.id] : null, { x, y, zoom: z } = f.viewport.value;
+    const p = spot, was = opened, b = p ? drawnBox(p.id) : null, { x, y, zoom: z } = f.viewport.value;
     spot = null; opened = null;
     if (!p || !b || !was || was.x !== x || was.y !== y || was.zoom !== z) return;
     await cam.put(p.sx - b.x * z, p.sy - b.y * z, z);
@@ -95,22 +98,22 @@ export function useTreeCamFollow(doc: Ref<TreeDoc>, f: ReturnType<typeof useVueF
    * 箱が 4 つ以上増えても開いた時の寄りへ戻さない。手を足す時は結果の箱が枠の外なら入る向きだけ最小限動かす (S-147c)。手を変える時は結果の箱の頭が全く見えない時だけ動かす
    */
   async function holdBox(id: string, edit: () => string): Promise<void> {
-    const was = doc.value.boxes[id];
-    if (!was) { edit(); return; }
-    const { x: x0, y: y0, zoom: z } = f.viewport.value, sx = spot?.id === id ? spot.sx : was.x * z + x0, sy = spot?.id === id ? spot.sy : was.y * z + y0, changed = !!was.hand;
+    const was = doc.value.boxes[id], seen = drawnBox(id);
+    if (!was || !seen) { edit(); return; }
+    const { x: x0, y: y0, zoom: z } = f.viewport.value, sx = spot?.id === id ? spot.sx : seen.x * z + x0, sy = spot?.id === id ? spot.sy : seen.y * z + y0, changed = !!was.hand;
     spot = null;
     holding = true;
     try {
       const to = edit();
       // 手を決めた箱を、その後しばらくの並べ直しの軸にする (S-147h)
-      held = { id: to, at: performance.now() };
+      held = { id: bandHead(doc.value, to), at: performance.now() };
       // S-147h: 50% より大きい時は 50% へ縮めて、触った箱を同じ場所に (50% 以下ならその大きさのまま)
       const zc = flag("treeCalmCamera") && z > CALM_Z * pageZ.value + 1e-3 ? CALM_Z * pageZ.value : z;
-      const put = async (): Promise<void> => { const b = doc.value.boxes[to]; if (b) await cam.put(sx - b.x * zc, sy - b.y * zc, zc); };
+      const put = async (): Promise<void> => { const b = drawnBox(to); if (b) await cam.put(sx - b.x * zc, sy - b.y * zc, zc); };
       const kidsOf = (): NonNullable<typeof was>[] => (doc.value.boxes[to]?.outs ?? []).flatMap((k) => doc.value.boxes[k] ?? []);
       await put();
       await nextTick(); await nextTick();
-      await settled(() => sig([to, ...kidsOf().map((b) => b.id)]));
+      await settled(() => sig([bandHead(doc.value, to), to, ...kidsOf().map((b) => b.id)]));
       await put();
       const kids = kidsOf();
       if (!kids.length || flag("treeCalmCamera")) return; // S-147h: 触った箱を同じ場所に保つだけ (結果の箱へは寄せない)
