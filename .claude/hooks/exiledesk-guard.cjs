@@ -150,6 +150,24 @@ process.stdin.on("end", () => {
   };
   const releaseOk = () => fs.existsSync(MARK);
 
+  // G-52 空振りの監視を立て直さない (オーナー 11-14「何も動いてなかったら即監視解いて良いよ」「フックしといてこれ夜中トークンめっちゃつかったやろ」)
+  // 一番新しい Monitor の期限切れが「新しい行 0」で、その後に係との送り合い・係を立てる事が無ければ止める
+  if (tool === "Monitor") {
+    let t = "";
+    try {
+      const f = String(input.transcript_path || "");
+      const size = fs.statSync(f).size, n = Math.min(size, 400000), buf = Buffer.alloc(n);
+      const fd = fs.openSync(f, "r"); fs.readSync(fd, buf, 0, n, size - n); fs.closeSync(fd);
+      t = buf.toString("utf8");
+    } catch {}
+    const at = t.lastIndexOf("Monitor expired after");
+    if (at >= 0 && /^Monitor expired after[^\]]*with no events delivered/.test(t.slice(at, at + 200))) {
+      const after = t.slice(at);
+      if (!/cross-session-message|"name":"SendMessage"|"name":"mcp__ccd_session__start_session"/.test(after))
+        block("前の監視は新しい行 0 のまま期限が来た。何も動いていない時は立て直さない (G-52)。係に頼みを出したか係から知らせが来てから立てる");
+    }
+  }
+
   // 回し物の見張り (G-45、オーナー 11-06「さっきの見張りルールフックしといて」「1分毎に結果をそのセッションに出すとブラックやセッション見た奴が中止するか否か即わかる」)
   // 1. セッションを立てる頼みの文 (start_session の prompt・今の作業を渡す hand_off_to_session の remaining_plan) に、
   //    進み具合の板 (progress/<名前>.md) と回しの記録 (<名前>-run.log) の決まりが要る

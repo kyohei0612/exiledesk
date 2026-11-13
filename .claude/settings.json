@@ -16,7 +16,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|PowerShell|Edit|Write|MultiEdit|mcp__ccd_session__start_session|mcp__ccd_session__hand_off_to_session",
+        "matcher": "Bash|PowerShell|Edit|Write|MultiEdit|Monitor|mcp__ccd_session__start_session|mcp__ccd_session__hand_off_to_session",
         "hooks": [
           {
             "type": "command",
