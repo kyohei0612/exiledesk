@@ -9,7 +9,7 @@ import { backLabelOf } from "./tree-fail";
 import { tr } from "../../../i18n/lang";
 import { foldOf, resetStripFolds, stripChains, stripFolds, stripHidden, stripOpen, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
 
-const OUT_WORD: Record<string, [string, string]> = { junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
+const OUT_WORD: Record<string, [string, string]> = { hit: ["当たり", "Hit"], any: ["打った後", "Result"], junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
 /** まとめた ↩ だけの箱の行 (S-142j ②、スイッチ foldEnds): 行き先ごとに「外れ ×2 → 再度挑戦 · 10 段目へ戻る」 */
 function endsLines(d: TreeDoc, ids: readonly string[]): string[] {
   const by = new Map<string, string[]>();

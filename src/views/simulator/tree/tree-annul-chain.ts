@@ -59,8 +59,11 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
       // 前は消去の結果が 1 つの所で止め、全部消えてよい消去が [エッセンス / ✦] で止まった)。消せる MOD が無い (結果 0) 時も止める。
       // 残したい MOD が消える枝は消せる物に数えない (残したい MOD は木の側の物でエンジンは知らない。同じ MOD かはエンジンの当て方 sameAimMod、✦ はエンジンが消さない)。
       // 前は残すと決めたエッセンスしか左に残っていない箱にも消去を足し、オーナーの組んでいない「狙いが消えた」の未設定の箱ができた (11-08 オーナー「そもそも残すっていってんのにすすむんだが」)
-      const mods = f.item.prefixes.length + f.item.suffixes.length;
       const kept = (m: { modId: string }): boolean => (h.keep ?? []).some((a) => sameAimMod(data, a, { modId: m.modId, tier: 1 }));
+      // (スイッチ annulLastOne) 数えるのは消せる MOD だけ (✦・残すと決めた MOD を引く)。✦ + 1 MOD の箱は続けず未設定で出す = カオスを打てる最後の形
+      // (11-14 オーナー「一応カオススパム用で１MOD残してね？」。前は ✦ も数え、✦ だけの箱まで消してから人がカオスに替えていた)
+      const all = [...f.item.prefixes, ...f.item.suffixes];
+      const mods = flag("annulLastOne") ? all.filter((m) => !m.fractured && !kept(m)).length : all.length;
       return mods > 1 && (stepOutcomes(data, f.item, h.currency, engineOmens(h)) ?? []).some((o) => !o.void && !(o.removed ?? []).some(kept)) ? [{ id, h }] : [];
     });
     if (!go.length) break;
