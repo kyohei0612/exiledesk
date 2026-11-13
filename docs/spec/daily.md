@@ -136,7 +136,7 @@
 | 部品 | デイリー | 持ち主への頼み |
 |---|---|---|
 | TreeBox・TreeOverlays・TreeHandPage・棚・線・並べ方・TreeRunLayer・TreeIssues・TreeUnsetBar | そのまま | SimTreePage (496 行) から木の面を部品に切り出す (D-41) |
-| TreeGoalCard | 読むだけで右に | 口を足す (編集を閉じる) |
+| TreeGoalCard | 読むだけで右に (ティア調整のボタンは出さない = シミュだけ) | 口を足す (編集を閉じる) |
 | 完成形の MOD 一覧 (ModTable) | 窓で見るだけ | そのまま |
 | TreeRunBar・TreeRunSum・TreeRunReport | そのまま、下に「提出」 | slot を足す |
 | TreeFlowSteps (1〜4 の帯)・TreeBasePick・TreeGoalPage・TreePasteBox | 無し | — |
