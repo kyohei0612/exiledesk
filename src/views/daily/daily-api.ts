@@ -190,10 +190,11 @@ export async function submitTry(id: string, cost: number, rate: number, now = Da
 /**
  * POST /daily/live (D-57b): 挑戦中の最新の木 (端末の控えの tree = 提出と同じ形) と動作の列をサーバーへ置く。呼ぶのは daily-live.ts だけ (15 秒まとめ・離れる時)。
  * last = 離れる時 (ページが閉じても届くよう keepalive)。返り: true = 置けた、false = もう受けない (終わった挑戦・名前が違う)、null = つながらない・古いサーバー
+ * 端末で「記録しない」を選んだ人 (Y-63) からは送らない (false = 止める。LIVE_NO_LOG、オーナー 11-13)
  */
 export async function livePost(id: string, acts: readonly object[], last = false): Promise<boolean | null> {
   const a = auth(), t = daily.local.tries[id];
-  if (!a || !t || t.ended) return false;
+  if (!a || !t || t.ended || (LIVE_NO_LOG && optedOut())) return false;
   try {
     const r = await fetch(`${API}/daily/live`, { method: "POST", credentials: "omit", keepalive: last, headers: { "content-type": "text/plain;charset=UTF-8" }, body: JSON.stringify({ ...a, id, tree: t.tree ?? null, acts }) });
     if (!r.ok) return null;
@@ -224,6 +225,8 @@ export async function rankRecipe(id: string, name: string): Promise<string | nul
   const r = await call<{ recipe?: string | null }>(`/daily/recipe.json?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
   return r?.recipe ?? null;
 }
+/** 「記録しない」の端末から挑戦中の控えを送らない (D-57b、オーナー 11-13「やめる」)。出すまでは開発版の画面だけ = 出す時に true */
+export const LIVE_NO_LOG: boolean = DEV_BUILD;
 /** 端末で「記録しない」を選んだか (utils/no-log.ts の控えと同じ鍵)。手元の開発版・録画の時の「送らない」は見ない = 開発版は手元の口に置くだけなので試せる */
 const optedOut = (): boolean => { try { return localStorage.getItem("exiledesk.noLog") === "1"; } catch { return false; } };
 /**
