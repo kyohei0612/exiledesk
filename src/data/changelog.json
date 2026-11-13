@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.732",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの木の上の帯を 1 行にまとめ、全画面のボタンを外しました。「まだ回していない」は「100 人回す」にマウスを乗せた時だけ出ます",
+    "en": "The simulator tree's top bar now fits on one row without the full-screen button. \"Not run yet\" only appears when you hover \"Run 100\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの木で、左の段の札に箱や線がかぶらなくなりました",
+    "en": "In the simulator tree, boxes and lines no longer overlap the stage labels on the left"
+   }
+  ]
+ },
+ {
   "v": "0.1.731",
   "date": "2026-11-13",
   "items": [
@@ -940,24 +958,6 @@
     "area": "",
     "text": "デイリー: 創生の樹の MOD が 2 つ以上の装備は投稿できないようにしました。挑戦中に 100 人回した数を締めの集計と同じにしました",
     "en": "Daily: items with two or more Genesis Tree mods can no longer be submitted. The 100-run numbers during a challenge now match the final tally"
-   }
-  ]
- },
- {
-  "v": "0.1.692",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 開いた時はいつもベース選びから始まるようにしました (前回の作りかけから続けない)",
-    "en": "Simulator: it now always opens at base selection (no longer resumes the last unsaved tree)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ヒネコラの髪束の予見が使えるようになりました",
-    "en": "Simulator: Hinekora's Lock (foresight) is now available"
    }
   ]
  }

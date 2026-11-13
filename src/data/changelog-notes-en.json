@@ -1,4 +1,8 @@
 {
+  "0.1.732": [
+    "The simulator tree's top bar now fits on one row without the full-screen button. \"Not run yet\" only appears when you hover \"Run 100\"",
+    "In the simulator tree, boxes and lines no longer overlap the stage labels on the left"
+  ],
   "0.1.731": [
     "Daily: Notes now sit next to the name in the ranking",
     "Daily: Nicknames can now be up to 20 characters (10 for Japanese)",
