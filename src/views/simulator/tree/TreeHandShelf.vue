@@ -40,7 +40,7 @@ import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useHandLater } from "./use-hand-later"; import { whittleHint } from "./tree-whittle-hint";
-import { foreseeBlock, heldOutNames } from "../../../services/simulator/tree/tree-foresee";
+import { foreseeBlock, heldOutNames } from "../../../services/simulator/tree/tree-foresee"; import { fluxBlock } from "../../../services/simulator/tree/tree-flux";
 import { keepsMods } from "../../../services/simulator/sim-engine";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -141,7 +141,7 @@ const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Es
 /** フラクチャー無しで始めた木 (印 noFracOrb、デイリー) ではフラクチャーのオーブを打たせない (S-13b) */
 const noFracBlock = (k: string): string | null => (k === "fracture" && t.doc.value.start?.noFracOrb ? tr("フラクチャー無しで始めた木では使えない", "Not usable in a tree started without a fracture") : null);
 // 完成形の使用ルーンは棚のルーンの節の先頭に (S-31g、11-05 オーナー「おｋ先頭で」)
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k) ?? noFracBlock(k) ?? foreseeBlock(t.doc.value, props.boxId, k), () => (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`));
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k) ?? noFracBlock(k) ?? foreseeBlock(t.doc.value, props.boxId, k) ?? (s.data.value ? fluxBlock(s.data.value, t.doc.value, item.value, k) : null), () => (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`));
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
   simOp("hold", k);

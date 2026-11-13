@@ -20,6 +20,7 @@ import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { essenceModOf, midAims, placedAims } from "./tree-veil";
+import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
 import { modText, tr } from "../../../i18n/lang";
@@ -75,6 +76,8 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 11-08 オーナー「エッセンスと合金 一度付けた奴で名前がハズレＭＯＤになるのは残すを選択しなかった場合とかどうかね」
   const e = essenceModOf(b.parent ? doc.boxes[b.parent]?.hand?.currency : undefined);
   if (e) for (const a of midAims(data, doc)) if (sameAimMod(data, a, { modId: e, tier: 99 })) base.add(a.modId);
+  // 耐性のフラックスで狙いの MOD を変えた先も狙い (S-31h)
+  if (fluxOn(b.parent ? doc.boxes[b.parent]?.hand?.currency : undefined)) for (const id of fluxAimed(data, doc, prev, before, item)) base.add(id);
   const on = goalsOn(data, doc, item);
   return new Set([...base].filter((id) => on.has(id)));
 }

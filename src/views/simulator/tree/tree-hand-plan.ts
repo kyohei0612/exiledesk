@@ -5,7 +5,7 @@
 import { treeOrder } from "../../../services/simulator/tree/tree-order";
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
-import { foldMisses, holdsAt } from "../../../services/simulator/tree/tree-foresee";
+import { foldMisses, holdsAt } from "../../../services/simulator/tree/tree-foresee"; import { fluxBlock } from "../../../services/simulator/tree/tree-flux";
 import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -228,8 +228,7 @@ export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item:
  */
 export function pickedHits(choices: readonly Aim[], checked: readonly string[], held: string, spam: boolean): { aims: Aim[]; free: boolean } | null {
   if (!FREE_EFFECTS.includes(effectOf(held))) return null;
-  // 確定の手 (フラックス S-31h) は ☑ が無く、狙い無しでもない (札は木の狙いで見る)
-  if (isFixedHand(held)) return { aims: [], free: false };
+  if (isFixedHand(held)) return { aims: [], free: false }; // 確定の手 (フラックス S-31h) は ☑ が無く、狙い無しでもない
   const aims = choices.filter((a) => checked.includes(a.modId));
   // チェックした物だけが当たりの箱 (TreeHandShelf の hitAims と同じ。10-27 朝に f468861b の (a) を戻した)
   if (aims.length) return { aims, free: false };
@@ -524,7 +523,7 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
   const only = onlyOf(data, doc, id, hand, preCat, aims);
-  return { hand, kind, aims, preCat, only, problem: problemOf(data, it, hand, aims, preCat, preFill) };
+  return { hand, kind, aims, preCat, only, problem: fluxBlock(data, doc, it, key) ?? problemOf(data, it, hand, aims, preCat, preFill) };
 }
 // 伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の catalystBoosts を呼ぶだけ)。付きうる狙い reachableAims は精査も使うので tree-aim.ts (10-25)
 /** その MOD を伸ばすカタリスト (keys の並びで最初の物、伸ばす物が無ければ null)。伸びるかはエンジンの catalystBoosts (指輪・アミュレットは MOD の tags、ジュエル・上のベースは中身のタグ) */

@@ -6,7 +6,8 @@
 import { applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
-import { effectOf, engineOmens, isCatalyst, isFluxHand, isRuneHand, PICK_EFFECTS } from "./tree-hands";
+import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
+import { fluxOn } from "./tree-flux";
 import { bothKeyOf, boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
@@ -311,20 +312,12 @@ const infiniteHit = (data: PatchData, oc: Outcome, own: readonly Aim[], before: 
   const hits = outcomeOf(data, before, after, own, key).hits; // 新しく付いた ☑ の札 (付いたかはエンジンの aimDiff)
   return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
 };
-/**
- * 耐性のフラックスの結果の札 (S-31h): 狙いの耐性を変えてしまえば狙いが消えた (先に見る)、変えた先が狙いの段を満たせば当たり、どちらでもなければ打った後。
- * 段の動き (E-73 の Lv の表) と当たりの見方はエンジンの前後の比べ (outcomeOf の aimDiff) のまま
- */
-function fluxOutcome(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
-  const oc = outcomeOf(data, before, after, aims, undefined, true);
-  return oc.out === "lost" || (oc.out === "hit" && oc.hits.length) ? oc : { out: "any", hits: [] };
-}
 function boxOutcomeRaw(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, own: readonly Aim[], before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
   const key = h?.currency;
   // ルーンの手は確定の手: はめた人は全員「打った後」の 1 箱へ (当たり / 外れに分けない、S-31e)
   if (key && isRuneHand(key)) return { out: "any", hits: [] };
-  // 耐性のフラックスは確定の手: 札は木の狙いで見る (☑ は無い、S-31h)
-  if (key && isFluxHand(key) && flag("treeFlux")) return fluxOutcome(data, before, after, aims);
+  // 耐性のフラックスは確定の手: カタリストを手として打った時と同じ「打った後」の 1 箱へ (S-31h・S-31b)
+  if (fluxOn(key)) return { out: "any", hits: [] };
   if (key && infiniteAim(key)) return flag("treeInfinitePick") ? infiniteHit(data, outcomeOf(data, before, after, aims, key), own, before, after, key) : ownHits(data, outcomeOf(data, before, after, aims, key), own);
   // 印の無い木の狙い無しのフラクチャー: 固定された MOD の箱 (スイッチ fracPick)
   if (fracFree(doc, h)) {
@@ -378,20 +371,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (h.repeat || isCatalyst(h.currency)) return null;
   // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
   if (isRuneHand(h.currency)) return [{ out: "any", aim: null }];
-  // 耐性のフラックスは乱数の無い手: 見本ごとにエンジンで 1 回打った結果の札 (当たり / 狙いが消えた / 打った後) だけ (S-31h、スイッチ treeFlux)
-  if (isFluxHand(h.currency) && flag("treeFlux")) {
-    // 札を見る狙い = 木の当たりの箱の狙い + 完成形の狙い (まだ当たりの箱の無い狙いに変わる時も当たり)
-    const tree0 = aimsOf(data, doc), tree = [...tree0, ...(doc.memoAims ?? []).filter((a) => !tree0.some((x) => sameAimMod(data, x, a)))], found = new Map<string, BoxOut>();
-    for (let i = 0; i < SINGLE_SEEDS; i++) {
-      const smp = sampleOf(data, doc, boxId, i + 1);
-      if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
-      const r = applyCurrency(data, smp.item, h.currency, mulberry32(i + 1), engineOmens(h));
-      if (!r.applied) continue;
-      const e = boxOutOf(fluxOutcome(data, smp.item, r.item, tree), false);
-      found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}`, e);
-    }
-    return found.size ? [...found.values()] : [{ out: "any", aim: null }];
-  }
+  // 耐性のフラックスは確定の手: カタリストの手と同じ「打った後」の 1 箱・枝なし (S-31h・S-31b、スイッチ treeFlux)
+  if (fluxOn(h.currency)) return [{ out: "any", aim: null }];
   // ヒネコラの髪束は MOD を変えない手: 直下に予見した「打った後」の 1 箱だけ (S-39 ①、11-11 オーナー「1枠ヒネコラ打ったらその直下に枠出来るだけじゃないのそもそも」。
   // 前はエンジンの枝が取れず手の種類の既定 = 当たり + 外れ の 2 箱になり、合流をやめた後に直下が 2 つに見えた)
   if (h.currency === "hinekora") return [{ out: "any", aim: null }];
