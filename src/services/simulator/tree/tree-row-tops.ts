@@ -68,14 +68,11 @@ export const stackEnds = (d: TreeDoc, b: TreeBox): string[] => {
   // (スイッチ hitsSide) 積むのは外れ側だけ。当たり・打った後 (→ 同じ中身の箱の続きへ など) は横に並べる (11-14 オーナー「当たりだけ横に出して他たためば？」)
   const side = (c: TreeBox): boolean => !flag("hitsSide") || c.out === "junk" || c.out === "junkGone" || c.out === "lost";
   const ends = drawnKids(d, b).filter((k) => { const c = d.boxes[k]!; return !!c.back && !c.done && c.out !== "pass" && !drawnKids(d, c).length && side(c); });
-  if (ends.length >= 2) return ends;
-  // (スイッチ hitsSide) 畳んだ 1 行の札は横の 1 枠を取らず、下に何も無い兄弟の箱の下に積む = 残った箱が親の真下へ詰まる
-  // (11-14 オーナー「そしたらこの段は左詰めになるから直で下に来たみたいな感じだから分かりやすいだろうし」)
-  if (!flag("hitsSide")) return [];
-  const kids = drawnKids(d, b), folds = stripFolds(d), card = kids.find((k) => folds.get(k)?.ends);
-  const leaf = card ? kids.find((k) => k !== card && d.boxes[k]!.out !== "pass" && !drawnKids(d, d.boxes[k]!).length) : undefined;
-  return card && leaf ? [leaf, card] : [];
+  // (スイッチ hitsSide) 畳んだ 1 行の札は積まず、段の右端に並べる (tree-place-wide の wideX)
+  return ends.length >= 2 ? ends : [];
 };
+/** (S-142j ②、スイッチ hitsSide) 段の右端に並べる畳んだ 1 行の札 (札の箱の id) */
+export const endCards = (d: TreeDoc): Set<string> => (flag("hitsSide") ? new Set([...stripFolds(d).values()].filter((f) => f.ends).map((f) => f.head)) : new Set());
 /**
  * 段を揃える (10-28 夜オーナー「段を合わせて欲しいな今横のラインが気持ちよくない…一番下枠が出ているものに合わせてそこを起点として次の段の位置を決める。
  * 決め方は枠の上枠で決めて線を調整・オーブの位置までそろえたい」): 同じ段 (深さ) の箱は上の枠を揃え、次の段の上の枠 = その段の一番下の枠 + 48 + 札 + 48

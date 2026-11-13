@@ -6,7 +6,7 @@ import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
+import { endCards, LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { FOLD_H, foldOuts, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
@@ -38,6 +38,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   // 畳んだ消去の続き (S-28g ③): 根の線は札へ、札の線は止まった箱へ、隠した箱からは引かない
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
+  const ends = computed(() => endCards(doc.value));
   /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
   /**
    * 削減の手前の枠の帯 (S-65c ⑫): 枠ごとに 帯 → 手の札 → 結果の箱 を別の線で (11-11 オーナー「どこに何打ってこのツリーになったのか一ミリも分からん」)。
@@ -100,7 +101,9 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
           + [...hops].sort((a, z) => s * (a - z)).map((x) => `L ${x - s * HOP} ${busY} A ${HOP} ${HOP} 0 0 ${s > 0 ? 1 : 0} ${x + s * HOP} ${busY} `).join("")
           + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} ` + (side ? `L ${cx} ${ey - 8} Q ${cx} ${ey} ${cx + 8} ${ey} L ${k.q.x} ${ey}` : `L ${cx} ${cy}`);
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
-      return { id: k.id, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null };
+      // 段の右端へ回した畳んだ札への線は細く (S-142j ②、スイッチ hitsSide)
+      const w = ends.value.has(k.id) ? 1 : 2;
+      return { id: k.id, w, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null };
     }).sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; })];

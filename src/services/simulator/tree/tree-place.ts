@@ -9,7 +9,7 @@
  * 始まりの箱の位置は動かさない (木ごと合わせる)。動かしたら true
  */
 import { BOX_W, type TreeDoc } from "./tree-model";
-import { centerMerged, drawnKids, rowLayout, stackEnds, type RowLayout } from "./tree-row-tops";
+import { centerMerged, drawnKids, endCards, rowLayout, stackEnds, type RowLayout } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
 import { bandAway, bandsTogether } from "./tree-band";
 import { flag } from "../../../web/release-flags";
@@ -99,7 +99,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     return [[Math.min(own[0], offs[0]! - px), Math.max(own[1], offs[n - 1]! + BOX_W - px)], ...acc.map(([l, r]): [number, number] => [l - px, r - px])];
   };
   const L = rowLayout(d, heightOf);
-  const xs = wide ? wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF, deep: GAP_DEEP }, (id) => [...stacked.values()].includes(id)) : below ? null : near(d, L, kidsOf, chipW);
+  const xs = wide ? wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF, deep: GAP_DEEP }, (id) => [...stacked.values()].includes(id), endCards(d)) : below ? null : near(d, L, kidsOf, chipW);
   /** (S-142j) 縦に積んだ箱を 1 つ目の箱と同じ x、段の上の枠 + 下げ幅に置く */
   const putStacked = (): void => { for (const [k, head] of stacked) { const b = d.boxes[k]!, r = L.rows.get(k); b.x = d.boxes[head]!.x; if (r != null) b.y = L.top[r]! + (L.off.get(k) ?? 0); } };
   if (xs) {
