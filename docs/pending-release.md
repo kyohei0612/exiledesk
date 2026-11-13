@@ -7,6 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
