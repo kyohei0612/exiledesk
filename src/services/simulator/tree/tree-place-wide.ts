@@ -15,7 +15,7 @@ import { idealOn, idealPath } from "./tree-ideal-first";
 type Row = [number, number];
 
 /** 箱の x (始まりの箱は今の x)。kidsOf は並べ順の決まった描く子 (縦に積んだ 2 つ目からは除いた物) */
-export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW: ((id: string) => number | undefined) | undefined, gaps: { leaf: number; deep: number }, stackHead: (id: string) => boolean = () => false, cards: ReadonlySet<string> = new Set()): Map<string, number> {
+export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW: ((id: string) => number | undefined) | undefined, gaps: { leaf: number; deep: number; reserve?: boolean }, stackHead: (id: string) => boolean = () => false, cards: ReadonlySet<string> = new Set()): Map<string, number> {
   const x = new Map<string, number>([["start", d.boxes.start!.x]]);
   const leafFree = idealOn();
   const seen = new Set<string>(["start"]), kids = new Map<string, string[]>(), up = new Map<string, string>();
@@ -29,7 +29,8 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
   const deep = (id: string): boolean => kids.get(id)!.some((c) => !cards.has(c)) || stackHead(id); // 段の右端の札だけの子は線が下へ下りない (hitsSide)
   /** 兄弟の間: 子が 2 つ以上の兄弟の右は 1 列分空ける / どちらかが deep 72 / どちらも箱 1 つ 24 */
   // 段の右端へ回す札は兄弟の数に入れない (S-142j ②、スイッチ hitsSide)
-  const sibGap = (a: string, b: string): number => (kids.get(a)!.filter((k) => !cards.has(k)).length >= 2 ? gaps.deep * 2 + BOX_W : deep(a) || deep(b) ? gaps.deep : gaps.leaf);
+  // (S-142j ③、スイッチ hitsSide) 1 列の取り置きはしない = 孫は下の段で右へずらすだけ (下の段は上の段に縦で重なって良い。11-14 オーナー「縦で重なる分は良しとしてるはずだが」)
+  const sibGap = (a: string, b: string): number => (gaps.reserve !== false && kids.get(a)!.filter((k) => !cards.has(k)).length >= 2 ? gaps.deep * 2 + BOX_W : deep(a) || deep(b) ? gaps.deep : gaps.leaf);
   for (let r = 1; r < byRow.length; r++) {
     const above = (byRow[r - 1] ?? []).filter((id) => x.has(id));
     const ps = [...new Set((byRow[r] ?? []).map((id) => up.get(id)!))].filter((p) => x.has(p)).sort((a, z) => x.get(a)! - x.get(z)!);
