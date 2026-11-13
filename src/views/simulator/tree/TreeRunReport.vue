@@ -25,6 +25,11 @@ const emit = defineEmits<{ close: []; go: [id: string] }>();
 const t = useTree();
 
 const div = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
+/** 1 人目の挑戦の 1 行 (S-72c) */
+const firstTryLine = (f: NonNullable<TreeRunResult["firstTry"]>): string =>
+  f.end === "done" ? tr(`1 人目の挑戦: ${f.restarts} 回作り直して完成 · ${div(f.cost)} 神`, `First run: done after ${f.restarts} restart(s) · ${div(f.cost)} div`)
+  : f.end === "capped" ? tr(`1 人目の挑戦: 上限まで挑戦したが完成せず (${f.restarts} 回作り直し)`, `First run: hit the limit without finishing (${f.restarts} restart(s))`)
+  : tr("1 人目の挑戦: 途中で止まった", "First run: got stuck");
 const pct = computed(() => Math.round((props.result.finished / (props.result.n || 1)) * 100));
 /** 1 個 (高貴建ての値段 → 神、回した時と同じ) */
 const price = (k: string): number => t.treePrice(k) / (t.treePrice("divine") || 1);
@@ -88,6 +93,8 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
         <span class="text-[26px] font-bold tabular-nums text-amber-100">{{ div(result.perItem) }}<small class="ml-1 text-[14px] font-normal">{{ tr("神 / 1 個", "div / item") }}</small></span>
         <span class="ml-auto tabular-nums" :class="pct < 100 ? 'text-rose-300' : 'text-emerald-300'">{{ tr(`完成 ${pct}%`, `${pct}% done`) }}</span>
       </div>
+      <!-- 1 人目の挑戦 (S-72c、スイッチ firstTry): 失敗でも作り直して完成まで続けた 1 人。100 人の数には入っていない -->
+      <p v-if="result.firstTry" data-tree-run-first-try :data-end="result.firstTry.end" class="-mt-2 break-words text-[12px] leading-snug" :class="result.firstTry.end === 'done' ? 'text-emerald-200/90' : 'text-[#a99d86]'">{{ firstTryLine(result.firstTry) }}<span class="ml-1 opacity-70">{{ tr("1 人の例 (運でぶれる)", "One example run (luck varies)") }}</span></p>
       <!-- この始め方のベースの値段 (取引所の値段を手で入れる。入れると回し直さずに 1 個の神へ足し直す = use-tree-run の withStartCost、10-25 オーナー) -->
       <div data-tree-run-report-start class="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5">
         <h4 class="mb-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-[12px] text-[#a99d86]">{{ tr(`ベースの値段 · ${startName(t.doc.value)}`, `Base price · ${startName(t.doc.value)}`) }}</h4>

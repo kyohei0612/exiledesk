@@ -16,6 +16,7 @@ import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
 import { capDivOf, runPrice } from "../../../services/simulator/tree/run-price";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -113,7 +114,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     const priceIn = runPrice(rig?.price ?? priceOf);
     const capDiv = capDivOf(priceIn);
     // 種・値段を外から持たせている間は使い回さない (精査は種 1・木の相場で回している)
-    if (re && !rig && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost < capDiv)) {
+    // 1 人目の挑戦 (S-72c、スイッチ firstTry) は 100 人回しだけ。精査の 30 人には居ないので使い回さない
+    const first = flag("firstTry") && !opt.test && !view;
+    if (re && !rig && !first && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost < capDiv)) {
       await nextTick();
       if (my === token) { raw.value = re.run; running.value = false; logRun(); }
       return;
@@ -122,7 +125,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, perBox: rig?.perBox, doneOk: rig?.doneOk, price: priceIn, capDiv, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, perBox: rig?.perBox, doneOk: rig?.doneOk, price: priceIn, capDiv, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0, firstTry: first,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {

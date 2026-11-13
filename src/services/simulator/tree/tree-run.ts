@@ -64,6 +64,8 @@ export interface TreeRunOpts {
    * 無ければ今までどおり着いた人は全員完成。false の人はその箱の失敗と同じ数え (そこで終わり・費用は合計に入る・完成に数えない)、箱ごとの人数は結果の unmetAt
    */
   doneOk?: (item: StageItem, box: string) => boolean;
+  /** 1 人目の挑戦 (S-72c、スイッチ firstTry): 100 人とは別にもう 1 人、失敗の箱でも作り直して完成まで回す。結果は firstTry に (100 人の数には入れない) */
+  firstTry?: boolean;
 }
 /** 箱ごとの列 (perBox)。種・何人目・箱の名前を混ぜて 1 本ずつ作る */
 function boxStreams(seed: number, i: number): (box: string) => () => number {
@@ -131,6 +133,8 @@ export interface TreeRunResult {
   /** 回した時のベースの値段 (神) と、人ごとの費用・作り直しの回数・完成したか (ベースの値段を替えた時に回し直さず足し直す、withStartCost) */
   startCost: number;
   persons: Array<{ cost: number; restarts: number; done: boolean }>;
+  /** 1 人目の挑戦 (S-72c、opts.firstTry の時だけ): 終わり方・費用・作り直しの回数 */
+  firstTry?: { end: End; cost: number; restarts: number };
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
@@ -145,7 +149,7 @@ export const stopAimedOf = (item: StageItem): ReadonlySet<string> | null => STOP
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
-function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, pick: ((box: string) => () => number) | null, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand" | "doneOk">): Generator<void, Person> {
+function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, rng0: () => number, pick: ((box: string) => () => number) | null, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit" | "slice">> & Pick<TreeRunOpts, "start" | "onHand" | "doneOk"> & { retryFail?: boolean }): Generator<void, Person> {
   // 輪の早送り (S-71b): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
   const light = !o.onHand;
   let rolls = 0, seenRolls = -1;
@@ -190,7 +194,9 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     visit(at);
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
-    if (b.done === "fail") return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
+    if (b.done === "fail" && !o.retryFail) return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
+    // 1 人目の挑戦 (S-72c): 失敗の箱でもスタートから作り直す (作り直しの手 RESTART と同じ数え)。打ち切りは打ち止めの上限
+    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); cost += o.startCost; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
     if (b.done === "main") {
       if (o.doneOk && !o.doneOk(item, at)) return fin({ end: "failed", unmet: true, cost, at, visits, uses, restarts, odd });
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)。
@@ -466,7 +472,14 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
     if (opts.onProgress && ((i + 1) % every === 0 || p.end === "stuck") && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
     yield i + 1;
   }
-  return summarize(doc, people, o.startCost);
+  const out = summarize(doc, people, o.startCost);
+  if (opts.firstTry) {
+    // 1 人目の挑戦 (S-72c): 100 人とは別の乱数の列で 1 人 (100 人の数は変えない)
+    const g = runOne(data, doc, aims, j, mulberry32((opts.seed ^ 0x9e3779b9) >>> 0), opts.perBox ? boxStreams(opts.seed, -1) : null, { ...o, slice: 0, retryFail: true });
+    const p = holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } });
+    out.firstTry = { end: p.end, cost: p.cost, restarts: p.restarts };
+  }
+  return out;
 }
 function runIn(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
   const g = runTreeSteps(data, doc, opts);
