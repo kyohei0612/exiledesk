@@ -16,6 +16,7 @@ import { flag } from "../../../web/release-flags";
 import { doneLeftOrder, keepOrder, type KeptOrder } from "./tree-place-order";
 import { wideOrder, wideX } from "./tree-place-wide";
 import { idealPath } from "./tree-ideal-first";
+import { unsetBoxes } from "./tree-junk-tidy";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -42,11 +43,16 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const stacked = new Map<string, string>();
   // 組んでいる間は、もう並んでいる兄弟の順を入れ替えない (S-142g、kept = 画面が持つ控え。無ければ毎回決まりどおり)
   const memo = new Map<string, string[]>();
+  // (S-142k、スイッチ treeTidyOnDone) 組んでいる間に手を置いて新しく出た子の枠は、出た瞬間に 狙いどおり (当たり) → 未設定 → 残り (自動の ↩ など決まった物) の順。
+  // 開いた時・並べ直しの時 (控えが空) と、もうある箱 (控えのある親) は今の順のまま (11-13 オーナー「狙い通りが一番左やね枝出る内の」「その次未設定って感じで」)
+  const fresh = !!kept && kept.size > 0 && flag("treeTidyOnDone"), unset = fresh ? new Set(unsetBoxes(d)) : null;
+  const freshOrder = (ks: string[]): string[] => { const g = (k: string): number => (d.boxes[k]?.out === "hit" ? 0 : unset!.has(k) ? 1 : 2); return ks.map((k, i) => ({ k, i })).sort((a, z) => g(a.k) - g(z.k) || a.i - z.i).map((x) => x.k); };
   const kidsOf = (id: string): string[] => {
     let ks = memo.get(id);
     if (ks) return ks;
     const l = drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => outRank(d.boxes[a.o]!) - outRank(d.boxes[z.o]!) || a.i - z.i).map((x) => x.o);
     ks = reorder ? reorder(l) : l;
+    if (fresh && !(kept!.get(id) ?? []).some((k) => ks!.includes(k))) ks = freshOrder(ks); // 子が全部新しい (手を置いた・替えた) 時だけ
     if (kept) ks = keepOrder(kept, id, ks);
     if (ip && kept) { const on = ks.filter((k) => ip.path.has(k)); if (on.length) { ks = [...on, ...ks.filter((k) => !ip.path.has(k))]; kept.set(id, [...ks]); } }
     ks = bandsTogether(d, ks); // 帯の枠は帯の頭のすぐ右に (S-65c ⑫、スイッチ treeLaneOwnHand)
