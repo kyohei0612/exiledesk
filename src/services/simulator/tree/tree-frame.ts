@@ -156,7 +156,25 @@ export const frameKeyOf = (k: string): string => k.replace(/~q(\d+)\.(\d*)\./, (
 /** 木の形 (位置・メモを除く) が同じ間は配置を 1 回だけ出す (judgeMemo は組み替え・回しのたびに作り直す) */
 const FRAMES = new WeakMap<PatchData, WeakMap<TreeDoc, { sig: string; held: number; ft: FrameTree }>>();
 // 例のアイテム (examples) は開いた時に 1 回入れて変えないので鍵に入れない (丸ごと JSON にすると 1 手ごとに重い)
-const sigOf = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" || k === "examples" ? undefined : v));
+const sigFull = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) => (k === "x" || k === "y" || k === "note" || k === "examples" ? undefined : v));
+/**
+ * スイッチ frameSigOnce: 鍵は同じ木の物ごとに、今の流れ (同じマイクロタスクの間 = 画面の 1 回の描き) の中で 1 回だけ作る。
+ * 箱のカードごとに木を丸ごと文字にしていた (4 倍遅く・94 箱で約 0.5 秒、開く・手を置く・タブ替えのたびに)。
+ * 木をその場で書き換える所 (並べ・消去の札) があるので、木の物そのものを鍵にはしない。次の流れでは必ず作り直す。
+ * 覚えるのは画面に出ている木だけ (組み替えの途中の木 = edit の中の整理 tidyJunk は、同じ流れの中で書き換えながら引くので毎回作る)
+ */
+let sigNow = new WeakMap<TreeDoc, string>(), sigClear = false, sigShown: TreeDoc | null = null;
+/** 画面に出ている木を知らせる (use-row-settle が木を替えるたびに呼ぶ) */
+export const setSigShown = (d: TreeDoc): void => { sigShown = d; };
+const sigOf = (doc: TreeDoc): string => {
+  if (!flag("frameSigOnce") || doc !== sigShown) return sigFull(doc);
+  let s = sigNow.get(doc);
+  if (s === undefined) {
+    sigNow.set(doc, (s = sigFull(doc)));
+    if (!sigClear) { sigClear = true; queueMicrotask(() => { sigNow = new WeakMap(); sigClear = false; }); }
+  }
+  return s;
+};
 export function frameOfDoc(data: PatchData, doc: TreeDoc): FrameTree {
   let m = FRAMES.get(data);
   if (!m) FRAMES.set(data, (m = new WeakMap()));

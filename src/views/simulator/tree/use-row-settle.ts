@@ -10,6 +10,7 @@ import { EST_H } from "../../../services/simulator/tree/tree-row-tops";
 import { placeTree } from "../../../services/simulator/tree/tree-place";
 import type { KeptOrder } from "../../../services/simulator/tree/tree-place-order";
 import { stripFoldKey } from "../../../services/simulator/tree/tree-strip-fold";
+import { setSigShown } from "../../../services/simulator/tree/tree-frame";
 import { flag } from "../../../web/release-flags";
 import { settleAnnul } from "./tree-shape-tag";
 
@@ -33,6 +34,7 @@ export const placeKept: KeptOrder = new Map();
 export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined, open?: { opened: Ref<number>; loading: Ref<boolean> }): void {
   const heightOf = boxHeightOf(measure);
   let seenOpen = open?.opened.value;
+  watch(doc, setSigShown, { flush: "sync", immediate: true }); // 見本の配置の鍵を 1 回の描きの中で 1 回にするのは、画面に出ている木だけ (スイッチ frameSigOnce、tree-frame)
   watch(() => `${noOf(doc.value)}#` + Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.merged ? 1 : 0}:${b.hand ? 1 : 0}`).join(",") + `|${stripFoldKey(doc.value)}`, () => {
     if (!open || open.loading.value || open.opened.value !== seenOpen) { seenOpen = open?.opened.value; placeKept.clear(); }
     if (placeTree(doc.value, heightOf, chipW, placeKept)) triggerRef(doc);
