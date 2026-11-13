@@ -4,10 +4,11 @@
  */
 import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
+import { busLevels, CHIP_HALF, HAND_DY, roundPath, type Seg } from "./tree-lines";
+import { sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { endCards, LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
-import { FOLD_H, foldOuts, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { backTargets, FOLD_H, foldOuts, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
 
@@ -45,6 +46,22 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const ends = computed(() => endCards(doc.value));
   /** (S-142j ③、スイッチ hitsSide) 札も描かず直に線を引く畳み: 親 → 行き先の箱 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) */
   const links = computed(() => linkTargets(doc.value, fold.value.folds));
+  /** (S-142j ③、スイッチ hitsSide) ↩ の畳み: 親 → 戻り先の箱 (手の札に乗せた時だけ青い線) */
+  const backs = computed(() => backTargets(doc.value, fold.value.folds));
+  /** 戻りの青い線が避ける箱 (描く箱だけ) */
+  const avoid = computed(() => backs.value.size ? boxes.value.filter((b) => b.out !== "pass" && !fold.value.hidden.has(b.id) && !mergedAway(doc.value, b) && !bandAway(doc.value, b)).map((b) => ({ id: b.id, ...posOf(b), w: BOX_W, h: heightOf?.(b.id) || BOX_H })) : []);
+  /**
+   * 手の札 (px, jy) から戻り先の箱の横の辺の真ん中への道 (S-145 の探し方 sideRoute、ほかの箱を避ける)。通れなければ右の外を回る
+   * (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
+   */
+  const backPath = (px: number, jy: number, t: string): string => {
+    const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, bx = avoid.value.filter((a) => a.id !== t);
+    const x0 = Math.min(...avoid.value.map((a) => a.x)), x1 = Math.max(...avoid.value.map((a) => a.x + a.w));
+    const side = sideRoute({ x: px, y: jy - CHIP_HALF, w: 0, h: CHIP_HALF * 2 }, { ...tq, w: BOX_W, h: th }, bx, x0 - 48, x1 + 48);
+    if (side) return roundPath(side);
+    const col = Math.max(px, tq.x + BOX_W) + 48, ty = tq.y + th / 2;
+    return roundPath([{ x: px, y: jy }, { x: col, y: jy }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }]);
+  };
   /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
   /**
    * 削減の手前の枠の帯 (S-65c ⑫): 枠ごとに 帯 → 手の札 → 結果の箱 を別の線で (11-11 オーナー「どこに何打ってこのツリーになったのか一ミリも分からん」)。
@@ -71,7 +88,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...os.map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
-  const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && (outsOf(b).length || links.value.has(b.id))).map((b) => {
+  const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && (outsOf(b).length || links.value.has(b.id) || backs.value.has(b.id))).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
     // まとめて描かない箱 (案 A) は、まとめ先の箱へ直に線を引く (同じまとめ先が 2 つあれば 1 本)
@@ -83,7 +100,8 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 枠ごとに 1 本ずつの時 (S-65c ⑫、スイッチ treeLaneOwnHand) は、帯 → 手の札 → 結果の箱の線を枠の色に (どの枠の枝かを線で追える。11-12 オーナー「線が無いと分かりづらい」)
     const lane: LvClass | null = flag("treeLaneOwnHand") && bandFrom(b) ? lvPart(b.junkKey) ?? null : null, tone = lane ? `rgb(${lvLook(lane).rgb})` : null;
     const bf = bandFrom(b), lead = bf?.lead ?? b.id, gk = bf && bf.group.length > 1 ? [...new Set(groupOuts(b).map(toOf))] : kids.length ? kids.map((k) => k.id) : links.value.get(b.id) ?? [];
-    const top = Math.min(...gk.map((k) => posOf(doc.value.boxes[k]!).y)), multi = gk.length > 1;
+    // 子が ↩ の畳みだけ (描く子も直に線も無い) の時は、手の札を親の下 LINE_Y に (段の決めがあればその段の札の高さ)
+    const top = gk.length ? Math.min(...gk.map((k) => posOf(doc.value.boxes[k]!).y)) : p.y + (heightOf?.(b.id) || BOX_H) + 2 * LINE_Y + 2 * CHIP_HALF, multi = gk.length > 1;
     // 帯の中の枠の箱は帯の真下から (手の名前は帯の中なので札は出さない、band)
     const px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
@@ -141,7 +159,9 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     to.sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: onlyCards ? jy + CHIP_HALF : busY }, ...kids.flatMap((k) => { if (ends.value.has(k.id)) { const cx = midOf(k.id); return [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: cardY }, { x0: px, y0: cardY, x1: cx, y1: cardY }, { x0: cx, y0: cardY, x1: cx, y1: k.q.y }]; } const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; }), ...linkSegs];
-    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, chip: lead === b.id, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs };
+    // ↩ の畳みの戻り先への青い線 (手の札に乗せた時だけ描く。TreeCanvas)
+    const backLines = (backs.value.get(b.id) ?? []).filter((t) => doc.value.boxes[t]).map((t) => ({ id: t, d: backPath(px, jy, t) }));
+    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, backLines, chip: lead === b.id, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs };
   }));
   /**
    * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。

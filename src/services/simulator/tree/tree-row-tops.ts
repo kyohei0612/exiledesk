@@ -73,8 +73,11 @@ export const stackEnds = (d: TreeDoc, b: TreeBox): string[] => {
   // (スイッチ hitsSide) 畳んだ 1 行の札は積まず、段の右端に並べる (tree-place-wide の wideX)
   return ends.length >= 2 ? ends : [];
 };
-/** (S-142j ②、スイッチ hitsSide) 段の右端に並べる畳んだ 1 行の札 (札の箱の id) */
-export const endCards = (d: TreeDoc): Set<string> => (flag("hitsSide") ? new Set([...stripFolds(d).values()].filter((f) => f.ends && !f.link).map((f) => f.head)) : new Set());
+/**
+ * (S-142j ②、スイッチ hitsSide) 段の右端に並べる畳んだ 1 行の札 (札の箱の id)。11-14 から ↩ の畳みも札を描かない (back) ので今は空
+ * (右端の札の並べと細い線の作りは残っている。外すのは後の片付け)
+ */
+export const endCards = (d: TreeDoc): Set<string> => (flag("hitsSide") ? new Set([...stripFolds(d).values()].filter((f) => f.ends && !f.link && !f.back).map((f) => f.head)) : new Set());
 /**
  * 段を揃える (10-28 夜オーナー「段を合わせて欲しいな今横のラインが気持ちよくない…一番下枠が出ているものに合わせてそこを起点として次の段の位置を決める。
  * 決め方は枠の上枠で決めて線を調整・オーブの位置までそろえたい」): 同じ段 (深さ) の箱は上の枠を揃え、次の段の上の枠 = その段の一番下の枠 + 48 + 札 + 48
