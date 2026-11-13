@@ -25,6 +25,8 @@ import StageSettings from "./StageSettings.vue";
 import { useStageBase } from "./use-stage-base";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import StageQualityBar from "../../components/for-share/item/StageQualityBar.vue";
+import GrantedSkillPick from "../../components/for-share/trade/GrantedSkillPick.vue";
+import { tradeSkill } from "../../state/emulator/trade-skill";
 import StageSanctifyBar from "./StageSanctifyBar.vue";
 import { flag } from "../../web/release-flags";
 import StageAimPanel from "./StageAimPanel.vue";
@@ -290,6 +292,8 @@ function pickMode(m: typeof s.mode.value): void {
           <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top shrink-0" :title="tr('このベースに付く MOD の一覧へ (Tab でも開く)', 'Go to the mod list (Tab also opens it)')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}</button><!-- Tab の札は説明へ (品質の帯が 1 行に入らなかった。2026-10-18) -->
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
+        <!-- 2 行目: 付与スキルの選び (嘆きの / 前兆の / 不在のアミュレットだけ。取引所の検索にも効く。M-05・U-12f、スイッチ tradeSkill、オーナー 11-13「1行目品質系の設定おいて二行目に付与スキルでプルダウン」) -->
+        <div v-if="flag('tradeSkill') && !courseHidesEmulator && s.item.value && !s.replay.value" data-stage-skill-row class="-mb-6 flex w-full max-w-[480px] justify-end empty:hidden max-md:-mb-2"><GrantedSkillPick v-model="tradeSkill" :base="s.item.value.base" /></div>
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
         <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px] max-md:-mb-2"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
         <!-- スマホはカードそのものを上に貼る (下へ送っても打っている物が見える。前の文字だけの要約の帯の代わり、オーナー 11-10「今打ってるアイテムカードから固定に」) -->

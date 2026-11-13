@@ -21,7 +21,7 @@ import { flag } from "../../web/release-flags";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
 import HelpTip from "../../components/ui/HelpTip.vue";
-import GrantedSkillPick from "../../components/for-share/trade/GrantedSkillPick.vue";
+import { tradeSkill } from "../../state/emulator/trade-skill";
 import type { ModGroup } from "../../services/craft-stage/trade-search";
 
 defineProps<{ phone: boolean }>();
@@ -80,9 +80,8 @@ const stageModGroups = computed<ModGroup[]>(() => {
 const TRADE_BASE_KEY = "exiledesk.stage.tradeWithBase";
 const tradeWithBase = ref((() => { try { return localStorage.getItem(TRADE_BASE_KEY) === "1"; } catch { return false; } })());
 watch(tradeWithBase, (v) => { try { localStorage.setItem(TRADE_BASE_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても動く */ } });
-/** 取引所の検索の付与スキル (U-12f、スイッチ tradeSkill。嘆きの / 前兆の / 不在のアミュレットの時だけ選びが出る) */
+/** 取引所の検索の付与スキル (U-12f、スイッチ tradeSkill)。選びは品の上の帯の 2 行目 (CraftStage.vue、M-05) */
 const TRADE_SKILL = flag("tradeSkill");
-const tradeSkill = ref<string | null>(null);
 async function searchStageMods(): Promise<void> {
   const d = s.data.value, it = s.item.value;
   // MOD は各 MOD の段の下限まで、普通 / フラクチャー / 冒涜のどれでも (2026-10-08 オーナー「ティアだけは下限でおｋ」)。
@@ -130,7 +129,6 @@ function armReset(): void {
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('POE2Tube に渡す結果 JSON (今の相場の値段で)', 'Result JSON for POE2Tube (at current market prices)')" @click="copy(tr('結果 JSON', 'result JSON'), s.result(pkg.version))">{{ tr("結果 JSON", "Result JSON") }}</button>
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :title="tr('craft-stage-run.mjs の --prices に渡す相場 (高貴建て)', 'Market prices for craft-stage-run.mjs --prices (in Exalted)')" @click="copy(tr('相場 JSON', 'price JSON'), s.prices())">{{ tr("相場 JSON", "Price JSON") }}</button>
       <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
-      <GrantedSkillPick v-if="TRADE_SKILL" v-model="tradeSkill" :base="s.item.value?.base" />
       <label class="flex cursor-pointer items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr('取引所の検索にベース・アイテムレベル・ソケットも入れる (外すと MOD だけで探す)', 'Also match base, item level and sockets on trade (off = mods only)')"><input v-model="tradeWithBase" type="checkbox" />{{ tr("ベース検索含め", "Include base") }}</label>
       <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tradeWithBase ? tr(`今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・${TIER}の下限まで)`, 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)') : tr(`今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (${TIER}の下限まで、ベースは問わない)`, 'Open the trade site with this item’s mods (minimum tiers, any base)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
       <!-- 検索の仕組みのヒント (2026-10-14 要望 0ce15a82 の返事と同じ中身。オーナー「? でヒント出しておくか取引所の横とかに」) -->
