@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.725",
+  "date": "2026-11-13",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成・最終チェックを押した時に、木を見やすい形に並べ直すようにしました。木の横幅も詰めて表示します。手を置いて出た新しい箱は 当たり → 未設定 → 残り の順に並びます",
+    "en": "Simulator: pressing Done or Final check now rearranges the tree into an easier-to-read layout, and the tree is drawn narrower. New boxes from a step are ordered hit → unset → the rest"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 削減の帯の「未設定 ＋」から手を置いた時に、木の表示が横にずれる不具合を直しました",
+    "en": "Simulator: fixed the tree view shifting sideways when placing a step from \"Unset +\" on a Whittling lane band"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 前に保存した木を開いた時、仕組みが変わった後は今の決まりで組み直すようにしました",
+    "en": "Simulator: saved trees are now rebuilt with the current rules when opened after the rules have changed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 11/13 のお題から、お題のティアを T2 以上にしました (前は T3 以上)",
+    "en": "Daily: from the 11/13 challenge, challenge tiers are T2 or higher (previously T3 or higher)"
+   }
+  ]
+ },
+ {
   "v": "0.1.724",
   "date": "2026-11-12",
   "items": [
@@ -850,18 +880,6 @@
     "area": "",
     "text": "エミュレーター: ベース選びの属性の札の右端「ルーンフォージ版」で、フォージ品の並びから選べます。カードの説明の文 (骨の付く側・ソケット・品質など) も直しました",
     "en": "Emulator: on base selection, \"Runeforged\" at the right end of the attribute tabs lists the Runeforged bases to pick from. Card help texts (which side bones add to, sockets, quality, etc.) are also fixed"
-   }
-  ]
- },
- {
-  "v": "0.1.685",
-  "date": "2026-11-09",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: チュートリアルを出しました (PC のみ)。ベースを選ぶページの「チュートリアル」から、見本のツリーを 18 の手順で組めます",
-    "en": "Simulator: the tutorial is now available (PC only). Open it from \"Tutorial\" on the base selection page and build a sample tree in 18 steps"
    }
   ]
  }

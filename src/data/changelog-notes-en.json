@@ -1,4 +1,10 @@
 {
+  "0.1.725": [
+    "Simulator: pressing Done or Final check now rearranges the tree into an easier-to-read layout, and the tree is drawn narrower. New boxes from a step are ordered hit → unset → the rest",
+    "Simulator: fixed the tree view shifting sideways when placing a step from \"Unset +\" on a Whittling lane band",
+    "Simulator: saved trees are now rebuilt with the current rules when opened after the rules have changed",
+    "Daily: from the 11/13 challenge, challenge tiers are T2 or higher (previously T3 or higher)"
+  ],
   "0.1.724": [
     "Simulator: you can now stop a Whittling step all at once. Click \"Stop Whittling\" to the right of the lane band (Lower / Same / Higher); after a confirmation the lanes go back to one box and you can choose the next step. The confirmation dialog shown when replacing a Whittling step with another step also gets a \"Stop all Whittling\" option (before, you had to repeat the same change for every lane)"
   ],
