@@ -56,27 +56,31 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
    * 手の札 (px, jy) から戻り先の箱の横の辺の真ん中への道 (S-145 の探し方 sideRoute、ほかの箱を避ける)。通れなければ箱の間の列と段の間を折れて進む (gridRoute)、それも無ければ右の外を回る
    * (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
    */
-  /** lane = 同じ手の札から出る何本目か (下ろす高さを LANE_GAP ずつずらして、横の所が重ならない) */
-  const backPath = (px: number, jy: number, t: string, lane = 0): string => {
+  /** lane = 同じ手の札から出る何本目か (横の高さを 12 ずつ上へずらして、横の所が重ならない。帯に収まるよう 2 本目まで) */
+  const backPath = (px0: number, jy: number, t: string, lane = 0, stem: number | null = null): string => {
     const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, bx = avoid.value.filter((a) => a.id !== t);
+    // 札の真ん中 (親の縦の線と同じ x) から上がると、緑が親の箱から出て見える = 行き先の側へ LANE_GAP ずらして上がる (11-14 レビュワー)
+    const px = stem != null && px0 === stem ? px0 + LANE_GAP() * (tq.x + BOX_W / 2 < px0 ? -1 : 1) : px0;
     const x0 = Math.min(...avoid.value.map((a) => a.x)), x1 = Math.max(...avoid.value.map((a) => a.x + a.w));
     // 左は木の左の端より外へ出さない (段の札の列の下に隠れる、laneEdge。11-14 ブラック 105: b99 の緑が x -24 を回った)。右の外は残す
-    // 出だしは手の札の下 +27 まで下ろしてから横へ (札の高さで横に走ると、同じ段のほかの手の札の上を通り、同じ札からの緑どうしも重なった。11-14 レビュワー)
-    const drop = jy + CHIP_HALF + 27 + Math.max(0, lane) * LANE_GAP();
-    const side = sideRoute({ x: px, y: drop, w: 0, h: 0 }, { ...tq, w: BOX_W, h: th }, bx, x0, x1 + 48);
+    // 横の通り道は「段の箱の下の端 → 手の札の上」の帯 (高さ LINE_Y) の真ん中: 灰色の横線は 1 本も無く縦の線だけが通る (11-14 レビュワー:
+    // 札の高さを横に走るとほかの手の札の上を通り、札の下 +27 は灰色の横線の高さと重なって 34 組が並んで走った)
+    // 帯 (48) の中で箱・札から 10 以上離した 2 本: 札の上の端の 14 上・34 上 (間 20 = 線どうしの間、11-14 オーナー「線同士2倍間空けよう」)。3 本目からは 2 本目の高さ
+    const band = jy - CHIP_HALF - 14 - Math.min(Math.max(0, lane), 1) * LANE_GAP();
+    const side = sideRoute({ x: px, y: band, w: 0, h: 0 }, { ...tq, w: BOX_W, h: th }, bx, x0, x1 + 48);
     if (side) return roundPath([{ x: px, y: jy }, ...side]);
     const ty = tq.y + th / 2;
     // 横の辺どうしで通れなければ、箱の間の列と段の間の高さを折れて進む道 (S-145 の探し方、tree-lines-grid の gridRoute)。
     // 行き先の右と左の辺の外 (16) へ横から着き、辺の真ん中へ入る。前はここで行き先の右 +48 の列を箱を見ずに下り、間の箱を貫通した (11-14 レビュワー、b99→b41 が b38)
-    const s = { x: px, y: drop - 27 }, outs = [{ e: { x: tq.x + BOX_W + 16, y: ty }, edge: tq.x + BOX_W }, { e: { x: tq.x - 16, y: ty }, edge: tq.x }];
+    const s = { x: px, y: band - 27 }, outs = [{ e: { x: tq.x + BOX_W + 16, y: ty }, edge: tq.x + BOX_W }, { e: { x: tq.x - 16, y: ty }, edge: tq.x }];
     const len = (ps: readonly { x: number; y: number }[]): number => ps.reduce((n, p, i) => n + (i ? Math.abs(p.x - ps[i - 1]!.x) + Math.abs(p.y - ps[i - 1]!.y) : 0), 0);
-    const grid = outs.map(({ e, edge }) => { const g = gridRoute(s, e, avoid.value, x0, x1 + 48, { tops: false }); return g ? [{ x: px, y: jy }, ...g, { x: edge, y: ty }] : null; })
+    const grid = outs.map(({ e, edge }) => { const g = gridRoute(s, e, avoid.value, x0, x1 + 48, { tops: false }); return g ? [{ x: px, y: jy }, ...g.slice(1), { x: edge, y: ty }] : null; }) // 格子の始め (帯の 27 上) は通らず、札から帯へ直に上がる
       .filter((g): g is { x: number; y: number }[] => !!g).sort((a, z) => len(a) - len(z))[0];
     if (grid) return roundPath(grid);
     // 外回りも箱を見る: 行き先の右 +48 の列が箱を通るなら、木の右端の外の列へ逃がす (畳んだ緑は札が無いので線を消さない。11-14 レビュワー)
-    const near = Math.max(px, tq.x + BOX_W) + 48, segsOf = (c: number): Seg[] => [{ x0: px, y0: jy, x1: c, y1: jy }, { x0: c, y0: jy, x1: c, y1: ty }, { x0: c, y0: ty, x1: tq.x + BOX_W, y1: ty }];
+    const near = Math.max(px, tq.x + BOX_W) + 48, segsOf = (c: number): Seg[] => [{ x0: px, y0: band, x1: c, y1: band }, { x0: c, y0: band, x1: c, y1: ty }, { x0: c, y0: ty, x1: tq.x + BOX_W, y1: ty }];
     const col = pierces(segsOf(near), [t]) ? Math.max(near, x1 + 48) : near;
-    return roundPath([{ x: px, y: jy }, { x: col, y: jy }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }]);
+    return roundPath([{ x: px, y: jy }, { x: px, y: band }, { x: col, y: band }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }]);
   };
   /** (スイッチ newerHome) 縦・横の真っ直ぐな所がほかの描く箱を横切るか (行き先と出元の箱は除く。端から 4 内側で見る) */
   const pierces = (segs: readonly Seg[], skip: readonly string[]): boolean => avoid.value.some((a) => !skip.includes(a.id) && segs.some((g) => {
@@ -167,7 +171,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
       if (flag("newerHome")) {
         const ex0 = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x;
         const lSegs: Seg[] = px >= tq.x && px <= tq.x + BOX_W ? [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: tq.y }] : [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex0, y1: ty }];
-        if (pierces(lSegs, [t, b.id])) { const d0 = backPath(px, jy, t, nth - 1); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: d0, bad: false, mk: () => d0, h: null }); continue; }
+        if (pierces(lSegs, [t, b.id])) { const d0 = backPath(px, jy, t, nth - 1, px0); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: d0, bad: false, mk: () => d0, h: null }); continue; }
       }
       if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
         to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null });
