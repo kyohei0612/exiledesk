@@ -305,6 +305,12 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "qbarOneLine",
   "tradeSkill",
   "treeEndNoMix",
+  // 次の出し: 一括ティア調整 (✦ / 普通側の 2 行・詳細ルール・決定)・発現で選ぶ MOD のタグ・理想手の結果を上の段へ戻さない・消去の下の「形が変わる見込み」の札 (オーナー 11-13 見た目「OKかな」→「11出して」、fracSplit は保留、ブラック 99)
+  "tierDown",
+  "fracDual",
+  "veilMulti",
+  "idealNoBack",
+  "annulShapeTag",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
