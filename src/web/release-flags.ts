@@ -214,6 +214,10 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // シミュの木のタブ: タブごとにレシピと保存の控えを持つ・替えても木を作り直さない・描く 1 回で控えの鍵を 1 回 (オーナー 11-14「出来てるやん。これ次出してね」→「1だして」、ブラック 105・106)。並べ方の実験 (hitsSide・newerHome・handSplit・buildHitsFirst・kidsUnderOwn・foldEnds) は入れない
+  "tabRecipe",
+  "tabKeep",
+  "frameSigOnce",
   // シミュの完成形から「エミュで試す →」・消去の続きは ✦ を数えず消せる MOD 1 つで止める (オーナー 11-14「あー出していいよね」「これはもう出していい」→「おｋ」、ブラック 104)。tradeSkill は入れない
   "simToEmu",
   "annulLastOne",

@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.734",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの木のタブごとに別のレシピを開けるようにしました。ほかのタブで開いているレシピを押すとそのタブへ移ります",
+    "en": "Each simulator tree tab can now hold its own recipe. Picking a recipe that is open in another tab switches to that tab"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの木のタブを替えても木を描き直さず、前の並びや位置のまま出すようにしました (大きい木でも軽くなりました)",
+    "en": "Switching simulator tree tabs no longer redraws the tree; it keeps its layout and position (large trees feel lighter too)"
+   }
+  ]
+ },
+ {
   "v": "0.1.733",
   "date": "2026-11-14",
   "items": [
@@ -910,36 +928,6 @@
     "area": "",
     "text": "要望・バグを送るページを閉じた時に、開く前のページへ同じ見え方で戻るようにしました (前はベース選びに戻っていました)。戻るボタンには元のページの名前を出します",
     "en": "Closing the feedback page now returns to the page you came from, as you left it (it used to go back to base selection). The back button shows that page's name"
-   }
-  ]
- },
- {
-  "v": "0.1.694",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減のお告げを打つ前に、外れ MOD の MOD レベルが低い・同じ・高いで分かれ、それぞれ次の手を決められるようにしました",
-    "en": "Simulator: before an Omen of Whittling, the tree now splits by whether the junk mod level is lower, the same or higher, so you can pick a different move for each"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター (スマホ): ツリーの全体図で段の札が重なっていたのを直しました",
-    "en": "Simulator (phone): fixed the tier labels overlapping on the full tree view"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スパムシミュレーター (スマホ): 上へ戻るのボタンが「狙う MOD を選ぶ」に重なっていたのを直しました",
-    "en": "Spam simulator (phone): fixed the back-to-top button covering \"Pick a target mod\""
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 創生の樹の MOD が 2 つ以上の装備を投稿しようとした時の文を「やり直し不可能なMODは1つまでです」にしました (貼り付けの時も同じ)",
-    "en": "Daily: submitting an item with two or more Genesis Tree mods now says \"Only 1 mod that can't be crafted again is allowed\" (also when pasting)"
    }
   ]
  }
