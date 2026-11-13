@@ -59,6 +59,21 @@ export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, f
   return true;
 }
 
+/**
+ * ✦ の印の狙いの普通側の段 (固定されなかった時に要る段) を to に下げる (S-10g、スイッチ fracDual。2 完成の MOD の画面のティア調整だけ)。
+ * 書くのは完成形の狙いの plainTier だけ。木に置いた当たりの箱の段は触らない (✦ 側の札と見分けが付かないため。新しく置く手から普通側の段になる)
+ */
+export function lowerPlainTier(data: PatchData, d: TreeDoc, goal: Aim, to: number): boolean {
+  const now = goal.plainTier ?? goal.tier;
+  if (!goal.fractured || to <= now) return false;
+  d.memoAims = (d.memoAims ?? []).map((a) => (a.fractured && sameAimMod(data, a, goal) ? { ...a, plainTier: to } : a));
+  return true;
+}
+/** 2 つ持ちで ✦ 側だけ下げる時、普通側を今の段に留める (plainTier が無いと ✦ 側に付いて下がるため) */
+export function pinPlainTier(data: PatchData, d: TreeDoc, goal: Aim): void {
+  d.memoAims = (d.memoAims ?? []).map((a) => (a.fractured && a.plainTier == null && sameAimMod(data, a, goal) ? { ...a, plainTier: a.tier } : a));
+}
+
 /** 今のオーブでは狙いの下限の段が出ない手 (box = 手の箱、aim = 出ない狙い、level = その段の MOD レベル、to = おすすめのオーブ) */
 export interface OrbMisfit { box: string; currency: string; aim: Aim; level: number; to: string }
 /** その MOD (goal と同じ MOD) を当たりの箱に持つ手のうち、オーブの段の下限が狙いの段の MOD レベルを超える物 */

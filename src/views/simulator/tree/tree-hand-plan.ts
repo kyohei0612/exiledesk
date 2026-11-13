@@ -29,7 +29,7 @@ import { joinSameShape } from "./tree-merge";
 import { backChoicesOf } from "./use-tree-link";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
-import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
+import { fracFree } from "../../../services/simulator/tree/tree-frac-pick"; import { phaseAim } from "../../../services/simulator/tree/tree-frac-dual";
 import { tr } from "../../../i18n/lang";
 import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
 import { DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
@@ -191,7 +191,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
-  const pool = [...aimsOf(data, doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i);
+  const pool = [...aimsOf(data, doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i).map((a) => phaseAim(a, (doc.memoAims ?? []).find((g) => sameAimMod(data, g, a)), item)); // ✦ の 2 つ持ちは固定の後 = 普通側の段 (S-10g)
   const open = pool.filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)。どの見本でも行き先が無ければ全部。
   // 当たるまで (どれでも) も同じ絞り: 前は付いていない狙い全部で、カオスで付かない狙い (冒涜の MOD・アイテムレベルの足りない段) だけが残ると

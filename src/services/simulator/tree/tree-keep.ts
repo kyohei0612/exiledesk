@@ -10,13 +10,14 @@ import { aimHeldOn } from "./tree-aim";
 import { engineOmens } from "./tree-hands";
 import { isMissMod, missAims } from "./tree-miss";
 import { sameAimMod } from "./tree-hand-core";
+import { looseTierOf } from "./tree-frac-dual";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { handWhittleSide, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
 
 /** 残したい MOD を決めた手か。消去も同じ (11-04、[] = 全部消えてよい = 残したい MOD 無し。前は消去だけ tree-outcome の isKeepAnnul で別に数えた) */
 export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep;
-/** 残したい MOD の段は完成形の段 (消去の S-27c と同じ) */
-export const goalTierOf = (data: PatchData, doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => { const g = (doc.memoAims ?? []).find((x) => sameAimMod(data, x, a)); return g ? { ...a, tier: g.tier } : a; });
+/** 残したい MOD の段は完成形の段 (消去の S-27c と同じ。✦ の印の 2 つ持ちは 2 つのうち下の段、S-10g) */
+export const goalTierOf = (data: PatchData, doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => { const g = (doc.memoAims ?? []).find((x) => sameAimMod(data, x, a)); return g ? { ...a, tier: looseTierOf(g) } : a; });
 /** 消える手の残したい MOD (段は完成形の段)。残したい MOD を決めていない手は null (既定 = 持っている狙い) */
 export const keptAimsOf = (data: PatchData, doc: TreeDoc, h: Hand | null | undefined): Aim[] | null => (isKeepHand(h) ? goalTierOf(data, doc, h.keep) : null);
 /** 打つ前の ☑ の代わりに使う印 (残したい MOD + ✦ の印)。決めていない手は aimed のまま */

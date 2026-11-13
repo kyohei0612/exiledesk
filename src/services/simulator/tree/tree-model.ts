@@ -28,6 +28,7 @@ export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "b
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
+  /** ✦ の印の狙いの普通側の段 (固定されなかった時に要る段、S-10g・スイッチ fracDual)。無ければ tier と同じ。tier は ✦ 側 (フラクチャーの候補の段) */ plainTier?: number;
   /** 付け方の覚え (完成の狙いだけ、S-10b)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated";
   /** 前の作りで完成形の品質のために自動で足したブリーチのエッセンスの MOD の印 (読むだけ。開く時に tree-migrate が狙いから外す、S-31 の撤回 11-07) */ forQuality?: true;
   /** 貼り付けで取り込んだ素の値 (完成の狙いだけ。完成形のカードにそのまま出す、段の中央でなく。段を替えたら外す、10-25 オーナー「コピペした時数値の変更が若干ある」) */ values?: number[] }
