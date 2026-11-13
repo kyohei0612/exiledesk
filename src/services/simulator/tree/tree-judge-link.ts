@@ -12,6 +12,7 @@ import { effectOf, isRuneHand } from "./tree-hands";
 import { treeOrder } from "./tree-order";
 import { outKey } from "./tree-recipe-v1";
 import { flag } from "../../../web/release-flags";
+import { hitsOn, idealPath } from "./tree-ideal-first";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -149,7 +150,10 @@ export function trunkOf(doc: TreeDoc, id: string, j: Judge): string | null {
   const split = flag("handSplit");
   // 完成への道の手の結果は上の段の箱を幹にしない (S-50g、自動の ↩ の候補 autoTargets と同じ。要望 861a5393: 手を置くと上の消去の箱へ畳まれ、見直しで ↩ も外れて＋が進まなかった。スイッチ idealNoFold)
   const up = flag("idealNoFold") ? idealNoUp(doc, id) : 0;
-  return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && (!split || sameHand(t.hand, b.hand!)) && !below.has(t.id) && cmp(t.id, id) < 0 && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
+  // (S-142j ⑤、スイッチ buildHitsFirst) 同じ中身は ① で先に組んだ当たりの道の箱を本物 = 当たりの道の箱と道の外の箱では、木の並びより道の箱を前にする
+  const ip = hitsOn() ? idealPath(doc) : null, onPath = (x: string): boolean => !!ip?.path.has(x);
+  const earlier = (t: string): boolean => (ip && onPath(t) !== onPath(id) ? onPath(t) : cmp(t, id) < 0);
+  return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && (!split || sameHand(t.hand, b.hand!)) && !below.has(t.id) && earlier(t.id) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort((x, y) => (ip ? Number(onPath(y)) - Number(onPath(x)) : 0) || cmp(x, y))[0] ?? null;
 }
 /** 人の決めのある箱か (手・完成 / 失敗・人の ↩・分かれ目) */
 const decided = (b: TreeBox | undefined): boolean => !!b && (!!b.hand || !!b.done || (!!b.back && !b.autoBack) || !!b.split);
