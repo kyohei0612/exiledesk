@@ -16,6 +16,7 @@ import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import { useHeldShares } from "../../../components/for-share/mod-list/use-held-shares";
 import { isRevealHand } from "../../../services/simulator/tree/tree-veil";
+import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { craftStage as s } from "../../../state/craft-stage";
 import { handName } from "./tree-names";
 import { ECHO } from "../../../services/simulator/tree/tree-hands";
@@ -29,8 +30,19 @@ const MOD_HIDE = flag("modHide");
 /** 骨の 3 択 (TreeHandShelf の boneMode)。reveal = 発現 (☑ の MOD)、free = 発現させて狙い無し、keep = 未発現のまま */
 export type BoneMode = "reveal" | "free" | "keep";
 /** echo = アビスの反響のお告げが手に付いているか (任意の ☑、発現させる時 (発現・狙い無し) だけ出す。棚のお告げの欄と同じ omens を見る) */
-const props = defineProps<{ modelValue: boolean; mode?: BoneMode; big?: boolean; noCheck?: boolean; boxId: string; item: StageItem | null; hand: Hand | null; echo?: boolean }>();
-const emit = defineEmits<{ "update:modelValue": [boolean]; mode: [BoneMode]; add: [Aim]; echo: [boolean] }>();
+/** chosen = 手の窓で ☑ の付いた MOD (extra = 窓で選んだ置き石。スイッチ veilMulti の間、窓の ☑ とボタンの下のタグに使う) */
+const props = defineProps<{ modelValue: boolean; mode?: BoneMode; big?: boolean; noCheck?: boolean; boxId: string; item: StageItem | null; hand: Hand | null; echo?: boolean; chosen?: ReadonlyArray<{ aim: Aim; label: string; extra?: boolean }> }>();
+const emit = defineEmits<{ "update:modelValue": [boolean]; mode: [BoneMode]; add: [Aim]; drop: [Aim]; echo: [boolean] }>();
+/** 窓で続けて選ぶ (押すたびに ☑ を付け外し、閉じるまで選び続ける) + 選んだ MOD をタグで並べる (S-32c、スイッチ veilMulti) */
+const MULTI = flag("veilMulti");
+/** この手の窓で、完成の狙いの候補にある MOD を窓から選んだ物 (置き石でなくてもタグに出す = 窓で選んだ物は必ずタグに出る) */
+const pickedHere = ref<Aim[]>([]);
+const sameMod = (x: Aim, a: Aim): boolean => { const d = s.data.value; return !!d && sameAimMod(d, x, a); };
+/** タグ = 窓で選んだ物 (置き石と、この窓で選んだ完成の狙いの候補) のうち ☑ の付いている物 */
+const tags = computed(() => (props.chosen ?? []).filter((c) => c.extra || pickedHere.value.some((p) => sameMod(p, c.aim))));
+/** 窓の段の MOD がタグにあるか (同じ MOD かはエンジンの当て方 sameAimMod) */
+const isChosen = (modId: string): boolean => tags.value.some((c) => sameMod(c.aim, { modId, tier: c.aim.tier }));
+function dropTag(a: Aim): void { pickedHere.value = pickedHere.value.filter((p) => !sameMod(p, a)); emit("drop", a); }
 const MODES = computed((): Array<{ k: BoneMode; label: string }> => [
   { k: "reveal", label: tr("発現 (選んだ MOD が出れば当たり)", "Reveal (a hit if a picked mod shows up)") },
   { k: "free", label: tr("狙い無し (発現させて、出た MOD は外れ)", "No target (reveal it; the mod counts as a miss)") },
@@ -56,7 +68,13 @@ const dimTier = (r: ListRow, x: ListTier): boolean => (pool.value ? !poolTier(r,
 // 開いた時は上 (一般の MOD) から、冒涜専用は下へ送れば見える (11-07 オーナー「開いたモッドが冒涜から始まるから、一般から始めて欲しい」。前は冒涜専用の節へ送っていた)
 /** 「発現で選ぶ」を出す段 = 灰色でない行の灰色でない段 */
 const pickable = (r: ListRow, x: ListTier): boolean => !dimRow(r) && !dimTier(r, x) && (pool.value != null || shares.heldTierShare(r, x) > 0);
-function pick(a: Aim): void { picking.value = false; emit("add", a); }
+function pick(a: Aim): void {
+  if (!MULTI) { picking.value = false; emit("add", a); return; }
+  // 窓は開いたまま。☑ の付いた MOD をもう一度押すと外す
+  if (isChosen(a.modId)) { dropTag(a); return; }
+  pickedHere.value = [...pickedHere.value, a];
+  emit("add", a);
+}
 </script>
 
 <template>
@@ -74,6 +92,12 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
           <span class="min-w-0 break-words">{{ handName(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
         </label>
         <button v-if="m.k === 'reveal'" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : 'ml-5'" @click="picking = true">{{ tr("発現で選ぶ MOD を選ぶ", "Pick the mod to reveal") }}</button>
+        <div v-if="m.k === 'reveal' && MULTI && tags.length" data-tree-hand-veil-tags class="flex flex-wrap gap-1" :class="big ? '' : 'ml-5'">
+          <span v-for="c in tags" :key="c.aim.modId" data-tree-hand-veil-tag class="inline-flex min-h-6 max-w-full items-center gap-1 rounded border border-[var(--exile-color-border-brass)] bg-black/30 pl-2 text-[11px]" :class="big ? '!min-h-10 text-[13px]' : ''">
+            <span class="min-w-0 truncate">{{ c.label }}</span>
+            <button type="button" data-tree-hand-veil-untag class="shrink-0 rounded px-1.5 leading-none opacity-70 hover:bg-white/10 hover:opacity-100" :class="big ? 'min-h-10 min-w-10' : 'min-h-6'" :title="tr('外す', 'Remove')" :aria-label="tr(`${c.label} を外す`, `Remove ${c.label}`)" @click="dropTag(c.aim)">×</button>
+          </span>
+        </div>
       </template>
     </template>
   </template>
@@ -82,8 +106,14 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
     <span class="min-w-0 break-words">{{ handName(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
   </label>
   <button v-if="noCheck" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : ''" @click="picking = true">{{ tr("発現で選ぶ MOD を選ぶ", "Pick the mod to reveal") }}</button>
+  <div v-if="noCheck && MULTI && tags.length" data-tree-hand-veil-tags class="flex flex-wrap gap-1">
+    <span v-for="c in tags" :key="c.aim.modId" data-tree-hand-veil-tag class="inline-flex min-h-6 max-w-full items-center gap-1 rounded border border-[var(--exile-color-border-brass)] bg-black/30 pl-2 text-[11px]" :class="big ? '!min-h-10 text-[13px]' : ''">
+      <span class="min-w-0 truncate">{{ c.label }}</span>
+      <button type="button" data-tree-hand-veil-untag class="shrink-0 rounded px-1.5 leading-none opacity-70 hover:bg-white/10 hover:opacity-100" :class="big ? 'min-h-10 min-w-10' : 'min-h-6'" :title="tr('外す', 'Remove')" :aria-label="tr(`${c.label} を外す`, `Remove ${c.label}`)" @click="dropTag(c.aim)">×</button>
+    </span>
+  </div>
   <!-- エミュの「このベースに付く MOD」の重ね窓と同じ枠 (CraftStage.vue の ModalShell と同じ大きさ、スマホは画面いっぱい) と同じ表 (S-38) -->
-  <ModalShell :open="picking" rec="tree-veil-mods" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (選ばない)', 'Close (pick nothing)')" width="w-[75%] h-[75%] max-[48rem]:h-auto" full-on-phone body-class="px-3 pb-3" @close="picking = false">
+  <ModalShell :open="picking" rec="tree-veil-mods" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="MULTI ? tr('閉じる', 'Close') : tr('閉じる (選ばない)', 'Close (pick nothing)')" width="w-[75%] h-[75%] max-[48rem]:h-auto" full-on-phone body-class="px-3 pb-3" @close="picking = false">
     <template #header><span class="g-sec-sub max-[48rem]:hidden">{{ tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>
     <div data-tree-hand-veil-pick>
       <ModTable
@@ -93,7 +123,7 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
       >
         <template #tier-actions="{ row: r, tier: tt }">
           <td class="py-0.5 pl-2 text-right">
-            <button v-if="pickable(r, tt)" type="button" data-mod-pick data-tree-hand-veil-tier class="tbtn" :title="tr(`${tt.rank} 以上が発現で選べたら当たり`, `A hit if ${tt.rank}+ is revealed`)" @click.stop="pick({ modId: tt.modId ?? r.id, tier: tt.tier })">{{ tr("発現で選ぶ", "Pick") }}</button>
+            <button v-if="pickable(r, tt)" type="button" data-mod-pick data-tree-hand-veil-tier class="tbtn" :class="MULTI && isChosen(tt.modId ?? r.id) ? 'on' : ''" :aria-pressed="MULTI ? isChosen(tt.modId ?? r.id) : undefined" :title="MULTI && isChosen(tt.modId ?? r.id) ? tr('押すと外す', 'Click to remove') : tr(`${tt.rank} 以上が発現で選べたら当たり`, `A hit if ${tt.rank}+ is revealed`)" @click.stop="pick({ modId: tt.modId ?? r.id, tier: tt.tier })">{{ MULTI && isChosen(tt.modId ?? r.id) ? tr("☑ 選んだ", "☑ Picked") : tr("発現で選ぶ", "Pick") }}</button>
           </td>
         </template>
       </ModTable>
