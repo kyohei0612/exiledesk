@@ -10,7 +10,7 @@
 | 最終チェック長 | — (15 local_f23780b9 は 11-14 0 時台にアーカイブ。次の出しでブラックが立て直す) | なし |
 | サーバー係 | local_f6d61d7a-84b0-4083-a562-8a70d8ee1a19 (4 代目 server-keeper4、Opus 5.5、11-13 21 時台にブラック 101 が控えに立て、3 代目 local_723fe780 が 2,39x 件で交代。頼み = 共有ノート progress/server-keeper4-brief.md) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
 | 解析君 | — (analyst1 local_819bb9cb は 11-14 0 時台に ui_tally を済ませてアーカイブ。一覧は本番に出て 1 週溜めてから) | 待機 |
-| ジン部長 | local_e283feed-b3dd-480c-9014-2f4f3981b0de (11-12 に local_6602c6d4 が 2,483 件で交代。作業場 .claude/worktrees/wizardly-gould-f36ecf、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: 古いテスト 10 件を設計図どおりに → グラスピングメイルの冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト (錬金の表の 0% はオーナーの選び待ち) |
+| ジン部長 | — (local_e283feed はアーカイブ済み、11-14 0 時台にブラック 104 が見た。作業場 .claude/worktrees/wizardly-gould-f36ecf・引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 仕事が来たらブラックが立てる (古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテストが残り) |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_94e9c731-8ec4-4c60-aebf-8817384816f6 (36 sim-lead36、Opus 5.5、11-13 23 時台にブラック 102 が控えに立て、35 = local_fbf10717 が 2,0xx 件で交代。手伝い = sim-side1 local_b61d4a02 (tabKeep A 区切り 1)・控え sim-side2 local_4faf9e25 (区切り 2 を引き継ぐ)) | 今: 「同じ枠だけ変える」の読みと手間 (ブラック 104 へ)・手の札の案 A と当たりのまとめはオーナーの返事待ち・sim-side の作り替えの間は use-tree.ts・SimTreePage.vue・描く側を書かない・整頓 D+A は外す予定 (revert 未)・idealNoFold は開発版だけ |
