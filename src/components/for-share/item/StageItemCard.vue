@@ -22,6 +22,7 @@ import { runeArt } from "../../../components/art/rune-art";
 import { uniqueLines } from "../../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../../services/craft-stage/roll-text";
 import { BASE_VALUES_ON, augmentLineOf, modLineOf } from "./base-values";
+import { fracNames } from "./frac-split";
 import { boostedMod, hasExtraCatalyst, scaledAugment } from "../../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { craftStage } from "../../../state/craft-stage";
@@ -236,6 +237,23 @@ const fracRows = computed(() => {
   return hit.length >= 2 ? hit : [];
 });
 const plainRows = computed(() => (fracRows.value.length ? rows.value.filter((r) => !fracRows.value.includes(r)) : rows.value));
+/**
+ * まとめた行を枠ごとに開く (S-11c、スイッチ fracSplit。オーナー 11-13「フラクチャー３MOD、P1狙いMOD×３P1狙いMOD×３の３つならべないと」)。
+ * ✦ の行 1 つ (どれか 1 つが固定) + 残りの狙いの行 (印の数 − 1)。名前は短く (frac-split.ts)。閉じている間は「フラクチャー MOD ×n」の 1 行
+ */
+const FRAC_SPLIT = flag("fracSplit");
+const fracSplit = computed(() => {
+  const fr = fracRows.value;
+  if (!FRAC_SPLIT || !fr.length) return null;
+  const names = fracNames(fr.map((r) => r.text)).join(" / ");
+  const sides = [...new Set(fr.map((r) => (r.side === "プレフィックス" ? "P" : "S")))];
+  const tags = new Set(fr.map((r) => sideTier(r)));
+  const one = sides.length === 1 ? (sides[0] === "P" ? "text-stage-prefix" : "text-stage-suffix") : "";
+  return {
+    head: { tag: `${sides.join("·")}✦`, text: tr(`フラクチャー: ${names} のどれか 1 つ`, `Fractured: one of ${names}`) },
+    rest: { tag: tags.size === 1 ? [...tags][0]! : sides.join("·"), cls: one, text: tr(`残りのどれか (${names})`, `Any of the rest (${names})`), n: fr.length - 1 },
+  };
+});
 /** まとめた行の小窓: ホバーで出し、押すと出したまま (スマホ)。枠の外を押す・Esc で閉じる */
 const fracOpen = ref(false);
 const fracEl = ref<HTMLElement | null>(null);
@@ -336,7 +354,20 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <div v-if="!hidden" class="space-y-1">
         <!-- フラクチャーの印が 2 つ以上: 1 行にまとめ、ホバー (スマホは押す) でどれが重なっているかを小窓に。小窓の行は押すと MOD 一覧へ、右クリックで印を外す (2026-10-23 オーナー) -->
         <div v-if="fracRows.length" ref="fracEl" data-fracture-group class="group/fg relative" @mouseenter="hover = 'mod'" @mouseleave="(hover = null), (fracOpen = false)">
-          <p class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
+          <!-- 枠ごとの行 (S-11c、スイッチ fracSplit): ✦ の行 + 残りの狙いの行。小窓は今と同じくホバー・押すで -->
+          <template v-if="fracSplit">
+            <p data-fracture-head class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
+              <span class="shrink-0 whitespace-nowrap text-left font-bold" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]']">{{ fracSplit.head.tag }}</span>
+              <span v-fit-text class="min-w-0 flex-1 text-center">{{ fracSplit.head.text }}</span>
+              <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
+            </p>
+            <p v-for="i in fracSplit.rest.n" :key="`fr-rest-${i}`" data-fracture-rest class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-rarity-magic hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
+              <span class="shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', fracSplit.rest.cls]">{{ fracSplit.rest.tag }}</span>
+              <span v-fit-text class="min-w-0 flex-1 text-center">{{ fracSplit.rest.text }}</span>
+              <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
+            </p>
+          </template>
+          <p v-else class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
             <span class="shrink-0 text-left font-bold" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]']">{{ [...new Set(fracRows.map((r) => (r.side === "プレフィックス" ? "P" : "S")))].join("·") }}</span>
             <span v-fit-text class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
             <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
