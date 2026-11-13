@@ -104,7 +104,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const cardY = jy + CHIP_HALF + CARD_DY, onlyCards = kids.every((k) => ends.value.has(k.id));
     const to = kids.map((k) => {
       if (ends.value.has(k.id)) {
-        const cx = midOf(k.id), cy = k.q.y, s = Math.sign(cx - px) || 1, r = Math.min(8, Math.abs(cx - px) / 2), y0 = jy + CHIP_HALF;
+        const cx = midOf(k.id), cy = k.q.y, s = Math.sign(cx - px) || 1, r = Math.min(8, Math.abs(cx - px) / 2), y0 = jy; // 手の札の真ん中から (札の裏を通る)
         const mk = (hops: readonly number[]): string => `M ${px} ${y0} L ${px} ${cardY - r} Q ${px} ${cardY} ${px + s * r} ${cardY} `
           + [...hops].sort((a, z) => s * (a - z)).map((x) => `L ${x - s * HOP} ${cardY} A ${HOP} ${HOP} 0 0 ${s > 0 ? 1 : 0} ${x + s * HOP} ${cardY} `).join("")
           + `L ${cx - s * r} ${cardY} Q ${cx} ${cardY} ${cx} ${cardY + r} L ${cx} ${cy}`;
@@ -123,7 +123,8 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     });
     // (S-142j ③、スイッチ hitsSide) 同じ枠へ・同じ中身の箱の続きへの畳みは札も描かず、手の札の真ん中から真下へ伸ばし、行き先の箱の真ん中の高さで曲がって横から入る
     // (11-14 オーナー「左の枠の真ん中めがけて横の線はそこで縦の線は消去の真ん中から下へのばして」「同じ枠系はそのごの枠へつなげばいいのでは」)
-    const linkY0 = jy + CHIP_HALF, linkSegs: Seg[] = [];
+    // 手の札の真ん中から始める (札の裏を通って下の縁で切れない。CHIP_HALF は札の高さの見込みで本物より大きく、下の縁から始めると隙間が出た。11-14 オーナー「緑くっついてないぞ手の札に」)
+    const linkY0 = jy, linkSegs: Seg[] = [];
     for (const t of links.value.get(b.id) ?? []) {
       const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, ty = tq.y + th / 2;
       if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
