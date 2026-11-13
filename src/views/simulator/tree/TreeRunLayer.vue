@@ -12,7 +12,10 @@ import { stuckDetail, type TreeRunResult } from "../../../services/simulator/tre
 import { useTree } from "./use-tree";
 import type { MergeLine } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 const t = useTree();
+/** 通った道の線と線の回数 (「n 回」「↩ n 回」) を出さない (S-199b、スイッチ runNoLines。オーナー 11-13「線消していいよ100人後の通った線」)。箱の「n 人」・止まり・別の箱へは出す */
+const noLines = flag("runNoLines");
 /** 止まりの札に乗せた時、その人の MOD と来た道 (S-72) */
 
 /** 止まりの札をカードに被せない  */
@@ -94,7 +97,7 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
 
 <template>
   <!-- 通った線 (箱の後ろ、組む画面の線の上に重ねる) -->
-  <svg data-tree-run-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
+  <svg v-if="!noLines" data-tree-run-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
     <path v-for="l in fwd" :key="l.key" :d="l.d" :stroke="ON.fwd" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n) * lineK" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     <path v-for="l in back" :key="l.key" :d="l.d" :stroke="ON.back" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n) * lineK" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   </svg>
@@ -110,9 +113,9 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
       :style="{ left: `${m.x + BOX_W - 6}px`, top: `${m.y - 2}px` }"
       :title="tr(`来た人 ${m.reach} 人 · 着くまで平均 ${div(m.costIn)} 神 · ここから完成まで平均 ${div(m.remain)} 神`, `${m.reach} runs reached · avg ${div(m.costIn)} div to get here · avg ${div(m.remain)} div from here to done`)">{{ tr(`${m.reach} 人`, `${m.reach} runs`) }}</span>
     <!-- 札は箱の題・中の字に被せない (モンキー 11-01): 回数は箱の上の外、箱の下の札は本当の高さ m.h の下 -->
-    <span v-if="m.inN" data-tree-run-in class="pointer-events-none absolute z-20 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-amber-200/90 -translate-y-full"
+    <span v-if="m.inN && !noLines" data-tree-run-in class="pointer-events-none absolute z-20 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-amber-200/90 -translate-y-full"
       :style="{ left: `${m.x + 6}px`, top: `${m.y - 2}px` }">{{ tr(`${m.inN} 回`, `${m.inN}×`) }}</span>
-    <span v-if="m.outBack" data-tree-run-back class="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-cyan-200/90"
+    <span v-if="m.outBack && !noLines" data-tree-run-back class="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-cyan-200/90"
       :style="{ left: `${m.x + BOX_W / 2}px`, top: `${m.y + m.h + 4}px` }">↩ {{ tr(`${m.outBack} 回`, `${m.outBack}×`) }}</span>
     <!-- 止まった人: 理由を箱の上に文で重ねる (前は赤い札の title だけ、10-26 失敗時の挙動の案 2)。押すとその箱へ寄る -->
     <!-- 止まりの札はカードに被せない (10-27 夜オーナー「カードに被ったまま消えない」= バグ): 箱のすぐ下に「止まり n 人」だけを常に出し、理由は乗せた時・押した時だけ広げる -->
