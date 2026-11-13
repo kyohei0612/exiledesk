@@ -51,7 +51,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** (S-142j ③、スイッチ hitsSide) ↩ の畳み: 親 → 戻り先の箱 (手の札に乗せた時だけ青い線) */
   const backs = computed(() => backTargets(doc.value, fold.value.folds));
   /** 戻りの青い線が避ける箱 (描く箱だけ) */
-  const avoid = computed(() => backs.value.size ? boxes.value.filter((b) => b.out !== "pass" && !fold.value.hidden.has(b.id) && !mergedAway(doc.value, b) && !bandAway(doc.value, b)).map((b) => ({ id: b.id, ...posOf(b), w: BOX_W, h: heightOf?.(b.id) || BOX_H })) : []);
+  const avoid = computed(() => backs.value.size || (flag("newerHome") && links.value.size) ? boxes.value.filter((b) => b.out !== "pass" && !fold.value.hidden.has(b.id) && !mergedAway(doc.value, b) && !bandAway(doc.value, b)).map((b) => ({ id: b.id, ...posOf(b), w: BOX_W, h: heightOf?.(b.id) || BOX_H })) : []);
   /**
    * 手の札 (px, jy) から戻り先の箱の横の辺の真ん中への道 (S-145 の探し方 sideRoute、ほかの箱を避ける)。通れなければ右の外を回る
    * (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
@@ -64,6 +64,11 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const col = Math.max(px, tq.x + BOX_W) + 48, ty = tq.y + th / 2;
     return roundPath([{ x: px, y: jy }, { x: col, y: jy }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }]);
   };
+  /** (スイッチ newerHome) 縦・横の真っ直ぐな所がほかの描く箱を横切るか (行き先と出元の箱は除く。端から 4 内側で見る) */
+  const pierces = (segs: readonly Seg[], skip: readonly string[]): boolean => avoid.value.some((a) => !skip.includes(a.id) && segs.some((g) => {
+    const x0 = Math.min(g.x0, g.x1), x1 = Math.max(g.x0, g.x1), y0 = Math.min(g.y0, g.y1), y1 = Math.max(g.y0, g.y1);
+    return x1 > a.x + 4 && x0 < a.x + a.w - 4 && y1 > a.y + 4 && y0 < a.y + a.h - 4;
+  }));
   /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
   /**
    * 削減の手前の枠の帯 (S-65c ⑫): 枠ごとに 帯 → 手の札 → 結果の箱 を別の線で (11-11 オーナー「どこに何打ってこのツリーになったのか一ミリも分からん」)。
@@ -143,6 +148,13 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     for (const t of links.value.get(b.id) ?? []) {
       const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, ty = tq.y + th / 2;
       const off = flag("hitsSide") ? nth++ * LANE_GAP() * (tq.x + BOX_W / 2 < px0 ? -1 : 1) : 0, px = px0 + off;
+      // (スイッチ newerHome) 真下へまっすぐ・L 字のどちらもほかの箱を貫通する時は、箱を避ける道 (S-145 の sideRoute) で行き先の横の辺の真ん中へ
+      // (11-14 オーナー「貫通してんのこれ」「Ｌ字は例だから。臨機応変にしてほしいけどそこは」)
+      if (flag("newerHome")) {
+        const ex0 = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x;
+        const lSegs: Seg[] = px >= tq.x && px <= tq.x + BOX_W ? [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: tq.y }] : [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex0, y1: ty }];
+        if (pierces(lSegs, [t, b.id])) { const d0 = backPath(px, jy, t); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: d0, bad: false, mk: () => d0, h: null }); continue; }
+      }
       if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
         to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null });
         linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: tq.y });

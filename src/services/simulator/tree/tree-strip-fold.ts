@@ -8,7 +8,7 @@
  */
 import { ref, type Ref } from "vue";
 import { effectOf } from "./tree-hands";
-import type { TreeBox, TreeDoc } from "./tree-model";
+import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
@@ -102,8 +102,45 @@ export const linkTargets = (d: TreeDoc, folds = stripFolds(d)): Map<string, stri
 /** (S-142j ③) ↩ の畳み: 親の箱 → 戻り先の箱 (乗せた時だけ青い線) */
 export const backTargets = (d: TreeDoc, folds = stripFolds(d)): Map<string, string[]> => targetsOf(d, folds, "back");
 function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" | "back"): Map<string, string[]> {
-  const m = new Map<string, string[]>();
-  for (const f of folds.values()) if (f[k]) for (const id of f.mids) { const c = d.boxes[id]; if (!c?.parent || !c.back || !d.boxes[c.back]) continue; const l = m.get(c.parent) ?? []; if (!l.includes(c.back)) l.push(c.back); m.set(c.parent, l); }
+  const m = new Map<string, string[]>(), homes = k === "link" ? homesOf(d, folds) : new Map<string, Home>();
+  const add = (p: string, t: string): void => { const l = m.get(p) ?? []; if (!l.includes(t)) l.push(t); m.set(p, l); };
+  for (const f of folds.values()) if (f[k]) for (const id of f.mids) {
+    const c = d.boxes[id];
+    if (!c?.parent || !c.back || !d.boxes[c.back]) continue;
+    // (スイッチ newerHome) 行き先の箱をこの親の下に描く時は線を引かず、本物の親から線を引く
+    if (homes.get(c.back)?.via === id) { add(d.boxes[c.back]!.parent!, c.back); continue; }
+    add(c.parent, c.back);
+  }
+  return m;
+}
+/** (S-142j ③、スイッチ newerHome) 行き先の箱を描く親 (p) と、その親の子の並びで行き先の箱に置き換える畳んだ箱 (via) */
+interface Home { p: string; via: string }
+const seqOf = (id: string): number => Number(id.slice(1)) || 0;
+const homeMemo = new WeakMap<ReadonlyMap<string, StripFold>, Map<string, Home>>();
+/**
+ * 同じ箱を本物の親と畳んだ箱の親の 2 か所以上が指す時、後から作った方 (結果の箱の番号が大きい方 = 後からその手を置いた方) の親の下に描く
+ * (11-14 オーナー「後から設定した奴と前から設定した奴が同じ箱だった場合新しい方優先で表示でいいと思うわ」「１だね。ただ、実験段階」)。
+ * 描く場所だけ (木の形・回す・保存は変えない)。輪になる時・描かない箱が絡む時は動かさない
+ */
+export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<string, Home> {
+  const memo = homeMemo.get(folds);
+  if (memo) return memo;
+  const m = new Map<string, Home>();
+  homeMemo.set(folds, m);
+  if (!flag("newerHome")) return m;
+  const hidden = stripHidden(d, folds), by = new Map<string, string[]>();
+  for (const f of folds.values()) if (f.link) for (const a of f.mids) { const t = d.boxes[a]?.back; if (t && d.boxes[t]) by.set(t, [...(by.get(t) ?? []), a]); }
+  for (const [t, as] of by) {
+    const T = d.boxes[t]!;
+    if (!T.parent || t === "start" || hidden.has(t)) continue;
+    const via = as.filter((a) => !!d.boxes[a]?.parent).sort((x, y) => seqOf(y) - seqOf(x))[0];
+    const p = via ? d.boxes[via]!.parent! : null;
+    if (!via || !p || seqOf(via) < seqOf(t) || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
+    m.set(t, { p, via });
+  }
+  // 動かした先どうしで輪になる物は外す (描く親をたどって自分に戻る)
+  const upOf = (id: string): string | null => m.get(id)?.p ?? d.boxes[id]?.parent ?? null;
+  for (const t of [...m.keys()]) { let x = upOf(t), n = 0; while (x && x !== t && n++ < 500) x = upOf(x); if (x === t) m.delete(t); }
   return m;
 }
 /** 未設定の子 (手も行き先も無い・完成でない・通り抜けでない) */
@@ -115,7 +152,7 @@ export const stripFolds = (d: TreeDoc): Map<string, StripFold> => {
   return all;
 };
 /** 描かない箱 (畳んだ続きの head 以外の自動の消去の箱) */
-export function stripHidden(d: TreeDoc, folds = stripFolds(d)): Set<string> {
+export function stripHidden(d: TreeDoc, folds: ReadonlyMap<string, StripFold> = stripFolds(d)): Set<string> {
   const s = new Set<string>();
   for (const f of folds.values()) for (const id of f.mids) if (id !== f.head || f.link || f.back) s.add(id); // 直に線・↩ の畳みは札も描かない
   // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
@@ -125,7 +162,12 @@ export function stripHidden(d: TreeDoc, folds = stripFolds(d)): Set<string> {
 /** 描く子 (札は止まった箱全部、描かない箱は子無し。札の親はそのまま = 札は親の子の箱の場所) */
 export function foldOuts(d: TreeDoc, b: TreeBox, folds = stripFolds(d), hidden = stripHidden(d, folds)): string[] {
   if (hidden.has(b.id)) return [];
-  return (folds.get(b.id)?.stops ?? b.outs).filter((o) => !hidden.has(o)); // まとめた兄弟 (S-142j ②) は親の子から外す
+  const outs = (folds.get(b.id)?.stops ?? b.outs).filter((o) => !hidden.has(o)); // まとめた兄弟 (S-142j ②) は親の子から外す
+  const homes = homesOf(d, folds);
+  if (!homes.size) return outs;
+  // (スイッチ newerHome) 新しい方の親は畳んだ箱の場所に行き先の箱を描き、本物の親の子からは外す
+  const via = new Map([...homes].map(([t, h]) => [h.via, t] as const));
+  return [...(folds.get(b.id)?.stops ?? b.outs)].flatMap((o) => (via.has(o) && homes.get(via.get(o)!)!.p === b.id ? [via.get(o)!] : outs.includes(o) && !(homes.get(o) && homes.get(o)!.p !== b.id) ? [o] : []));
 }
 /** 止まった箱 → 札 (線を札から引く。スマホの全体図) */
 export const stopToHead = (folds: ReadonlyMap<string, StripFold>): Map<string, string> => new Map([...folds.values()].flatMap((f) => f.stops.map((s) => [s, f.head] as const)));
