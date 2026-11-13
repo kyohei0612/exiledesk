@@ -16,6 +16,7 @@ import { fmtDate } from "../recipe-share";
 import { track } from "../../../utils/track";
 import { useTree } from "./use-tree";
 import { draftCode, openDraftTree } from "./tree-draft-open";
+import { openedMark } from "./tree-tab-recipe";
 
 /**
  * 作りかけ (失うと困る物がある) か。開いているレシピがあればそれと違う時、無ければ完成の狙いか手 (箱 2 つ以上) がある時。
@@ -28,6 +29,7 @@ export function unsaved(d: TreeDoc, current = true): boolean {
   if (pristine && pristine === JSON.stringify(d)) return false;
   const cur = current ? currentTreeRecipe.value : null;
   if (!cur && current && challengeTree(d)) return false;
+  const openedAs = openedMark.v;
   if (cur) return !(openedAs?.id === cur.id && openedAs.at === cur.updatedAt && openedAs.v1 === v1Of(d)) && !sameTree(d, cur.tree);
   return !!d.memoAims?.length || Object.keys(d.boxes).length > 1;
 }
@@ -36,7 +38,7 @@ export function unsaved(d: TreeDoc, current = true): boolean {
  * 組み直した木は保存した写しと打ち方の形が字面でずれる事がある (提出の形・古い版の読み替え) ので、開いたままなら作りかけに数えない。触って変われば今までどおり。
  * at = その時のレシピの最後の保存 (上書きした後は保存した物と比べる)
  */
-let openedAs: { id: string; at: number; v1: string } | null = null;
+// 控えはタブごと (S-09 ②、tree-tab-recipe の openedMark。タブを替えると替わる)
 const v1Of = (d: TreeDoc): string => JSON.stringify(toRecipeV1(d));
 /**
  * デイリーの挑戦の木をシミュで映している (S-03c ②、D-37g の帯で移った時)。挑戦の木は挑戦の側が持つので、離れる時に保存を聞かない。
@@ -53,11 +55,11 @@ function challengeTree(d: TreeDoc): boolean {
 }
 /** レシピ id を開いた後に呼ぶ: 読み込み (少しずつ描く・データ待ち) が終わったらその時の木を覚える */
 export function markOpened(id: string): void {
-  openedAs = null;
+  openedMark.v = null;
   const stop = watch(() => !treeLoading.value && !!s.data.value, (ready) => {
     if (!ready) return;
     queueMicrotask(() => stop());
-    void nextTick(() => { const cur = currentTreeRecipe.value; if (cur?.id === id) openedAs = { id, at: cur.updatedAt, v1: v1Of(useTree().doc.value) }; });
+    void nextTick(() => { const cur = currentTreeRecipe.value; if (cur?.id === id) openedMark.v = { id, at: cur.updatedAt, v1: v1Of(useTree().doc.value) }; });
   }, { immediate: true });
 }
 /** エミュから入れた直後の木 (JSON)。そのままなら作りかけに数えない。tree-paste.ts の requestEmuItem が入れる */

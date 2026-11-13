@@ -60,6 +60,7 @@ const arm = useArmed();
 
 /** レシピを開く。今の木が作りかけなら 3 択 (保存して進む = 今の木を保存してから開く、10-26 オーナー) */
 function open(r: TreeRecipe): void {
+  if (t.focusRecipeTab(r.id)) { openTreePage(); return; } // ほかのタブで開いていればそのタブへ (S-09 ②)
   if (dirty.value && currentTreeRecipeId.value !== r.id) { askLeave(() => openNow(r), () => void quickSave()); return; }
   openNow(r);
 }

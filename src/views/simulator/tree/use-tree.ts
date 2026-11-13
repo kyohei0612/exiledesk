@@ -15,7 +15,7 @@ import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { touchedScope } from "./tree-local-scope";
-import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check";
 
@@ -79,23 +79,19 @@ try {
 function resetAll(): void {
   const d = load();
   tabDocs.value = [d];
-  histories.length = 0;
+  histories.length = 0; clearTabRecipes();
   prevTab = null;
   setActive(0, d, null);
-  needBase.value = false;
-  goalPage.value = 0;
-  startPage.value = false;
-  reportOpen.value = false;
+  needBase.value = false; goalPage.value = 0; startPage.value = false; reportOpen.value = false;
   setCurrentTreeRecipe(null);
 }
-/** タブごとに回した結果 (結果のまとめの始め方の比べ。このページを開いている間だけ) */
 /** タブの木を写す (タブごとに別の木。完成形の設定も写さない、10-24 オーナー「タブは人が押した時だけ、新しいツリーを最初から」) */
 const cloneDoc = (d: TreeDoc): TreeDoc => JSON.parse(JSON.stringify(d)) as TreeDoc;
 /** タブごとの 1 つ戻す・やり直しの控え (替えて戻っても続きから戻せる、10-24 モンキー初めての人の回 9。保存はしない、読み直したら空) */
 const histories: Array<{ u: string[]; r: string[] }> = [];
 /** from = 今の控えをしまうタブ (閉じたタブは null) */
 function setActive(i: number, next: TreeDoc, from: number | null = active.value): void {
-  if (from !== null) histories[from] = { u: [...undoStack], r: [...redoStack] };
+  if (from !== null) histories[from] = { u: [...undoStack], r: [...redoStack] }; swapTabRecipe(from, i); // 開いているレシピもタブごと (S-09 ②)
   const h = histories[i] ?? { u: [], r: [] };
   active.value = i;
   undoStack.splice(0, undoStack.length, ...h.u);
@@ -106,6 +102,7 @@ function setActive(i: number, next: TreeDoc, from: number | null = active.value)
   doc.value = next;
   save(next);
 }
+const focusRecipeTab = (id: string): boolean => { const i = tabOfRecipe(id, active.value); if (i < 0) return false; switchTab(i); return true; }; // このレシピをほかのタブで開いていればそのタブへ移る (読み込み直さない、S-09 ②)
 /** タブを替える (1 つ戻すは替えたタブの分から) */
 function switchTab(i: number): void {
   if (i === active.value || !tabDocs.value[i]) return;
@@ -131,7 +128,7 @@ function addTab(): void {
 function closeTab(i: number): void {
   if (tabDocs.value.length <= 1) return;
   const list = tabDocs.value.filter((_, j) => j !== i);
-  histories.splice(i, 1);
+  histories.splice(i, 1); dropTabRecipe(i);
   // 開いているタブを閉じたら隣のタブの木を、その木に合った画面で出す (前は新しいツリーのベース選びのまま残り、残ったツリー① も消えたように見えた、10-25 オーナー)
   if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, cloneDoc(list[k]!), null); showTab(); return; }
   if (i < active.value) active.value--;
@@ -498,5 +495,5 @@ export const allowCost = allow;
  */
 if (import.meta.hot) import.meta.hot.dispose(() => location.reload());
 export function useTree() {
-  return { loading, bigStepNow, tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { loading, bigStepNow, tabDocs, active, switchTab, focusRecipeTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

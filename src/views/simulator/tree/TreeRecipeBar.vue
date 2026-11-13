@@ -125,6 +125,7 @@ const recent = computed(() => [...treeRecipes.value].sort((a, b) => touchedAtTre
 /** レシピを開く。今の木が作りかけなら 3 択 (保存して進む = 今の木を保存してから開く。10-26 オーナー「レシピを開いて今の木を替える」も) */
 function open(r: TreeRecipe): void {
   const go = (): void => { simOp("open-recipe"); setCurrentTreeRecipe(r.id); t.open(r.tree, true); pop.value = false; emit("opened"); track("tree-recipe:open"); };
+  if (t.focusRecipeTab(r.id)) { pop.value = false; emit("opened"); return; } // ほかのタブで開いていればそのタブへ (S-09 ②)
   if (dirty.value && currentTreeRecipe.value?.id !== r.id) { pop.value = false; askLeave(go, () => void quickSave()); }
   else go();
 }
