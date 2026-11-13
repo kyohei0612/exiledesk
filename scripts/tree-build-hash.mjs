@@ -25,8 +25,22 @@ async function walk(dir) {
   return out;
 }
 
+/**
+ * 入っているスイッチの名前 (並べて)。本番 = RELEASED、開発版の作り (VITE_DEV_PREVIEW=1) = FLAGS の全部。スイッチだけの出しで指紋が変わらず、
+ * 前に保存した木が組み直されなかった (0.1.718→719・0.1.720→721、11-13 最終チェック長 12)。説明の文は混ぜない (名前だけ)
+ */
+export async function onFlags(root = process.cwd(), dev = process.env.VITE_DEV_PREVIEW === "1") {
+  const src = (await readFile(join(root, "src/web/release-flags.ts"), "utf8")).replace(/\r\n/g, "\n");
+  const part = (head, end) => { const i = src.indexOf(head); if (i < 0) throw new Error(`release-flags.ts に ${head} が無い`); return src.slice(i + head.length, src.indexOf(end, i)); };
+  const list = dev
+    ? [...part("export const FLAGS = {", "\n};").matchAll(/^ {2}"?([A-Za-z0-9_]+)"?\s*:/gm)].map((m) => m[1])
+    : [...part("const RELEASED: ReadonlySet<Flag> = new Set<Flag>([", "]);").replace(/\/\/.*$/gm, "").matchAll(/"([A-Za-z0-9_]+)"/g)].map((m) => m[1]);
+  return [...new Set(list)].sort();
+}
+
 export async function treeBuildHash(root = process.cwd()) {
   const h = createHash("sha256");
+  h.update("flags").update("\0").update((await onFlags(root)).join(",")).update("\0");
   for (const r of ROOTS) {
     const files = (await walk(join(root, r))).sort();
     // 改行の違い (CRLF / LF) では変えない
