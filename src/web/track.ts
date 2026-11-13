@@ -11,6 +11,7 @@ import { randId } from "../utils/rand-id";
 import { lang, langFrom } from "../i18n/lang";
 import { logRecord } from "../utils/log-record";
 import { onSim, simLeave, simOp, simPage } from "./sim-trail";
+import { startUiTally, takeUiTally } from "./ui-tally";
 /** シミュの画面はここから simOp (操作の流れ) を呼ぶ (入口を track.ts 1 つに) */
 export { simOp };
 
@@ -148,6 +149,8 @@ function pull(): string | null {
   if (noLog()) { buf.length = 0; return null; }
   // タブを隠した・閉じた時はシミュの操作の流れを 1 件 (logRecord した物はこの後で log-sender が同じ便に入れる)
   if (document.visibilityState === "hidden") simLeave();
+  // 押した数 (Y-67、スイッチ uiTally)。名前ごとの数を 1 件にまとめて同じ便に
+  const ut = takeUiTally(); if (ut) logRecord("ui_tally", { t: ut, s: Math.round((Date.now() - t0) / 1000) });
   // 見ていた秒数の合計 (増えていれば)。開いてから何秒目かではなく、見ていた秒数そのもの
   const stay = Math.round(activeMs / 1000);
   if (stay > staySent) { buf.push({ n: "stay", s: stay }); staySent = stay; }
@@ -169,6 +172,7 @@ export function flush(): void {
 /** 入口で 1 回。印の受け口を登録し、自動で付く印 (開いた・段階・滞在・JS エラー) を始める */
 export function startTracking(): void {
   (globalThis as { __exiledeskTrack?: (n: string, x?: string) => void }).__exiledeskTrack = track;
+  startUiTally();
   trackOnce("open");
   trackOnce(`entry:${entry}`);
   // 私 (Claude) が手元から読める記録 (D1) にも入口を残す。印 (Analytics Engine) はサーバーの鍵が無いと読めない (2026-10-16)

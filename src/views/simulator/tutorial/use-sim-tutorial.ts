@@ -13,6 +13,7 @@ import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
+import { pauseUiTallyWhen } from "../../../web/ui-tally";
 import { DRAFT_WHY, ECHO_OMEN, SPELL, TUT_GOALS, goalMatches, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { wayName } from "../tree/tree-attach";
 import { tutData, type TutStepDef } from "./tut-data";
@@ -21,6 +22,7 @@ import { overviewOpen, phoneIndex, phoneNow } from "./use-sim-tutorial-phone";
 
 /** 案内中か */
 export const tutOn = ref(false);
+pauseUiTallyWhen(() => tutOn.value); // チュートリアルの間は押した数を数えない (Y-67)
 /** 窓・棚の DOM の変わり目を拾う刻み (SimTutorialGuide が 0.25 秒ごとに足す) */
 export const tutTick = ref(0);
 /** スマホの形 (1280 未満、U-53・isPhoneWidth) で案内している (SimTutorialGuide が刻みで合わせる) */

@@ -1,7 +1,7 @@
 # 分析用の記録の動向 (2026-10-10、2026-10-19 に来た・PV・流れ・チュートリアル・スパムシミュレーターを足した)
 #   python scripts/analyze-logs.py data-cache/logs/2026-10-15.jsonl data-cache/logs/2026-10-16.jsonl ...   (data-cache/logs/*.jsonl でも可)
 # 記録の取り出し: node scripts/pull-logs.mjs <日付> ... (鍵が無ければ wrangler で D1 を読む)。1 行 = 届いた 1 まとまり {at, country, b: {app, v, uid, sid, dev, recs}}
-# 記録の中身はメモ analytics-logs (visit (lang・langFrom・w)・lang (押して替えた from → to)・screen・emu_use・aim_odds / aim_roll・emu_spam / emu_spam_share・routes_calc / routes_shared・tutorial・pwa・gem_corrupt・ブログの screen "blog:<slug>:<言語>"・blog_share)
+# 記録の中身はメモ analytics-logs (visit (lang・langFrom・w)・lang (押して替えた from → to)・screen・emu_use・aim_odds / aim_roll・emu_spam / emu_spam_share・routes_calc / routes_shared・tutorial・pwa・gem_corrupt・ブログの screen "blog:<slug>:<言語>"・blog_share・ui_tally (押した数、Y-67))
 import collections, glob, json, statistics, sys
 from datetime import datetime, timedelta, timezone
 
@@ -257,15 +257,40 @@ if recs["blog_read"]:
     by = collections.defaultdict(list)
     for (_, slug), p in best.items(): by[slug].append(p)
     print("ブログの読んだ深さ (中央 % / 人):", ", ".join(f"{slug} {med(v)}% / {len(v)}" for slug, v in sorted(by.items(), key=lambda kv: -len(kv[1]))[:10]))
+# ---- 押した数 (ui_tally、2026-11-14 Y-67。端末で名前ごとに数えて 1 便に 1 件) ----
+if recs["ui_tally"]:
+    import re
+    tally, who = collections.Counter(), collections.defaultdict(set)
+    for r in recs["ui_tally"]:
+        for k, v in (r["d"].get("t") or {}).items(): tally[k] += v; who[k].add(r["uid"])
+    print(f"\n== 押した数 (ui_tally {len(recs['ui_tally'])} 件・{len(tally)} 名前、少ない順。数 / 人)")
+    print(", ".join(f"{k} {v}/{len(who[k])}" for k, v in sorted(tally.items(), key=lambda kv: (kv[1], kv[0]))[:40]))
+    print("多い順:", top(tally, 15))
+    # 分母 = ソースの付け札 (Web の画面の .vue の button・input・select の data-ui か最初の data-*)。0 回 = 押された記録が 1 つも無い
+    # アプリだけの画面は外す。開発版だけのスイッチの裏・出ていない画面の物も 0 に出るので、消すかを決める前にスイッチを見る
+    WEB_DIRS = ("views/simulator", "views/craft-stage", "views/daily", "views/tutorial", "views/skins", "components/for-share", "components/craft-v2", "web")
+    seen = {k.split("=")[0].lstrip("?") for k in tally}
+    known = collections.defaultdict(set)
+    for f in glob.glob("src/**/*.vue", recursive=True):
+        rel = f.replace("\\", "/")
+        if not any(f"src/{d}/" in rel for d in WEB_DIRS): continue
+        for tag in re.findall(r"<(?:button|input|select)\b[^>]*>", open(f, encoding="utf-8").read(), re.S):
+            ui = re.search(r'(?<![\w:@-])data-ui="([^"]+)"', tag)
+            m = ui or re.search(r'(?<![\w@-]):?data-((?!v-|ui\b)[a-z0-9-]+)', tag)
+            if m: known[m.group(1)].add(rel.split("/")[-1])
+    zero = sorted(k for k in known if k not in seen)
+    print(f"付け札があるのに 0 回 ({len(zero)} / {len(known)}):", ", ".join(f"{k} ({'・'.join(sorted(known[k]))[:40]})" for k in zero[:60]))
 print(f"\nPWA の記録 {len(recs['pwa'])} / ジェムコラプト {len(recs['gem_corrupt'])} / シミュレーション (開発版だけ) {len(recs['sim_run'])}")
 
 if AS_JSON:
+    UT = collections.Counter()
+    for r in recs["ui_tally"]: UT.update(r["d"].get("t") or {})
     scr = collections.Counter("course" if t.startswith("course:") else t for s in sessions for t in s["screens"] if not t.startswith(STATIC))
     sys.stdout.write(json.dumps({
         "visits": len(sessions), "people": len({s["uid"] for s in sessions}),
         "pv": sum(pv(s) for s in sessions), "pv_pc": sum(pv(s) for s in sessions if s["dev"] == "pc"), "pv_mobile": sum(pv(s) for s in sessions if s["dev"] == "mobile"),
         "first": sum(1 for s in sessions if (s["visit"] or {}).get("first")), "ref": dict(collections.Counter(v.get("ref") for v in vis).most_common(8)),
-        "screens": dict(scr.most_common()), "blog": dict(collections.Counter(r["d"]["to"][5:] for r in blog).most_common()),
+        "screens": dict(scr.most_common()), "ui_tally": dict(UT.most_common()), "blog": dict(collections.Counter(r["d"]["to"][5:] for r in blog).most_common()),
         "cosmetics": dict(collections.Counter(r["d"]["to"][10:] for r in cosm).most_common()),
         "sim": SIM, "sim_trail": SIM_TRAIL,
         "uses": len(uses), "users": len({u["uid"] for u in uses}), "used_visits": sum(1 for s in sessions if s["uses"]),
