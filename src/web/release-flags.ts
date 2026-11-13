@@ -199,6 +199,11 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // デイリーの順位のひとことを PC は名前の右・スマホは名前の下に 2 行まで、名前の上限を全角 10 / 半角 20 に。シミュの消去 1 段は札に畳まない・完成形のカードはティア調整だけ (オーナー 11-13 絵を見て「スマホは下の行に戻して」「おｋ」→「他は出しておk」「ティア調整も一緒に出して修正後」、ブラック 102)。+ の直し idealNoFold は入れない (「プラスはまだ」)
+  "dailyNoteSide",
+  "nickWidth",
+  "annulFoldTwo",
+  "goalTierOnly",
   // デイリーの提出のひとこと (提出の欄・後から書く / 直す / 消す) と要望の返事の URL を押せるリンクに (オーナー 11-13 絵を見て「みためおーけー」→「おーけー」、ブラック 101)
   "dailyNote",
   "replyLink",
