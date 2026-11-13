@@ -63,7 +63,7 @@ function peeked(): void {
             :title="canOpen(r.me) ? tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`) : undefined" @click="canOpen(r.me) && press(r.name, r.me)">
             <span class="daily-place">{{ i + 1 }}</span>
             <DailyName v-if="!showNote || !r.note" class="flex-1" :name="r.name" />
-            <span v-else class="daily-rank-who flex-1"><DailyName :name="r.name" /><small class="daily-rank-note" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">「{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}」</small></span>
+            <span v-else class="daily-rank-who flex-1"><DailyName :name="r.name" /><small class="daily-rank-note" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">{{ tr("「", "“") }}{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}{{ tr("」", "”") }}</small></span>
             <span v-if="showTime" class="daily-num w-12 daily-rank-time" :class="{ 'daily-veiled': veiled }">{{ num(mins(r.ms), tr("00 分", "00m")) }}</span>
             <span class="daily-num w-10" :class="{ 'daily-veiled': veiled }">{{ num(`${r.rate}%`, "00%") }}</span>
             <component :is="score ? 'span' : 'b'" class="daily-num w-16" :class="[score ? 'daily-rank-cost' : 'daily-points', { 'daily-veiled': veiled }]">{{ busy === r.name ? tr("開いている", "Opening") : num(`${r.cost} ${tr("神", "div")}`, `000.0 ${tr("神", "div")}`) }}</component>
