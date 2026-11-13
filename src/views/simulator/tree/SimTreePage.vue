@@ -63,7 +63,7 @@ import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import { backTargetsOf } from "./tree-merge";
-import { useTreeMerge } from "./use-tree-merge";
+import { useTreeMerge } from "./use-tree-merge"; import { flag } from "../../../web/release-flags";
 const t = useTree();
 const doc = t.doc;
 /** 見るだけの幅 (768 未満、S-94g) = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
@@ -89,7 +89,7 @@ watch(sideClosed, (v) => { try { localStorage.setItem(SIDE_KEY, v ? "1" : "0"); 
 /** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
 const v = useTreeFlow(doc);
-const { zoom, full, viewOnly, pageZ } = v;
+const { zoom, full, viewOnly, pageZ } = v; const ONE_ROW = flag("treeTrim"); // 上の帯を全部 1 行・左詰め (戻す・白紙も)、入らない幅は折り返さず帯の中を横に送る (S-94j、スイッチ treeTrim、オーナー 11-14「全部1行で左詰めで」)
 /**
  * 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す。100% 以上でページの zoom が 1 未満 (1280 幅で 0.85) の時はその分も戻す
  * (箱の中の押せる物が 24px を切った、オーナー 10-22 OK。1920 以上は今のまま)。75% でまで戻すと 1.57 倍になり箱の中で重なった (zoom-steps 29 件) ので 75% は前のまま
@@ -391,7 +391,7 @@ const glowOf = (b: Box): boolean => {
     <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 pb-0.5 pt-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : '-mb-3.5'">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <!-- 11-11 オーナー「上も余りまくってるし」「1行でいいだろこんなん」: 手順の段と下の帯を 1 行に並べる。入りきらない幅だけ帯が次の行へ折り返す (帯の basis は道具が全部見える幅 950px、帯の中は今までどおり横に送る) -->
-      <div data-tree-head class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+      <div data-tree-head class="flex min-w-0 items-center gap-x-3 gap-y-1.5" :class="ONE_ROW ? 'flex-nowrap' : 'flex-wrap'">
       <div class="flex shrink-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
         <!-- 箱の割合・100 人回しの費用はゲームが公表していない重みの目安 (U-46 の青の札、11-09 オーナー「全て洗って注意喚起」。箱ごとには付けず帯に 1 つ) -->
@@ -410,9 +410,9 @@ const glowOf = (b: Box): boolean => {
           <TreeRunSum class="shrink-0" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="flex-1" @switched="v.openView()" />
-        <span v-else class="flex-1" />
-        <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact :class="ONE_ROW ? 'shrink-0' : 'flex-1'" @switched="v.openView()" />
+        <span v-else-if="!ONE_ROW" class="flex-1" />
+        <span ref="clearBtn" class="shrink-0" :class="ONE_ROW ? '' : 'ml-auto'"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
         </div>
       </div>
       </div>

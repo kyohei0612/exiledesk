@@ -10,7 +10,7 @@ import { RUN_N } from "./use-tree-run";
 import { flag } from "../../../web/release-flags";
 
 /** 回す前の「n 人: まだ回していない」は「100 人回す」に乗せた時だけ薄く出す (スイッチ treeTrim、S-70b。オーナー 11-14「グレーアウト100人回すをホバーしたら表示する感じで」)。
-    場所は取ったまま (帯が揺れない)。乗せられない指だけの機械は今どおりいつも出す (下の style の hover: hover) */
+    場所は取らず帯の下に浮かせる (S-94j)。乗せられない指だけの機械は今どおりいつも出す (下の style の hover: hover) */
 const IDLE_HOVER = flag("treeTrim");
 
 /** halted = 止まった人が出て途中で止めた (何人目)。walk = 1 人目が進んでいる所 */
@@ -52,7 +52,9 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
 <style>
 /* 「100 人回す」(TreeRunBar の data-tree-run、灰色で押せない間も) に乗せた時だけ回す前の文を出す。置き場 SimTreePage の帯の送りの中で兄弟 */
 @media (hover: hover) {
-  [data-tree-run-idle] { opacity: 0 !important; transition: opacity 120ms; }
-  [data-tree-bar-scroll]:has([data-tree-run]:hover) [data-tree-run-idle] { opacity: 0.6 !important; }
+  /* 場所を取らない (横の物が詰まる、オーナー 11-14「全部1行で左詰めで」)。乗せた時は帯のすぐ下に浮かせて出す。
+     帯の送り (data-tree-bar-scroll) は位置の基にならないので、浮いた字は送りに切られず、外の帯 (relative) の下に出る */
+  [data-tree-run-idle] { position: absolute; top: 100%; z-index: 40; margin-top: 2px; padding: 1px 8px; border-radius: 6px; background: rgba(21, 17, 12, 0.95); pointer-events: none; opacity: 0 !important; transition: opacity 120ms; }
+  [data-tree-bar-scroll]:has([data-tree-run]:hover) [data-tree-run-idle] { opacity: 0.75 !important; }
 }
 </style>
