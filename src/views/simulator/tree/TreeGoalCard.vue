@@ -22,25 +22,13 @@ const ts = useTreeSearch();
 import { openEmuWithGoals } from "../../../state/for-share/sim-links";
 /** 完成形をエミュで試す (S-211、スイッチ simToEmu。完成形のカードの品をそのままエミュに載せる) */
 const SIM_TO_EMU = flag("simToEmu");
-import TreeTierPick from "./TreeTierPick.vue";
+import TreeTierBulk from "./TreeTierBulk.vue";
 import TreeOrbAsk from "./TreeOrbAsk.vue";
-import { isAimMod } from "../../../services/simulator/tree/tree-tier-down";
-import { craftStage as s } from "../../../state/craft-stage";
-import type { Aim } from "../../../services/simulator/tree/tree-model";
-/** 段の札 (P1・S2 以上) を押すと段の一覧から下限を選ぶ (S-10f、スイッチ tierDown) */
+/** MOD の札の左の「ティア調整」で狙いを全部並べて段の下限を選ぶ (S-10f、スイッチ tierDown) */
 const TIER_DOWN = flag("tierDown");
-const tierAt = ref<{ goal: Aim; x: number; y: number } | null>(null);
+const tierOpen = ref(false);
 /** 段を下げた MOD (オーブをどうしますかの注意書きの対象、× で閉じる) */
 const orbAsk = ref<string[]>([]);
-function onTierTag(e: MouseEvent): void {
-  const tag = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-mod] > span.tabular-nums");
-  const id = tag?.parentElement?.getAttribute("data-card-mod");
-  const data = s.data.value, goal = id && data ? t.goals.value.find((a) => isAimMod(data, a, id)) : undefined;
-  if (!tag || !goal) return;
-  e.stopPropagation();
-  const r = tag.getBoundingClientRect();
-  tierAt.value = { goal, x: r.left, y: r.top + r.height / 2 };
-}
 
 const t = useTree();
 const shown = useGoalShown();
@@ -109,10 +97,13 @@ onBeforeUnmount(() => ro?.disconnect());
       <span class="shrink-0 text-[10px] opacity-70">{{ folded ? "▸" : "▾" }}</span>
     </button>
     <div v-if="!folded" ref="wrap" class="relative mt-1 max-h-[calc(100vh-14rem)] overflow-y-auto overflow-x-hidden">
-      <div :style="{ zoom: ZOOM }" :class="TIER_DOWN ? 'goal-tier-tags' : ''" @click.capture="TIER_DOWN && onTierTag($event)"><StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
+      <div :style="{ zoom: ZOOM }"><StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
       <!-- ベースは名前の帯のすぐ下の種類の行の右、MOD は MOD の上の区切り線の右 (上下を札の高さだけ空ける、11-05) (10-25 オーナー「ベースのとこにベースボタン、その下に MOD ボタン」)。文字に重ならない小さな札 -->
       <button v-if="baseTop != null" type="button" data-tree-goal-open="base" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${baseTop ?? 0}px` }" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level') + ` (${rarity})`" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
-      <button v-if="modTop != null" ref="modBtn" type="button" data-tree-goal-open="mods" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${modTop}px` }" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
+      <div v-if="modTop != null" class="absolute right-2 z-10 flex -translate-y-1/2 gap-1" :style="{ top: `${modTop}px` }">
+        <button v-if="TIER_DOWN && n" type="button" data-tree-goal-tier :class="PILL" :title="tr('狙うMODの一括ティア調整 (段の下限を下げる)', 'Adjust target mod tiers (lower the minimum tier)')" @click="tierOpen = true">{{ tr("ティア調整", "Tiers") }}</button>
+        <button ref="modBtn" type="button" data-tree-goal-open="mods" :class="PILL" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
+      </div>
       <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」) -->
       <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
       <!-- カードの枠に乗らない狙い (TreeGoalPage と同じ。どれかが付けば当たり) -->
@@ -122,12 +113,6 @@ onBeforeUnmount(() => ro?.disconnect());
       :title="tr('完成形の品をそのままエミュに載せる (枠を超える時は同じベースの白で開く)', 'Open the final item as-is in the emulator (a fresh base if it exceeds the affix limits)')"
       @click="void openEmuWithGoals(t.doc.value.base, t.doc.value.itemLevel, t.goals.value)">{{ tr("エミュで試す →", "Try in the emulator →") }}</button>
     <TreeOrbAsk v-if="TIER_DOWN && orbAsk.length" :mod-ids="orbAsk" @close="orbAsk = []" />
-    <TreeTierPick v-if="tierAt" :goal="tierAt.goal" :x="tierAt.x" :y="tierAt.y" @close="tierAt = null" @lowered="(id) => (orbAsk = [...new Set([...orbAsk, id])])" />
+    <TreeTierBulk v-if="tierOpen" @close="tierOpen = false" @lowered="(ids) => (orbAsk = [...new Set([...orbAsk, ...ids])])" />
   </div>
 </template>
-
-<style scoped>
-/* 段の札は押せる (S-10f): 点線の下線と指 */
-.goal-tier-tags :deep([data-card-mod] > span.tabular-nums) { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
-.goal-tier-tags :deep([data-card-mod] > span.tabular-nums:hover) { color: #fff; }
-</style>
