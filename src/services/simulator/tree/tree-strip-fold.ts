@@ -74,6 +74,8 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
   }
   if (flag("foldEnds")) for (const b of Object.values(d.boxes)) {
     const ends = b.outs.filter((o) => backOnly(d.boxes[o]));
+    // (スイッチ hitsSide) その手の子に未設定 (手も行き先も無い・完成でない) が 1 つでもあれば畳まない (11-14 オーナー「そもそも未設定あるならたたまないけど」)
+    if (flag("hitsSide") && b.outs.some((o) => unset(d.boxes[o]))) continue;
     if (ends.length >= 2 && !ends.some((id) => out.has(id))) out.set(ends[0]!, { head: ends[0]!, mids: ends, stops: [], steps: 0, tucked: [], ends: true });
   }
   return out;
@@ -82,7 +84,9 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
  * (S-142j ②、スイッチ foldEnds) まとめる箱 = 外れ側 (外れ・外れが消えた・狙いが消えた) で、行き先が自動の ↩ だけの箱 (完成でない・手も下も無い)。
  * 1 つの手の結果にこれが 2 つ以上あれば箱を描かず 1 行にまとめる (11-14 オーナー「2段以上ならまとめたるか」)。当たりはまとめない
  */
-const backOnly = (c: TreeBox | undefined): boolean => !!c && (c.out === "junk" || c.out === "junkGone" || c.out === "lost") && !!c.autoBack && !!c.back && !c.merged && !c.done && !c.hand && !c.outs.length;
+const backOnly = (c: TreeBox | undefined): boolean => !!c && (c.out === "junk" || c.out === "junkGone" || c.out === "lost") && !!c.autoBack && !!c.back && (!c.merged || flag("hitsSide")) && !c.done && !c.hand && !c.outs.length;
+/** 未設定の子 (手も行き先も無い・完成でない・通り抜けでない) */
+const unset = (c: TreeBox | undefined): boolean => !!c && !c.hand && !c.back && !c.done && c.out !== "pass" && !c.outs.length;
 /** 今畳んでいる続き (開いた物を除く) */
 export const stripFolds = (d: TreeDoc): Map<string, StripFold> => {
   const all = stripChains(d), open = stripOpen.value;

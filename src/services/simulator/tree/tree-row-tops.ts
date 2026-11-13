@@ -65,7 +65,9 @@ export const STACK_GAP = 28;
  */
 export const stackEnds = (d: TreeDoc, b: TreeBox): string[] => {
   if (!flag("treeWideFit")) return [];
-  const ends = drawnKids(d, b).filter((k) => { const c = d.boxes[k]!; return !!c.back && !c.done && c.out !== "pass" && !drawnKids(d, c).length; });
+  // (スイッチ hitsSide) 積むのは外れ側だけ。当たり・打った後 (→ 同じ中身の箱の続きへ など) は横に並べる (11-14 オーナー「当たりだけ横に出して他たためば？」)
+  const side = (c: TreeBox): boolean => !flag("hitsSide") || c.out === "junk" || c.out === "junkGone" || c.out === "lost";
+  const ends = drawnKids(d, b).filter((k) => { const c = d.boxes[k]!; return !!c.back && !c.done && c.out !== "pass" && !drawnKids(d, c).length && side(c); });
   return ends.length >= 2 ? ends : [];
 };
 /**
