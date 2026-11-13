@@ -14,6 +14,7 @@ import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tr
 import { parseRuneKey } from "../../../services/craft-stage/engine";
 import { isWhittleHand, type LvClass } from "../../../services/simulator/tree/tree-whittle";
 import { lvLook } from "./tree-whittle-marks";
+import { CHIP_K } from "../../../services/simulator/tree/tree-row-tops";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
@@ -37,7 +38,9 @@ const runeOn = computed((): string | null => {
 /** 予見の枠の手 (ヒネコラの後) は「打つ」でなく「持つ」(S-39、11-05 オーナー「ヒネコラ後は打つじゃなくて持つになる」) */
 const sd = useSurfaceDoc(); // この描き面の木 (S-09c。面の外では今のタブの木)
 const hold = computed(() => !!props.hand && holdsAt(sd.doc.value, props.id));
-const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
+const maxW = computed(() => `${Math.round(props.room / (props.inv * CHIP_K))}px`);
+/** 札の倍率 (画面の倍率の戻し × 札の大きさ、スイッチ hitsSide で 1.5 倍) */
+const sc = computed(() => String(props.inv * CHIP_K));
 /**
  * 削減の手 (削減のお告げ付き) で ☑ が無い = 当たりの箱が無い時も「狙い無し」(S-23。11-11 オーナー「狙い無しなら削減のカレンシーの枝の途中の枠に狙い無しってかかれるはず」)。
  * 削減の手は狙い無しの印 free を持たない作り (付く MOD を選べない手の表 FREE_EFFECTS の外) なので、前から札に出ていなかった
@@ -51,11 +54,11 @@ const whittleNoAim = computed(() => {
 <template>
   <!-- w-max: 札は文の幅で広がる (absolute の幅は left から入れ物の右の端までに縮み、右の方の札が「カオス…」と切れた、10-26。上限は room) -->
   <button v-if="!hand" type="button" data-tree-split-chip :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-teal-400/60 bg-[#0f1a18] px-3 py-0.5 text-[12px] font-semibold text-teal-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-teal-300"
-    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv) }" :title="tr('打たずに分ける: 上の行から見て、合った行の箱へ進む (押すと行を替える)', 'Split without crafting: go to the first matching row (click to edit rows)')" @click="$emit('open')">
+    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: sc }" :title="tr('打たずに分ける: 上の行から見て、合った行の箱へ進む (押すと行を替える)', 'Split without crafting: go to the first matching row (click to edit rows)')" @click="$emit('open')">
     ◇ {{ tr(`分かれ目 (${split ?? 0} 行)`, `Split (${split ?? 0} rows)`) }}<span v-if="choice" data-tree-hand-choice class="text-amber-200">→ {{ choice }} ▾</span>
   </button>
   <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-2xl border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
-    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW, ...(laneRgb ? { borderColor: `rgb(${laneRgb})` } : {}) }" :data-hand-lane="lane || undefined" :title="handLabel(hand)" @click="$emit('open')">
+    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: sc, maxWidth: maxW, ...(laneRgb ? { borderColor: `rgb(${laneRgb})` } : {}) }" :data-hand-lane="lane || undefined" :title="handLabel(hand)" @click="$emit('open')">
     <span v-if="lane && laneRgb" data-tree-hand-lane class="shrink-0 rounded-sm px-1 text-[10px] font-bold text-black" :style="{ background: `rgb(${laneRgb})` }">{{ tr(LANE[lane][0], LANE[lane][1]) }}</span>
     <span v-if="hold" data-tree-hand-hold class="shrink-0 rounded-sm bg-violet-400/25 px-1 text-[10px] text-violet-100" :title="tr('予見の枠: まだ使わずに持って結果を見る', 'Foresight: held, not used yet')">{{ tr("持つ", "Hold") }}</span>
     <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>

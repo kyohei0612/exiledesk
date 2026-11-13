@@ -11,7 +11,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import type { TreeBox as Box, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { bandAway } from "../../../services/simulator/tree/tree-band";
-import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
+import { CHIP_K, laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { placeTree } from "../../../services/simulator/tree/tree-place";
 import type { KeptOrder } from "../../../services/simulator/tree/tree-place-order";
 import { useStripOpen } from "../../../services/simulator/tree/tree-strip-fold";
@@ -101,7 +101,7 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
     const el = (root.value ?? document).querySelector<HTMLElement>(`[data-hand-of="${id}"]`);
     if (!el) return undefined;
     const name = el.querySelector<HTMLElement>(".truncate");
-    return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value);
+    return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value) * CHIP_K; // 札の大きさの倍率 (スイッチ hitsSide)
   };
   // 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す)
   const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;

@@ -7,6 +7,7 @@
  */
 import { gridRoute } from "./tree-lines-grid";
 import { BOX_H, BOX_W } from "../../../services/simulator/tree/tree-model";
+import { CHIP_Y } from "../../../services/simulator/tree/tree-row-tops";
 
 /** 箱の左上。w・h が無ければ箱の大きさ (まとめた札は細い、tree-merge.ts) */
 export interface Pos { x: number; y: number; w?: number; h?: number }
@@ -31,8 +32,9 @@ function freeRow(y: number, x0: number, x1: number, boxes: readonly Pos[]): bool
 
 /** 手の札の真ん中 (箱の下から。SimTreePage の札の位置)。札の上下の半分は CHIP_HALF (箱 → 札の縦の線 = HAND_DY - CHIP_HALF = 40、10-25 オーナー「長さ十分」の形で 46 → 60)。
  * 戻りの線は 10-25 から札でなく行き先の箱の枠へ入る (オーナー「枠に返すような線じゃなかったっけ」、前の handAnchor は消した) */
-export const HAND_DY = 60;
-export const CHIP_HALF = 20;
+export const CHIP_HALF = CHIP_Y / 2;
+/** 箱 → 札の縦の線は 40 のまま (札を 1.5 倍にした時も札の分だけ下げる、スイッチ hitsSide) */
+export const HAND_DY = 40 + CHIP_HALF;
 
 /** 進む線 (直角の木の線) の 1 本の真っ直ぐな所。戻りの線がこれと交わる所は跨ぐ形にする */
 export interface Seg { x0: number; y0: number; x1: number; y1: number }

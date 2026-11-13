@@ -12,8 +12,10 @@ import { flag } from "../../../web/release-flags";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
 export const LINE_Y = 48;
+/** 手の札の大きさの倍率 (S-142j ②、スイッチ hitsSide。11-14 オーナー「こいつも大きさ大きくしたろかサイズ小さいし1.5倍くらいかな全体的にこいつ」) */
+export const CHIP_K = flag("hitsSide") ? 1.5 : 1;
 /** 手の札の高さ (tree-lines の CHIP_HALF × 2) */
-export const CHIP_Y = 40;
+export const CHIP_Y = 40 * CHIP_K;
 /** 整列の行の見込みの間 (整列の後に settleRows が親ごとに掛け直す) */
 export const LINK_Y = LINE_Y * 3 + CHIP_Y;
 /** 画面に描く前の箱の高さの見込み (カードに MOD が 2 行の結果の箱くらい) */

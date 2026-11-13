@@ -53,7 +53,9 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     return ks;
   };
   const L = rowLayout(d, heightOf);
-  const xs = wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF, deep: GAP_DEEP }, (id) => [...stacked.values()].includes(id), endCards(d));
+  // (S-142j ②、スイッチ hitsSide) 箱と箱の横の間は倍 (11-14 オーナー「枠通しの横枠だけど倍あげようか　詰めすぎてもね？」)
+  const g = flag("hitsSide") ? 2 : 1;
+  const xs = wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF * g, deep: GAP_DEEP * g }, (id) => [...stacked.values()].includes(id), endCards(d));
   for (const [id, x] of xs) {
     const b = d.boxes[id]!, r = L.rows.get(id);
     b.x = Math.round(x);

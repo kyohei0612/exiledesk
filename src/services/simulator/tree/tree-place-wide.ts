@@ -26,7 +26,7 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
   const byRow: string[][] = [];
   for (const id of seen) { const r = L.rows.get(id); if (r != null) (byRow[r] ??= []).push(id); }
   /** 下に子がある、または縦に積んだ列の頭 (列の左の脇を下の箱への線が通る) */
-  const deep = (id: string): boolean => !!kids.get(id)!.length || stackHead(id);
+  const deep = (id: string): boolean => kids.get(id)!.some((c) => !cards.has(c)) || stackHead(id); // 段の右端の札だけの子は線が下へ下りない (hitsSide)
   /** 兄弟の間: 子が 2 つ以上の兄弟の右は 1 列分空ける / どちらかが deep 72 / どちらも箱 1 つ 24 */
   // 段の右端へ回す札は兄弟の数に入れない (S-142j ②、スイッチ hitsSide)
   const sibGap = (a: string, b: string): number => (kids.get(a)!.filter((k) => !cards.has(k)).length >= 2 ? gaps.deep * 2 + BOX_W : deep(a) || deep(b) ? gaps.deep : gaps.leaf);
@@ -50,7 +50,8 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
         for (let moved = true; moved; ) {
           moved = false;
           for (const a of above) {
-            if (a === p || (leafFree && !kids.get(a)?.length)) continue;
+            // (S-142j ②、スイッチ hitsSide) 子が段の右端の札だけの箱も真下を塞がない (札への線は手の札から横へ出て下へ下りない。11-14 オーナー「下に来るはず」)
+            if (a === p || (leafFree && !kids.get(a)?.some((c) => !cards.has(c)))) continue;
             const ax = x.get(a)!;
             if (kx < ax + BOX_W + gaps.leaf && kx + BOX_W + gaps.leaf > ax) { kx = ax + BOX_W + gaps.leaf; moved = true; }
           }
