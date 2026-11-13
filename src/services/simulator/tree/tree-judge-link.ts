@@ -145,7 +145,9 @@ export function trunkOf(doc: TreeDoc, id: string, j: Judge): string | null {
   const b = doc.boxes[id];
   if (!b?.hand || b.out === "start" || b.split || b.noAutoBack || b.seen) return null;
   const below = new Set(subtree(doc, id)), cmp = shallow(doc);
-  return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && !below.has(t.id) && cmp(t.id, id) < 0 && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
+  // 完成への道の手の結果は上の段の箱を幹にしない (S-50g、自動の ↩ の候補 autoTargets と同じ。要望 861a5393: 手を置くと上の消去の箱へ畳まれ、見直しで ↩ も外れて＋が進まなかった)
+  const up = idealNoUp(doc, id);
+  return Object.values(doc.boxes).filter((t) => t.id !== id && !!t.hand && !t.split && !t.seen && !below.has(t.id) && cmp(t.id, id) < 0 && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
 }
 /** 人の決めのある箱か (手・完成 / 失敗・人の ↩・分かれ目) */
 const decided = (b: TreeBox | undefined): boolean => !!b && (!!b.hand || !!b.done || (!!b.back && !b.autoBack) || !!b.split);
