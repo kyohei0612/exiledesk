@@ -201,15 +201,12 @@ export function foldToTrunks(doc: TreeDoc, judge: () => Judge): boolean {
   }
   return changed;
 }
-/**
- * 手を決めた箱 id のまわりだけ (S-51d を手を決めた時に、S-51c と同じ所): id に幹があれば id を、無ければ id を幹にする深い箱をまとめる。
- * only = 畳んでよい深い箱 (S-142m ①、組んでいる間は手を置いた枝とその下だけ。ほかの枝は完成・最終チェック・開き直しで揃える)
- */
-export function foldAround(doc: TreeDoc, id: string, judge: () => Judge, only?: (id: string) => boolean): void {
+/** 手を決めた箱 id のまわりだけ (S-51d を手を決めた時に、S-51c と同じ所): id に幹があれば id を、無ければ id を幹にする深い箱をまとめる */
+export function foldAround(doc: TreeDoc, id: string, judge: () => Judge): void {
   const tk = trunkOf(doc, id, judge());
   if (tk) { foldInto(doc, id, tk); return; }
   for (let n = 0; n < 64; n++) {
-    const j = judge(), x = Object.values(doc.boxes).find((b) => b.id !== id && (!only || only(b.id)) && trunkOf(doc, b.id, j) === id);
+    const j = judge(), x = Object.values(doc.boxes).find((b) => b.id !== id && trunkOf(doc, b.id, j) === id);
     if (!x) return;
     foldInto(doc, x.id, id);
   }

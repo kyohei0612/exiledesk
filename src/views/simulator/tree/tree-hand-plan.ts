@@ -25,7 +25,7 @@ import { depthOf, shallow, foldAround, joinableByContent, linkByContent, pruneBy
 import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, drop, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { joinSameShape } from "./tree-merge"; import { pickScope, within, type Scope } from "./tree-local-scope";
+import { joinSameShape } from "./tree-merge";
 import { backChoicesOf } from "./use-tree-link";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
@@ -307,7 +307,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
   pinDivineMisses(d);
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
-  if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d), pickScope(d) ?? undefined); // 組んでいる間はほかの枝を畳まない (S-142m ①)
+  if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
   if (data) syncSameHiUnder(data, d, at); // エッセンスの箱の下の「同格以上」(S-33e ⑦)
   if (data) { syncSameMod(data, d, d.boxes[at]?.parent ?? null); syncWhittlePre(data, d, d.boxes[at]?.parent ?? null, at); } // 削減の手前の枠 (S-65c)
   linkAllSameHi(d);
@@ -392,7 +392,7 @@ function pinDivineMisses(d: TreeDoc): void {
  */
 function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>): void {
   const j = judgeMemo(data, d);
-  const loose = within(Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), pickScope(d)); // 組んでいる間は手を置いた枝だけ (S-142m ①)
+  const loose = Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id);
   // 同じ枠なら手を決めたその場で自動の ↩ とまとめ (組む間も止めない、11-06 オーナー「同じ枠があったらその枠に打つカレンシーって決まってる」。前は整理を押すまで待った = S-193)
   linkByContent(d, loose, j);
   mergeOpenSame(d, loose, j);
@@ -420,12 +420,12 @@ function fillMissOuts(data: PatchData, d: TreeDoc, at: string): void {
 export const holdLinks = <T>(fn: () => T): T => fn();
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
 /** auto = 木を変えるたびに回す整理 (S-201 ①)。完成の後の案内 (S-198 の doneNow) は完成を押した時だけなので、ここでは立てない */
-export function tidyJunk(d: TreeDoc, auto = false, sc: Scope = null): void { // sc = 見る箱 (S-142m ①、組んでいる間は組み替えで変わった枝だけ。null = 木全体)
+export function tidyJunk(d: TreeDoc, auto = false): void {
   const data = craftStage.data.value;
   if (!data) return;
   const link = (): void => {
     // 見る順は木の並び (S-50e の足し、tree-order。前は段と箱の番号で、開き直すとまとめ先が入れ替わった)
-    const ids = within(Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id), sc).sort(treeOrder(d));
+    const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort(treeOrder(d));
     const j = judgeMemo(data, d);
     linkByContent(d, ids, j);
     mergeOpenSame(d, ids, j);
@@ -433,8 +433,8 @@ export function tidyJunk(d: TreeDoc, auto = false, sc: Scope = null): void { // 
   };
   link();
   // 消去の続き (S-28g): 後から同じ枠ができた自動の消去は ↩ に畳み、空いた消去の結果は続ける
-  const trimmed = trimAnnul(data, d, sc);
-  if (extendAnnul(data, d, sc ? Object.values(d.boxes).filter((b) => isAnnulHand(b.hand) && sc(b.id)).map((b) => b.id) : undefined) || trimmed) link();
+  const trimmed = trimAnnul(data, d);
+  if (extendAnnul(data, d) || trimmed) link();
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
   dropUnplayable(data, d);

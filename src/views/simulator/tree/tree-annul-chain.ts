@@ -86,11 +86,11 @@ const humanBelow = (d: TreeDoc, id: string): boolean =>
 
 /**
  * 自動の消去の手の箱で、木に同じ枠の手のある箱ができた物は、手を外してそこへ自動の ↩ (後から同じ枠が見つかった = そこで止まる)。
- * 下に人の決めがある箱は触らない。浅い段から見る。only = 見る箱 (S-142m ①、組んでいる間は組み替えで変わった枝だけ)
+ * 下に人の決めがある箱は触らない。浅い段から見る
  */
-export function trimAnnul(data: PatchData, d: TreeDoc, only?: ((id: string) => boolean) | null): boolean {
+export function trimAnnul(data: PatchData, d: TreeDoc): boolean {
   const depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
-  const ids = Object.values(d.boxes).filter((b) => b.autoAnnul && b.hand && (!only || only(b.id))).map((b) => b.id).sort((a, z) => depth(a) - depth(z));
+  const ids = Object.values(d.boxes).filter((b) => b.autoAnnul && b.hand).map((b) => b.id).sort((a, z) => depth(a) - depth(z));
   if (!ids.length) return false;
   const j = judgeMemo(data, d);
   let changed = false;
