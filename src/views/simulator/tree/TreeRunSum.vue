@@ -9,8 +9,8 @@ import { driveSum } from "./hole-check";
 import { RUN_N } from "./use-tree-run";
 import { flag } from "../../../web/release-flags";
 
-/** 回す前の「n 人: まだ回していない」は「100 人回す」に乗せた時だけ薄く出す (スイッチ treeTrim、S-70b。オーナー 11-14「グレーアウト100人回すをホバーしたら表示する感じで」)。
-    場所は取らず帯の下に浮かせる (S-94j)。乗せられない指だけの機械は今どおりいつも出す (下の style の hover: hover) */
+/** 回す前の「n 人: まだ回していない」は出さない (スイッチ treeTrim、S-70b。オーナー 11-14「回してないかどうかなんてわかる」)。
+    「100 人回す」に乗せた時は押せない訳だけを TreeRunBar が出す */
 const IDLE_HOVER = flag("treeTrim");
 
 /** halted = 止まった人が出て途中で止めた (何人目)。walk = 1 人目が進んでいる所 */
@@ -29,7 +29,7 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
 <template>
   <span class="flex min-w-0 items-center gap-1.5">
     <!-- 一番大事な数字なので切らない (縮めるのはレシピの名前、10-22 金の指輪の録画で完成 % が … で切れた) -->
-    <span data-tree-run-sum :data-tree-run-idle="IDLE_HOVER && !walk && !result ? '' : undefined" class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
+    <span v-if="!(IDLE_HOVER && !walk && !result)" data-tree-run-sum class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
       <template v-if="walk">{{ tr(`1 人目が進んでいる ${walk.step}/${walk.total} 箱 · ${div(walk.cost)} 神`, `Run 1 walking ${walk.step}/${walk.total} boxes · ${div(walk.cost)} div`) }}</template>
       <template v-else-if="result && halted && halted.n === 1">{{ tr("1 人目が止まったので止めた (止まった箱を直して回し直す)", "Run 1 got stuck, stopped (fix the box and run again)") }}</template>
       <template v-else-if="result && halted">{{ tr(`${halted.n} 人目で止まったので止めた (止まった箱を直して回し直す)`, `Stopped at run ${halted.n}: a run got stuck (fix the box and run again)`) }}</template>
@@ -49,12 +49,3 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
     <button v-if="result && !running" type="button" data-tree-run-toggle :class="MINI" :aria-pressed="shown" @click="shown = !shown">{{ shown ? tr("結果を隠す", "Hide results") : tr("結果を出す", "Show results") }}</button>
   </span>
 </template>
-<style>
-/* 「100 人回す」(TreeRunBar の data-tree-run、灰色で押せない間も) に乗せた時だけ回す前の文を出す。置き場 SimTreePage の帯の送りの中で兄弟 */
-@media (hover: hover) {
-  /* 場所を取らない (横の物が詰まる、オーナー 11-14「全部1行で左詰めで」)。乗せた時は帯のすぐ下に浮かせて出す。
-     帯の送り (data-tree-bar-scroll) は位置の基にならないので、浮いた字は送りに切られず、外の帯 (relative) の下に出る */
-  [data-tree-run-idle] { position: absolute; top: 100%; z-index: 40; margin-top: 2px; padding: 1px 8px; border-radius: 6px; background: rgba(21, 17, 12, 0.95); pointer-events: none; opacity: 0 !important; transition: opacity 120ms; }
-  [data-tree-bar-scroll]:has([data-tree-run]:hover) [data-tree-run-idle] { opacity: 0.75 !important; }
-}
-</style>
