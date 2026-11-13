@@ -34,7 +34,7 @@ import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
-import { openSharedRecipe } from "../../state/for-share/sim-links";
+import { openSharedRecipe, simEmuNote } from "../../state/for-share/sim-links";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "../../components/for-share/shelf/CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -194,6 +194,8 @@ function setQualityCap(n: number): void {
 /** MOD 一覧を重ねて開く (飛ばない。2026-10-11 オーナー「ジャンプしなくていいから MOD 一覧が全て画面に出て」) */
 function toModList(): void { s.modOverlay.value = true; }
 watch(() => s.item.value, (it) => { if (!it) s.modOverlay.value = false; });
+/** 「エミュで試す」の訳 (M-06d) はベースを変えたら消す (sync = 入口がベースを入れた後に訳を入れる順のまま) */
+watch(() => s.base.value, () => { simEmuNote.value = null; }, { flush: "sync" });
 function fractureMod(m: StageMod): void {
   if (m.fractured) { s.use(forceKey(m.modId, null, "u")); return; } // フラクチャー済みは右クリック (押しても) で外す (2026-10-18 オーナー)
   const d = s.data.value; s.use(forceKey(m.modId, d?.mods.has(m.modId) ? `T${tierRankOf(d, m.modId, m.tierIndex)}` : null, "f"));
@@ -275,6 +277,8 @@ function pickMode(m: typeof s.mode.value): void {
 
     <!-- 設定と操作 (StageSettings.vue) -->
     <StageSettings :phone="phone" />
+    <!-- シミュの「エミュで試す」で完成形を載せられず白で開いた訳 (M-06d、スイッチ simToEmu)。× かベースを変えると消える -->
+    <p v-if="simEmuNote" data-sim-emu-note class="mb-3 flex items-center gap-3 rounded-lg border border-amber-300/40 bg-amber-400/10 px-3 py-2 text-[13px] text-amber-100"><span class="min-w-0 flex-1">{{ simEmuNote }}</span><button type="button" class="g-btn sm shrink-0" :aria-label="tr('閉じる', 'Close')" @click="simEmuNote = null">×</button></p>
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
     <p v-if="s.error.value" class="mb-3 flex items-center gap-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300"><span class="min-w-0 flex-1">{{ s.error.value }}</span><button v-if="!s.data.value" type="button" class="g-btn sm shrink-0" @click="retryInit">{{ tr("もう一度", "Retry") }}</button></p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center"><BusyTag :text="tr('クラフトのデータを読み込み中', 'Loading craft data')" /></p>
