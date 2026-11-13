@@ -3,6 +3,7 @@
  * 名前は画面の側 (views/simulator/tree/tree-names.ts、クラフト台の棚と同じ nameOfKey)。手の効果はエンジン (applyCurrency)、ここは種類と並びだけ
  */
 import { actionClassOfKey, CATALYSTS, kindOf, OMEN_FOR, OMEN_KEY, parseKey, parseRuneKey } from "../../craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 
 /** カタリスト = 品質だけ上げる手 (エンジンの kindOf。catalyst_<タグ>・jcatalyst_<タグ>) */
 export const isCatalyst = (key: string): boolean => kindOf(key) === "catalyst";
@@ -10,6 +11,10 @@ export const isCatalyst = (key: string): boolean => kindOf(key) === "catalyst";
 export const canSpam = (key: string): boolean => kindOf(key) === "chaos";
 /** ルーンをはめる手 (確定の手 = 結果は打った後の 1 箱、S-31e) */
 export const isRuneHand = (key: string): boolean => !!parseRuneKey(key); // 鍵の読みはエンジンの parseRuneKey
+/** 耐性のフラックス = 元素を変えるだけの乱数の無い手 (S-31h、スイッチ treeFlux。説明文の部品 convertElements で見る。ルーンは上の isRuneHand) */
+export const isFluxHand = (key: string): boolean => !isRuneHand(key) && actionClassOfKey(key).parts.includes("convertElements");
+/** 手の窓に ☑ を出さず、当たりの箱を選ばない確定の手 (ルーン S-31e・フラックス S-31h。フラックスはスイッチ treeFlux の間だけ) */
+export const isFixedHand = (key: string): boolean => isRuneHand(key) || (isFluxHand(key) && flag("treeFlux"));
 
 /** 触媒の高貴のお告げ (名前はエンジンの OMEN_KEY、E-27) */
 export const CATALYSING = OMEN_KEY.catalysing;

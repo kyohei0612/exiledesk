@@ -16,7 +16,7 @@ import { extendAnnul, holdAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath, staysGray } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
-import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, isFixedHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
 import { restoreWhittlePre } from "./tree-whittle-pre";
 import { fillHeldHi } from "./tree-held-use";
@@ -24,7 +24,7 @@ import { lvPart } from "../../../services/simulator/tree/tree-whittle";
 import { flag } from "../../../web/release-flags";
 
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
-const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
+const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isFixedHand(h.currency) || veilKeep(h));
 /** 前の保存の印 block (エッセンスの「ブロックに使う」☑、S-33b 撤回) を外し、当たりの札は木の狙いの物だけにする (完成形に無いエッセンスの MOD は外れ = S-33c) */
 function dropBlock(data: PatchData, d: TreeDoc, h: Hand, aims: readonly Aim[]): { hand: Hand; aims: Aim[] } {
   if (!("block" in h)) return { hand: h, aims: [...aims] };

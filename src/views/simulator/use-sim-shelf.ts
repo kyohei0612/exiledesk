@@ -24,8 +24,12 @@ import { flag } from "../../web/release-flags";
 export const TREE_SPAM_ORB = false;
 /** 神のオーブは 11-06 から木の棚に出す (狙いの MOD の数値の目標を決める手、S-202) */
 export const TREE_HIDDEN = new Set<string>([OMEN_KEY.sanctification, OMEN_KEY.blessed]);
-/** フラックス (耐性の変換) は木の枝の決まりが無いのでツリーの棚に出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す) */
+/**
+ * フラックス (耐性の変換) はスイッチ treeFlux の間は木の棚に出す (確定の 1 箱 + 札、S-31h、要望 37931ca5・オーナー 11-13「結構使えそう」。デイリーの木も同じ棚)。
+ * 閉じている間は前のまま出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す)
+ */
 const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"]);
+const fluxHidden = (key: string): boolean => FLUX_KEYS.has(key) && !flag("treeFlux");
 /** ルーンはクラフト以外も消さず、エミュの棚と同じく畳んだ節に出す (S-20・S-31f、11-05 オーナー「いつでもルーンは展開して使えるように」) */
 /**
  * ヒネコラの髪束 (予見) は木の棚に出す。神のオーブは予見したアイテムの時だけ (予見を消す手、S-39・開発版だけ = FORESEE_ON。
@@ -37,7 +41,7 @@ const putrefyHidden = (key: string): boolean => key === OMEN_KEY.putrefaction &&
 /** 錬金のオーブは木の棚に出さない = 新しく置けない (S-20d、スイッチ treeNoAlchemy、11-12 オーナー「錬金消してもいいけどなシミュ」。もう置いてある錬金の手は棚を通らずに開くので残る) */
 const alchemyHidden = (key: string): boolean => key === "alchemy" && flag("treeNoAlchemy");
 /** it = 棚に渡したアイテム (無ければ予見の例外は神のオーブに効かない) */
-export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || FLUX_KEYS.has(key) || putrefyHidden(key) || alchemyHidden(key));
+export const treeHidden = (key: string, it?: StageItem | null): boolean => !foreseeShown(key, it) && (simHidden(key) || TREE_HIDDEN.has(key) || fluxHidden(key) || putrefyHidden(key) || alchemyHidden(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null, runeFirst?: () => readonly string[]) {

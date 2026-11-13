@@ -49,7 +49,7 @@ import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sampl
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
-import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, isFixedHand } from "../../../services/simulator/tree/tree-hands";
 import { fillHeldDefaults } from "./tree-held-use";
 import { capDivOf } from "../../../services/simulator/tree/run-price";
 
@@ -298,7 +298,7 @@ export function installSimMonkey(): () => void {
       let at = id;
       t.edit((x) => {
         if (p.hand) {
-          const h = oldVeil(p.hand, p.aims ?? []), free = (!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h);
+          const h = oldVeil(p.hand, p.aims ?? []), free = (!!h.free && effectOf(h.currency) !== "fracture") || isFixedHand(h.currency) || veilKeep(h);
           const aims = free ? [] : alignEssenceAims(d, x, p.aims ?? []), pre = p.pre ?? null;
           at = holdLinks(() => applyPick(x, id, h, kindOf(h), aims, pre, onlyOf(d, x, id, h, pre, aims)));
         }

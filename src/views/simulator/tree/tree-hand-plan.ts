@@ -13,7 +13,7 @@ import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
-import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isFixedHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { infiniteAim, needsSameHiUnder, needsSameMod, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
@@ -187,7 +187,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   }
   // 狙い無しの手・ルーンの手は当たりの箱を出さない (S-23・S-31e、10-31 朝オーナー「狙い無しってことはただ付けて終わりって話だから当たりMODの設定が無い以上でないようにしたいな枝には」)。
-  if (kind === "free" || isRuneHand(h.currency)) return [];
+  if (kind === "free" || isFixedHand(h.currency)) return [];
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
@@ -218,7 +218,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
 export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo" | "veil">, goals: readonly Aim[]): Aim[] {
   // 印の無い木の乱数のフラクチャーも ☑ で狙いを選べる (候補 = 見本に付いている完成の狙い。スイッチ fracPick)
   if (effectOf(p.held) === "fracture" && !fractureMarks(doc).length) return hitAimsOf(data, doc, boxId, item, { ...handOf({ held: p.held, omens: p.omens }), pick: "random" }, goals);
-  if (!FREE_EFFECTS.includes(effectOf(p.held)) || isRuneHand(p.held)) return [];
+  if (!FREE_EFFECTS.includes(effectOf(p.held)) || isFixedHand(p.held)) return [];
   return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo, veil: p.veil }), goals);
 }
 /**
@@ -228,6 +228,8 @@ export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item:
  */
 export function pickedHits(choices: readonly Aim[], checked: readonly string[], held: string, spam: boolean): { aims: Aim[]; free: boolean } | null {
   if (!FREE_EFFECTS.includes(effectOf(held))) return null;
+  // 確定の手 (フラックス S-31h) は ☑ が無く、狙い無しでもない (札は木の狙いで見る)
+  if (isFixedHand(held)) return { aims: [], free: false };
   const aims = choices.filter((a) => checked.includes(a.modId));
   // チェックした物だけが当たりの箱 (TreeHandShelf の hitAims と同じ。10-27 朝に f468861b の (a) を戻した)
   if (aims.length) return { aims, free: false };
