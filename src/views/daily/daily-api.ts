@@ -28,7 +28,7 @@ export type DailyAim = GenAim;
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え) */ note?: string };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
 /** views = そのレシピを開いた人の数 (D-50e、1 人も開いていない行には無い) */
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number; /** 提出の一言 (D-35e、無い人は無し) */ note?: string };
 /** 提出の一言の字数の上限 (D-35e、サーバーの SUBMIT_NOTE_MAX と同じ) */
@@ -191,6 +191,22 @@ export async function submitTry(id: string, cost: number, rate: number, note = "
   save();
   return { ok: true, best: t.best ?? null };
 }
+/** 提出の後から一言を足す・直す・消すか (D-35e): 今日のお題で、この端末から提出して順位に載る記録がある時 */
+export const canEditNote = (id: string, now = Date.now()): boolean => id === todayId(now) && !!daily.local.tries[id]?.submitted && !!daily.local.tries[id]?.best;
+/** 置いた一言を自分の行に重ねる間 (順位の表は 60 秒の写し、D-35e) */
+const NOTE_FRESH_MS = 120_000;
+/** POST /daily/note (D-35e)。空で消す。返り: ok / bad (悪口・URL) / fail (つながらない・今日でない・提出していない) */
+export async function noteTry(id: string, note: string, now = Date.now()): Promise<"ok" | "bad" | "fail"> {
+  const a = auth(), t = daily.local.tries[id];
+  if (!a || !t) return "fail";
+  const r = await call<{ ok?: boolean; note?: string | null; error?: string }>("/daily/note", { ...a, id, note: note.trim() });
+  if (r?.error === "note") return "bad";
+  if (!r?.ok) return "fail";
+  t.note = r.note ?? "";
+  t.noteAt = now;
+  save();
+  return "ok";
+}
 /**
  * POST /daily/live (D-57b): 挑戦中の最新の木 (端末の控えの tree = 提出と同じ形) と動作の列をサーバーへ置く。呼ぶのは daily-live.ts だけ (15 秒まとめ・離れる時)。
  * last = 離れる時 (ページが閉じても届くよう keepalive)。返り: true = 置けた、false = もう受けない (終わった挑戦・名前が違う)、null = つながらない・古いサーバー
@@ -219,7 +235,10 @@ export const TRIED_CARD: boolean = true;
  */
 export function rankOf(id: string): DailyRankRow[] {
   const me = daily.local.nick?.name, mine = daily.local.tries[id], best = mine?.best;
-  const rows = (daily.remote?.ranks[id] ?? []).map((r) => (r.name === me ? { ...r, me: true } : r));
+  // 後から置いた一言 (D-35e) は置いた直後だけ端末の物を重ねる (サーバーの表が追いつくまで)
+  const fresh = mine?.noteAt != null && Date.now() - mine.noteAt < NOTE_FRESH_MS;
+  const withNote = (r: DailyRankRow): DailyRankRow => { if (!fresh) return r; const { note: _n, ...rest } = r; return mine!.note ? { ...rest, note: mine!.note } : rest; };
+  const rows = (daily.remote?.ranks[id] ?? []).map((r) => (r.name === me ? withNote({ ...r, me: true }) : r));
   if (best && me && !rows.some((r) => r.me)) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true, ...(mine?.note ? { note: mine.note } : {}) });
   const score = rankByScore(id);
   return rows.sort((a, b) => rankCmp(a, b, score));

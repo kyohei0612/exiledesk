@@ -166,7 +166,7 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
   if (!Number.isFinite(cost) || cost < 0 || cost > 1e9 || !Number.isFinite(rate) || rate < 0 || rate > 100) return { error: "value" };
   if (recipe && recipe.length > RECIPE_MAX) return { error: "large" };
   // 一言 (D-35e): 任意・40 字まで。悪口・URL は提出させずに断る (画面が訳を出して書き直してもらう)
-  const note = typeof b.note === "string" ? [...b.note.replace(/\s+/g, " ").trim()].slice(0, SUBMIT_NOTE_MAX).join("") || null : null;
+  const note = noteOf(b.note);
   if (note && submitNoteBad(note)) return { ok: false, error: "note" };
   const t = await db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>();
   const best = (r: TryRow | null) => (r && r.cost != null && r.rate! >= SOLVE_RATE ? { cost: r.cost, rate: r.rate, ms: r.submitted_at! - r.started_at, at: r.submitted_at } : null);
@@ -176,6 +176,21 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
   const w = await db.prepare("UPDATE daily_tries SET submitted_at = ?, cost = ?, rate = ?, recipe = ?, note = ? WHERE topic_id = ? AND nick_id = ? AND submitted_at IS NULL").bind(now, cost, rate, recipe, note, id, nick.id).run();
   if (!w.meta.changes) return { ok: false, done: true, best: best(t) };
   return { ok: true, best: best({ ...t, submitted_at: now, cost, rate }) };
+}
+
+/** 一言の整え (D-35e): 空白を 1 つに・前後を落とす・40 字まで。空は null */
+const noteOf = (v: unknown): string | null => (typeof v === "string" ? [...v.replace(/\s+/g, " ").trim()].slice(0, SUBMIT_NOTE_MAX).join("") || null : null);
+
+/** POST /daily/note: 提出の後から一言を足す・直す・消す (D-35e、11-13)。今日のお題で提出済みの行だけ。悪口・URL は提出と同じ表で断る、空は消す */
+export async function dailyNote(db: D1Database, b: Body, now: number): Promise<unknown> {
+  const nick = await authNick(db, b.nickId, b.code);
+  if (!nick) return { error: "nick" };
+  const id = typeof b.id === "string" ? b.id : "";
+  if (id !== idOf(dayNoOf(now))) return { ok: false, error: "notToday" };
+  const note = noteOf(b.note);
+  if (note && submitNoteBad(note)) return { ok: false, error: "note" };
+  const w = await db.prepare("UPDATE daily_tries SET note = ? WHERE topic_id = ? AND nick_id = ? AND submitted_at IS NOT NULL").bind(note, id, nick.id).run();
+  return w.meta.changes ? { ok: true, note } : { ok: false, error: "notSubmitted" };
 }
 
 /**

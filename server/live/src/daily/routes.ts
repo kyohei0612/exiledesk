@@ -3,7 +3,7 @@
  * 相場の写し (お題の prices) は KV の "market" (1 時間おきの cron が書く物) をそのまま使う
  */
 import type { Env } from "../types";
-import { dailyBox, dailyBoxStatus, dailyGiveup, dailyJson, dailyMine, dailyRecipe, dailyStart, dailySubmit, dailyTitle } from "./api";
+import { dailyBox, dailyBoxStatus, dailyGiveup, dailyJson, dailyMine, dailyNote, dailyRecipe, dailyStart, dailySubmit, dailyTitle } from "./api";
 import { notifyBox } from "./box-notify";
 import { dailyLive, pruneDailyLive } from "./live";
 import { nickPost } from "./nick";
@@ -69,6 +69,8 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
       return json(await dailyMine(db, body));
     case "/daily/submit":
       return json(await dailySubmit(db, body, now));
+    case "/daily/note":
+      return json(await dailyNote(db, body, now));
     case "/daily/giveup":
       return json(await dailyGiveup(db, body, now));
     case "/daily/title":

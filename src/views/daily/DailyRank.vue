@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
-import { canStillTry, getTry, myNick, rankByScore, rankOf, type DailyTopic } from "./daily-api";
+import { canEditNote, canStillTry, getTry, myNick, rankByScore, rankOf, type DailyTopic } from "./daily-api";
 import { scoreOf } from "./daily-score";
 import { flag } from "../../web/release-flags";
 import { usePhone } from "../../utils/use-phone";
@@ -10,6 +10,7 @@ import { useRankRecipe } from "./daily-open";
 import DailyName from "./DailyName.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyPeekAsk from "./DailyPeekAsk.vue";
+import DailyNoteEdit from "./DailyNoteEdit.vue";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const rows = computed(() => rankOf(props.topic.id).slice(0, 10));
@@ -21,6 +22,10 @@ const showTime = computed(() => !(score.value && phone.value));
 const showViews = flag("dailyViews");
 /** 提出の一言 (D-35e、スイッチ dailyNote) を名前の下に小さく 1 行。挑戦前のぼかしの日は一言もぼかす */
 const showNote = flag("dailyNote");
+/** 提出の後から一言を足す・直す・消す (D-35e): 今日のお題で自分の行が表にある時だけ、表の下に 1 つ */
+const noteOpen = ref(false);
+const myNote = computed(() => rows.value.find((r) => r.me)?.note ?? "");
+const noteEditable = computed(() => showNote && canEditNote(props.topic.id) && rows.value.some((r) => r.me));
 /** 挑戦前のぼかし (D-50): 今日のお題でまだ始めていない人は順位と名前だけ。数は画面に置かず仮の字をぼかす */
 const veiled = computed(() => score.value && !closed.value && !getTry(props.topic.id));
 const num = (real: string, fake: string): string => (veiled.value ? fake : real);
@@ -67,11 +72,13 @@ function peeked(): void {
           </component>
         </li>
       </ol>
+      <p v-if="noteEditable" class="daily-rank-note-edit"><button type="button" class="g-btn" data-daily-note-open @click="noteOpen = true">{{ myNote ? tr("ひとことを直す", "Edit your note") : tr("ひとことを書く", "Add a note") }}</button></p>
       <p v-if="failed" data-daily-rank-fail class="mt-1 text-[13px] text-[var(--exile-color-signal-down)]">{{ tr(`${failed} のレシピを開けなかった (木が残っていない)`, `Couldn't open ${failed}'s recipe (no tree saved)`) }}</p>
       <p class="mt-2 text-[13px] opacity-70">{{ closed ? tr("行を押すと、その人のレシピをシミュレーターで開く (写しなので元は変わらない)", "Click a row to open that recipe in the Simulator (a copy; the original stays)") : tr("行を押すとその人のレシピを開く。今日まだ挑戦できる時は、見ると今日の挑戦は諦めた扱いになる", "Click a row to open that recipe. If you can still take today's challenge, viewing it counts as giving up") }}</p>
     </template>
     <p v-else class="text-[14px] opacity-70">{{ closed ? tr("この日は順位に載った人がいない。", "No one was ranked this day.") : tr("まだ誰も提出していない。最初の 1 人になれる。", "No one has submitted yet. You can be the first.") }}</p>
     <DailyPeekAsk :id="topic.id" :name="peekName" @close="peekName = null" @done="peeked" />
+    <DailyNoteEdit v-if="showNote" :id="topic.id" :open="noteOpen" @close="noteOpen = false" />
     <DailyNick v-if="nickFor" @done="peekName = nickFor; nickFor = null" @close="nickFor = null" />
   </div>
 </template>
