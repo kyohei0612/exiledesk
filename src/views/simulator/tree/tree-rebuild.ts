@@ -92,6 +92,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
       if (p.hand) { const { hand: h0, aims: a0 } = dropBlock(data, d, p.hand, p.aims ?? []), h = oldVeil(h0, a0), aims = noHitHand(h) ? [] : alignEssenceAims(data, d, a0), pre = p.pre ?? null; applyPick(d, id, h, kindOf(h), aims, pre, onlyOf(data, d, id, h, pre, aims)); }
       const b = d.boxes[id];
       if (b) {
+        // 手を置いた時刻は保存の時刻へ戻す (組み直しで打ち直した今の時刻にしない = 開いただけでは newerHome で動かない)
+        if (p.touched) b.touched = p.touched; else delete b.touched;
         if ((p.done || p.noAutoBack) && b.autoBack) { b.back = null; delete b.autoBack; delete b.merged; delete b.handBack; }
         if (p.done && !b.hand && !b.back) { b.done = p.done; decided.push(id); }
         if (p.note) b.note = p.note;

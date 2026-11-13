@@ -113,7 +113,7 @@ export interface TreeBox {
   /** 矢印の先の結果の箱 (並び順 = 画面の左から) */
   outs: string[];
   /** 戻りの矢印の先 (hand と一緒には持たない) */
-  back: string | null;
+  back: string | null; /** (スイッチ newerHome) 人が最後にこの箱へ手を置いた時刻 (ms。applyPick が書き、保存の決めに載せる。自動の手には付けない) */ touched?: number;
   /** 完成の印 (前の版の "compromise" = 妥協は読む時に null = 未完成へ、use-tree の load) */
   /** fail = 失敗 (ここで終わり)。回す時はそこで止めた人を失敗と数える (結果の箱ならどれでも) */
   done: "main" | "fail" | null;

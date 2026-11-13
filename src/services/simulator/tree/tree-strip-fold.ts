@@ -118,7 +118,7 @@ interface Home { p: string; via: string }
 const seqOf = (id: string): number => Number(id.slice(1)) || 0;
 const homeMemo = new WeakMap<ReadonlyMap<string, StripFold>, Map<string, Home>>();
 /**
- * 同じ箱を本物の親と畳んだ箱の親の 2 か所以上が指す時、後から作った方 (結果の箱の番号が大きい方 = 後からその手を置いた方) の親の下に描く
+ * 同じ箱を本物の親と畳んだ箱の親の 2 か所以上が指す時、人が最後に手を置いた方 (親の箱の touched が一番後) の親の下に描く
  * (11-14 オーナー「後から設定した奴と前から設定した奴が同じ箱だった場合新しい方優先で表示でいいと思うわ」「１だね。ただ、実験段階」)。
  * 描く場所だけ (木の形・回す・保存は変えない)。輪になる時・描かない箱が絡む時は動かさない
  */
@@ -133,9 +133,12 @@ export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<
   for (const [t, as] of by) {
     const T = d.boxes[t]!;
     if (!T.parent || t === "start" || hidden.has(t)) continue;
-    const via = as.filter((a) => !!d.boxes[a]?.parent).sort((x, y) => seqOf(y) - seqOf(x))[0];
+    // 新しい方 = 人が最後に手を置いた時刻 (親の touched) が一番後の親。時刻の無い親 (開いただけ・前の保存) は 0 = 動かさない
+    // (11-14 オーナー「後から手を加えて足したかどうかじゃね」、ブラック 105 の決め: 組む順の後に手を置き直した所だけ)
+    const at = (id: string): number => d.boxes[d.boxes[id]?.parent ?? ""]?.touched ?? 0;
+    const via = as.filter((a) => !!d.boxes[a]?.parent).sort((x, y) => at(y) - at(x) || seqOf(y) - seqOf(x))[0];
     const p = via ? d.boxes[via]!.parent! : null;
-    if (!via || !p || seqOf(via) < seqOf(t) || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
+    if (!via || !p || at(via) <= at(t) || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
     m.set(t, { p, via });
   }
   // 動かした先どうしで輪になる物は外す (描く親をたどって自分に戻る)
