@@ -17,6 +17,8 @@ const t = useTree();
 const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[12px] text-sim-body hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35 aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
 /** 「線」と「メモ」のボタンを出さない (スイッチ simNoLineMemo。オーナー 11-12「あとこの線とメモ使わんから削除でおｋ」) */
 const NO_LM = flag("simNoLineMemo");
+/** 「全画面」のボタンを出さない (スイッチ treeTrim、S-94i。オーナー 11-14「後全画面機能使ってる奴いる？いないなら削除していいと思うが」) */
+const NO_FULL = flag("treeTrim");
 /** 再挑戦の線は乗せた時だけ (S-87c) */
 /** 人が選ぶ「まとめる」は無い (S-52b) */
 </script>
@@ -31,7 +33,7 @@ const NO_LM = flag("simNoLineMemo");
     </template>
     <button v-if="!NO_LM" type="button" data-tree-memo :class="BTN" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" :aria-label="tr('メモ', 'Notes')" @click="emit('memo')"><Icon name="pencil" class="size-4" /><span>{{ tr("メモ", "Notes") }}</span><span v-if="note" class="size-1.5 rounded-full bg-amber-400" /></button>
     <template v-if="!t.needBase.value">
-      <button type="button" data-tree-full :class="BTN" :aria-pressed="full" :title="full ? tr('全画面を閉じる', 'Exit full screen') : tr('全画面に広げる', 'Full screen')" :aria-label="full ? tr('全画面を閉じる', 'Exit full screen') : tr('全画面に広げる', 'Full screen')" @click="emit('full')">
+      <button v-if="!NO_FULL" type="button" data-tree-full :class="BTN" :aria-pressed="full" :title="full ? tr('全画面を閉じる', 'Exit full screen') : tr('全画面に広げる', 'Full screen')" :aria-label="full ? tr('全画面を閉じる', 'Exit full screen') : tr('全画面に広げる', 'Full screen')" @click="emit('full')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg><span>{{ tr("全画面", "Full") }}</span>
       </button>
       <span class="mx-0.5 h-5 w-0.5 rounded bg-white/10" aria-hidden="true" />
