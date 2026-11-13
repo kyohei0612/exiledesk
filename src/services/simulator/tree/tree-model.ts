@@ -507,7 +507,7 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   // 打った後の箱 (ルーンで仕上げる・狙い無しの手の後) も完成にできる (S-31e・S-54、スイッチ runeHand)
   if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch" && b.out !== "any") return;
   b.done = v;
-  if (v === "main") b.doneNow = true;
+  if (v === "main") { for (const o of Object.values(d.boxes)) if (o !== b && !o.done) delete o.doneNow; b.doneNow = true; } // 前に外した完成の印 (doneNow だけ残った箱) は消す = 完成を外した後の道 (S-142i) は一番新しく外した箱から (11-13 最終チェック 11: 2 回外すと古い道に戻った)
 }
 
 // 箱の配置の小物 (並べ直す・空ける・押す・ずらす・外枠) は tree-model-layout.ts に分けた (1 ファイル 500 行まで、10-28)。呼ぶ所はここから

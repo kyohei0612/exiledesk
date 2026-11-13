@@ -3,7 +3,8 @@
  * 描いた箱の位置 (Vue Flow の箱の translate と大きさ) で数える:
  *  (P1) 箱どうしが重ならない
  *  (P2) 子の帯の真上に別の箱が無い = 子 c の親 p と同じ段に、p でも c の先祖でもない箱があり、c と横に重なる
- *  (P3) 同じ段の箱の上の枠が揃う
+ *     (S-142i のスイッチ treeIdealFirst の間は、下に子の無い箱の真下は道の子に使ってよいので数えない。--off に treeIdealFirst を入れると数える)
+ *  (P3) 同じ段の箱の上の枠が揃う (S-142j ② で 1 列に縦に積んだ箱は列の頭だけで数える = 同じ x の箱は一番上だけ)
  *  (P4) 同じ段の箱の下の枠が揃う (S-141b、スイッチの下でだけ数える: --bottom)
  * 開いた時と、兄弟のいる手の無い箱にカオス (狙い無し) を --grow 回足した後の両方で数える (__simMonkey、開発版だけ)。
  *   node scripts/sim-watch/place.mjs [origin] [--codes <1 行 1 レシピ>] [--only key] [--grow 2] [--off a,b] [--bottom]   … 既定 http://localhost:1442
@@ -11,7 +12,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const PLACE = `(() => {
+export const placeOf = (leafOk = false) => `(() => {
+  const leafOk = ${leafOk ? "true" : "false"};
   const d = window.__simMonkey.dump();
   const pos = {};
   for (const n of document.querySelectorAll(".vue-flow__node")) {
@@ -30,6 +32,7 @@ export const PLACE = `(() => {
     const up = anc(c.id);
     for (const [id, b] of Object.entries(pos)) {
       if (up.has(id) || Math.abs(b.y - pp.y) > 4) continue;
+      if (leafOk && !(d.boxes[id]?.outs ?? []).some((o) => pos[o])) continue;
       if (b.x < pc.x + pc.w && b.x + b.w > pc.x) bad.push({ rule: "P2", what: id + " が " + c.id + " (親 " + p + ") の真上" });
     }
   }
@@ -38,12 +41,14 @@ export const PLACE = `(() => {
   const rows = {};
   for (const id of ids) (rows[dep(id)] ??= []).push(id);
   for (const [r, list] of Object.entries(rows)) {
-    const tops = list.map((id) => pos[id].y), bots = list.filter((id) => d.boxes[id]?.out !== "pass").map((id) => pos[id].y + pos[id].h);
+    const heads = list.filter((id) => !list.some((o) => o !== id && Math.abs(pos[o].x - pos[id].x) <= 1 && pos[o].y < pos[id].y));
+    const tops = heads.map((id) => pos[id].y), bots = heads.filter((id) => d.boxes[id]?.out !== "pass").map((id) => pos[id].y + pos[id].h);
     if (Math.max(...tops) - Math.min(...tops) > 1) bad.push({ rule: "P3", what: (+r + 1) + " 段目の上の枠が " + Math.round(Math.max(...tops) - Math.min(...tops)) + " ずれる" });
     if (bots.length && Math.max(...bots) - Math.min(...bots) > 1) bad.push({ rule: "P4", what: (+r + 1) + " 段目の下の枠が " + Math.round(Math.max(...bots) - Math.min(...bots)) + " ずれる" });
   }
   return JSON.stringify({ boxes: ids.length, bad: [...new Map(bad.map((b) => [b.rule + b.what, b])).values()] });
 })()`;
+export const PLACE = placeOf(false);
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { openChrome, sleep } = await import("./cdp.mjs");
@@ -55,7 +60,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const trees = [...JSON.parse(readFileSync(new URL("./trees.json", import.meta.url), "utf8")).trees, ...extra].filter((t) => !opt("--only") || t.key === opt("--only"));
   const c = await openChrome(Number(process.env.WATCH_PORT ?? 9372));
   let total = 0;
-  const count = async () => { const r = JSON.parse(await c.ev(PLACE)); r.bad = r.bad.filter((b) => bottom || b.rule !== "P4"); return r; };
+  const leafOk = !(opt("--off") ?? "").split(",").includes("treeIdealFirst");
+  const count = async () => { const r = JSON.parse(await c.ev(placeOf(leafOk))); r.bad = r.bad.filter((b) => bottom || b.rule !== "P4"); return r; };
   try {
     for (const t of trees) {
       await c.size(1660, 860, false);

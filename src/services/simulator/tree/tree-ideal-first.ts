@@ -27,7 +27,8 @@ export function idealPath(d: TreeDoc): IdealPath | null {
 
 function walk(d: TreeDoc): IdealPath | null {
   if (Object.values(d.boxes).some((b) => b.done === "main")) return null;
-  const busy = (id: string): boolean => { const b = d.boxes[id]; return !!b && (!!b.hand || !!b.split?.length || !!b.done); };
+  // 手のある箱 = 次の手・分かれ目。完成でない印 (失敗など) は止まりの印なので手と数えない (11-13 最終チェック 11 の A: 結果の片方に失敗を付けるともう片方が灰色)
+  const busy = (id: string): boolean => { const b = d.boxes[id]; return !!b && (!!b.hand || !!b.split?.length); };
   // 完成を外した後 (この画面で押した印 doneNow が残り、完成は外れた箱): その箱までの道に戻す。手のある枝は灰色にしない (ブラック 95 の決め、置いた物が急に触れなくなるのを避ける)
   const was = Object.values(d.boxes).find((b) => b.doneNow && !b.done);
   if (was) return undone(d, was.id, busy);
@@ -38,7 +39,7 @@ function walk(d: TreeDoc): IdealPath | null {
     path.add(at);
     if (on.length > 1) return null;
     if (!on.length) break;
-    for (const k of ks) if (k !== on[0]) gray.add(k);
+    for (const k of ks) if (k !== on[0] && !d.boxes[k]!.done) gray.add(k); // 失敗などの印を付けた箱は灰色にしない (付けた物を触れなくしない)
     at = on[0];
   }
   // 道の外に手がある = 前の作り方の木 (灰色にしない)
@@ -49,13 +50,22 @@ function walk(d: TreeDoc): IdealPath | null {
   return { path, gray };
 }
 
-/** 完成を外した後の道 (前の完成の箱まで) と灰色 (道の横の、下に手が 1 つも無い枝) */
+/**
+ * 完成を外した後の道 (前の完成の箱まで、その箱に手を置いた後は組む時と同じく手の付いた子が 1 つだけの間たどる) と灰色 (道の横の、下に手が 1 つも無い枝)。
+ * 道の先 (一番下の手の結果の箱) は灰色にしない (11-13 最終チェック 11 の B: 外した箱に手を置くと結果が灰色で押せなかった)
+ */
 function undone(d: TreeDoc, id: string, busy: (id: string) => boolean): IdealPath {
   const path = new Set<string>(), gray = new Set<string>();
   for (let x: string | undefined = id; x && d.boxes[x]; x = d.boxes[x]!.parent ?? undefined) path.add(x);
-  const touched = (k: string): boolean => busy(k) || (d.boxes[k]?.outs ?? []).some((o) => !!d.boxes[o] && touched(o));
+  let end = id;
+  for (;;) {
+    const on = (d.boxes[end]?.outs ?? []).filter((o) => !!d.boxes[o] && busy(o));
+    if (on.length !== 1) break;
+    end = on[0]!; path.add(end);
+  }
+  const touched = (k: string): boolean => busy(k) || !!d.boxes[k]?.done || (d.boxes[k]?.outs ?? []).some((o) => !!d.boxes[o] && touched(o));
   const down = (k: string): void => { gray.add(k); for (const o of d.boxes[k]?.outs ?? []) if (d.boxes[o] && !gray.has(o)) down(o); };
-  for (const p of path) for (const k of d.boxes[p]?.outs ?? []) if (d.boxes[k] && !path.has(k) && !touched(k)) down(k);
+  for (const p of path) if (p !== end) for (const k of d.boxes[p]?.outs ?? []) if (d.boxes[k] && !path.has(k) && !touched(k)) down(k);
   return { path, gray };
 }
 

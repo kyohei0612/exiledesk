@@ -196,7 +196,7 @@ let dragEndedAt = 0;
 function onNodeClick(e: NodeMouseEvent): void {
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
-  if (sf.folds.value.has(b.id)) { sf.toggle(b.id); return; }
+  if (sf.folds.value.has(b.id)) { sf.toggle(b.id); return; } if (jt.idealGrayOf(b)) return; // 完成を押すまでの灰色 (S-142i) は縮めた時のポップアップでも触らせない (11-13 レビュー)
   // 縮めて見ている時は、その箱の編集を等倍のポップアップで (オーナー 10-22「75% 未満の見るだけをやめる」)
   if (viewOnly.value) { pop.value = b.id; return; }
   if (panel.value) closeHand();
