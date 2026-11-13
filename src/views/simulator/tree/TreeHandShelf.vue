@@ -188,10 +188,7 @@ const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => ou
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
-  if (!d || !it || !held.value) return [];
-  const base = hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value);
-  // 骨・発現: 完成の狙い + 窓で選んだ MOD。完成の狙いにある MOD でも、この箱の候補に無ければ足す (11-13 オーナー「発現で選ぶMOD選択しても候補にあがらん」。前は完成の狙いの MOD を一律に外していた)
-  return base.concat(boneVeil.value || held.value === "reveal" ? extraAims.value.filter((x) => !base.some((g) => g.modId === x.modId)) : []);
+  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value).concat(boneVeil.value || held.value === "reveal" ? extraAims.value.filter((x) => !t.goals.value.some((g) => g.modId === x.modId)) : []) : []; // 骨・発現: 完成の狙い + 選んだ置き石
 });
 /** 今は付けられない完成形の狙い (グレーで並べ、ホバーで訳。11-08 オーナー「狙いMODは必ず表示で付けれないならグレーアウト」。骨の発現は TreeVeilCheck が持つ) */
 const lockedAims = computed(() => (noMod.value || boneVeil.value || held.value === "reveal" ? [] : lockedAimRows(s.data.value, item.value, t.goals.value, aimChoices.value, hand.value, (a) => t.aimLabel(a))));
