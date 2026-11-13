@@ -95,6 +95,17 @@ export function liveStop(final = false): void {
   document.removeEventListener("visibilitychange", onHide);
   window.removeEventListener("pagehide", onHide);
 }
+/**
+ * 提出・諦めの直前 (窓の「出す」「諦める」を押した時、サーバーへ送る前) に、溜まった動作と離れた印を送り切って待つ。
+ * サーバーは終わった挑戦を受けず、端末も ended の後は送らないので、終える前に送らないと最後の 15 秒の手が消える (11-13 総ざらいの ×)。
+ * 止めはしない = 終えられなかった時 (つながらない) は挑戦の続きをそのまま送る。終わった後の最初の送りで止まる。
+ * 待つのは 3 秒まで (遅い回線で提出・諦めを待たせない。送りは keepalive なので待たなくても届く事が多い)
+ */
+export async function liveFlush(): Promise<void> {
+  if (stopped) return;
+  clearTimeout(timer); timer = 0;
+  await Promise.race([send(true), new Promise<void>((ok) => setTimeout(ok, 3000))]);
+}
 /** 木の外の動作 (始め方とフラクチャーの選び・やり直し・回した結果など) */
 export function liveAct(k: string, extra?: Record<string, unknown>): void {
   push(k, extra);

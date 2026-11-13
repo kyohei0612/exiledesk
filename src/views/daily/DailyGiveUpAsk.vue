@@ -7,12 +7,14 @@ import { ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { giveUpTry } from "./daily-api";
+import { liveFlush } from "./daily-live";
 
 const props = defineProps<{ id: string; open: boolean; /** 開発版の見本 (dev=giveup): サーバーに送らない */ dev?: boolean }>();
 const emit = defineEmits<{ close: []; done: [] }>();
 const failed = ref(false);
 async function giveUp(): Promise<void> {
   failed.value = false;
+  if (!props.dev) await liveFlush(); // 終える前に最後の手と離れた印を控えへ (D-57b)
   if (props.dev || (await giveUpTry(props.id))) emit("done"); else failed.value = true;
 }
 </script>

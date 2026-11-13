@@ -7,12 +7,14 @@ import { ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { giveUpTry } from "./daily-api";
+import { liveFlush } from "./daily-live";
 
 const props = defineProps<{ id: string; name: string | null }>();
 const emit = defineEmits<{ close: []; done: [] }>();
 const failed = ref(false);
 async function peek(): Promise<void> {
   failed.value = false;
+  await liveFlush(); // 挑戦の画面から来た時は最後の手を控えへ (D-57b、挑戦中でなければ何もしない)
   if (await giveUpTry(props.id)) emit("done"); else failed.value = true;
 }
 </script>

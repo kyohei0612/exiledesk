@@ -7,6 +7,7 @@ import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { rankOf, SOLVE_RATE, submitTry } from "./daily-api";
+import { liveFlush } from "./daily-live";
 import { goDaily } from "./daily-open";
 
 /** cost = null は完成 0 人 (費用が無い = —、D-35d)。サーバーには 0 で送り、完成率 0% なので順位には載らない */
@@ -24,6 +25,7 @@ const place = computed(() => { if (!solved.value) return null; const i = rankOf(
 async function send(): Promise<void> {
   failed.value = false;
   step.value = "sending";
+  if (!props.dev) await liveFlush(); // 終える前に最後の手を控えへ (D-57b)
   const r = props.dev ? { ok: true } : await submitTry(props.id, props.cost ?? 0, props.rate);
   if (!r.ok) { step.value = "ask"; failed.value = true; return; }
   sent.value = { cost: props.cost, rate: props.rate };
