@@ -1,4 +1,11 @@
 {
+  "0.1.726": [
+    "Simulator: after zooming in or out, boxes no longer overlap the tier label band on the left",
+    "Simulator: end boxes marked Done or Failed no longer show the \"players with a different item shape arrive here\" notice in Final check, and are not counted as unset",
+    "Simulator: fixed mods chosen in the Reveal dialog sometimes disappearing instead of showing as targets in the step dialog",
+    "Emulator: the bar above the item is now tighter, with quality and the type selector on one line",
+    "Trade site search: for amulets that grant a skill, you can now pick the granted skill and include it in the search (Emulator and Simulator)"
+  ],
   "0.1.725": [
     "Simulator: pressing Done or Final check now rearranges the tree into an easier-to-read layout, and the tree is drawn narrower. New boxes from a step are ordered hit → unset → the rest",
     "Simulator: fixed the tree view shifting sideways when placing a step from \"Unset +\" on a Whittling lane band",
