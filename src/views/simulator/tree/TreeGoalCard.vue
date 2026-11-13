@@ -22,6 +22,25 @@ const ts = useTreeSearch();
 import { openEmuWithGoals } from "../../../state/for-share/sim-links";
 /** 完成形をエミュで試す (S-211、スイッチ simToEmu。完成形のカードの品をそのままエミュに載せる) */
 const SIM_TO_EMU = flag("simToEmu");
+import TreeTierPick from "./TreeTierPick.vue";
+import TreeOrbAsk from "./TreeOrbAsk.vue";
+import { isAimMod } from "../../../services/simulator/tree/tree-tier-down";
+import { craftStage as s } from "../../../state/craft-stage";
+import type { Aim } from "../../../services/simulator/tree/tree-model";
+/** 段の札 (P1・S2 以上) を押すと段の一覧から下限を選ぶ (S-10f、スイッチ tierDown) */
+const TIER_DOWN = flag("tierDown");
+const tierAt = ref<{ goal: Aim; x: number; y: number } | null>(null);
+/** 段を下げた MOD (オーブをどうしますかの注意書きの対象、× で閉じる) */
+const orbAsk = ref<string[]>([]);
+function onTierTag(e: MouseEvent): void {
+  const tag = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-card-mod] > span.tabular-nums");
+  const id = tag?.parentElement?.getAttribute("data-card-mod");
+  const data = s.data.value, goal = id && data ? t.goals.value.find((a) => isAimMod(data, a, id)) : undefined;
+  if (!tag || !goal) return;
+  e.stopPropagation();
+  const r = tag.getBoundingClientRect();
+  tierAt.value = { goal, x: r.left, y: r.top + r.height / 2 };
+}
 
 const t = useTree();
 const shown = useGoalShown();
@@ -90,7 +109,7 @@ onBeforeUnmount(() => ro?.disconnect());
       <span class="shrink-0 text-[10px] opacity-70">{{ folded ? "▸" : "▾" }}</span>
     </button>
     <div v-if="!folded" ref="wrap" class="relative mt-1 max-h-[calc(100vh-14rem)] overflow-y-auto overflow-x-hidden">
-      <div :style="{ zoom: ZOOM }"><StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
+      <div :style="{ zoom: ZOOM }" :class="TIER_DOWN ? 'goal-tier-tags' : ''" @click.capture="TIER_DOWN && onTierTag($event)"><StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
       <!-- ベースは名前の帯のすぐ下の種類の行の右、MOD は MOD の上の区切り線の右 (上下を札の高さだけ空ける、11-05) (10-25 オーナー「ベースのとこにベースボタン、その下に MOD ボタン」)。文字に重ならない小さな札 -->
       <button v-if="baseTop != null" type="button" data-tree-goal-open="base" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${baseTop ?? 0}px` }" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level') + ` (${rarity})`" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
       <button v-if="modTop != null" ref="modBtn" type="button" data-tree-goal-open="mods" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${modTop}px` }" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
@@ -102,5 +121,13 @@ onBeforeUnmount(() => ro?.disconnect());
     <button v-if="SIM_TO_EMU && n" type="button" data-tree-goal-emu class="g-btn sm mt-1.5 w-full"
       :title="tr('完成形の品をそのままエミュに載せる (枠を超える時は同じベースの白で開く)', 'Open the final item as-is in the emulator (a fresh base if it exceeds the affix limits)')"
       @click="void openEmuWithGoals(t.doc.value.base, t.doc.value.itemLevel, t.goals.value)">{{ tr("エミュで試す →", "Try in the emulator →") }}</button>
+    <TreeOrbAsk v-if="TIER_DOWN && orbAsk.length" :mod-ids="orbAsk" @close="orbAsk = []" />
+    <TreeTierPick v-if="tierAt" :goal="tierAt.goal" :x="tierAt.x" :y="tierAt.y" @close="tierAt = null" @lowered="(id) => (orbAsk = [...new Set([...orbAsk, id])])" />
   </div>
 </template>
+
+<style scoped>
+/* 段の札は押せる (S-10f): 点線の下線と指 */
+.goal-tier-tags :deep([data-card-mod] > span.tabular-nums) { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.goal-tier-tags :deep([data-card-mod] > span.tabular-nums:hover) { color: #fff; }
+</style>
