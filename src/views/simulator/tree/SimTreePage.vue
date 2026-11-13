@@ -58,7 +58,7 @@ import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
 import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
-import { installSimMonkey } from "./sim-monkey";
+import { installSimMonkey } from "./sim-monkey"; import { laneBandW } from "./tree-lane-band";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
@@ -430,7 +430,7 @@ const glowOf = (b: Box): boolean => {
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
-        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
+        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
             :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
             :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
