@@ -9,7 +9,7 @@
   線・打つ手の札・引っ張る線・合流の線は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowReactive, watch } from "vue";
 import type { NodeMouseEvent } from "@vue-flow/core";
 import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
@@ -20,15 +20,13 @@ import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import PhoneViewPage from "../phone/PhoneViewPage.vue";
 import TreeLoadingCover from "./TreeLoadingCover.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
-import TreeBox from "./TreeBox.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
+import TreeBox from "./TreeBox.vue"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
-import { boxHeightOf, placeKept, tidyEach, tidyView, useRowSettle } from "./use-row-settle"; import { settleNow, withPickScope } from "./tree-local-scope"; import { placeTree } from "../../../services/simulator/tree/tree-place";
-import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
-import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
+import { tidyEach, tidyView } from "./use-row-settle"; import { settleNow, withPickScope } from "./tree-local-scope";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue"; import TreeBoxModBtn from "./TreeBoxModBtn.vue";
 import { useTree } from "./use-tree";
-import { useTreeFlow } from "./use-tree-flow";
+import type { useTreeFlow } from "./use-tree-flow";
 import { useTreePop } from "./use-tree-pop";
 import { openTreeFirst } from "./tree-open-first";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -37,8 +35,7 @@ import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
-import { useTreeEdges } from "./use-tree-edges";
-import { useTreeBands } from "./use-tree-bands"; import { fillHeldDefaults } from "./tree-held-use"; import { bandAway } from "../../../services/simulator/tree/tree-band";
+import { fillHeldDefaults } from "./tree-held-use";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
@@ -47,22 +44,20 @@ import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
 import { backLabelOf } from "./tree-fail";
-import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue"; import TreeBugReport, { reportTreeBug } from "./TreeBugReport.vue"; import { issueGroups } from "./hole-check";
 import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
-import { useTreeReveal } from "./use-tree-reveal";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
 import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
-import TreeCanvas from "./TreeCanvas.vue"; import type { CanvasCtx } from "./tree-canvas-ctx";
+import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
 import { backTargetsOf } from "./tree-merge";
-import { useTreeMerge } from "./use-tree-merge"; import { flag } from "../../../web/release-flags";
+import { flag } from "../../../web/release-flags";
 const t = useTree();
 const doc = t.doc;
 /** 見るだけの幅 (768 未満、S-94g) = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
@@ -72,7 +67,7 @@ const viewPhone = computed(() => viewWidth.value);
 useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */
 /** add = 横の ＋ で開いた選ぶ窓 (id は押した横の箱。選んで決めた時に初めて箱を足す、at = 引っ張って置いた所) */
-const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; id: string; add?: { at?: { x: number; y: number } } } | null>(null);
+const panel = ref<Panel | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
 const MEMO_KEY = "exiledesk.tree.memo-open";
 const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
@@ -87,31 +82,35 @@ const SIDE_BTN = "flex h-6 shrink-0 items-center gap-0.5 whitespace-nowrap round
 watch(sideClosed, (v) => { try { localStorage.setItem(SIDE_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 /** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
-const v = useTreeFlow(doc);
-const { zoom, full, viewOnly, pageZ } = v; const ONE_ROW = flag("treeTrim"); // 上の帯を全部 1 行・左詰め (戻す・白紙も)、入らない幅は折り返さず帯の中を横に送る (S-94j、スイッチ treeTrim、オーナー 11-14「全部1行で左詰めで」)
 /**
- * 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す。100% 以上でページの zoom が 1 未満 (1280 幅で 0.85) の時はその分も戻す
- * (箱の中の押せる物が 24px を切った、オーナー 10-22 OK。1920 以上は今のまま)。75% でまで戻すと 1.57 倍になり箱の中で重なった (zoom-steps 29 件) ので 75% は前のまま
+ * 描き面 (TreeCanvas、作りは use-tree-surface.ts)。スイッチ tabKeep の中は一度開いたタブごとに 1 枚、外は 1 枚 (S-09c)。
+ * 置き場の手は出ている面 (cur) へ届ける: 視点 v・畳み・帯・＋・乗せた箱・整列
  */
-const inv = computed(() => (viewOnly.value ? 1 : zoom.value < 1 ? 1 / zoom.value : Math.max(1, 1 / (zoom.value * pageZ.value))));
-onBeforeUnmount(v.dispose);
+const KEEP = flag("tabKeep");
+const liveKey = computed(() => (KEEP ? (t.tabDocs.value, tabKeyAt(t.active.value)) : 0));
+const surfs = shallowReactive(new Map<number, Surface>());
+const cur = computed(() => surfs.get(liveKey.value) ?? null);
+const S = (): Surface => cur.value!;
+/** 一度出したタブ (閉じたタブは外す) */
+const seen = ref<number[]>([]);
+watch(liveKey, (k) => { if (!seen.value.includes(k)) seen.value = [...seen.value, k]; }, { immediate: true });
+const alive = computed(() => { const ks = new Set(t.tabDocs.value.map((_, i) => tabKeyAt(i))); return seen.value.filter((k) => ks.has(k)); });
+const zoom = computed(() => cur.value?.v.zoom.value ?? 1), viewOnly = computed(() => cur.value?.v.viewOnly.value ?? false), pageZ = computed(() => cur.value?.v.pageZ.value ?? pageZoom());
+type Flow = ReturnType<typeof useTreeFlow>;
+/** 出ている面の視点。面がまだ無い間 (新しいタブの面ができる前) は倍率・見るだけ・ページの zoom を読めて、ほかの手 (寄る・覚える) は何もしない */
+const idle = async (): Promise<void> => {};
+const v = new Proxy({ zoom, viewOnly, pageZ } as unknown as Flow, { get: (o, k) => (k in o ? (o as Record<string | symbol, unknown>)[k] : cur.value ? (cur.value.v as unknown as Record<string | symbol, unknown>)[k] : idle) });
+/** 全画面 (帯のボタン。スイッチ treeTrim で外した、前は視点の持ち物) */
+const full = ref(false);
+const toggleFull = (): void => { full.value = !full.value; };
+const ONE_ROW = flag("treeTrim"); // 上の帯を全部 1 行・左詰め (戻す・白紙も)、入らない幅は折り返さず帯の中を横に送る (S-94j、スイッチ treeTrim、オーナー 11-14「全部1行で左詰めで」)
 // 猿の台本が呼ぶ口 window.__simMonkey (開発の時だけ、sim-monkey.ts)
 onBeforeUnmount(installSimMonkey());
 
 // ドラッグ中は Vue Flow の箱だけが動き、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)。線は引っ張っている位置に合わせる
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
-const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
-const boxes = computed(() => Object.values(doc.value.boxes));
-/** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
-// 消去の続きを畳む (S-28g ③、use-strip-fold.ts): 隠した箱は描かず、根の最初の自動の消去の箱は札 (TreeStripFold)、止まった箱は札の下
-const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => x.boxId) ?? [], () => tr100.result.value?.stuckAt ?? null);
 useTreeDraft(doc); // 要望に添える作りかけの木 (11-08 オーナー「1おけ」、web/feedback-tree.ts)
-const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !bandAway(doc.value, b) && !sf.hidden.value.has(b.id)));
-const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
-/** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
-const rv = useTreeReveal(shown, () => !!s.data.value, t.opened, t.bigStepNow); watch(t.loading, (on) => { if (!on) void v.openView(); });
-/** 出ている箱どうしの線と札だけ描く (通り抜けは箱が無いので数えない) */
-const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(bd.drawnId(id)))));
+watch(t.loading, (on) => { if (!on && cur.value) void v.openView(); });
 
 /**
  * 画面の高さ (拡大前の CSS ピクセル)。html の zoom (WebApp.vue の fitZoom) が 1 より大きいと 100vh が画面より高くなり、
@@ -154,8 +153,6 @@ onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); con
 onBeforeUnmount(() => { window.removeEventListener("resize", onResizeH); headRo?.disconnect(); });
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
-const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value, (id) => v.flow.findNode(id)?.dimensions.height ?? 0);
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), moving: () => drag.value?.id ?? null, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []), chips: () => edges.value.filter((e) => e.hand && e.chip).map((e) => ({ x: e.jx, y: e.jy, w: chipRoom.value.get(e.id) ?? 340 })) });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
@@ -165,7 +162,7 @@ function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); s
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
-const backLabel = (b: Box): string => backLabelOf(doc.value, b);
+const backLabel = (b: Box): string => backLabelOf(doc.value, b); // 縮めた時のポップアップ (面の外、今のタブの木)
 
 // 組み替え
 /**
@@ -180,7 +177,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
   // 視点は holdBox (S-147e)。削減の手を打ち直してほかの枠の手が消える時、手の窓の確かめ「この手以降は削除されます」(下の箱が消える時に出る) で伝えていなければ先に聞く (S-65c4)
-  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { tidyEach(); withPickScope(id, () => t.edit((d) => { at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); tidyOf(d); })); return at; });
+  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { tidyEach(S().kept); withPickScope(id, () => t.edit((d) => { at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); S().tidyOf(d); })); return at; });
     panel.value = null; }, q || drawnBelow(doc.value, id).length > 0);
 }
 /**
@@ -195,7 +192,7 @@ let dragEndedAt = 0;
 function onNodeClick(e: NodeMouseEvent): void {
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
-  if (sf.folds.value.has(b.id)) { sf.toggle(b.id); return; } if (jt.idealGrayOf(b)) return; // 完成を押すまでの灰色 (S-142i) は縮めた時のポップアップでも触らせない (11-13 レビュー)
+  if (S().sf.folds.value.has(b.id)) { S().sf.toggle(b.id); return; } if (jt.idealGrayOf(b)) return; // 完成を押すまでの灰色 (S-142i) は縮めた時のポップアップでも触らせない (11-13 レビュー)
   // 縮めて見ている時は、その箱の編集を等倍のポップアップで (オーナー 10-22「75% 未満の見るだけをやめる」)
   if (viewOnly.value) { pop.value = b.id; return; }
   if (panel.value) closeHand();
@@ -236,7 +233,7 @@ function addHitWith(b: Box, a: Aim, at?: { x: number; y: number }): void {
     const made = addHit(d, b.parent!, b.id);
     if (!made) return;
     setAim(d, made, a);
-    if (at) moveBox(d, made, at.x - BOX_W / 2, at.y); else tidyOf(d);
+    if (at) moveBox(d, made, at.x - BOX_W / 2, at.y); else S().tidyOf(d);
   });
 }
 function onAim(b: Box): void { if (b.out === "start") t.startPage.value = true; else panel.value = { kind: "aim", id: b.id }; }
@@ -248,9 +245,9 @@ function onAim(b: Box): void { if (b.out === "start") t.startPage.value = true; 
 function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   simOp(link ? "set-back" : "side-plus");
   if (!link) { panel.value = { kind: "aim", id: b.id, add: at ? { at } : {} }; return; }
-  t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
+  t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { S().tidyOf(d); setBack(d, made, link); } });
 }
-function onDone(b: Box): void { const on = !b.done; t.edit((d) => setDone(d, b.id, b.done ? null : "main")); if (on && doc.value.boxes[b.id]?.done === "main") { settleNow(t.edit); tidyView(doc, measureBox, chipNatural); } } // 完成を押した時は木全体を揃えて (S-142m ①) 見やすい木へ (S-142k)
+function onDone(b: Box): void { const on = !b.done; t.edit((d) => setDone(d, b.id, b.done ? null : "main")); if (on && doc.value.boxes[b.id]?.done === "main") { settleNow(t.edit); tidyNow(); } } // 完成を押した時は木全体を揃えて (S-142m ①) 見やすい木へ (S-142k)
 /** 失敗 (ここで終わり) の印を付ける・外す  */
 function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
 // ルート精査 (押した時に始める、use-tree-check.ts)
@@ -267,7 +264,7 @@ const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).length
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 最終チェックのボタン: 人を回さず木の枠を辿る精査だけ (11-11 オーナー「何人か回してるよね。やめさせてくれ。普通に全枠2周して未設定やバグないかのチェックが最終チェックだ」、S-201 ②。前は精査の後に試しの 30 人を回していた) */
 async function onTest(): Promise<void> {
-  settleNow(t.edit); tidyView(doc, measureBox, chipNatural); // 最終チェックを押した時も木全体を揃えて (S-142m ①) 見やすい木へ (S-142k)。整理で未設定が出たらそこで止め、全部決まったら押し直さずに続ける (S-190・S-190c)
+  settleNow(t.edit); tidyNow(); // 最終チェックを押した時も木全体を揃えて (S-142m ①) 見やすい木へ (S-142k)。整理で未設定が出たらそこで止め、全部決まったら押し直さずに続ける (S-190・S-190c)
   if (jt.on.value && await jt.sort(() => void onTest())) return;
   await onCheck();
 }
@@ -291,7 +288,7 @@ onBeforeUnmount(() => { setLeaveGuard(null); window.removeEventListener("pagehid
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value || t.loading.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: tr100.test.value ? TEST_N : RUN_N };
-  const r = rv.run.value;
+  const r = cur.value?.rv.run.value;
   return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : t.baseCostBusy.value ? { text: tr("始まりの値段を計算中", "Pricing the start") } : null;
 });
 const checkBusy = computed((): { text: string; n?: number; of?: number } | null => {
@@ -299,42 +296,12 @@ const checkBusy = computed((): { text: string; n?: number; of?: number } | null 
   const p = progress.value;
   return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Running"), n: p.n, of: p.of };
 });
-async function goIssue(id: string): Promise<void> { if (!doc.value.boxes[id]) return; await sf.openFor(id); void v.reveal(bd.drawnId(id), true); } // 箱の無い要確認 (S-89c ③) は寄らない
-/** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
-// 札の幅は名前を切らない幅 (… で切れている分を足す) × 今の倍率で拡げる分 (全体表示で並んでも重ならない)
-const chipNatural = (id: string): number | undefined => {
-  const el = document.querySelector<HTMLElement>(`[data-hand-of="${id}"]`);
-  if (!el) return undefined;
-  const name = el.querySelector<HTMLElement>(".truncate");
-  return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value);
-};
-// 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す)
-const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
-const tidyOf = (d: typeof doc.value): void => void placeTree(d, boxHeightOf(measureBox), chipNatural, placeKept);
-useRowSettle(doc, measureBox, chipNatural, { opened: t.opened, loading: t.loading });
-/** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
-/** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ、S-85b) */
-const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
-const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
-// 段の札の帯は木の枠の外の左の列 (S-147f、11-08)。帯の幅が変わった分は木の送りで打ち消す (倍率を変えても木が横に跳ねない)
-const lanes = computed(() => laneMarks(doc.value, rowL.value)); // 段の札は 11-11 から木の面の中に重ねる (枠の幅が変わらない) ので、帯の幅の変わりを木の送りで打ち消す laneShift は呼ばない
-
-// ＋を引っ張ってつなぐ (use-tree-plus.ts)
-const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
-const bd = useTreeBands({ doc, selectedId: () => panel.value?.id ?? plus.value?.id ?? null, issueOf, openHand: (id) => (panel.value = { kind: "hand", id }), onPlus: (b, e) => onPlus(b, "next", e), edit: t.edit }); // 削減の手前の枠の帯 (S-65c ⑫)
+async function goIssue(id: string): Promise<void> { if (!doc.value.boxes[id]) return; await S().sf.openFor(id); void v.reveal(S().bd.drawnId(id), true); } // 箱の無い要確認 (S-89c ③) は寄らない
+/** 整列して、全体に合わせる (1 つ戻すで元の並びへ)。出ている面の木・高さ・札の幅・並べの控えで */
+function tidyNow(): void { const c = S(); tidyView(c.doc, c.measureBox, c.chipNatural, c.kept); }
 watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.revealSpot(id), 0); } });
 // 手の窓を選ばずに閉じたら開く前の視点へ (S-147e)。手を決めた時は holdBox が先に場所を使い切る
 watch(panel, (p, was) => { if (!p && was?.kind === "hand") void v.backSpot(); });
-/** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
-const flowNodes = computed(() => [...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
-// Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
-// 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
-watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
-/** ドットの格子 (Vue Flow の送りと倍率に合わせて動く) */
-const grid = computed(() => {
-  const { x, y, zoom: z } = v.flow.viewport.value;
-  return { backgroundImage: "radial-gradient(rgba(214,180,120,0.16) 1.2px, transparent 1.7px)", backgroundSize: `${22 * z}px ${22 * z}px`, backgroundPosition: `${x}px ${y}px` };
-});
 
 function onKey(e: KeyboardEvent): void {
   if (feedbackPage.value) return; // 要望のページの間は木が隠れているだけ (U-05c)。戻す・やり直しなどを効かせない
@@ -345,12 +312,12 @@ function onKey(e: KeyboardEvent): void {
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
   // 何も開いていない時の Esc は何もしない (前はページを閉じてクラフトステージへ出た。2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)。
   // 乗せた時の印 (合流の線の光) は消す (10-27 オーナー「ホバーのカードも一旦出さなくていい」)
-  if (e.key === "Escape" && !e.defaultPrevented) { cardBox.value = null; hoverBox.value = null; }
+  if (e.key === "Escape" && !e.defaultPrevented && cur.value) { cur.value.cardBox.value = null; cur.value.hoverBox.value = null; }
 }
 // ＋の選び・戻り先選び・全画面の Esc は共通の useDismiss の積み (U-21: 一番後に開いた 1 つだけ。箱の重ね窓 panel は上の useDismiss。前はここで自前に順を決め、足りない所の一覧と一緒に 2 つ閉じていた)
-const escOff = (f: () => void) => (): void => { cardBox.value = null; hoverBox.value = null; f(); };
-useDismiss(() => !!plus.value, [], escOff(() => { plus.value = null; }), { escOnly: true });
-useDismiss(() => !!full.value, [], escOff(() => void v.toggleFull()), { escOnly: true });
+const escOff = (f: () => void) => (): void => { if (cur.value) { cur.value.cardBox.value = null; cur.value.hoverBox.value = null; } f(); };
+useDismiss(() => !!cur.value?.plus.value, [], escOff(() => { S().plus.value = null; }), { escOnly: true });
+useDismiss(() => !!full.value, [], escOff(toggleFull), { escOnly: true });
 onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
@@ -369,7 +336,20 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
-const canvasCtx: CanvasCtx = { hand, pageZ, grid, t, lanes, v, sf, doc, panel, plus, backLabel, viewOnly, jt, glowOf, zoom, tr100, issueOf, inv, bd, startDrag, onAim, onPlus, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, startLink, merged, linesAll, shown, goIssue, plusLine, onPaneClick, onNodeClick }; // 描き面へ渡す物 (tree-canvas-ctx)
+/** 描き面へ渡す物 (全部の面で同じ。use-tree-surface の PageCtx) */
+const pageCtx: PageCtx = { keep: KEEP, liveKey, t, hand, panel, drag, jt, tr100, glowOf, issueOf, issueBoxes: () => issues.value?.map((x) => x.boxId) ?? [], stuckAt: () => tr100.result.value?.stuckAt ?? null,
+  startDrag, onAim, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, startLink, goIssue, onPaneClick, onNodeClick, onAddHit,
+  register: (k, api) => { if (api) surfs.set(k, api as Surface); else surfs.delete(k); } };
+/**
+ * タブを替えた・足した・閉じた後の視点。スイッチ tabKeep の中でただ替えただけ (開き直していない) の時は、その面の前の視点のまま (S-09c)。
+ * 初めて出す面は面ができた時に開いた時の寄りへ (use-tree-flow の onPaneReady)
+ */
+let plainSwitch = false;
+watch(() => t.active.value, () => { plainSwitch = true; }, { flush: "sync" });
+watch(t.opened, () => { plainSwitch = false; }, { flush: "sync" });
+function onSwitched(): void { const keepView = KEEP && plainSwitch; plainSwitch = false; if (!keepView && cur.value) void v.openView(); }
+/** 線を全部表示 (帯のボタン): どの面も同じにする */
+const setLines = (on: boolean): void => { for (const c of surfs.values()) c.linesAll.value = on; };
 </script>
 
 <template>
@@ -410,9 +390,9 @@ const canvasCtx: CanvasCtx = { hand, pageZ, grid, t, lanes, v, sf, doc, panel, p
           <TreeRunSum class="shrink-0" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact :class="ONE_ROW ? 'shrink-0' : 'flex-1'" @switched="v.openView()" />
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact :class="ONE_ROW ? 'shrink-0' : 'flex-1'" @switched="onSwitched" />
         <span v-else-if="!ONE_ROW" class="flex-1" />
-        <span ref="clearBtn" class="shrink-0" :class="ONE_ROW ? '' : 'ml-auto'"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
+        <span ref="clearBtn" class="shrink-0" :class="ONE_ROW ? '' : 'ml-auto'"><TreeTopTools :lines-all="cur?.linesAll.value ?? false" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="setLines(!cur?.linesAll.value)" @memo="memoOpen = !memoOpen" @full="toggleFull" @clear="onClear" /></span>
         </div>
       </div>
       </div>
@@ -423,14 +403,15 @@ const canvasCtx: CanvasCtx = { hand, pageZ, grid, t, lanes, v, sf, doc, panel, p
         <!-- 段の札の列も木の枠と同じくページの zoom を打ち消す (送りと倍率は枠の中の座標。打ち消さないと札が zoom 倍に伸び、下の段ほどずれた、11-08 ayqOgcD9 オーナー「段がバグってる」) -->
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-clip rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <!-- 段の札の列は木の面 (点々の地) の左端に重ねる (11-11 オーナー「完成形から左側は全部下も含めてツリーの中に収めてくれこの点線をツリー中として」「段目と未設定だけ外に分けてるでしょ今」。前は枠の外の左の列 = 11-08)。ページの zoom を打ち消すのは木の面と同じ -->
-        <TreeLaneTags v-if="!t.needBase.value" inside :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
         <button v-if="!t.needBase.value && sideClosed" type="button" data-tree-side-toggle aria-expanded="false" :class="[SIDE_BTN, 'absolute right-2 top-2 z-20']" :title="tr('右の列 (完成形・保存・ミニマップ) を出す', 'Show the side column (final item, save, minimap)')" @click="sideClosed = false"><Icon name="chevron-right" class="size-3.5 -scale-x-100" />{{ tr("完成形", "Final item") }}</button>
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
-        <TreeCanvas :c="canvasCtx" /><!-- 描き面 (Vue Flow と箱・線・札・回した層、TreeCanvas.vue。S-09c の区切り 1) -->
+        <!-- 描き面 (Vue Flow と箱・線・札・回した層・段の札、TreeCanvas.vue)。スイッチ tabKeep の中は一度開いたタブごとに 1 枚、隠れた面は止めて残す (S-09c)。v-show は外の枠に (部品に付けると替えるたびに面を描き直す) -->
+        <template v-if="KEEP"><div v-for="k in alive" :key="k" v-show="k === liveKey" class="contents" :data-tree-tab-key="k"><TreeCanvas :tab-key="k" :page="pageCtx" /></div></template>
+        <TreeCanvas v-else :tab-key="0" :page="pageCtx" />
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。手の時だけ (戻り先を選ぶ形は 11-08 夜に無くした、S-52b) -->
         <p v-if="hand" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border border-white/10 bg-[#15110c]/95 px-3 py-1 text-[12px] text-[#d8ccb4] shadow-[0_4px_14px_rgba(0,0,0,0.6)]">
@@ -439,7 +420,7 @@ const canvasCtx: CanvasCtx = { hand, pageZ, grid, t, lanes, v, sf, doc, panel, p
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${popBoxH}px` }">
-            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)" :bands="bd.bandsFor(pop)" @quit="popDo((x) => bd.onQuit(x))"
+            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)" :bands="S().bd.bandsFor(pop)" @quit="popDo((x) => S().bd.onQuit(x))"
               @drag="() => {}" @band="(id) => popDo(() => (panel = { kind: 'hand', id }))" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
               @clear-back="t.edit((d) => clearBack(d, pop!))" @done="popDo((_, b) => onDone(b))" @fail="popDo((_, b) => onFail(b))"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
@@ -458,7 +439,7 @@ const canvasCtx: CanvasCtx = { hand, pageZ, grid, t, lanes, v, sf, doc, panel, p
             <div data-tree-side-recipe data-tree-own class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
               <TreeRecipeBar @opened="v.openView()" />
             </div>
-            <TreeCanvasTools :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+            <TreeCanvasTools v-if="cur" :boxes="cur.rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
           </div>
         </aside>
       </div>

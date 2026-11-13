@@ -6,7 +6,7 @@
  * 畳むのは描く所だけ (並べ方の段と帯・線・箱)。木の中身・回す・精査・保存・「n 段目」の数え (tree-row-tops の depthRows) は触らない。
  * 開いた / 畳んだは覚えない (木を開くたびに畳んだ形、画面が resetStripFolds を呼ぶ)。前の S-28b (全部消えてよい消去の直線) の札の作りをそのまま使う
  */
-import { ref } from "vue";
+import { ref, type Ref } from "vue";
 import { effectOf } from "./tree-hands";
 import type { TreeBox, TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
@@ -18,7 +18,15 @@ export interface StripFold { head: string; mids: string[]; stops: string[]; step
   /** ↩ で戻るだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ foldEnds)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true }
 
 /** 開いた続き (head の id)。保存しない */
-export const stripOpen = ref<ReadonlySet<string>>(new Set());
+const ownOpen = ref<ReadonlySet<string>>(new Set());
+let openNow: Ref<ReadonlySet<string>> = ownOpen;
+/**
+ * 今出ている木の印を指す。スイッチ tabKeep (S-09c) の間は描き面ごとに印を持ち、出ている面の物へ差し替える (useStripOpen)。
+ * 読んだ面の印だけを追うので、隠れた面の畳みの数えはほかのタブの開け閉めで作り直されない
+ */
+export const stripOpen = { get value(): ReadonlySet<string> { return openNow.value; }, set value(s: ReadonlySet<string>) { openNow.value = s; } };
+/** 出ている描き面の印へ差し替える (null = ページに 1 つの印) */
+export const useStripOpen = (r: Ref<ReadonlySet<string>> | null): void => { openNow = r ?? ownOpen; };
 export const resetStripFolds = (): void => { if (stripOpen.value.size) stripOpen.value = new Set(); };
 export function toggleStripFold(head: string): void {
   const s = new Set(stripOpen.value);

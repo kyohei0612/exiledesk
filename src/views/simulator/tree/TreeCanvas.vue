@@ -1,8 +1,10 @@
 <!--
-  TreeCanvas.vue — 木の枠の中の描き面 (Vue Flow と箱・線・打つ手の札・合流の線・回した層・＋の線)。SimTreePage から切り出した (11-14、S-09c の区切り 1)。
-  中身と動きは前と同じ: 使う値と手は置き場 (SimTreePage) が作って c に 1 つにまとめて渡す (区切り 2 でタブごとの描き面にする時、ここに描き面ごとの作りを移す)
+  TreeCanvas.vue — 木の枠の中の描き面 (Vue Flow と箱・線・打つ手の札・合流の線・回した層・＋の線・段の札)。SimTreePage から切り出した (11-14、S-09c)。
+  面ごとの作り (視点・畳み・並べ・段ごとの出し・線・合流・帯・＋) は use-tree-surface.ts、手と窓は置き場 (SimTreePage) の物を page で受け取る。
+  スイッチ tabKeep の中はタブごとに 1 枚 (置き場が v-show で並べる)、外は 1 枚
 -->
 <script setup lang="ts">
+import { ref } from "vue";
 import { VueFlow } from "@vue-flow/core";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeBox from "./TreeBox.vue";
@@ -10,24 +12,29 @@ import TreeStripFold from "./TreeStripFold.vue";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeRunLayer from "./TreeRunLayer.vue";
-import { FLOW_ID } from "./use-tree-flow";
+import TreeLaneTags from "./TreeLaneTags.vue";
 import { LINE } from "./use-tree-edges";
 import { laneBandW } from "./tree-lane-band";
 import { BOX_W, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
-import type { CanvasCtx } from "./tree-canvas-ctx";
+import { useTreeSurface, type PageCtx } from "./use-tree-surface";
 
 type Lane = { text: string };
 type ChipEdge = { chip?: unknown };
-const props = defineProps<{ c: CanvasCtx }>();
-// 置き場の値をそのまま名前で使う (テンプレートは切り出す前と同じ文。ref は上の段なので自動で外れる)
-const { hand, pageZ, grid, t, lanes, v, sf, doc, panel, plus, backLabel, viewOnly, jt, glowOf, zoom, tr100, issueOf, inv, bd, startDrag, onAim, onPlus, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, startLink, merged, linesAll, shown, goIssue, plusLine, onPaneClick, onNodeClick } = props.c;
+const props = defineProps<{ tabKey: number; page: PageCtx }>();
+const root = ref<HTMLElement | null>(null);
+// 置き場の手と窓 (全部の面で同じ物) と、この面の作り (テンプレートは切り出す前と同じ名前で使う。ref は上の段なので自動で外れる)
+const { t, hand, panel, jt, glowOf, tr100, issueOf, startDrag, onAim, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, startLink, goIssue, onPaneClick, onNodeClick } = props.page;
+const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine } = useTreeSurface(props.tabKey, props.page, root);
 </script>
 
 <template>
+  <!-- 面の外枠 (段の札と描き面。置き場の v-show はこの外の枠に掛ける)。段の札の列は木の面 (点々の地) の左端に重ねる (11-11 オーナー、前は置き場) -->
+  <div ref="root" data-tree-surface class="contents">
+  <TreeLaneTags v-if="!t.needBase.value" inside :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
   <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
-    <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
+    <VueFlow :id="flowId" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
       :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
       :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
       :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
@@ -63,5 +70,6 @@ const { hand, pageZ, grid, t, lanes, v, sf, doc, panel, plus, backLabel, viewOnl
         </svg>
       </template>
     </VueFlow>
+  </div>
   </div>
 </template>

@@ -16,7 +16,7 @@ import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, t
 import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { touchedScope } from "./tree-local-scope";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
-import { tr } from "../../../i18n/lang";
+import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -90,7 +90,7 @@ const cloneDoc = (d: TreeDoc): TreeDoc => JSON.parse(JSON.stringify(d)) as TreeD
 /** タブごとの 1 つ戻す・やり直しの控え (替えて戻っても続きから戻せる、10-24 モンキー初めての人の回 9。保存はしない、読み直したら空) */
 const histories: Array<{ u: string[]; r: string[] }> = [];
 /** from = 今の控えをしまうタブ (閉じたタブは null) */
-function setActive(i: number, next: TreeDoc, from: number | null = active.value): void {
+function setActive(i: number, next: TreeDoc, from: number | null = active.value, keep = false): void { // keep = 替えただけ (開いた扱いにしない = 段ごとの出し直し・並べの控えの捨てをしない、S-09c)
   if (from !== null) histories[from] = { u: [...undoStack], r: [...redoStack] }; swapTabRecipe(from, i); // 開いているレシピもタブごと (S-09 ②)
   const h = histories[i] ?? { u: [], r: [] };
   active.value = i;
@@ -98,7 +98,7 @@ function setActive(i: number, next: TreeDoc, from: number | null = active.value)
   redoStack.splice(0, redoStack.length, ...h.r);
   canUndo.value = undoStack.length > 0;
   canRedo.value = redoStack.length > 0;
-  opened.value++;
+  if (!keep) opened.value++;
   doc.value = next;
   save(next);
 }
@@ -106,7 +106,7 @@ const focusRecipeTab = (id: string): boolean => { const i = tabOfRecipe(id, acti
 /** タブを替える (1 つ戻すは替えたタブの分から) */
 function switchTab(i: number): void {
   if (i === active.value || !tabDocs.value[i]) return;
-  setActive(i, cloneDoc(tabDocs.value[i]!));
+  if (flag("tabKeep")) setActive(i, tabDocs.value[i]!, active.value, true); else setActive(i, cloneDoc(tabDocs.value[i]!)); // tabKeep (S-09c): 写さずタブの木そのもの (木は変えるたびに新しい物なので別のタブと混ざらない。面の木と同じ物なので面を描き直さない)
   showTab();
 }
 /** タブを替えた・閉じた後の画面: ベースを選ぶ前の白紙のタブはベース選びから、ほかは完成形の設定を閉じてその木へ (完成形の設定の窓の上のタブから替えた時、10-24 モンキー初めての人の回 8) */

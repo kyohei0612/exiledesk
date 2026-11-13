@@ -8,7 +8,7 @@ import { computed } from "vue";
 import type { Hand } from "../../../services/simulator/tree/tree-model";
 import { handIcon as iconOf, handLabel, handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
-import { useTree } from "./use-tree";
+import { useSurfaceDoc } from "./tree-surface";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { parseRuneKey } from "../../../services/craft-stage/engine";
@@ -35,16 +35,16 @@ const runeOn = computed((): string | null => {
   return parseRuneKey(h.currency) ? handName(h.currency) : null;
 });
 /** 予見の枠の手 (ヒネコラの後) は「打つ」でなく「持つ」(S-39、11-05 オーナー「ヒネコラ後は打つじゃなくて持つになる」) */
-const t = useTree();
-const hold = computed(() => !!props.hand && holdsAt(t.doc.value, props.id));
+const sd = useSurfaceDoc(); // この描き面の木 (S-09c。面の外では今のタブの木)
+const hold = computed(() => !!props.hand && holdsAt(sd.doc.value, props.id));
 const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
 /**
  * 削減の手 (削減のお告げ付き) で ☑ が無い = 当たりの箱が無い時も「狙い無し」(S-23。11-11 オーナー「狙い無しなら削減のカレンシーの枝の途中の枠に狙い無しってかかれるはず」)。
  * 削減の手は狙い無しの印 free を持たない作り (付く MOD を選べない手の表 FREE_EFFECTS の外) なので、前から札に出ていなかった
  */
 const whittleNoAim = computed(() => {
-  const h = props.hand, b = t.doc.value.boxes[props.id];
-  return !!h && !h.free && isWhittleHand(h) && !!b?.outs.length && !b.outs.some((o) => t.doc.value.boxes[o]?.out === "hit");
+  const h = props.hand, b = sd.doc.value.boxes[props.id];
+  return !!h && !h.free && isWhittleHand(h) && !!b?.outs.length && !b.outs.some((o) => sd.doc.value.boxes[o]?.out === "hit");
 });
 </script>
 

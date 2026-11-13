@@ -31,13 +31,13 @@ const noOf = (d: TreeDoc): number => { let n = docNo.get(d); if (n === undefined
  */
 export const placeKept: KeptOrder = new Map();
 
-export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined, open?: { opened: Ref<number>; loading: Ref<boolean> }): void {
+export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined, open?: { opened: Ref<number>; loading: Ref<boolean> }, kept: KeptOrder = placeKept): void { // kept = 並べの控え (スイッチ tabKeep の間は描き面ごと、S-09c)
   const heightOf = boxHeightOf(measure);
   let seenOpen = open?.opened.value;
   watch(doc, setSigShown, { flush: "sync", immediate: true }); // 見本の配置の鍵を 1 回の描きの中で 1 回にするのは、画面に出ている木だけ (スイッチ frameSigOnce、tree-frame)
   watch(() => `${noOf(doc.value)}#` + Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.merged ? 1 : 0}:${b.hand ? 1 : 0}`).join(",") + `|${stripFoldKey(doc.value)}`, () => {
-    if (!open || open.loading.value || open.opened.value !== seenOpen) { seenOpen = open?.opened.value; placeKept.clear(); }
-    if (placeTree(doc.value, heightOf, chipW, placeKept)) triggerRef(doc);
+    if (!open || open.loading.value || open.opened.value !== seenOpen) { seenOpen = open?.opened.value; kept.clear(); }
+    if (placeTree(doc.value, heightOf, chipW, kept)) triggerRef(doc);
   }, { flush: "post", immediate: true });
 }
 /**
@@ -45,10 +45,10 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
  * 完成を押した時と最終チェックを押した時に 1 回ずつ (11-13 オーナー「完成押した瞬間に見やすいツリーへ変えるのはいいね、後整頓タイミングは最中チェック押したらも整頓しよう」)
  */
 /** 手を置く・替える時の並べ (S-142m ②、スイッチ treeTidyEach): 兄弟の順の控えを捨て、完成の時と同じ見やすい並べに (触った箱は holdBox が同じ所に保つ) */
-export const tidyEach = (): void => { if (flag("treeTidyEach")) placeKept.clear(); };
-export function tidyView(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined): void {
+export const tidyEach = (kept: KeptOrder = placeKept): void => { if (flag("treeTidyEach")) kept.clear(); };
+export function tidyView(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined, kept: KeptOrder = placeKept): void {
   if (!flag("treeTidyOnDone")) return;
-  placeKept.clear();
+  kept.clear();
   settleAnnul(doc.value); // 消去の下の「形が変わる見込み」の札はここで消える (S-142l)
-  if (placeTree(doc.value, boxHeightOf(measure), chipW, placeKept)) triggerRef(doc);
+  if (placeTree(doc.value, boxHeightOf(measure), chipW, kept)) triggerRef(doc);
 }

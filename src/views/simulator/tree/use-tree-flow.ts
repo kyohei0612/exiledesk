@@ -25,8 +25,10 @@ import { laneSize } from "./tree-lane-band";
 
 export const FLOW_ID = "sim-tree";
 
-export function useTreeFlow(doc: Ref<TreeDoc>) {
-  const f = useVueFlow(FLOW_ID);
+/** id = Vue Flow の名前 (スイッチ tabKeep の間は描き面ごと)、root = 描き面の外枠 (段の札の帯を探す所。無ければ木の枠、S-09c) */
+export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Element | null) {
+  const f = useVueFlow(id);
+  const inRoot = (sel: string): Element | null => (root?.() ?? document.querySelector("[data-tree-frame]"))?.querySelector(sel) ?? null;
   /** 視点を書く口: 置く・ツリーの座標の点を枠の真ん中へ・今見ている真ん中を軸に大きさだけ */
   const put = (x: number, y: number, zoom: number): Promise<unknown> => f.setViewport({ x, y, zoom });
   const center = (wx: number, wy: number, zoom: number): Promise<unknown> => f.setCenter(wx, wy, { zoom });
@@ -112,13 +114,13 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 木の面の左に重ねた段の札の帯の幅 (画面の px = 木の面の px、TreeLaneTags の inside)。開いた時の寄せはこの分を左に空けて、
    * 左端の箱が「n 段目」の下に入らないように (11-11 オーナー「この点線をツリー中として」で帯を木の面の中へ移した)
    */
-  const laneW = (): number => document.querySelector("[data-tree-frame] [data-tree-lane-band]")?.getBoundingClientRect().width ?? 0;
+  const laneW = (): number => inRoot("[data-tree-lane-band]")?.getBoundingClientRect().width ?? 0;
   /**
    * 倍率 z (Vue Flow の倍率) の時の帯の幅 (S-147k)。帯の幅は札の字の大きさ (laneSize) に比例するので、今描いている幅 × 字の大きさの比。
    * 今描いている字の大きさは札の style から読む (視点を書いた直後は描き直しの前で、帯はまだ前の倍率の幅)
    */
   function laneWAt(z: number): number {
-    const w = laneW(), fs = parseFloat((document.querySelector("[data-tree-frame] [data-tree-lane]") as HTMLElement | null)?.style.fontSize ?? "");
+    const w = laneW(), fs = parseFloat((inRoot("[data-tree-lane]") as HTMLElement | null)?.style.fontSize ?? "");
     return fs > 0 ? w * laneSize(z) / fs : w;
   }
   /**

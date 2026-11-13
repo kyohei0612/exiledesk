@@ -6,6 +6,7 @@
  */
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { flag } from "../../../web/release-flags";
+import { clearTabKeys, dropTabKey, tabKeyAt } from "./tree-tab-keys";
 
 /** 開いたレシピを読み込み終えた時の打ち方の形 (S-03c。tree-save の unsaved・markOpened が読み書きする) */
 export type OpenedAs = { id: string; at: number; v1: string } | null;
@@ -17,6 +18,7 @@ const marks: Array<Mark | undefined> = [];
 
 /** タブを替える時 (use-tree の setActive): from のタブの印をしまい、to のタブの印を出す (新しいタブ・写したタブは無し) */
 export function swapTabRecipe(from: number | null, to: number): void {
+  tabKeyAt(to); // 新しいタブの描き面の番号もここで振る (S-09c)
   if (!flag("tabRecipe")) return;
   if (from !== null) marks[from] = { id: currentTreeRecipeId.value, opened: openedMark.v };
   const m = marks[to];
@@ -25,9 +27,9 @@ export function swapTabRecipe(from: number | null, to: number): void {
   openedMark.v = m?.opened ?? null;
 }
 /** タブを閉じた時 (並びを詰める) */
-export function dropTabRecipe(i: number): void { marks.splice(i, 1); }
+export function dropTabRecipe(i: number): void { marks.splice(i, 1); dropTabKey(i); }
 /** 全部のタブを白紙に戻した時 */
-export function clearTabRecipes(): void { marks.length = 0; }
+export function clearTabRecipes(): void { marks.length = 0; clearTabKeys(); }
 /** このレシピを開いているほかのタブ (無ければ -1)。一覧・帯でそのレシピを押した時に読み込み直さずそのタブへ移る */
 export function tabOfRecipe(id: string, active: number): number {
   if (!flag("tabRecipe")) return -1;
