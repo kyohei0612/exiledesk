@@ -51,28 +51,23 @@ const HIT_SIDE: ReadonlySet<string> = new Set(["hit", "any", "pass", "branch"]);
 const RANK = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk", "blocked"];
 
 /**
- * (S-142j ⑤) 当たりの道 = スタートから完成への道の結果だけをたどった箱を全部。当たりの道に未設定が残る間 (①) は、道の外の枝で手も印も無い物とその下を灰色、
- * 「次へ」の順は左の枝から深く。未設定が無くなれば (②) 灰色なし・順なし (道は左端の幹のために返す)
+ * (S-142j ⑤) 当たりの道 = スタートから完成への道の結果だけをたどった箱を全部。灰色は無し (どの箱も押せる)。
+ * 当たりの道に未設定が残る間 (①) の「次へ」の順は、当たりの道を左の枝から深く → その後に残りを上の段から。道は左端の幹のために返す
  */
 function hitsWalk(d: TreeDoc): IdealPath {
-  const path = new Set<string>(), side: string[] = [], order: string[] = [];
+  const path = new Set<string>(), order: string[] = [];
   const open = (id: string): boolean => { const b = d.boxes[id]; return !!b && !b.hand && !b.back && !b.done && !b.split?.length; };
   const kids = (id: string): string[] => (d.boxes[id]?.outs ?? []).filter((o) => !!d.boxes[o]).map((o, i) => ({ o, i })).sort((a, z) => RANK.indexOf(d.boxes[a.o]!.out) - RANK.indexOf(d.boxes[z.o]!.out) || a.i - z.i).map((x) => x.o);
   const dfs = (id: string): void => {
     if (path.has(id)) return;
     path.add(id);
     if (open(id) && id !== "start") order.push(id);
-    for (const k of kids(id)) if (HIT_SIDE.has(d.boxes[k]!.out)) dfs(k); else side.push(k);
+    for (const k of kids(id)) if (HIT_SIDE.has(d.boxes[k]!.out)) dfs(k);
   };
   dfs("start");
   if (open("start")) order.unshift("start");
-  if (!order.length) return { path, gray: new Set(), order: [] };
-  // 手・完成 / 失敗の印・人の ↩ が 1 つでもある枝は灰色にしない (置いた物が急に触れなくなるのを避ける、S-142i のブラック 95 の決めと同じ)
-  const touched = (k: string): boolean => { const b = d.boxes[k]; return !!b && (!!b.hand || !!b.done || !!b.split?.length || (!!b.back && !b.autoBack) || b.outs.some((o) => !path.has(o) && touched(o))); };
-  const gray = new Set<string>();
-  const down = (k: string): void => { if (gray.has(k) || path.has(k)) return; gray.add(k); for (const o of d.boxes[k]?.outs ?? []) if (d.boxes[o]) down(o); };
-  for (const s of side) if (!path.has(s) && !touched(s)) down(s);
-  return { path, gray, order };
+  // 灰色にはしない (S-142k の「組んでいる間は自由に手を置ける」のまま。11-14 ブラック 105 の直し)。組む順は「次へ」の案内の順だけ
+  return { path, gray: new Set(), order };
 }
 
 function walk(d: TreeDoc): IdealPath | null {
