@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.730",
+  "date": "2026-11-13",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 提出する時にひとこと (40 字まで) を書けるようにし、順位の名前の下に出すようにしました。提出の後も、その日のうちは順位の下から書く・直す・消すができます",
+    "en": "Daily: You can add a short note (up to 40 characters) when you submit, shown under your name in the ranking. You can add, edit, or remove it later that day from below the ranking"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "要望への返事: 返事の文の中の URL を押すと、そのページが新しいタブで開くようにしました",
+    "en": "Replies to feedback: URLs in a reply are now links that open the page in a new tab"
+   }
+  ]
+ },
+ {
   "v": "0.1.729",
   "date": "2026-11-13",
   "items": [
@@ -922,18 +940,6 @@
     "area": "",
     "text": "シミュレーター: フラクチャーの手の窓の説明を直しました (固定される MOD はゲームと同じ乱数で 1 つ、オーブは 1 回 1 個)",
     "en": "Simulator: corrected the Fracturing Orb step's description (one fracturable mod is picked at random as in the game, 1 orb per use)"
-   }
-  ]
- },
- {
-  "v": "0.1.690",
-  "date": "2026-11-09",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "記事を整理しました (重なる記事をまとめ、古い記事を消しました)",
-    "en": "Tidied up the blog (merged overlapping articles and removed outdated ones)"
    }
   ]
  }
