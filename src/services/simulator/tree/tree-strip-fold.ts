@@ -15,7 +15,7 @@ import { flag } from "../../../web/release-flags";
 export const FOLD_H = 64;
 /** 畳んだ続き: head = 札に描く箱 (根の最初の自動の消去の箱)、mids = 自動の消去の箱全部 (head 込み)、stops = 札の下に並べる止まった箱、steps = 消去の段の数 (根を含む) */
 export interface StripFold { head: string; mids: string[]; stops: string[]; steps: number; /** 札の中の箱へまとめた箱 (S-66)。止まった箱に数えず、スイッチ treeFoldMerged の下は畳んでいる間描かない */ tucked: string[];
-  /** ↩ で戻るだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ foldEnds)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true }
+  /** 行き先を指すだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ hitsSide)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true }
 
 /** 開いた続き (head の id)。保存しない */
 const ownOpen = ref<ReadonlySet<string>>(new Set());
@@ -72,21 +72,21 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
     const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };
     out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => !tuck(id)), steps, tucked: stops.filter(tuck) });
   }
-  if (flag("foldEnds")) for (const b of Object.values(d.boxes)) {
+  // (S-142j ②、スイッチ hitsSide。前のスイッチ foldEnds は 11-14 にここへまとめた) 行き先を指すだけの箱は 1 つでも 1 行の札に畳む
+  // (11-14 オーナー「2段以上ならまとめたるか」「もはや1段も同じ枠あるから非表示でいいだろうし」)
+  if (flag("hitsSide")) for (const b of Object.values(d.boxes)) {
     const ends = b.outs.filter((o) => backOnly(d.boxes[o]));
-    // (スイッチ hitsSide) その手の子に未設定 (手も行き先も無い・完成でない) が 1 つでもあれば畳まない (11-14 オーナー「そもそも未設定あるならたたまないけど」)
-    if (flag("hitsSide") && b.outs.some((o) => unset(d.boxes[o]))) continue;
-    // (スイッチ hitsSide) 1 つだけでも畳む (11-14 オーナー「もはや1段も同じ枠あるから非表示でいいだろうし」)
-    if (ends.length >= (flag("hitsSide") ? 1 : 2) && !ends.some((id) => out.has(id))) out.set(ends[0]!, { head: ends[0]!, mids: ends, stops: [], steps: 0, tucked: [], ends: true });
+    // その手の子に未設定 (手も行き先も無い・完成でない) が 1 つでもあれば畳まない (11-14 オーナー「そもそも未設定あるならたたまないけど」)
+    if (b.outs.some((o) => unset(d.boxes[o]))) continue;
+    if (ends.length && !ends.some((id) => out.has(id))) out.set(ends[0]!, { head: ends[0]!, mids: ends, stops: [], steps: 0, tucked: [], ends: true });
   }
   return out;
 }
 /**
- * (S-142j ②、スイッチ foldEnds) まとめる箱 = 外れ側 (外れ・外れが消えた・狙いが消えた) で、行き先が自動の ↩ だけの箱 (完成でない・手も下も無い)。
- * スイッチ hitsSide の間は、行き先を指すだけで下に何も無い箱なら当たり (→ 同じ中身の箱の続きへ)・同じ枠へ・人の ↩ も畳む (11-14 オーナー「これもたたむし」)。
- * 1 つの手の結果にこれが 2 つ以上あれば箱を描かず 1 行にまとめる (11-14 オーナー「2段以上ならまとめたるか」)。当たりはまとめない
+ * (S-142j ②、スイッチ hitsSide) 畳む箱 = 行き先を指すだけで下に何も無い箱 (当たりの → 同じ中身の箱の続きへ・同じ枠へ・↩、完成でない・手も下も無い)。
+ * 自分の下に続きを持つ当たりは畳まない (11-14 オーナー「これもたたむし」)
  */
-const backOnly = (c: TreeBox | undefined): boolean => !!c && (flag("hitsSide") ? !!c.back : (c.out === "junk" || c.out === "junkGone" || c.out === "lost") && !!c.autoBack && !c.merged) && !!c.back && !c.done && !c.hand && !c.outs.length && c.out !== "pass";
+const backOnly = (c: TreeBox | undefined): boolean => !!c && !!c.back && !c.done && !c.hand && !c.outs.length && c.out !== "pass";
 /** 未設定の子 (手も行き先も無い・完成でない・通り抜けでない) */
 const unset = (c: TreeBox | undefined): boolean => !!c && !c.hand && !c.back && !c.done && c.out !== "pass" && !c.outs.length;
 /** 今畳んでいる続き (開いた物を除く) */
