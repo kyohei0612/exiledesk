@@ -6,7 +6,7 @@
 | 誰 | session id | 今 |
 |---|---|---|
 | ブラック | local_68875f97-bac9-4d16-9f34-b84176067a18 (103 代目、Opus 5.5、11-13 23 時台に入れ替え。102 = local_d99d58d6 が 2,38x 件で交代) | 司令塔・振り分け・順番 |
-| デイリー部長 | local_c0a24882-a1fb-42bb-a1e2-a09493a8cdfd (18 daily-lead18、Opus 5.5、11-13 19 時台にブラック 101 が控えに立て、17 = local_4530bf9e が 2,4xx 件で交代。頼み = 共有ノート progress/daily-lead18-brief.md、引き継ぎ = progress/daily-lead17-handover.md、板 = progress/daily-lead18.md) | 今: 提出のひとことを後から足す・直す・消す (オーナー 11-13「後から追加もできるように」「編集も」、dailyNote は開発版だけ)・毎日の見張り (15:13 roll / 16:33 close) の予定の立て直し・① はジンの口待ち |
+| デイリー部長 | local_8012d45a-f27c-41b3-a753-51f83ccc2ea9 (19 daily-lead19、Opus 5.5、11-13 23 時台にブラック 102 が控えに立て、18 = local_c0a24882 が 2,1xx 件で交代。引き継ぎ = 共有ノート progress/daily-lead18-handover.md、板 = progress/daily-lead19.md) | 今: 毎日の見張り (15:13 roll / 16:33 close、11-14 から、11-20 に立て直し)・名前の受け口を幅だけ ab9ad906f は次のサーバーの出し・① はジンの口待ち |
 | 最終チェック長 | local_f23780b9-0f7a-4e5c-83c5-ccf3d4350a3e (15 release-next15、Opus 5.5、11-13 21 時台にブラック 101 が立てた) | 待機 (0.1.731 は 22:51、強制更新は無し = force.txt 7 0.1.730 + 返事 b20dd690 のまま) |
 | サーバー係 | local_f6d61d7a-84b0-4083-a562-8a70d8ee1a19 (4 代目 server-keeper4、Opus 5.5、11-13 21 時台にブラック 101 が控えに立て、3 代目 local_723fe780 が 2,39x 件で交代。頼み = 共有ノート progress/server-keeper4-brief.md) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
 | 解析君 | — (4 本目 local_0432afe5 は 10-22 夜にアーカイブ、仕事が来たらブラックが立てる) | 待機 |
