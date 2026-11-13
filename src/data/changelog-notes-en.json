@@ -1,4 +1,8 @@
 {
+  "0.1.734": [
+    "Each simulator tree tab can now hold its own recipe. Picking a recipe that is open in another tab switches to that tab",
+    "Switching simulator tree tabs no longer redraws the tree; it keeps its layout and position (large trees feel lighter too)"
+  ],
   "0.1.733": [
     "You can now open the simulator's target item in the emulator with \"Try in the emulator →\"",
     "In the simulator, annulment chains now stop when one removable mod is left, not counting fractured mods, so you can follow up with Chaos",
