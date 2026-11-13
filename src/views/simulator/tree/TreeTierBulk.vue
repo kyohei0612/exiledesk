@@ -143,7 +143,18 @@ function apply(): void {
           </template>
         </div>
       </div>
-      <p class="mt-2 text-[12px] leading-snug text-white/55">{{ frac ? tr("フラクチャーの候補 (✦) もここで段を選べる。ここで決めた段が、全部付けたい MOD の下限になる (ツリーのティア調整では ✦ は変えない)。", "Fracture candidates (✦) can be set here too; the tier you pick is their minimum (the tree's tier window keeps ✦ as is). ") : "" }}{{ dualOn ? tr("✦ の MOD は 2 行: 「フラクチャー時」= 固定される段 (固定の前に増強・変成・カオススパムで狙う段)、「フラクチャーしない時」= 固定されずに残った時に要る段。", "✦ mods have two rows: \"If fractured\" = the tier to fix (aimed before fracturing), \"If not fractured\" = the tier needed if it stays unfixed. ") : "" }}{{ tr("選べるのは今の段と、それより下だけ。% は 100 人回した後に、その行だけ下げた時の完成率を出す。決めると木の当たりの箱の段も下がる。今のオーブでその段が出ない手は、決めた後に替えるかを聞く (1 つ戻すで戻せる)", "Only the current tier or lower can be chosen. After running 100, each row shows the completion rate if only that row is lowered. Applying also lowers the hit boxes in the tree. If an orb can't roll the new tier you'll be asked whether to switch it (Undo restores it)") }}</p>
+      <!-- 説明は初め閉じた「詳細ルール」の箇条書き (11-13 オーナー「ティア調整表の↓閉じてておけ、長ったらしい説明詳細ルールみたいなタイトルでいいから」) -->
+      <details data-tree-tier-rules class="mt-2 text-[12px] leading-snug text-white/55">
+        <summary class="cursor-pointer select-none text-white/70">{{ tr("詳細ルール", "Rules") }}</summary>
+        <ul class="mt-1 list-disc space-y-0.5 pl-5">
+          <li>{{ tr("選べるのは今の段と、それより下だけ", "Only the current tier or lower") }}</li>
+          <li>{{ tr("% = 100 人回した後、その行だけ下げた時の完成率", "% = completion rate if only that row is lowered (after running 100)") }}</li>
+          <li>{{ tr("決めると木の当たりの箱の段も下がる (1 つ戻すで戻せる)", "Applying also lowers the hit boxes in the tree (Undo restores)") }}</li>
+          <li>{{ tr("今のオーブでその段が出ない手は、決めた後に替えるかを聞く", "If an orb can't roll the new tier, you'll be asked whether to switch it") }}</li>
+          <li v-if="frac">{{ tr("フラクチャーの候補 (✦) もここで選べる。決めた段が付けたい MOD の下限 (ツリーのティア調整では ✦ は変えない)", "Fracture candidates (✦) can be set here; the tier is their minimum (the tree's window keeps ✦)") }}</li>
+          <li v-if="dualOn">{{ tr("✦ の MOD は 2 行: フラクチャー時 = 固定される段 (固定の前に狙う段)・フラクチャーしない時 = 固定されずに残った時に要る段", "✦ mods have two rows: if fractured = tier to fix (aimed before fracturing); if not fractured = tier needed if it stays unfixed") }}</li>
+        </ul>
+      </details>
       <div class="mt-2 flex justify-end gap-2">
         <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-tier-apply class="g-btn sm" :disabled="!changed" @click="apply">{{ changed ? tr(`${changed} つ下げる`, `Lower ${changed}`) : tr("下げる物なし", "Nothing to lower") }}</button>
