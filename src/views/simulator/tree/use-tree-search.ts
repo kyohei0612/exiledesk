@@ -37,16 +37,18 @@ export function useTreeSearch() {
   }
   /** 探せるか (4 MOD・フラクチャー済みは ✦ が要る) */
   const can = (k: TreeSearchKind): boolean => k === "white" || !!fracStats(k === "four" ? "explicit" : "fractured");
-  async function search(k: TreeSearchKind): Promise<void> {
+  /** skill = 付与スキル (英語の名前、U-12f・スイッチ tradeSkill。null = どれでも) */
+  async function search(k: TreeSearchKind, skill: string | null = null): Promise<void> {
     const base = t.doc.value.base;
-    if (k === "white") return openTradeQuery(buildSpecQuery({ baseType: base, rarity: "normal", ilvlMin: ilvlMin.value, stats: [], noSanctified: true }));
+    const gs = skill ? { grantedSkill: skill } : {};
+    if (k === "white") return openTradeQuery(buildSpecQuery({ ...gs, baseType: base, rarity: "normal", ilvlMin: ilvlMin.value, stats: [], noSanctified: true }));
     const per = fracStats(k === "four" ? "explicit" : "fractured");
     if (!per) return;
     // 4 MOD: ✦ の MOD を全部持つ (どれかを固定する)
-    if (k === "four") return openTradeQuery(buildSpecQuery({ baseType: base, rarity: "nonunique", ilvlMin: ilvlMin.value, stats: [...per.flat(), { id: AFFIX_COUNT, max: 4 }], anyOf: [], fracturedItem: false, noSanctified: true }));
+    if (k === "four") return openTradeQuery(buildSpecQuery({ ...gs, baseType: base, rarity: "nonunique", ilvlMin: ilvlMin.value, stats: [...per.flat(), { id: AFFIX_COUNT, max: 4 }], anyOf: [], fracturedItem: false, noSanctified: true }));
     // フラクチャー済み: ✦ 1 つならその MOD (値が 2 つの MOD は両方) が固定、2 つ以上なら固定されるのは 1 つなので、どれか 1 つ
     const one = per.length === 1;
-    return openTradeQuery(buildSpecQuery({ baseType: base, rarity: "nonunique", ilvlMin: ilvlMin.value, stats: one ? per[0]! : [], anyOf: one ? [] : [{ filters: per.flat(), count: 1 }], fracturedItem: true, noSanctified: true }));
+    return openTradeQuery(buildSpecQuery({ ...gs, baseType: base, rarity: "nonunique", ilvlMin: ilvlMin.value, stats: one ? per[0]! : [], anyOf: one ? [] : [{ filters: per.flat(), count: 1 }], fracturedItem: true, noSanctified: true }));
   }
   return { can, search };
 }

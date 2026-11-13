@@ -6,7 +6,9 @@
   10-22 オーナー「どの始め方が安いかは結果のまとめで」: 一番上にこのタブの始め方のベースの値段 (取引所で探す・手で入れる) と、回したタブどうしの比べ
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import GrantedSkillPick from "../../../components/for-share/trade/GrantedSkillPick.vue";
+import { flag } from "../../../web/release-flags";
 import NumStep from "../../../components/NumStep.vue";
 import DataNote from "../../../components/ui/DataNote.vue"; import { ODDS_NOTE } from "./use-tree-run";
 import { startOf, startRarity, startsFractured } from "../../../services/simulator/tree/tree-model";
@@ -45,6 +47,9 @@ const whyOf = (id: string): string => props.result.stuckWhy[id]?.reason ?? "";
 const shortOf = (id: string): string => props.result.stuckWhy[id]?.short ?? whyOf(id);
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
+/** 取引所の検索の付与スキル (U-12f、スイッチ tradeSkill。付与スキルの付くベースの時だけ選びが出る) */
+const TRADE_SKILL = flag("tradeSkill");
+const skill = ref<string | null>(null);
 simOp("report-open");
 const searchKind = computed((): TreeSearchKind | null => (startsFractured(t.doc.value) ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
 const priceIn = computed(() => startOf(t.doc.value).price ?? null);
@@ -91,9 +96,10 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
       <!-- この始め方のベースの値段 (取引所の値段を手で入れる。入れると回し直さずに 1 個の神へ足し直す = use-tree-run の withStartCost、10-25 オーナー) -->
       <div data-tree-run-report-start class="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5">
         <h4 class="mb-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-[12px] text-[#a99d86]">{{ tr(`ベースの値段 · ${startName(t.doc.value)}`, `Base price · ${startName(t.doc.value)}`) }}</h4>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <NumStep data-tree-run-report-price :model-value="priceIn" width="w-24" placeholder-text="—" @update:model-value="t.setStartPrice" /><span>{{ tr("神", "div") }}</span>
-          <button type="button" data-tree-run-report-search class="g-btn sm ml-auto" :disabled="!searchKind || !ts.can(searchKind)" :title="searchKind ? tr('取引所で探す (開くだけ。値段は手で入れる)', 'Search the trade site (opens it; type the price yourself)') : tr('ノーマル・フラクチャー済みの始め方で探せる', 'Available for normal and fractured starts')" @click="searchKind && ts.search(searchKind)">{{ tr("取引所で探す", "Search trade") }}</button>
+          <GrantedSkillPick v-if="TRADE_SKILL" v-model="skill" :base="t.doc.value.base" />
+          <button type="button" data-tree-run-report-search class="g-btn sm ml-auto" :disabled="!searchKind || !ts.can(searchKind)" :title="searchKind ? tr('取引所で探す (開くだけ。値段は手で入れる)', 'Search the trade site (opens it; type the price yourself)') : tr('ノーマル・フラクチャー済みの始め方で探せる', 'Available for normal and fractured starts')" @click="searchKind && ts.search(searchKind, TRADE_SKILL ? skill : null)">{{ tr("取引所で探す", "Search trade") }}</button>
         </div>
       </div>
       <!-- 費用の幅 (完成した人) -->
