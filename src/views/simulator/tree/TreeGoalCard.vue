@@ -26,6 +26,8 @@ import TreeTierBulk from "./TreeTierBulk.vue";
 import TreeOrbAsk from "./TreeOrbAsk.vue";
 /** MOD の札の左の「ティア調整」で狙いを全部並べて段の下限を選ぶ (S-10f、スイッチ tierDown) */
 const TIER_DOWN = flag("tierDown");
+/** 狙いのある間は MOD の札を出さずティア調整 1 つ (スイッチ goalTierOnly) */
+const GOAL_TIER_ONLY = flag("goalTierOnly");
 const tierOpen = ref(false);
 /** 段を下げた MOD (オーブをどうしますかの注意書きの対象、× で閉じる) */
 const orbAsk = ref<string[]>([]);
@@ -71,7 +73,7 @@ function place(): void {
   // (行の右を空けると文が v-fit-text で縮んで読めない)。区切り線は縮めたカードの中なので px は ZOOM で割り戻す
   if (spaced && spaced !== sep) spaced.style.marginTop = spaced.style.marginBottom = "";
   spaced = sep as HTMLElement | null;
-  const bh = modBtn.value?.offsetHeight ?? 0;
+  const bh = modBtn.value?.offsetHeight ?? 0; // 札の並び (ティア調整・MOD) の高さ
   if (spaced && bh) spaced.style.marginTop = spaced.style.marginBottom = `${Math.ceil(((bh + 4) / ZOOM - 8) / 2)}px`;
   modTop.value = mid(sep);
 }
@@ -100,9 +102,10 @@ onBeforeUnmount(() => ro?.disconnect());
       <div :style="{ zoom: ZOOM }"><StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
       <!-- ベースは名前の帯のすぐ下の種類の行の右、MOD は MOD の上の区切り線の右 (上下を札の高さだけ空ける、11-05) (10-25 オーナー「ベースのとこにベースボタン、その下に MOD ボタン」)。文字に重ならない小さな札 -->
       <button v-if="baseTop != null" type="button" data-tree-goal-open="base" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${baseTop ?? 0}px` }" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level') + ` (${rarity})`" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
-      <div v-if="modTop != null" class="absolute right-2 z-10 flex -translate-y-1/2 gap-1" :style="{ top: `${modTop}px` }">
+      <div v-if="modTop != null" ref="modBtn" class="absolute right-2 z-10 flex -translate-y-1/2 gap-1" :style="{ top: `${modTop}px` }">
         <button v-if="TIER_DOWN && n" type="button" data-tree-goal-tier :class="PILL" :title="tr('狙うMODの一括ティア調整 (段の下限を下げる)', 'Adjust target mod tiers (lower the minimum tier)')" @click="tierOpen = true">{{ tr("ティア調整", "Tiers") }}</button>
-        <button ref="modBtn" type="button" data-tree-goal-open="mods" :class="PILL" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
+        <!-- 狙いのある間は MOD を出さずティア調整 1 つ (スイッチ goalTierOnly、11-13 オーナー「ここのMODってボタンをティア調整にかえてほしいっていみだった」。選び直しは上の段の「2 完成の MOD」) -->
+        <button v-if="!(GOAL_TIER_ONLY && TIER_DOWN && n)" type="button" data-tree-goal-open="mods" :class="PILL" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
       </div>
       <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」) -->
       <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
