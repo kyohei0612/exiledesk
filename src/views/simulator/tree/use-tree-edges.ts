@@ -70,7 +70,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 行き先の右と左の辺の外 (16) へ横から着き、辺の真ん中へ入る。前はここで行き先の右 +48 の列を箱を見ずに下り、間の箱を貫通した (11-14 レビュワー、b99→b41 が b38)
     const s = { x: px, y: drop - 27 }, outs = [{ e: { x: tq.x + BOX_W + 16, y: ty }, edge: tq.x + BOX_W }, { e: { x: tq.x - 16, y: ty }, edge: tq.x }];
     const len = (ps: readonly { x: number; y: number }[]): number => ps.reduce((n, p, i) => n + (i ? Math.abs(p.x - ps[i - 1]!.x) + Math.abs(p.y - ps[i - 1]!.y) : 0), 0);
-    const grid = outs.map(({ e, edge }) => { const g = gridRoute(s, e, avoid.value, x0, x1 + 48); return g ? [{ x: px, y: jy }, ...g, { x: edge, y: ty }] : null; })
+    const grid = outs.map(({ e, edge }) => { const g = gridRoute(s, e, avoid.value, x0, x1 + 48, { tops: false }); return g ? [{ x: px, y: jy }, ...g, { x: edge, y: ty }] : null; })
       .filter((g): g is { x: number; y: number }[] => !!g).sort((a, z) => len(a) - len(z))[0];
     if (grid) return roundPath(grid);
     // 外回りも箱を見る: 行き先の右 +48 の列が箱を通るなら、木の右端の外の列へ逃がす (畳んだ緑は札が無いので線を消さない。11-14 レビュワー)

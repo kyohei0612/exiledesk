@@ -34,10 +34,11 @@ function nearHeap(): { push: (d: number, no: number, k: number) => void; pop: ()
 }
 
 /** s (出元の箱の下の真ん中) → e (行き先の箱の上 24) の折れ線 (始めと終わりを含む、終わりへは横から)。boxes = 避ける箱 (出元・行き先も入れて渡す)。道が無ければ null */
-export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: number): P[] | null {
+/** opt.tops = false: 箱の上 −24 の高さを通らない (木の枝分かれの灰色の横線とほぼ同じ高さ = 畳んだ緑が灰色の上を走って 1 本に見えた、11-14 レビュワー) */
+export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: number, opt: { tops?: boolean } = {}): P[] | null {
   const right = (b: P): number => b.x + (b.w ?? BOX_W), bottom = (b: P): number => b.y + (b.h ?? BOX_H);
   const xs = new Set<number>([s.x, e.x]), ys = new Set<number>([s.y, s.y + 27, e.y]);
-  for (const b of boxes) { xs.add(b.x - GAP - 6); xs.add(right(b) + GAP + 6); ys.add(bottom(b) + 27); ys.add(b.y - 24); }
+  for (const b of boxes) { xs.add(b.x - GAP - 6); xs.add(right(b) + GAP + 6); ys.add(bottom(b) + 27); if (opt.tops !== false) ys.add(b.y - 24); }
   const X = [...xs].filter((x) => x >= x0 && x <= x1).sort((a, z) => a - z), Y = [...ys].sort((a, z) => a - z);
   // その列・段にかかる箱だけを見る (同じ列・段を箱の数だけ何度も見ていた、S-71b ⑫)
   const inCol = new Map<number, P[]>(), inRow = new Map<number, P[]>();
