@@ -9,22 +9,70 @@
 import type { TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
-export interface IdealPath { /** 組んでいる道の箱 (スタートから一番下の手の箱まで。道の先の結果の箱は含まない) */ path: ReadonlySet<string>; /** 灰色の箱 */ gray: ReadonlySet<string> }
+export interface IdealPath {
+  /** 組んでいる道の箱 (スタートから一番下の手の箱まで。道の先の結果の箱は含まない。buildHitsFirst の間は当たりの道の箱を全部) */ path: ReadonlySet<string>;
+  /** 灰色の箱 */ gray: ReadonlySet<string>;
+  /** (buildHitsFirst) 当たりの道の未設定の箱を左の枝から深くの順 (「次へ」の順、S-142j ⑤ ①)。② の後は空 */ order?: readonly string[];
+}
 
 const memo = new WeakMap<TreeDoc, { key: string; v: IdealPath | null }>();
 
 /** 灰色が効くか。スイッチ treeTidyOnDone の間はやめ (S-142k、11-13 オーナー: 灰色はやめて自由に組ませ、完成・最終チェックを押した時に並べ直す) */
 export const idealOn = (): boolean => flag("treeIdealFirst") && !flag("treeTidyOnDone");
+/** 組む順 2 段 (S-142j ⑤、スイッチ buildHitsFirst、開発版だけ・実験)。treeTidyOnDone と一緒に効く */
+export const hitsOn = (): boolean => flag("buildHitsFirst");
 /** 組んでいる道と灰色の箱 (灰色が効かない・灰色にしない木は null) */
 export function idealPath(d: TreeDoc): IdealPath | null {
-  if (!idealOn() || !d.boxes.start) return null;
+  if ((!idealOn() && !hitsOn()) || !d.boxes.start) return null;
   // 木の形と手の付き方だけで決まるので、それを鍵にして同じ木では 1 回だけ数える (箱ごとに呼ばれる)
-  const key = Object.values(d.boxes).map((b) => `${b.id}:${b.outs.join(",")}:${b.hand ? 1 : 0}${b.split?.length ? 1 : 0}${b.done ?? ""}${b.doneNow ? "n" : ""}`).join("|");
+  const key = Object.values(d.boxes).map((b) => `${b.id}:${b.outs.join(",")}:${b.hand ? 1 : 0}${b.split?.length ? 1 : 0}${b.back ? "b" : ""}${b.done ?? ""}${b.doneNow ? "n" : ""}`).join("|");
   const m = memo.get(d);
   if (m?.key === key) return m.v;
-  const v = walk(d);
+  const v = hitsOn() ? hitsWalk(d) : walk(d);
   memo.set(d, { key, v });
   return v;
+}
+/** 箱の「次へ」の順 (buildHitsFirst の ① の間の当たりの道の未設定だけ。ほかは null = 今どおり上の段から) */
+export function idealRank(d: TreeDoc, id: string): number | null {
+  const o = idealPath(d)?.order;
+  if (!o?.length) return null;
+  const i = o.indexOf(id);
+  return i < 0 ? null : i;
+}
+
+/** 「次へ」の並べ: ① の当たりの道の未設定を先に左の枝から深く、ほかは上の段から・同じ段は左から (S-89b のまま) */
+export function nextCmp(d: TreeDoc): (a: string, z: string) => number {
+  const r = (id: string): number => idealRank(d, id) ?? Infinity;
+  return (a, z) => r(a) - r(z) || d.boxes[a]!.y - d.boxes[z]!.y || d.boxes[a]!.x - d.boxes[z]!.x;
+}
+
+/** 完成への道の結果 (S-50g と同じ当たり・打った後に、通り抜け・分かれ目) */
+const HIT_SIDE: ReadonlySet<string> = new Set(["hit", "any", "pass", "branch"]);
+const RANK = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk", "blocked"];
+
+/**
+ * (S-142j ⑤) 当たりの道 = スタートから完成への道の結果だけをたどった箱を全部。当たりの道に未設定が残る間 (①) は、道の外の枝で手も印も無い物とその下を灰色、
+ * 「次へ」の順は左の枝から深く。未設定が無くなれば (②) 灰色なし・順なし (道は左端の幹のために返す)
+ */
+function hitsWalk(d: TreeDoc): IdealPath {
+  const path = new Set<string>(), side: string[] = [], order: string[] = [];
+  const open = (id: string): boolean => { const b = d.boxes[id]; return !!b && !b.hand && !b.back && !b.done && !b.split?.length; };
+  const kids = (id: string): string[] => (d.boxes[id]?.outs ?? []).filter((o) => !!d.boxes[o]).map((o, i) => ({ o, i })).sort((a, z) => RANK.indexOf(d.boxes[a.o]!.out) - RANK.indexOf(d.boxes[z.o]!.out) || a.i - z.i).map((x) => x.o);
+  const dfs = (id: string): void => {
+    if (path.has(id)) return;
+    path.add(id);
+    if (open(id) && id !== "start") order.push(id);
+    for (const k of kids(id)) if (HIT_SIDE.has(d.boxes[k]!.out)) dfs(k); else side.push(k);
+  };
+  dfs("start");
+  if (open("start")) order.unshift("start");
+  if (!order.length) return { path, gray: new Set(), order: [] };
+  // 手・完成 / 失敗の印・人の ↩ が 1 つでもある枝は灰色にしない (置いた物が急に触れなくなるのを避ける、S-142i のブラック 95 の決めと同じ)
+  const touched = (k: string): boolean => { const b = d.boxes[k]; return !!b && (!!b.hand || !!b.done || !!b.split?.length || (!!b.back && !b.autoBack) || b.outs.some((o) => !path.has(o) && touched(o))); };
+  const gray = new Set<string>();
+  const down = (k: string): void => { if (gray.has(k) || path.has(k)) return; gray.add(k); for (const o of d.boxes[k]?.outs ?? []) if (d.boxes[o]) down(o); };
+  for (const s of side) if (!path.has(s) && !touched(s)) down(s);
+  return { path, gray, order };
 }
 
 function walk(d: TreeDoc): IdealPath | null {

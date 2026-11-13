@@ -9,6 +9,7 @@ import { tr } from "../../../i18n/lang";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { holesCount } from "./hole-check";
+import { nextCmp } from "../../../services/simulator/tree/tree-ideal-first";
 
 /** n = 未設定の数 (困り事の出た箱の数、箱の無い木の不具合も 1 つ。上の札・一覧の見出しと同じ数、11-08) */
 const props = defineProps<{ issues: readonly CheckIssue[] | null; n: number; doc: TreeDoc }>();
@@ -17,7 +18,7 @@ const emit = defineEmits<{ go: [id: string] }>();
 const ids = computed(() => {
   const d = props.doc;
   const set = [...new Set((props.issues ?? []).filter((x) => d.boxes[x.boxId]).map((x) => x.boxId))];
-  return set.sort((a, z) => d.boxes[a]!.y - d.boxes[z]!.y || d.boxes[a]!.x - d.boxes[z]!.x);
+  return set.sort(nextCmp(d)); // buildHitsFirst の ① は当たりの道を左の枝から深く (S-142j ⑤)、ほかは上の段から
 });
 const at = ref(-1);
 function next(): void {
