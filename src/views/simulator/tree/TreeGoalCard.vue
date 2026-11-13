@@ -19,6 +19,9 @@ import { flag } from "../../../web/release-flags";
 /** 付与スキルの選び (U-12f、スイッチ tradeSkill。付与スキルの付くベースの時だけ出る。選んだスキルは結果の窓の「取引所で探す」に効く) */
 const TRADE_SKILL = flag("tradeSkill");
 const ts = useTreeSearch();
+import { openEmuWithGoals } from "../../../state/for-share/sim-links";
+/** 完成形をエミュで試す (S-211、スイッチ simToEmu。完成形のカードの品をそのままエミュに載せる) */
+const SIM_TO_EMU = flag("simToEmu");
 
 const t = useTree();
 const shown = useGoalShown();
@@ -95,5 +98,9 @@ onBeforeUnmount(() => ro?.disconnect());
       <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
       <!-- カードの枠に乗らない狙い (TreeGoalPage と同じ。どれかが付けば当たり) -->
     </div>
+    <!-- 完成形をエミュで試す (S-211、畳んだ時も出す) -->
+    <button v-if="SIM_TO_EMU && n" type="button" data-tree-goal-emu class="g-btn sm mt-1.5 w-full"
+      :title="tr('完成形の品をそのままエミュに載せる (枠を超える時は同じベースの白で開く)', 'Open the final item as-is in the emulator (a fresh base if it exceeds the affix limits)')"
+      @click="void openEmuWithGoals(t.doc.value.base, t.doc.value.itemLevel, t.goals.value)">{{ tr("エミュで試す →", "Try in the emulator →") }}</button>
   </div>
 </template>
