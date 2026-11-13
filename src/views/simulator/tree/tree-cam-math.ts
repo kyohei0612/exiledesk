@@ -57,6 +57,23 @@ export const levelsWith = (whole: number | null): readonly number[] =>
 /** 大きさを to に変える。ツリーの座標の点 w が、変えた後も同じ画面の点に来るように */
 export const zoomAt = (vp: Vp, w: { x: number; y: number }, to: number): Vp => ({ x: w.x * vp.zoom + vp.x - w.x * to, y: w.y * vp.zoom + vp.y - w.y * to, zoom: to });
 
+/** 段の札の帯から離す間 (S-147k) */
+export const LANE_GAP = 8;
+/**
+ * 大きさを変えた後の視点 vp で、木の面の左の段の札の帯 (幅 lw) にかぶる箱があれば、横だけ動きの小さい方へ送った x (S-147k、スイッチ treeZoomLane)。
+ * 帯の右へ出す (箱の左の端 = 帯の右 + LANE_GAP) か、枠の左の外へ逃がす (箱の右の端 = 0) の 2 つから、送った後にかぶる箱が無い方の小さい動き。
+ * どちらでもかぶる時は動きの小さい方。boxes = 描いている箱 (ツリーの座標と高さ)、h = 枠の高さ (縦に枠の外の箱は見ない)
+ */
+export function laneClear(boxes: readonly { x: number; y: number; h: number }[], vp: Vp, lw: number, h: number): number {
+  const z = vp.zoom, sw = BOX_W * z;
+  const hits = (x: number) => boxes.filter((b) => { const sx = b.x * z + x, sy = b.y * z + vp.y; return sy + b.h * z > 0 && sy < h && sx < lw && sx + sw > 0; });
+  const now = hits(vp.x);
+  if (!lw || !now.length) return vp.x;
+  const right = vp.x + Math.max(...now.map((b) => lw + LANE_GAP - (b.x * z + vp.x))), left = vp.x - Math.max(...now.map((b) => b.x * z + vp.x + sw));
+  const byMove = [right, left].sort((a, c) => Math.abs(a - vp.x) - Math.abs(c - vp.x));
+  return byMove.find((x) => !hits(x).length) ?? byMove[0]!;
+}
+
 /**
  * 木 (範囲 b、下の端 bottom) が枠 (幅 w・高さ h、上は top を空ける) に入る一番大きい倍率 (段に丸めない・ページの zoom を割る前)。
  * 左右は始まりの箱 (左の端 startX) の真ん中から遠い方の端まで (始まりを真ん中に置くので、片側に伸びた木はその側の分を両側に取る)。

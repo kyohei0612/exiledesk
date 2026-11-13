@@ -19,8 +19,9 @@ import { drawnKids } from "../../../services/simulator/tree/tree-row-tops";
 import { pageZoom } from "../../../utils/zoom";
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import { flag } from "../../../web/release-flags";
-import { BAR_H, CALM_Z, FIT_MIN, LEFT_PAD, NEXT_H, OPEN_MIN, OPEN_QUIET, PAD_MIN, PHONE_MIN, VIEW_ONLY, WHEEL_RATE, WHEEL_STEP, ZOOM_LEVELS, ZOOM_MAX, ZOOM_MIN, edgeLimit, fitZoom, levelsWith, openPlace, snapTo, zoomAt, type Area } from "./tree-cam-math";
+import { BAR_H, CALM_Z, FIT_MIN, LEFT_PAD, NEXT_H, OPEN_MIN, OPEN_QUIET, PAD_MIN, PHONE_MIN, VIEW_ONLY, WHEEL_RATE, WHEEL_STEP, ZOOM_LEVELS, ZOOM_MAX, ZOOM_MIN, edgeLimit, fitZoom, laneClear, levelsWith, openPlace, snapTo, zoomAt, type Area } from "./tree-cam-math";
 import { useTreeCamFollow } from "./use-tree-cam-follow";
+import { laneSize } from "./tree-lane-band";
 
 export const FLOW_ID = "sim-tree";
 
@@ -54,13 +55,21 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   const levels = (): readonly number[] => (innerWidth < VIEW_ONLY_MAX ? ZOOM_LEVELS : levelsWith(wholeZoom()));
   const snapZoom = (z: number): number => snapTo(levels(), z);
 
-  /** 倍率を変える (段に吸い付く。at = 軸にする画面の点 (clientX / clientY)、無ければ画面の真ん中) */
-  async function setZoom(z: number, at?: { x: number; y: number }): Promise<void> {
+  /** 倍率を変える (段に吸い付く。at = 軸にする画面の点 (clientX / clientY)、無ければ画面の真ん中。clear = 段の札の帯にかぶる箱を寄せる (人が大きさを変えた時、S-147k)) */
+  async function setZoom(z: number, at?: { x: number; y: number }, clear = true): Promise<void> {
     const to = snapZoom(z) * pageZ.value, vp = f.viewport.value;
-    if (!at) { await scale(to); return; }
-    // 軸の点の下のツリーの座標が、倍率を変えた後も同じ画面の点に来るように
-    const n = zoomAt(vp, f.screenToFlowCoordinate(at), to);
-    await put(n.x, n.y, n.zoom);
+    if (!at && !(clear && laneOn())) { await scale(to); return; }
+    // 軸の点の下のツリーの座標が、倍率を変えた後も同じ画面の点に来るように (軸が無い時は枠の真ん中)
+    const w = f.dimensions.value.width, h = f.dimensions.value.height;
+    const n = zoomAt(vp, at ? f.screenToFlowCoordinate(at) : { x: (w / 2 - vp.x) / vp.zoom, y: (h / 2 - vp.y) / vp.zoom }, to);
+    await (clear ? zoomPut(n.x, n.y, n.zoom) : put(n.x, n.y, n.zoom));
+  }
+  /** スイッチ treeZoomLane (S-147k): 大きさを変えた後に段の札の帯にかぶる箱を横だけ帯の外へ。PC の木だけ (スマホの形 U-53 は今のまま) */
+  const laneOn = (): boolean => flag("treeZoomLane") && innerWidth >= VIEW_ONLY_MAX;
+  function zoomPut(x: number, y: number, zoom: number): Promise<unknown> {
+    if (!laneOn()) return put(x, y, zoom);
+    const bs = f.getNodes.value.filter((n) => !n.hidden).map((n) => ({ x: n.position.x, y: n.position.y, h: n.dimensions.height || BOX_H }));
+    return put(laneClear(bs, { x, y, zoom }, laneWAt(zoom), f.dimensions.value.height), y, zoom);
   }
   /** 今より 1 段上 / 下 (段の間にいる時は近い側の次) */
   const stepZoom = (dir: 1 | -1, at?: { x: number; y: number }): Promise<void> => {
@@ -83,7 +92,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (flag("treeFineWheel")) {
       const vp = f.viewport.value, to = Math.min(maxZoom.value, Math.max(minZoom.value, vp.zoom * (dir > 0 ? WHEEL_RATE : 1 / WHEEL_RATE)));
       const n = zoomAt(vp, f.screenToFlowCoordinate({ x: e.clientX, y: e.clientY }), to);
-      if (to !== vp.zoom) void put(n.x, n.y, n.zoom);
+      if (to !== vp.zoom) void zoomPut(n.x, n.y, n.zoom);
       return;
     }
     void stepZoom(dir, { x: e.clientX, y: e.clientY });
@@ -100,6 +109,14 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 左端の箱が「n 段目」の下に入らないように (11-11 オーナー「この点線をツリー中として」で帯を木の面の中へ移した)
    */
   const laneW = (): number => document.querySelector("[data-tree-frame] [data-tree-lane-band]")?.getBoundingClientRect().width ?? 0;
+  /**
+   * 倍率 z (Vue Flow の倍率) の時の帯の幅 (S-147k)。帯の幅は札の字の大きさ (laneSize) に比例するので、今描いている幅 × 字の大きさの比。
+   * 今描いている字の大きさは札の style から読む (視点を書いた直後は描き直しの前で、帯はまだ前の倍率の幅)
+   */
+  function laneWAt(z: number): number {
+    const w = laneW(), fs = parseFloat((document.querySelector("[data-tree-frame] [data-tree-lane]") as HTMLElement | null)?.style.fontSize ?? "");
+    return fs > 0 ? w * laneSize(z) / fs : w;
+  }
   /**
    * 開いた時・全体表示の合わせに使う木の範囲 (S-142h、スイッチ treeOpenStartLeft): 描く箱だけで数え (畳んで描かない消去の続きの箱は古い位置のまま)、
    * 左の端は始まりの箱そのもの (木は始まりから右と下へだけ伸びる)。スイッチの外は全部の箱
@@ -210,13 +227,14 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (mid || out) await center(b.x + BOX_W / 2, sh > h - bar - m * 2 ? b.y + (h / 2 - m) / z : b.y + sh / (2 * z) + bar / (2 * z), z);
   }
   // 木を変えた後の視点 (手を決める・箱が増える / 減る・箱の背、S-147c・S-147e・S-147h) は use-tree-cam-follow.ts
-  const follow = useTreeCamFollow(doc, f, { pageZ, put, center, setZoom, openView, reveal, opens: () => opens, openAt: () => openAt });
+  const follow = useTreeCamFollow(doc, f, { pageZ, put, center, setZoom: (z: number) => setZoom(z, undefined, false), openView, reveal, opens: () => opens, openAt: () => openAt });
   /**
    * 木を送れる範囲の左と上の端 (S-142h、スイッチ treeOpenStartLeft): 木は始まりの箱から右と下へだけ伸びるので、始まりの箱が開いた時の位置 (横に入らない木 = 木の面の左上、
    * 入る木 = 木が真ん中に来る所) より右・下へは送れない = 左と上の空きを見せない。手で左へ引っ張った箱がある時はその箱まで。スマホの形 (U-53) は今のまま
    */
   watch(() => `${f.viewport.value.x}|${f.viewport.value.y}|${f.viewport.value.zoom}`, () => {
-    const d = doc.value, { x, y, zoom: z } = f.viewport.value, lw = laneW(), w = f.dimensions.value.width - lw;
+    // スイッチ treeZoomLane (S-147k): ここは描き直しの前なので帯はまだ前の倍率の幅。倍率 z の幅で数える (古い幅で端を数えると、帯の右へ出した箱を帯の下へ押し戻した)
+    const d = doc.value, { x, y, zoom: z } = f.viewport.value, lw = laneOn() ? laneWAt(z) : laneW(), w = f.dimensions.value.width - lw;
     if (!flag("treeOpenStartLeft") || innerWidth < VIEW_ONLY_MAX || !d.boxes.start || w <= 0) return;
     const b = openBounds(), ns = f.getNodes.value;
     const { mx, my } = edgeLimit(b, Math.min(b.x, ...ns.map((n) => n.position.x)), Math.min(b.y, ...ns.map((n) => n.position.y)), lw, w, z, topY());
