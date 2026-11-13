@@ -3,7 +3,7 @@
  * エミュの画面はここだけを読み、シミュの中 (views/simulator) は読まない。シミュの物はここで後から読む (最初の読み込みに入れない)
  */
 import { ref } from "vue";
-import { openTreePage } from "../../web/page";
+import { closeTreePage, openTreePage } from "../../web/page";
 import { flag } from "../../web/release-flags";
 import type { StageItem } from "../../services/craft-stage/types";
 
@@ -20,6 +20,32 @@ export async function openSimWithItem(item: StageItem): Promise<void> {
   if (!flag("sim")) return;
   const { requestEmuItem } = await import("../../views/simulator/tree/tree-paste");
   requestEmuItem(item);
+}
+
+/**
+ * シミュの完成形をエミュで試す (S-147・M-06d、スイッチ simToEmu、オーナー 11-13「②案１」): エミュを同じベース・同じアイテムレベルの白で開き、
+ * 完成の MOD をその段以上で「次の手で狙う」へ入れる (6 つまで = AIM_MAX)。シミュの画面はここだけを呼び、エミュの中 (views/craft-stage) は読まない
+ */
+export async function openEmuWithGoals(base: string, itemLevel: number, goals: ReadonlyArray<{ modId: string; tier: number }>): Promise<void> {
+  if (!flag("simToEmu")) return;
+  const [{ craftStage: s, AIM_MAX }, { tierIndexOf, aimLabel }, { useStageBase }] = await Promise.all([
+    import("../craft-stage"),
+    import("../../services/craft-stage/engine"),
+    import("../../views/craft-stage/use-stage-base"),
+  ]);
+  closeTreePage(() => {
+    s.play.value = "emu";
+    s.mode.value = "hand";
+    s.itemLevel.value = itemLevel;
+    useStageBase().pickSimBase(base); // ベースを選んだ印・白に戻す (s.reset)
+    const d = s.data.value;
+    s.aims.value = d ? goals.slice(0, AIM_MAX).flatMap((g) => {
+      const minTierIndex = tierIndexOf(d, g.modId, g.tier);
+      if (minTierIndex < 0) return [];
+      const a = { modId: g.modId, minTierIndex, label: "" };
+      return [{ ...a, label: aimLabel(d, a) }];
+    }) : [];
+  });
 }
 
 /** レシピが読めない時の文 (レシピの URL を貼る欄と URL で開いた時で同じ言葉、S-103c) */

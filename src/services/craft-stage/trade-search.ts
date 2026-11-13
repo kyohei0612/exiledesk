@@ -42,7 +42,7 @@ function statGroupsOfMod(data: PatchData, t: ModPick, withMin = false): Array<Ar
  */
 export async function searchModGroups(
   data: PatchData,
-  opts: { groups: readonly ModGroup[]; exact?: { baseType: string; ilvlMin?: number; socketsMin: number }; minValues?: boolean },
+  opts: { groups: readonly ModGroup[]; exact?: { baseType: string; ilvlMin?: number; socketsMin: number }; minValues?: boolean; /** 付与スキル (英語の名前、U-12f。null = どれでも) */ grantedSkill?: string | null },
 ): Promise<void> {
   const stats: Array<{ id: string; min?: number }> = [];
   const anyOf: Array<{ filters: Array<{ id: string; min?: number }>; count?: number }> = [];
@@ -63,5 +63,5 @@ export async function searchModGroups(
     else if (fs.length) anyOf.push({ filters: fs, ...(count > 1 ? { count } : {}) });
   }
   const ex = opts.exact;
-  await openTradeQuery(buildSpecQuery({ rarity: "nonunique", stats, anyOf, ...(ex ? { baseType: ex.baseType, ...(ex.ilvlMin != null ? { ilvlMin: ex.ilvlMin } : {}), noSanctified: true, ...(ex.socketsMin > 0 ? { socketsMin: ex.socketsMin } : {}) } : {}) }));
+  await openTradeQuery(buildSpecQuery({ rarity: "nonunique", stats, anyOf, ...(opts.grantedSkill ? { grantedSkill: opts.grantedSkill } : {}), ...(ex ? { baseType: ex.baseType, ...(ex.ilvlMin != null ? { ilvlMin: ex.ilvlMin } : {}), noSanctified: true, ...(ex.socketsMin > 0 ? { socketsMin: ex.socketsMin } : {}) } : {}) }));
 }

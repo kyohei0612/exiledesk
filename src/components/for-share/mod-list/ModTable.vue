@@ -94,7 +94,10 @@ const query = ref("");
 const expanded = ref<string | null>(null);
 const listEl = ref<HTMLElement | null>(null);
 // 開いた段の表は行の外を押す・Esc で閉じる (押した物には届ける。2026-10-22 オーナー「キャンセルは枠の外をクリックで」)
-useDismiss(() => !!expanded.value, [() => (expanded.value ? listEl.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(expanded.value)}"]`) : null), ...props.keepOpen.map((q) => () => document.querySelector<HTMLElement>(q))], () => { expanded.value = null; }, { swallow: false, keep: '[data-rec^="mod:"]' });
+// 棚・帯のカレンシーやお告げの札 (ShelfButton の data-rec="shelf:…") を押して持ち替えても閉じない (U-12g、スイッチ tierKeepHeld、
+// オーナー 11-13「ティア開いた状態でカレンシー持ち直した際閉じちゃうから開けっ放しでおｋ」)。同じ系統が新しい表にもあれば開いたまま
+const KEEP_ON_HOLD = flag("tierKeepHeld");
+useDismiss(() => !!expanded.value, [() => (expanded.value ? listEl.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(expanded.value)}"]`) : null), ...props.keepOpen.map((q) => () => document.querySelector<HTMLElement>(q))], () => { expanded.value = null; }, { swallow: false, keep: KEEP_ON_HOLD ? '[data-rec^="mod:"], [data-rec^="shelf:"]' : '[data-rec^="mod:"]' });
 /** 少しの間光らせる行・枠で囲む段 (カードから飛んで来た時、jumpTo) */
 const flashKey = ref<string | null>(null);
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
