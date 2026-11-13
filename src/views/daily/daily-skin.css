@@ -65,8 +65,7 @@
 .daily-veil { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
 .daily-veil-frame { flex: none; display: grid; place-items: center; width: 136px; height: 136px; position: relative; isolation: isolate; background: radial-gradient(closest-side, var(--skin-hover), transparent), url("/ui-art/slot.webp") center / 100% 100% no-repeat; }
 .daily-veil-frame::after { content: ""; position: absolute; inset: -6px; border: 14px solid transparent; border-image: url("/ui-art/item-frame.webp") 18 / 18px / 2px stretch; filter: var(--skin-art); pointer-events: none; }
-.daily-veil-art { width: 108px; height: 108px; object-fit: contain; filter: brightness(0.42) contrast(1.15); }
-.daily-veil-art.open { filter: none; }
+.daily-veil-art { width: 108px; height: 108px; object-fit: contain; } /* 始める前も暗くしない (D-60d。伏せるのは MOD だけ、D-32b) */
 .daily-plate { display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 2px; border-style: solid; border-color: transparent; border-width: 0 44px; border-image: url("/ui-art/ihead-rare.webp") 0 76 fill / 0 44px stretch; }
 /* 狙いの完成形のカード (D-37e)。絵と名前に揃えて真ん中に */
 .daily-aim-card { display: flex; flex-direction: column; align-items: center; margin-bottom: 14px; }
