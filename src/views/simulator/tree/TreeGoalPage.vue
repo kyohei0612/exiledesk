@@ -45,6 +45,9 @@ import TreeAttachPick from "./TreeAttachPick.vue";
 import TreeGoalRunes from "./TreeGoalRunes.vue";
 import { wayName } from "./tree-attach";
 import { simOp } from "../../../web/track";
+import { flag } from "../../../web/release-flags";
+/** 見本の MOD はツリーで狙いにできる、の注意書き (S-10e、スイッチ aimGroups) */
+const AIM_NOTE = flag("aimGroups");
 /** 段の行のボタンを「付ける」1 つに (S-10b) */
 
 
@@ -335,6 +338,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
+        <!-- 見本の MOD はツリーで狙いにできる (S-10e、スイッチ aimGroups。11-13 オーナー「フラクチャーで設定した場合でも狙いMODとして定めることが出来るんだなって思うよね」) -->
+        <ul v-if="AIM_NOTE && t.goalItem.value" data-tree-goal-aim-note class="list-disc pl-5 text-[12px] leading-snug text-sim-dim"><li>{{ tr("上記の見本に入れた MOD (フラクチャーの候補も) は、ツリーで狙い MOD として設定できます。同じ MOD をもう一度足す必要はありません", "Mods in the item above (fracture candidates too) can be set as target mods in the tree. No need to add the same mod again") }}</li></ul>
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <TreeGoalRunes />
