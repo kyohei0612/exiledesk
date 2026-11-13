@@ -66,16 +66,25 @@ const hover = flag("monkeyEmu1023") ? "enabled:hover:bg-white/10" : "hover:bg-wh
 const btn = `g-plain grid size-6 place-items-center rounded border border-white/15 text-white/70 ${hover} disabled:opacity-30`;
 const wbtn = `g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 ${hover} disabled:opacity-30`;
 const sel = "h-6 cursor-pointer rounded border border-white/15 bg-black/60 px-1 text-white/80";
+/**
+ * 1 行に詰める (U-12h、スイッチ qbarOneLine、オーナー 11-13「2行目種類を選ぶを1行目へそしたら2行になるでしょ」): 品の上の帯は幅 347 (1440 の PC) で
+ * 「種類を選ぶ」だけが 2 行目に落ちていた。種類の欄・% の欄・最小 / 最大の脇を詰めて品質系を 1 行に、2 行目は付与スキル (M-05) だけにする。スマホの狭い幅は今どおり折り返す
+ */
+const ONE_LINE = flag("qbarOneLine");
+// スマホは字が大きいので詰めない (詰めると「種類を選」で切れた)。md 以上だけ
+const wbtnQ = ONE_LINE ? wbtn.replace("px-1.5", "px-1.5 md:px-1") : wbtn;
+const pctW = ONE_LINE ? "w-10 md:w-8" : "w-10";
+const typeW = ONE_LINE ? "w-[7rem] md:w-[5.75rem]" : "w-[7rem]";
 </script>
 
 <template>
   <div v-if="shown" class="flex w-full flex-wrap items-center justify-end gap-1 text-[11px] leading-none text-white/60" :class="locked && LOCKED_CLS" :title="locked ? SANCTIFIED_REASON() : undefined" @click.stop>
     {{ tr("品質", "Quality") }}
-    <button type="button" :class="wbtn" :disabled="locked || item.quality <= 0" :title="tr('品質を 0% に', 'Set quality to 0%')" @click="emit('quality', 0)">{{ tr("最小", "Min") }}</button>
+    <button type="button" :class="wbtnQ" :disabled="locked || item.quality <= 0" :title="tr('品質を 0% に', 'Set quality to 0%')" @click="emit('quality', 0)">{{ tr("最小", "Min") }}</button>
     <button type="button" :class="btn" :disabled="locked || item.quality <= 0" :title="tr('品質 −1% (長押しで続けて)', 'Quality −1% (hold to repeat)')" @pointerdown.prevent="hold(-1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(-1)">−</button>
-    <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
+    <span class="text-center tabular-nums" :class="[pctW, item.quality > 0 ? 'text-rarity-magic' : 'text-white/60']">+{{ item.quality }}%</span>
     <button type="button" :class="btn" :disabled="locked || item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%、長押しで続けて)`, `Quality +1% (max ${maxQ}%, hold to repeat)`)" @pointerdown.prevent="hold(1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(1)">+</button>
-    <button type="button" :class="wbtn" :disabled="locked || item.quality >= maxQ" :title="tr(`品質を上限の ${maxQ}% に`, `Set quality to the max (${maxQ}%)`)" @click="emit('quality', maxQ)">{{ tr("最大", "Max") }}</button>
+    <button type="button" :class="wbtnQ" :disabled="locked || item.quality >= maxQ" :title="tr(`品質を上限の ${maxQ}% に`, `Set quality to the max (${maxQ}%)`)" @click="emit('quality', maxQ)">{{ tr("最大", "Max") }}</button>
     <!-- 「上限」は選ぶ欄の中の字に (別の字にすると 1 行に入らず、種類の欄が 2 段目に落ちていた。2026-10-18) -->
     <select :disabled="locked" :class="[sel, 'tabular-nums']" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
       <option v-for="q in caps" :key="q" :value="q">{{ tr(`上限 ${q}%`, `Cap ${q}%`) }}</option>
@@ -88,7 +97,7 @@ const sel = "h-6 cursor-pointer rounded border border-white/15 bg-black/60 px-1 
       <span v-if="item.qualityTag" class="w-10 text-center tabular-nums" :class="catQ > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ catQ }}%</span>
       <button v-if="item.qualityTag" type="button" :class="wbtn" :disabled="locked || catQ <= 0" :title="tr('カタリストの品質を 0% に', 'Set Catalyst quality to 0%')" @click="emit('catalyst', 0, item.qualityTag!)">{{ tr("最小", "Min") }}</button>
     </span>
-    <select v-if="jewel" :disabled="locked" :class="[sel, 'w-[7rem]']" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
+    <select v-if="jewel" :disabled="locked" :class="[sel, typeW]" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
       <option v-for="c in choices" :key="c.tag" :value="c.tag">{{ c.label }}</option>
     </select>
