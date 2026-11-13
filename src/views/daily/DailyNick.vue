@@ -6,7 +6,11 @@
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
-import { createNick, NICK_MAX, restoreNick, type DailyNick, type NickError } from "./daily-api";
+import { createNick, NICK_MAX, NICK_WIDTH_MAX, nickWidth, restoreNick, type DailyNick, type NickError } from "./daily-api";
+import { flag } from "../../web/release-flags";
+
+/** 名前の長さを幅で数える (D-51a、全角 10 字 = 半角 20 字) */
+const WIDTH = flag("nickWidth");
 
 const emit = defineEmits<{ done: [DailyNick]; close: [] }>();
 const mode = ref<"new" | "back">("new");
@@ -19,7 +23,7 @@ const copied = ref(false);
 
 const WHY: Record<NickError, () => string> = {
   empty: () => tr("名前を入れる", "Enter a name"),
-  long: () => tr(`${NICK_MAX} 字まで`, `Up to ${NICK_MAX} characters`),
+  long: () => (WIDTH ? tr("全角 10 字 (半角 20 字) まで", "Up to 20 characters (10 for Japanese/CJK)") : tr(`${NICK_MAX} 字まで`, `Up to ${NICK_MAX} characters`)),
   url: () => tr("URL は使えない", "URLs aren't allowed"),
   reserved: () => tr("運営に見える名前は使えない", "This name looks official"),
   bad: () => tr("使えない言葉が入っている", "This name has a banned word"),
@@ -31,6 +35,8 @@ const WHY: Record<NickError, () => string> = {
 const why = computed(() => (fail.value ? WHY[fail.value]() : ""));
 
 async function decide(): Promise<void> {
+  // 幅で数える (D-51a、スイッチ nickWidth): サーバーは出すまで 12 字でも受けるので、ここで幅 20 を越えたら断る
+  if (WIDTH && nickWidth(name.value.trim()) > NICK_WIDTH_MAX) { fail.value = "long"; return; }
   const r = await createNick(name.value);
   if (typeof r === "string") { fail.value = r; return; }
   fail.value = null; made.value = r;
@@ -61,7 +67,7 @@ const setMode = (m: "new" | "back"): void => { mode.value = m; fail.value = null
       </template>
       <template v-else>
         <p v-if="mode === 'new'">{{ tr("順位に載る名前を決める。ずっと同じ名前で遊べて、同じ名前の人は出ない。", "Choose the name shown on the rankings. It stays yours and no one else can take it.") }}</p>
-        <input v-model="name" data-daily-nick-name type="text" :maxlength="NICK_MAX + 4" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('ニックネーム', 'Nickname')" :placeholder="tr('ニックネーム', 'Nickname')" @input="fail = null" @keydown.enter.prevent="mode === 'new' ? decide() : back()" />
+        <input v-model="name" data-daily-nick-name type="text" :maxlength="(WIDTH ? NICK_WIDTH_MAX : NICK_MAX) + 4" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('ニックネーム', 'Nickname')" :placeholder="tr('ニックネーム', 'Nickname')" @input="fail = null" @keydown.enter.prevent="mode === 'new' ? decide() : back()" />
         <input v-if="mode === 'back'" v-model="code" data-daily-nick-pass type="text" spellcheck="false" autocomplete="off" class="daily-input" :aria-label="tr('引き継ぎコード', 'Transfer code')" :placeholder="tr('引き継ぎコード', 'Transfer code')" @input="fail = null" @keydown.enter.prevent="back" />
         <p v-if="why" data-daily-nick-why class="text-[13px] text-[var(--exile-color-signal-down)]">{{ why }}</p>
         <div class="flex items-center justify-between gap-2">

@@ -4,6 +4,9 @@
  * スタート・提出・札の選び・投稿は nickId + code で本人を見る (D-56 の「合言葉の控え」)
  */
 export const NICK_MAX = 12;
+/** 名前の幅の上限 (D-51a): 全角 10 字 = 半角 20 字。半角 = U+0000〜00FF・半角カナ U+FF61〜FF9F、ほかは 2 */
+export const NICK_WIDTH_MAX = 20;
+export const nickWidth = (s: string): number => [...s].reduce((n, c) => { const p = c.codePointAt(0)!; return n + (p <= 0xff || (p >= 0xff61 && p <= 0xff9f) ? 1 : 2); }, 0);
 const RESERVED = /exiledesk|運営|admin|公式|official/;
 /** 悪口の表 (D-20・D-51)。名前と一言の両方で見る */
 const BAD = /死ね|しね|氏ね|殺す|ころす|くそ|クソ|ゴミ|カス|きもい|キモい|fuck|shit|bitch|cunt|nigg|retard/i;
@@ -20,7 +23,8 @@ export const nameKey = (s: string): string => s.normalize("NFKC").trim().toLower
 function nameError(name: string): NickError | null {
   const k = nameKey(name);
   if (!k || !/[\p{L}\p{N}]/u.test(k)) return "empty";
-  if ([...name.trim()].length > NICK_MAX) return "long";
+  // 画面のスイッチ nickWidth を出すまでは 12 字以内か幅 20 以内のどちらかで受ける (前の画面も新しい画面も断らない)。出した後は幅だけに (D-51a)
+  if ([...name.trim()].length > NICK_MAX && nickWidth(name.trim()) > NICK_WIDTH_MAX) return "long";
   if (/https?:|www\.|\.[a-z]{2,}\//.test(k)) return "url";
   if (RESERVED.test(k)) return "reserved";
   if (hasBadWord(k)) return "bad";

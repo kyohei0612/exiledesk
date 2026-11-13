@@ -7,6 +7,8 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| デイリーの一言を名前の横に (スイッチ `dailyNoteSide`、D-35e2) | (この commit) | デイリー: 順位のひとことを名前の横に並べるようにしました | Daily: Notes now sit next to the name in the ranking |
+| デイリーの名前の長さを幅で (スイッチ `nickWidth`、D-51a。サーバーの出しも一緒、出した後に nick.ts を幅だけに) | (この commit) | デイリー: ニックネームを全角 10 字 (半角 20 字) まで付けられるようにしました | Daily: Nicknames can now be up to 20 characters (10 for Japanese) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)

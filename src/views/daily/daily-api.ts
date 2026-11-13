@@ -20,6 +20,9 @@ export const TIME_LIMIT_MS = 60 * 60 * 1000;
 /** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
 export const SOLVE_RATE = 1;
 export const NICK_MAX = 12;
+/** 名前の幅の上限 (D-51a、スイッチ nickWidth、サーバーの nick.ts と同じ): 全角 10 字 = 半角 20 字。半角 = U+0000〜00FF・半角カナ */
+export const NICK_WIDTH_MAX = 20;
+export const nickWidth = (s: string): number => [...s].reduce((n, c) => { const p = c.codePointAt(0)!; return n + (p <= 0xff || (p >= 0xff61 && p <= 0xff9f) ? 1 : 2); }, 0);
 /** 曜日の部位の名前 (D-05、0 = 月) */
 export const SLOT_NAMES: readonly { ja: string; en: string }[] = SLOTS.map(({ ja, en }) => ({ ja, en }));
 

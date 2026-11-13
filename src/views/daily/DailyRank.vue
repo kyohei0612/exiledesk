@@ -22,6 +22,8 @@ const showTime = computed(() => !(score.value && phone.value));
 const showViews = flag("dailyViews");
 /** 提出の一言 (D-35e、スイッチ dailyNote) を名前の下に小さく 1 行。挑戦前のぼかしの日は一言もぼかす */
 const showNote = flag("dailyNote");
+/** 一言を名前の横に同じ 1 行で (D-35e2、スイッチ dailyNoteSide) */
+const noteSide = flag("dailyNoteSide");
 /** 提出の後から一言を足す・直す・消す (D-35e): 今日のお題で自分の行が表にある時だけ、表の下に 1 つ */
 const noteOpen = ref(false);
 const myNote = computed(() => rows.value.find((r) => r.me)?.note ?? "");
@@ -63,7 +65,7 @@ function peeked(): void {
             :title="canOpen(r.me) ? tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`) : undefined" @click="canOpen(r.me) && press(r.name, r.me)">
             <span class="daily-place">{{ i + 1 }}</span>
             <DailyName v-if="!showNote || !r.note" class="flex-1" :name="r.name" />
-            <span v-else class="daily-rank-who flex-1"><DailyName :name="r.name" /><small class="daily-rank-note" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">{{ tr("「", "“") }}{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}{{ tr("」", "”") }}</small></span>
+            <span v-else class="daily-rank-who flex-1" :class="{ side: noteSide }"><DailyName :name="r.name" /><small class="daily-rank-note" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">{{ tr("「", "“") }}{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}{{ tr("」", "”") }}</small></span>
             <span v-if="showTime" class="daily-num w-12 daily-rank-time" :class="{ 'daily-veiled': veiled }">{{ num(mins(r.ms), tr("00 分", "00m")) }}</span>
             <span class="daily-num w-10" :class="{ 'daily-veiled': veiled }">{{ num(`${r.rate}%`, "00%") }}</span>
             <component :is="score ? 'span' : 'b'" class="daily-num w-16" :class="[score ? 'daily-rank-cost' : 'daily-points', { 'daily-veiled': veiled }]">{{ busy === r.name ? tr("開いている", "Opening") : num(`${r.cost} ${tr("神", "div")}`, `000.0 ${tr("神", "div")}`) }}</component>
