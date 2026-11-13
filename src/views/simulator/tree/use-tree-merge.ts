@@ -8,6 +8,7 @@ import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, roundPath, routeBacks, typ
 import { sideRoute } from "./tree-lines-grid";
 import { joinPath, mergeReqs } from "./tree-merge";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
+import { stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { flag } from "../../../web/release-flags";
 
 /** 合流の線を引き直す前に、入力 (箱の位置・高さ) が変わらないのを待つ時間 */
@@ -47,7 +48,10 @@ export function useTreeMerge(o: {
     /** 引っ張っている間、この線は前の道のまま (引っ張っている箱に触れない・前の道がある) */
     const keepOf = (id: string, from: string, to: string): string | undefined => (mv && from !== mv && to !== mv ? before?.paths.get(id) : undefined);
     const pos = (id: string) => ({ ...o.posOf(d.boxes[id]!), w: BOX_W, h: o.heightOf?.(id) || BOX_H });
-    const { reqs, lines } = mergeReqs(d, pos);
+    const all = mergeReqs(d, pos);
+    // (S-142j ③、スイッチ hitsSide) 札も描かない畳みの箱からは引かない (位置が古いまま。線は use-tree-edges が手の札から行き先へ直に引く)
+    const hid = stripHidden(d), off = (id: string): boolean => hid.has(id.split(">")[0]!);
+    const reqs = hid.size ? all.reqs.filter((r) => !off(r.id)) : all.reqs, lines = hid.size ? all.lines.filter((l) => !hid.has(l.from) && !hid.has(l.to)) : all.lines;
     // 避ける箱 = 描く箱。11-11 からまとめた箱も各親の下に描く (S-66) ので、描かないのはヒネコラのハズレの先頭へまとめた箱 (mergedAway) だけ。前は merged を全部外し、
     // 戻りの線がまとめた箱の上を通った (オーナーの木 lfUrzYOg の b26→b7 と b19、線の見張り L3。S-145、スイッチ treeOwnHeight)
     const drawnBox = (id: string): boolean => (flag("treeOwnHeight") ? !mergedAway(d, d.boxes[id]!) : !d.boxes[id]!.merged);

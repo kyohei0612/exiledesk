@@ -7,7 +7,7 @@ import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simu
 import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { endCards, LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
-import { FOLD_H, foldOuts, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { FOLD_H, foldOuts, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
 
@@ -29,6 +29,8 @@ const HOP = 6;
 const STACK_SIDE = 20, STACK_IN = 24;
 /** 段の右端の札への細い線が手の札の下の縁から折れるまでの長さ (S-142j ②) */
 const CARD_DY = 14;
+/** 同じ枠へ直に引く線の色 (乗せた時の合流の線と同じ緑) */
+const LINK_COLOR = "#6fd08c";
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
 const CHIP_MAX = 340;
 
@@ -41,6 +43,8 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
   const ends = computed(() => endCards(doc.value));
+  /** (S-142j ③、スイッチ hitsSide) 札も描かず直に線を引く畳み: 親 → 行き先の箱 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) */
+  const links = computed(() => linkTargets(doc.value, fold.value.folds));
   /** 削減の手前の枠の帯 (S-65c ⑫): 枠の箱の線はその枠の帯の真下から (頭の箱の下端)。帯でなければ null */
   /**
    * 削減の手前の枠の帯 (S-65c ⑫): 枠ごとに 帯 → 手の札 → 結果の箱 を別の線で (11-11 オーナー「どこに何打ってこのツリーになったのか一ミリも分からん」)。
@@ -67,7 +71,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...os.map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
-  const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
+  const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && (outsOf(b).length || links.value.has(b.id))).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
     // まとめて描かない箱 (案 A) は、まとめ先の箱へ直に線を引く (同じまとめ先が 2 つあれば 1 本)
@@ -78,7 +82,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 同じ手の帯の組は組の結果で札・枝分かれの高さを決める (組の線が同じ所を通る)
     // 枠ごとに 1 本ずつの時 (S-65c ⑫、スイッチ treeLaneOwnHand) は、帯 → 手の札 → 結果の箱の線を枠の色に (どの枠の枝かを線で追える。11-12 オーナー「線が無いと分かりづらい」)
     const lane: LvClass | null = flag("treeLaneOwnHand") && bandFrom(b) ? lvPart(b.junkKey) ?? null : null, tone = lane ? `rgb(${lvLook(lane).rgb})` : null;
-    const bf = bandFrom(b), lead = bf?.lead ?? b.id, gk = bf && bf.group.length > 1 ? [...new Set(groupOuts(b).map(toOf))] : kids.map((k) => k.id);
+    const bf = bandFrom(b), lead = bf?.lead ?? b.id, gk = bf && bf.group.length > 1 ? [...new Set(groupOuts(b).map(toOf))] : kids.length ? kids.map((k) => k.id) : links.value.get(b.id) ?? [];
     const top = Math.min(...gk.map((k) => posOf(doc.value.boxes[k]!).y)), multi = gk.length > 1;
     // 帯の中の枠の箱は帯の真下から (手の名前は帯の中なので札は出さない、band)
     const px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
@@ -87,7 +91,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
     // 畳んだ消去の続きの札の上下 (人の消去の箱 → 札・札 → 止まった箱) は、手の札を前の箱の下端と次の箱の上端の真ん中に (上下の線を同じ長さ。
     // 段の札の高さに揃えると、背の低い札の下の線だけ長くなった。11-07 オーナー「消去と前の枠と次のわくの間において欲しい…不細工にならないように線の長さが」)
-    const mid = !pass && !multi && (fold.value.folds.has(b.id) || fold.value.folds.has(kids[0]!.id));
+    const mid = !pass && !multi && (fold.value.folds.has(b.id) || (!!kids[0] && fold.value.folds.has(kids[0].id)));
     const midJy = mid ? (fold.value.folds.has(b.id) ? py : p.y + (heightOf?.(b.id) || BOX_H)) / 2 + top / 2 : null;
     const jy = pass ? p.y : midJy ?? rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
     const busY = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(lead) ?? 0);
@@ -116,9 +120,26 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
           + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} ` + (side ? `L ${cx} ${ey - 8} Q ${cx} ${ey} ${cx + 8} ${ey} L ${k.q.x} ${ey}` : `L ${cx} ${cy}`);
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
       return { id: k.id, w: 2, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null };
-    }).sort((a, z) => Number(z.bad) - Number(a.bad));
+    });
+    // (S-142j ③、スイッチ hitsSide) 同じ枠へ・同じ中身の箱の続きへの畳みは札も描かず、手の札の真ん中から真下へ伸ばし、行き先の箱の真ん中の高さで曲がって横から入る
+    // (11-14 オーナー「左の枠の真ん中めがけて横の線はそこで縦の線は消去の真ん中から下へのばして」「同じ枠系はそのごの枠へつなげばいいのでは」)
+    const linkY0 = jy + CHIP_HALF, linkSegs: Seg[] = [];
+    for (const t of links.value.get(b.id) ?? []) {
+      const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, ty = tq.y + th / 2;
+      if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
+        to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null });
+        linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: tq.y });
+        continue;
+      }
+      const ex = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x, sg = Math.sign(ex - px) || 1, r = Math.min(10, Math.abs(ex - px) / 2, Math.max(0, ty - linkY0) / 2);
+      const mk = (hops: readonly number[]): string => `M ${px} ${linkY0} L ${px} ${ty - r} Q ${px} ${ty} ${px + sg * r} ${ty} `
+        + [...hops].sort((a, z) => sg * (a - z)).map((x) => `L ${x - sg * HOP} ${ty} A ${HOP} ${HOP} 0 0 ${sg > 0 ? 1 : 0} ${x + sg * HOP} ${ty} `).join("") + `L ${ex} ${ty}`;
+      to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: mk([]), bad: false, mk, h: { x0: Math.min(px + sg * r, ex), x1: Math.max(px + sg * r, ex), y: ty } });
+      linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex, y1: ty });
+    }
+    to.sort((a, z) => Number(z.bad) - Number(a.bad));
     // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
-    const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: onlyCards ? jy + CHIP_HALF : busY }, ...kids.flatMap((k) => { if (ends.value.has(k.id)) { const cx = midOf(k.id); return [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: cardY }, { x0: px, y0: cardY, x1: cx, y1: cardY }, { x0: cx, y0: cardY, x1: cx, y1: k.q.y }]; } const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; })];
+    const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: onlyCards ? jy + CHIP_HALF : busY }, ...kids.flatMap((k) => { if (ends.value.has(k.id)) { const cx = midOf(k.id); return [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: cardY }, { x0: px, y0: cardY, x1: cx, y1: cardY }, { x0: cx, y0: cardY, x1: cx, y1: k.q.y }]; } const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; }), ...linkSegs];
     return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, chip: lead === b.id, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs };
   }));
   /**

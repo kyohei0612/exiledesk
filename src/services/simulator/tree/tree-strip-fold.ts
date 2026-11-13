@@ -15,6 +15,7 @@ import { flag } from "../../../web/release-flags";
 export const FOLD_H = 64;
 /** 畳んだ続き: head = 札に描く箱 (根の最初の自動の消去の箱)、mids = 自動の消去の箱全部 (head 込み)、stops = 札の下に並べる止まった箱、steps = 消去の段の数 (根を含む) */
 export interface StripFold { head: string; mids: string[]; stops: string[]; steps: number; /** 札の中の箱へまとめた箱 (S-66)。止まった箱に数えず、スイッチ treeFoldMerged の下は畳んでいる間描かない */ tucked: string[];
+  /** (S-142j ③、スイッチ hitsSide) 行き先が同じ段か先 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) の畳み: 札も描かず、親の手の札から行き先の箱へ直に線 */ link?: true;
   /** 行き先を指すだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ hitsSide)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true }
 
 /** 開いた続き (head の id)。保存しない */
@@ -78,7 +79,11 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
     const ends = b.outs.filter((o) => backOnly(d.boxes[o]));
     // その手の子に未設定 (手も行き先も無い・完成でない) が 1 つでもあれば畳まない (11-14 オーナー「そもそも未設定あるならたたまないけど」)
     if (b.outs.some((o) => unset(d.boxes[o]))) continue;
-    if (ends.length && !ends.some((id) => out.has(id))) out.set(ends[0]!, { head: ends[0]!, mids: ends, stops: [], steps: 0, tucked: [], ends: true });
+    if (!ends.length || ends.some((id) => out.has(id))) continue;
+    // 行き先が同じ段か先の箱は札も出さず直に線 (11-14 オーナー「表示せず枠を」「同じ枠系はそのごの枠へつなげばいいのでは」)、前の段へ戻る (↩) は段の右端の札
+    const links = ends.filter((id) => ahead(d, id)), backs = ends.filter((id) => !ahead(d, id));
+    if (links.length) out.set(links[0]!, { head: links[0]!, mids: links, stops: [], steps: 0, tucked: [], ends: true, link: true });
+    if (backs.length) out.set(backs[0]!, { head: backs[0]!, mids: backs, stops: [], steps: 0, tucked: [], ends: true });
   }
   return out;
 }
@@ -87,6 +92,15 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
  * 自分の下に続きを持つ当たりは畳まない (11-14 オーナー「これもたたむし」)
  */
 const backOnly = (c: TreeBox | undefined): boolean => !!c && !!c.back && !c.done && !c.hand && !c.outs.length && c.out !== "pass";
+const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+/** 行き先が同じ段か先の箱 (→ 同じ枠へ・→ 同じ中身の箱の続きへ。tree-fail の isForward と同じ見方、↩ は前の段) */
+const ahead = (d: TreeDoc, id: string): boolean => { const c = d.boxes[id], t = d.boxes[c?.back ?? ""]; return !!t && t.id !== "start" && depthOf(d, t.id) >= depthOf(d, id); };
+/** (S-142j ③) 札を描かず直に線を引く畳み: 親の箱 → 行き先の箱 (重なりは 1 つ) */
+export function linkTargets(d: TreeDoc, folds = stripFolds(d)): Map<string, string[]> {
+  const m = new Map<string, string[]>();
+  for (const f of folds.values()) if (f.link) for (const id of f.mids) { const c = d.boxes[id]; if (!c?.parent || !c.back || !d.boxes[c.back]) continue; const l = m.get(c.parent) ?? []; if (!l.includes(c.back)) l.push(c.back); m.set(c.parent, l); }
+  return m;
+}
 /** 未設定の子 (手も行き先も無い・完成でない・通り抜けでない) */
 const unset = (c: TreeBox | undefined): boolean => !!c && !c.hand && !c.back && !c.done && c.out !== "pass" && !c.outs.length;
 /** 今畳んでいる続き (開いた物を除く) */
@@ -98,7 +112,7 @@ export const stripFolds = (d: TreeDoc): Map<string, StripFold> => {
 /** 描かない箱 (畳んだ続きの head 以外の自動の消去の箱) */
 export function stripHidden(d: TreeDoc, folds = stripFolds(d)): Set<string> {
   const s = new Set<string>();
-  for (const f of folds.values()) for (const id of f.mids) if (id !== f.head) s.add(id);
+  for (const f of folds.values()) for (const id of f.mids) if (id !== f.head || f.link) s.add(id); // 直に線の畳みは札も描かない
   // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
   if (flag("treeFoldMerged")) for (const f of folds.values()) for (const id of f.tucked) s.add(id);
   return s;
