@@ -5,7 +5,7 @@
 import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { busLevels, CHIP_HALF, HAND_DY, roundPath, type Seg } from "./tree-lines";
-import { sideRoute } from "./tree-lines-grid";
+import { gridRoute, sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { backTargets, FOLD_H, foldOuts, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
@@ -53,7 +53,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** 戻りの青い線が避ける箱 (描く箱だけ) */
   const avoid = computed(() => backs.value.size || (flag("newerHome") && links.value.size) ? boxes.value.filter((b) => b.out !== "pass" && !fold.value.hidden.has(b.id) && !mergedAway(doc.value, b) && !bandAway(doc.value, b)).map((b) => ({ id: b.id, ...posOf(b), w: BOX_W, h: heightOf?.(b.id) || BOX_H })) : []);
   /**
-   * 手の札 (px, jy) から戻り先の箱の横の辺の真ん中への道 (S-145 の探し方 sideRoute、ほかの箱を避ける)。通れなければ右の外を回る
+   * 手の札 (px, jy) から戻り先の箱の横の辺の真ん中への道 (S-145 の探し方 sideRoute、ほかの箱を避ける)。通れなければ箱の間の列と段の間を折れて進む (gridRoute)、それも無ければ右の外を回る
    * (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
    */
   const backPath = (px: number, jy: number, t: string): string => {
@@ -61,7 +61,17 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const x0 = Math.min(...avoid.value.map((a) => a.x)), x1 = Math.max(...avoid.value.map((a) => a.x + a.w));
     const side = sideRoute({ x: px, y: jy - CHIP_HALF, w: 0, h: CHIP_HALF * 2 }, { ...tq, w: BOX_W, h: th }, bx, x0 - 48, x1 + 48);
     if (side) return roundPath(side);
-    const col = Math.max(px, tq.x + BOX_W) + 48, ty = tq.y + th / 2;
+    const ty = tq.y + th / 2;
+    // 横の辺どうしで通れなければ、箱の間の列と段の間の高さを折れて進む道 (S-145 の探し方、tree-lines-grid の gridRoute)。
+    // 行き先の右と左の辺の外 (16) へ横から着き、辺の真ん中へ入る。前はここで行き先の右 +48 の列を箱を見ずに下り、間の箱を貫通した (11-14 レビュワー、b99→b41 が b38)
+    const s = { x: px, y: jy + CHIP_HALF }, outs = [{ e: { x: tq.x + BOX_W + 16, y: ty }, edge: tq.x + BOX_W }, { e: { x: tq.x - 16, y: ty }, edge: tq.x }];
+    const len = (ps: readonly { x: number; y: number }[]): number => ps.reduce((n, p, i) => n + (i ? Math.abs(p.x - ps[i - 1]!.x) + Math.abs(p.y - ps[i - 1]!.y) : 0), 0);
+    const grid = outs.map(({ e, edge }) => { const g = gridRoute(s, e, avoid.value, x0 - 48, x1 + 48); return g ? [{ x: px, y: jy }, ...g, { x: edge, y: ty }] : null; })
+      .filter((g): g is { x: number; y: number }[] => !!g).sort((a, z) => len(a) - len(z))[0];
+    if (grid) return roundPath(grid);
+    // 外回りも箱を見る: 行き先の右 +48 の列が箱を通るなら、木の右端の外の列へ逃がす (畳んだ緑は札が無いので線を消さない。11-14 レビュワー)
+    const near = Math.max(px, tq.x + BOX_W) + 48, segsOf = (c: number): Seg[] => [{ x0: px, y0: jy, x1: c, y1: jy }, { x0: c, y0: jy, x1: c, y1: ty }, { x0: c, y0: ty, x1: tq.x + BOX_W, y1: ty }];
+    const col = pierces(segsOf(near), [t]) ? Math.max(near, x1 + 48) : near;
     return roundPath([{ x: px, y: jy }, { x: col, y: jy }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }]);
   };
   /** (スイッチ newerHome) 縦・横の真っ直ぐな所がほかの描く箱を横切るか (行き先と出元の箱は除く。端から 4 内側で見る) */
