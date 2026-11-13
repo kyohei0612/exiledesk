@@ -24,6 +24,8 @@ import { isPhoneWidth } from "../../../utils/use-phone";
 const tierW = tr(TIER.length > 1 ? "w-9" : "w-6", "w-6");
 /** 右の 3 列 (出やすさ・ティア・Lv) は見出しと値を真ん中揃えに (オーナー 10-28「真ん中ぞろえにしてくれるかズレてる」、tierWord と同じスイッチ) */
 const COL = flag("tierWord") ? "text-center" : "text-right";
+/** hideDim で全部消えた時の一言 (U-12d、開発版だけ) */
+const MOD_NONE = flag("modNone");
 
 export interface ModSection { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
 
@@ -266,6 +268,8 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
     <slot name="notes" />
 
     <p v-if="SEARCH_FIT && query.trim() && !sections.length" data-mod-none class="py-4 text-center opacity-50">{{ tr("見つかりません", "No matches") }}</p>
+    <!-- hideDim で全部の節が消えた時 (例: MOD が上限まで付いた品で高貴を持つ) は一言 (U-12d、オーナー 11-13「出そうか」) -->
+    <p v-else-if="MOD_NONE && props.hideDim && !query.trim() && !sections.length" data-mod-empty class="py-4 text-center opacity-50">{{ tr("付けられる MOD はありません", "No mods can be added") }}</p>
     <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
       <h3 class="mb-3 mt-1 flex flex-wrap items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
         <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
