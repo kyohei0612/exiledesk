@@ -13,6 +13,12 @@ import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { rarityName } from "./tree-names";
+import GrantedSkillPick from "../../../components/for-share/trade/GrantedSkillPick.vue";
+import { useTreeSearch } from "./use-tree-search";
+import { flag } from "../../../web/release-flags";
+/** 付与スキルの選び (U-12f、スイッチ tradeSkill。付与スキルの付くベースの時だけ出る。選んだスキルは結果の窓の「取引所で探す」に効く) */
+const TRADE_SKILL = flag("tradeSkill");
+const ts = useTreeSearch();
 
 const t = useTree();
 const shown = useGoalShown();
@@ -70,6 +76,7 @@ onBeforeUnmount(() => ro?.disconnect());
 </script>
 
 <template>
+  <GrantedSkillPick v-if="TRADE_SKILL" v-model="ts.skill.value" class="mb-1.5 px-0.5" :base="t.doc.value.base" />
   <div data-tree-goal class="pointer-events-auto max-w-[calc(100vw-2rem)] select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#221b10]/95 to-[#120e08]/95 p-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
     :style="{ borderColor: `rgba(${RGB},${t.goalPage.value ? 0.95 : 0.7})`, width: `${Math.round(CARD_W * ZOOM) + 14}px` }">
     <button type="button" data-tree-goal-fold class="flex w-full items-center gap-1.5 rounded-md px-0.5 text-left hover:bg-white/[0.04] h-7" :aria-expanded="!folded" :title="folded ? tr('完成形のアイテムを出す', 'Show the final item') : tr('畳む', 'Collapse')" @click="toggleFold">

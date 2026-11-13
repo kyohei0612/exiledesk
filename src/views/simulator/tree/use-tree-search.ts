@@ -5,7 +5,8 @@
  * ✦ が 2 つ以上 (11-10 直し、前は 1 つ目だけ): Lv の下限は ✦ 全部を付けられる Lv、4 MOD は ✦ の MOD を全部持つ物 (start-cost の 4 MOD 買いと同じ)、
  * フラクチャー済みは ✦ のどれか 1 つが固定された物 (S-42「どの ✦ が固定されても当たり」)
  */
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { flag } from "../../../web/release-flags";
 import { craftStage as s } from "../../../state/craft-stage";
 import { minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine";
 import { tradeFiltersFor } from "../../../services/htc/buy-or-craft";
@@ -18,6 +19,9 @@ import { useTree } from "./use-tree";
 const AFFIX_COUNT = "pseudo.pseudo_number_of_affix_mods";
 export type TreeSearchKind = "white" | "four" | "fractured";
 type Filter = { id: string; min?: number };
+
+/** 取引所の検索の付与スキル (英語の名前、U-12f・スイッチ tradeSkill。null = どれでも)。選びは「0 完成形の設定」の上 (TreeGoalCard)、効くのは結果の窓の「取引所で探す」 */
+const grantedSkill = ref<string | null>(null);
 
 export function useTreeSearch() {
   const t = useTree();
@@ -38,7 +42,7 @@ export function useTreeSearch() {
   /** 探せるか (4 MOD・フラクチャー済みは ✦ が要る) */
   const can = (k: TreeSearchKind): boolean => k === "white" || !!fracStats(k === "four" ? "explicit" : "fractured");
   /** skill = 付与スキル (英語の名前、U-12f・スイッチ tradeSkill。null = どれでも) */
-  async function search(k: TreeSearchKind, skill: string | null = null): Promise<void> {
+  async function search(k: TreeSearchKind, skill: string | null = flag("tradeSkill") ? grantedSkill.value : null): Promise<void> {
     const base = t.doc.value.base;
     const gs = skill ? { grantedSkill: skill } : {};
     if (k === "white") return openTradeQuery(buildSpecQuery({ ...gs, baseType: base, rarity: "normal", ilvlMin: ilvlMin.value, stats: [], noSanctified: true }));
@@ -50,5 +54,5 @@ export function useTreeSearch() {
     const one = per.length === 1;
     return openTradeQuery(buildSpecQuery({ ...gs, baseType: base, rarity: "nonunique", ilvlMin: ilvlMin.value, stats: one ? per[0]! : [], anyOf: one ? [] : [{ filters: per.flat(), count: 1 }], fracturedItem: true, noSanctified: true }));
   }
-  return { can, search };
+  return { can, search, skill: grantedSkill };
 }
