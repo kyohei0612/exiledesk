@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.731",
+  "date": "2026-11-13",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 順位のひとことを名前の横に並べるようにしました",
+    "en": "Daily: Notes now sit next to the name in the ranking"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: ニックネームを全角 10 字 (半角 20 字) まで付けられるようにしました",
+    "en": "Daily: Nicknames can now be up to 20 characters (10 for Japanese)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去の後の自動の続きが 1 段だけの時は、札に畳まずに箱をそのまま並べるようにしました",
+    "en": "Simulator: when the automatic follow-up after an Orb of Annulment is only one step, its boxes are now shown as they are instead of being folded into a tag"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形のカードは、狙いを決めた後は MOD の札を出さず「ティア調整」だけにしました (MOD の選び直しは上の「完成の MOD」から)",
+    "en": "Simulator: once targets are set, the goal card shows only the tier adjust button instead of the mod tag (change the mods from the final mods step above)"
+   }
+  ]
+ },
+ {
   "v": "0.1.730",
   "date": "2026-11-13",
   "items": [
@@ -928,18 +958,6 @@
     "area": "",
     "text": "シミュレーター: ヒネコラの髪束の予見が使えるようになりました",
     "en": "Simulator: Hinekora's Lock (foresight) is now available"
-   }
-  ]
- },
- {
-  "v": "0.1.691",
-  "date": "2026-11-09",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: フラクチャーの手の窓の説明を直しました (固定される MOD はゲームと同じ乱数で 1 つ、オーブは 1 回 1 個)",
-    "en": "Simulator: corrected the Fracturing Orb step's description (one fracturable mod is picked at random as in the game, 1 orb per use)"
    }
   ]
  }
