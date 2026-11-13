@@ -210,6 +210,9 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // シミュの完成形から「エミュで試す →」・消去の続きは ✦ を数えず消せる MOD 1 つで止める (オーナー 11-14「あー出していいよね」「これはもう出していい」→「おｋ」、ブラック 104)。tradeSkill は入れない
+  "simToEmu",
+  "annulLastOne",
   // シミュの木の上の帯 (全画面を外す・1 行左詰め・まだ回していないは乗せた時)・段の札の端 (箱が札にかぶらない)・押した数の数え (オーナー 11-14「３はツリー系だからパス出さない。以外はリリースおk」、ブラック 104)。閉じたまま = tabRecipe・frameSigOnce (タブ化と一緒)・foldEnds (外れ側を 1 行)
   "treeTrim",
   "laneEdge",

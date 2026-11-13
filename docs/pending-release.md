@@ -7,6 +7,9 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| エミュで試す simToEmu (S-211・M-06d、19a8ecd28 ほか) | 19a8ecd28 | シミュレーターの完成形の設定から「エミュで試す →」でエミュレーターに完成形の品を載せて開けるようにしました | You can now open the simulator's target item in the emulator with "Try in the emulator →" |
+| 消去は 1 MOD 残しで止める annulLastOne (S-28g ①、52892f92c) | 52892f92c | シミュレーターの消去の続きは、フラクチャーで固めた MOD を数えず、消せる MOD が 1 つ残った所で止まるようにしました (カオスを打てる形) | In the simulator, annulment chains now stop when one removable mod is left, not counting fractured mods, so you can follow up with Chaos |
+| 「100 人回す」に乗せた時の吹き出しを 1 つに (TreeRunBar・TreeRunSum、sim-side2 の直し) | (sim-side2 の push) | シミュレーターの「100 人回す」に乗せた時、説明が 2 つ重なって出ていたのを 1 つにしました | Hovering "Run 100" in the simulator no longer shows two overlapping tips |
 | デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
