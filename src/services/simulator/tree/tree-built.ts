@@ -6,10 +6,13 @@
  */
 import type { TreeDoc } from "./tree-model";
 import { toRecipeV1 } from "./tree-recipe-v1";
+import { DEV_BUILD } from "../../../web/release-flags";
 
 declare const __TREE_BUILD__: string | undefined;
+/** 画面の ?off= で切ったスイッチ (開発版の作りだけ効く。名前を並べて版に足す = 切り方が違えば写しを使わない、11-13 最終チェック長 12) */
+const offKey = (): string => { if (!DEV_BUILD) return ""; try { const v = new URLSearchParams(location.search).get("off"); return v ? `|off=${v.split(",").filter(Boolean).sort().join(",")}` : ""; } catch { return ""; } };
 /** 木の組み方の版 (空 = 写しを作らない・使わない) */
-export const TREE_BUILD: string = typeof __TREE_BUILD__ === "string" ? __TREE_BUILD__ : "";
+export const TREE_BUILD: string = typeof __TREE_BUILD__ === "string" && __TREE_BUILD__ ? __TREE_BUILD__ + offKey() : "";
 
 /** 組み上がった木の写し: v = 組み方の版、rec = 組んだ打ち方の指紋、doc = 組み上がった木 (例のアイテムは外す = 保存の形の examples を使う) */
 export interface TreeBuilt { v: string; rec: string; doc: TreeDoc }
