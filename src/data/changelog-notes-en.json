@@ -1,4 +1,8 @@
 {
+  "0.1.729": [
+    "Simulator: added resistance Flux orbs as tree steps. They are applied to a target resistance mod and add one result box below (also in the Daily tree)",
+    "Replies to feedback: when a reply arrives, a popup now also shows on the page you have open"
+  ],
   "0.1.728": [
     "Daily: today's challenge image is now shown bright even before you start"
   ],

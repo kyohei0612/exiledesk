@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.729",
+  "date": "2026-11-13",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木の手に耐性のフラックスを足しました。狙いの耐性 MOD に打ち、打った後の箱を 1 つ下に出します (デイリーの木も同じ)",
+    "en": "Simulator: added resistance Flux orbs as tree steps. They are applied to a target resistance mod and add one result box below (also in the Daily tree)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "要望への返事: 返事が届いた時、今開いている画面にもポップアップで知らせるようにしました",
+    "en": "Replies to feedback: when a reply arrives, a popup now also shows on the page you have open"
+   }
+  ]
+ },
+ {
   "v": "0.1.728",
   "date": "2026-11-13",
   "items": [
@@ -916,24 +934,6 @@
     "area": "",
     "text": "記事を整理しました (重なる記事をまとめ、古い記事を消しました)",
     "en": "Tidied up the blog (merged overlapping articles and removed outdated ones)"
-   }
-  ]
- },
- {
-  "v": "0.1.689",
-  "date": "2026-11-09",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 共有されたレシピを開いて見ただけなら、ほかの画面へ移る時に保存するか聞かないようにしました",
-    "en": "Simulator: opening a shared recipe just to look at it no longer asks whether to save when you move to another page"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 最終チェックの途中で画面が固まりにくくしました",
-    "en": "Simulator: the page freezes less while the final check is running"
    }
   ]
  }
