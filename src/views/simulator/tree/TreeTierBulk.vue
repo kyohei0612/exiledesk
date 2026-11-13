@@ -162,7 +162,7 @@ function apply(): void {
       </details>
       <div class="mt-2 flex justify-end gap-2">
         <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
-        <button type="button" data-tree-tier-apply class="g-btn sm" :disabled="!changed" @click="apply">{{ changed ? tr(`${changed} つ下げる`, `Lower ${changed}`) : tr("下げる物なし", "Nothing to lower") }}</button>
+        <button type="button" data-tree-tier-apply class="g-btn sm" :disabled="!changed" @click="apply">{{ tr("決定", "Confirm") }}</button>
       </div>
     </div>
   </Teleport>
