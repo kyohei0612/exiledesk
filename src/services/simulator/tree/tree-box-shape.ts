@@ -5,7 +5,8 @@
  * 見張り scripts/sim-watch が呼ぶ) の boxShape・sameShape だけが使う。前の世代の形の鍵の判定 (tree-shape の linkSameShape・matchBox) と、それだけが使った
  * bodyFixed・backBody・heldOfKey は 11-07 に消した
  */
-import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import { sampleOf } from "./tree-sample";
 import { heldSets, MATCH, RESTART, shapeFits } from "./tree-shape";
 import { aimedMiss, isMissMod, type MissAims } from "./tree-miss";
@@ -27,10 +28,16 @@ export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, aims?: MissAi
     for (const m of ms) { if (m.fractured || !isMissMod(m, miss)) continue; if (m.unrevealed) u++; else if (m.desecrated) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
     return `${n}.${c}.${x}.${u}`;
   };
-  // ✦ は完成形の狙い全部で見る (☑ は見ない、前から)
-  const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const g = f.filter((m) => !isMissMod(m, all)).length; return `g${g}j${f.length - g}`; };
+  // ✦ は完成形の狙い全部で見る (☑ は見ない、前から)。
+  // スイッチ fracSplit: 狙いの ✦ は数でなく「どの狙いが固定されているか」(modId の組) で見る = 固定された MOD が違う人は同じ箱にまとめない
+  // (S-11b、11-13 オーナー「イだろうねフラクチャー枠違うわけだし」。前は数だけで、F:冷気・雷は普通の人と F:雷・冷気は普通の人が同じ箱へ合流した = r/G9O1UdeA の b50 → b20)
+  const split = flag("fracSplit");
+  const gIds = (f: readonly StageMod[]): string => [...new Set(f.flatMap((m) => all.targets.filter((t) => aimHits(m, t, all.opts)).map((t) => t.modId)))].sort().join("+");
+  const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const gf = f.filter((m) => !isMissMod(m, all)), g = gf.length; return `g${split && g ? `[${gIds(gf)}]` : g}j${f.length - g}`; };
   return `${side(it.prefixes)}|${side(it.suffixes)}|✦${fr(it.prefixes)}.${fr(it.suffixes)}|${it.rarity}`;
 }
+/** 中身の鍵の ✦ の「どの狙いが固定か」(g[modId+modId]、スイッチ fracSplit) を数に戻す = 固定された MOD の違いだけを見ない鍵 (S-11b の写し) */
+export const fracCountKey = (k: string): string => k.replace(/g\[([^\]]*)\]/g, (_, s: string) => `g${s.split("+").length}`);
 /** 体の鍵の部分 (側ごとの外れ 2 つ・✦・レアリティ) */
 const partsOf = (body: string): { p: number[]; s: number[]; fr: string; rarity: string } => {
   const [p = "", s = "", fr = "", rarity = ""] = body.split("|");

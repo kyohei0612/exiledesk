@@ -152,6 +152,27 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
     }
   }
   yield* carryPicks();
+  /**
+   * スイッチ fracSplit (S-11b): ✦ で固定された狙いの MOD だけが違うので合流しなくなった決めの無い箱に、合流先 (手のある箱・完成 / 失敗の箱) の保存の決めを下ごと写す
+   * (11-13 オーナー案 A「分かれた箱には合流先の下の手をそのまま写して自動で組む」、ブラック 97 経由。r/G9O1UdeA の b50 → b20)。写した後は普通の箱
+   */
+  function* carryFrac(): Generator<TreeDoc> {
+    if (!flag("fracSplit")) return;
+    for (let n = 0; n < 8; n++) {
+      const j = judgeMemo(data, d), saved = (id: string): string | null => { const at = placed.get(id)?.[1]; return at && picks.has(at) ? at : null; };
+      let moved = false;
+      for (const b of Object.values(d.boxes)) {
+        if (b.out === "start" || b.hand || b.back || b.done || b.split || !placed.has(b.id) || saved(b.id)) continue;
+        const t = Object.values(d.boxes).filter((x) => (!!x.hand || !!x.done) && !!saved(x.id) && j.fracOnly(b.id, x.id)).map((x) => x.id).sort(treeOrder(d))[0];
+        if (!t) continue;
+        q.push([b.id, placed.get(b.id)![0], saved(t)!]);
+        moved = true;
+      }
+      if (!moved) return;
+      yield* drain();
+    }
+  }
+  yield* carryFrac();
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); foldToTrunks(d, () => judgeMemo(data, d)); yield* carryPicks(); linkLeftovers(data, d); mergeIntoBacked(data, d); // 同じ中身は木に 1 箱 (S-51d)
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
   const left = !stepped || [...picks.keys()].some((k) => !used.has(k));

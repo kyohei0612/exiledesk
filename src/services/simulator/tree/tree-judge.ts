@@ -12,7 +12,7 @@ import { kindOf, mulberry32, occupiedFamiliesOf, OMEN_KEY, type PatchData, type 
 import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
-import { bodyOf } from "./tree-box-shape";
+import { bodyOf, fracCountKey } from "./tree-box-shape";
 import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
 import { aimOpts, playHand, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
@@ -268,6 +268,8 @@ export interface Judge {
   afterQuality(id: string): boolean;
   /** from の代表の品に to の手が打てるか (自動の ↩ の先を選ぶ時。枠の比べ fitsBox は手を見ないまま、S-60c。11-11 骨の発現の後の外れが骨の箱へ戻って打てなかった) */
   playsAt(from: string, to: string): boolean;
+  /** 箱どうし: ✦ で固定された狙いの MOD だけが違い、ほかの中身は同じ (スイッチ fracSplit で分けた合流の写し、S-11b) */
+  fracOnly(from: string, to: string): boolean;
 }
 
 /** 中身を作る途中で止めた印 (judgeMemo の fullUntil) */
@@ -343,6 +345,14 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       if (fullUntil(from, (k) => !b.has(looseKey(k))) === REJECTED) return false;
       const a = contents(from);
       return !!a && a.size === b.size && [...a].every((k) => b.has(k));
+    },
+    fracOnly(from, to) {
+      // ✦ で固定された狙いの MOD だけが違う (スイッチ fracSplit、S-11b): 両方分かり、✦ を数に戻すと同じ中身で、そのままでは違う
+      if (from === to || !doc.boxes[from] || !doc.boxes[to] || lvOf(from) !== lvOf(to)) return false;
+      const a = contents(from), b = contents(to);
+      if (!a || !b || a.size !== b.size || [...a].every((k) => b.has(k))) return false;
+      const bc = new Set([...b].map(fracCountKey));
+      return [...a].every((k) => bc.has(fracCountKey(k)));
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
