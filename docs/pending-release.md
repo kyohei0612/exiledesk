@@ -7,6 +7,9 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| シミュの木の上の帯 treeTrim (S-94i・S-94j、fd375647c・76f095355) | fd375647c・76f095355 | シミュレーターの木の上の帯を 1 行にまとめ、全画面のボタンを外しました。「まだ回していない」は「100 人回す」にマウスを乗せた時だけ出ます | The simulator tree's top bar now fits on one row without the full-screen button. "Not run yet" only appears when you hover "Run 100" |
+| 段の札の端 laneEdge (S-147m、1c0871407) | 1c0871407 | シミュレーターの木で、左の段の札に箱や線がかぶらなくなりました | In the simulator tree, boxes and lines no longer overlap the stage labels on the left |
+| 押した数の数え uiTally (Y-67、6217dc556) | 6217dc556 | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 | デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
