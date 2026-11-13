@@ -9,6 +9,7 @@ import { mulberry32, type PatchData, type StageApply, type StageItem } from "../
 import { isAimMod } from "./tree-aim";
 import { aimOpts, aimsOf, handAims, holdDocSig, outcomeOf, playHandSteps, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, essenceHold, passSameHi } from "./tree-outcome";
+import { fluxBlock } from "./tree-flux";
 import { MATCH, outBoxOf, RESTART, splitTo, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -266,7 +267,8 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品、使う物は 3 回分
     const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
     if (sure) useSureFrac(b.hand, (k, n) => { spent.push([k, n]); });
-    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
+    // 耐性のフラックスで変えられる狙いの耐性が無い人 (2 周目でもう変えた後など) は打たずに飛ばす: 品のまま・使わない (S-31h、オーナー 11-13「スキップ処理は必要止まるよ」)
+    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) || fluxBlock(data, doc, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
