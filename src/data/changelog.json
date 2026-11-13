@@ -24,6 +24,18 @@
    {
     "kind": "",
     "area": "",
+    "text": "シミュレーター: フラクチャーオーブで固めた MOD を、品に付いている段と値のまま表示するようにしました (前は完成形の段の値で表示していました)",
+    "en": "Simulator: mods locked with a Fracturing Orb now show the tier and value they actually have on the item (before, they showed the tier value from the finished item)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 共有・保存した木を開いた時、スタートの箱を左上に置き、50% の大きさから表示するようにしました",
+    "en": "Simulator: when opening a shared or saved tree, the Start box is now placed at the top left and the view starts at 50% zoom"
+   },
+   {
+    "kind": "",
+    "area": "",
     "text": "デイリー: 11/13 のお題から、お題のティアを T2 以上にしました (前は T3 以上)",
     "en": "Daily: from the 11/13 challenge, challenge tiers are T2 or higher (previously T3 or higher)"
    }

@@ -3,6 +3,8 @@
     "Simulator: pressing Done or Final check now rearranges the tree into an easier-to-read layout, and the tree is drawn narrower. New boxes from a step are ordered hit → unset → the rest",
     "Simulator: fixed the tree view shifting sideways when placing a step from \"Unset +\" on a Whittling lane band",
     "Simulator: saved trees are now rebuilt with the current rules when opened after the rules have changed",
+    "Simulator: mods locked with a Fracturing Orb now show the tier and value they actually have on the item (before, they showed the tier value from the finished item)",
+    "Simulator: when opening a shared or saved tree, the Start box is now placed at the top left and the view starts at 50% zoom",
     "Daily: from the 11/13 challenge, challenge tiers are T2 or higher (previously T3 or higher)"
   ],
   "0.1.724": [
