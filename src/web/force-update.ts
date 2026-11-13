@@ -18,6 +18,13 @@ import { leaveAsk } from "./page";
 import { craftStage } from "../state/craft-stage";
 
 export const FORCE_ON = typeof window !== "undefined" && flag("forceUpdate");
+/**
+ * 返事の合図 (U-36、スイッチ replyPush): /force.txt の 2 行目「返事 <要望の id の頭 8 字,…>」。押した時の同じ 1 回の読みで拾い、
+ * onReplySignal で渡した物 (ReplyAsk.vue → feedback-replies の checkPushed) に頭の並びを渡す。Worker は通らない
+ */
+export const REPLY_PUSH = typeof window !== "undefined" && flag("replyPush") && flag("replyPopup");
+let replyHook: ((heads: string[]) => void) | null = null;
+export function onReplySignal(fn: (heads: string[]) => void): void { replyHook = fn; }
 
 /** ポップアップを出している */
 export const forceAsk = ref(false);
@@ -54,8 +61,11 @@ async function readSignal(): Promise<void> {
   try {
     const res = await fetch(`/force.txt?t=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) return;
-    const [no, to] = (await res.text()).trim().split(/\s+/);
-    if (Number(no) > 0 && to && /^\d+(\.\d+)*$/.test(to) && older(pkg.version, to)) forceReady.value = true;
+    const [first = "", second = ""] = (await res.text()).trim().split(/\r?\n/);
+    const [no, to] = first.trim().split(/\s+/);
+    const heads = /^(返事|reply)\s+/i.test(second.trim()) ? second.trim().replace(/^\S+\s+/, "").split(/[\s,]+/).filter(Boolean) : [];
+    if (REPLY_PUSH && heads.length) replyHook?.(heads);
+    if (FORCE_ON && Number(no) > 0 && to && /^\d+(\.\d+)*$/.test(to) && older(pkg.version, to)) forceReady.value = true;
   } catch { /* 読めなければ次の押しで */ } finally { reading = false; }
 }
 
@@ -84,7 +94,7 @@ function onPress(e: Event): void {
     const t = e.target as HTMLElement | null;
     if (t?.closest?.("input, textarea, select, [contenteditable='true']")) return; // 打っている鍵では出さない (欄の外を押した時に)
   }
-  if (!forceReady.value && FORCE_ON && performance.now() - lastRead >= READ_GAP) { void readSignal().then(() => setTimeout(maybeAsk, 0)); return; }
+  if (((!forceReady.value && FORCE_ON) || REPLY_PUSH) && performance.now() - lastRead >= READ_GAP) { void readSignal().then(() => setTimeout(maybeAsk, 0)); return; }
   setTimeout(maybeAsk, 0); // 押した手が効いた後に出す
 }
 

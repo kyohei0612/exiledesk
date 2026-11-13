@@ -55,6 +55,20 @@ export async function checkReplies(): Promise<boolean> {
   } catch { return false; }
 }
 
+/** 合図で聞いた id (この画面の間は同じ id で 2 度聞かない) */
+const pushedAsked = new Set<string>();
+/**
+ * 返事の合図 (U-36、スイッチ replyPush): /force.txt の 2 行目の id の頭 (8 字) に、この端末で送ってまだ返事を見ていない要望が入っていたら 1 回だけ聞く。
+ * 入っていなければ Worker に聞かない (Y-100 の例外は「合図が自分の id を含んだ時の 1 回」)
+ */
+export function checkPushed(heads: readonly string[]): void {
+  const seen = new Set(read<string[]>(SEEN_KEY, []));
+  const hit = read<Sent[]>(SENT_KEY, []).filter((x) => !seen.has(x.id) && !pushedAsked.has(x.id) && heads.includes(x.id.slice(0, 8)));
+  if (!hit.length) return;
+  for (const x of hit) pushedAsked.add(x.id);
+  void checkReplies();
+}
+
 /** 窓を閉じた時に呼ぶ: 出した返事は見た事にする (ポップアップの返事も) */
 export function markRepliesSeen(): void {
   const all = [...feedbackReplies.value, ...popupReplies.value];

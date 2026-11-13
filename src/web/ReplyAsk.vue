@@ -8,11 +8,13 @@
 import { ref } from "vue";
 import ModalShell from "../components/ui/ModalShell.vue";
 import { tr } from "../i18n/lang";
-import { markRepliesSeen, popupReplies, replyTo } from "../state/feedback-replies";
-import { addPressAsker } from "./force-update";
+import { checkPushed, markRepliesSeen, popupReplies, replyTo } from "../state/feedback-replies";
+import { addPressAsker, onReplySignal } from "./force-update";
 import { openFeedback } from "./page";
 
 const open = ref(false);
+// 返事の合図 (/force.txt の 2 行目、スイッチ replyPush): 自分の要望が入っていたら聞き、次の押しで出す
+onReplySignal(checkPushed);
 addPressAsker(() => { if (!popupReplies.value.length) return false; open.value = true; return true; }, () => open.value);
 
 function close(): void { open.value = false; markRepliesSeen(); }
