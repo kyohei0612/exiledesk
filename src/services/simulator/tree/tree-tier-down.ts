@@ -3,7 +3,8 @@
  * 完成形のカードの段の札から下限を選ぶと、完成形の狙い・木の当たりの箱の段・残す MOD の段を一緒に下げる。
  * オーブ (高貴の上級・完全など) は自動で替えない (11-13 オーナー「今のオーブで出なかったら注意書きでオーブのおすすめ」「変更加えたオーブだけいじったらええ」):
  * 今のオーブの段の下限 (E-11d、エンジンの orbFloor) では狙いの下限の段が出ない手だけを orbMisfits で拾い、画面が「オーブをどうしますか」とおすすめを出す。
- * ✦ (フラクチャーの印) の MOD は下げない。同じ MOD の ✦ 側 / 普通側の 2 つ持ちは後 (todo)。上げは無し。
+ * ✦ (フラクチャーの印) の MOD は木 (3) では下げない。2 完成の MOD の画面のティア調整 (frac) では ✦ も下げ、そこで決めた段がフラクチャーの候補の下限になる
+ * (11-13 オーナー「フラクチャーMODが複数ついた場合もう最初のベース決めの次MOD選びの段階でティア調整ボタンは配置しておくべき」)。上げは無し。
  */
 import { orbFloor, parseKey, type OrbStrength, type PatchData } from "../../craft-stage/engine";
 import { sameAimMod } from "./tree-hand-core";
@@ -41,13 +42,15 @@ export const canLowerGoal = (data: PatchData, doc: TreeDoc, goal: Aim): boolean 
 /**
  * 完成形の狙い from を to (同じ MOD の下の段。to.tier > from.tier) に下げる。
  * 書き換える物: 完成形の狙い (貼り付けの値は外す)・当たりの箱の段 (aim と anyOf)・残す MOD (keep)。オーブは触らない (orbMisfits)。
- * 段を上げる・✦ の MOD は何もしない (false)
+ * 段を上げる・✦ の MOD は何もしない (false)。frac = 2 完成の MOD の画面から (✦ の MOD も下げる、✦ の印は残す)
  */
-export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim): boolean {
-  if (to.tier <= from.tier || !canLowerGoal(data, d, from)) return false;
+/** 貼り付けの値を外した狙い (✦ の印などほかはそのまま) */
+const noValues = (a: Aim): Aim => { const { values: _v, ...rest } = a; return rest; };
+export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, frac = false): boolean {
+  if (to.tier <= from.tier || (!frac && !canLowerGoal(data, d, from))) return false;
   const same = (a: Aim): boolean => sameAimMod(data, a, from);
-  const down = (a: Aim): Aim => (same(a) && !a.fractured ? { ...a, modId: to.modId, tier: to.tier } : a);
-  d.memoAims = (d.memoAims ?? []).map((a) => (same(a) && !a.fractured ? { modId: to.modId, tier: to.tier } : a));
+  const down = (a: Aim): Aim => (same(a) && (frac || !a.fractured) ? { ...a, modId: to.modId, tier: to.tier } : a);
+  d.memoAims = (d.memoAims ?? []).map((a) => (same(a) && (frac || !a.fractured) ? { ...noValues(a), modId: to.modId, tier: to.tier } : a));
   for (const b of Object.values(d.boxes)) {
     if (b.aim) b.aim = down(b.aim);
     if (b.anyOf) b.anyOf = b.anyOf.map(down);

@@ -46,6 +46,10 @@ import TreeGoalRunes from "./TreeGoalRunes.vue";
 import { wayName } from "./tree-attach";
 import { simOp } from "../../../web/track";
 import { flag } from "../../../web/release-flags";
+import TreeTierBulk from "./TreeTierBulk.vue";
+/** 狙うMODの一括ティア調整をここにも (S-10f、スイッチ tierDown。✦ の段はここで決める、11-13 オーナー「次MOD選びの段階でティア調整ボタンは配置しておくべき」) */
+const TIER_DOWN = flag("tierDown");
+const tierOpen = ref(false);
 /** 見本の MOD はツリーで狙いにできる、の注意書き (S-10e、スイッチ aimGroups) */
 const AIM_NOTE = flag("aimGroups");
 /** 段の行のボタンを「付ける」1 つに (S-10b) */
@@ -340,6 +344,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
         <!-- 見本の MOD はツリーで狙いにできる (S-10e、スイッチ aimGroups。11-13 オーナー「フラクチャーで設定した場合でも狙いMODとして定めることが出来るんだなって思うよね」) -->
         <ul v-if="AIM_NOTE && t.goalItem.value" data-tree-goal-aim-note class="list-disc pl-5 text-[12px] leading-snug text-sim-dim"><li>{{ tr("上記の見本に入れた MOD (フラクチャーの候補も) は、ツリーで狙い MOD として設定できます。同じ MOD をもう一度足す必要はありません", "Mods in the item above (fracture candidates too) can be set as target mods in the tree. No need to add the same mod again") }}</li></ul>
+        <button v-if="TIER_DOWN && t.goals.value.length" type="button" data-tree-goal-tier-step2 class="g-btn sm self-end" :title="tr('狙うMODの一括ティア調整 (フラクチャーの候補 ✦ の段もここで決める)', 'Adjust target mod tiers (set fracture candidate tiers here too)')" @click="tierOpen = true">{{ tr("ティア調整", "Tiers") }}</button>
+        <TreeTierBulk v-if="tierOpen" frac @close="tierOpen = false" />
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <TreeGoalRunes />

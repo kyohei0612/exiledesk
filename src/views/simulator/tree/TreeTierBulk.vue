@@ -18,6 +18,8 @@ import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import { capDivOf, runPrice } from "../../../services/simulator/tree/run-price";
 import { RUN_N } from "./use-tree-run";
 
+/** frac = 2 完成の MOD の画面から開いた (✦ の行も段を選べる。ここで決めた段がフラクチャーの候補の下限、S-10f) */
+const props = defineProps<{ frac?: boolean }>();
 const emit = defineEmits<{ close: []; lowered: [modIds: string[]] }>();
 const t = useTree();
 const box = ref<HTMLElement | null>(null);
@@ -33,7 +35,7 @@ const lines = computed<Line[]>(() => {
     const row = t.rows.value.find((r) => is(r.id) || r.tiers.some((x) => is(x.modId)));
     const all = (row?.tiers ?? []).filter((x) => !x.modId || is(x.modId));
     const now = all.find((x) => x.tier === goal.tier);
-    return { goal, head: now?.text ?? row?.text ?? t.aimLabel(goal), locked: !canLowerGoal(data, t.doc.value, goal), tiers: all.filter((x) => x.tier >= goal.tier).sort((a, z) => a.tier - z.tier) };
+    return { goal, head: now?.text ?? row?.text ?? t.aimLabel(goal), locked: !props.frac && !canLowerGoal(data, t.doc.value, goal), tiers: all.filter((x) => x.tier >= goal.tier).sort((a, z) => a.tier - z.tier) };
   });
 });
 /** 行ごとに選んだ段 (狙いの順。初めは今の段) */
@@ -75,7 +77,7 @@ async function count(): Promise<void> {
         const [i, tier] = want.split(":").map(Number) as [number, number];
         const goal = lines.value[i]!.goal;
         d = JSON.parse(JSON.stringify(base)) as TreeDoc;
-        lowerGoalTier(data, d, goal, { modId: goal.modId, tier });
+        lowerGoalTier(data, d, goal, { modId: goal.modId, tier }, props.frac);
       }
       const r = await rateOf(d);
       if (!alive || t.doc.value !== base) return;
@@ -90,7 +92,7 @@ function apply(): void {
   const data = s.data.value;
   if (!data || !changed.value) return;
   const goals = lines.value.map((l, i) => ({ l, tier: picked.value[i] ?? l.goal.tier })).filter((x) => !x.l.locked && x.tier > x.l.goal.tier);
-  t.edit((d) => { for (const x of goals) lowerGoalTier(data, d, x.l.goal, { modId: x.l.goal.modId, tier: x.tier }); });
+  t.edit((d) => { for (const x of goals) lowerGoalTier(data, d, x.l.goal, { modId: x.l.goal.modId, tier: x.tier }, props.frac); });
   emit("lowered", goals.map((x) => x.l.goal.modId));
   emit("close");
 }
@@ -98,9 +100,10 @@ function apply(): void {
 
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 z-[79] bg-black/40" aria-hidden="true" />
-    <div ref="box" data-tree-tier-bulk role="dialog" :aria-label="tr('狙うMODの一括ティア調整', 'Adjust target mod tiers')"
-      class="fixed left-1/2 top-[12vh] z-[80] w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-[#c9a45c]/70 bg-[#17120a] p-3 text-[13px] shadow-[0_8px_24px_rgba(0,0,0,0.75)]">
+    <!-- 2 完成の MOD の画面 (ModalShell z-310) の上にも出す -->
+    <div class="fixed inset-0 bg-black/40" :class="frac ? 'z-[320]' : 'z-[79]'" aria-hidden="true" />
+    <div ref="box" data-tree-tier-bulk role="dialog" :aria-label="tr('狙うMODの一括ティア調整', 'Adjust target mod tiers')" :class="frac ? 'z-[321]' : 'z-[80]'"
+      class="fixed left-1/2 top-[12vh] w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-[#c9a45c]/70 bg-[#17120a] p-3 text-[13px] shadow-[0_8px_24px_rgba(0,0,0,0.75)]">
       <div class="mb-2 flex items-baseline gap-2">
         <p class="flex-1 text-[15px] font-bold text-[#f2d27a]">{{ tr("狙うMODの一括ティア調整", "Adjust target mod tiers") }}</p>
         <span v-if="t.runReady.value" data-tree-tier-now class="text-[12px] tabular-nums text-white/70">{{ tr("今の完成率", "Now") }} <b class="text-[#f2d27a]">{{ pct(rates.now) }}</b></span>
@@ -109,7 +112,7 @@ function apply(): void {
       <div class="max-h-[60vh] overflow-y-auto">
         <div v-for="(l, i) in lines" :key="l.goal.modId + ':' + i" data-tree-tier-line :data-mod="l.goal.modId" class="flex items-center gap-2 border-t border-white/[0.07] py-1.5">
           <span class="min-w-0 flex-1 truncate text-white/85" :title="l.head"><span v-if="l.goal.fractured" class="mr-1 text-[#9fd3ff]">✦</span>{{ l.head }}</span>
-          <span v-if="l.locked" data-tree-tier-locked class="shrink-0 text-[12px] text-white/50">{{ tr(`T${l.goal.tier} 以上のまま (フラクチャーの候補は下げない)`, `Stays T${l.goal.tier}+ (fracture candidate)`) }}</span>
+          <span v-if="l.locked" data-tree-tier-locked class="shrink-0 text-[12px] text-white/50">{{ tr(`T${l.goal.tier} 以上のまま (フラクチャーの候補は 2 完成の MOD で決める)`, `Stays T${l.goal.tier}+ (set fracture candidates in step 2)`) }}</span>
           <template v-else>
             <select v-model.number="picked[i]" data-tree-tier-select :aria-label="tr(`${l.head} の段`, `${l.head} tier`)"
               class="w-[9.5rem] shrink-0 rounded border border-[#c9a45c]/50 bg-[#0f0b06] px-1 py-0.5 text-[12px] tabular-nums text-[#f2d27a]">
@@ -123,7 +126,7 @@ function apply(): void {
           </template>
         </div>
       </div>
-      <p class="mt-2 text-[12px] leading-snug text-white/55">{{ tr("選べるのは今の段と、それより下だけ。% は 100 人回した後に、その行だけ下げた時の完成率を出す。決めると木の当たりの箱の段も下がる。今のオーブでその段が出ない手は、決めた後に替えるかを聞く (1 つ戻すで戻せる)", "Only the current tier or lower can be chosen. After running 100, each row shows the completion rate if only that row is lowered. Applying also lowers the hit boxes in the tree. If an orb can't roll the new tier you'll be asked whether to switch it (Undo restores it)") }}</p>
+      <p class="mt-2 text-[12px] leading-snug text-white/55">{{ frac ? tr("フラクチャーの候補 (✦) もここで段を選べる。ここで決めた段が、全部付けたい MOD の下限になる (ツリーのティア調整では ✦ は変えない)。", "Fracture candidates (✦) can be set here too; the tier you pick is their minimum (the tree's tier window keeps ✦ as is). ") : "" }}{{ tr("選べるのは今の段と、それより下だけ。% は 100 人回した後に、その行だけ下げた時の完成率を出す。決めると木の当たりの箱の段も下がる。今のオーブでその段が出ない手は、決めた後に替えるかを聞く (1 つ戻すで戻せる)", "Only the current tier or lower can be chosen. After running 100, each row shows the completion rate if only that row is lowered. Applying also lowers the hit boxes in the tree. If an orb can't roll the new tier you'll be asked whether to switch it (Undo restores it)") }}</p>
       <div class="mt-2 flex justify-end gap-2">
         <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-tier-apply class="g-btn sm" :disabled="!changed" @click="apply">{{ changed ? tr(`${changed} つ下げる`, `Lower ${changed}`) : tr("下げる物なし", "Nothing to lower") }}</button>
