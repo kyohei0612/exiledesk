@@ -56,7 +56,8 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
       for (const o of b.outs) walk(o, n + 1);
     };
     walk(h.id, 1);
-    if (steps < 2 && !oneBranch()) continue;
+    // 1 段だけの続きは畳まず箱をそのまま並べる (スイッチ annulFoldTwo、11-13 オーナー「ここまできたら省略とかいらんだろうな」。閉じている間は treeNoAnnulAuto の下で 1 段も畳む)
+    if (steps < 2 && (!oneBranch() || flag("annulFoldTwo"))) continue;
     // 畳んだ中の箱へまとめた箱 (同じ段のまとめ S-66) は札の中 = 止まった箱にしない。線の先に描かない箱が混ざると札の線ごと消えた (11-06 MISV6HZL、オーナー「普通に線が消えてね」)
     const inside = new Set(mids);
     const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };
