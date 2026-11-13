@@ -68,8 +68,12 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   const laneOn = (): boolean => flag("treeZoomLane") && innerWidth >= VIEW_ONLY_MAX;
   function zoomPut(x: number, y: number, zoom: number): Promise<unknown> {
     if (!laneOn()) return put(x, y, zoom);
+    return put(laneX(x, y, zoom), y, zoom);
+  }
+  /** 視点 (x, y, zoom) で段の札の帯にかぶる箱を横だけ帯の外へ出す視点の x (S-147k の laneClear) */
+  function laneX(x: number, y: number, zoom: number): number {
     const bs = f.getNodes.value.filter((n) => !n.hidden).map((n) => ({ x: n.position.x, y: n.position.y, h: n.dimensions.height || BOX_H }));
-    return put(laneClear(bs, { x, y, zoom }, laneWAt(zoom), f.dimensions.value.height), y, zoom);
+    return laneClear(bs, { x, y, zoom }, laneWAt(zoom), f.dimensions.value.height);
   }
   /** 今より 1 段上 / 下 (段の間にいる時は近い側の次) */
   const stepZoom = (dir: 1 | -1, at?: { x: number; y: number }): Promise<void> => {
@@ -224,7 +228,12 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     // 11-11 から札は木の面の上に浮くので (TreeUnsetBar)、札の帯の高さを見える高さから引く
     const bar = document.querySelector("[data-tree-unset-bar]") ? BAR_H * pageZ.value : 0;
     const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - bar - m;
-    if (mid || out) await center(b.x + BOX_W / 2, sh > h - bar - m * 2 ? b.y + (h / 2 - m) / z : b.y + sh / (2 * z) + bar / (2 * z), z);
+    if (!(mid || out)) return;
+    await center(b.x + BOX_W / 2, sh > h - bar - m * 2 ? b.y + (h / 2 - m) / z : b.y + sh / (2 * z) + bar / (2 * z), z);
+    // 寄せた後も段の札の帯にかぶる箱を横だけ帯の外へ (S-147l、「未設定 → 次へ」の飛び先など。11-13 オーナー「被り直して」)。寄せた箱が枠から出る送りはしない
+    if (!laneOn()) return;
+    const v = f.viewport.value, nx = laneX(v.x, v.y, v.zoom), bx = b.x * v.zoom + nx;
+    if (nx !== v.x && bx >= 0 && bx + BOX_W * v.zoom <= w) await put(nx, v.y, v.zoom);
   }
   // 木を変えた後の視点 (手を決める・箱が増える / 減る・箱の背、S-147c・S-147e・S-147h) は use-tree-cam-follow.ts
   const follow = useTreeCamFollow(doc, f, { pageZ, put, center, setZoom: (z: number) => setZoom(z, undefined, false), openView, reveal, opens: () => opens, openAt: () => openAt });
