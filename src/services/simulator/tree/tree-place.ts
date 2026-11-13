@@ -9,7 +9,7 @@
  * 本番の treeWideFit (v0.1.725) の下で通らないので 11-14 に外した
  */
 import type { TreeDoc } from "./tree-model";
-import { centerMerged, drawnKids, endCards, rowLayout, stackEnds } from "./tree-row-tops";
+import { centerMerged, drawnKids, rowLayout, stackEnds } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
 import { bandsTogether } from "./tree-band";
 import { flag } from "../../../web/release-flags";
@@ -56,7 +56,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const L = rowLayout(d, heightOf);
   // (S-142j ②、スイッチ hitsSide) 箱と箱の横の間は倍 (11-14 オーナー「枠通しの横枠だけど倍あげようか　詰めすぎてもね？」)
   const g = flag("hitsSide") ? 2 : 1;
-  const xs = wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF * g, deep: GAP_DEEP * g, reserve: !flag("hitsSide") }, (id) => [...stacked.values()].includes(id), endCards(d), new Set(linkTargets(d).keys()));
+  const xs = wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF * g, deep: GAP_DEEP * g, reserve: !flag("hitsSide") }, (id) => [...stacked.values()].includes(id), new Set(linkTargets(d).keys()));
   for (const [id, x] of xs) {
     const b = d.boxes[id]!, r = L.rows.get(id);
     b.x = Math.round(x);
