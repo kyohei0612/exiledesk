@@ -18,7 +18,7 @@ import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
 import { CHIP_HALF } from "./tree-lines";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
-import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
+import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags"; import { shapeTagOf } from "./tree-shape-tag";
 import { useTree } from "./use-tree";
 import { setSameHiOwn } from "./tree-hand-plan";
 import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
@@ -57,6 +57,8 @@ const emit = defineEmits<{
   quit: [];
 }>();
 const t = useTree();
+/** 組んでいる間に置いた消去の下の箱 = 結果の札の代わりに「ツリーの形が変わる見込み」(S-142l、スイッチ annulShapeTag) */
+const shapeTag = computed(() => props.box.out !== "start" && shapeTagOf(t.doc.value, props.box.id, t.opened.value));
 /**
  * × = この箱を作った手を消す (その手の結果の箱すべてと、その下も。親の箱は手が無い形に戻り、手を選び直せる)。1 回目で赤く「下の n 箱ごと消す」、
  * 3 秒のうちにもう一度で消す (1 つ戻すで戻せる)。どの箱にも (スタートは除く)。前の「この当たりを消す」(当たりの箱 1 つだけ) はこれにまとめた
@@ -223,7 +225,8 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
     <button v-if="unset" type="button" data-tree-unset data-tree-issue class="nodrag absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)] hover:bg-rose-500" :title="tr(`${issue} (押すと未設定の一覧)`, `${issue} (click for the list of unset boxes)`)" @click.stop="emit('issue')">!</button>
     <div class="absolute left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap" :class="headA ? 'head-a bottom-[calc(100%-13px)] w-[calc(100%-16px)]' : '-top-[10px]'">
-    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="headA ? { color: '#111', borderColor: `rgb(${rgb})`, background: `rgb(${rgb})`, boxShadow: `0 0 10px rgba(${rgb},0.6)` } : { color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
+    <span v-if="shapeTag" data-tree-shape-tag class="shrink-0 rounded-full border border-amber-200 bg-amber-400 px-2 text-[11px] font-bold leading-[18px] text-[#1a1206] shadow-[0_0_10px_rgba(251,191,36,0.55)]" :title="tr('消去の結果は、完成・最終チェックを押した時の並べ直しで合流や並びが変わる', 'Annul results may merge or move when the tree is tidied (Done / Final check)')">{{ tr("ツリーの形が変わる見込み", "Tree shape may change") }}</span>
+    <component v-else :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="headA ? { color: '#111', borderColor: `rgb(${rgb})`, background: `rgb(${rgb})`, boxShadow: `0 0 10px rgba(${rgb},0.6)` } : { color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <!-- 開いた時の組み直しで増えた箱 (前の形の木に無かった札、S-107・⑦19 案 A。保存しない) -->
     <span v-if="box.fresh" data-tree-fresh class="shrink-0 rounded-md border border-sky-400/60 bg-sim-panel px-1.5 text-[11px] font-bold leading-[18px] text-sky-300" :title="tr('今の決まりで組み直した時に、前の保存には無かった結果の箱。行き先を確かめて決める', 'A result box that was not in the saved recipe and appeared when rebuilt with the current rules. Check where it goes')">{{ tr("組み直しで増えた", "New after rebuild") }}</span>
     <span v-if="hold || seenOut" data-tree-foresee-frame class="shrink-0 rounded-md border border-violet-300/60 bg-[#15110c] px-1.5 text-[11px] font-bold leading-[18px] text-violet-200" :title="hold ? tr('ヒネコラで予見したアイテム: 次の手の結果が使う前に見える', 'Foreseen with Hinekora: the next craft’s result is visible before use') : tr('予見で見えた結果 (ヒネコラで持った手の結果)', 'A foreseen result (of the craft held after Hinekora)')">{{ hold ? tr("予見", "Foresight") : tr("予見の結果", "Foreseen") }}</span>

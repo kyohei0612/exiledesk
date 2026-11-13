@@ -11,6 +11,7 @@ import { placeTree } from "../../../services/simulator/tree/tree-place";
 import type { KeptOrder } from "../../../services/simulator/tree/tree-place-order";
 import { stripFoldKey } from "../../../services/simulator/tree/tree-strip-fold";
 import { flag } from "../../../web/release-flags";
+import { settleAnnul } from "./tree-shape-tag";
 
 /** 箱の高さ (画面が測った値、まだなら見込み) */
 export const boxHeightOf = (measure: (id: string) => number | undefined) => (id: string): number => measure(id) || EST_H;
@@ -44,5 +45,6 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
 export function tidyView(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined): void {
   if (!flag("treeTidyOnDone")) return;
   placeKept.clear();
+  settleAnnul(doc.value); // 消去の下の「形が変わる見込み」の札はここで消える (S-142l)
   if (placeTree(doc.value, boxHeightOf(measure), chipW, placeKept)) triggerRef(doc);
 }
