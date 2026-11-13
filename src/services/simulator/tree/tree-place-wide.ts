@@ -11,6 +11,7 @@
 import { BOX_W, type TreeDoc } from "./tree-model";
 import type { RowLayout } from "./tree-row-tops";
 import { idealOn, idealPath } from "./tree-ideal-first";
+import { flag } from "../../../web/release-flags";
 
 type Row = [number, number];
 
@@ -46,7 +47,8 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
         // 別の親の箱の真下なら、その箱の右へずらす (上は動かさない)。
         // (S-142i、スイッチ treeIdealFirst) 下に子の無い箱は真下をふさがない = 灰色の兄弟の真下を道の子に使う。完成を押して灰色が外れても並びは跳ねず、
         // 後からその箱に手を置いた時は、その子が右へ出る (上は動かさない)
-        for (let moved = true; moved; ) {
+        // (スイッチ kidsUnderOwn、開発版だけ) 別の親の真下でもずらさない = ぶつかるのは同じ段の前の箱とだけ (11-14 オーナー「何その親の下は置かないみたいなルール撤廃でしょ」)
+        for (let moved = !flag("kidsUnderOwn"); moved; ) {
           moved = false;
           for (const a of above) {
             // (S-142j ③、スイッチ hitsSide) 子が ↩ の畳みだけの箱も真下を塞がない (線は手の札で止まる。11-14 オーナー「下に来るはず」)
