@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.733",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの完成形の設定から「エミュで試す →」でエミュレーターに完成形の品を載せて開けるようにしました",
+    "en": "You can now open the simulator's target item in the emulator with \"Try in the emulator →\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの消去の続きは、フラクチャーで固めた MOD を数えず、消せる MOD が 1 つ残った所で止まるようにしました (カオスを打てる形)",
+    "en": "In the simulator, annulment chains now stop when one removable mod is left, not counting fractured mods, so you can follow up with Chaos"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの「100 人回す」に乗せた時、説明が 2 つ重なって出ていたのを 1 つにしました",
+    "en": "Hovering \"Run 100\" in the simulator no longer shows two overlapping tips"
+   }
+  ]
+ },
+ {
   "v": "0.1.732",
   "date": "2026-11-14",
   "items": [
@@ -916,48 +940,6 @@
     "area": "",
     "text": "デイリー: 創生の樹の MOD が 2 つ以上の装備を投稿しようとした時の文を「やり直し不可能なMODは1つまでです」にしました (貼り付けの時も同じ)",
     "en": "Daily: submitting an item with two or more Genesis Tree mods now says \"Only 1 mod that can't be crafted again is allowed\" (also when pasting)"
-   }
-  ]
- },
- {
-  "v": "0.1.693",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エミュレーター (スマホ): 素材の棚を工程の前に出し、下へ送るとアイテムのカードが上に止まるようにしました",
-    "en": "Emulator (phone): the currency shelf now comes before the steps, and the item card stays at the top as you scroll"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ✦ が 2 つ以上の完成形でも、取引所の検索が ✦ の MOD を全部見るようにしました",
-    "en": "Simulator: with two or more ✦ mods on the final item, the trade site search now checks every ✦ mod"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スタートしか無いツリーにも未設定の印を出すようにしました",
-    "en": "Simulator: a tree with only the start now shows the unset mark too"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 錬金術の後に骨を未発現のまま打った箱の見本が空になり、発現を選べなかったのを直しました",
-    "en": "Simulator: fixed the sample of a box after Orb of Alchemy then a Bone left Unrevealed being empty, which hid Reveal"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホで共有のレシピを開いた時に、ツリーの全体図から見られるようにしました",
-    "en": "Simulator: shared recipes opened on a phone now start on the full tree view"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 創生の樹の MOD が 2 つ以上の装備は投稿できないようにしました。挑戦中に 100 人回した数を締めの集計と同じにしました",
-    "en": "Daily: items with two or more Genesis Tree mods can no longer be submitted. The 100-run numbers during a challenge now match the final tally"
    }
   ]
  }
