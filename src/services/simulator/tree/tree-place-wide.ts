@@ -10,15 +10,14 @@
  */
 import { BOX_W, type TreeDoc } from "./tree-model";
 import type { RowLayout } from "./tree-row-tops";
-import { idealPath } from "./tree-ideal-first";
-import { flag } from "../../../web/release-flags";
+import { idealOn, idealPath } from "./tree-ideal-first";
 
 type Row = [number, number];
 
 /** 箱の x (始まりの箱は今の x)。kidsOf は並べ順の決まった描く子 (縦に積んだ 2 つ目からは除いた物) */
 export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW: ((id: string) => number | undefined) | undefined, gaps: { leaf: number; deep: number }, stackHead: (id: string) => boolean = () => false): Map<string, number> {
   const x = new Map<string, number>([["start", d.boxes.start!.x]]);
-  const leafFree = flag("treeIdealFirst");
+  const leafFree = idealOn();
   const seen = new Set<string>(["start"]), kids = new Map<string, string[]>(), up = new Map<string, string>();
   const walk = (id: string): void => { const ks = kidsOf(id).filter((k) => !seen.has(k)); for (const k of ks) { seen.add(k); up.set(k, id); } kids.set(id, ks); ks.forEach(walk); };
   walk("start");

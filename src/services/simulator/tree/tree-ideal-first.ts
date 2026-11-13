@@ -13,9 +13,11 @@ export interface IdealPath { /** 組んでいる道の箱 (スタートから一
 
 const memo = new WeakMap<TreeDoc, { key: string; v: IdealPath | null }>();
 
-/** 組んでいる道と灰色の箱 (スイッチ treeIdealFirst が閉じている・灰色にしない木は null) */
+/** 灰色が効くか。スイッチ treeTidyOnDone の間はやめ (S-142k、11-13 オーナー: 灰色はやめて自由に組ませ、完成・最終チェックを押した時に並べ直す) */
+export const idealOn = (): boolean => flag("treeIdealFirst") && !flag("treeTidyOnDone");
+/** 組んでいる道と灰色の箱 (灰色が効かない・灰色にしない木は null) */
 export function idealPath(d: TreeDoc): IdealPath | null {
-  if (!flag("treeIdealFirst") || !d.boxes.start) return null;
+  if (!idealOn() || !d.boxes.start) return null;
   // 木の形と手の付き方だけで決まるので、それを鍵にして同じ木では 1 回だけ数える (箱ごとに呼ばれる)
   const key = Object.values(d.boxes).map((b) => `${b.id}:${b.outs.join(",")}:${b.hand ? 1 : 0}${b.split?.length ? 1 : 0}${b.done ?? ""}${b.doneNow ? "n" : ""}`).join("|");
   const m = memo.get(d);

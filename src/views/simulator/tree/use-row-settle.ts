@@ -10,6 +10,7 @@ import { EST_H } from "../../../services/simulator/tree/tree-row-tops";
 import { placeTree } from "../../../services/simulator/tree/tree-place";
 import type { KeptOrder } from "../../../services/simulator/tree/tree-place-order";
 import { stripFoldKey } from "../../../services/simulator/tree/tree-strip-fold";
+import { flag } from "../../../web/release-flags";
 
 /** 箱の高さ (画面が測った値、まだなら見込み) */
 export const boxHeightOf = (measure: (id: string) => number | undefined) => (id: string): number => measure(id) || EST_H;
@@ -35,4 +36,13 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
     if (!open || open.loading.value || open.opened.value !== seenOpen) { seenOpen = open?.opened.value; placeKept.clear(); }
     if (placeTree(doc.value, heightOf, chipW, placeKept)) triggerRef(doc);
   }, { flush: "post", immediate: true });
+}
+/**
+ * 見やすい木へ並べ直す (S-142k、スイッチ treeTidyOnDone): 組んでいる間の順の控え (S-142g) を捨て、開き直しと同じ並べ (完成の道を左端・ほかは結果の順) に。
+ * 完成を押した時と最終チェックを押した時に 1 回ずつ (11-13 オーナー「完成押した瞬間に見やすいツリーへ変えるのはいいね、後整頓タイミングは最中チェック押したらも整頓しよう」)
+ */
+export function tidyView(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined): void {
+  if (!flag("treeTidyOnDone")) return;
+  placeKept.clear();
+  if (placeTree(doc.value, boxHeightOf(measure), chipW, placeKept)) triggerRef(doc);
 }

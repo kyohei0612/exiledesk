@@ -22,7 +22,7 @@ import TreeLoadingCover from "./TreeLoadingCover.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
-import { boxHeightOf, placeKept, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
+import { boxHeightOf, placeKept, tidyView, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
@@ -251,7 +251,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   if (!link) { panel.value = { kind: "aim", id: b.id, add: at ? { at } : {} }; return; }
   t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
 }
-function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
+function onDone(b: Box): void { const on = !b.done; t.edit((d) => setDone(d, b.id, b.done ? null : "main")); if (on && doc.value.boxes[b.id]?.done === "main") tidyView(doc, measureBox, chipNatural); } // 完成を押した時は見やすい木へ (S-142k)
 /** 失敗 (ここで終わり) の印を付ける・外す  */
 function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
 // ルート精査 (押した時に始める、use-tree-check.ts)
@@ -268,7 +268,7 @@ const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).length
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 最終チェックのボタン: 人を回さず木の枠を辿る精査だけ (11-11 オーナー「何人か回してるよね。やめさせてくれ。普通に全枠2周して未設定やバグないかのチェックが最終チェックだ」、S-201 ②。前は精査の後に試しの 30 人を回していた) */
 async function onTest(): Promise<void> {
-  // 整理で未設定が出たらそこで止め、全部決まったら押し直さずに続ける (S-190・S-190c)
+  tidyView(doc, measureBox, chipNatural); // 最終チェックを押した時も見やすい木へ (S-142k)。整理で未設定が出たらそこで止め、全部決まったら押し直さずに続ける (S-190・S-190c)
   if (jt.on.value && await jt.sort(() => void onTest())) return;
   await onCheck();
 }
