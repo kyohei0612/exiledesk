@@ -192,6 +192,9 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // シミュの木の耐性のフラックス (打った後の 1 箱、カタリストの箱に揃える) と要望の返事の強制ポップ (force.txt の 2 行目) (オーナー 11-13 絵を見て「そゆことやろな」「ええな」→「出しておけ」、ブラック 101)
+  "treeFlux",
+  "replyPush",
   // 0.1.725 シミュの木: 横幅を詰める並べ方 (案 6) と、完成・最終チェックを押した時に見やすい木へ並べ直す・新しく出た子は 当たり → 未設定 → 残り (オーナー 11-13 絵を見て「完成押した瞬間に見やすいツリーへ変えるのはいいね」「あ」→「出して」、ブラック 96)。灰色 (treeIdealFirst) は入れない
   "treeWideFit",
   "treeTidyOnDone",
