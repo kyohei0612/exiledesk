@@ -13,7 +13,7 @@
 | ジン部長 | local_e283feed-b3dd-480c-9014-2f4f3981b0de (11-12 に local_6602c6d4 が 2,483 件で交代。作業場 .claude/worktrees/wizardly-gould-f36ecf、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: 古いテスト 10 件を設計図どおりに → グラスピングメイルの冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト (錬金の表の 0% はオーナーの選び待ち) |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_b3751d59-89b1-4b0c-8b53-84f3c4d356fe (29 sim-lead29、Opus 5.5、11-13 午後にブラック 98 が控えに立て、28 = local_909d53c5 が 2,3xx 件で交代。頼み = 共有ノート progress/sim-lead29-brief.md、板 = progress/sim-lead29.md) | 今: 段下げを見本どおり作る (オーナー「一旦作って見せて」)。見本の返事待ち = 完成形のカードのプレを 3 行・理想手の「形が変わる見込み」の札 |
+| シミュ部長 | local_3e594aaa-534e-4ef7-a125-bd6c14ea3839 (30 sim-lead30、Opus 5.5、11-13 午後にブラック 98 が控えに立て、29 = local_b3751d59 が 2,0xx 件で交代。予備 31 = local_98020170-2a03-400d-a24f-89fe00ec879b が待機。頼み = 共有ノート progress/sim-lead30-brief.md、板 = progress/sim-lead30.md) | 今: フラクチャーの MOD の 2 つ持ち (✦ 側 / 普通側の段) を作る。見た目の返事待ち = 一括ティア調整・veilMulti・idealNoBack・カードのプレ 3 行の見本・形が変わる見込みの札 |
 | デザイン部長 | local_28256afd-041c-4d00-b110-d023f3c6f37e (4、Opus 5.5、11-13 10:44 にブラック 96 が立てた。頼み = 共有ノート progress/design-lead4-brief.md) | 今: MOD 一覧が空の時の一言 (modNone、84e662adb、開発版だけ) を上げて待機 |
 | エミュ部長 | local_f31baf5f-cab7-4d82-8546-6e554a711f48 (emu-lead、Opus 5.5、11-13 昼にブラック 97 が立てた (オーナー「たてて」)。前の local_b7f1334c はもういない。頼み = 共有ノート progress/emu-lead-brief.md、板 = progress/emu-lead.md) | 今: ① 付与スキルの選び d657151d1 済み。② エミュで試す = 完成形の見本の品で開く・上限超えは白 + 一言 (オーナー 11-13) |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
