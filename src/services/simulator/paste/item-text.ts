@@ -310,7 +310,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       t.texts.forEach((x, k) => { if (!taken.has(k) && x.endsWith("(アルダーで重ねる)")) pick(b, k, true); });
       continue;
     }
-    if (dropOnly.has(b.text)) { out.skipped.push(skip(b.line, "dropOnly")); continue; }
+    if (dropOnly.has(b.text) && !flag("pasteDropOnly")) { out.skipped.push(skip(b.line, "dropOnly")); continue; } // スイッチ pasteDropOnly の間は下で同じ部位のエンジンの MOD (E-18a の special) として読む (S-08j)
     if (!t.skipped.includes(b.text)) { parts.push(b); continue; }
     // 置き場の索引に無い (液化した感情の MOD など、プールではなく別の表で付く物)。同じクラスのエンジンの MOD を文で引く
     const k = matchKey(b.template!);
