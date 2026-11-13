@@ -4,7 +4,8 @@
  */
 import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { busLevels, CHIP_HALF, HAND_DY, roundPath, type Seg } from "./tree-lines";
+import { busLevels, CHIP_HALF, HAND_DY, hopPath, roundPath, type Pos, type Seg } from "./tree-lines";
+import { nudgeLines, segsOfPts } from "./tree-lines-nudge";
 import { gridRoute, sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
@@ -57,7 +58,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
    * (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
    */
   /** lane = 同じ手の札から出る何本目か (横の高さを 12 ずつ上へずらして、横の所が重ならない。帯に収まるよう 2 本目まで) */
-  const backPath = (px0: number, jy: number, t: string, lane = 0, stem: number | null = null): string => {
+  const backPts = (px0: number, jy: number, t: string, lane = 0, stem: number | null = null): Pos[] => {
     const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, bx = avoid.value.filter((a) => a.id !== t);
     // 札の真ん中 (親の縦の線と同じ x) から上がると、緑が親の箱から出て見える = 行き先の側へ LANE_GAP ずらして上がる (11-14 レビュワー)
     const px = stem != null && px0 === stem ? px0 + LANE_GAP() * (tq.x + BOX_W / 2 < px0 ? -1 : 1) : px0;
@@ -68,7 +69,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 帯 (48) の中で箱・札から 10 以上離した 2 本: 札の上の端の 14 上・34 上 (間 20 = 線どうしの間、11-14 オーナー「線同士2倍間空けよう」)。3 本目からは 2 本目の高さ
     const band = jy - CHIP_HALF - 14 - Math.min(Math.max(0, lane), 1) * LANE_GAP();
     const side = sideRoute({ x: px, y: band, w: 0, h: 0 }, { ...tq, w: BOX_W, h: th }, bx, x0, x1 + 48);
-    if (side) return roundPath([{ x: px, y: jy }, ...side]);
+    if (side) return [{ x: px, y: jy }, ...side];
     const ty = tq.y + th / 2;
     // 横の辺どうしで通れなければ、箱の間の列と段の間の高さを折れて進む道 (S-145 の探し方、tree-lines-grid の gridRoute)。
     // 行き先の右と左の辺の外 (16) へ横から着き、辺の真ん中へ入る。前はここで行き先の右 +48 の列を箱を見ずに下り、間の箱を貫通した (11-14 レビュワー、b99→b41 が b38)
@@ -76,12 +77,13 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const len = (ps: readonly { x: number; y: number }[]): number => ps.reduce((n, p, i) => n + (i ? Math.abs(p.x - ps[i - 1]!.x) + Math.abs(p.y - ps[i - 1]!.y) : 0), 0);
     const grid = outs.map(({ e, edge }) => { const g = gridRoute(s, e, avoid.value, x0, x1 + 48, { tops: false }); return g ? [{ x: px, y: jy }, ...g.slice(1), { x: edge, y: ty }] : null; }) // 格子の始め (帯の 27 上) は通らず、札から帯へ直に上がる
       .filter((g): g is { x: number; y: number }[] => !!g).sort((a, z) => len(a) - len(z))[0];
-    if (grid) return roundPath(grid);
+    if (grid) return grid;
     // 外回りも箱を見る: 行き先の右 +48 の列が箱を通るなら、木の右端の外の列へ逃がす (畳んだ緑は札が無いので線を消さない。11-14 レビュワー)
     const near = Math.max(px, tq.x + BOX_W) + 48, segsOf = (c: number): Seg[] => [{ x0: px, y0: band, x1: c, y1: band }, { x0: c, y0: band, x1: c, y1: ty }, { x0: c, y0: ty, x1: tq.x + BOX_W, y1: ty }];
     const col = pierces(segsOf(near), [t]) ? Math.max(near, x1 + 48) : near;
-    return roundPath([{ x: px, y: jy }, { x: px, y: band }, { x: col, y: band }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }]);
+    return [{ x: px, y: jy }, { x: px, y: band }, { x: col, y: band }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }];
   };
+  const backPath = (px0: number, jy: number, t: string, lane = 0, stem: number | null = null): string => roundPath(backPts(px0, jy, t, lane, stem));
   /** (スイッチ newerHome) 縦・横の真っ直ぐな所がほかの描く箱を横切るか (行き先と出元の箱は除く。端から 4 内側で見る) */
   const pierces = (segs: readonly Seg[], skip: readonly string[]): boolean => avoid.value.some((a) => !skip.includes(a.id) && segs.some((g) => {
     const x0 = Math.min(g.x0, g.x1), x1 = Math.max(g.x0, g.x1), y0 = Math.min(g.y0, g.y1), y1 = Math.max(g.y0, g.y1);
@@ -154,7 +156,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
           + [...hops].sort((a, z) => s * (a - z)).map((x) => `L ${x - s * HOP} ${busY} A ${HOP} ${HOP} 0 0 ${s > 0 ? 1 : 0} ${x + s * HOP} ${busY} `).join("")
           + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} ` + (side ? `L ${cx} ${ey - 8} Q ${cx} ${ey} ${cx + 8} ${ey} L ${k.q.x} ${ey}` : `L ${cx} ${cy}`);
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
-      return { id: k.id, w: 2, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null };
+      return { id: k.id, w: 2, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null, pts: null as Pos[] | null };
     });
     // (S-142j ③、スイッチ hitsSide) 同じ枠へ・同じ中身の箱の続きへの畳みは札も描かず、手の札の真ん中から真下へ伸ばし、行き先の箱の真ん中の高さで曲がって横から入る
     // (11-14 オーナー「左の枠の真ん中めがけて横の線はそこで縦の線は消去の真ん中から下へのばして」「同じ枠系はそのごの枠へつなげばいいのでは」)
@@ -171,17 +173,17 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
       if (flag("newerHome")) {
         const ex0 = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x;
         const lSegs: Seg[] = px >= tq.x && px <= tq.x + BOX_W ? [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: tq.y }] : [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex0, y1: ty }];
-        if (pierces(lSegs, [t, b.id])) { const d0 = backPath(px, jy, t, nth - 1, px0); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: d0, bad: false, mk: () => d0, h: null }); continue; }
+        if (pierces(lSegs, [t, b.id])) { const p0 = backPts(px, jy, t, nth - 1, px0), d0 = roundPath(p0); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: d0, bad: false, mk: () => d0, h: null, pts: p0 }); continue; }
       }
       if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
-        to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null });
+        to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null, pts: null });
         linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: tq.y });
         continue;
       }
       const ex = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x, sg = Math.sign(ex - px) || 1, r = Math.min(10, Math.abs(ex - px) / 2, Math.max(0, ty - linkY0) / 2);
       const mk = (hops: readonly number[]): string => `M ${px} ${linkY0} L ${px} ${ty - r} Q ${px} ${ty} ${px + sg * r} ${ty} `
         + [...hops].sort((a, z) => sg * (a - z)).map((x) => `L ${x - sg * HOP} ${ty} A ${HOP} ${HOP} 0 0 ${sg > 0 ? 1 : 0} ${x + sg * HOP} ${ty} `).join("") + `L ${ex} ${ty}`;
-      to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: mk([]), bad: false, mk, h: { x0: Math.min(px + sg * r, ex), x1: Math.max(px + sg * r, ex), y: ty } });
+      to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: mk([]), bad: false, mk, h: { x0: Math.min(px + sg * r, ex), x1: Math.max(px + sg * r, ex), y: ty }, pts: null });
       linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex, y1: ty });
     }
     to.sort((a, z) => Number(z.bad) - Number(a.bad));
@@ -209,12 +211,35 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
    * 並んだ箱の消去の線が段をずらして重なり、ほかの縦の線と交わって合流に見えた (オーナーの 11-08 の木の 8 → 9 段目)。データのつながりは変えない。
    * 同じ札の組 (帯の線が 1 つの札に入る、札の位置が同じ) どうしはつながっているので橋を掛けない
    */
+  /**
+   * (S-145、スイッチ hitsSide) 箱を避けて曲がる緑を全部組んだ後に、ほかの線と間 20 未満で並ぶ所を上下・左右へずらす (tree-lines-nudge)。
+   * ずらすと箱・手の札を通る時は取らない (11-14 レビュワー: 別の親の緑どうしが同じ高さで重なって 1 本に見えた)
+   */
+  const nudged = computed(() => {
+    const list = edges.value;
+    const items = list.flatMap((e) => e.to.filter((o) => o.pts).map((o) => ({ e, o })));
+    if (!flag("hitsSide") || !items.length) return list;
+    const chips = list.filter((e) => e.chip).map((e) => { const w = chipRoom.value.get(e.id) ?? CHIP_MAX; return { id: e.id, x: e.jx - w / 2, y: e.jy - CHIP_HALF, w, h: 2 * CHIP_HALF }; });
+    // 自分の手の札は、そこから出る縦の所だけ通って良い (横にずらして自分の札の高さを走らない。b99 の 3 本目が札の中の y 3834 へ入った)
+    const onChip = (segs: readonly Seg[], own: string): boolean => chips.some((c) => segs.some((g) => (c.id !== own || g.y0 === g.y1) && Math.max(g.x0, g.x1) > c.x && Math.min(g.x0, g.x1) < c.x + c.w && Math.max(g.y0, g.y1) > c.y && Math.min(g.y0, g.y1) < c.y + c.h));
+    const out = nudgeLines(items.map(({ e, o }) => ({ pts: o.pts!, bad: (segs: readonly Seg[]) => pierces(segs, [o.id, e.id]) || onChip(segs, e.id) })), list.flatMap((e) => e.segs));
+    const moved = new Map(items.map(({ o }, i) => [o, out[i]!] as const));
+    return list.map((e) => ({ ...e, to: e.to.map((o) => { const p = moved.get(o); return p ? { ...o, pts: p, d: roundPath(p) } : o; }) }));
+  });
   const hopped = computed(() => {
-    const list = edges.value, keyOf = (e: { jx: number; jy: number }): string => `${Math.round(e.jx)},${Math.round(e.jy)}`;
-    const vert = list.flatMap((e) => e.segs.filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => ({ k: keyOf(e), x: g.x0, y0: Math.min(g.y0, g.y1), y1: Math.max(g.y0, g.y1) })));
+    const list = nudged.value, keyOf = (e: { jx: number; jy: number }): string => `${Math.round(e.jx)},${Math.round(e.jy)}`;
+    const vOf = (k: string, g: Seg) => ({ k, x: g.x0, y0: Math.min(g.y0, g.y1), y1: Math.max(g.y0, g.y1) });
+    // 曲がる緑の縦の所も跨ぐ相手に入れる (o = その緑。自分は跨がない)
+    const greenV = list.flatMap((e) => e.to.filter((o) => o.pts).flatMap((o) => segsOfPts(o.pts!).filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => ({ ...vOf(keyOf(e), g), o }))));
+    const vert = [...list.flatMap((e) => e.segs.filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => vOf(keyOf(e), g))), ...greenV];
     return list.map((e) => {
       const k = keyOf(e);
       const to = e.to.map((o) => {
+        // (S-145、スイッチ hitsSide) 曲がる緑の横の所も、ほかの札の縦の線を跨ぐ所に半円の橋 (灰の横の棒と同じ形。11-14 レビュワー)
+        if (o.pts && flag("hitsSide")) {
+          const d = hopPath(o.pts, (a, b) => a.y !== b.y ? [] : [...new Set(vert.filter((v) => v.k !== k && ("o" in v ? v.o !== o : true) && v.x > Math.min(a.x, b.x) && v.x < Math.max(a.x, b.x) && v.y0 < a.y - 1 && v.y1 > a.y + 1).map((v) => v.x))]);
+          return { ...o, d };
+        }
         const h = o.h;
         if (!h) return o;
         const xs = [...new Set(vert.filter((v) => v.k !== k && v.x > h.x0 + HOP + 1 && v.x < h.x1 - HOP - 1 && v.y0 < h.y - 1 && v.y1 > h.y + 1).map((v) => v.x))];

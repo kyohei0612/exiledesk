@@ -143,6 +143,7 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
 export const roundPath = (pts: readonly Pos[]): string => hopped(pts, () => []);
 
 /** 角を丸めた折れ線。hops(a, b) = その真っ直ぐな所で跨ぐ位置 (横なら x、縦なら y)。跨ぐ形は上 (縦は右) へふくらむ半円 */
+export const hopPath = (pts: readonly Pos[], hops: (a: Pos, b: Pos) => number[]): string => hopped(pts, hops);
 function hopped(pts: readonly Pos[], hops: (a: Pos, b: Pos) => number[]): string {
   let d = `M ${pts[0]!.x} ${pts[0]!.y}`;
   for (let i = 0; i < pts.length - 1; i++) {
