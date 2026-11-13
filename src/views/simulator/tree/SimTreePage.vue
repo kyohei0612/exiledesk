@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { VueFlow, type NodeMouseEvent } from "@vue-flow/core";
+import type { NodeMouseEvent } from "@vue-flow/core";
 import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
@@ -20,7 +20,7 @@ import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import PhoneViewPage from "../phone/PhoneViewPage.vue";
 import TreeLoadingCover from "./TreeLoadingCover.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
-import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
+import TreeBox from "./TreeBox.vue"; import { useStripFold } from "./use-strip-fold"; import { useTreeDraft } from "./use-tree-draft";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, placeKept, tidyEach, tidyView, useRowSettle } from "./use-row-settle"; import { settleNow, withPickScope } from "./tree-local-scope"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneMarks, laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops"; import TreeLaneTags from "./TreeLaneTags.vue";
@@ -28,7 +28,7 @@ import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue"; import TreeBoxModBtn from "./TreeBoxModBtn.vue";
 import { useTree } from "./use-tree";
-import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
+import { useTreeFlow } from "./use-tree-flow";
 import { useTreePop } from "./use-tree-pop";
 import { openTreeFirst } from "./tree-open-first";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -37,7 +37,7 @@ import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
-import { LINE, useTreeEdges } from "./use-tree-edges";
+import { useTreeEdges } from "./use-tree-edges";
 import { useTreeBands } from "./use-tree-bands"; import { fillHeldDefaults } from "./tree-held-use"; import { bandAway } from "../../../services/simulator/tree/tree-band";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
@@ -58,10 +58,9 @@ import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
 import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
-import { installSimMonkey } from "./sim-monkey"; import { laneBandW } from "./tree-lane-band";
-import TreeRunLayer from "./TreeRunLayer.vue";
-import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
-import TreeMergeLayer from "./TreeMergeLayer.vue";
+import { installSimMonkey } from "./sim-monkey";
+import TreeTabs from "./TreeTabs.vue";
+import TreeCanvas from "./TreeCanvas.vue"; import type { CanvasCtx } from "./tree-canvas-ctx";
 import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge"; import { flag } from "../../../web/release-flags";
 const t = useTree();
@@ -370,6 +369,7 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
+const canvasCtx: CanvasCtx = { hand, pageZ, grid, t, lanes, v, sf, doc, panel, plus, backLabel, viewOnly, jt, glowOf, zoom, tr100, issueOf, inv, bd, startDrag, onAim, onPlus, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, startLink, merged, linesAll, shown, goIssue, plusLine, onPaneClick, onNodeClick }; // 描き面へ渡す物 (tree-canvas-ctx)
 </script>
 
 <template>
@@ -430,44 +430,7 @@ const glowOf = (b: Box): boolean => {
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
-        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
-          <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
-            :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
-            :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
-            :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
-            @pane-click="onPaneClick" @node-click="onNodeClick">
-            <template #node-box="{ id }">
-              <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
-              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="jt.idealGrayOf(doc.boxes[id]!) ? null : issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" @quit="bd.onQuit(id)" :band-on="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!)" @band="(x, e) => (viewOnly ? (panel = { kind: 'hand', id: x }) : bd.onBand(x, e))"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
-                @clear-back="t.edit((d) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
-                @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
-            </template>
-            <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
-            <template #zoom-pane>
-              <svg data-tree-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
-                <!-- 札 → 下の箱は矢印なしで箱の上の縁までまっすぐ (箱 → 札の線と同じ形、10-25 オーナー「ここと同じにしようか」) -->
-                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-edge-id="e.id" :data-hot="edgeHot(e) || undefined" :opacity="hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
-                  <path :d="e.stem" :stroke="e.stemColor" :stroke-width="edgeHot(e) ? 3.5 : 2" fill="none" />
-                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" :stroke-width="edgeHot(e) && (edgeHot(e) === 'parent' || o.id === hoverBox) ? 3.5 : 2" stroke-linejoin="round" fill="none" />
-                </g>
-              </svg>
-              <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
-              <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
-              <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
-              <TreeHandChip v-for="e in shownEdges.filter((x) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
-              <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
-              <button v-for="b in rv.done.value ? passes.filter((x) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
-                :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>
-              <TreeMergeLayer v-if="merged && rv.done.value" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :sel="panel?.id ?? null" :show-all="linesAll" @hover="(id) => (hoverBox = id)" />
-              <TreeRunLayer v-if="(tr100.result.value || tr100.walk.value) && tr100.shown.value && rv.done.value" :result="tr100.result.value" :walk="tr100.walk.value" :k="1 / zoom" :boxes="shown" :pos-of="posOf" :edges="shownEdges" :lines="merged?.lines ?? []" :paths="merged?.paths ?? new Map()" :height-of="(id: string) => v.flow.findNode(id)?.dimensions.height ?? 0" @go="goIssue" />
-              <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
-              <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
-                <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
-                <path v-if="plusLine" data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
-              </svg>
-            </template>
-          </VueFlow>
-        </div>
+        <TreeCanvas :c="canvasCtx" /><!-- 描き面 (Vue Flow と箱・線・札・回した層、TreeCanvas.vue。S-09c の区切り 1) -->
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。手の時だけ (戻り先を選ぶ形は 11-08 夜に無くした、S-52b) -->
         <p v-if="hand" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border border-white/10 bg-[#15110c]/95 px-3 py-1 text-[12px] text-[#d8ccb4] shadow-[0_4px_14px_rgba(0,0,0,0.6)]">

@@ -1,0 +1,67 @@
+<!--
+  TreeCanvas.vue — 木の枠の中の描き面 (Vue Flow と箱・線・打つ手の札・合流の線・回した層・＋の線)。SimTreePage から切り出した (11-14、S-09c の区切り 1)。
+  中身と動きは前と同じ: 使う値と手は置き場 (SimTreePage) が作って c に 1 つにまとめて渡す (区切り 2 でタブごとの描き面にする時、ここに描き面ごとの作りを移す)
+-->
+<script setup lang="ts">
+import { VueFlow } from "@vue-flow/core";
+import Icon from "../../../components/ui/Icon.vue";
+import TreeBox from "./TreeBox.vue";
+import TreeStripFold from "./TreeStripFold.vue";
+import TreeHandChip from "./TreeHandChip.vue";
+import TreeMergeLayer from "./TreeMergeLayer.vue";
+import TreeRunLayer from "./TreeRunLayer.vue";
+import { FLOW_ID } from "./use-tree-flow";
+import { LINE } from "./use-tree-edges";
+import { laneBandW } from "./tree-lane-band";
+import { BOX_W, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+import type { CanvasCtx } from "./tree-canvas-ctx";
+
+type Lane = { text: string };
+type ChipEdge = { chip?: unknown };
+const props = defineProps<{ c: CanvasCtx }>();
+// 置き場の値をそのまま名前で使う (テンプレートは切り出す前と同じ文。ref は上の段なので自動で外れる)
+const { hand, pageZ, grid, t, lanes, v, sf, doc, panel, plus, backLabel, viewOnly, jt, glowOf, zoom, tr100, issueOf, inv, bd, startDrag, onAim, onPlus, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, startLink, merged, linesAll, shown, goIssue, plusLine, onPaneClick, onNodeClick } = props.c;
+</script>
+
+<template>
+  <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
+    <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
+      :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
+      :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
+      :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
+      @pane-click="onPaneClick" @node-click="onNodeClick">
+      <template #node-box="{ id }">
+        <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
+        <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="jt.idealGrayOf(doc.boxes[id]!) ? null : issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" @quit="bd.onQuit(id)" :band-on="viewOnly && !hand && !jt.grayOf(doc.boxes[id]!) && !jt.dimOf(doc.boxes[id]!)" @band="(x, e) => (viewOnly ? (panel = { kind: 'hand', id: x }) : bd.onBand(x, e))"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
+          @clear-back="t.edit((d: TreeDoc) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
+          @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d: TreeDoc) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
+      </template>
+      <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
+      <template #zoom-pane>
+        <svg data-tree-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
+          <!-- 札 → 下の箱は矢印なしで箱の上の縁までまっすぐ (箱 → 札の線と同じ形、10-25 オーナー「ここと同じにしようか」) -->
+          <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-edge-id="e.id" :data-hot="edgeHot(e) || undefined" :opacity="hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
+            <path :d="e.stem" :stroke="e.stemColor" :stroke-width="edgeHot(e) ? 3.5 : 2" fill="none" />
+            <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" :stroke-width="edgeHot(e) && (edgeHot(e) === 'parent' || o.id === hoverBox) ? 3.5 : 2" stroke-linejoin="round" fill="none" />
+          </g>
+        </svg>
+        <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
+        <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
+        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
+        <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
+        <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
+        <button v-for="b in rv.done.value ? passes.filter((x: Box) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
+          :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>
+        <TreeMergeLayer v-if="merged && rv.done.value" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :sel="panel?.id ?? null" :show-all="linesAll" @hover="(id) => (hoverBox = id)" />
+        <TreeRunLayer v-if="(tr100.result.value || tr100.walk.value) && tr100.shown.value && rv.done.value" :result="tr100.result.value" :walk="tr100.walk.value" :k="1 / zoom" :boxes="shown" :pos-of="posOf" :edges="shownEdges" :lines="merged?.lines ?? []" :paths="merged?.paths ?? new Map()" :height-of="(id: string) => v.flow.findNode(id)?.dimensions.height ?? 0" @go="goIssue" />
+        <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
+        <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
+          <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
+          <path v-if="plusLine" data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
+        </svg>
+      </template>
+    </VueFlow>
+  </div>
+</template>
