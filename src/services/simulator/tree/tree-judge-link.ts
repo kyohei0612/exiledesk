@@ -11,6 +11,7 @@ import { DIVINE_LT, isDivineAim } from "./tree-divine";
 import { effectOf, isRuneHand } from "./tree-hands";
 import { treeOrder } from "./tree-order";
 import { outKey } from "./tree-recipe-v1";
+import { flag } from "../../../web/release-flags";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -70,13 +71,23 @@ export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
   // 同じ中身の手のある箱は木に 1 つにまとまるので、候補が 2 つ以上になるのはまとめの前だけ。前は人が「↩ 戻り先を選ぶ (n 個)」で選んだ)
   return autoTargets(doc, id, j)[0] ?? null;
 }
+/**
+ * 上の段へ戻さない箱なら自分の段 (この段より浅い箱は自動の ↩ の候補にしない)、ほかは 0 (S-50g、スイッチ idealNoBack)。
+ * 完成への道の手の結果 = 当たり・狙い無しの結果 (11-13 オーナー「理想手では戻らせないようにしてくれ全部狙い通りなんだから狙い無しも狙い通りだしね」)。外れの側は今のまま
+ */
+function idealNoUp(doc: TreeDoc, id: string): number {
+  const out = doc.boxes[id]?.out;
+  return flag("idealNoBack") && (out === "hit" || out === "any") ? depthOf(doc, id) : 0;
+}
 /** 自動の ↩ の候補 (親 → 浅い段・先に作った箱の順) */
 export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
   const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null;
   const rank = (t: string): number => (t === p ? 0 : 1);
   const cmp = shallow(doc);
   // 品質はどこでも見ない (S-60b・S-60c、11-08 オーナー「いやだから品質みないっての」): カタリストの n % に届くかで候補を外さない
-  const ts = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
+  // スイッチ idealNoBack (S-50g): 完成への道の手の結果 (当たり・狙い無しの結果) は上の段へ戻さない。同じ段・下の段への合流は今のまま
+  const up = idealNoUp(doc, id);
+  const ts = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
   // 結果が 1 通りの手 (カタリストなど) で上の候補から続くだけの候補は、上の 1 つと数える (S-52b、11-08 オーナーの木の 13 段目 → 10 段目。11 段目はカタリストを打った後)
   return ts.filter((t) => !ts.some((u) => u !== t && straightUp(doc, t, u))).sort((x, y) => rank(x) - rank(y) || cmp(x, y));
 }
@@ -208,7 +219,9 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
     // 「エッセンスと同じ MOD (同格以上)」の既定の統合 (S-33e ⑥、tree-hand-plan の linkSameHi) は中身で見直さない (特例でエッセンスとして扱う)
     if (b.out === "blocked" && b.junkKey === "hi") continue;
     // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない。同じ枠の候補が 2 つ以上でも外さない (戻り先はいつも 1 つ、S-52b 11-08 夜)
-    if (j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
+    // 完成への道の結果から上の段への自動の ↩ は外す (S-50g、スイッチ idealNoBack。人が同じ手で戻った handBack は人の決めなので残す)
+    const up = b.handBack ? 0 : idealNoUp(doc, b.id);
+    if (!(up && depthOf(doc, b.back) < up) && j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }
