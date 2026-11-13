@@ -9,6 +9,7 @@
 import { orbFloor, parseKey, type OrbStrength, type PatchData } from "../../craft-stage/engine";
 import { sameAimMod } from "./tree-hand-core";
 import type { Aim, TreeDoc } from "./tree-model";
+import { sampleOf } from "./tree-sample";
 
 /** 強い順 (下限の高い順) */
 const STRONG_FIRST: readonly OrbStrength[] = ["perfect", "greater", "base"];
@@ -46,12 +47,13 @@ export const canLowerGoal = (data: PatchData, doc: TreeDoc, goal: Aim): boolean 
  */
 /** 貼り付けの値を外した狙い (✦ の印などほかはそのまま) */
 const noValues = (a: Aim): Aim => { const { values: _v, ...rest } = a; return rest; };
-export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, frac = false): boolean {
+export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, frac = false, boxOk?: (boxId: string) => boolean): boolean {
   if (to.tier <= from.tier || (!frac && !canLowerGoal(data, d, from))) return false;
   const same = (a: Aim): boolean => sameAimMod(data, a, from);
   const down = (a: Aim): Aim => (same(a) && (frac || !a.fractured) ? { ...a, modId: to.modId, tier: to.tier } : a);
   d.memoAims = (d.memoAims ?? []).map((a) => (same(a) && (frac || !a.fractured) ? { ...noValues(a), modId: to.modId, tier: to.tier } : a));
   for (const b of Object.values(d.boxes)) {
+    if (boxOk && !boxOk(b.id)) continue;
     if (b.aim) b.aim = down(b.aim);
     if (b.anyOf) b.anyOf = b.anyOf.map(down);
     if (b.hand?.keep) b.hand.keep = b.hand.keep.map(down);
@@ -60,13 +62,39 @@ export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, f
 }
 
 /**
- * ✦ の印の狙いの普通側の段 (固定されなかった時に要る段) を to に下げる (S-10g、スイッチ fracDual。2 完成の MOD の画面のティア調整だけ)。
- * 書くのは完成形の狙いの plainTier だけ。木に置いた当たりの箱の段は触らない (✦ 側の札と見分けが付かないため。新しく置く手から普通側の段になる)
+ * 当たりの箱 (と残す MOD を持つ手の箱) が固定の後か = その手を打つ前の品 (見本) に ✦ が付いているか (S-10g の当たりの札の段の分け方と同じ)。
+ * 2 つ持ちで段を下げる時、✦ 側は固定の前の箱だけ・普通側は固定の後の箱だけを下げるのに使う。書き換える前に全部の箱で 1 回ずつ取る (prime)
  */
-export function lowerPlainTier(data: PatchData, d: TreeDoc, goal: Aim, to: number): boolean {
+export function fixedAfter(data: PatchData, d: TreeDoc): (boxId: string) => boolean {
+  const memo = new Map<string, boolean>();
+  const of = (id: string): boolean => {
+    let v = memo.get(id);
+    if (v === undefined) {
+      const b = d.boxes[id], at = b?.hand ? id : b?.parent; // 手の箱 (残す MOD) はその箱の品、結果の箱は親の品
+      const it = at ? sampleOf(data, d, at, 1).item : null;
+      v = !!it && [...it.prefixes, ...it.suffixes].some((m) => m.fractured);
+      memo.set(id, v);
+    }
+    return v;
+  };
+  for (const id of Object.keys(d.boxes)) of(id);
+  return of;
+}
+/**
+ * ✦ の印の狙いの普通側の段 (固定されなかった時に要る段) を to に下げる (S-10g、スイッチ fracDual)。
+ * 完成形の狙いの plainTier と、固定の後の当たりの箱・残す MOD の段も一緒に下げる (11-13 オーナー「一括やから変えるで」)。after = 書き換える前に作った fixedAfter
+ */
+export function lowerPlainTier(data: PatchData, d: TreeDoc, goal: Aim, to: number, after: (boxId: string) => boolean = fixedAfter(data, d)): boolean {
   const now = goal.plainTier ?? goal.tier;
   if (!goal.fractured || to <= now) return false;
   d.memoAims = (d.memoAims ?? []).map((a) => (a.fractured && sameAimMod(data, a, goal) ? { ...a, plainTier: to } : a));
+  const down = (a: Aim): Aim => (sameAimMod(data, a, goal) && a.tier < to ? { ...a, tier: to } : a);
+  for (const b of Object.values(d.boxes)) {
+    if (!after(b.id)) continue;
+    if (b.aim) b.aim = down(b.aim);
+    if (b.anyOf) b.anyOf = b.anyOf.map(down);
+    if (b.hand?.keep) b.hand.keep = b.hand.keep.map(down);
+  }
   return true;
 }
 /** 2 つ持ちで ✦ 側だけ下げる時、普通側を今の段に留める (plainTier が無いと ✦ 側に付いて下がるため) */

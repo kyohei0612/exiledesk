@@ -1,7 +1,8 @@
 <!--
   TreeTierBulk.vue — 完成形のカードの「ティア調整」で開く「狙うMODの一括ティア調整」(S-10f、スイッチ tierDown)。
   11-13 オーナー「ティア調整ボタンで、狙いモッド全て表示してティアをそこで選ばせる…プルダウンで⚪︎ティア以上ってやればおけ」:
-  完成形の狙いを 1 行ずつ並べ、行ごとのプルダウンで「T○ 以上」を選ぶ (今の段と、それより下だけ。上げは無し)。✦ の行は選ばせず一言だけ。
+  完成形の狙いを 1 行ずつ並べ、行ごとのプルダウンで「T○ 以上」を選ぶ (今の段と、それより下だけ。上げは無し)。✦ の行も選べる。
+  開くのは完成形のカードのボタンだけ (2 完成の MOD の画面の右のカードと木の右のカード)。どこから開いても同じ窓 (11-13 オーナー「完成イメージカードだけでええんやないおくの」)。
   「決める」で選んだ行を全部下げる (木の当たりの箱の段・残す MOD の段も一緒、1 つ戻すで戻せる)。今のオーブで出ない手は下げた後に TreeOrbAsk が聞く。
   100 人回した後は、行ごとに「その行だけ選んだ段まで下げた木」を同じ種・同じ値段で 100 人回した完成率を順に数えて出す
 -->
@@ -12,7 +13,7 @@ import { useTree } from "./use-tree";
 import { craftStage as s } from "../../../state/craft-stage";
 import { useDismiss } from "../../../utils/use-dismiss";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { canLowerGoal, isAimMod, lowerGoalTier, lowerPlainTier, pinPlainTier } from "../../../services/simulator/tree/tree-tier-down";
+import { fixedAfter, isAimMod, lowerGoalTier, lowerPlainTier, pinPlainTier } from "../../../services/simulator/tree/tree-tier-down";
 import { flag } from "../../../web/release-flags";
 import { sideOfMod } from "../../../services/craft-stage/engine";
 import { runTreeSteps } from "../../../services/simulator/tree/tree-run";
@@ -20,8 +21,8 @@ import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import { capDivOf, runPrice } from "../../../services/simulator/tree/run-price";
 import { RUN_N } from "./use-tree-run";
 
-/** frac = 2 完成の MOD の画面から開いた (✦ の行も段を選べる。ここで決めた段がフラクチャーの候補の下限、S-10f) */
-const props = defineProps<{ frac?: boolean }>();
+/** frac = 2 完成の MOD の画面から開いた (重ねる高さとオーブの注意書きだけが違う。✦ の行はどちらでも選べ、決めた段がフラクチャーの候補の下限、S-10f) */
+defineProps<{ frac?: boolean }>();
 const emit = defineEmits<{ close: []; lowered: [modIds: string[]] }>();
 const t = useTree();
 const box = ref<HTMLElement | null>(null);
@@ -29,9 +30,9 @@ useDismiss(() => true, [box], () => emit("close"));
 
 /** plain = ✦ の印の狙いの普通側の行 (S-10g、fracDual)、base = その行の今の段 */
 interface Line { goal: Aim; head: string; locked: boolean; plain: boolean; base: number; tiers: { tier: number; text: string; ilvl: number }[] }
-/** 2 つ持ち (S-10g): 2 完成の MOD の画面で ✦ の印が 2 つ以上の時、✦ の狙いを ✦ 側 / 普通側の 2 行に */
+/** 2 つ持ち (S-10g): ✦ の印が 2 つ以上の時、✦ の狙いを ✦ 側 / 普通側の 2 行に (どこから開いても) */
 const DUAL = flag("fracDual");
-const dualOn = computed(() => !!props.frac && DUAL && t.goals.value.filter((a) => a.fractured).length >= 2);
+const dualOn = computed(() => DUAL && t.goals.value.filter((a) => a.fractured).length >= 2);
 /** 狙いごとの行 (この MOD の段だけ。今の段から下へ) */
 const lines = computed<Line[]>(() => {
   const data = s.data.value;
@@ -45,7 +46,7 @@ const lines = computed<Line[]>(() => {
     const row = t.rows.value.find((r) => is(r.id) || r.tiers.some((x) => is(x.modId)));
     const all = (row?.tiers ?? []).filter((x) => !x.modId || is(x.modId));
     const now = all.find((x) => x.tier === goal.tier);
-    const mk = (plain: boolean): Line => { const base = plain ? goal.plainTier ?? goal.tier : goal.tier; return { goal, plain, base, head: now?.text ?? row?.text ?? t.aimLabel(goal), locked: !props.frac && !canLowerGoal(data, t.doc.value, goal), tiers: all.filter((x) => x.tier >= base).sort((a, z) => a.tier - z.tier) }; };
+    const mk = (plain: boolean): Line => { const base = plain ? goal.plainTier ?? goal.tier : goal.tier; return { goal, plain, base, head: now?.text ?? row?.text ?? t.aimLabel(goal), locked: false, tiers: all.filter((x) => x.tier >= base).sort((a, z) => a.tier - z.tier) }; };
     return dualOn.value && goal.fractured ? [mk(false), mk(true)] : [mk(false)];
   });
 });
@@ -53,11 +54,15 @@ const lines = computed<Line[]>(() => {
 const picked = ref<number[]>([]);
 watch(lines, (ls) => { picked.value = ls.map((l) => l.base); }, { immediate: true });
 const changed = computed(() => lines.value.filter((l, i) => !l.locked && (picked.value[i] ?? l.base) > l.base).length);
-/** 1 行を木 d に当てる (普通側 = plainTier だけ、✦ 側の 2 つ持ちは普通側を今の段に留めてから下げる) */
-function lowerLine(data: NonNullable<typeof s.data.value>, d: TreeDoc, l: Line, tier: number): void {
-  if (l.plain) { lowerPlainTier(data, d, l.goal, tier); return; }
-  if (dualOn.value && l.goal.fractured) pinPlainTier(data, d, l.goal);
-  lowerGoalTier(data, d, l.goal, { modId: l.goal.modId, tier }, props.frac);
+/**
+ * 1 行を木 d に当てる。置いた当たりの箱・残す MOD の段も一緒に下げる (11-13 オーナー「一括やから変えるで」)。
+ * 2 つ持ちの ✦ の MOD は、✦ 側 = 固定の前の箱だけ (普通側を今の段に留めてから)・普通側 = 固定の後の箱だけ (after = 書き換える前に作った fixedAfter)
+ */
+function lowerLine(data: NonNullable<typeof s.data.value>, d: TreeDoc, l: Line, tier: number, after: (boxId: string) => boolean): void {
+  const dual = dualOn.value && !!l.goal.fractured;
+  if (l.plain) { lowerPlainTier(data, d, l.goal, tier, after); return; }
+  if (dual) pinPlainTier(data, d, l.goal);
+  lowerGoalTier(data, d, l.goal, { modId: l.goal.modId, tier }, true, dual ? (id) => !after(id) : undefined);
 }
 
 /** 完成率 (鍵 = "now" か "行:段")。無い = まだ数えていない */
@@ -93,7 +98,7 @@ async function count(): Promise<void> {
       if (want !== "now") {
         const [i, tier] = want.split(":").map(Number) as [number, number];
         d = JSON.parse(JSON.stringify(base)) as TreeDoc;
-        lowerLine(data, d, lines.value[i]!, tier);
+        lowerLine(data, d, lines.value[i]!, tier, fixedAfter(data, d));
       }
       const r = await rateOf(d);
       if (!alive || t.doc.value !== base) return;
@@ -109,7 +114,7 @@ function apply(): void {
   if (!data || !changed.value) return;
   const goals = lines.value.map((l, i) => ({ l, tier: picked.value[i] ?? l.base })).filter((x) => !x.l.locked && x.tier > x.l.base);
   // ✦ 側を先に (同じ MOD の普通側は後から plainTier を書く)
-  t.edit((d) => { for (const x of [...goals.filter((g) => !g.l.plain), ...goals.filter((g) => g.l.plain)]) lowerLine(data, d, x.l, x.tier); });
+  t.edit((d) => { const after = fixedAfter(data, d); for (const x of [...goals.filter((g) => !g.l.plain), ...goals.filter((g) => g.l.plain)]) lowerLine(data, d, x.l, x.tier, after); });
   emit("lowered", goals.filter((x) => !x.l.plain).map((x) => x.l.goal.modId));
   emit("close");
 }
@@ -151,7 +156,7 @@ function apply(): void {
           <li>{{ tr("% = 100 人回した後、その行だけ下げた時の完成率", "% = completion rate if only that row is lowered (after running 100)") }}</li>
           <li>{{ tr("決めると木の当たりの箱の段も下がる (1 つ戻すで戻せる)", "Applying also lowers the hit boxes in the tree (Undo restores)") }}</li>
           <li>{{ tr("今のオーブでその段が出ない手は、決めた後に替えるかを聞く", "If an orb can't roll the new tier, you'll be asked whether to switch it") }}</li>
-          <li v-if="frac">{{ tr("フラクチャーの候補 (✦) もここで選べる。決めた段が付けたい MOD の下限 (ツリーのティア調整では ✦ は変えない)", "Fracture candidates (✦) can be set here; the tier is their minimum (the tree's window keeps ✦)") }}</li>
+          <li v-if="t.goals.value.some((a) => a.fractured)">{{ tr("フラクチャーの候補 (✦) も選べる。決めた段が付けたい MOD の下限", "Fracture candidates (✦) can be set too; the tier is their minimum") }}</li>
           <li v-if="dualOn">{{ tr("✦ の MOD は 2 行: フラクチャー時 = 固定される段 (固定の前に狙う段)・フラクチャーしない時 = 固定されずに残った時に要る段", "✦ mods have two rows: if fractured = tier to fix (aimed before fracturing); if not fractured = tier needed if it stays unfixed") }}</li>
         </ul>
       </details>
