@@ -14,7 +14,7 @@ import { goalRunesOf, placeWithSlots } from "./tree-slot-mods";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
-import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan";
+import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { touchedScope } from "./tree-local-scope";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check";
@@ -195,7 +195,7 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   const d = JSON.parse(before) as TreeDoc;
   fn(d); if (!open) dropTouchedOrphans(doc.value, d); // 置き直した箱の要確認は外す (11-08)
   // 整理は木を変えるたびにその場で (S-201 ①、ハズレ整理のボタンは無い)。同じ組み替えの中なので 1 つ戻すで一緒に戻る
-  if (d.boxes.start) tidyJunk(d, true); // 幅は見ない (S-197「同じ木は幅で変わらない」)
+  if (d.boxes.start) tidyJunk(d, true, touchedScope(doc.value, d, open)); // 幅は見ない (S-197「同じ木は幅で変わらない」)。組んでいる間は変わった枝だけ (S-142m ①)
   const after = JSON.stringify(d);
   if (after === before) return;
   undoStack.push(before);

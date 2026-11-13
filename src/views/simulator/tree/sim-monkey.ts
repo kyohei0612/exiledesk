@@ -50,7 +50,7 @@ import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isFixedHand } from "../../../services/simulator/tree/tree-hands";
-import { fillHeldDefaults } from "./tree-held-use";
+import { fillHeldDefaults } from "./tree-held-use"; import { settleNow, withPickScope } from "./tree-local-scope"; import { tidyEach } from "./use-row-settle";
 import { capDivOf } from "../../../services/simulator/tree/run-price";
 
 type Opt = PickOpt;
@@ -125,7 +125,7 @@ export function installSimMonkey(): () => void {
       const h = holdNext ? { ...h0, held: true as const } : h0;
       let at = id;
       // 画面の手の決定 (SimTreePage) と同じく、ヒネコラで持つ削減の枠の既定 (打つ / 打たない、S-39 ②b) も入れる
-      t.edit((x) => { at = holdLinks(() => applyPick(x, id, h, kind, hitAims, preCat, only)); fillHeldDefaults(x, id); });
+      tidyEach(); withPickScope(id, () => t.edit((x) => { at = holdLinks(() => applyPick(x, id, h, kind, hitAims, preCat, only)); fillHeldDefaults(x, id); })); // 範囲と並べも画面と同じ (S-142m)
       const boxes = (t.doc.value.boxes[at]?.outs ?? []).map((bid) => {
         const b = t.doc.value.boxes[bid]!, item = sample(bid)?.item;
         return {
@@ -206,6 +206,8 @@ export function installSimMonkey(): () => void {
     undo() { t.undo(); return { ok: true }; },
     /** ハズレ整理 (S-193) と今のボタンの状態 */
     tidy() { t.edit(tidyJunk); return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value) }; },
+    /** 完成・最終チェックの時と同じく木全体を揃える (S-142m ①。スイッチ treeLocalLink が閉じていれば何もしない) */
+    settle() { settleNow(t.edit); },
     /** 木を開き終えたか (開いている間は木を変えない、S-196) */
     ready() { return !t.loading.value; },
     tidyState() { return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value), gray: Object.values(t.doc.value.boxes).filter(isGrayBox).map((b) => b.id) }; },

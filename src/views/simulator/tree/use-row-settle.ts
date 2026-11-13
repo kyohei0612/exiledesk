@@ -42,6 +42,8 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
  * 見やすい木へ並べ直す (S-142k、スイッチ treeTidyOnDone): 組んでいる間の順の控え (S-142g) を捨て、開き直しと同じ並べ (完成の道を左端・ほかは結果の順) に。
  * 完成を押した時と最終チェックを押した時に 1 回ずつ (11-13 オーナー「完成押した瞬間に見やすいツリーへ変えるのはいいね、後整頓タイミングは最中チェック押したらも整頓しよう」)
  */
+/** 手を置く・替える時の並べ (S-142m ②、スイッチ treeTidyEach): 兄弟の順の控えを捨て、完成の時と同じ見やすい並べに (触った箱は holdBox が同じ所に保つ) */
+export const tidyEach = (): void => { if (flag("treeTidyEach")) placeKept.clear(); };
 export function tidyView(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined): void {
   if (!flag("treeTidyOnDone")) return;
   placeKept.clear();
