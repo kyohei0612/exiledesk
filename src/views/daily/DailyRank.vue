@@ -22,8 +22,10 @@ const showTime = computed(() => !(score.value && phone.value));
 const showViews = flag("dailyViews");
 /** 提出の一言 (D-35e、スイッチ dailyNote) を名前の下に小さく 1 行。挑戦前のぼかしの日は一言もぼかす */
 const showNote = flag("dailyNote");
-/** 一言を名前の横に同じ 1 行で (D-35e2、スイッチ dailyNoteSide) */
-const noteSide = flag("dailyNoteSide");
+/** 一言を名前の横に同じ 1 行で (D-35e2、スイッチ dailyNoteSide)。スマホの形の幅は名前の下 = 行の 2 行目に 2 行まで (noteWide) */
+const noteSideOn = flag("dailyNoteSide");
+const noteSide = computed(() => noteSideOn && !phone.value);
+const noteWide = computed(() => noteSideOn && phone.value);
 /** 提出の後から一言を足す・直す・消す (D-35e): 今日のお題で自分の行が表にある時だけ、表の下に 1 つ */
 const noteOpen = ref(false);
 const myNote = computed(() => rows.value.find((r) => r.me)?.note ?? "");
@@ -64,13 +66,15 @@ function peeked(): void {
           <component :is="canOpen(r.me) ? 'button' : 'div'" :type="canOpen(r.me) ? 'button' : undefined" class="daily-rank-in" :class="canOpen(r.me) ? 'link' : ''" :disabled="canOpen(r.me) && !!busy" :data-daily-rank-open="canOpen(r.me) ? r.name : undefined"
             :title="canOpen(r.me) ? tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`) : undefined" @click="canOpen(r.me) && press(r.name, r.me)">
             <span class="daily-place">{{ i + 1 }}</span>
-            <DailyName v-if="!showNote || !r.note" class="flex-1" :name="r.name" />
+            <DailyName v-if="!showNote || !r.note || noteWide" class="flex-1" :class="{ 'daily-rank-name1': noteWide && showNote && r.note }" :name="r.name" />
             <span v-else class="daily-rank-who flex-1" :class="{ side: noteSide }"><DailyName :name="r.name" /><small class="daily-rank-note" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">{{ tr("「", "“") }}{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}{{ tr("」", "”") }}</small></span>
             <span v-if="showTime" class="daily-num w-12 daily-rank-time" :class="{ 'daily-veiled': veiled }">{{ num(mins(r.ms), tr("00 分", "00m")) }}</span>
             <span class="daily-num w-10" :class="{ 'daily-veiled': veiled }">{{ num(`${r.rate}%`, "00%") }}</span>
             <component :is="score ? 'span' : 'b'" class="daily-num w-16" :class="[score ? 'daily-rank-cost' : 'daily-points', { 'daily-veiled': veiled }]">{{ busy === r.name ? tr("開いている", "Opening") : num(`${r.cost} ${tr("神", "div")}`, `000.0 ${tr("神", "div")}`) }}</component>
             <b v-if="score" class="daily-num daily-points w-14" data-daily-rank-score :class="{ 'daily-veiled': veiled }">{{ num(String(scoreOf(r.cost, r.rate) ?? "—"), "000.0") }}</b>
             <span v-if="showViews" class="daily-num daily-rank-views" data-daily-rank-views :class="{ 'daily-veiled': veiled }">{{ num(r.views ? String(r.views) : "—", "00") }}</span>
+            <!-- スマホの形の幅は一言を行の 2 行目に、行の幅いっぱい・2 行まで (D-35e2) -->
+            <small v-if="noteWide && showNote && r.note" class="daily-rank-note wide" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">{{ tr("「", "“") }}{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}{{ tr("」", "”") }}</small>
           </component>
         </li>
       </ol>

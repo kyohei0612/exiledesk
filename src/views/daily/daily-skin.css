@@ -101,6 +101,10 @@
 .daily-rank-who.side { flex-direction: row; align-items: baseline; gap: 8px; padding-block: 0; }
 .daily-rank-who.side > :first-child { flex: 0 1 auto; max-width: 70%; }
 .daily-rank-who.side > .daily-rank-note { flex: 1 1 0; min-width: 0; }
+/* スマホの形の幅 (D-35e2): 一言は行の 2 行目に、順位の数の右から行の端まで、2 行まで折り返して超えたら … */
+.daily-rank-in:has(> .daily-rank-note.wide) { flex-wrap: wrap; row-gap: 0; }
+.daily-rank-note.wide { flex: 0 0 100%; padding: 0 0 3px 28px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; line-height: 1.35; }
+.daily-rank-name1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 提出の後の一言の書く / 直す (D-35e): 表の下の右に 1 つ */
 .daily-rank-note-edit { display: flex; justify-content: flex-end; margin-top: 8px; }
 .daily-rank-in.link:hover { background: var(--skin-hover); color: var(--skin-title); }
