@@ -164,9 +164,10 @@ function hopped(pts: readonly Pos[], hops: (a: Pos, b: Pos) => number[]): string
 }
 
 /**
- * 進む線の横の棒の段 (同じ高さで横に重なる棒を 1 段 10px ずつ上へ、3 段まで = 手の札に届かない)。spans = 親ごとの棒の [左, 右, 高さ]。返り値 = ずらす量 (上へ、px)
+ * 進む線の横の棒の段 (同じ高さで横に重なる棒を 1 段 step px ずつ上へ、3 段まで = 手の札に届かない)。spans = 親ごとの棒の [左, 右, 高さ]。返り値 = ずらす量 (上へ、px)
+ * step は 10、スイッチ hitsSide の間は 20 (use-tree-edges の LANE_GAP。S-145、11-14 オーナー「線同士2倍間空けようか今より」)
  */
-export function busLevels(spans: ReadonlyArray<{ id: string; x0: number; x1: number; y: number }>): Map<string, number> {
+export function busLevels(spans: ReadonlyArray<{ id: string; x0: number; x1: number; y: number }>, step = 10): Map<string, number> {
   const out = new Map<string, number>();
   const rows = new Map<number, typeof spans[number][]>();
   for (const s of spans) { const k = Math.round(s.y); rows.set(k, [...(rows.get(k) ?? []), s]); }
@@ -176,7 +177,7 @@ export function busLevels(spans: ReadonlyArray<{ id: string; x0: number; x1: num
       let k = lanes.findIndex((l) => l.every(([a, b]) => s.x1 < a - 6 || s.x0 > b + 6));
       if (k < 0) { lanes.push([]); k = lanes.length - 1; }
       lanes[k]!.push([s.x0, s.x1]);
-      out.set(s.id, Math.min(k, 2) * 10);
+      out.set(s.id, Math.min(k, 2) * step);
     }
   }
   return out;

@@ -28,6 +28,11 @@ const BUS_DY = HAND_DY - CHIP_HALF;
 const HOP = 6;
 /** 縦に積んだ下の箱への線 (S-142j): 列の左の脇の x (箱の左の端から) と、箱の横から入る高さ (箱の上の端から) */
 const STACK_SIDE = 20, STACK_IN = 24;
+/**
+ * 並んで走る線どうしの間 (横の棒の段の縦の間・同じ手の札から出る線の横の間)。スイッチ hitsSide の間は前の 10 の倍
+ * (S-145、11-14 オーナー「線同士2倍間空けようか今より」「その幅に合わせて縦線の横幅間隔一緒にしてくれ」)
+ */
+const LANE_GAP = (): number => (flag("hitsSide") ? 20 : 10);
 /** 同じ枠へ直に引く線の色 (乗せた時の合流の線と同じ緑) */
 const LINK_COLOR = "#6fd08c";
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
@@ -82,7 +87,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length && (bandFrom(b)?.lead ?? b.id) === b.id).map((b) => {
     const os = groupOuts(b), xs = [bandFrom(b)?.col ?? posOf(b).x + BOX_W / 2, ...os.map(toOf).map(midOf)];
     return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...os.map((o) => posOf(doc.value.boxes[toOf(o)]!).y)) - BUS_DY };
-  })));
+  }), LANE_GAP()));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
   const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && (outsOf(b).length || links.value.has(b.id) || backs.value.has(b.id))).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
@@ -108,7 +113,9 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const mid = !pass && !multi && (fold.value.folds.has(b.id) || (!!kids[0] && fold.value.folds.has(kids[0].id)));
     const midJy = mid ? (fold.value.folds.has(b.id) ? py : p.y + (heightOf?.(b.id) || BOX_H)) / 2 + top / 2 : null;
     const jy = pass ? p.y : midJy ?? rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
-    const busY = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2)) - (busShift.value.get(lead) ?? 0);
+    const busY0 = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2));
+    // ずらしても手の札の下の縁 + 12 より上へは上げない (段の間を倍にしても札に届かない)
+    const busY = busY0 - Math.max(0, Math.min(busShift.value.get(lead) ?? 0, busY0 - (jy + CHIP_HALF + 12)));
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     // 縦に積んだ箱 (S-142j): 同じ x の兄弟の下の箱は、列の左の脇 (STACK_SIDE) を下りて箱の横から入る (上の箱の裏を通ると上の箱の続きに見える)
@@ -129,9 +136,13 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // (S-142j ③、スイッチ hitsSide) 同じ枠へ・同じ中身の箱の続きへの畳みは札も描かず、手の札の真ん中から真下へ伸ばし、行き先の箱の真ん中の高さで曲がって横から入る
     // (11-14 オーナー「左の枠の真ん中めがけて横の線はそこで縦の線は消去の真ん中から下へのばして」「同じ枠系はそのごの枠へつなげばいいのでは」)
     // 手の札の真ん中から始める (札の裏を通って下の縁で切れない。CHIP_HALF は札の高さの見込みで本物より大きく、下の縁から始めると隙間が出た。11-14 オーナー「緑くっついてないぞ手の札に」)
-    const linkY0 = jy, linkSegs: Seg[] = [];
+    const linkY0 = jy, linkSegs: Seg[] = [], px0 = px;
+    // (スイッチ hitsSide) 同じ手の札から灰の線と緑の線 (や緑 2 本) が出る時は、緑を行き先の側へ LANE_GAP ずつずらして出す (同じ点から出て 1 本に見えた。
+    // 11-14 オーナー「手の札から伸びてる線もあいだあげてちゃんと２本で伸びてんだってわかった方が良い」「縦線の横幅間隔一緒にしてくれ」)
+    let nth = kids.length ? 1 : 0;
     for (const t of links.value.get(b.id) ?? []) {
       const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, ty = tq.y + th / 2;
+      const off = flag("hitsSide") ? nth++ * LANE_GAP() * (tq.x + BOX_W / 2 < px0 ? -1 : 1) : 0, px = px0 + off;
       if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
         to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null });
         linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: tq.y });
