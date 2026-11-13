@@ -28,9 +28,11 @@ export type DailyAim = GenAim;
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え) */ note?: string };
 /** views = そのレシピを開いた人の数 (D-50e、1 人も開いていない行には無い) */
-export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number };
+export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number; /** 提出の一言 (D-35e、無い人は無し) */ note?: string };
+/** 提出の一言の字数の上限 (D-35e、サーバーの SUBMIT_NOTE_MAX と同じ) */
+export const SUBMIT_NOTE_MAX = 40;
 export type DailyNick = { id: string; name: string; code: string };
 /** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
 export type DailyBoxItem = { id: string; at: number; note: string; base: string; baseJa: string; ilvl: number; aims: DailyAim[]; status: "wait" | "ok" | "no" | "used"; why?: string };
@@ -173,16 +175,18 @@ export function canStillTry(id: string, now = Date.now()): boolean {
 /** 残り時間 (実際の時計、ページを閉じても進む) */
 export const leftMs = (t: DailyTry, now = Date.now()): number => t.startedAt + TIME_LIMIT_MS - now;
 /** POST /daily/submit。1 回だけで、出したら挑戦は終わり (D-35c)。木 (recipe) も一緒に送る (D-55、検算 D-58 の材料)。1 時間 + 30 秒を過ぎたらサーバーが断る */
-export async function submitTry(id: string, cost: number, rate: number, now = Date.now()): Promise<{ ok: boolean; best: DailyRecord | null }> {
+export async function submitTry(id: string, cost: number, rate: number, note = "", now = Date.now()): Promise<{ ok: boolean; best: DailyRecord | null; /** 一言が悪口・URL で断られた (D-35e) */ badNote?: boolean }> {
   const a = auth(), t = daily.local.tries[id];
   if (!a || !t) return { ok: false, best: t?.best ?? null };
-  const r = await call<{ ok?: boolean; best?: DailyRecord | null; error?: string }>("/daily/submit", { ...a, id, cost, rate, recipe: t.tree ?? null });
+  const r = await call<{ ok?: boolean; best?: DailyRecord | null; error?: string }>("/daily/submit", { ...a, id, cost, rate, recipe: t.tree ?? null, ...(note.trim() ? { note: note.trim() } : {}) });
+  if (r?.error === "note") return { ok: false, best: t.best ?? null, badNote: true };
   // 前に出していた (別の画面・別の PC) 時も終わりの印を付ける
   if (r?.error === undefined && (r as { done?: boolean } | null)?.done) { t.ended = true; t.submitted = true; save(); }
   if (!r?.ok) return { ok: false, best: t.best ?? null };
   t.ended = true;
   t.submitted = true;
   t.last = { cost, rate, ms: now - t.startedAt, at: now };
+  if (note.trim()) t.note = note.trim();
   if (r.best) t.best = r.best; else delete t.best;
   save();
   return { ok: true, best: t.best ?? null };
@@ -214,9 +218,9 @@ export const TRIED_CARD: boolean = true;
  * 自分の行はサーバーの数が正 (回し直しで差し替えた数も出す、11-11 ブラック 82)。サーバーの表は 60 秒古いことがあるので、サーバーに自分の行がまだ無い間だけこの端末の記録を足す
  */
 export function rankOf(id: string): DailyRankRow[] {
-  const me = daily.local.nick?.name, best = daily.local.tries[id]?.best;
+  const me = daily.local.nick?.name, mine = daily.local.tries[id], best = mine?.best;
   const rows = (daily.remote?.ranks[id] ?? []).map((r) => (r.name === me ? { ...r, me: true } : r));
-  if (best && me && !rows.some((r) => r.me)) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true });
+  if (best && me && !rows.some((r) => r.me)) rows.push({ name: me, cost: best.cost, rate: best.rate, ms: best.ms, me: true, ...(mine?.note ? { note: mine.note } : {}) });
   const score = rankByScore(id);
   return rows.sort((a, b) => rankCmp(a, b, score));
 }

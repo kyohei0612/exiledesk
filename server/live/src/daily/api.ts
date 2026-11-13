@@ -16,6 +16,9 @@ const BOX_PER_HOUR = 5;
 const ITEM_MAX = 4096;
 const RECIPE_MAX = 32 * 1024;
 const NOTE_MAX = 100;
+/** 提出の一言 (D-35e) は 40 字まで。悪口・URL は断る (書き直してもらう) */
+const SUBMIT_NOTE_MAX = 40;
+const submitNoteBad = (s: string): boolean => hasBadWord(s) || /https?:|www\.|\.[a-z]{2,}\//i.test(s.normalize("NFKC"));
 
 type Aim = { modId: string; tier: number; ja: string; en: string };
 type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string };
@@ -61,7 +64,7 @@ export async function settleFromPlan(db: D1Database, upTo: number, prices: strin
 }
 
 /** 解決の順位 (D-50): 解決だけ・検算で外れた物は除く・費用の安い順 (D-02b の日からはスコアの小さい順、並べは daily-score.ts の 1 か所)・同じなら先に出した人 */
-const rankSql = (topicId: string): string => `SELECT n.name, t.cost, t.rate, t.submitted_at - t.started_at AS ms FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id
+const rankSql = (topicId: string): string => `SELECT n.name, t.cost, t.rate, t.submitted_at - t.started_at AS ms, t.note FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id
   WHERE t.topic_id = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0) ORDER BY ${rankOrderSql(byScore(topicId))} LIMIT ?`;
 
 function topicOut(t: TopicRow, tries: number, closed: boolean): Record<string, unknown> {
@@ -92,7 +95,8 @@ export async function dailyJson(db: D1Database, now: number, prices: string | nu
   const week = Array.from({ length: 7 }, (_, i) => ({ id: idOf(monday + i), wd: i, md: dayName(monday + i).slice(5).replace("-", "/"), today: monday + i === today, t: monday + i <= today ? out(monday + i) : null }));
   const ranks: Record<string, unknown[]> = {};
   for (const t of topics) {
-    const rows = (await db.prepare(rankSql(t.id)).bind(t.id, RANK_TOP).all<{ name: string }>()).results;
+    // 一言 (D-35e) の無い行は欄を付けない
+    const rows = (await db.prepare(rankSql(t.id)).bind(t.id, RANK_TOP).all<{ name: string; note?: string | null }>()).results.map(({ note, ...r }) => (note ? { ...r, note } : r));
     // レシピを開いた人の数 (D-50e)。1 人も開いていない行には欄を付けない (画面は「—」)
     const views = rows.length ? await viewCounts(db, t.id) : new Map<string, number>();
     ranks[t.id] = views.size ? rows.map((r) => (views.has(r.name) ? { ...r, views: views.get(r.name) } : r)) : rows;
@@ -161,12 +165,15 @@ export async function dailySubmit(db: D1Database, b: Body, now: number): Promise
   const recipe = typeof b.recipe === "string" ? b.recipe : b.recipe == null ? null : JSON.stringify(b.recipe);
   if (!Number.isFinite(cost) || cost < 0 || cost > 1e9 || !Number.isFinite(rate) || rate < 0 || rate > 100) return { error: "value" };
   if (recipe && recipe.length > RECIPE_MAX) return { error: "large" };
+  // 一言 (D-35e): 任意・40 字まで。悪口・URL は提出させずに断る (画面が訳を出して書き直してもらう)
+  const note = typeof b.note === "string" ? [...b.note.replace(/\s+/g, " ").trim()].slice(0, SUBMIT_NOTE_MAX).join("") || null : null;
+  if (note && submitNoteBad(note)) return { ok: false, error: "note" };
   const t = await db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>();
   const best = (r: TryRow | null) => (r && r.cost != null && r.rate! >= SOLVE_RATE ? { cost: r.cost, rate: r.rate, ms: r.submitted_at! - r.started_at, at: r.submitted_at } : null);
   if (!t || t.gave_up_at || now > t.started_at + TIME_LIMIT_MS + SUBMIT_GRACE_MS) return { ok: false, best: best(t) };
   // 出した後は受けない (D-35c)。同時に 2 回押されても 1 回目だけが書く (submitted_at IS NULL の時だけ書き替える)
   if (t.submitted_at) return { ok: false, done: true, best: best(t) };
-  const w = await db.prepare("UPDATE daily_tries SET submitted_at = ?, cost = ?, rate = ?, recipe = ? WHERE topic_id = ? AND nick_id = ? AND submitted_at IS NULL").bind(now, cost, rate, recipe, id, nick.id).run();
+  const w = await db.prepare("UPDATE daily_tries SET submitted_at = ?, cost = ?, rate = ?, recipe = ?, note = ? WHERE topic_id = ? AND nick_id = ? AND submitted_at IS NULL").bind(now, cost, rate, recipe, note, id, nick.id).run();
   if (!w.meta.changes) return { ok: false, done: true, best: best(t) };
   return { ok: true, best: best({ ...t, submitted_at: now, cost, rate }) };
 }

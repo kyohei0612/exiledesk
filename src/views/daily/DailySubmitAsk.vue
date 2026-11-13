@@ -6,15 +6,21 @@
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
-import { rankOf, SOLVE_RATE, submitTry } from "./daily-api";
+import { rankOf, SOLVE_RATE, SUBMIT_NOTE_MAX, submitTry } from "./daily-api";
 import { liveFlush } from "./daily-live";
 import { goDaily } from "./daily-open";
+import { flag } from "../../web/release-flags";
 
 /** cost = null は完成 0 人 (費用が無い = —、D-35d)。サーバーには 0 で送り、完成率 0% なので順位には載らない */
 const props = defineProps<{ id: string; open: boolean; cost: number | null; rate: number; /** 開発版の見本: 結果の窓から開く (dev=done) */ shown?: { cost: number | null; rate: number } | null; /** 開発版の見本: サーバーに送らない */ dev?: boolean }>();
 const emit = defineEmits<{ close: []; done: [] }>();
 const step = ref<"ask" | "sending" | "done">(props.shown ? "done" : "ask");
 const failed = ref(false);
+/** 提出の一言 (D-35e、スイッチ dailyNote): 任意・40 字まで。悪口・URL はサーバーが断り、ここに訳を出して書き直してもらう */
+const NOTE = flag("dailyNote");
+const note = ref("");
+const badNote = ref(false);
+const noteLen = computed(() => [...note.value.trim()].length);
 /** 出した時の数 (出した後に木を見ても変わらない) */
 const sent = ref<{ cost: number | null; rate: number } | null>(props.shown ?? null);
 const solved = computed(() => (sent.value?.rate ?? 0) >= SOLVE_RATE);
@@ -24,9 +30,11 @@ const costText = (c: number | null): string => (c == null ? "—" : `${c} ${tr("
 const place = computed(() => { if (!solved.value) return null; const i = rankOf(props.id).findIndex((r) => r.me); return i < 0 ? null : i + 1; });
 async function send(): Promise<void> {
   failed.value = false;
+  badNote.value = false;
   step.value = "sending";
   if (!props.dev) await liveFlush(); // 終える前に最後の手を控えへ (D-57b)
-  const r = props.dev ? { ok: true } : await submitTry(props.id, props.cost ?? 0, props.rate);
+  const r: { ok: boolean; badNote?: boolean } = props.dev ? { ok: true } : await submitTry(props.id, props.cost ?? 0, props.rate, NOTE ? note.value : "");
+  if (r.badNote) { step.value = "ask"; badNote.value = true; return; }
   if (!r.ok) { step.value = "ask"; failed.value = true; return; }
   sent.value = { cost: props.cost, rate: props.rate };
   step.value = "done";
@@ -45,6 +53,12 @@ function close(): void {
       <p>{{ tr("提出すると今日の挑戦は終わり、出し直せません。", "Submitting ends today's challenge. You can't submit again.") }}</p>
       <p class="daily-submit-nums"><b>{{ costText(cost) }}</b> <small>{{ tr("完成 1 個あたりの費用", "per finished item") }}</small> <b>{{ rate }}%</b> <small>{{ tr("完成率", "finished") }}</small></p>
       <p v-if="rate < SOLVE_RATE" data-daily-submit-zero>{{ tr("100 人とも完成まで届かない、とても難しい道でした。このまま提出でき、今日の記録として残ります (順位には載りません)。", "None of the 100 crafters finished, so this is a very hard route. You can still submit it as today's record (it isn't ranked).") }}</p>
+      <label v-if="NOTE" class="daily-submit-note" data-daily-submit-note>
+        <span>{{ tr("ひとこと (なくてもよい・順位の行に出る)", "A word (optional, shown on your ranking row)") }}</span>
+        <input v-model="note" type="text" class="daily-input w-full" :maxlength="SUBMIT_NOTE_MAX" spellcheck="false" autocomplete="off" :disabled="step === 'sending'" :placeholder="tr('例: フラクチャーで 2 回ミスった', 'e.g. Missed the fracture twice')" @input="badNote = false" />
+        <small>{{ noteLen }} / {{ SUBMIT_NOTE_MAX }}</small>
+      </label>
+      <p v-if="badNote" data-daily-submit-note-bad class="text-[var(--exile-color-signal-down)]">{{ tr("ひとことに使えない言葉か URL が入っている。書き直すか、消して提出してください。", "Your note has a word or URL that isn't allowed. Change it or clear it to submit.") }}</p>
       <p v-if="failed" class="text-[var(--exile-color-signal-down)]">{{ tr("提出が届かなかった (つながらない・時間切れ・もう出した)。", "The submission didn't go through (connection, time is up, or already submitted).") }}</p>
       <div class="flex justify-end gap-2">
         <button type="button" class="g-btn" data-daily-submit-cancel :disabled="step === 'sending'" @click="close">{{ tr("やめる", "Cancel") }}</button>
@@ -68,4 +82,7 @@ function close(): void {
 .daily-submit-nums { display: flex; align-items: baseline; gap: 6px; }
 .daily-submit-nums b { font-size: 20px; }
 .daily-submit-nums small { margin-right: 12px; opacity: 0.7; }
+.daily-submit-note { display: flex; flex-direction: column; gap: 4px; }
+.daily-submit-note > span { font-size: 13px; opacity: 0.8; }
+.daily-submit-note > small { align-self: flex-end; font-size: 12px; opacity: 0.6; }
 </style>

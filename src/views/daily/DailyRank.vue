@@ -19,6 +19,8 @@ const phone = usePhone();
 const showTime = computed(() => !(score.value && phone.value));
 /** 右端の列「閲覧」= そのレシピを開いた人の数 (D-50e、スイッチ dailyViews)。0 人は「—」、今日の分は挑戦前の人にはほかの数と同じくぼかす */
 const showViews = flag("dailyViews");
+/** 提出の一言 (D-35e、スイッチ dailyNote) を名前の下に小さく 1 行。挑戦前のぼかしの日は一言もぼかす */
+const showNote = flag("dailyNote");
 /** 挑戦前のぼかし (D-50): 今日のお題でまだ始めていない人は順位と名前だけ。数は画面に置かず仮の字をぼかす */
 const veiled = computed(() => score.value && !closed.value && !getTry(props.topic.id));
 const num = (real: string, fake: string): string => (veiled.value ? fake : real);
@@ -55,7 +57,8 @@ function peeked(): void {
           <component :is="canOpen(r.me) ? 'button' : 'div'" :type="canOpen(r.me) ? 'button' : undefined" class="daily-rank-in" :class="canOpen(r.me) ? 'link' : ''" :disabled="canOpen(r.me) && !!busy" :data-daily-rank-open="canOpen(r.me) ? r.name : undefined"
             :title="canOpen(r.me) ? tr(`${r.name} のレシピをシミュレーターで開く`, `Open ${r.name}'s recipe in the Simulator`) : undefined" @click="canOpen(r.me) && press(r.name, r.me)">
             <span class="daily-place">{{ i + 1 }}</span>
-            <DailyName class="flex-1" :name="r.name" />
+            <DailyName v-if="!showNote || !r.note" class="flex-1" :name="r.name" />
+            <span v-else class="daily-rank-who flex-1"><DailyName :name="r.name" /><small class="daily-rank-note" data-daily-rank-note :class="{ 'daily-veiled': veiled }" :title="veiled ? undefined : r.note">「{{ veiled ? tr("ひとことはまだ見えない", "Hidden for now") : r.note }}」</small></span>
             <span v-if="showTime" class="daily-num w-12 daily-rank-time" :class="{ 'daily-veiled': veiled }">{{ num(mins(r.ms), tr("00 分", "00m")) }}</span>
             <span class="daily-num w-10" :class="{ 'daily-veiled': veiled }">{{ num(`${r.rate}%`, "00%") }}</span>
             <component :is="score ? 'span' : 'b'" class="daily-num w-16" :class="[score ? 'daily-rank-cost' : 'daily-points', { 'daily-veiled': veiled }]">{{ busy === r.name ? tr("開いている", "Opening") : num(`${r.cost} ${tr("神", "div")}`, `000.0 ${tr("神", "div")}`) }}</component>
