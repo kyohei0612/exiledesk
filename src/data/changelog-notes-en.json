@@ -1,4 +1,12 @@
 {
+  "0.1.727": [
+    "Simulator: you can now adjust the tiers of all target mods at once in one dialog (\"Tiers\" on the finished item card and the final mods screen)",
+    "Simulator: mods planned for a Fracturing Orb now set their tier on two lines, for when they are fractured and when they are not",
+    "Simulator: mods to Reveal can now be picked one after another in the dialog, and the picked mods are listed as tags below the button",
+    "Simulator: result boxes from the ideal step are no longer sent back automatically to a box with the same contents on an upper row",
+    "Simulator: boxes below an Orb of Annulment placed while building now show a \"Tree shape may change\" tag",
+    "Simulator: fixed tree boxes sometimes overlapping the tier label band on the left"
+  ],
   "0.1.726": [
     "Simulator: after zooming in or out, boxes no longer overlap the tier label band on the left",
     "Simulator: end boxes marked Done or Failed no longer show the \"players with a different item shape arrive here\" notice in Final check, and are not counted as unset",
