@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.728",
+  "date": "2026-11-13",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 今日のお題の絵を、始める前も明るく見せるようにしました",
+    "en": "Daily: today's challenge image is now shown bright even before you start"
+   }
+  ]
+ },
+ {
   "v": "0.1.727",
   "date": "2026-11-13",
   "items": [
@@ -922,18 +934,6 @@
     "area": "",
     "text": "シミュレーター: 最終チェックの途中で画面が固まりにくくしました",
     "en": "Simulator: the page freezes less while the final check is running"
-   }
-  ]
- },
- {
-  "v": "0.1.688",
-  "date": "2026-11-09",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ページを開いた時に読み込みが終わらないことがある不具合を直しました。札に乗せた時の説明が二重に出ないようにしました",
-    "en": "Fixed pages sometimes getting stuck while loading. Info badges no longer show a duplicate tooltip on hover"
    }
   ]
  }

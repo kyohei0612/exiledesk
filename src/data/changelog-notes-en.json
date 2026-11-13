@@ -1,4 +1,7 @@
 {
+  "0.1.728": [
+    "Daily: today's challenge image is now shown bright even before you start"
+  ],
   "0.1.727": [
     "Simulator: you can now adjust the tiers of all target mods at once in one dialog (\"Tiers\" on the finished item card and the final mods screen)",
     "Simulator: mods planned for a Fracturing Orb now set their tier on two lines, for when they are fractured and when they are not",
