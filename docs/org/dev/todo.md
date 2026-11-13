@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_98020170-2a03-400d-a24f-89fe00ec879b (31、Opus 5.5、11-13 午後にブラック 98 が予備に立て、11-13 16 時前にブラック 99 の合図で入った。30 = local_3e594aaa が 2,0xx 件で交代・アーカイブ済み。引き継ぎ = 共有ノート progress/sim-lead30-handover.md) | 今: 待機。保留 = fracSplit (カードのプレ 3 行・木の箱を分ける)・複数フラクチャーの木の並べ方 |
-| デザイン部長 | local_28256afd-041c-4d00-b110-d023f3c6f37e (4、Opus 5.5、11-13 10:44 にブラック 96 が立てた。頼み = 共有ノート progress/design-lead4-brief.md) | 今: MOD 一覧が空の時の一言 (modNone、84e662adb、開発版だけ) を上げて待機 |
+| デザイン部長 | local_d3b7cf5a-7afd-405f-8263-1acc7ab63991 (5、Opus 5.5、11-13 17 時台にブラック 99 が控えに立て、4 = local_28256afd が 2,3xx 件で交代・アーカイブ済み。予備 6 = local_6439c0c9-fa2e-45a8-93c2-875f8584c06e が待機。頼み = 共有ノート progress/design-lead5-brief.md、引き継ぎ = progress/design-lead4-handover.md) | 今: 要望の返事を強制ポップで出す replyPush (作業場 design-lead5、詰まり = 押しても force.txt を読まない) |
 | エミュ部長 | local_f31baf5f-cab7-4d82-8546-6e554a711f48 (emu-lead、Opus 5.5、11-13 昼にブラック 97 が立てた (オーナー「たてて」)。前の local_b7f1334c はもういない。頼み = 共有ノート progress/emu-lead-brief.md、板 = progress/emu-lead.md) | 今: ① 付与スキルの選び d657151d1 済み。② エミュで試す = 完成形の見本の品で開く・上限超えは白 + 一言 (オーナー 11-13) |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | — (11-10 棚卸しで前の行を閉じた) | 仕事が来たらブラックが立てる |
