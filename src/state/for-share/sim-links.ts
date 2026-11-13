@@ -23,28 +23,43 @@ export async function openSimWithItem(item: StageItem): Promise<void> {
 }
 
 /**
- * シミュの完成形をエミュで試す (S-147・M-06d、スイッチ simToEmu、オーナー 11-13「②案１」): エミュを同じベース・同じアイテムレベルの白で開き、
- * 完成の MOD をその段以上で「次の手で狙う」へ入れる (6 つまで = AIM_MAX)。シミュの画面はここだけを呼び、エミュの中 (views/craft-stage) は読まない
+ * 「エミュで試す」で白から開いた訳 (M-06d。エミュの画面が上に一言出す、× かベースを変えると消える)。null = 出さない
+ */
+export const simEmuNote = ref<string | null>(null);
+/**
+ * シミュの完成形をエミュで試す (S-211・M-06d、スイッチ simToEmu、オーナー 11-13「完成形の見本通りにエミュで表示させたらおk」):
+ * 完成形のカードの品 (use-tree の goalItem、段・値・フラクチャー・冒涜の印ごと) を工程なしの品としてエミュに載せる (狙いには入れない)。
+ * 完成形が枠 (プレ / サフィの上限) を超えている・エンジンがそのまま付けられない時は、同じベース・アイテムレベルの白で開き、上に訳を出す。
+ * goals は数だけ見る (0 なら何もしない)。シミュの画面はここだけを呼び、エミュの中 (views/craft-stage) は読まない
  */
 export async function openEmuWithGoals(base: string, itemLevel: number, goals: ReadonlyArray<{ modId: string; tier: number }>): Promise<void> {
-  if (!flag("simToEmu")) return;
-  const [{ craftStage: s, AIM_MAX }, { tierIndexOf, aimLabel }, { useStageBase }] = await Promise.all([
+  if (!flag("simToEmu") || !goals.length) return;
+  const [{ craftStage: s }, { forcesOf }, { useStageBase }, { useTree }, { tr }] = await Promise.all([
     import("../craft-stage"),
-    import("../../services/craft-stage/engine"),
+    import("../../services/emulator/emu-engine"),
     import("../../views/craft-stage/use-stage-base"),
+    import("../../views/simulator/tree/use-tree"),
+    import("../../i18n/lang"),
   ]);
+  // エミュをまだ開いていない時も載せた後に init (写しの戻し・白) で上書きされないよう、先にデータを読む (済みなら何もしない)
+  await s.init();
+  const g = useTree().goalItem.value;
   closeTreePage(() => {
     s.play.value = "emu";
     s.mode.value = "hand";
+    s.aims.value = [];
+    const sb = useStageBase();
+    sb.pickSimBase(base); // ベースを選んだ印・白に戻す (s.reset)
     s.itemLevel.value = itemLevel;
-    useStageBase().pickSimBase(base); // ベースを選んだ印・白に戻す (s.reset)
-    const d = s.data.value;
-    s.aims.value = d ? goals.slice(0, AIM_MAX).flatMap((g) => {
-      const minTierIndex = tierIndexOf(d, g.modId, g.tier);
-      if (minTierIndex < 0) return [];
-      const a = { modId: g.modId, minTierIndex, label: "" };
-      return [{ ...a, label: aimLabel(d, a) }];
-    }) : [];
+    if (!g) { s.reset(); simEmuNote.value = null; return; }
+    const over = g.left.length > 0;
+    const why = over ? null : s.startWith(base, itemLevel, forcesOf(g.item));
+    if (over || why) {
+      s.reset();
+      simEmuNote.value = over
+        ? tr("既定の MOD 数を超えているため、エミュレーターで初めから作り直してください", "This build has more mods than the item can hold, so craft it from scratch in the emulator")
+        : tr(`この完成形はそのままでは載せられないため (${why})、エミュレーターで初めから作り直してください`, `This build can't be loaded as is (${why}), so craft it from scratch in the emulator`);
+    } else simEmuNote.value = null;
   });
 }
 
