@@ -7,6 +7,7 @@ import { computed } from "vue";
 import { APP_VERSION, CHANGELOG, changelogNew, changelogOpen } from "../state/changelog";
 import { tr, isEn } from "../i18n/lang";
 import ModalShell from "./ui/ModalShell.vue";
+import LinkText from "./ui/LinkText.vue";
 import { feedbackReplies, imageAskFor, markRepliesSeen } from "../state/feedback-replies";
 
 const list = computed(() => (changelogOpen.value === "new" ? changelogNew.value : CHANGELOG.filter((e) => e.items.length)));
@@ -34,7 +35,7 @@ const sendImage = (id: string): void => { close(); imageAskFor.value = id; };
       <!-- お礼は決まった一文 (2026-10-11 オーナー「お礼も言ってな、無難な文章で、！付けていい」)。直した中身は返事ごとに書く -->
       <div v-for="r in replies" :key="r.id" class="py-1 text-[12px] leading-relaxed">
         <p class="text-[var(--exile-color-text-tertiary)]">「{{ r.asked }}{{ r.asked.length >= 60 ? "…" : "" }}」</p>
-        <p class="text-[var(--exile-color-text-primary)]">{{ tr("ご報告ありがとうございます！", "Thank you for your feedback!") }} {{ isEn && r.en ? r.en : r.reply }}<span v-if="r.version" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]">(v{{ r.version }})</span></p>
+        <p class="text-[var(--exile-color-text-primary)]">{{ tr("ご報告ありがとうございます！", "Thank you for your feedback!") }} <LinkText :text="isEn && r.en ? r.en : r.reply" /><span v-if="r.version" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]">(v{{ r.version }})</span></p>
         <button v-if="r.askImage" type="button" class="g-btn sm mt-1" @click="sendImage(r.id)">{{ tr("画像を送る", "Send images") }}</button>
       </div>
     </section>

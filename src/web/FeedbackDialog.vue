@@ -18,6 +18,7 @@ import type { StageMod } from "../services/craft-stage/types";
 import pkg from "../../package.json";
 import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
+import LinkText from "../components/ui/LinkText.vue";
 import { flag } from "./release-flags";
 
 /**
@@ -158,7 +159,7 @@ async function send(): Promise<void> {
       <!-- 返事を書く (U-36): 元の要望と届いた返事を小さく。送ると元の要望にぶら下がる -->
       <div v-if="replyTo && !forId" data-reply-context class="mb-2 rounded border border-white/10 bg-black/30 px-2 py-1.5 text-[11px] leading-relaxed">
         <p class="truncate text-[var(--exile-color-text-tertiary)]" :title="replyTo.asked">{{ tr("あなたの要望", "Your feedback") }}: {{ replyTo.asked }}</p>
-        <p class="line-clamp-3 whitespace-pre-wrap text-[var(--exile-color-text-secondary)]">{{ tr("返事", "Reply") }}: {{ tr(replyTo.reply, replyTo.en ?? replyTo.reply) }}</p>
+        <p class="line-clamp-3 whitespace-pre-wrap text-[var(--exile-color-text-secondary)]">{{ tr("返事", "Reply") }}: <LinkText :text="tr(replyTo.reply, replyTo.en ?? replyTo.reply)" /></p>
       </div>
       <textarea ref="textEl" v-model="text":rows="forId ? 3 : 6" class="w-full resize-y rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 outline-none focus:border-amber-400/60" :placeholder="forId ? tr('ひとこと (無くてもよい)', 'A note (optional)') : tr('こうなると嬉しい、ここがおかしい (何をしたら何が起きたか) など、なんでも', 'Feature ideas, something that looks wrong (what you did and what happened), anything')" autofocus @paste="onPaste"></textarea>
       <input v-model="website" tabindex="-1" autocomplete="off" class="absolute -left-[9999px] h-0 w-0 opacity-0" aria-hidden="true" />

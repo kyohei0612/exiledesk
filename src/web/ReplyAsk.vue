@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import ModalShell from "../components/ui/ModalShell.vue";
+import LinkText from "../components/ui/LinkText.vue";
 import { tr } from "../i18n/lang";
 import { checkPushed, markRepliesSeen, popupReplies, replyTo } from "../state/feedback-replies";
 import { addPressAsker, onReplySignal } from "./force-update";
@@ -31,7 +32,7 @@ function write(id: string): void {
     <div class="flex flex-col gap-3">
       <section v-for="r in popupReplies" :key="r.id" data-reply-item class="flex flex-col gap-1.5">
         <p class="truncate text-[11px] text-[var(--exile-color-text-tertiary)]" :title="r.asked">{{ tr("あなたの要望", "Your feedback") }}: {{ r.asked }}</p>
-        <p class="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--exile-color-text-primary)]">{{ tr(r.reply, r.en ?? r.reply) }}</p>
+        <p class="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--exile-color-text-primary)]"><LinkText :text="tr(r.reply, r.en ?? r.reply)" /></p>
         <p v-if="r.askImage" class="text-[11px] text-amber-200/80">{{ tr("画像を付けて返事をいただけると助かります", "A screenshot in your reply would help") }}</p>
         <div class="flex justify-end">
           <button type="button" data-reply-write class="g-btn sm" @click="write(r.id)">{{ tr("返事を書く", "Write a reply") }}</button>
