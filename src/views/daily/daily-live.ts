@@ -7,8 +7,12 @@
  *       done / undone (完成の印)・boxes (箱の増減だけ)・undo / redo・run (100 人回した結果)・ev (回す・穴チェックなどの押した印、track の名前)・leave (離れた)
  * 送るのは木か動作が変わってから 15 秒まとめて 1 回 + 離れる時に 1 回 (Y-100 の例外、D-57)。終わった挑戦 (提出・諦め・時間切れ) では送らない。
  * 木の中身の見比べは置いた手と完成の印だけ (箱の場所・見た目だけの違いは動作に数えない)
+ * 置いた順の記録 (スイッチ actLog、11-14 オーナー「すすめて、デイリーのバグで再現がこっちで出来んとあかんやろ」): open に版 (app・build)、木が変わるたびに
+ *   シミュの共通の部品 (act-log.ts の actLogStep) で保存の形の差分 snap / base / p / p- も足す (こちらは scripts/sim-watch/act-replay.mjs で置いた順に組み直す)。
+ *   最初の snap は決めを抜いた前提だけにし、決めは p で 1 つずつ (1 行 4KB の上限に収める。続きから開いた木でも同じ)
  */
 import type { Hand, TreeDoc } from "../../services/simulator/tree/tree-model";
+import { actLogOpen, actLogStep, type ActPrev } from "../simulator/tree/act-log";
 import { flag } from "../../web/release-flags";
 import { trailNow } from "../../web/track";
 import { livePost } from "./daily-api";
@@ -33,6 +37,8 @@ let lastEvAt = 0;
 let prev: Map<string, BoxSig> | null = null;
 let past: string[] = [];
 let future: string[] = [];
+/** 置いた順の記録の見比べの控え (actLog) */
+let logPrev: ActPrev | null = null;
 
 const sec = (): number => Math.max(0, Math.round((Date.now() - startedAt) / 1000));
 const handSig = (h: Hand | null): string => (h ? [h.currency, ...h.omens, h.catalyst ?? "", h.free ? "free" : "", h.repeat ? "spam" : "", h.held ? "held" : "", h.noUse ? "noUse" : "", h.veil ?? ""].filter(Boolean).join("+") : "");
@@ -81,10 +87,10 @@ export function liveStart(id: string, started: number): void {
   if (!flag("dailyLive")) return;
   if (!stopped && id === topicId && started === startedAt) return;
   liveStop();
-  topicId = id; startedAt = started; acts = []; dirty = false; prev = null; past = []; future = []; lastEvAt = Date.now(); stopped = false;
+  topicId = id; startedAt = started; acts = []; dirty = false; prev = null; past = []; future = []; logPrev = null; lastEvAt = Date.now(); stopped = false;
   document.addEventListener("visibilitychange", onHide);
   window.addEventListener("pagehide", onHide);
-  push("open");
+  if (flag("actLog")) { const { k: _k, ...v } = actLogOpen(); push("open", v); } else push("open");
 }
 /** 画面を離れた・挑戦が終わった。残りを 1 回送って止める */
 export function liveStop(final = false): void {
@@ -110,12 +116,13 @@ export async function liveFlush(): Promise<void> {
 export function liveAct(k: string, extra?: Record<string, unknown>): void {
   push(k, extra);
   // やり直しの後は新しい木なので、前の木との見比べを捨てる
-  if (k === "restart") { prev = null; past = []; future = []; }
+  if (k === "restart") { prev = null; past = []; future = []; logPrev = null; }
 }
 
 /** 木が変わるたびに呼ぶ (DailyPlay の見張り)。前の木と見比べて、何をしたかを動作にする */
 export function liveDoc(d: TreeDoc): void {
   if (stopped) return;
+  if (flag("actLog")) logStep(d);
   const now = sigOf(d), key = keyOf(now);
   if (!prev) { prev = now; past = [key]; mark(); return; }
   if (key === past[past.length - 1]) { mark(); return; } // 手と完成の印は同じ (場所・メモだけ)。木は送り直す
@@ -135,4 +142,18 @@ export function liveDoc(d: TreeDoc): void {
     if (!n) push("boxes", { boxes, was: prev.size });
   }
   prev = now;
+}
+
+/** 置いた順の記録の行を足す (actLog)。最初は決めを抜いた snap + 決めごとの p (1 行を小さく)、後は前と見比べた差分 */
+function logStep(d: TreeDoc): void {
+  if (!logPrev) {
+    const first = actLogStep(null, d);
+    const r = first.lines[0]?.r as Record<string, unknown> | undefined;
+    if (r) push("snap", { r: { ...r, picks: [] } });
+    // 決めの無い控えと見比べれば、今の決めが上の段から p で並ぶ
+    logPrev = { ...first.prev, picks: new Map<string, string>() };
+  }
+  const r = actLogStep(logPrev, d);
+  for (const { k, ...rest } of r.lines) push(k, rest);
+  logPrev = r.prev;
 }
