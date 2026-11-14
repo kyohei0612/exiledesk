@@ -19,7 +19,7 @@ import { BOX_H, BOX_W, type TreeBox as Box, type TreeDoc } from "../../../servic
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { useTreeSurface, type PageCtx } from "./use-tree-surface";
-import { spotArc, spotCss, type SpotArc } from "./tree-spot-arc";
+import { spotArc, spotCss, spotZoomRim, type SpotArc } from "./tree-spot-arc";
 
 type Lane = { text: string };
 type ChipEdge = { chip?: unknown };
@@ -53,7 +53,7 @@ const spot = computed((): { arcs: SpotArc[]; css: string } | null => {
     return hit.length ? [{ id: o.id, back: hit.every(Boolean) }] : [];
   });
   const chips = [{ id: e.id, back: mine }, ...peers];
-  return { arcs, css: spotCss(e.id, [...ts, ...chips], chips) };
+  return { arcs, css: spotCss(e.id, [...ts, ...chips], chips, k) };
 });
 /**
  * (linkChipHover) 照らしている間、縮めて見ていれば行き先の箱を写し (読むだけ、押した時の等倍の窓の 2/3) で箱の上に重ねる (11-14 オーナー「ライトアップ中は拡大表示してあげてね飛び先の枠」)。
@@ -131,7 +131,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         <!-- (linkChipHover) 照らしている間の行き先の箱の写し (読むだけ・押せない。箱の上の辺の真ん中を軸に大きく = 下へ伸びる) -->
         <div v-for="{ id, h, dy } in spotZoom?.items ?? []" :key="`spot-zoom-${id}`" data-tree-spot-zoom :data-spot-zoom-of="id" :data-spot-zoom-dy="Math.round(dy) || undefined" class="pointer-events-none absolute z-[6] rounded-xl"
           :style="{ left: `${posOf(doc.boxes[id]!).x}px`, top: `${posOf(doc.boxes[id]!).y + dy}px`, width: `${BOX_W}px`, height: `${h}px`, transform: `scale(${spotZoom!.k})`, transformOrigin: '50% 0', boxShadow: '0 0 0 2px rgba(255,255,255,0.08), 0 10px 30px rgba(0,0,0,0.7)' }">
-          <TreeBox :box="doc.boxes[id]!" :x="0" :y="0" :removable="false" :selected="false" :back-label="backLabel(doc.boxes[id]!)" :view-only="true" />
+          <TreeBox :box="doc.boxes[id]!" :x="0" :y="0" :removable="false" :selected="false" :back-label="backLabel(doc.boxes[id]!)" :view-only="true" :style="spotZoomRim(spot?.arcs.some((a) => a.id === id && a.back) ?? false, (2 * inv) / spotZoom!.k)" />
         </div>
         <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
         <button v-for="b in rv.done.value ? passes.filter((x: Box) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"

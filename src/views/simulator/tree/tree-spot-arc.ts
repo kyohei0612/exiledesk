@@ -23,20 +23,28 @@ export function spotArc(sx: number, sy: number, q: { x: number; y: number }, h: 
 export interface SpotLit { id: string; back: boolean }
 
 const glow = (back: boolean): string => `drop-shadow(0 0 10px ${back ? "rgba(95,208,224,0.95)" : "rgba(111,208,140,0.95)"}) brightness(1.15)`;
+/** 照らした箱の縁 (画面で 2px、札の色に合わせる: ↩ = 青・同じ枠 = 緑)。木は倍率で縮むので k = 倍率の逆数を掛ける */
+const rim = (back: boolean, k: number): string => `outline: ${2 * k}px solid ${back ? "#5fd0e0" : "#6fd08c"}; outline-offset: ${2 * k}px; border-radius: ${6 * k}px;`;
+/** 行き先の写し (縮めて見ている時に箱の上に重ねる) にも同じ光りと縁。w = 縁の太さ (写しの中の px、画面で 2px になる値) */
+export const spotZoomRim = (back: boolean, w: number): Record<string, string> => ({
+  filter: glow(back), outline: `${w}px solid ${back ? "#5fd0e0" : "#6fd08c"}`, outlineOffset: `${w}px`,
+});
+/** 関わらない物の暗さ (11-14 オーナー「任せるかな、みやすさをもっとーに」→ 25% から 12% へ) */
+const DIM = 0.12;
 /**
  * 乗せた手の札に関わる物を照らし、ほかを暗くする CSS (描き面 key の中だけ)。
  * boxes = 照らす箱 (乗せた札の元の箱・行き先の箱・同じ行き先を指すほかの手の札の元の箱)、chips = 照らす手の札 (乗せた札と、同じ行き先を指すほかの札。札の印は元の箱の id)。
  * 11-14 オーナー「その範囲で全部ライトアップして」(前は行き先の箱だけ光らせ、元の箱は暗くしないだけ・同じ行き先を指すほかの札は暗くしていた)
  */
-export function spotCss(key: string, boxes: readonly SpotLit[], chips: readonly SpotLit[]): string {
+export function spotCss(key: string, boxes: readonly SpotLit[], chips: readonly SpotLit[], k = 1): string {
   if (!boxes.length) return "";
   const root = `[data-tree-canvas][data-spot="${key}"]`;
   const keepB = boxes.map((b) => `:not([data-id="${b.id}"])`).join(""), keepC = chips.map((c) => `:not([data-hand-of="${c.id}"])`).join("");
   return [
-    `${root} .vue-flow__node${keepB} { opacity: 0.25; }`,
-    `${root} [data-tree-lines] { opacity: 0.25; }`,
-    `${root} [data-hand-of]${keepC} { opacity: 0.25; }`,
-    ...boxes.map((b) => `${root} .vue-flow__node[data-id="${b.id}"] { filter: ${glow(b.back)}; }`),
+    `${root} .vue-flow__node${keepB} { opacity: ${DIM}; }`,
+    `${root} [data-tree-lines] { opacity: ${DIM}; }`,
+    `${root} [data-hand-of]${keepC} { opacity: ${DIM}; }`,
+    ...boxes.map((b) => `${root} .vue-flow__node[data-id="${b.id}"] { filter: ${glow(b.back)}; ${rim(b.back, k)} }`),
     ...chips.map((c) => `${root} [data-hand-of="${c.id}"] { filter: ${glow(c.back)}; }`),
   ].join("\n");
 }
