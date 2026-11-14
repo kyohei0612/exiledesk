@@ -18,7 +18,7 @@ import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf, isRuneHand, rerollsValues } from "../../../services/simulator/tree/tree-hands";
 import { RUNE_PREFIX, runeNameOf } from "../../../services/craft-stage/engine";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
-import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { addsRandomMod, CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue"; import TreeAimRows from "./TreeAimRows.vue";
@@ -170,7 +170,7 @@ const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
 const veilOn = ref(!!props.current && isBone(props.current.currency) && props.current.veil !== "keep"); // 前の版の骨の手 (veil 無し) は同じ手で発現 = ☑ あり
 const boneVeil = computed(() => !!held.value && isBone(held.value));
 /** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b) */
-const pagedAims = computed(() => ((boneVeil.value && veilOn.value) || held.value === "reveal" ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : aimChoices.value));
+const pagedAims = computed(() => ((boneVeil.value && veilOn.value) || held.value === "reveal" ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : addsRandomMod(held.value) ? aimChoices.value.filter((a) => !extraAims.value.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a))) : aimChoices.value)); // 普通の手で足した狙いはタグだけ (S-33f)
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
 function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) { boneFree.value = false; omens.value = om.filter((o) => o !== ECHO); } } // 反響は外す時だけ外す (付けるのは任意の ☑)
 /** 骨の 3 択 (S-32、11-07 オーナー「発現、狙い無し、未発現だね」): 発現 = veil pick + ☑、狙い無し = veil pick + 狙い無し (出た MOD は外れ)、未発現 = veil keep */
@@ -191,7 +191,7 @@ const aimChoices = computed((): Aim[] => {
   if (!d || !it || !held.value) return [];
   const base = hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value);
   // 骨・発現: 完成の狙いの候補 + 窓で選んだ MOD (選んだ段のまま。この箱の候補に同じ MOD が無ければ、完成形にある MOD でも捨てずに足す = S-32b)
-  return base.concat(boneVeil.value || held.value === "reveal" ? extraAims.value.filter((x) => !base.some((g) => sameAimMod(d, g, x))) : []);
+  return base.concat(boneVeil.value || held.value === "reveal" || addsRandomMod(held.value) ? extraAims.value.filter((x) => !base.some((g) => sameAimMod(d, g, x))) : []);
 });
 /** 今は付けられない完成形の狙い (グレーで並べ、ホバーで訳。11-08 オーナー「狙いMODは必ず表示で付けれないならグレーアウト」。骨の発現は TreeVeilCheck が持つ) */
 const lockedAims = computed(() => (noMod.value || boneVeil.value || held.value === "reveal" ? [] : lockedAimRows(s.data.value, item.value, t.goals.value, aimChoices.value, hand.value, (a) => t.aimLabel(a))));
@@ -408,9 +408,9 @@ function ok(): void {
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
         <span v-else-if="noMod" data-tree-hand-nomod class="opacity-80">{{ noModTitle() }}</span>
         <span v-else class="opacity-80">{{ tr("狙う MOD (☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (one hit box per ☑ mod; any one landing is a hit)") }}</span>
-        <TreeAimRows :aims="flag('veilMulti') && (boneVeil || held === 'reveal') ? aimChoices.filter((a) => !extraAims.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a))) : aimChoices" :checked="checkedAims.map(aimKey)" :no-mod="noMod" :no-mod-title="noModTitle()" :free="freeShown" @toggle="toggleAim"><template #mid><TreeAimLocked :rows="lockedAims" />
+        <TreeAimRows :aims="flag('veilMulti') && (boneVeil || held === 'reveal' || addsRandomMod(held)) ? aimChoices.filter((a) => !extraAims.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a))) : aimChoices" :checked="checkedAims.map(aimKey)" :no-mod="noMod" :no-mod-title="noModTitle()" :free="freeShown" @toggle="toggleAim"><template #mid><TreeAimLocked :rows="lockedAims" />
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
-        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :chosen="checkedAims.map((a) => ({ aim: a, label: t.aimLabel(a), extra: extraAims.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a)) }))" @drop="(a) => { const g = checkedAims.find((x) => !!s.data.value && sameAimMod(s.data.value, x, a)); if (g) toggleAim(g); }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" /></template>
+        <TreeVeilCheck v-if="boneVeil || held === 'reveal' || addsRandomMod(held)" :no-check="held === 'reveal' || addsRandomMod(held)" :plain="addsRandomMod(held)" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :chosen="checkedAims.map((a) => ({ aim: a, label: t.aimLabel(a), extra: extraAims.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a)) }))" @drop="(a) => { const g = checkedAims.find((x) => !!s.data.value && sameAimMod(s.data.value, x, a)); if (g) toggleAim(g); }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" /></template>
         <label v-if="freeShown" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label></TreeAimRows>
@@ -465,7 +465,7 @@ function ok(): void {
           <p class="mt-1 break-words text-[12px] text-sim-dim">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : noMod ? noModTitle() : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
           <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
             <TreeAimRows big :aims="pagedAims" :checked="checkedAims.map(aimKey)" :no-mod="noMod" :no-mod-title="noModTitle()" :free="freeShown" @toggle="toggleAim"><template #mid><TreeAimLocked big :rows="lockedAims" />
-            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :chosen="checkedAims.map((a) => ({ aim: a, label: t.aimLabel(a), extra: extraAims.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a)) }))" @drop="(a) => { const g = checkedAims.find((x) => !!s.data.value && sameAimMod(s.data.value, x, a)); if (g) toggleAim(g); }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" /></template>
+            <TreeVeilCheck v-if="boneVeil || held === 'reveal' || addsRandomMod(held)" big :no-check="held === 'reveal' || addsRandomMod(held)" :plain="addsRandomMod(held)" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" :mode="boneMode" @mode="setBoneMode" @update:model-value="setVeil" @add="(a) => { const g = aimChoices.find((x) => x.modId === a.modId); if (g) { if (!checked.includes(aimKey(g))) toggleAim(g); } else { extraAims.push(a); toggleAim(a); } }" :chosen="checkedAims.map((a) => ({ aim: a, label: t.aimLabel(a), extra: extraAims.some((x) => !!s.data.value && sameAimMod(s.data.value, x, a)) }))" @drop="(a) => { const g = checkedAims.find((x) => !!s.data.value && sameAimMod(s.data.value, x, a)); if (g) toggleAim(g); }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" /></template>
             <label v-if="freeShown" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label></TreeAimRows>

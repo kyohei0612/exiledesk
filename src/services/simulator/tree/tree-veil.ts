@@ -7,7 +7,7 @@
  */
 import { aimHits, parseKey, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence"; import { flag } from "../../../web/release-flags";
-import { isBone } from "./tree-hands";
+import { addsRandomMod, isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
 import { docHeld } from "./tree-sample";
 import { sameAimMod } from "./tree-hand-core";
@@ -43,11 +43,11 @@ const onceHeld = (m: WeakMap<TreeDoc, [number, Aim[]]>, doc: TreeDoc, make: () =
   m.set(doc, [n, v]);
   return v;
 };
-/** 木の発現で選ぶ手の当たりの札のうち、完成形に無い物 = 置き石 (S-33。エッセンスの「ブロックに使う」S-33b は 11-07 に撤回 = 置き石は発現だけ)。完成形にあるかはエンジンの sameAimTarget */
+/** 木の発現で選ぶ手 (と普通の手で足した狙い S-33f) の当たりの札のうち、完成形に無い物 = 置き石 (S-33。エッセンスの「ブロックに使う」S-33b は 11-07 に撤回 = 置き石は発現だけ)。完成形にあるかはエンジンの sameAimTarget */
 export const placedAims = (data: PatchData, doc: TreeDoc): Aim[] => onceHeld(PLACED, doc, () => placedRaw(data, doc));
 function placedRaw(data: PatchData, doc: TreeDoc): Aim[] {
   const goals = doc.memoAims ?? [];
-  const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || infinitePicked(doc.boxes[b.parent]?.hand?.currency)) && !goals.some((g) => sameAimMod(data, g, b.aim!)) ? [b.aim] : []));
+  const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || infinitePicked(doc.boxes[b.parent]?.hand?.currency) || addsRandomMod(doc.boxes[b.parent]?.hand?.currency)) && !goals.some((g) => sameAimMod(data, g, b.aim!)) ? [b.aim] : []));
   return plain;
 }
 /** 無限のエッセンスの窓で ☑ した能力値の当たりの箱か (完成形に無くても選べる = 置き石と同じ扱い、S-33d。スイッチ treeInfinitePick) */

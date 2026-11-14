@@ -16,6 +16,10 @@ export const isFluxHand = (key: string): boolean => !isRuneHand(key) && actionCl
 /** 手の窓に ☑ を出さず、当たりの箱を選ばない確定の手 (ルーン S-31e・フラックス S-31h。フラックスはスイッチ treeFlux の間だけ) */
 export const isFixedHand = (key: string): boolean => isRuneHand(key) || (isFluxHand(key) && flag("treeFlux"));
 
+/** 乱数で MOD が 1 つ付く普通の手 (変成・増強・王者・高貴・カオス、上級・完全も)。手の窓の「狙いの MOD を足す」を出す手 (S-33f、スイッチ handAddAim) */
+const RANDOM_ADD: ReadonlySet<string> = new Set(["transmute", "augment", "regal", "exalt", "chaos"]);
+export const addsRandomMod = (key: string | null | undefined): boolean => !!key && RANDOM_ADD.has(kindOf(key)) && flag("handAddAim");
+
 /** 触媒の高貴のお告げ (名前はエンジンの OMEN_KEY、E-27) */
 export const CATALYSING = OMEN_KEY.catalysing;
 /**
