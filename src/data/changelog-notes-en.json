@@ -1,4 +1,8 @@
 {
+  "0.1.736": [
+    "Simulator and Daily trees: Resistance Flux can now be used on resistance mods shown by name on the card, including ones revealed from Desecration that weren't targets (still not on junk mods).",
+    "Daily challenges no longer use Jewels."
+  ],
   "0.1.735": [
     "Kolr's Hunt gloves: Critical Hit Chance and Mark/Projectile skill level mods now use the same tier weights as the regular Critical Damage Bonus and Melee skill level mods (higher tiers are rarer)."
   ],

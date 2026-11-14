@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.736",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター・デイリーの木で、冒涜から発現してカードに名前の出ている耐性の MOD (狙いに無い物も) にもフラックスを打てるようにしました (「外れ MOD」には打ちません)",
+    "en": "Simulator and Daily trees: Resistance Flux can now be used on resistance mods shown by name on the card, including ones revealed from Desecration that weren't targets (still not on junk mods)."
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーのお題にジュエルを出さないようにしました",
+    "en": "Daily challenges no longer use Jewels."
+   }
+  ]
+ },
+ {
   "v": "0.1.735",
   "date": "2026-11-14",
   "items": [
@@ -904,18 +922,6 @@
     "area": "",
     "text": "シミュレーター: 削減と左側・右側の抹消のお告げを一緒に使う手は、比べる相手と差し替える外れをその側の MOD だけで決めるようにしました",
     "en": "Simulator: crafts that combine Whittling with a Sinistral or Dextral Erasure omen now pick the compared mod and the replaced miss only from that side's mods"
-   }
-  ]
- },
- {
-  "v": "0.1.696",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: レシピを開く時は木を 1 回だけ組んでから出すようにし、組んでいる間は「レシピ読み込み中…」を出して操作を止めます (開く途中でベース選びへ飛ぶ事もなくなりました)。スマホでは開くのが軽くなりました",
-    "en": "Simulator: opening a recipe now builds the tree once before showing it, with \"Loading recipe…\" on screen and input paused meanwhile (it no longer jumps to base selection while loading). Opening on phones is lighter"
    }
   ]
  }
