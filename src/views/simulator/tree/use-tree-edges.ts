@@ -156,7 +156,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
           + [...hops].sort((a, z) => s * (a - z)).map((x) => `L ${x - s * HOP} ${busY} A ${HOP} ${HOP} 0 0 ${s > 0 ? 1 : 0} ${x + s * HOP} ${busY} `).join("")
           + `L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} ` + (side ? `L ${cx} ${ey - 8} Q ${cx} ${ey} ${cx + 8} ${ey} L ${k.q.x} ${ey}` : `L ${cx} ${cy}`);
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
-      return { id: k.id, w: 2, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null, pts: null as Pos[] | null };
+      return { id: k.id, w: 2, color: tone ?? (bad ? LINE.bad : LINE.fwd), kind: bad ? "bad" : "fwd", link: false, d: mk([]), bad, mk, h: s ? { x0: Math.min(px + s * r, cx - s * r), x1: Math.max(px + s * r, cx - s * r), y: busY } : null, pts: null as Pos[] | null };
     });
     // (S-142j ③、スイッチ hitsSide) 同じ枠へ・同じ中身の箱の続きへの畳みは札も描かず、手の札の真ん中から真下へ伸ばし、行き先の箱の真ん中の高さで曲がって横から入る
     // (11-14 オーナー「左の枠の真ん中めがけて横の線はそこで縦の線は消去の真ん中から下へのばして」「同じ枠系はそのごの枠へつなげばいいのでは」)
@@ -173,17 +173,17 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
       if (flag("newerHome")) {
         const ex0 = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x;
         const lSegs: Seg[] = px >= tq.x && px <= tq.x + BOX_W ? [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: tq.y }] : [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex0, y1: ty }];
-        if (pierces(lSegs, [t, b.id])) { const p0 = backPts(px, jy, t, nth - 1, px0), d0 = roundPath(p0); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: d0, bad: false, mk: () => d0, h: null, pts: p0 }); continue; }
+        if (pierces(lSegs, [t, b.id])) { const p0 = backPts(px, jy, t, nth - 1, px0), d0 = roundPath(p0); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", link: true, d: d0, bad: false, mk: () => d0, h: null, pts: p0 }); continue; }
       }
       if (px >= tq.x && px <= tq.x + BOX_W) { // 行き先が真下: 上の辺へまっすぐ
-        to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null, pts: null });
+        to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", link: true, d: `M ${px} ${linkY0} L ${px} ${tq.y}`, bad: false, mk: () => `M ${px} ${linkY0} L ${px} ${tq.y}`, h: null, pts: null });
         linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: tq.y });
         continue;
       }
       const ex = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x, sg = Math.sign(ex - px) || 1, r = Math.min(10, Math.abs(ex - px) / 2, Math.max(0, ty - linkY0) / 2);
       const mk = (hops: readonly number[]): string => `M ${px} ${linkY0} L ${px} ${ty - r} Q ${px} ${ty} ${px + sg * r} ${ty} `
         + [...hops].sort((a, z) => sg * (a - z)).map((x) => `L ${x - sg * HOP} ${ty} A ${HOP} ${HOP} 0 0 ${sg > 0 ? 1 : 0} ${x + sg * HOP} ${ty} `).join("") + `L ${ex} ${ty}`;
-      to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", d: mk([]), bad: false, mk, h: { x0: Math.min(px + sg * r, ex), x1: Math.max(px + sg * r, ex), y: ty }, pts: null });
+      to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", link: true, d: mk([]), bad: false, mk, h: { x0: Math.min(px + sg * r, ex), x1: Math.max(px + sg * r, ex), y: ty }, pts: null });
       linkSegs.push({ x0: px, y0: linkY0, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex, y1: ty });
     }
     to.sort((a, z) => Number(z.bad) - Number(a.bad));
@@ -191,7 +191,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: onlyCards ? jy + CHIP_HALF : busY }, ...kids.flatMap((k) => { const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; }), ...linkSegs];
     // ↩ の畳みの戻り先への青い線 (手の札に乗せた時だけ描く。TreeCanvas)
     const backLines = (backs.value.get(b.id) ?? []).filter((t) => doc.value.boxes[t]).map((t) => ({ id: t, d: backPath(px, jy, t) }));
-    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, backLines, chip: lead === b.id, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs };
+    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, backLines, chip: lead === b.id, links: (links.value.get(b.id) ?? []).length, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs, lsegs: linkSegs };
   }));
   /**
    * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。
@@ -230,8 +230,10 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const list = nudged.value, keyOf = (e: { jx: number; jy: number }): string => `${Math.round(e.jx)},${Math.round(e.jy)}`;
     const vOf = (k: string, g: Seg) => ({ k, x: g.x0, y0: Math.min(g.y0, g.y1), y1: Math.max(g.y0, g.y1) });
     // 曲がる緑の縦の所も跨ぐ相手に入れる (o = その緑。自分は跨がない)
-    const greenV = list.flatMap((e) => e.to.filter((o) => o.pts).flatMap((o) => segsOfPts(o.pts!).filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => ({ ...vOf(keyOf(e), g), o }))));
-    const vert = [...list.flatMap((e) => e.segs.filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => vOf(keyOf(e), g))), ...greenV];
+    // (S-142j ③、スイッチ linkChipHover) 緑はふだん描かない = 緑の縦を跨ぐ橋は掛けない (見えない線の上に半円が浮く)
+    const hideLink = flag("linkChipHover");
+    const greenV = hideLink ? [] : list.flatMap((e) => e.to.filter((o) => o.pts).flatMap((o) => segsOfPts(o.pts!).filter((g) => g.x0 === g.x1 && g.y0 !== g.y1).map((g) => ({ ...vOf(keyOf(e), g), o }))));
+    const vert = [...list.flatMap((e) => e.segs.filter((g) => g.x0 === g.x1 && g.y0 !== g.y1 && !(hideLink && e.lsegs.includes(g))).map((g) => vOf(keyOf(e), g))), ...greenV];
     return list.map((e) => {
       const k = keyOf(e);
       const to = e.to.map((o) => {
