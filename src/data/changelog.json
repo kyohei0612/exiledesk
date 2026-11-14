@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.739",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーで、挑戦中に別のタブから今日の順位のレシピを開くと確認の窓が出ない不具合を直しました",
+    "en": "Fixed a bug where opening today's recipe from the Daily ranking in another tab during a challenge skipped the confirmation."
+   }
+  ]
+ },
+ {
   "v": "0.1.738",
   "date": "2026-11-14",
   "items": [
@@ -886,30 +898,6 @@
     "area": "",
     "text": "シミュレーター: 次に打つ手の窓の「狙う MOD」に、もう品に付いている狙いを出さないようにしました",
     "en": "Simulator: the “target mods” list in the next-craft window no longer shows targets the item already has"
-   }
-  ]
- },
- {
-  "v": "0.1.699",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベース選び: クロスボウの札にトラーサスキャノンが出ていなかったのを直しました",
-    "en": "Base selection: Trarthan Cannon was missing from the Crossbow shelf; it is now listed"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 英語にした時などに、木の＋が下の「未設定 → 次へ」の札の裏に隠れて押せない事があったのを直しました",
-    "en": "Simulator: fixed the tree’s + button sometimes hiding behind the “Unset → Next” bar (for example after switching to English)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 次に打つ手の窓で結果の枠の分かれ方の一行を手の名前のすぐ下に出し、窓を下へ送らずに読めるようにしました",
-    "en": "Simulator: in the next-craft window, the line about how the result splits into frames now sits right under the craft name, so you can read it without scrolling"
    }
   ]
  }

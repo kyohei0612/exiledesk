@@ -1,4 +1,7 @@
 {
+  "0.1.739": [
+    "Fixed a bug where opening today's recipe from the Daily ranking in another tab during a challenge skipped the confirmation."
+  ],
   "0.1.738": [
     "Fixed a bug on phones where a recipe opened from the Daily ranking could show a previously opened one."
   ],
