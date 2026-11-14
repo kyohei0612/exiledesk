@@ -8,6 +8,7 @@
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 | デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| コルの狩り (手袋) のクリ率・呪印/投射物スキルのレベルの重みを一般のクリダメ・近接レベルと同じティアの段に (E-03b、オーナー 11-14「呪印投射物は近接レベルのティアの段と同じ。クリ率もダメと同じティア段でそろえるイメージ」「入ったら出して」、ジン部長 jin-kolr、ブラック 107) | be11efdf0 | コルの狩りを差した手袋の、クリティカルヒット率と呪印・投射物スキルのレベルの MOD の重みを、一般のクリティカルダメージ・近接スキルのレベルと同じ段の値にしました (上の段ほど出にくい) | Kolr's Hunt gloves: Critical Hit Chance and Mark/Projectile skill level mods now use the same tier weights as the regular Critical Damage Bonus and Melee skill level mods (higher tiers are rarer). |
 | 広告のコードはブログの記事だけに (Y-26。web.html・ブログの一覧・使い方・入門・固定ページから AdSense の読み込みを外す、オーナー 11-14「記事オンリーやな」、ブラック 106。オーナーの「出して」待ち) | b4992d058 | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
