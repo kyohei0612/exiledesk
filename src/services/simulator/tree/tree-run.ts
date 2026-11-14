@@ -20,6 +20,7 @@ import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
 import { sureFracOn, sureFracture, useSureFrac } from "./tree-sure-frac";
 import { defaultCapDiv } from "./run-price";
+import { goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -115,6 +116,8 @@ export interface TreeRunResult {
   loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
+  /** 予期せぬ狙い MOD で止まった人 (止まりにも数える) の、狙い無しの手の箱ごとの数 (S-33g ②、スイッチ goalMetTag) */
+  goalStop?: Record<string, number>;
   /** 着いた箱 (手の結果の箱・戻り先) の形が実物と違い、形の合う箱へ移した人数 (箱ごと、settle。照らしの台本は形合わせを辿らないので、これのある木は比べ方が違う、10-24) */
   moved: Record<string, number>;
   /** 全員の合計 ÷ 完成数 (完成 0 なら NaN) */
@@ -139,7 +142,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -174,10 +177,12 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   // 止まりの付け先 (S-72、スイッチ bodyStrict): 体 (外れの側・数) の違う人を ↩ で送り出した箱・形の合う箱へ移した箱。止まったらそこに数える
   // (10-29 オーナー「なんか止まり方が戻った先で止まるんだよな。結果を選んでその結果にしたがってるだけなのに」)
   let blame: string | null = null;
+  let marks: GoalMark[] = []; // 狙い無しの手で付いた完成形の狙い (tree-goal-stop)
   const fin = (p: Person): Person => {
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
-    return blame && p.end === "stuck" ? { ...p, blame } : p;
+    const goalAt = p.end === "stuck" ? goalStopAt(marks, p.why?.item ?? item) : undefined;
+    return blame && p.end === "stuck" ? { ...p, blame, goalAt } : goalAt ? { ...p, goalAt } : p;
   };
   /** 付いている名前の印になりうる MOD (箱の中身の鍵と同じ口 goalsOn。前は完成形の狙いだけで、行き先探しの前にエッセンス / 合金の印が落ちた) */
   const aimsHeld = (it: StageItem): ReadonlySet<string> => goalsOn(data, doc, it);
@@ -197,7 +202,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail" && !o.retryFail) return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     // 1 人目の挑戦 (S-72c): 失敗の箱でもスタートから作り直す (作り直しの手 RESTART と同じ数え)。打ち切りは打ち止めの上限
-    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); cost += o.startCost; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
+    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); marks = []; cost += o.startCost; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
     if (b.done === "main") {
       if (o.doneOk && !o.doneOk(item, at)) return fin({ end: "failed", unmet: true, cost, at, visits, uses, restarts, odd });
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)。
@@ -216,7 +221,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
       if (++hops > 1000) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.loop(), short: STOP.loop(), item } });
       if (b.back === RESTART) {
         item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
-        aimed = startAimed(data, doc, item);
+        aimed = startAimed(data, doc, item); marks = [];
         cost += o.startCost;
         forget();
         restarts++;
@@ -272,6 +277,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
+    marks = goalMarks(data, doc, at, before, r.item, marks);
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, aimed);
     const next = oc ? outBoxOf(data, doc, b, oc, r.item) : null;
     // 予見で当たり以外が見えた人: 手を使わず、アイテム・☑・費用は持つ前のまま、まとめたハズレ箱の手へ (S-39)
@@ -386,6 +392,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   }
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
+  const goalStop: Record<string, number> = {};
+  for (const p of people) if (p.end === "stuck" && p.goalAt) goalStop[p.goalAt] = (goalStop[p.goalAt] ?? 0) + 1;
   const moved: Record<string, number> = {};
   for (const p of people) for (const id of new Set(p.visits.filter((v) => v.pass).map((v) => v.box))) moved[id] = (moved[id] ?? 0) + 1;
   const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number }> = {};
@@ -415,7 +423,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, failed: people.filter((p) => p.end === "failed").length, failAt, unmetAt, stuckWhy, loopAt, unexpected, moved, perItem,
+    stuckAt, failed: people.filter((p) => p.end === "failed").length, failAt, unmetAt, stuckWhy, loopAt, unexpected, goalStop, moved, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),

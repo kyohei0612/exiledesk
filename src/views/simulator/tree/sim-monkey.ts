@@ -229,7 +229,7 @@ export function installSimMonkey(): () => void {
       const price = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = t.treePrice(k) / div; memo.set(k, v); } return v; };
       const capDiv = capDivOf(price);
       const r = runTree(d, t.doc.value, { n, seed, price, capDiv, startCost: t.startPrice() });
-      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, failed: r.failed, failAt: r.failAt, unexpected: r.unexpected, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
+      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, failed: r.failed, failAt: r.failAt, unexpected: r.unexpected, goalStop: r.goalStop, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv, capSteps: 20000 };
     },

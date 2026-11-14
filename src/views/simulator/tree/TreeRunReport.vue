@@ -17,6 +17,7 @@ import { handLabel, handName, outName, startName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { driveHead } from "./hole-check";
 import { simOp } from "../../../web/track";
+import TreeGoalStop from "./TreeGoalStop.vue";
 
 /** test = 穴チェックの走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
 /** note = 見出しの下の 1 行 (スマホの 10 人の「振れます」、S-94e。11-07〜11-10 は 100 人で渡していなかった) */
@@ -81,6 +82,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
             <button type="button" data-tree-test-drive-stuck class="block w-full break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="shortOf(id)" class="block text-[11px] text-rose-200/85">{{ shortOf(id) }}</span></button>
             <details v-if="whyOf(id) && whyOf(id) !== shortOf(id)" class="text-[11px] text-rose-200/70"><summary class="cursor-pointer select-none">{{ tr("詳しく", "Details") }}</summary><p class="break-words">{{ whyOf(id) }}</p></details>
           </div>
+          <TreeGoalStop :goal-stop="result.goalStop" @go="emit('go', $event)" />
         </div>
         <div v-if="loops.length" class="rounded-md border border-amber-400/40 bg-amber-900/20 px-2 py-1.5">
           <h4 class="mb-1 text-[12px] text-amber-200">{{ tr("沼った場所 (青枠の箱)", "Swamps (blue boxes)") }}</h4>
@@ -117,6 +119,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
         <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 沼った場所 ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} swamped`) }}</div>
         <button v-for="[id, n] in stuck" :key="id" type="button" class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}</button>
         <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
+        <TreeGoalStop :goal-stop="result.goalStop" @go="emit('go', $event)" />
       </div>
       </template>
       <!-- 一番お金を使った箱 -->
