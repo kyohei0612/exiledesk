@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_6c315ff7-9fce-4976-911e-da71d60c8108 (112 代目、Opus 5.5、11-15 11 時台に入れ替え。111 = local_b35318f6 が 2,37x 件で交代。控えは無し) | 司令塔・振り分け・順番 |
+| ブラック | local_7dc3cd58-5dcc-4489-9a84-7ec2c2c768d3 (113 代目、Opus 5.5、11-15 夜に入れ替え。112 = local_6c315ff7 が 2,506 件で交代。控えは無し) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_f0e3bead-1d17-4e00-bb00-16abf89e2fbe (21、Opus 5.5、11-14 夕にブラック 110 が控えで立て、20 = local_ad45c42f が 2,500 件で交代。引き継ぎ = 共有ノート local_429a9cb4…/daily-lead20-handover.md。記録 = progress/daily-lead21-run.log) | 今: 順位の行から開くレシピの直し 03a1760c3 をシミュ部長 46 の push の後に push・スマホの幅の確かめ。11-15 16:15 頃に来週の予定の見張り (plancheck)。毎日の見張り (roll / close) は予定のタスク側 |
 | 最終チェック長 | local_bd769d85-da09-44a8-8254-93470617baea (18、11-14 夕にブラック 110 が控えで立て、17 = local_77b05d2b が 2,424 件で交代。記録 = progress/release-next18-run.log) | 次: デイリーのすり抜けの直し 案 1 (ブラックの合図で出す)。本番は 0.1.738 |
 | サーバー係 | local_f6d61d7a-84b0-4083-a562-8a70d8ee1a19 (4 代目 server-keeper4、Opus 5.5、11-13 21 時台にブラック 101 が控えに立て、3 代目 local_723fe780 が 2,39x 件で交代。頼み = 共有ノート progress/server-keeper4-brief.md) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
