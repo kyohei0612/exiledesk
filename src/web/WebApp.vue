@@ -56,6 +56,7 @@ const DailyGoingPill = flag("daily") && goingFile ? defineAsyncComponent(goingFi
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/tutorial/craft-lesson";
 import { isPhoneWidth } from "../utils/use-phone";
+import { preventMenu } from "../utils/no-context-menu"; // 右クリックで離す。文字の欄・選んだ文字の上はメニューを残す (U-38)
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
 
@@ -269,7 +270,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <div v-if="textPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pr-4 empty:hidden"><AdSlot id="page-right" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
       <!-- スマホのシミュ (ツリー) では出さない (空いた所にシミュがツリーの全体図を置く。2026-10-26 オーナー「スマホ版が死ぬほど使いづらい」、シミュ部長 30)。
            シミュのレシピのページも出さない (同日オーナー「シミュレータースマホに関してはブログやらチャンネルやらは載せなくてよろしい。邪魔なだけ」、シミュ部長 32)。デイリーの挑戦も木の操作の画面なので出さない (D-61) -->
-      <aside v-show="(phone && !treePage && !recipesPage && dailyPage?.view !== 'start') || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+      <aside v-show="(phone && !treePage && !recipesPage && dailyPage?.view !== 'start') || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu="preventMenu($event); craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
           <!-- 読み物 (関係する記事・新しい記事・使い方) を上、チャンネルを下 (2026-10-22、開発版だけ。右の列の広告の枠は外した) -->
           <SideReads v-if="BLOG_ON" class="mb-3" />
