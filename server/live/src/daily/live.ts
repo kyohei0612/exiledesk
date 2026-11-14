@@ -6,11 +6,13 @@
 import { authNick } from "./nick";
 import { SUBMIT_GRACE_MS, TIME_LIMIT_MS } from "./time";
 
-/** 木は提出と同じ 32KB まで。動作は 1 回 16KB・200 個まで、1 人 1 日の合計 256KB まで (超えた分は捨てる)。1 人 1 日 600 回まで */
+/** 木は提出と同じ 32KB まで。動作は 1 行 4096 字・1 回 16KB・200 個まで、1 人 1 日の合計 512KB まで (超えた分は捨てる)。1 人 1 日 600 回まで。
+ *  1 行と合計は 11-14 に 2048 字・256KB から上げた (箱の決めの差分 p の行は深い箱で 2KB を超える、D-57b) */
 const TREE_MAX = 32 * 1024;
 const ACTS_BATCH_MAX = 16 * 1024;
 const ACTS_BATCH_N = 200;
-const ACTS_TOTAL_MAX = 256 * 1024;
+export const ACTS_LINE_MAX = 4096;
+export const ACTS_TOTAL_MAX = 512 * 1024;
 const SENDS_MAX = 600;
 /** 動作の列を残す日数 (過ぎたら毎朝の cron が空にする。木は残す) */
 const ACTS_KEEP_DAYS = 30;
@@ -18,13 +20,13 @@ const ACTS_KEEP_DAYS = 30;
 type Body = Record<string, unknown>;
 
 /** 動作の 1 つを 1 行の JSON に (物でない・大きすぎる物は捨てる) */
-function actLines(acts: unknown): string {
+export function actLines(acts: unknown): string {
   if (!Array.isArray(acts)) return "";
   let out = "";
   for (const a of acts.slice(0, ACTS_BATCH_N)) {
     if (!a || typeof a !== "object") continue;
     const line = JSON.stringify(a);
-    if (line.length > 2048 || out.length + line.length + 1 > ACTS_BATCH_MAX) continue;
+    if (line.length > ACTS_LINE_MAX || out.length + line.length + 1 > ACTS_BATCH_MAX) continue;
     out += line + "\n";
   }
   return out;
