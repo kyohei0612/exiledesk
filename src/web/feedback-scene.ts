@@ -25,7 +25,19 @@ export type Scene = {
   daily?: { view: string; topicId: string | null; state: DailyState | null; minutes: number | null };
   /** 木の大きさ (作りかけの木から。手を置いた箱・完成・失敗) と、その木が写ってから何秒か */
   tree?: { picks: number; main: number; fail: number; ageSec: number } | null;
+  /** 木を開いた直後の不具合の印 (途中の未設定の数と、開いてから何秒か。U-05f) */
+  openIssues?: { midUnset: number; agoSec: number } | null;
 };
+
+/**
+ * 木を開いた直後の不具合の印 (U-05f、オーナー 11-14「いやまぁバグ何で変にツリー解体しちゃう前にバグですって要望書かせた方が良い」)。
+ * シミュの木の画面が開いた時に途中の未設定 (手が決まって下も組めているのに印が出た箱) を数えてここへ書く。要望の窓が送った画面の欄に添える。
+ * 0 や白紙の木は null で消す。開き直すたびに上書き
+ */
+let openHealth: { midUnset: number; at: number } | null = null;
+export function noteOpenHealth(h: { midUnset: number } | null): void {
+  openHealth = h && h.midUnset > 0 ? { midUnset: h.midUnset, at: Date.now() } : null;
+}
 
 /** 窓の下にある画面 (要望のページを開く前のページ) */
 export function scenePage(): ScenePage {
@@ -112,5 +124,7 @@ export async function sceneNow(): Promise<{ scene: Scene; summaryJa: string[] }>
     const last = withHand.reduce<RecipePick | null>((a, p) => (!a || (p.touched ?? 0) >= (a.touched ?? 0) ? p : a), null);
     if (last?.hand) out.push(`最後に置いた手: ${handJa(last.hand)}`);
   } else out.push("木: 端末に作りかけの木が無い");
-  return { scene: { page, ...(daily ? { daily } : {}), tree }, summaryJa: out };
+  const openIssues = openHealth ? { midUnset: openHealth.midUnset, agoSec: Math.round((Date.now() - openHealth.at) / 1000) } : null;
+  if (openIssues) out.push(`開いた時: 途中の未設定 ${openIssues.midUnset} (サイトの不具合の印、${openIssues.agoSec >= 60 ? `${Math.round(openIssues.agoSec / 60)} 分前に開いた` : `${openIssues.agoSec} 秒前に開いた`})`);
+  return { scene: { page, ...(daily ? { daily } : {}), tree, openIssues }, summaryJa: out };
 }
