@@ -23,9 +23,11 @@ import { ANY_ELE_FAMILIES } from "./any-ele";
 
 /**
  * 狙いの札。anyEle = 「いずれかの元素耐性」の n 番 (1〜3、S-10h ②): 一般の火・冷気・雷耐性のどれかが段 (T = modId の段の数 − minTierIndex) 以上なら当たり、
- * n 番は当たる元素耐性が n 個で付いている。eleSkip = 数えない系統 (元素を決めた狙いの系統)。modId は火・冷気・雷のどれか (段の数を見る札、S-10h ③)
+ * eleSkip = 数えない系統 (元素を決めた狙いの系統)。modId は火・冷気・雷のどれか (段の数を見る札、S-10h ③)。
+ * anyEleTiers = 置いた「いずれか」全部の段の T の数字 (厳しい順 = 小さい順、anyEle 番はその anyEle 番目)。付いているかは aimHeldIn の割り当てで見る。
+ * 無ければ「当たる元素耐性が n 個」(全部同じ段の時と同じ答え)
  */
-export interface AimTarget { modId: string; minTierIndex: number; anyEle?: number; eleSkip?: readonly string[] }
+export interface AimTarget { modId: string; minTierIndex: number; anyEle?: number; eleSkip?: readonly string[]; anyEleTiers?: readonly number[] }
 /** 試す打ち方 (カレンシー + お告げ)。reveal = 付いている未発現の MOD を発現させる (反響込み) */
 export interface AimCombo { currency: string; omens: string[] }
 export interface AimOdd extends AimCombo { p: number; n: number }
@@ -75,17 +77,38 @@ const isEssenceSource = isCraftedSource;
  * data があれば出どころ normal と段の名前の T で比べ、無ければ段の番号で比べる (3 元素とも段の数が同じ 8 なので同じ答え)
  */
 function eleHit(m: StageMod, t: AimTarget, o?: AimHitOpts): boolean {
-  if (m.crafted || m.desecrated || !ANY_ELE_FAMILIES.includes(m.family) || t.eleSkip?.includes(m.family)) return false;
+  if (!eleCounts(m, t, o)) return false;
   if (!o) return m.tierIndex >= t.minTierIndex;
-  const mod = o.data.mods.get(m.modId), want = o.data.mods.get(t.modId);
-  if (!mod || !want || mod.source !== "normal") return false;
-  return tierNoOf(m) <= want.tiers.length - t.minTierIndex;
+  return tierNoOf(m) <= o.data.mods.get(t.modId)!.tiers.length - t.minTierIndex;
+}
+/** 段を見ない「いずれか」に数える元素耐性か (未発現・クラフト・冒涜・エッセンス・eleSkip の系統は数えない) */
+function eleCounts(m: StageMod, t: AimTarget, o?: AimHitOpts): boolean {
+  if (m.unrevealed || m.crafted || m.desecrated || !ANY_ELE_FAMILIES.includes(m.family) || t.eleSkip?.includes(m.family)) return false;
+  if (!o) return true;
+  return o.data.mods.get(m.modId)?.source === "normal" && !!o.data.mods.get(t.modId);
 }
 /**
- * 品の MOD に狙いが付いているか: 当たる MOD が anyEle の数 (無ければ 1) 以上 (S-10h ②。元素耐性は 1 つの品に同じ系統が 2 つ付かないので、数 = 違う元素の数)。
- * 「もう付いているか」(aimDone)・次の手で狙う (aimOdds・aimChain) はこれで見る
+ * 品の MOD に狙いが付いているか。ふつうの札は当たる MOD が 1 つ以上。
+ * 「いずれか」で anyEleTiers がある時は割り当て: 品の元素耐性を段の良い順に並べ、狙いを厳しい順に 1 本ずつ「残っている一番良い元素耐性が段を満たせば当て、満たさなければその本は飛ばす」。
+ * 自分の本 (anyEle 番目) に当たれば付いている (段が入れ子なので、これで当たる本の数が一番多い。例: T2 以上・T3 以上の 2 本に T3 が 1 つ = T3 以上の本だけ付いている)。
+ * anyEleTiers が無ければ当たる元素耐性が anyEle 個以上 (元素耐性は 1 つの品に同じ系統が 2 つ付かないので、数 = 違う元素の数)。
+ * 「もう付いているか」(aimDone)・次の手で狙う (aimOdds・aimChain)・スパムの道 (routeHitIndex) はこれで見る
  */
 export const aimHeldIn = (mods: readonly StageMod[], t: AimTarget, o?: AimHitOpts): boolean => {
+  const tiers = t.anyEle ? t.anyEleTiers : undefined;
+  if (tiers?.length) {
+    const own = t.anyEle! - 1;
+    if (own >= tiers.length) return false;
+    const have = mods.filter((m) => eleCounts(m, t, o)).map((m) => tierNoOf(m)).sort((a, b) => a - b);
+    const want = [...tiers].sort((a, b) => a - b);
+    let j = 0;
+    for (let i = 0; i <= own; i++) {
+      const fits = j < have.length && have[j]! <= want[i]!;
+      if (i === own) return fits;
+      if (fits) j++;
+    }
+    return false;
+  }
   const need = t.anyEle ?? 1;
   let n = 0;
   for (const m of mods) if (hits(m, t, o) && ++n >= need) return true;
