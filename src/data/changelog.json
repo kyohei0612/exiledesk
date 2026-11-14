@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.738",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホでデイリーの順位から開いたレシピが前に開いた物になる不具合を直しました",
+    "en": "Fixed a bug on phones where a recipe opened from the Daily ranking could show a previously opened one."
+   }
+  ]
+ },
+ {
   "v": "0.1.737",
   "date": "2026-11-14",
   "items": [
@@ -898,24 +910,6 @@
     "area": "",
     "text": "シミュレーター: 次に打つ手の窓で結果の枠の分かれ方の一行を手の名前のすぐ下に出し、窓を下へ送らずに読めるようにしました",
     "en": "Simulator: in the next-craft window, the line about how the result splits into frames now sits right under the craft name, so you can read it without scrolling"
-   }
-  ]
- },
- {
-  "v": "0.1.698",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減のお告げを含む手で結果が枠に分かれる時は、次に打つ手の窓で「残したい MOD」を選べるようにしました。☑ を外した MOD は削減の比べでは外れ MOD として数えます",
-    "en": "Simulator: when a craft with an Omen of Whittling splits into frames, the next-craft window now lets you pick the mods to keep. Unchecked mods count as misses in the Whittling comparison"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 外れ MOD の文字をオレンジに、持った時に消える候補を赤にして見分けやすくしました (エミュの消える候補も赤)",
-    "en": "Simulator: miss mods are now shown in orange and the mods a held currency may remove in red, so they are easier to tell apart (the emulator's removal candidates are red too)"
    }
   ]
  }
