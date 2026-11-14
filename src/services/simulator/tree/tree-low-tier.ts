@@ -50,7 +50,7 @@ export function firstAimsOf(data: PatchData, doc: TreeDoc, b: TreeBox): Aim[] {
 }
 
 /** 箱 id の見本と、その手を打った結果 (エンジンの数え上げ) のどれかが a を段の足りない形で持つか */
-function lowAt(data: PatchData, doc: TreeDoc, id: string, a: Aim, self: boolean): boolean {
+function lowAtRaw(data: PatchData, doc: TreeDoc, id: string, a: Aim, self: boolean): boolean {
   const b = doc.boxes[id];
   if (!b?.hand) return false;
   for (let i = 1; i <= SINGLE_SEEDS; i++) {
@@ -66,7 +66,15 @@ function lowAt(data: PatchData, doc: TreeDoc, id: string, a: Aim, self: boolean)
  * 箱 bId の手の結果に「<a> 低ティア MOD」の箱が要るか: この箱の見本とその手の結果、上の手 (始まりまで) の結果、↩ でこの箱へ着く箱の道の手の結果の
  * どれかが a を段の足りない形で持ちうる時。代表の外れは狙いの族を取らない (外れは枠だけ、S-200 ③) ので、この箱の見本だけでは見ない (レビュワー 1 の 16)
  */
-export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim): boolean {
+export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim, memo?: Map<string, boolean>): boolean {
+  // memo = 1 回のそろえ (syncLowTier) の中の控え。同じ箱・同じ狙いの見本 × 手の結果を何度も打たない (レビュワー 1 の 28、根の近くに手を置いた時の重さ)
+  const lowAt = (d: PatchData, dc: TreeDoc, id: string, x: Aim, self: boolean): boolean => {
+    if (!memo) return lowAtRaw(d, dc, id, x, self);
+    const k = `${id}|${x.modId}|${x.tier}|${self ? 1 : 0}`;
+    let v = memo.get(k);
+    if (v === undefined) { v = lowAtRaw(d, dc, id, x, self); memo.set(k, v); }
+    return v;
+  };
   if (lowAt(data, doc, bId, a, true)) return true;
   const roots = [bId, ...Object.values(doc.boxes).filter((x) => x.back === bId).map((x) => x.id)];
   for (const r of roots) {

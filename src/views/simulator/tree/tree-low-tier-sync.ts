@@ -9,10 +9,10 @@ import { firstAimsOf, lowTierKey, lowTierModOf, needsLowTier } from "../../../se
 import { flag } from "../../../web/release-flags";
 
 /** 箱 id の手の結果の低ティアの箱を、要る物は足し、要らない物は人の決め (手・人が付けた ↩・完成 / 失敗) が無ければ消す */
-function syncOne(data: PatchData, d: TreeDoc, id: string): void {
+function syncOne(data: PatchData, d: TreeDoc, id: string, memo: Map<string, boolean>): void {
   const b = d.boxes[id];
   if (!b) return;
-  const want = flag("lowTierBox") && b.hand ? firstAimsOf(data, d, b).filter((a) => needsLowTier(data, d, id, a)) : [];
+  const want = flag("lowTierBox") && b.hand ? firstAimsOf(data, d, b).filter((a) => needsLowTier(data, d, id, a, memo)) : [];
   const keys = new Set(want.map(lowTierKey));
   for (const o of [...b.outs]) {
     const c = d.boxes[o];
@@ -25,5 +25,6 @@ function syncOne(data: PatchData, d: TreeDoc, id: string): void {
 /** 箱 at と、その下の手のある箱の低ティアの箱をそろえる (手を決めた後・外した後) */
 export function syncLowTier(data: PatchData, d: TreeDoc, at: string | null): void {
   if (!at || !d.boxes[at]) return;
-  for (const id of subtree(d, at)) if (d.boxes[id]?.hand) syncOne(data, d, id);
+  const memo = new Map<string, boolean>(); // 1 回のそろえの中だけの控え (上の箱の見本 × 手の結果を箱ごとに打ち直さない、レビュワー 1 の 28)
+  for (const id of subtree(d, at)) if (d.boxes[id]?.hand) syncOne(data, d, id, memo);
 }
