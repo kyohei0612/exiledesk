@@ -28,6 +28,8 @@ export function recipeShort() {
           res.statusCode = 502; res.setHeader("Content-Type", "text/plain; charset=utf-8");
           return res.end(`本番の短い URL を取れなかった (${e instanceof Error ? e.message : String(e)})`);
         }
+        // 貼る欄から読む時 (?raw=1、recipe-share の shortCodeOf) は本番の HTML をそのまま返す (中身は画面の側で抜く = 本番で本番の /r/ を読む時と同じ形)
+        if (/[?&]raw=1(&|$)/.test(m[2] ?? "")) { res.statusCode = 200; res.setHeader("Content-Type", "text/html; charset=utf-8"); return res.end(html); }
         const h = HASH.exec(html);
         if (!h) { res.statusCode = 404; res.setHeader("Content-Type", "text/plain; charset=utf-8"); return res.end("本番の短い URL にレシピが無い (消えた・違う id)"); }
         res.statusCode = 302;

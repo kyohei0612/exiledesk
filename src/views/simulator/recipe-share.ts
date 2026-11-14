@@ -139,6 +139,18 @@ const recipeCodeOf = (text: string): string | null => {
   const m = /#recipe=([A-Za-z0-9_-]+)/.exec(t) ?? /^([A-Za-z0-9_-]{20,})$/.exec(t);
   return m ? m[1]! : null;
 };
+/** 本番の短い URL (…/r/<id>) の id (Y-70b) */
+const shortIdOf = (text: string): string | null => /\/r\/([A-Za-z0-9_-]{4,40})(?:[/?#]|$)/.exec(text.trim())?.[1] ?? null;
+/**
+ * 短い URL の中身を取る (Y-70b、オーナー 11-16「開くボタン押したら変換して開けるようにしてくれ」): 本番の /r/<id> の HTML の location.replace("/#recipe=…") から抜く。
+ * 開発版 (vite serve) は開発サーバーの口 (scripts/vite-recipe-short.mjs) に ?raw=1 で本番の HTML をそのまま返してもらう。取れなければ null
+ */
+async function shortCodeOf(id: string): Promise<string | null> {
+  try {
+    const r = await fetch(`/r/${id}${import.meta.env.DEV ? "?raw=1" : ""}`);
+    return r.ok ? (/location\.replace\("\/?#recipe=([A-Za-z0-9_-]+)"\)/.exec(await r.text())?.[1] ?? null) : null;
+  } catch { return null; }
+}
 
 /**
  * レシピの中身 (縮めた物) を開く: 保存したレシピに足して (同じ中身があればそれを使う)、そのレシピでシミュレーターを始める。
@@ -177,13 +189,14 @@ export function useRecipeUrl(o: { notUrl?: [string, string]; unreadable?: [strin
   const url = ref("");
   const urlNote = ref("");
   async function openUrl(): Promise<void> {
-    const code = recipeCodeOf(url.value);
+    const id = recipeCodeOf(url.value) ? null : shortIdOf(url.value);
+    const code = recipeCodeOf(url.value) ?? (id ? await shortCodeOf(id) : null);
     if (!code) { urlNote.value = url.value.trim() ? tr(...(o.notUrl ?? ["レシピの URL ではありません (#recipe= の付いた URL を貼る)", "Not a recipe URL (paste one with #recipe=)"])) : ""; return; }
     const ok = await openRecipeCode(code);
     urlNote.value = ok ? "" : tr(...(o.unreadable ?? RECIPE_UNREADABLE));
     if (ok) { url.value = ""; o.onOpened?.(); }
   }
-  function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
+  function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value) || shortIdOf(url.value)) void openUrl(); }); }
   return { url, urlNote, openUrl, onPaste };
 }
 /** レシピの日時 (保存の既定の名前・一覧): 「月/日 時:分」、今年でなければ頭に年 */
