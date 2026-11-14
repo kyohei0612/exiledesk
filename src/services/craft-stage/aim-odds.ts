@@ -20,7 +20,11 @@ import { omenRivals } from "./spec/omen-layer";
 import { OMEN_KEY } from "./spec/omen-keys";
 import { actionClassOfKey } from "./spec/action-class";
 
-export interface AimTarget { modId: string; minTierIndex: number }
+/**
+ * 狙いの札。anyEle = 「いずれかの元素耐性」の n 番 (1〜3、S-10h ②): 一般の火・冷気・雷耐性のどれかが段 (T = modId の段の数 − minTierIndex) 以上なら当たり、
+ * n 番は当たる元素耐性が n 個で付いている。eleSkip = 数えない系統 (元素を決めた狙いの系統)。modId は火・冷気・雷のどれか (段の数を見る札、S-10h ③)
+ */
+export interface AimTarget { modId: string; minTierIndex: number; anyEle?: number; eleSkip?: readonly string[] }
 /** 試す打ち方 (カレンシー + お告げ)。reveal = 付いている未発現の MOD を発現させる (反響込み) */
 export interface AimCombo { currency: string; omens: string[] }
 export interface AimOdd extends AimCombo { p: number; n: number }
@@ -54,6 +58,7 @@ export interface AimHitOpts { data: PatchData; sameText?: boolean }
 /** 当たり = その狙いの MOD が付いている (未発現は数えない) */
 export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   if (m.unrevealed) return false;
+  if (t.anyEle) return eleHit(m, t, o);
   const want = o?.sameText ? o.data.mods.get(t.modId) : undefined;
   if (!want) return m.modId === t.modId && m.tierIndex >= t.minTierIndex;
   // エッセンスの MOD と一般の MOD は別物 (2026-10-24 オーナー): 狙いがエッセンスの MOD なら同じ modId だけ、段はエッセンス自身の段 (T1 = グレーター)。
@@ -64,6 +69,29 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   return same && tierNoOf(m) <= want.tiers.length - t.minTierIndex;
 };
 const isEssenceSource = isCraftedSource;
+/** 「いずれかの元素耐性」に数える系統 (一般の火・冷気・雷耐性だけ。全ての元素耐性・2 元素・混沌・冒涜・エッセンスは数えない、S-10h ①) */
+export const ANY_ELE_FAMILIES: readonly string[] = ["FireResistance", "ColdResistance", "LightningResistance"];
+/**
+ * 「いずれかの元素耐性」の当たり (S-10h ②): 一般の MOD (クラフト・冒涜・エッセンスでない) で系統が火・冷気・雷耐性のどれか、eleSkip に無く、段が狙いの T 以上。
+ * data があれば出どころ normal と段の名前の T で比べ、無ければ段の番号で比べる (3 元素とも段の数が同じ 8 なので同じ答え)
+ */
+function eleHit(m: StageMod, t: AimTarget, o?: AimHitOpts): boolean {
+  if (m.crafted || m.desecrated || !ANY_ELE_FAMILIES.includes(m.family) || t.eleSkip?.includes(m.family)) return false;
+  if (!o) return m.tierIndex >= t.minTierIndex;
+  const mod = o.data.mods.get(m.modId), want = o.data.mods.get(t.modId);
+  if (!mod || !want || mod.source !== "normal") return false;
+  return tierNoOf(m) <= want.tiers.length - t.minTierIndex;
+}
+/**
+ * 品の MOD に狙いが付いているか: 当たる MOD が anyEle の数 (無ければ 1) 以上 (S-10h ②。元素耐性は 1 つの品に同じ系統が 2 つ付かないので、数 = 違う元素の数)。
+ * 「もう付いているか」(aimDone)・次の手で狙う (aimOdds・aimChain) はこれで見る
+ */
+export const aimHeldIn = (mods: readonly StageMod[], t: AimTarget, o?: AimHitOpts): boolean => {
+  const need = t.anyEle ?? 1;
+  let n = 0;
+  for (const m of mods) if (hits(m, t, o) && ++n >= need) return true;
+  return false;
+};
 /**
  * 狙いの札どうしが同じ MOD か (aimHits の sameText と同じ見方: 同じ modId か、同じ系統で効果の文も同じ一般の MOD。エッセンスの MOD は同じ modId だけ)。
  * tier: true = 段の T も同じ (sameText の段は段の名前の T = その MOD の段の数 − 段の番号)。省略 = 段は見ないが、aimHits と同じく a の T が b の段の数を超える時は別物
@@ -72,12 +100,15 @@ const isEssenceSource = isCraftedSource;
 export function sameAimTarget(data: PatchData, a: AimTarget, b: AimTarget, o: { tier?: boolean } = {}): boolean {
   const ma = data.mods.get(a.modId), mb = data.mods.get(b.modId);
   const tA = (ma?.tiers.length ?? 0) - a.minTierIndex, tB = (mb?.tiers.length ?? 0) - b.minTierIndex;
+  // 「いずれかの元素耐性」は元素を見ない (両方なら同じ MOD、片方だけなら別物。S-10h ③)
+  if (!!a.anyEle !== !!b.anyEle) return false;
+  if (a.anyEle) return !o.tier || tA === tB;
   if (a.modId === b.modId) return !o.tier || a.minTierIndex === b.minTierIndex;
   if (!ma || !mb || isEssenceSource(ma.source) || isEssenceSource(mb.source)) return false;
   if (!mb.family || ma.family !== mb.family || ma.text !== mb.text) return false;
   return o.tier ? tA === tB : tA <= (mb.tiers.length ?? 0);
 }
-const has = (item: StageItem, t: AimTarget, o?: AimHitOpts): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, o));
+const has = (item: StageItem, t: AimTarget, o?: AimHitOpts): boolean => aimHeldIn([...item.prefixes, ...item.suffixes], t, o);
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */
 const SAME_SEEDS = 8;

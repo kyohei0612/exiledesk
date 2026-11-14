@@ -19,7 +19,7 @@
  *   無ければ増強。当たりがプレとサフィの両方にある時は、どれか 1 つの数字に加えて「両方揃うまで (プレ 1 + サフィ 1)」の平均も出す (RaceRow.both。2026-10-22 オーナー)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { hits as aimHits, stepCost } from "./aim-odds";
+import { aimHeldIn, hits as aimHits, stepCost } from "./aim-odds";
 import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
 import { limitOf, openSlots, sideOfMod } from "./stage-core";
@@ -42,7 +42,7 @@ const sideList = (it: StageItem, side: "prefix" | "suffix") => (side === "prefix
  * 前は modId の一致だけの自前の式 (11-07 J-01。寄せても高貴・増強・カオスの道で止まる手は変わらない = 広がる組は冒涜 ⇄ ルーンとハンドラップ専用だけ)。
  * data を渡さない呼び手 (運試しの画面 StageRouteLuck.vue の当たりの番号、エミュ部長の持ち物) は前の modId の一致のまま。渡すと同じ式になる
  */
-export const routeHitIndex = (it: StageItem, targets: readonly RaceTarget[], data?: PatchData): number => targets.findIndex((t) => allMods(it).some((m) => aimHits(m, t, data ? { data, sameText: true } : undefined)));
+export const routeHitIndex = (it: StageItem, targets: readonly RaceTarget[], data?: PatchData): number => targets.findIndex((t) => aimHeldIn(allMods(it), t, data ? { data, sameText: true } : undefined));
 const routeHit = (data: PatchData, it: StageItem, targets: readonly RaceTarget[]): boolean => routeHitIndex(it, targets, data) >= 0;
 /** その MOD が当たりのどれかに当たるか (aimHits の sameText。spam-counts も同じ物) */
 export const routeHitMod = (data: PatchData, targets: readonly RaceTarget[]) => (m: StageMod): boolean => targets.some((t) => aimHits(m, t, { data, sameText: true }));
