@@ -112,12 +112,13 @@ export const eleAnyText = (text: string, n = 1): string =>
   text.replace(/(火|冷気|雷)耐性/, "いずれかの元素耐性").replace(/(Fire|Cold|Lightning) Resistance/, "any Elemental Resistance") + (n > 1 ? tr(` (${n} つ目)`, ` (#${n})`) : "");
 
 /**
- * 手の窓の ☑ の候補の「いずれか」は、まだ付いていない一番小さい番号だけ (S-10h ②)。n 番は n−1 番が付いていないと付かないので、上の番号の箱は見本が作れない
- * (白からの錬金で 2 番だけの当たりの箱が「MOD なし」になった)。2 つ同時に付く時は「2 つとも付いた」の箱ではなく 1 番の当たりの箱に入る
+ * 手の窓の ☑ の候補の「いずれか」は、まだ付いていない一番小さい番号から、その手で付く数まで (S-10h ②。偉大な高貴なら 2 つ目まで、置いた本数が上限)。
+ * n 番は n−1 番の後でしか付かないので、それより上の番号の箱は見本が作れない (白からの錬金で 2 番だけの当たりの箱が「MOD なし」になった)。
+ * 2 つとも付いた人は「2 つとも付いた」の箱 (S-22d)
  */
-export function nextEleOnly<A extends { anyEle?: number }>(open: readonly A[]): A[] {
+export function nextEleOnly<A extends { anyEle?: number }>(open: readonly A[], adds = 1): A[] {
   const ns = open.filter((a) => a.anyEle).map((a) => a.anyEle!);
-  if (ns.length < 2) return [...open];
-  const lo = Math.min(...ns);
-  return open.filter((a) => !a.anyEle || a.anyEle === lo);
+  if (!ns.length) return [...open];
+  const lo = Math.min(...ns), hi = lo + Math.max(1, adds) - 1;
+  return open.filter((a) => !a.anyEle || a.anyEle <= hi);
 }
