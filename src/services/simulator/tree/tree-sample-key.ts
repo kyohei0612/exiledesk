@@ -40,11 +40,11 @@ export function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number, alt: boo
 export const itemKeyOf = (it: StageItem): string => JSON.stringify(it, (k, v: unknown) => (k === "cls" ? undefined : v));
 /** 木の前提 (箱・狙いより外。始まりの見本はこれと種だけで決まる) */
 export function premiseOf(doc: TreeDoc): string {
-  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
+  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, midDropped: _md, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
   return JSON.stringify(rest, skipPos);
 }
 /** 箱によらない部分 (木の前提・木の狙いの札・置き石)。箱の数の分だけ掛かるので、木の変わらない間は 1 回だけ作る (tree-sample の keyOf) */
 export function docPartOf(data: PatchData, doc: TreeDoc): string {
-  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
+  const { boxes: _b, seq: _s, picks: _p, orphans: _o, droppedOld: _d, midDropped: _md, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, examples: _x, ...rest } = doc;
   return JSON.stringify([rest, aimsOf(data, doc), placedAims(data, doc)], skipPos);
 }

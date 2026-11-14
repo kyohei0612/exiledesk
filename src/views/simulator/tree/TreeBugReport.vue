@@ -10,23 +10,22 @@ import { ref } from "vue";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 
 /** 開いている間の状態 (doc: 押した時の木) */
-const bug = ref<{ doc: TreeDoc; mid: boolean } | null>(null);
-/** 一覧の「要望・バグを送る」から (押した瞬間に呼ぶ)。mid = 木の途中の未設定の「このまま送る」(窓の上の 1 行を替える、U-05f) */
-export function reportTreeBug(doc: TreeDoc, mid = false): void {
-  bug.value = { doc, mid };
+const bug = ref<{ doc: TreeDoc } | null>(null);
+/** 一覧の「要望・バグを送る」から (押した瞬間に呼ぶ) */
+export function reportTreeBug(doc: TreeDoc): void {
+  bug.value = { doc };
 }
 </script>
 
 <script setup lang="ts">
 import FeedbackDialog from "../../../web/FeedbackDialog.vue";
 import { tr } from "../../../i18n/lang";
-import { midBugNote } from "./tree-mid-unset";
 </script>
 
 <template>
   <template v-if="bug">
     <FeedbackDialog open @close="bug = null" />
     <!-- 窓の上の 1 行 (要望の窓より上の段) -->
-    <p data-tree-bug-note role="status" class="fixed inset-x-0 top-3 z-[400] mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-md border border-amber-300/50 bg-[#1c1610] px-3 py-1.5 text-center text-[13px] text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">{{ bug.mid ? midBugNote() : tr("木は要望と一緒に届きます。何が起きたかを書いて送ってください", "The tree is sent with your feedback. Write what happened and send") }}</p>
+    <p data-tree-bug-note role="status" class="fixed inset-x-0 top-3 z-[400] mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-md border border-amber-300/50 bg-[#1c1610] px-3 py-1.5 text-center text-[13px] text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">{{ tr("木は要望と一緒に届きます。何が起きたかを書いて送ってください", "The tree is sent with your feedback. Write what happened and send") }}</p>
   </template>
 </template>

@@ -30,6 +30,12 @@ function sameMarkLeft(d: TreeDoc, keyOf: ReadonlyMap<string, string>, o: RecipeO
   const b = d.boxes[keyOf.get(o.at) ?? ""];
   return !!b && !b.hand && b.done === p.done;
 }
+/** 要確認の印が付く箱 (札の残っている一番近い上の箱、use-tree-check の orphanBoxOf と同じ) が手を持つ = 木の途中の余った印 (S-107d) */
+function midLeft(d: TreeDoc, keyOf: ReadonlyMap<string, string>, o: RecipeOrphan): boolean {
+  let k = o.at;
+  while (k.includes("/") && !keyOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
+  return !!d.boxes[keyOf.get(k) ?? ""]?.hand;
+}
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isFixedHand(h.currency) || veilKeep(h));
 /** 前の保存の印 block (エッセンスの「ブロックに使う」☑、S-33b 撤回) を外し、当たりの札は木の狙いの物だけにする (完成形に無いエッセンスの MOD は外れ = S-33c) */
@@ -219,7 +225,10 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   const notGone = orphans.filter((o) => o.why !== "gone"), dropped = orphans.length - notGone.length;
   // 前の版で分かれていた箱がまとまって同じ完成 / 失敗の印が重なった余りは要確認に残さない (数えない・帯にも出さない、S-107d スイッチ actLog)
   const keyOf = flag("actLog") ? new Map([...pathKeysOf(d)].map(([id, k]) => [k, id])) : null;
-  const kept = keyOf ? notGone.filter((o) => !sameMarkLeft(d, keyOf, o)) : notGone;
+  const unSame = keyOf ? notGone.filter((o) => !sameMarkLeft(d, keyOf, o)) : notGone;
+  // 木の途中 (印の箱が手を持つ) の余った印も画面に出さず外し、数だけ控える (要望に添える。11-14 オーナー「未設定と出さないでいいんやない　真のエラーは止まるだし」)
+  const kept = keyOf ? unSame.filter((o) => !midLeft(d, keyOf, o)) : unSame;
+  if (unSame.length > kept.length) d.midDropped = unSame.length - kept.length;
   if (kept.length) d.orphans = kept;
   if (dropped) d.droppedOld = dropped;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる

@@ -76,7 +76,7 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
   return b.hand && kind(b.hand) === "quality" && !b.hand.quality && c?.out === "pass" && c.hand?.omens.includes(CATALYSING) ? c : null;
 }
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
-const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld", "examples", "built"]);
+const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld", "midDropped", "examples", "built"]);
 
 /** 木 (どの版でも) → 保存の形 v1 (打ち方だけ。例のアイテムは外す、入れるのは tree-frame の recipeOf)。保存の形ならそのまま (欄を揃えるだけ) */
 export function toRecipeV1(d: TreeDoc): TreeDoc {

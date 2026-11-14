@@ -226,6 +226,8 @@ export interface TreeDoc {
   tidyRan?: true;
   /** 開いた時に外した前の版の決めの数 (今の木に札の箱が無い物、S-107b。帯に 1 行出すだけ、保存しない) */
   droppedOld?: number;
+  /** 開いた時に黙って外した木の途中の余った印の数 (要確認の札の箱が手を持つ物、S-107d。画面には出さず要望に添えるだけ、保存しない) */
+  midDropped?: number;
   /** 前の版の「途中で消える」にしたクラフト MOD (読むだけ。開く時に tree-migrate が完成形から外す、S-30 撤回 11-07) */
   wayMods?: Aim[];
   /**

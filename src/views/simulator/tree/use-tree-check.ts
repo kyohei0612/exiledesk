@@ -32,9 +32,6 @@ export function orphanIssues(d: TreeDoc): CheckIssue[] {
   return d.orphans.filter((o) => o.why !== "gone" || !idOf.has(o.at)).map((o) => ({ boxId: orphanBoxOf(idOf, o.at), kind: "orphan" as const, text: orphanText() }));
 }
 
-/** 木の途中の未設定 = 要確認の印の箱が手を持つ (下に箱が続く) 物。末端の未設定 (人がこれから組む所) は入れない (S-107d、誘いの札の数) */
-export const midUnsetOf = (d: TreeDoc, list: readonly CheckIssue[] | null): CheckIssue[] => (list ?? []).filter((x) => x.kind === "orphan" && !!d.boxes[x.boxId]?.hand);
-
 /** 要確認の札の箱 (orphanIssues と同じ: 札の残っている一番近い上の箱。無ければ "") */
 function orphanBoxOf(idOf: ReadonlyMap<string, string>, at: string): string {
   let k = at;
@@ -121,7 +118,5 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
   // 始めたばかり (スタートしか無い) の木もスタートに印を出す (S-89b・S-89c。前の 10-26 の「見せない」= S-132 は 10-28 深夜に撤回)
   const shownIssues = computed(() => nowIssues.value);
   const issueOf = (b: TreeBox): string | null => (!shown.value ? null : nowIssues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
-  /** 今の木の途中の未設定 (S-107d。文・色・札はデザイン部長) */
-  const midUnset = computed(() => midUnsetOf(doc.value, nowIssues.value));
-  return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf, midUnset, checkRun: (): CheckRun | null => lastRun };
+  return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf, checkRun: (): CheckRun | null => lastRun };
 }
