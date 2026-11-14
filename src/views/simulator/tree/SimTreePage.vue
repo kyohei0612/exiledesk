@@ -20,7 +20,7 @@ import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import PhoneViewPage from "../phone/PhoneViewPage.vue";
 import TreeLoadingCover from "./TreeLoadingCover.vue";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
-import TreeBox from "./TreeBox.vue"; import { useTreeDraft } from "./use-tree-draft";
+import TreeBox from "./TreeBox.vue"; import { useTreeDraft } from "./use-tree-draft"; import { useActLog } from "./act-log";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { tidyView } from "./use-row-settle";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
@@ -110,6 +110,7 @@ onBeforeUnmount(installSimMonkey());
 // ドラッグ中は Vue Flow の箱だけが動き、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)。線は引っ張っている位置に合わせる
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
 useTreeDraft(doc); // 要望に添える作りかけの木 (11-08 オーナー「1おけ」、web/feedback-tree.ts)
+useActLog(doc, t.loading); // 置いた順の記録 (S-104c、スイッチ actLog)
 watch(t.loading, (on) => { if (!on && cur.value) void v.openView(); });
 
 /**
