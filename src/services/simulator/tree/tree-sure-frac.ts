@@ -4,7 +4,8 @@
  * エンジンの起こりうる結果 (stepOutcomes) のうち ✦ の印の MOD が固定された物だけを残す (外れの枝なし)。費用はその手を FRACTURE_POOL (3) 回分。
  * エンジンは変えない。印の無いシミュの木は今のまま (S-43 は 11-05 に撤回、11-05 オーナー「ツリーに勝手に足しやがって2度とすんなまじで」)
  */
-import { aimHits, allMods, tierIndexOf, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { aimHits, allMods, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { aimTargetOf } from "./tree-ele-any";
 import { stepOutcomes } from "../sim-engine";
 import { FRACTURE_POOL } from "../sim-odds";
 import { newlyFractured } from "./tree-frac-pick";
@@ -26,7 +27,7 @@ export function sureFracture(data: PatchData, doc: TreeDoc, item: StageItem, h: 
   const hits = (stepOutcomes(data, item, h.currency, engineOmens(h)) ?? []).filter((o) => {
     if (o.void) return false;
     const m = newlyFractured(item, o.item);
-    return !!m && marks.some((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true }));
+    return !!m && marks.some((a) => aimHits(m, aimTargetOf(data, a), { data, sameText: true }));
   });
   if (!hits.length) return null;
   const best = hits.reduce((x, y) => (y.p > x.p ? y : x));
@@ -49,7 +50,7 @@ export const sureFracMissing = (data: PatchData, doc: TreeDoc, item: StageItem, 
 export function sureFracWhy(data: PatchData, doc: TreeDoc, item: StageItem, h: Hand | null | undefined): "desecrated" | "none" | null {
   if (!sureFracMissing(data, doc, item, h)) return null;
   const marks = fractureMarks(doc);
-  const des = allMods(item).some((m) => !m.unrevealed && !!m.desecrated && marks.some((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })));
+  const des = allMods(item).some((m) => !m.unrevealed && !!m.desecrated && marks.some((a) => aimHits(m, aimTargetOf(data, a), { data, sameText: true })));
   return des ? "desecrated" : "none";
 }
 

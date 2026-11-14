@@ -2,22 +2,23 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, sameAimTarget, tierIndexOf, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHeldIn, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, sameAimTarget, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { junkOf } from "./tree-aim";
 import { missAims } from "./tree-miss";
 import { ECHO as ABYSSAL_ECHO_OMEN, splitOmens } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { isRevealHand } from "./tree-veil";
+import { aimTargetOf } from "./tree-ele-any";
 
 /** 段の名前の T で言う狙い (T1 が一番上) */
-interface TierAim { modId: string; tier: number }
+interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[] }
 interface AimDiffOpts { sameText?: boolean }
 
-const targetOf = (data: PatchData, a: TierAim): AimTarget => ({ modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) });
+const targetOf = (data: PatchData, a: TierAim): AimTarget => aimTargetOf(data, a);
 const modsOf = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
 const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
   const t = targetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
-  return mods.some((m) => hits(m, t, opts));
+  return aimHeldIn(mods, t, opts);
 };
 
 interface AimDiff<A extends TierAim = TierAim> {
@@ -47,14 +48,16 @@ export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, a
     lost: had.filter((a) => !has.includes(a)),
     junkGone: junk(after) < junk(before),
     fractured,
-    fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], a, o)) : [],
+    fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], { ...a, anyEle: a.anyEle ? 1 : undefined }, o)) : [],
   };
 }
 
+/** いずれかの元素耐性の札は番号も同じ時だけ同じ札 (1 番だけ付いた人が 2 番の箱に入らない、S-10h ②。エンジンの sameAimTarget は番号を見ない) */
+const sameEleNo = (x: TierAim, a: TierAim): boolean => (x.anyEle ?? 0) === (a.anyEle ?? 0);
 /** 札どうしが同じ MOD か (段は見ない、同じ文の別 modId も同じ) = エンジンの sameAimTarget (aimHits の sameText と同じ見方) */
-export const sameAimMod = (data: PatchData, x: TierAim, a: TierAim): boolean => sameAimTarget(data, targetOf(data, x), targetOf(data, a));
+export const sameAimMod = (data: PatchData, x: TierAim, a: TierAim): boolean => sameEleNo(x, a) && sameAimTarget(data, targetOf(data, x), targetOf(data, a));
 /** 札どうしが同じ狙いか = 同じ MOD で段も同じ (エンジンの sameAimTarget の tier) */
-export const sameAim = (data: PatchData, x: TierAim, a: TierAim): boolean => sameAimTarget(data, targetOf(data, x), targetOf(data, a), { tier: true });
+export const sameAim = (data: PatchData, x: TierAim, a: TierAim): boolean => sameEleNo(x, a) && sameAimTarget(data, targetOf(data, x), targetOf(data, a), { tier: true });
 
 /**
  * その手 (key + お告げ) がこのアイテムに打てない理由。打てるなら null。

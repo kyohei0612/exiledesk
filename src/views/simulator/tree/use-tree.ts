@@ -17,7 +17,7 @@ import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
-import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check";
+import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check"; import { eleAnyText, setEleAnyDaily, tidyEleAny } from "../../../services/simulator/tree/tree-ele-any"; import { page as webPage } from "../../../web/page"; setEleAnyDaily(() => webPage.value === "daily"); // デイリーのお題の木は読み替えない (S-10h ④)
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 
@@ -190,7 +190,8 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   if (loading.value) return; // 開いている間は木を変えない (S-196)
   const before = JSON.stringify(doc.value);
   const d = JSON.parse(before) as TreeDoc;
-  fn(d); if (!open) dropTouchedOrphans(doc.value, d); // 置き直した箱の要確認は外す (11-08)
+  if (s.data.value && !open) tidyEleAny(s.data.value, d); // 変える前に印 (新しい木で元素を決めて選んだ狙いを読み替えない、S-10h ④)
+  fn(d); if (!open) dropTouchedOrphans(doc.value, d); if (s.data.value) tidyEleAny(s.data.value, d); // 置き直した箱の要確認は外す (11-08)・いずれかの元素耐性を揃える / 前の木の読み替え (S-10h)
   // 整理は木を変えるたびにその場で (S-201 ①、ハズレ整理のボタンは無い)。同じ組み替えの中なので 1 つ戻すで一緒に戻る
   if (d.boxes.start) tidyJunk(d, true); // 幅は見ない (S-197「同じ木は幅で変わらない」)
   const after = JSON.stringify(d);
@@ -305,14 +306,14 @@ const reportOpen = ref(false);
 const startPage = ref(false);
 /** 完成の狙い (0 の箱で決める。前の「欲しい MOD のメモ」memoAims を使い回す。後の箱の当たりはこの一覧から選ぶ、オーナー 10-22) */
 const goals = computed((): Aim[] => doc.value.memoAims ?? []);
-const hasGoal = (modId: string, tier: number): boolean => goals.value.some((a) => a.modId === modId && a.tier === tier);
+const hasGoal = (modId: string, tier: number): boolean => goals.value.some((a) => a.modId === modId && a.tier === tier && !a.anyEle); // いずれかの元素耐性 (S-10h) は今の行の印にしない
 /** 狙いにする / 外す (同じ MOD は段だけ替える。1 つ戻すで戻せる) */
 function toggleGoal(modId: string, tier: number): void {
   simOp("pick-goal-mod");
   edit((d) => {
-    const list = d.memoAims ?? [], same = list.find((a) => a.modId === modId);
+    const list = d.memoAims ?? [], same = list.find((a) => a.modId === modId && !a.anyEle), mine = (a: Aim): boolean => a.modId === modId && !a.anyEle;
     // 段を替えたら貼り付けの値は外す (その段の幅に入らない)
-    const next = same?.tier === tier ? list.filter((a) => a.modId !== modId) : same ? list.map((a) => (a.modId === modId ? { modId, tier, ...(a.fractured ? { fractured: true as const } : {}) } : a)) : [...list, { modId, tier }];
+    const next = same?.tier === tier ? list.filter((a) => !mine(a)) : same ? list.map((a) => (mine(a) ? { modId, tier, ...(a.fractured ? { fractured: true as const } : {}) } : a)) : [...list, { modId, tier }];
     if (next.length) d.memoAims = next; else delete d.memoAims;
     migrateStart(d);
   });
@@ -324,7 +325,7 @@ function toggleGoal(modId: string, tier: number): void {
  */
 function toggleFracture(modId: string, tier: number): void {
   edit((d) => {
-    const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId);
+    const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId && !a.anyEle);
     // 印は 1 つだけ: 付けるとほかの印は外れる (10-26 夜オーナー「PC もスマホも 1 つだけ」。始め方はツリーへ行く時の窓 TreeStartAsk)
     // 複数付けられるので外さない (10-28 オーナー「✦ を複数設定してよい」)
     if (!g) list.push({ modId, tier, fractured: true });
@@ -442,7 +443,7 @@ const NUM = /\((-?[\d.]+)-(-?[\d.]+)\)|(-?\d+(?:\.\d+)?)/g;
  * 狙いの MOD の文を段の幅で (「最大ライフ #」でなく「最大ライフ (85-119)」= 狙いの段の下限〜一番上の段の上限。狙いは「その段以上」、10-25 オーナー「おすすめの2つで進めて」)。
  * 文は MOD の一覧の段の文 (ListTier.text) から。数値の並びが段どうしで合わない時は狙いの段の文のまま
  */
-function aimText(a: Aim): string {
+function aimText(a: Aim): string { return a.anyEle ? eleAnyText(aimText0(a), a.anyEle) : aimText0(a); } function aimText0(a: Aim): string { // いずれかの元素耐性は元素の語を替える (S-10h ③)
   const r = rowOfMod(a.modId);
   if (!r) return NOT_ON_BASE();
   const ts = r.tiers.filter((x) => (x.modId ?? r.id) === a.modId);

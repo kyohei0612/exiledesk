@@ -2,15 +2,16 @@
  * tree-aim.ts — ツリーの当たりの小さな判定 (段の名前の T で持つ狙い・同じ系統で文も同じ別の modId も当たり)。中身はエンジンの核の aimHits と段の換算 tierIndexOf を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。オーナー「元からエンジンにあった物をシミュが勝手に自前で作っただけ」)
  */
-import { aimHits as hits, heldOdds, makeStageMod, tierIndexOf, type AimHitOpts, type AimTarget, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHeldIn, aimHits as hits, heldOdds, makeStageMod, type AimHitOpts, type AimTarget, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { isMissMod, type MissAims } from "./tree-miss";
+import { aimTargetOf } from "./tree-ele-any";
 
 // 付きうる狙い (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits を呼ぶだけ。10-25 に画面の tree-hand-plan から精査と一緒に使うここへ)
-interface TierAim { modId: string; tier: number }
+interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[] }
 interface AimDiffOpts { sameText?: boolean }
 const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
-  const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, opts = o.sameText ? { data, sameText: true } : undefined;
-  return mods.some((m) => hits(m, t, opts));
+  const t = aimTargetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
+  return aimHeldIn(mods, t, opts);
 };
 /**
  * この手で付きうる狙い = items (同じ箱の見本など) のどれかで、クラフト台でそのカレンシーを持った時に出る % (heldOdds。CoE と合わせ済み) が 0 より大きい段がある狙い
@@ -47,8 +48,8 @@ export function junkOf(item: StageItem, x: MissAims): { prefix: StageMod[]; suff
  * アイテムに狙い (modId と段の名前の T) が付いているか (2026-10-22 シミュの aimHeld の橋渡しを入口へ)。アイテムの MOD を全部見て、T を段の番号に直して aimHits。
  * sameText = 同じ系統で文も同じ別の modId も当たり (シミュの aimHeld と同じ)
  */
-export function aimHeldOn(data: PatchData, item: StageItem, a: { modId: string; tier: number }, o?: { sameText?: boolean }): boolean {
-  const t: AimTarget = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) };
+export function aimHeldOn(data: PatchData, item: StageItem, a: TierAim, o?: { sameText?: boolean }): boolean {
+  const t: AimTarget = aimTargetOf(data, a);
   const opts = o?.sameText ? { data, sameText: true } : undefined;
-  return [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, opts));
+  return aimHeldIn([...item.prefixes, ...item.suffixes], t, opts);
 }

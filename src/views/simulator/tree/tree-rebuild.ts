@@ -7,6 +7,7 @@
 import { treeOrder } from "../../../services/simulator/tree/tree-order";
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, subtree, TREE_SCHEMA_N, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { readEleAny } from "../../../services/simulator/tree/tree-ele-any";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { autoTarget, foldToTrunks, graftDecided, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
@@ -67,7 +68,8 @@ export async function rebuildInSteps(data: PatchData, src: TreeDoc, paint: (d: T
   }
 }
 /** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで */
-function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
+function* rebuildSteps(data: PatchData, src0: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
+  const src = readEleAny(data, src0); // 前の木の火・冷気・雷の狙いは「いずれかの元素耐性」に読み替えて組む (S-10h ④、スイッチ eleAny)
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   // 保存の例のアイテム (v2、S-200 ⑦) は開いた木に持たせ、配置の代表に使う (tree-frame)。打ち方の比べ (toRecipeV1) には入れない
   if (src.examples) d.examples = JSON.parse(JSON.stringify(src.examples)) as NonNullable<TreeDoc["examples"]>;

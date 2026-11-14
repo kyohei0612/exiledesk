@@ -6,7 +6,8 @@
  *     どれが固定されるかはエンジンの乱数のまま (行ごとに等しく、同じ枝の行は足す)
  *   - ☑ あり: ☑ の MOD が固定された = 当たり、ほかが固定された = 外れ (今までの fracRandom の形)
  */
-import { aimHits, tierIndexOf, unfracturable, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, unfracturable, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimTargetOf } from "./tree-ele-any";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { stepOutcomes } from "../sim-engine";
@@ -27,7 +28,7 @@ const fixable = (data: PatchData, it: StageItem): StageMod[] => [...it.prefixes,
 export function fracFreeOuts(data: PatchData, doc: TreeDoc, items: readonly StageItem[]): { aims: Aim[]; junk: string[] } {
   const goals = doc.memoAims ?? [];
   const aims = goals.filter((a) => items.some((it) => aimHeldOn(data, { ...it, prefixes: fixable(data, it).filter((m) => m.side === "prefix"), suffixes: fixable(data, it).filter((m) => m.side === "suffix") }, a, { sameText: true }))).map((a) => ({ modId: a.modId, tier: a.tier }));
-  const isGoal = (m: StageMod): boolean => goals.some((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true }));
+  const isGoal = (m: StageMod): boolean => goals.some((a) => aimHits(m, aimTargetOf(data, a), { data, sameText: true }));
   // 外れは固定後の形 (側と種類) が同じ物どうしで 1 枝 (10-27 夜オーナー「外れ 2 つは同じ側・同じ種類なので固定後の形が同じ」)。並びはプレ → サフィ、普通 → エッセンス
   const junk = new Set<string>();
   for (const it of items) for (const m of fixable(data, it)) if (!isGoal(m)) junk.add(junkKeyOf(data, m));
@@ -47,7 +48,7 @@ export function junkKeyLabel(key: string): [string, string] {
 /** 固定された MOD が当たる枝の札 (無ければ外れ MOD の枝) */
 export function fracFreeHit(data: PatchData, m: StageMod | null, own: readonly Aim[]): Aim | null {
   if (!m) return null;
-  return own.find((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })) ?? null;
+  return own.find((a) => aimHits(m, aimTargetOf(data, a), { data, sameText: true })) ?? null;
 }
 
 /** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */

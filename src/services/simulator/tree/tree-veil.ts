@@ -5,7 +5,8 @@
  * ☑ の MOD が完成の狙いに無い物 (置き石。例: 全耐性の前に冷気耐性で系統を埋める) は、その手の時だけ当たりで、以降は冒涜の外れ MOD (aimsOf で数えない)。
  * 付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
  */
-import { aimHits, parseKey, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, parseKey, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimTargetOf } from "./tree-ele-any";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence"; import { flag } from "../../../web/release-flags";
 import { addsRandomMod, isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
@@ -79,5 +80,5 @@ export function revealedOf(before: StageItem, after: StageItem): StageMod | null
 /** 発現した MOD が当たる ☑ の札 (段は「その段以上」、同じ文の別の modId も当たり = 木の当たりの判定と同じ) */
 export function revealHitOf(data: PatchData, m: StageMod | null, own: readonly Aim[]): Aim | null {
   if (!m) return null;
-  return own.find((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })) ?? null;
+  return own.find((a) => aimHits(m, aimTargetOf(data, a), { data, sameText: true })) ?? null;
 }

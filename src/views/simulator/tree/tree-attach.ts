@@ -35,7 +35,7 @@ export function wayBlock(group: string | undefined, w: AttachWay): string | null
 /** その段以上をその付け方の狙いにする (段が違えば替える。✦ はフラクチャーの時だけ、via は冒涜の時だけ) */
 export function attachIn(d: TreeDoc, modId: string, tier: number, w: AttachWay): void {
   const list = d.memoAims ?? [];
-  let g = list.find((a) => a.modId === modId);
+  let g = list.find((a) => a.modId === modId && !a.anyEle); // 「いずれかの元素耐性」(S-10h) は元素を決めた狙いと別
   if (!g) { g = { modId, tier }; list.push(g); }
   else if (g.tier !== tier) { g.tier = tier; delete g.values; }
   if (w === "fracture") g.fractured = true; else delete g.fractured;
@@ -49,7 +49,7 @@ export function attachIn(d: TreeDoc, modId: string, tier: number, w: AttachWay):
 
 /** 狙いから外す */
 export function detachIn(d: TreeDoc, modId: string): void {
-  const next = (d.memoAims ?? []).filter((a) => a.modId !== modId);
+  const all = d.memoAims ?? [], hit = all.find((a) => a.modId === modId && !a.anyEle) ?? all.find((a) => a.modId === modId), next = all.filter((a) => a !== hit); // 元素を決めた狙いを先に (S-10h)
   if (next.length) d.memoAims = next; else delete d.memoAims;
   migrateStart(d);
   d.start!.rarity = startRarity(d);

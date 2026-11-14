@@ -2,7 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { treeOrder } from "../../../services/simulator/tree/tree-order";
+import { treeOrder } from "../../../services/simulator/tree/tree-order"; import { nextEleOnly } from "../../../services/simulator/tree/tree-ele-any";
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { foldMisses, holdsAt } from "../../../services/simulator/tree/tree-foresee"; import { fluxBlock } from "../../../services/simulator/tree/tree-flux";
@@ -192,7 +192,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
   const pool = [...aimsOf(data, doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i).map((a) => phaseAim(a, (doc.memoAims ?? []).find((g) => sameAimMod(data, g, a)), item)); // ✦ の 2 つ持ちは固定の後 = 普通側の段 (S-10g)
-  const open = pool.filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
+  const open = nextEleOnly(pool.filter((a) => !aimHeldOn(data, item, a, { sameText: true }))); // いずれかの元素耐性はまだ付いていない一番小さい番号だけ (S-10h ②)
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)。どの見本でも行き先が無ければ全部。
   // 当たるまで (どれでも) も同じ絞り: 前は付いていない狙い全部で、カオスで付かない狙い (冒涜の MOD・アイテムレベルの足りない段) だけが残ると
   // 当たるまでが毎回 5000 回の上限まで回り、精査の 30 人回しでページが固まった (10-25 モンキー 3 本目、クォータースタッフの外れの箱に 2 つ目のカオススパム)

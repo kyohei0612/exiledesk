@@ -8,6 +8,7 @@ import type { StageItem, StageMod } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
+import { tr } from "../../../i18n/lang";
 import { aimRows, bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim } from "./tree-way-mods";
 
 export function useGoalShown() {
@@ -50,8 +51,8 @@ export function useGoalShown() {
   });
   /** 束の札 (クラフト MOD「どれか n つ残る」・冒涜「どれか 1 つ」) */
   const tags = computed((): Map<string, RowTag> | null => {
-    const b = bundle.value, ds = desecrated.value;
-    return b || ds ? new Map([...(b?.aims ?? []).map((a) => [a.modId, bundleTag(b!.lim)] as const), ...(ds ?? []).map((a) => [a.modId, desecratedTag()] as const)]) : null;
+    const b = bundle.value, ds = desecrated.value, ea = (t.doc.value.memoAims ?? []).filter((a) => a.anyEle); // いずれかの元素耐性の札 (S-10h ③)
+    return b || ds || ea.length ? new Map([...(b?.aims ?? []).map((a) => [a.modId, bundleTag(b!.lim)] as const), ...(ds ?? []).map((a) => [a.modId, desecratedTag()] as const), ...ea.map((a) => [a.modId, { text: t.aimShort(a), replace: true, tone: "info", title: tr("火・冷気・雷耐性のどれか 1 つが段以上で当たり。2 つ目は違う元素", "Any one of fire / cold / lightning at this tier or better. The 2nd must be a different element") } as RowTag] as const)]) : null;
   });
   /**
    * カードの並びの束 (StageItemCard の rowGroup): エッセンス・合金の MOD (束でなくても全部) = 1 で、ふつうの MOD の下・冒涜の上に

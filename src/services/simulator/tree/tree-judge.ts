@@ -99,7 +99,9 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
 function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): { keys: Set<string>; miss: MissAims; body: string } {
   const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
   const keys = new Set<string>();
-  for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) keys.add(g.modId); }
+  for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => !a.anyEle && isAimMod(m, targetsOf(data, [a]), opts)); if (g) keys.add(g.modId); }
+  // いずれかの元素耐性の n 番は、当たる元素耐性が n 個ある時だけ (S-10h ②。MOD ごとに 1 番目の札へ寄せると 2 番が鍵に入らなかった)
+  for (const a of goals) if (a.anyEle && aimHeldOn(data, it, a, { sameText: true })) keys.add(a.modId);
   return { keys, miss, body: bodyOf(data, doc, it, miss) };
 }
 /**

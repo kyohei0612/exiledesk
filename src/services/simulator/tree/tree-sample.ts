@@ -7,7 +7,8 @@
  * 引けなかった結果の箱は作れない印 (note) を返す (指名で付けて作らない)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { frameSample } from "./tree-frame";
-import { aimDone, aimHits, freshItem, mulberry32, stageTuning, tierIndexOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimDone, aimHits, freshItem, mulberry32, stageTuning, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimTargetOf } from "./tree-ele-any";
 import { catalystFull, fractureStart, keepsMods } from "../../simulator/sim-engine";
 import { aimDiff, applyHand, canUse, sameAim, sameAimMod, startWith } from "./tree-hand-core";
 export { aimDiff } from "./tree-hand-core";
@@ -34,7 +35,7 @@ const TRIES_LIGHT = 1000;
 export interface Sample { item: StageItem; note: string | null }
 
 /** 木の狙い (段 T) → エンジンの入口の狙いの形 (段の位置)。当たりの判定はエンジンの入口 (aimHeldOn・isAimMod・junkOf) に sameText で聞く (決まり 8) */
-export const targetsOf = (data: PatchData, aims: readonly Aim[]): AimTarget[] => aims.map((a) => ({ modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }));
+export const targetsOf = (data: PatchData, aims: readonly Aim[]): AimTarget[] => aims.map((a) => aimTargetOf(data, a));
 /** 木の当たりの判定の設定 (同じ系統・同じ文も当たり。系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった、10-22 #3) */
 export const aimOpts = (data: PatchData): AimHitOpts => ({ data, sameText: true });
 /**

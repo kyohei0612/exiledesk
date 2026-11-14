@@ -47,6 +47,7 @@ import { wayName } from "./tree-attach";
 import { simOp } from "../../../web/track";
 import { flag } from "../../../web/release-flags";
 import TreeTierBulk from "./TreeTierBulk.vue";
+import { useEleFold } from "./use-ele-fold";
 /** 狙うMODの一括ティア調整をここにも (S-10f、スイッチ tierDown。✦ の段はここで決める、11-13 オーナー「次MOD選びの段階でティア調整ボタンは配置しておくべき」) */
 const TIER_DOWN = flag("tierDown");
 const tierOpen = ref(false);
@@ -56,6 +57,8 @@ const AIM_NOTE = flag("aimGroups");
 
 
 const t = useTree();
+/** 「いずれかの元素耐性」の畳む行 (S-10h ①、スイッチ eleAny) */
+const ef = useEleFold();
 /** 完成形のカード (品質・束の行) */
 const shown = useGoalShown();
 const step = computed(() => t.goalPage.value);
@@ -193,12 +196,12 @@ function rowBlocks(r: Parameters<typeof rowBlockLines>[0]): Array<{ why: string;
   return rowGoal(r) ? [] : rowBlockLines(r, blockOf);
 }
 /** その行 (系統) の狙い (段ごとに modId が違うまとめ行もあるので、行の段のどれかの modId で引く) */
-const rowGoal = (r: { id: string; tiers: Array<{ modId?: string }> }): Aim | undefined => t.goals.value.find((a) => a.modId === r.id || r.tiers.some((x) => x.modId === a.modId));
+const rowGoal = (r: { id: string; tiers: Array<{ modId?: string }> }): Aim | undefined => t.goals.value.find((a) => !a.anyEle && (a.modId === r.id || r.tiers.some((x) => x.modId === a.modId)));
 /**
  * その段の行が狙いの中のどこか (10-24 オーナー「T2 を選んだら T2 以上」、狙いは MOD 1 つ): "pick" = 選んだ段 (✓ 狙い)、"in" = 選んだ段より上で含まれる (控えめな「含む」)、null = 狙いの外
  */
 function goalAt(modId: string, tier: number): "pick" | "in" | null {
-  const g = t.goals.value.find((a) => a.modId === modId);
+  const g = t.goals.value.find((a) => a.modId === modId && !a.anyEle);
   return !g ? null : g.tier === tier ? "pick" : tier < g.tier ? "in" : null;
 }
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
@@ -313,7 +316,25 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[48rem]:flex-col max-[48rem]:items-stretch">
-      <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="t.goalItem.value?.item ?? null" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)">
+      <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="ef.listItem.value" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)" :folds="ef.folds.value" :fold-on="ef.foldOn">
+        <!-- いずれかの元素耐性 (S-10h ①、オーナー 11-15「×２の所を追加ボタンにしたら？」): 1 本ずつ段のプルダウンと ×、「＋ 追加」はサフィの空きがある間だけ -->
+        <template #fold-tier>
+          <span class="flex flex-col items-end gap-0.5 py-0.5" @click.stop>
+            <span v-if="!ef.placed.value.length" class="flex items-center gap-1">
+              <select data-tree-ele-any-tier class="rounded border border-amber-300/40 bg-black/40 px-1 py-0.5 text-[12px] text-amber-100" :value="0" :disabled="!ef.canAdd.value" @change="ef.setTier(0, Number(($event.target as HTMLSelectElement).value))">
+                <option :value="0">‐</option>
+                <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
+              </select>
+            </span>
+            <span v-for="(a, i) in ef.placed.value" :key="i" data-tree-ele-any-line class="flex items-center gap-1">
+              <select data-tree-ele-any-tier class="rounded border border-amber-300/40 bg-black/40 px-1 py-0.5 text-[12px] text-amber-100" :value="a.tier" @change="ef.setTier(i, Number(($event.target as HTMLSelectElement).value))">
+                <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
+              </select>
+              <button type="button" data-tree-ele-any-remove class="px-1 text-[12px] text-rose-200 hover:text-rose-100" :title="tr('この「いずれかの元素耐性」を外す', 'Remove this any-elemental-resistance target')" @click="ef.remove(i)">×</button>
+            </span>
+            <button v-if="ef.placed.value.length && ef.canAdd.value" type="button" data-tree-ele-any-add class="rounded border border-amber-300/40 px-1.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
+          </span>
+        </template>
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
         <!-- 狙いの MOD の行に札 (印ありは ✦ の色)、段の表では狙いの段の左に色の帯 (行の色、10-24 オーナー「フラクチャーにした行は色を変えて」) -->
@@ -331,7 +352,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
             <!-- 選んだ段より上の段は狙いに含まれる印だけ (押すとそこから上に絞る)。ボタンの形にすると狙いが 2 つあるように見えた (10-24 オーナー) -->
             <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="t.toggleGoal(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
             <!-- 付け方 4 択の「付ける」1 つ (S-10b) -->
-            <TreeAttachPick v-else :mod-id="tt.modId ?? r.id" :tier="tt.tier" :rank="tt.rank" :group="r.group" :block="blockOf(tt.modId ?? r.id, tt.tier)" :aim="t.goals.value.find((a) => a.modId === (tt.modId ?? r.id))" />
+            <TreeAttachPick v-else :mod-id="tt.modId ?? r.id" :tier="tt.tier" :rank="tt.rank" :group="r.group" :block="blockOf(tt.modId ?? r.id, tt.tier)" :aim="t.goals.value.find((a) => a.modId === (tt.modId ?? r.id) && !a.anyEle)" />
           </td>
         </template>
       </ModTable></div>
