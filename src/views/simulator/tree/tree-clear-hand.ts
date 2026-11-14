@@ -8,6 +8,7 @@ import { craftStage } from "../../../state/craft-stage";
 import { clearHand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { syncSameMod } from "./tree-hand-plan";
 import { syncWhittlePre } from "./tree-whittle-pre";
+import { syncLowTier } from "./tree-low-tier-sync";
 import { flag } from "../../../web/release-flags";
 
 /** 箱 id の手 (と結果の箱・その下) を消し、親の手の結果の枠をそろえ直す */
@@ -22,4 +23,5 @@ export function clearHandAt(d: TreeDoc, id: string): void {
   if (!data || !p) return;
   syncSameMod(data, d, p);
   syncWhittlePre(data, d, p, id);
+  syncLowTier(data, d, p); // 「<狙い> 低ティア MOD」の箱も (S-33g ③、レビュワー 1 の 27)
 }

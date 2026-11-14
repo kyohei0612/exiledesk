@@ -21,7 +21,8 @@ import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goalTierOf, gotOf, isSwapEssence, keptAimedOf, keptAimsOf, swapKeyOf, veilSwapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
 import { sureFracMissing, sureFracOn } from "./tree-sure-frac";
-import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine"; import { lowTierOutcome } from "./tree-low-tier";
+import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
+import { lowTierOutcome } from "./tree-low-tier";
 
 /**
  * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) は ☑ した能力値だけ当たり、ほかが付いたら外れ MOD (10-27 オーナー「知性を選んだら知性が付いた = 当たり、

@@ -12,6 +12,7 @@ import { frameSiblings } from "../../../services/simulator/tree/tree-whittle-sce
 import { flag } from "../../../web/release-flags";
 import { applyPick, syncSameMod, type OnlyOut } from "./tree-hand-plan";
 import { syncWhittlePre } from "./tree-whittle-pre";
+import { syncLowTier } from "./tree-low-tier-sync";
 
 /** 箱 id と同じ組の枠 (低い・同じ・高い) */
 const framesOf = (d: TreeDoc, id: string): TreeBox[] => frameSiblings(d, id).filter((x) => !!lvPart(x.junkKey));
@@ -29,6 +30,7 @@ export function quitWhittle(d: TreeDoc, id: string): void {
   if (isWhittleHand(d.boxes[id]?.hand)) clearHand(d, id);
   syncSameMod(data, d, p);
   syncWhittlePre(data, d, p, id);
+  syncLowTier(data, d, p); // 「<狙い> 低ティア MOD」の箱も (S-33g ③、レビュワー 1 の 27)
 }
 
 /** ① の確かめの中身 (null = 聞いていない)。frames = 枠の数、n = 消える人の手の数 (削減の手も数える。自動の消去の続きは数えない) */

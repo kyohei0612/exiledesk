@@ -26,7 +26,7 @@ const hand = (id: string): string => { const h = t.doc.value.boxes[id]?.hand; re
       <button type="button" data-tree-goal-stop-more class="g-btn sm shrink-0" :aria-expanded="open" @click="open = !open">{{ open ? tr("閉じる", "Close") : tr("詳細", "Details") }}</button>
     </div>
     <template v-if="open">
-      <button v-for="[id, n] in rows" :key="id" type="button" data-tree-goal-stop-row class="block w-full break-words py-0.5 text-left text-[11px] leading-snug text-rose-200/90 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${stepOf(t.doc.value, id)} 段目の箱に「${hand(id)}」を置いて、狙い無しの手で狙いの MOD が付き、木が止まった (${n} 人)`, `Placing "${hand(id)}" on the step ${stepOf(t.doc.value, id)} box added a target mod with a no-target craft, and the tree stopped (${n} run${n === 1 ? "" : "s"})`) }}</button>
+      <button v-for="[id, n] in rows" :key="id" type="button" data-tree-goal-stop-row class="block w-full break-words py-0.5 text-left text-[11px] leading-snug text-rose-200/90 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${stepOf(t.doc.value, id)} 段目の「${hand(id)}」で、狙いの MOD が先に付いてしまった人です。☑ した手で当たりにならず、止まりました (${n} 人)`, `"${hand(id)}" at step ${stepOf(t.doc.value, id)} added the target mod too early, so the checked craft didn't count it as a hit and the run stopped (${n} run${n === 1 ? "" : "s"})`) }}</button>
     </template>
   </div>
 </template>

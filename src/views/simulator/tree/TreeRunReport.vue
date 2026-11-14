@@ -13,7 +13,8 @@ import { startOf, startRarity, startsFractured } from "../../../services/simulat
 import { useTreeSearch, type TreeSearchKind } from "./use-tree-search";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { useTree } from "./use-tree";
-import { handLabel, handName, outName, startName } from "./tree-names";
+import { handLabel, handName, headOf, outName, startName } from "./tree-names";
+import { stepOf } from "../../../services/simulator/tree/tree-goal-stop";
 import { tr } from "../../../i18n/lang";
 import { driveHead } from "./hole-check";
 import { simOp } from "../../../web/track";
@@ -35,7 +36,8 @@ const pct = computed(() => Math.round((props.result.finished / (props.result.n |
 /** 1 個 (高貴建ての値段 → 神、回した時と同じ) */
 const price = (k: string): number => t.treePrice(k) / (t.treePrice("divine") || 1);
 /** 箱の名前 (打つ手の名前、無ければ結果の名前) */
-const boxName = (id: string): string => { const b = t.doc.value.boxes[id]; return !b ? id : b.hand ? handLabel(b.hand) : id === "start" ? tr("始まり", "Start") : outName(b.out); };
+// 手の無い箱は木の箱の題と段で出す (前は結果の種類だけで「外れ で 65 人」「外れ で 38 人」と同じ字が並んだ、11-16 オーナー「日本語上手く分かりやすい感じで調整してくれ」)
+const boxName = (id: string): string => { const b = t.doc.value.boxes[id]; if (!b) return id; if (b.hand) return handLabel(b.hand); if (id === "start") return tr("始まり", "Start"); const n = stepOf(t.doc.value, id), h = headOf(b, t.aimShort) || outName(b.out); return tr(`${n} 段目「${h}」`, `step ${n} "${h}"`); };
 /** カレンシー別 (1 人あたりの数・神、神の多い順) */
 const uses = computed(() => Object.entries(props.result.uses).map(([k, n]) => ({ k, name: handName(k), n, div: n * price(k) })).sort((a, z) => z.div - a.div || z.n - a.n));
 const SHOW = 8;

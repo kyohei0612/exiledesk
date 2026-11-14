@@ -234,6 +234,8 @@ function toTree(after?: () => void): void {
 /** カードの行の × = 一覧で外したのと同じ (狙いから外す、印も一緒に外れる。10-24 夜オーナー「アイテムにつく UI からもバツで消したい」) */
 function onCardRemove(modId: string): void {
   const g = t.goals.value.find((a) => a.modId === modId);
+  // 「いずれかの元素耐性」の 1 本は 1 回で丸ごと外す (一覧の × と同じ。前は借りた元素の MOD を普通の狙いとして外し、火・冷気・雷が 1 つずつ消えた、11-16 オーナー「UI上はそもそも1発で消えて欲しい」)
+  if (g?.anyEle) { const i = ef.placed.value.indexOf(g); if (i >= 0) { ef.remove(i); return; } }
   if (g) t.toggleGoal(g.modId, g.tier);
 }
 /** カードの行の右クリック = その狙いの段で印を付け外し (狙いでない MOD は来ない) */
@@ -332,7 +334,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
               </select>
               <button type="button" data-tree-ele-any-remove class="px-1 text-[12px] text-rose-200 hover:text-rose-100" :title="tr('この「いずれかの元素耐性」を外す', 'Remove this any-elemental-resistance target')" @click="ef.remove(i)">×</button>
             </span>
-            <button v-if="ef.placed.value.length && ef.canAdd.value" type="button" data-tree-ele-any-add class="rounded border border-amber-300/40 px-1.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
+            <button v-if="ef.placed.value.length && ef.canAdd.value" type="button" data-tree-ele-any-add class="whitespace-nowrap rounded border border-amber-300/40 px-1.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
           </span>
         </template>
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
