@@ -56,6 +56,7 @@ import HeldCursor from "../../components/for-share/shelf/HeldCursor.vue";
 import { heldOmensOf } from "../../components/for-share/shelf/held-omens";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
+import { preventMenu } from "../../utils/no-context-menu"; // 右クリックで離す。文字の欄・選んだ文字の上はメニューを残す (U-38)
 
 const s = craftStage;
 // お告げは持った物ごとに覚える (持ち替えで前の物のお告げは外れる。スイッチ omenPerHeld、オーナー 10-26 夜)
@@ -221,7 +222,7 @@ function pickMode(m: typeof s.mode.value): void {
 
 <template>
   <!-- スクロールバーの分の幅は常に取っておく (出たり消えたりで横幅が変わり、ぎりぎりの高さでベースの並びが組み直されて跳んだ。2026-10-10 オーナー) -->
-  <div ref="rootEl" data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu.prevent="s.hold(null)">
+  <div ref="rootEl" data-stage-root class="h-full overflow-auto p-4 @container [scrollbar-gutter:stable]" :class="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) ? 'pb-32' : ''" @contextmenu="preventMenu($event); s.hold(null)">
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す (StagePhoneBar.vue) -->
     <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" @scroll-to-reveal="scrollToReveal" />
     <div v-show="!subPage"><!-- ベース選びのページの間は中身を隠す (消さないので戻ると元のまま) -->
