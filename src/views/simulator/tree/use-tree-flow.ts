@@ -19,7 +19,7 @@ import { drawnKids } from "../../../services/simulator/tree/tree-row-tops";
 import { pageZoom } from "../../../utils/zoom";
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import { flag } from "../../../web/release-flags";
-import { BAR_H, CALM_Z, FIT_MIN, LEFT_PAD, NEXT_H, OPEN_MIN, OPEN_QUIET, PAD_MIN, PHONE_MIN, VIEW_ONLY, WHEEL_RATE, WHEEL_STEP, ZOOM_LEVELS, ZOOM_MAX, ZOOM_MIN, edgeLimit, fitZoom, laneClear, laneSnap, levelsWith, openPlace, snapTo, zoomAt, type Area } from "./tree-cam-math";
+import { BAR_H, CALM_Z, FIT_MIN, LEFT_PAD, NEXT_H, OPEN_MIN, OPEN_QUIET, PAD_MIN, PHONE_MIN, VIEW_ONLY, WHEEL_RATE, WHEEL_STEP, ZOOM_LEVELS, ZOOM_MAX, ZOOM_MIN, LANE_GAP, edgeLimit, fitZoom, laneClear, levelsWith, openPlace, snapTo, zoomAt, type Area } from "./tree-cam-math";
 import { useTreeCamFollow } from "./use-tree-cam-follow";
 import { laneSize } from "./tree-lane-band";
 
@@ -248,23 +248,11 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
     const d = doc.value, { x, y, zoom: z } = f.viewport.value, lw = laneOn() ? laneWAt(z) : laneW(), w = f.dimensions.value.width - lw;
     if (!flag("treeOpenStartLeft") || innerWidth < VIEW_ONLY_MAX || !d.boxes.start || w <= 0) return;
     const b = openBounds(), ns = f.getNodes.value;
-    const { mx, my } = edgeLimit(b, Math.min(b.x, ...ns.map((n) => n.position.x)), Math.min(b.y, ...ns.map((n) => n.position.y)), lw, w, z, topY());
+    const x0 = Math.min(b.x, ...ns.map((n) => n.position.x)), { mx, my } = edgeLimit(b, x0, Math.min(b.y, ...ns.map((n) => n.position.y)), lw, w, z, topY());
+    // スイッチ laneWall (S-147n): 木の左の端を段の札の帯の右の線 + LANE_GAP に留める。引っ張り・ホイール・＋− のどれの後も横はここ (横に長い木は縮めて見る)
+    if (flag("laneWall")) { const px = lw + LANE_GAP - x0 * z; if (Math.abs(x - px) > 0.5 || y > my + 0.5) void put(px, Math.min(y, my), z); return; }
     if (x > mx + 0.5 || y > my + 0.5) void put(Math.min(x, mx), Math.min(y, my), z);
   }, { flush: "sync" });
-  // スイッチ laneSnapDrag (S-147n): 手で引っ張り終えた時、段の札の帯の線で半分に切れた箱を横だけ送る (視点だけ。箱は動かさない)。
-  // 引っ張り (マウス・指の押して動かす) だけ。ホイール・トラックパッドの送り (wheel) と、寄せ・開いた時など人の操作でない動き (sourceEvent 無し) は見ない
-  const dragOf = (e: unknown): boolean => { const t = (e as { sourceEvent?: { type?: string } } | null)?.sourceEvent?.type ?? ""; return /^(mouse|pointer|touch)/.test(t); };
-  let dragX0: number | null = null;
-  f.onMoveStart(({ event }) => { dragX0 = dragOf(event) ? f.viewport.value.x : null; });
-  f.onMoveEnd(({ event }) => {
-    const x0 = dragX0; dragX0 = null;
-    if (x0 == null || !dragOf(event) || !flag("laneSnapDrag") || !laneOn()) return;
-    const v = f.viewport.value;
-    if (Math.abs(v.x - x0) < 1) return;
-    const bs = f.getNodes.value.filter((n) => !n.hidden).map((n) => ({ x: n.position.x, y: n.position.y, h: n.dimensions.height || BOX_H }));
-    const nx = laneSnap(bs, v, laneWAt(v.zoom), f.dimensions.value.height, v.x - x0);
-    if (Math.abs(nx - v.x) > 0.5) void put(nx, v.y, v.zoom);
-  });
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
   function rectOf(b: { x: number; y: number }, w = BOX_W, h = BOX_H): { left: number; top: number; right: number; bottom: number; W: number; H: number } {

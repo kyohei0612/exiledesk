@@ -75,22 +75,6 @@ export function laneClear(boxes: readonly { x: number; y: number; h: number }[],
 }
 
 /**
- * 手で引っ張り終えた後の視点 vp で、段の札の帯の右の線 (lw) をまたいで半分に切れた箱があれば、横だけ送った x (S-147n、スイッチ laneSnapDrag)。
- * 線より左は描かない (S-147m) ので、線の右へ全部出す (箱の左の端 = 線 + LANE_GAP) か、線の外へ全部消す (箱の右の端 = 線) の 2 つ。
- * * 先に試すのは引っ張った向き (dir < 0 = 左へ引いた → 消す側)。送る量は帯の幅 lw か箱の半分 + LANE_GAP の大きい方まで、送った後にまたぐ箱が出る送りは後回し。どれも量が超える時は送らない
- */
-export function laneSnap(boxes: readonly { x: number; y: number; h: number }[], vp: Vp, lw: number, h: number, dir: number): number {
-  const z = vp.zoom, sw = BOX_W * z;
-  const hits = (x: number) => boxes.filter((b) => { const sx = b.x * z + x, sy = b.y * z + vp.y; return sy + b.h * z > 0 && sy < h && sx < lw && sx + sw > lw; });
-  const now = hits(vp.x);
-  if (!lw || !now.length) return vp.x;
-  const right = vp.x + Math.max(...now.map((b) => lw + LANE_GAP - (b.x * z + vp.x))), left = vp.x - Math.max(...now.map((b) => b.x * z + vp.x + sw - lw));
-  // 上限 = 帯の幅か箱の半分 + 空けの大きい方 (50% だと箱 158 > 帯 71 で、帯の幅だけではどちらにも送れない箱が残った。半分 + 空けならどちらか片方は必ず入る)
-  const cap = Math.max(lw, sw / 2 + LANE_GAP), ok = (dir < 0 ? [left, right] : [right, left]).filter((x) => Math.abs(x - vp.x) <= cap);
-  return ok.find((x) => !hits(x).length) ?? ok[0] ?? vp.x;
-}
-
-/**
  * 木 (範囲 b、下の端 bottom) が枠 (幅 w・高さ h、上は top を空ける) に入る一番大きい倍率 (段に丸めない・ページの zoom を割る前)。
  * 左右は始まりの箱 (左の端 startX) の真ん中から遠い方の端まで (始まりを真ん中に置くので、片側に伸びた木はその側の分を両側に取る)。
  * grow = S-142h (スイッチ treeGrowRight): 木は右へだけ伸びるので、幅は木の幅そのまま (始まりを真ん中に置かない)
