@@ -17,6 +17,8 @@ export async function openRankRecipe(id: string, name: string, day: string): Pro
   try { t = JSON.parse(recipe); } catch { return false; }
   // 開けた時に 1 回、開いた記録を置く (D-50e。自分のレシピ・記録しない端末は送らない)
   viewPost(id, name);
+  // シミュの「いずれかの元素耐性」(S-10h) の読み替えをさせない印。お題の判定は元素ごとなので、写しも元素ごとの狙いのまま開く (シミュ部長 49 と合わせ、11-14)
+  if (t && typeof t === "object") (t as { eleAny?: number }).eleAny = 1;
   const code = await packJson({ v: 2, n: `${name} (${day})`, t });
   // #recipe= は一覧を閉じる前に置く (閉じると木のページが開き、開き直し resumeTree が #recipe= を見て前のレシピを戻さない。
   // 後に置くと、前に開いた昨日のレシピで今日のレシピが上書きされた、11-14 オーナーのスマホ。URL の書き直し urlFor は # を残す)
