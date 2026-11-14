@@ -12,6 +12,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { simTutorialSave } from "./scripts/vite-sim-tutorial.mjs";
 // dev だけ: オーナーが触った操作を .dev-logs/ に足す口 (POST /__dev-log、Y-64)
 import { devLogSave } from "./scripts/vite-dev-log.mjs";
+// dev だけ: 本番の短い URL を開発版で開く口 (GET /r/<id>、Y-70b)
+import { recipeShort } from "./scripts/vite-recipe-short.mjs";
 // 本番の作りだけ: 木の組み方の版 (S-104b)
 import { treeBuildHash } from "./scripts/tree-build-hash.mjs";
 
@@ -19,7 +21,7 @@ import { treeBuildHash } from "./scripts/tree-build-hash.mjs";
 const OUT = process.env.WEB_OUT || "dist-web";
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), simTutorialSave(), devLogSave(), {
+  plugins: [vue(), tailwindcss(), simTutorialSave(), devLogSave(), recipeShort(), {
     // 木の組み方の版 (S-104b、scripts/tree-build-hash.mjs)。本番の作り (build) の時だけ埋める。開発の画面 (serve) は書き換えで版が古くなるので空 = いつも組み直す
     name: "exiledesk-tree-build",
     async config(_c: unknown, env: { command: string }) {
