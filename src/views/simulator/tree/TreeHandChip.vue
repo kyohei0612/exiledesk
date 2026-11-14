@@ -20,8 +20,11 @@ import { CHIP_K } from "../../../services/simulator/tree/tree-row-tops";
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
 /** choice = スマホの道で選んだ枝の MOD (札の中に出す、S-94h) */
 /** lane = 削減の手前の枠の枝の札 (S-65c ⑫、スイッチ treeLaneOwnHand): 縁を枠の色に、頭に ▼ 低い / ＝ 同じ / ▲ 高い の印 (どの枠の手かを札で読める) */
-/** links = 畳んで緑の線だけでつなぐ行き先の数 (S-142j ③、スイッチ linkChipHover): 1 以上なら札の上に「行き先は同じ枠へ」(線はふだん描かない) */
-const props = defineProps<{ hand: Hand | null; split?: number; id: string; x: number; y: number; inv: number; off: boolean; room: number; choice?: string; lane?: LvClass | null; links?: number }>();
+/**
+ * links / backs = 畳んで線だけでつなぐ行き先の数 (同じ枠へ・↩、S-142j ③、スイッチ linkChipHover)。乗せて照らした時だけ渡す (0 なら出さない):
+ * 札の上に「行き先は同じ枠へ」(緑)・「↩ 前の段へ戻る」(青)。11-14 オーナー「ライトアップ時に手の札の上のタグ表示が綺麗じゃない？」
+ */
+const props = defineProps<{ hand: Hand | null; split?: number; id: string; x: number; y: number; inv: number; off: boolean; room: number; choice?: string; lane?: LvClass | null; links?: number; backs?: number }>();
 const LANE: Record<LvClass, [string, string]> = { lo: ["▼ 低い", "▼ Lower"], eq: ["＝ 同じ", "= Same"], hi: ["▲ 高い", "▲ Higher"] };
 const laneRgb = computed(() => (props.lane ? lvLook(props.lane).rgb : null));
 defineEmits<{ open: [] }>();
@@ -56,12 +59,18 @@ const whittleNoAim = computed(() => {
   <!-- w-max: 札は文の幅で広がる (absolute の幅は left から入れ物の右の端までに縮み、右の方の札が「カオス…」と切れた、10-26。上限は room) -->
   <button v-if="!hand" type="button" data-tree-split-chip :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-teal-400/60 bg-[#0f1a18] px-3 py-0.5 text-[12px] font-semibold text-teal-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-teal-300"
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: sc }" :title="tr('打たずに分ける: 上の行から見て、合った行の箱へ進む (押すと行を替える)', 'Split without crafting: go to the first matching row (click to edit rows)')" @click="$emit('open')">
-    <span v-if="links" data-tree-hand-link-tag class="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max -translate-x-1/2 whitespace-nowrap rounded-sm border border-[#6fd08c]/60 bg-[#0f1a12] px-1.5 text-[10px] font-semibold leading-4 text-[#9fe3b4]">{{ tr(links > 1 ? `行き先は同じ枠へ (${links})` : "行き先は同じ枠へ", links > 1 ? `Goes to the same box (${links})` : "Goes to the same box") }}</span>
+    <span v-if="links || backs" class="pointer-events-none absolute bottom-full left-1/2 mb-1 flex w-max -translate-x-1/2 gap-1 whitespace-nowrap text-[10px] font-semibold leading-4">
+      <span v-if="links" data-tree-hand-link-tag class="rounded-sm border border-[#6fd08c]/70 bg-[#0f1a12] px-1.5 text-[#9fe3b4] shadow-[0_0_8px_rgba(111,208,140,0.5)]">{{ tr(links > 1 ? `行き先は同じ枠へ (${links})` : "行き先は同じ枠へ", links > 1 ? `Goes to the same box (${links})` : "Goes to the same box") }}</span>
+      <span v-if="backs" data-tree-hand-back-tag class="rounded-sm border border-[#5fd0e0]/70 bg-[#0d181a] px-1.5 text-[#a3e6ef] shadow-[0_0_8px_rgba(95,208,224,0.5)]">{{ tr(backs > 1 ? `↩ 前の段へ戻る (${backs})` : "↩ 前の段へ戻る", backs > 1 ? `↩ Back to an earlier step (${backs})` : "↩ Back to an earlier step") }}</span>
+    </span>
     ◇ {{ tr(`分かれ目 (${split ?? 0} 行)`, `Split (${split ?? 0} rows)`) }}<span v-if="choice" data-tree-hand-choice class="text-amber-200">→ {{ choice }} ▾</span>
   </button>
   <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-2xl border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: sc, maxWidth: maxW, ...(laneRgb ? { borderColor: `rgb(${laneRgb})` } : {}) }" :data-hand-lane="lane || undefined" :title="handLabel(hand)" @click="$emit('open')">
-    <span v-if="links" data-tree-hand-link-tag class="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max -translate-x-1/2 whitespace-nowrap rounded-sm border border-[#6fd08c]/60 bg-[#0f1a12] px-1.5 text-[10px] font-semibold leading-4 text-[#9fe3b4]">{{ tr(links > 1 ? `行き先は同じ枠へ (${links})` : "行き先は同じ枠へ", links > 1 ? `Goes to the same box (${links})` : "Goes to the same box") }}</span>
+    <span v-if="links || backs" class="pointer-events-none absolute bottom-full left-1/2 mb-1 flex w-max -translate-x-1/2 gap-1 whitespace-nowrap text-[10px] font-semibold leading-4">
+      <span v-if="links" data-tree-hand-link-tag class="rounded-sm border border-[#6fd08c]/70 bg-[#0f1a12] px-1.5 text-[#9fe3b4] shadow-[0_0_8px_rgba(111,208,140,0.5)]">{{ tr(links > 1 ? `行き先は同じ枠へ (${links})` : "行き先は同じ枠へ", links > 1 ? `Goes to the same box (${links})` : "Goes to the same box") }}</span>
+      <span v-if="backs" data-tree-hand-back-tag class="rounded-sm border border-[#5fd0e0]/70 bg-[#0d181a] px-1.5 text-[#a3e6ef] shadow-[0_0_8px_rgba(95,208,224,0.5)]">{{ tr(backs > 1 ? `↩ 前の段へ戻る (${backs})` : "↩ 前の段へ戻る", backs > 1 ? `↩ Back to an earlier step (${backs})` : "↩ Back to an earlier step") }}</span>
+    </span>
     <span v-if="lane && laneRgb" data-tree-hand-lane class="shrink-0 rounded-sm px-1 text-[10px] font-bold text-black" :style="{ background: `rgb(${laneRgb})` }">{{ tr(LANE[lane][0], LANE[lane][1]) }}</span>
     <span v-if="hold" data-tree-hand-hold class="shrink-0 rounded-sm bg-violet-400/25 px-1 text-[10px] text-violet-100" :title="tr('予見の枠: まだ使わずに持って結果を見る', 'Foresight: held, not used yet')">{{ tr("持つ", "Hold") }}</span>
     <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>

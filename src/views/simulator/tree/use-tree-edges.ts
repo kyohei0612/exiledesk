@@ -191,7 +191,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: onlyCards ? jy + CHIP_HALF : busY }, ...kids.flatMap((k) => { const cx = under(k) ? k.q.x - STACK_SIDE : midOf(k.id), y1 = under(k) ? k.q.y + STACK_IN : k.q.y; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1 }]; }), ...linkSegs];
     // ↩ の畳みの戻り先への青い線 (手の札に乗せた時だけ描く。TreeCanvas)
     const backLines = (backs.value.get(b.id) ?? []).filter((t) => doc.value.boxes[t]).map((t) => ({ id: t, d: backPath(px, jy, t) }));
-    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, backLines, chip: lead === b.id, links: (links.value.get(b.id) ?? []).length, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs, lsegs: linkSegs };
+    return { id: b.id, hand: b.hand, split: b.split?.length, band: !!bf, backLines, chip: lead === b.id, links: (links.value.get(b.id) ?? []).length, backs: backLines.length, lane, stemColor: tone ?? LINE.fwd, jx: px, jy, stem: bf?.turn != null ? `M ${bf.x} ${py} L ${bf.x} ${bf.turn} L ${px} ${bf.turn} L ${px} ${busY - 10}` : `M ${px} ${py} L ${px} ${onlyCards ? jy : busY - 10}`, to, segs, lsegs: linkSegs };
   }));
   /**
    * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。
