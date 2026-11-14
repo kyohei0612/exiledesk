@@ -23,6 +23,13 @@ import { fillHeldHi } from "./tree-held-use";
 import { lvPart } from "../../../services/simulator/tree/tree-whittle";
 import { flag } from "../../../web/release-flags";
 
+/** 要確認の決めが完成 / 失敗の印だけ (手・↩ なし) で、札の箱にもう同じ印が付いている (前の版の分け方の余りが重なった物、S-107d) */
+function sameMarkLeft(d: TreeDoc, keyOf: ReadonlyMap<string, string>, o: RecipeOrphan): boolean {
+  const p = o.raw as { hand?: unknown; back?: unknown; done?: unknown } | null;
+  if (!p || typeof p !== "object" || p.hand || p.back || !p.done) return false;
+  const b = d.boxes[keyOf.get(o.at) ?? ""];
+  return !!b && !b.hand && b.done === p.done;
+}
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => ((!!h.free && effectOf(h.currency) !== "fracture") || isFixedHand(h.currency) || veilKeep(h));
 /** 前の保存の印 block (エッセンスの「ブロックに使う」☑、S-33b 撤回) を外し、当たりの札は木の狙いの物だけにする (完成形に無いエッセンスの MOD は外れ = S-33c) */
@@ -209,7 +216,10 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => o.why !== "gone" || !now.has(o.at));
   const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
   // 札の箱の無い前の版の決め (gone) は木に入れずに外し、数だけ帯に出す。次の保存にも持ち越さない (S-107b。前は要確認に残し、置き場の無い物がスタートの「!」になった)
-  const kept = orphans.filter((o) => o.why !== "gone"), dropped = orphans.length - kept.length;
+  const notGone = orphans.filter((o) => o.why !== "gone"), dropped = orphans.length - notGone.length;
+  // 前の版で分かれていた箱がまとまって同じ完成 / 失敗の印が重なった余りは要確認に残さない (数えない・帯にも出さない、S-107d スイッチ actLog)
+  const keyOf = flag("actLog") ? new Map([...pathKeysOf(d)].map(([id, k]) => [k, id])) : null;
+  const kept = keyOf ? notGone.filter((o) => !sameMarkLeft(d, keyOf, o)) : notGone;
   if (kept.length) d.orphans = kept;
   if (dropped) d.droppedOld = dropped;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる

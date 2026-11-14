@@ -252,7 +252,7 @@ function onDone(b: Box): void { const on = !b.done; t.edit((d) => setDone(d, b.i
 /** 失敗 (ここで終わり) の印を付ける・外す  */
 function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value && !t.loading.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
+const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, midUnset } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value && !t.loading.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
 watch(() => t.active.value, () => { issuesShown.value = true; });
 /** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
@@ -265,7 +265,7 @@ function openIssues(): void { simOp("open-missing"); issuesShown.value = true; i
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
 /** 未設定の数 = 困り事の出た箱の数。左上の札・赤い札・一覧の見出し・下の帯で同じ (S-89b、11-08 オーナー「足りない所と下の未設定の数字が合わない」) */
-const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).length);
+const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).filter((g) => !flag("actLog") || !g.rows.every((x) => x.kind === "orphan" && midUnset.value.some((m) => m.boxId === x.boxId))).length); // 木の途中の未設定は数えない = 無視して 100 人回せる (S-107d)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 最終チェックのボタン: 人を回さず木の枠を辿る精査だけ (11-11 オーナー「何人か回してるよね。やめさせてくれ。普通に全枠2周して未設定やバグないかのチェックが最終チェックだ」、S-201 ②。前は精査の後に試しの 30 人を回していた) */
 async function onTest(): Promise<void> {
