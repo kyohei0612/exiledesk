@@ -18,8 +18,10 @@ export async function openRankRecipe(id: string, name: string, day: string): Pro
   // 開けた時に 1 回、開いた記録を置く (D-50e。自分のレシピ・記録しない端末は送らない)
   viewPost(id, name);
   const code = await packJson({ v: 2, n: `${name} (${day})`, t });
-  closeDailyPage();
+  // #recipe= は一覧を閉じる前に置く (閉じると木のページが開き、開き直し resumeTree が #recipe= を見て前のレシピを戻さない。
+  // 後に置くと、前に開いた昨日のレシピで今日のレシピが上書きされた、11-14 オーナーのスマホ。URL の書き直し urlFor は # を残す)
   history.replaceState(null, "", `${location.pathname}${location.search}#recipe=${code}`);
+  closeDailyPage();
   openSharedRecipe();
   return true;
 }
