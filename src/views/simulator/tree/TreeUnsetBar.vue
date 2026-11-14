@@ -26,6 +26,8 @@ function next(): void {
   at.value = (at.value + 1) % ids.value.length;
   emit("go", ids.value[at.value]!);
 }
+/** 上の帯の赤い「未設定 n つ」からも同じ順で寄る (スイッチ unsetTopJump、11-14 オーナー「上の未設定も押したら未設定の箱に飛ぶでええよ」) */
+defineExpose({ next });
 </script>
 
 <template>

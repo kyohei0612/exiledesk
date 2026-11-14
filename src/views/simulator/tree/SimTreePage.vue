@@ -255,6 +255,13 @@ const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, 
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
 watch(() => t.active.value, () => { issuesShown.value = true; });
 /** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
+/** 下の帯「未設定 n つ ▸ 次へ」(上の札からも同じ順で寄る、スイッチ unsetTopJump) */
+const unsetBar = ref<{ next: () => void } | null>(null);
+/** 上の帯の赤い「未設定 n つ」: スイッチ unsetTopJump の間は下の「次へ」と同じく未設定の箱へ寄る (11-14 オーナー「上の未設定も押したら未設定の箱に飛ぶでええよ」)、閉じている間は一覧の開け閉め */
+function onTopUnset(): void {
+  if (flag("unsetTopJump") && unsetBar.value) { unsetBar.value.next(); return; }
+  if (issuesOpen.value) issuesOpen.value = false; else openIssues();
+}
 function openIssues(): void { simOp("open-missing"); issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
@@ -386,7 +393,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
         <!-- 横に送る所 (浮く窓 = 足りない所の一覧・レシピの窓は送りの外に置く。送りの中に置くと切れる) -->
         <div data-tree-bar-scroll class="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto [scrollbar-width:thin]">
         <template v-if="!t.needBase.value">
-          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesOpen }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: holeN, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesOpen }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: holeN, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes-on="openIssues" @list="onTopUnset" @run="tr100.run" @go="goIssue" />
           <TreeRunSum class="shrink-0" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
@@ -407,7 +414,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
+        </div><TreeUnsetBar ref="unsetBar" v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" @go="goIssue" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <!-- 描き面 (Vue Flow と箱・線・札・回した層・段の札、TreeCanvas.vue)。スイッチ tabKeep の中は一度開いたタブごとに 1 枚、隠れた面は止めて残す (S-09c)。v-show は外の枠に (部品に付けると替えるたびに面を描き直す) -->
         <template v-if="KEEP"><div v-for="k in alive" :key="k" v-show="k === liveKey" class="contents" :data-tree-tab-key="k"><TreeCanvas :tab-key="k" :page="pageCtx" /></div></template>
