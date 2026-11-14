@@ -6,7 +6,7 @@
 | 誰 | session id | 今 |
 |---|---|---|
 | ブラック | local_429a9cb4-e6c3-41e9-82d3-e866100fb193 (108 代目、Opus 5.5、11-14 昼 12:1x に入れ替え。107 = local_241e693b が 2,40x 件で交代。控えなし) | 司令塔・振り分け・順番 |
-| デイリー部長 | local_8012d45a-f27c-41b3-a753-51f83ccc2ea9 (19 daily-lead19、Opus 5.5、11-13 23 時台にブラック 102 が控えに立て、18 = local_c0a24882 が 2,1xx 件で交代。引き継ぎ = 共有ノート progress/daily-lead18-handover.md、板 = progress/daily-lead19.md) | 今: 毎日の見張り (15:13 roll / 16:33 close、11-14 から、11-20 に立て直し)・名前の受け口を幅だけ ab9ad906f は次のサーバーの出し・① はジンの口待ち |
+| デイリー部長 | local_ad45c42f-be33-4142-93f9-aa496126cdf4 (20、Opus 5.5、11-14 昼にブラック 108 が立て。19 = local_8012d45a は閉じていて引き継ぎなし。記録 = progress/daily-lead20-run.log) | 今: 挑戦中の控えに置いた順の記録 (箱の決めの差分 p / p-・版 v・完成形 goal、D-57b) を足す。共通の部品はシミュ部長 44。毎日の見張り (roll / close) は予定のタスク側 |
 | 最終チェック長 | — (15 local_f23780b9 は 11-14 0 時台にアーカイブ。次の出しでブラックが立て直す) | なし |
 | サーバー係 | local_f6d61d7a-84b0-4083-a562-8a70d8ee1a19 (4 代目 server-keeper4、Opus 5.5、11-13 21 時台にブラック 101 が控えに立て、3 代目 local_723fe780 が 2,39x 件で交代。頼み = 共有ノート progress/server-keeper4-brief.md) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
 | 解析君 | — (analyst1 local_819bb9cb は 11-14 0 時台に ui_tally を済ませてアーカイブ。一覧は本番に出て 1 週溜めてから) | 待機 |
