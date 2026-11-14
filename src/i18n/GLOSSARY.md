@@ -43,6 +43,8 @@
 | 重み | Weight |
 | 狙い | Target |
 | 予期せぬ狙い MOD (シミュの行の札) | Unexpected target mod |
+| <狙い> 低ティア MOD (シミュの箱の題、S-33g) | <mod> low-tier mod |
+| 左側 (P) / 右側 (S) / 両側 (P・S) に外れ MOD が付いた (シミュの外れの箱の題、S-65d) | Miss mod added on the left (prefix) / on the right (suffix) / on both sides (prefix & suffix) |
 | 満杯 | Full |
 | 空き | Open slot |
 | MOD | Mod |
