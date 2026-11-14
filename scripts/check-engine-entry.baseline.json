@@ -48,6 +48,7 @@
  "F src/services/simulator/tree/tree-divine.ts": 3,
  "F src/services/simulator/tree/tree-ele-any.ts": 3,
  "F src/services/simulator/tree/tree-frac-pick.ts": 1,
+ "F src/services/simulator/tree/tree-goal-stop.ts": 1,
  "F src/services/simulator/tree/tree-hand-core.ts": 1,
  "F src/services/simulator/tree/tree-hands.ts": 5,
  "F src/services/simulator/tree/tree-judge.ts": 9,
