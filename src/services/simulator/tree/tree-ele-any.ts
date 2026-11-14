@@ -139,3 +139,12 @@ export function nextEleOnly<A extends { anyEle?: number; tier: number }>(open: r
   }
   return open.filter((a) => !a.anyEle || keep.has(a));
 }
+
+/**
+ * 「いずれか」の後の本 = 同じ段で番号の小さい本が list にある本 (S-10h ②)。手の窓では 1 本目の下の「☐ 2 個目の MOD も狙う」にする (2 つ付く手だけ)。
+ * 1 つしか付かない手では、候補にある本と同じ段の後の本を灰色の行にも出さない
+ */
+export function eleLaterOf<A extends { anyEle?: number; tier: number }>(a: A, list: readonly A[]): A | null {
+  if (!a.anyEle) return null;
+  return list.filter((x) => x !== a && x.anyEle && x.tier === a.tier && x.anyEle < a.anyEle!).sort((x, y) => y.anyEle! - x.anyEle!)[0] ?? null;
+}
