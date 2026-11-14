@@ -17,7 +17,7 @@ import { DEV_BUILD } from "../../web/release-flags";
 import { recipeCardOf } from "./recipe-card";
 import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
-import { markOpened } from "./tree/tree-save";
+import { forgetResume, markOpened } from "./tree/tree-save";
 import { openTreePage } from "../../web/page";
 import { setMapFold } from "./phone/map-fold";
 import { tr } from "../../i18n/lang";
@@ -122,7 +122,8 @@ export const closeNewer = (): void => { sharedNewer.value = []; };
 export async function openSharedRecipe(): Promise<void> {
   if (!location.hash.startsWith("#recipe=")) return;
   const m = /^#recipe=([A-Za-z0-9_-]+)$/.exec(location.hash);
-  // 開いた後は URL から外す (読み直すたびに足されないように)
+  // 開いた後は URL から外す (読み直すたびに足されないように)。外すのと一緒に、前に開いていたレシピの戻り先も捨てる (外した後は resumeTree が #recipe= を見られず前のレシピを開いた、S-02)
+  forgetResume();
   try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 外せなくても開く */ }
   // タップ 1 回で木まで: スマホは「完成形と全体図」の窓を開いて着く (PC は木のページがそのまま木。S-103、スイッチ recipeJump)
   const ok = !!m && (await openRecipeCode(m[1]!));

@@ -77,6 +77,14 @@ const RESUME_KEY = "exiledesk.tree.resume";
 export function rememberResume(): void {
   try { const id = currentTreeRecipe.value?.id; if (id) sessionStorage.setItem(RESUME_KEY, id); else sessionStorage.removeItem(RESUME_KEY); } catch { /* 覚えられなくてもよい */ }
 }
+/**
+ * 覚えたレシピを捨てる。共有のレシピ (#recipe= / デイリーの順位) を開く時に呼ぶ (S-02)。残すと、開いている間 (少しずつ描く途中は白紙に見える) に
+ * スマホの見るだけの画面が付いて resumeTree が前のレシピを開き、後から呼んだ方が勝つので今のレシピが取り消された
+ * (11-14 デイリー: 昨日の上位 → ブラウザの戻るで一覧 → 今日の上位で昨日のローブが出た)
+ */
+export function forgetResume(): void {
+  try { sessionStorage.removeItem(RESUME_KEY); } catch { /* 消せなくてもよい */ }
+}
 /** 覚えたレシピ (1 回だけ。無い・消えたなら null) */
 export function takeResume(): TreeRecipe | null {
   try {
