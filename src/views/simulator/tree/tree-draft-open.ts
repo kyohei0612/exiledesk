@@ -27,7 +27,8 @@ export function draftCode(since = 0): string | null {
 export async function openDraftTree(code: string, recipe: TreeRecipe | null = null): Promise<boolean> {
   const t = useTree();
   try {
-    if (recipe && code === (await treeCodeOf({ name: "", tree: recipe.tree }))) { setCurrentTreeRecipe(recipe.id); t.open(recipe.tree, true); return true; }
+    // 待つ間にほかの木 (共有のレシピなど) が開いていたら上書きしない (11-14 デイリーの順位から今日の物を押すと昨日の物が出た)
+    if (recipe && code === (await treeCodeOf({ name: "", tree: recipe.tree }))) { if (!blankTree(t.doc.value)) return true; setCurrentTreeRecipe(recipe.id); t.open(recipe.tree, true); return true; }
     const p = (await unpackJson(code)) as { v?: unknown; t?: unknown } | null;
     const d = p?.v === 2 ? migrateTreeDoc(p.t)?.doc : null;
     if (!d) return false;

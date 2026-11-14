@@ -15,7 +15,7 @@ import { tr } from "../../../i18n/lang";
 import { fmtDate } from "../recipe-share";
 import { track } from "../../../utils/track";
 import { useTree } from "./use-tree";
-import { draftCode, openDraftTree } from "./tree-draft-open";
+import { blankTree, draftCode, openDraftTree } from "./tree-draft-open";
 import { openedMark } from "./tree-tab-recipe";
 
 /**
@@ -98,8 +98,10 @@ export function resumeTree(): boolean {
     const r = takeResume();
     if (!r) return false;
     // 端末の作りかけの木がこのレシピの最後の保存より新しければ作りかけの木を、このレシピのまま開く (保存せず進んだ後も足した手が残る、S-02 ①、11-08 オーナー「なこして」)
-    const code = draftCode(r.updatedAt);
-    if (code) void openDraftTree(code, r).then((ok) => { if (!ok) { setCurrentTreeRecipe(r.id); t.open(r.tree, true); } });
+    // URL に共有のレシピ (#recipe=) がある時は、そちらを開く (openSharedRecipe) ので前のレシピを戻さない (11-14 デイリーの順位から今日の物を押すと昨日の物が出た、S-02)
+    const shared = /[#&]recipe=/.test(location.hash), code = shared ? null : draftCode(r.updatedAt);
+    if (shared) { /* 戻さない */ }
+    else if (code) void openDraftTree(code, r).then((ok) => { if (!ok && blankTree(t.doc.value)) { setCurrentTreeRecipe(r.id); t.open(r.tree, true); } });
     else { setCurrentTreeRecipe(r.id); t.open(r.tree, true); }
   }
   try { const u = new URL(location.href); u.searchParams.set("page", "sim-tree"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch { /* 置き換えられなくても開く */ }
