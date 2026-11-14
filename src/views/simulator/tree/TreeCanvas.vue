@@ -71,17 +71,22 @@ const spotZoom = computed((): { items: Array<{ id: string; h: number; dy: number
   const e = (shownEdges.value as SpotEdge[]).find((x) => x.id === hoverChip.value), src = e ? doc.value.boxes[e.id] : undefined;
   const obs = [...(e ? [{ x0: e.jx - 160 * ci, x1: e.jx + 160 * ci, y0: e.jy - 40 * ci, y1: e.jy + 40 * ci }] : []),
     ...(src ? [{ x0: posOf(src).x, x1: posOf(src).x + BOX_W, y0: posOf(src).y, y1: posOf(src).y + hOf(src.id) }] : [])];
-  const items = ids.map((id, i) => {
+  // 写しどうしもかぶらない: 上の写しから順に (同じ高さは左から) 置き、置いた写しも後の写しが避ける物に足す (11-14 オーナー「枠同士重なる→修正」)
+  const order = ids.map((_, i) => i).sort((a, b) => c[a]!.y - c[b]!.y || c[a]!.x - c[b]!.x);
+  const dys = new Map<string, number>();
+  for (const i of order) {
     const q = c[i]!, x0 = q.x - (BOX_W * k) / 2, x1 = q.x + (BOX_W * k) / 2, y0 = q.y - q.h / 2, y1 = y0 + q.h * k;
-    // ずらした先でまたかぶる時 (元の箱の下に札がある) は、その下までもう一度ずらす
+    // ずらした先でまたかぶる時 (元の箱の下に札がある・ほかの写しがある) は、その下までもう一度ずらす
     let dy = 0;
-    for (let n = 0; n < obs.length; n++) {
+    for (let n = 0; n <= obs.length; n++) {
       const hit = obs.filter((o) => o.x1 > x0 && o.x0 < x1 && o.y1 > y0 + dy && o.y0 < y1 + dy);
       if (!hit.length) break;
       dy = Math.max(dy, Math.max(...hit.map((o) => o.y1)) + 12 * ci - y0);
     }
-    return { id, h: q.h, dy };
-  });
+    dys.set(ids[i]!, dy);
+    obs.push({ x0, x1, y0: y0 + dy, y1: y1 + dy });
+  }
+  const items = ids.map((id, i) => ({ id, h: c[i]!.h, dy: dys.get(id) ?? 0 }));
   return { items, k };
 });
 const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id ? (shownEdges.value.find((e: { id: string }) => e.id === id) as { backLines?: Array<{ id: string; d: string }> } | undefined)?.backLines ?? [] : []);
