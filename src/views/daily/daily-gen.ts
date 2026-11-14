@@ -10,7 +10,7 @@ import { clientClassOf, ENGINE_CATEGORIES, handsOf, inGroup, kindOf } from "../.
 import { goalBlock } from "../../services/simulator/sim-engine";
 import { lang } from "../../i18n/lang";
 import { DAILY_TYPES } from "./daily-types";
-import { fullMods } from "./daily-check";
+import { fullMods, noNormalBase } from "./daily-check";
 
 export type GenAim = { modId: string; tier: number; ja: string; en: string };
 /** 型の 1 品。mods = 接頭・接尾の行の名前 (エンジンの行の id の / の後ろ) と段。暗黙は持たない (D-06) */
@@ -44,7 +44,7 @@ export function aimTextsOf(data: PatchData, base: string, ilvl: number): (modId:
 export const SLOTS: readonly { ja: string; en: string; has: (category: string) => boolean }[] = [
   { ja: "片手武器", en: "One-handed weapons", has: (c) => kindOf(c) === "weapon" && handsOf(c) === 1 },
   { ja: "両手武器", en: "Two-handed weapons", has: (c) => kindOf(c) === "weapon" && handsOf(c) === 2 },
-  { ja: "ジュエル・オフハンド", en: "Jewels & off-hands", has: (c) => inGroup(c, "jewel") || inGroup(c, "quiver") || inGroup(c, "shieldLike") },
+  { ja: "ジュエル・オフハンド", en: "Jewels & off-hands", has: (c) => inGroup(c, "quiver") || inGroup(c, "shieldLike") }, // ジュエルは 11-14 から出さない (noNormalBase)。札の名前はそのまま
   { ja: "兜・手袋", en: "Helmets & gloves", has: (c) => ["Helmet", "Gloves"].includes(clientClassOf(c) ?? "") },
   { ja: "鎧", en: "Body armour", has: (c) => inGroup(c, "bodyArmour") },
   { ja: "靴・ベルト", en: "Boots & belts", has: (c) => ["Boots", "Belt"].includes(clientClassOf(c) ?? "") },
@@ -54,7 +54,8 @@ export const SLOTS: readonly { ja: string; en: string; has: (category: string) =
 /** ベース → 部位 (クライアントの部位 Id)。エンジンに部位の表が無い物は null (山に入らない、D-05) */
 const CLASS_CAT = new Map<string, string>();
 for (const c of ENGINE_CATEGORIES) { const k = clientClassOf(c); if (k && !CLASS_CAT.has(k)) CLASS_CAT.set(k, c); }
-export const classOfBase = (base: string): string | null => { const k = baseStatsOf(base)?.cls; return k && CLASS_CAT.has(k) ? k : null; };
+/** ノーマルの無いベース (ジュエル) は部位なし = 予定・引き直し・忍者の品の山に入らない (D-05・D-84、11-14 noNormalBase) */
+export const classOfBase = (base: string): string | null => { const k = baseStatsOf(base)?.cls; return k && CLASS_CAT.has(k) && !noNormalBase(base) ? k : null; };
 /** 宝飾品 = 指輪・アミュレット・ベルト (D-04b の例外) */
 export const isJewellery = (base: string): boolean => { const k = classOfBase(base); const c = k ? CLASS_CAT.get(k) : undefined; return !!c && (inGroup(c, "ringAmulet") || clientClassOf(c) === "Belt"); };
 export const slotOfClass = (cls: string): number | null => { const c = CLASS_CAT.get(cls); if (!c) return null; const i = SLOTS.findIndex((s) => s.has(c)); return i < 0 ? null : i; };
