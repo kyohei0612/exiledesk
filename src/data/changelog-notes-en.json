@@ -1,4 +1,7 @@
 {
+  "0.1.737": [
+    "Fixed a bug where opening a recipe from the Daily ranking could show a previously opened recipe instead."
+  ],
   "0.1.736": [
     "Simulator and Daily trees: Resistance Flux can now be used on resistance mods shown by name on the card, including ones revealed from Desecration that weren't targets (still not on junk mods).",
     "Daily challenges no longer use Jewels."

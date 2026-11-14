@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.737",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーの順位から開いたレシピが前に開いた人の物になる不具合を直しました",
+    "en": "Fixed a bug where opening a recipe from the Daily ranking could show a previously opened recipe instead."
+   }
+  ]
+ },
+ {
   "v": "0.1.736",
   "date": "2026-11-14",
   "items": [
@@ -904,24 +916,6 @@
     "area": "",
     "text": "シミュレーター: 外れ MOD の文字をオレンジに、持った時に消える候補を赤にして見分けやすくしました (エミュの消える候補も赤)",
     "en": "Simulator: miss mods are now shown in orange and the mods a held currency may remove in red, so they are easier to tell apart (the emulator's removal candidates are red too)"
-   }
-  ]
- },
- {
-  "v": "0.1.697",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 次に打つ手の窓で削減のお告げを含む手を持つと、外れの MOD レベルで結果がどの枠 (低い・同じ・高い) に分かれ、この箱がどれになるかを一行で出すようにしました",
-    "en": "Simulator: when you hold a craft with an Omen of Whittling in the next-craft window, one line now shows which frames (lower, same, higher miss mod level) the result splits into and which one this box is"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減と左側・右側の抹消のお告げを一緒に使う手は、比べる相手と差し替える外れをその側の MOD だけで決めるようにしました",
-    "en": "Simulator: crafts that combine Whittling with a Sinistral or Dextral Erasure omen now pick the compared mod and the replaced miss only from that side's mods"
    }
   ]
  }
