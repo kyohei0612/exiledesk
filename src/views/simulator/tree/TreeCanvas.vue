@@ -63,7 +63,7 @@ const spot = computed((): { arcs: SpotArc[]; css: string } | null => {
 const HEAD_TAG = 14;
 const spotZoom = computed((): { items: Array<{ id: string; h: number; dy: number }>; k: number } | null => {
   const z = v.flow.viewport.value.zoom, ids = [...new Set(spot.value?.arcs.map((a) => a.id) ?? [])].filter((id) => doc.value.boxes[id]);
-  if (!ids.length || z >= 1) return null;
+  if (!ids.length || z >= 1 || flag("spotNoZoom")) return null; // (スイッチ spotNoZoom) 写しを重ねず光る縁の強調だけ (11-16 オーナー「もう強調表示だけでいいや」)
   const hOf = (id: string): number => v.flow.findNode(id)?.dimensions.height || BOX_H, c = ids.map((id) => ({ x: posOf(doc.value.boxes[id]!).x + BOX_W / 2, y: posOf(doc.value.boxes[id]!).y + hOf(id) / 2, h: hOf(id) }));
   // 大きさは縮めて見ている時に箱を押した等倍の窓の 1/1.5 (11-14 オーナー「もう1.5倍小さくていいぞサイズ」)
   let s = 1 / 1.5;
