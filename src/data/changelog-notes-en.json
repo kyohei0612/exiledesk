@@ -1,4 +1,7 @@
 {
+  "0.1.735": [
+    "Kolr's Hunt gloves: Critical Hit Chance and Mark/Projectile skill level mods now use the same tier weights as the regular Critical Damage Bonus and Melee skill level mods (higher tiers are rarer)."
+  ],
   "0.1.734": [
     "Each simulator tree tab can now hold its own recipe. Picking a recipe that is open in another tab switches to that tab",
     "Switching simulator tree tabs no longer redraws the tree; it keeps its layout and position (large trees feel lighter too)"

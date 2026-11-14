@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.735",
+  "date": "2026-11-14",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "コルの狩りを差した手袋の、クリティカルヒット率と呪印・投射物スキルのレベルの MOD の重みを、一般のクリティカルダメージ・近接スキルのレベルと同じ段の値にしました (上の段ほど出にくい)",
+    "en": "Kolr's Hunt gloves: Critical Hit Chance and Mark/Projectile skill level mods now use the same tier weights as the regular Critical Damage Bonus and Melee skill level mods (higher tiers are rarer)."
+   }
+  ]
+ },
+ {
   "v": "0.1.734",
   "date": "2026-11-14",
   "items": [
@@ -904,30 +916,6 @@
     "area": "",
     "text": "シミュレーター: レシピを開く時は木を 1 回だけ組んでから出すようにし、組んでいる間は「レシピ読み込み中…」を出して操作を止めます (開く途中でベース選びへ飛ぶ事もなくなりました)。スマホでは開くのが軽くなりました",
     "en": "Simulator: opening a recipe now builds the tree once before showing it, with \"Loading recipe…\" on screen and input paused meanwhile (it no longer jumps to base selection while loading). Opening on phones is lighter"
-   }
-  ]
- },
- {
-  "v": "0.1.695",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター (スマホ): スマホでは当分回さず、レシピを見るだけにしました。開いた時の穴チェックもやめて開くのを軽くし、未完成のレシピは「未完成のレシピです」と出します",
-    "en": "Simulator (phone): phones now only view recipes and no longer run them for now. Opening skips the hole check so it loads faster, and unfinished recipes say \"Unfinished recipe\""
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター (スマホ): 全体図で段の札が重なる時は間引くようにしました",
-    "en": "Simulator (phone): tier labels on the full tree view are thinned out when they would overlap"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望・バグを送るページを閉じた時に、開く前のページへ同じ見え方で戻るようにしました (前はベース選びに戻っていました)。戻るボタンには元のページの名前を出します",
-    "en": "Closing the feedback page now returns to the page you came from, as you left it (it used to go back to base selection). The back button shows that page's name"
    }
   ]
  }
