@@ -42,6 +42,7 @@
 | 確率 | Chance |
 | 重み | Weight |
 | 狙い | Target |
+| 予期せぬ狙い MOD (シミュの行の札) | Unexpected target mod |
 | 満杯 | Full |
 | 空き | Open slot |
 | MOD | Mod |
