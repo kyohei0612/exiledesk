@@ -8,7 +8,7 @@
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 | デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
-| シミュの木の左端を段の札の線のすぐ右に留める (laneWall、S-147n。引っ張っても大きさを変えても横は動かず、箱が段の札にかからない。オーナー 11-14 絵を見て「OK一旦出すリストで段は」、ブラック 106。オーナーの「出して」待ち) | 81d763631・914763b2b | シミュレーターのツリーで、ツリーの左端を段の表示のすぐ右に固定しました。ドラッグや拡大縮小をしても、箱が段の表示に重ならなくなりました | In the simulator tree, the left edge of the tree now stays fixed just right of the tier labels. Nodes no longer slide under the labels when you drag or zoom |
+| シミュの木の左端を段の札の線のすぐ右に留める (laneWall、S-147n。引っ張っても大きさを変えても横は動かず、箱が段の札にかからない。オーナー 11-14 絵を見て「OK一旦出すリストで段は」、ブラック 106。オーナーの「出して」待ち。**revealFreeX と一緒に出す** = laneWall だけだと「次へ」などで右の箱へ寄れない、ブラック 107) | 81d763631・914763b2b | シミュレーターのツリーで、ツリーの左端を段の表示のすぐ右に固定しました。ドラッグや拡大縮小をしても、箱が段の表示に重ならなくなりました | In the simulator tree, the left edge of the tree now stays fixed just right of the tier labels. Nodes no longer slide under the labels when you drag or zoom |
 | 広告のコードはブログの記事だけに (Y-26。web.html・ブログの一覧・使い方・入門・固定ページから AdSense の読み込みを外す、オーナー 11-14「記事オンリーやな」、ブラック 106。オーナーの「出して」待ち) | b4992d058 | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
