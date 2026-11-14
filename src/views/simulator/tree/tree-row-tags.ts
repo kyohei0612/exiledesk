@@ -123,7 +123,9 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 完成の狙い (完成形の MOD) も狙いに数える (10-27 夕モンキー 1: エッセンスで付いた完成形の MOD が「外れ MOD」と出た)
   // 外れの箱 (外れ・狙いが消えた・外れが消えた・打った後) は、その箱まで来た道で付いている狙いだけを狙いに数える。☑ の無い MOD はそのカレンシーでは外れ扱いなので、
   // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
-  const missBox = !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
+  // 「エッセンスと同じ MOD」の箱も同じ見方 (スイッチ goalMetTag。前は完成形の狙い全部を名前にし、☑ の無い木でライフが急に名前で出た、11-16 オーナー「Aで」)
+  const met = flag("goalMetTag");
+  const missBox = !!box?.id && !!box.out && box.out !== "start" && (MISS_OUTS.includes(box.out) || (met && box.out === "blocked"));
   // 箱の中身 (S-60) と同じく、見本の ☑ で付いた狙い (tree-judge の sampleAimed、見本の打ち方の順) だけを狙い。道の当たりの組では数えない (大本 1)
   const am = missBox ? aimedOfCard(d, doc, box!.id!, it) : null;
   const held = am ? (doc.memoAims ?? []).filter((g) => am.has(g.modId)).map((g) => ({ modId: g.modId, tier: g.tier })) : missBox ? heldOfSets(d, heldSets(doc, box!.id!)) : [];
@@ -140,7 +142,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const placed = box?.id ? placedAims(d, doc).filter((a) => aimedOfCard(d, doc, markId ?? box.id!, it)?.has(a.modId)) : [];
   // 外れ MOD の札は外れの式 1 本 (tree-miss の isMissMod): ここで決めた当たりに数える札 (☑ の狙い・置き石・この箱の当たりの札) に当たらない MOD
   const miss = missAims(d, [...(missBox ? held : hitHeld ?? [...aimsOf(d, doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
-  const goalMiss = aimedMiss(d, doc);
+  const goalMiss = aimedMiss(d, doc), goalAll = met ? missAims(d, doc.memoAims ?? []) : null;
   for (const m of [...it.prefixes, ...it.suffixes]) {
     // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま 
     // 固定された外れ (✦ の外れ) も「外れ MOD」だけ (値を出さない、S-82 仮。見本ごとに違う MOD が箱の名前に見えた、10-28 モンキー 7。スイッチ boxShape)
@@ -149,6 +151,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     if (m.fractured || m.unrevealed) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
+    // ☑ の無いまま完成形の狙いを段以上で満たす MOD は名前 + 「予期せぬ狙い MOD」(当たりの扱いにはしない、箱も分けない。スイッチ goalMetTag、11-16 オーナー「Aで」「予期せぬ狙いMODがついたでいこうか」)
+    else if (goalAll && isMissMod(m, miss) && !isMissMod(m, goalAll)) out.set(m.modId, { text: tr("予期せぬ狙い MOD", "Unexpected target mod"), tone: "good", title: tr(`☑ していない完成形の狙いが段以上で付いた (当たりの箱には分けない): ${modText(m)}`, `A goal target mod was added at its tier without being checked (not split into a hit box): ${modText(m)}`) });
     else if (isMissMod(m, miss)) putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
   }
   // 「エッセンスと同じ MOD」の箱は、次のエッセンス / 合金と同じ系統の MOD を名前で出す (S-33e ②、11-08 オーナー「それ名前出していいよ」)

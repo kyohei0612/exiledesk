@@ -28,6 +28,8 @@ import { mainSideOf } from "./tree-uncountable";
 import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
 import { DIVINE_LT, divineBranches, divineMet, isDivineAim } from "./tree-divine";
 import { sureFracOn, sureFracture } from "./tree-sure-frac";
+import { goalFamilies, junkClean, junkTaking } from "./tree-junk-frame";
+import { flag } from "../../../web/release-flags";
 export { fractureChoices } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 
 /** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
@@ -375,6 +377,9 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   if (sureFracOn(doc, h)) { const r = sureFracture(data, doc, base.item, h); if (r) return { item: handOut(r.item), note: base.note }; }
   if (!h.repeat && keepsMods(data, base.item, h.currency, h.omens)) { const r = roll(0); if (r.applied) return { item: handOut(r.item), note: base.note }; from = 1; }
   let last: Roll | null = null;
+  // 外れは枠だけ (S-200 ③、スイッチ junkFrameOnly): 外れが木の狙いの族を取った結果は後回し (ほかに無ければ使う)
+  const gf = flag("junkFrameOnly") ? goalFamilies(data, doc, aims) : null;
+  let avoid: StageItem | null = null, okAlt: StageItem | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
@@ -404,8 +409,11 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(data, doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => sameAim(data, a, x)))) continue;
+    // 族を取らない結果 → 段を満たす物だけの結果 → 段の足りない外れの結果 の順 (tree-frame の代表の 1) 2) と同じ)
+    if (gf && !junkClean(data, b, base.item, r.item, gf)) { if (junkTaking(data, b, base.item, r.item, gf).length) avoid ??= r.item; else okAlt ??= r.item; continue; }
     return got(r.item);
   }
+  if (okAlt ?? avoid) return got((okAlt ?? avoid)!);
   const remember = (note: string): Sample => { if (fk) putCapped(failMemo, fk, note); return { item: base.item, note }; };
   if (last && !last.applied) return remember(`cant:${last.reason ?? ""}`);
   // boxShape: 狙いを手で付ける (forceKey) のはやめる。手で付けるのはエミュの「付ける」の親切 (マジックの埋まった側ならレアにして付ける) で、エンジンの手の結果ではない

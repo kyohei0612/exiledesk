@@ -11,6 +11,7 @@ import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf, essenceHold, SAME_HI } from "./tree-outcome";
 import { sameHiHeld, sameHiSwap } from "./tree-same-hi";
+import { goalFamilies, itemTaking, junkClean, junkTaking, swapJunk } from "./tree-junk-frame";
 import { stepOutcomes } from "../sim-engine/outcomes";
 import { outBoxOf } from "./tree-shape";
 import { effectOf, engineOmens, isCatalyst } from "./tree-hands";
@@ -253,7 +254,7 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
      * ↩ で着く人 (from = ↩ 元の箱) と、1 つの箱に形の違う枝が入る時のほかの形 (狙い無しの結果を 1 箱にした any など。from = その箱、重い順に LOOK まで)
      */
     const extra: Array<{ at: string; f: Frame; from: string }> = [];
-    const cant: FrameCant[] = [], fams = treeFamilies(data, doc);
+    const cant: FrameCant[] = [], fams = treeFamilies(data, doc), gf = flag("junkFrameOnly") ? goalFamilies(data, doc, aims) : null;
     /** 木の族を塞ぎうる MOD の組 (狙いも入る粗い分け。印の違う枝を探すだけ) */
     const famSig = (it: StageItem): string => (fams.size ? [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed && famOf(data, m.modId).some((x) => fams.has(x))).map((m) => m.modId).sort().join(",") : "");
     /** 枝 brs (元の箱の代表 from に手を当てた物) から、箱 o の代表を選ぶ。箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方) */
@@ -275,10 +276,19 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
         if (!marks.has(mk)) { marks.add(mk); marked.push(fr); }
       }
       const ex = exOf(o), fe = ex ? pick({ item: ex, p: sum }) : null, saved = !!fe && all.some((fr) => fr.key === fe.key);
-      let best = saved ? fe! : all[0]!;
+      // 外れは枠だけ (S-200 ③、スイッチ junkFrameOnly): 代表は 0) 保存の例 1) 外れが木の狙いの族を取らない枝 2) 段を満たす物だけの枝 3) 段の足りない外れをほかの枝の外れと差し替えた品 の順 (保存の例も同じ順で見る)
+      const clean = (fr: Frame): boolean => !gf || junkClean(data, c, from.item, fr.item, gf);
+      const ok = (fr: Frame): boolean => !gf || !junkTaking(data, c, from.item, fr.item, gf).length;
+      const first = saved ? fe! : all[0]!;
+      const far = (p: (fr: Frame) => boolean): Frame | null => { for (const r of sorted.slice(LOOK)) { const fr = pick(r); if (fr.key === first.key && p(fr)) return fr; } return null; };
+      const swapped = (): Frame | null => { const it = swapJunk(data, from.item, first.item, junkTaking(data, c, from.item, first.item, gf!), sorted.map((r) => r.item), gf!); const fr = it ? pick({ item: it, p: sum }) : null; return fr && fr.key === first.key ? fr : null; };
+      const near = (p: (fr: Frame) => boolean): Frame | null => (p(first) ? first : all.find((fr) => fr.key === first.key && p(fr)) ?? far(p));
+      // 0) 保存の例は段の足りない外れを持たなければそのまま (段を満たす狙いを持つ例 = ✦ の狙いの筋力 T2 などを捨てない、レビュワー 1 の 13)
+      let best = !gf ? first : saved && ok(fe!) ? fe! : near(clean) ?? near(ok) ?? swapped() ?? first;
       if (c.hand && heavy.length > 1) {
-        let bestLost = saved ? 0 : lostP(splitOf(data, doc, c, best, aims, part));
-        for (const fr of all.slice(1)) {
+        let bestLost = best === fe ? 0 : lostP(splitOf(data, doc, c, best, aims, part));
+        for (const fr of all) {
+          if (fr === best || (ok(best) && !ok(fr)) || (clean(best) && !clean(fr))) continue;
           if (bestLost === 0) break;
           const l = lostP(splitOf(data, doc, c, fr, aims, part));
           if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
@@ -354,7 +364,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
         const v = rankVariants(data, sib.item, wanted, c.junkKey, miss, side).find((y) => lvClassOf(y.item, miss, side) === want);
         if (!v) continue;
         // 保存の例のアイテム (S-200 ⑦) がこの枠の組・兄弟の枠と同じ中身なら、差し替えた品の代わりに例を代表にする = 開き直しても組んだ時と同じ見本 (スイッチ treeLaneExample。見本の見た目だけ、割合 p は差し替えの物のまま)
-        const ex = flag("treeLaneExample") ? exOf(o) : null;
+        // 保存の例の外れが木の狙いの族を段の足りない形で取っていれば使わない (スイッチ junkFrameOnly、レビュワー 1 の 10)
+        const ex0 = flag("treeLaneExample") ? exOf(o) : null, ex = ex0 && !itemTaking(data, ex0, gf) ? ex0 : null;
         let rep: Pick<Frame, "item" | "aimed" | "key"> = { item: v.item, aimed: sib.aimed, key: sib.key };
         if (ex) { const am = nextAimed(data, doc, f.aimed, o, ex, f.item), key = frameKeyOf(contentOf(data, doc, ex, am)), w = whittleCompare(data, doc, wh, am, ex); if (key === sib.key && lvClassOf(ex, w.miss, w.side) === want) rep = { item: ex, aimed: am, key }; }
         return { ...sib, ...rep, p: sib.p * v.p, alts: undefined };
@@ -367,7 +378,10 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
     const done = new Set<string>();
     for (let pass = 0; pass < 3 && extra.length; pass++) {
       const again: string[] = [];
-      for (const { at, f: fa, from } of extra.splice(0)) {
+      // ↩・ほかの形で作れない見本の箱を埋める時は、外れが木の狙いの族を段の足りない形で持たない形を先に (無ければ使う。スイッチ junkFrameOnly、レビュワー 1 の 9)
+      const xs = extra.splice(0);
+      if (gf) xs.sort((a, b) => Number(itemTaking(data, a.f.item, gf)) - Number(itemTaking(data, b.f.item, gf)));
+      for (const { at, f: fa, from } of xs) {
         const x = doc.boxes[at], k = `${at}|${from}|${fa.key}|${blockMarkOf(data, doc, fa.item, fa.aimed)}`;
         if (!x?.hand || done.has(k)) continue;
         done.add(k);

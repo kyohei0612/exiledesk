@@ -38,7 +38,8 @@ import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
-import { DEV_BUILD } from "../../../web/release-flags";
+import { DEV_BUILD, flag } from "../../../web/release-flags";
+import { isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
 import { modText } from "../../../i18n/lang";
 import { afterQualityOf, alignEssenceAims, applyPick, autoCatOf, hitChoicesOf, holdLinks, kindOf, needAimOf, onlyOf, planPick, preFillOf, shelfKeysOf, tidyJunk, type PickOpt } from "./tree-hand-plan";
 import { isGrayBox, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
@@ -247,7 +248,10 @@ export function installSimMonkey(): () => void {
       const d = s.data.value, f = d ? frameOfDoc(d, t.doc.value).frames.get(id) : null;
       if (!d || !f || f.note) return null;
       const it = fixedValues(d, t.doc.value, shapeSampleWithNote(d, t.doc.value, id).item, id);
-      return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && f.aimed.has(m.modId)).length;
+      // ☑ の無いまま完成形の狙いを段以上で満たす行 (名前 + 「予期せぬ狙い MOD」、スイッチ goalMetTag) も外れ MOD でない行に数える
+      // 札は × 要らない が先なので、要らないの印の MOD は数えない (レビュワー 1 の (c))
+      const goal = flag("goalMetTag") ? missAims(d, t.doc.value.memoAims ?? []) : null, un = new Set(t.doc.value.boxes[id]?.unwanted ?? []);
+      return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && (f.aimed.has(m.modId) || (!!goal && !un.has(m.modId) && !isMissMod(m, goal)))).length;
     },
     /** 上限に届いた人の最後の道とアイテム (沼った訳を見る台本用、S-72) */
     tails(n = RUN_N, seed = 1, k = 3) {
