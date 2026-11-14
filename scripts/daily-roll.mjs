@@ -58,7 +58,9 @@ if (REDO || restoreAt >= 0) {
   if (!D1 || WEEK_ONLY || VERIFY) { console.error("--redo / --redo-restore は --d1 と一緒の時だけ (--week-only・--verify とは一緒に使えない)"); process.exit(1); }
   const X = await import("./_daily-redo.mjs");
   if (restoreAt >= 0) { console.log(await X.redoRestore(db, args[restoreAt + 1], now, DRY)); process.exit(0); }
-  redo = await X.redoTake(db, now, target, DRY);
+  // --after = 出た後の差し替え (オーナーの言葉がある時だけ、D-59)。--reject-box "<訳>" = そのお題の箱の投稿を落ちた (no) にする (組み直しで同じ投稿が出ない)
+  const rb = args.indexOf("--reject-box");
+  redo = await X.redoTake(db, now, target, DRY, { after: args.includes("--after"), rejectBox: rb >= 0 ? args[rb + 1] : null });
   if (redo.stop) { console.log(`直す口: 何も書かずに終わる — ${redo.stop}`); process.exit(1); }
   redo.check = () => X.redoCheck(db, redo);
 }
