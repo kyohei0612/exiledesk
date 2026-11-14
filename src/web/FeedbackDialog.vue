@@ -11,6 +11,7 @@ import { WEB_API_BASE } from "./config";
 import { diagNow, track, trailNow } from "./track";
 import { feedbackSummaryJa } from "./feedback-summary";
 import { treeDraftNow } from "./feedback-tree";
+import { emuScene, scenePage, sceneNow } from "./feedback-scene";
 import { marketStore } from "../state/market-store";
 import { allMods } from "../services/craft-stage/stage-core";
 import { craftedKindOf, tierRankOf } from "../services/craft-stage/tier-rank";
@@ -86,11 +87,17 @@ function modLine(m: StageMod): string {
   const tier = m.tierIndex == null || !data ? "" : kind ? " T0" : ` T${tierRankOf(data, m.modId, m.tierIndex)}`;
   return `${m.modId}${tier}${kind ? ` (${KIND_JA[kind]})` : ""}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}`;
 }
-function contextNow(): unknown {
+/** 送った画面でまとめる (U-05e、スイッチ actLog)。閉じている間は今どおりエミュの状態で */
+const SCENE_ON = flag("actLog");
+/** 窓の下の一言を木の言い方にする画面 (シミュ・デイリー) */
+const treeScene = computed(() => SCENE_ON && props.open && ["sim", "daily"].includes(scenePage()));
+async function contextNow(): Promise<unknown> {
   const s = craftStage;
   const it = s.item.value;
   const hand = s.log.value.length ? { plan: s.plan(), steps: s.log.value.length } : null;
   const d = diagNow();
+  const sc = SCENE_ON ? await sceneNow().catch(() => null) : null;
+  const emu = !sc || emuScene(sc.scene.page);
   return {
     version: pkg.version,
     url: location.href,
@@ -99,13 +106,15 @@ function contextNow(): unknown {
     // デイリーの名前の id と名前 (端末の控え、views/daily/daily-api.ts の KEY)。困った人の今日の挑戦を `pnpm daily:reset-one <id>` で消せるように。引き継ぎコードは入れない (U-05d・D-37h4、11-10 オーナー「IDで追跡でいいんじゃね」)
     daily: (() => { try { const n = (JSON.parse(localStorage.getItem("exiledesk.daily.v4") ?? "null") as { nick?: { id?: string; name?: string } } | null)?.nick; return n?.id && n.name ? { nickId: n.id, name: n.name } : null; } catch { return null; } })(),
     // 受けた側が読む日本語のまとめ (何を作っていて、どこまで打ったか。Discord の本文に出る)
-    summaryJa: (() => { try { return feedbackSummaryJa(); } catch { return []; } })(),
+    summaryJa: sc ? sc.summaryJa : (() => { try { return feedbackSummaryJa(); } catch { return []; } })(),
+    // 送った画面 (emu / sim / daily … とデイリーのお題・挑戦の状態・木の大きさ。U-05e)。サーバーは本文の 1 行に出す
+    ...(sc ? { scene: sc.scene } : {}),
     mode: s.mode.value,
-    base: s.base.value,
-    itemLevel: s.itemLevel.value,
+    // エミュの欄はエミュ (とスパムシミュ) から送った時だけ (シミュ・デイリーから金の指輪が来ないように、U-05e)
+    ...(emu ? { base: s.base.value, itemLevel: s.itemLevel.value } : {}),
     // T は段の名前 (T1 = 一番上)。tierIndex (0 = 一番下) のまま書くと逆になる (要望 ff4eb935、11-02)。
     // エッセンス・合金で付いた MOD はアイテムのカードと同じ T0 と「(エッセンス)」「(合金)」(エンジンの craftedKindOf)
-    item: it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => modLine(m)) } : null,
+    item: emu && it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => modLine(m)) } : null,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
     lang: navigator.language,
     market: { league: marketStore.league.value?.Value ?? null, fetchedAt: marketStore.fetchedAt.value, error: marketStore.error.value },
@@ -113,7 +122,7 @@ function contextNow(): unknown {
     trail: trailNow(),
     errors: d.errors,
     console: d.console,
-    hand,
+    hand: emu ? hand : null,
     // シミュの作りかけの木 (保存していなくても・別のページからでも。web/feedback-tree.ts、11-08 オーナー「1おけ」)。開くのは web.html?page=sim-tree#recipe=<code>
     treeDraft: treeDraftNow(),
   };
@@ -134,7 +143,7 @@ async function send(): Promise<void> {
       : await fetch(`${WEB_API_BASE}/feedback`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: contextNow(), ...(imgs.length ? { images: imgs } : {}), ...(replyTo.value ? { replyTo: replyTo.value.id } : {}) }),
+        body: JSON.stringify({ kind: "request", text: text.value.trim(), contact: "", website: website.value, context: await contextNow(), ...(imgs.length ? { images: imgs } : {}), ...(replyTo.value ? { replyTo: replyTo.value.id } : {}) }),
       });
     const j = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string; id?: string };
     if (!r.ok || !j.ok) throw new Error(j.error ?? `${r.status}`);
@@ -174,7 +183,7 @@ async function send(): Promise<void> {
         <span class="min-w-0 text-[11px] opacity-50">{{ imageNote || tr(`貼り付け (Ctrl+V) でも付けられます · ${MAX_IMAGES} 枚まで`, `You can also paste (Ctrl+V) · up to ${MAX_IMAGES}`) }}</span>
       </div>
       <!-- 画面の状態はいつも添付 (チェックの欄は外した。2026-10-13 オーナー「その欄いらんわ、送ってほしいから」: 外して送られ、再現できなかった) -->
-      <p v-if="!forId" class="mt-2 text-[11px] opacity-60">{{ tr("今の画面の状態 (ベース・付いている MOD・直前の操作の流れ) も一緒に届きます。デイリーの名前は入ります。ログインの情報は入りません", "The current screen state (base, mods, recent actions) is sent along, with your Daily Craft name. No login info") }}</p>
+      <p v-if="!forId" class="mt-2 text-[11px] opacity-60">{{ treeScene ? tr("今の木 (ベース・完成形・置いた順) と直前の操作の流れも一緒に届きます。デイリーの名前は入ります。ログインの情報は入りません", "Your current tree (base, final item, the order you placed hands) and recent actions are sent along, with your Daily Craft name. No login info") : tr("今の画面の状態 (ベース・付いている MOD・直前の操作の流れ) も一緒に届きます。デイリーの名前は入ります。ログインの情報は入りません", "The current screen state (base, mods, recent actions) is sent along, with your Daily Craft name. No login info") }}</p>
       <p v-if="state === 'error'" class="mt-2 text-rose-300">{{ tr("送れなかった", "Could not send") }}: {{ errorText }}</p>
     </div>
     <template #footer>
