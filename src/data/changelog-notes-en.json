@@ -1,4 +1,7 @@
 {
+  "0.1.740": [
+    "Daily: the ranking now shows how many players tried, submitted, gave up or timed out, plus an anonymous list of those who gave up with how long they lasted. Each day this week also shows its player count, and Wednesday's tag is now 'Off-hand'."
+  ],
   "0.1.739": [
     "Fixed a bug where opening today's recipe from the Daily ranking in another tab during a challenge skipped the confirmation."
   ],
