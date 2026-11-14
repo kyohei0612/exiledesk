@@ -25,6 +25,9 @@ import DailyPost from "./DailyPost.vue";
 import DailySkins from "./DailySkins.vue";
 import { genesisWhy } from "./daily-check";
 
+/** 今週のお題の各日に「n 人挑戦」(D-50g)。新しいサーバーは始める前の諦めを除いた数 (turnout.tried)、古いサーバーは行の数 (tries) */
+const triedOf = (t: DailyTopic): number => t.turnout?.tried ?? t.tries;
+
 const view = computed(() => dailyPage.value?.view ?? "list");
 const q = computed(() => dailyPage.value?.q ?? null);
 const post = computed(() => view.value === "detail" && (q.value === "post" || q.value === "post-emu"));
@@ -144,7 +147,7 @@ provide(DAILY_SKIN_KEY, computed(() => skin.value.id));
                 <button type="button" class="daily-tile" :disabled="!d.t" @click="d.t && goDaily({ view: 'detail', q: d.t.id })">
                   <span class="g-slot daily-tile-art" :class="d.today ? 'on' : ''"><img v-if="d.t" :src="baseArt(d.t.base) ?? undefined" alt="" /><b v-if="d.t && solved(d.t)" class="daily-tile-done">✓</b></span>
                   <span class="daily-tile-name">{{ d.t ? tr(d.t.baseJa, d.t.base) : tr(d.part.ja, d.part.en) }}</span>
-                  <small>{{ d.label }}</small><small v-if="d.t">{{ tr(`MOD ${d.t.modCount} つ`, `${d.t.modCount} mods`) }}</small>
+                  <small>{{ d.label }}</small><small v-if="d.t">{{ tr(`MOD ${d.t.modCount} つ`, `${d.t.modCount} mods`) }}</small><small v-if="d.t" class="daily-tile-tries" data-daily-tile-tries>{{ tr(`${triedOf(d.t)} 人挑戦`, `${triedOf(d.t)} tried`) }}</small>
                 </button>
               </li>
             </ul>

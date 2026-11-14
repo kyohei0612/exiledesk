@@ -6,6 +6,7 @@
 import { authNick, hasBadWord, ipHash } from "./nick";
 import type { BoxCard, BoxPost } from "./box-notify";
 import { viewCounts } from "./views";
+import { turnoutOf, type TurnRow } from "./turnout";
 import { byScore, rankOrderSql } from "../../../../src/views/daily/daily-score";
 import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
@@ -82,15 +83,18 @@ export async function dailyJson(db: D1Database, now: number, prices: string | nu
   await settleFromPlan(db, today, prices);
   const from = Math.min(monday, today - 1);
   const { results: topics } = await db.prepare("SELECT * FROM daily_topics WHERE day >= ? AND day <= ? ORDER BY day").bind(dayName(from), dayName(today)).all<TopicRow>();
-  const counts = new Map<string, number>();
+  // 挑戦の行 (tries = 行の数、シェアの「n 人中」。参加の数と諦めた人の並びは turnout、D-50f・D-50g)
+  const turnRows = new Map<string, TurnRow[]>();
   if (topics.length) {
-    const { results } = await db.prepare(`SELECT topic_id, count(*) AS n FROM daily_tries WHERE topic_id IN (${topics.map(() => "?").join(",")}) GROUP BY topic_id`).bind(...topics.map((t) => t.id)).all<{ topic_id: string; n: number }>();
-    for (const r of results) counts.set(r.topic_id, r.n);
+    const { results } = await db.prepare(`SELECT topic_id, started_at, submitted_at, gave_up_at FROM daily_tries WHERE topic_id IN (${topics.map(() => "?").join(",")})`).bind(...topics.map((t) => t.id)).all<TurnRow>();
+    for (const r of results) turnRows.set(r.topic_id, [...(turnRows.get(r.topic_id) ?? []), r]);
   }
   const byId = new Map(topics.map((t) => [t.id, t]));
   const out = (no: number) => {
     const t = byId.get(idOf(no));
-    return t ? topicOut(t, counts.get(t.id) ?? 0, no < today) : null;
+    if (!t) return null;
+    const rows = turnRows.get(t.id) ?? [], turn = turnoutOf(rows, now);
+    return { ...topicOut(t, rows.length, no < today), turnout: turn.counts, out: turn.out };
   };
   const week = Array.from({ length: 7 }, (_, i) => ({ id: idOf(monday + i), wd: i, md: dayName(monday + i).slice(5).replace("-", "/"), today: monday + i === today, t: monday + i <= today ? out(monday + i) : null }));
   const ranks: Record<string, unknown[]> = {};

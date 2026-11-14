@@ -132,6 +132,18 @@
 .daily-num { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--skin-dim); }
 /* 挑戦前のぼかし (D-50): 数は仮の字。読めないようにぼかし、選べないように */
 .daily-veiled { filter: blur(5px); user-select: none; }
+/* 参加の数の帯 (D-50g): 挑戦の人数を金で大きめ、内訳は薄く小さく。ぼかさない */
+.daily-turnout { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin: 2px 0 6px; font-size: 13px; color: var(--skin-dim); font-variant-numeric: tabular-nums; }
+.daily-turnout b { font-weight: 400; font-size: 16px; color: var(--skin-title); }
+/* 諦めた人の一覧 (D-50f): 順位の下に一段控えめに。名前の代わりに 失敗エグザイルA… */
+.daily-out { margin-top: 14px; }
+.daily-out-title { font-size: 14px; color: var(--skin-title); opacity: 0.85; }
+.daily-out-row { display: flex; align-items: center; gap: 8px; padding: 2px 8px; color: var(--skin-dim); }
+.daily-out-tag { margin-left: 8px; padding: 0 5px; font-size: 11px; border: 1px solid var(--skin-dim); border-radius: 3px; }
+.daily-out-more { margin-top: 4px; padding: 2px 8px; font-size: 13px; color: var(--skin-dim); text-decoration: underline; }
+.daily-out-more:hover { color: var(--skin-title); }
+/* 今週の棚の「n 人挑戦」(D-50g) */
+.daily-tile-tries { color: var(--skin-title); font-variant-numeric: tabular-nums; }
 
 /* タグ (D-54): 1 位は金の銘の札、2〜10 位は石の札。絵のまま小さく */
 .daily-tag { display: inline-block; margin-left: 6px; padding: 0 9px; font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; color: var(--skin-text); background: url("/ui-art/tab.webp") center / 100% 100% no-repeat; vertical-align: 1px; }

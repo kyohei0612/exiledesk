@@ -44,7 +44,7 @@ export function aimTextsOf(data: PatchData, base: string, ilvl: number): (modId:
 export const SLOTS: readonly { ja: string; en: string; has: (category: string) => boolean }[] = [
   { ja: "片手武器", en: "One-handed weapons", has: (c) => kindOf(c) === "weapon" && handsOf(c) === 1 },
   { ja: "両手武器", en: "Two-handed weapons", has: (c) => kindOf(c) === "weapon" && handsOf(c) === 2 },
-  { ja: "ジュエル・オフハンド", en: "Jewels & off-hands", has: (c) => inGroup(c, "quiver") || inGroup(c, "shieldLike") }, // ジュエルは 11-14 から出さない (noNormalBase)。札の名前はそのまま
+  { ja: "オフハンド", en: "Off-hands", has: (c) => inGroup(c, "quiver") || inGroup(c, "shieldLike") }, // ジュエルは 11-14 から出さない (noNormalBase)
   { ja: "兜・手袋", en: "Helmets & gloves", has: (c) => ["Helmet", "Gloves"].includes(clientClassOf(c) ?? "") },
   { ja: "鎧", en: "Body armour", has: (c) => inGroup(c, "bodyArmour") },
   { ja: "靴・ベルト", en: "Boots & belts", has: (c) => ["Boots", "Belt"].includes(clientClassOf(c) ?? "") },

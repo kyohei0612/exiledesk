@@ -11,6 +11,7 @@ import DailyName from "./DailyName.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyPeekAsk from "./DailyPeekAsk.vue";
 import DailyNoteEdit from "./DailyNoteEdit.vue";
+import DailyTurnout from "./DailyTurnout.vue";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const rows = computed(() => rankOf(props.topic.id).slice(0, 10));
@@ -57,6 +58,7 @@ function peeked(): void {
   <div data-daily-rank class="min-w-0">
     <!-- 題は短く、数え方は横の説明 (狭い幅では次の行へ回る。題は 1 行の字なので長いと右が切れた、11-11 ブラック 82) -->
     <div class="g-sec-head"><h3 class="g-sec-title">{{ score ? tr("スコアの順位", "Score ranking") : tr("一番安く作った人", "Cheapest crafts") }}</h3><span v-if="score" class="g-sec-sub" data-daily-rank-how>{{ tr("費用 ÷ 完成率、小さいほど上", "cost ÷ finish rate, lower is better") }}</span></div>
+    <DailyTurnout :topic="topic" where="head" :closed="closed" :veiled="veiled" />
     <p v-if="score" class="daily-rank-what" data-daily-rank-score-what>{{ closed ? tr(`${topic.day} のお題の順位。費用は完成 1 個あたり`, `Ranking for ${topic.day}. Cost is per finished item`) : tr("今日のお題の順位。費用は完成 1 個あたり", "Today's ranking. Cost is per finished item") }}</p>
     <p v-else class="daily-rank-what">{{ closed ? tr(`${topic.day} のお題の順位。完成 1 個あたりの費用の安い順`, `Ranking for ${topic.day}: cheapest per finished item first`) : tr("今日のお題の順位。完成 1 個あたりの費用の安い順", "Today's ranking: cheapest per finished item first") }}</p>
     <template v-if="rows.length">
@@ -83,6 +85,7 @@ function peeked(): void {
       <p class="mt-2 text-[13px] opacity-70">{{ closed ? tr("行を押すと、その人のレシピをシミュレーターで開く (写しなので元は変わらない)", "Click a row to open that recipe in the Simulator (a copy; the original stays)") : tr("行を押すとその人のレシピを開く。今日まだ挑戦できる時は、見ると今日の挑戦は諦めた扱いになる", "Click a row to open that recipe. If you can still take today's challenge, viewing it counts as giving up") }}</p>
     </template>
     <p v-else class="text-[14px] opacity-70">{{ closed ? tr("この日は順位に載った人がいない。", "No one was ranked this day.") : tr("まだ誰も提出していない。最初の 1 人になれる。", "No one has submitted yet. You can be the first.") }}</p>
+    <DailyTurnout :topic="topic" where="list" :closed="closed" :veiled="veiled" />
     <DailyPeekAsk :id="topic.id" :name="peekName" @close="peekName = null" @done="peeked" />
     <DailyNoteEdit v-if="showNote" :id="topic.id" :open="noteOpen" @close="noteOpen = false" />
     <DailyNick v-if="nickFor" @done="peekName = nickFor; nickFor = null" @close="nickFor = null" />
