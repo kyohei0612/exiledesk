@@ -118,7 +118,7 @@
   - 有効。出どころ: オーナー 10-10「8 時間に 1 回でええな」「相場も 1 時間に 1 回」、10-24・10-26 (Discord)。確かめ: server/live/wrangler.jsonc の triggers、index.ts の scheduled。
 - **Y-42b 公式トレードはオーナーが見る**: AI は公式トレードを数えない・API を叩かない。検索の URL (`?q=`) を作って渡すだけ。
   - 有効。出どころ: オーナー 11-05「次から俺が調べるよ URL渡して貰ったら調べるよ」。確かめ: 渡した URL をオーナーが開く。
-- **Y-43 要望・バグは KV と D1 に期限付きで置く**: `POST /feedback` は KV `fb:` に 90 日 (同じ IP から 1 時間 10 件、bot よけの欄、画面の状態の添付は 192 KB まで = 11-14 に 96 KB から、木と置いた順の記録のため U-05e)、画像は D1 `fb_images` に 90 日 (毎朝の cron が消す、後から足せるのは送った端末だけ)、返事は KV `fbr:` に 180 日 (置き方は R-20)。送った端末は id を覚え、開いた時と 45 分後に `/feedback/replies` で聞く。
+- **Y-43 要望・バグは KV と D1 に期限付きで置く**: `POST /feedback` は KV `fb:` に 90 日 (同じ IP から 1 時間 10 件、bot よけの欄、画面の状態の添付は 192 KB まで = 11-14 に 96 KB から、木と置いた順の記録のため U-05e。Discord の本文の終わりの 1 行は送った画面と PC / スマホ =「シミュレーター · PC」「デイリー 11-13 · 挑戦中 · スマホ」、context.scene の無い前の版は今まで通り)、画像は D1 `fb_images` に 90 日 (毎朝の cron が消す、後から足せるのは送った端末だけ)、返事は KV `fbr:` に 180 日 (置き方は R-20)。送った端末は id を覚え、開いた時と 45 分後に `/feedback/replies` で聞く。
   - 有効。出どころ: オーナー 10-11・10-14 (メモ feedback-replies)。確かめ: `https://exiledesk-live.exiledesk.workers.dev/feedback/replies?ids=<id>`。
 - **Y-44 異常は控えるだけ、すぐ Discord に送らない**: 相場の中継が落ちた・サーバーのエラーは KV `alertlog:` に控える (同じ物は 6 時間に 1 回、2 日残す)。毎朝の AI の評価と見解の材料にする。人が送った物 = 要望・バグと、デイリーのクラフト箱の投稿 (D-20b、11-12。行き先は秘密 `BOX_WEBHOOK`、無ければ要望と同じ `DISCORD_WEBHOOK`) は、届いた時にそのまま流す (控えるだけにしない)。
   - 有効。出どころ: 10-26 (server/live/README.md)。確かめ: `scripts/pull-server-notes.mjs <日>`。

@@ -26,7 +26,8 @@ export interface Feedback {
 
 const MAX_TEXT = 4000;
 const MAX_CONTACT = 200;
-const MAX_CONTEXT = 96 * 1024;
+/** 画面の状態の添付の上限 (11-14 に 96 KB → 192 KB: シミュの木と置いた順の記録を一緒に入れるため、U-05e・Y-43) */
+const MAX_CONTEXT = 192 * 1024;
 const PER_HOUR = 10;
 /** 連投よけ: 同じ IP は 1 分に 1 件 (2026-10-07 オーナー「1 分レートで連続で送れないように」) */
 const PER_MINUTE = 1;
@@ -142,6 +143,21 @@ export function deviceJa(context: unknown): string {
   const w = typeof vp === "string" ? Number(vp.split("x")[0]) : NaN;
   return Number.isFinite(w) ? (w < 768 ? "スマホ" : "PC") : "";
 }
+/**
+ * 送った画面 (U-05e、画面が context.scene を付ける)。「シミュレーター」「デイリー 11-13 · 挑戦中」など。scene の無い前の版は ""
+ * (2026-11-14 オーナー「デイリーやシミュでの要望統一せんとなずっと金の指輪でくるし」)
+ */
+const SCENE_JA: Record<string, string> = { emu: "エミュレーター", sim: "シミュレーター", daily: "デイリー", routes: "スパムシミュレーター", tutorial: "使い方・コース", recipes: "レシピ", skins: "コスメティック" };
+const DAILY_STATE_JA: Record<string, string> = { playing: "挑戦中", submitted: "提出済み", gaveUp: "諦めた", timeUp: "時間切れ", notYet: "まだ" };
+export function sceneJa(context: unknown): string {
+  const sc = (context as { scene?: unknown } | null)?.scene as { page?: unknown; daily?: { topicId?: unknown; state?: unknown } } | undefined;
+  if (!sc || typeof sc.page !== "string") return "";
+  const head = SCENE_JA[sc.page] ?? sc.page.slice(0, 20);
+  const d = sc.daily;
+  const day = typeof d?.topicId === "string" && /^d\d{4}-\d{2}-\d{2}$/.test(d.topicId) ? d.topicId.slice(6) : "";
+  const st = typeof d?.state === "string" ? DAILY_STATE_JA[d.state] ?? "" : "";
+  return [head + (day ? ` ${day}` : ""), st].filter(Boolean).join(" · ");
+}
 export function stateLine(context: unknown): string {
   if (!context || typeof context !== "object") return "";
   const hasSummary = Array.isArray((context as { summaryJa?: unknown }).summaryJa) && ((context as { summaryJa: unknown[] }).summaryJa.length > 0);
@@ -149,7 +165,7 @@ export function stateLine(context: unknown): string {
   const parts = [
     c.version ? `v${c.version}` : "",
     deviceJa(context),
-    c.mode === "sim" ? "シミュレーター" : c.mode === "hand" ? "エミュレーター" : "",
+    sceneJa(context) || (c.mode === "sim" ? "シミュレーター" : c.mode === "hand" ? "エミュレーター" : ""),
     c.base && !hasSummary ? `${c.base}${c.itemLevel ? ` ilvl${c.itemLevel}` : ""}` : "",
     c.hand?.steps && !hasSummary ? `${c.hand.steps} 手` : "",
     c.sim ? `狙い ${c.sim.targets?.length ?? 0} · パターン ${c.sim.patterns?.length ?? 0}` : "",
@@ -194,7 +210,8 @@ export async function notifyDiscord(webhook: string, fb: Feedback, fetchFn: Fetc
     "",
     // 短く (2026-10-12 オーナー「長くなるから打った手・最後の手・状態・流れはいらない、JSON だけでいい」): 作っている物と今の MOD・PC かスマホか・エラーだけ。手順と流れは添付の JSON に
     ...sumLines.filter((l) => !/^(打った手|最後の手)/.test(l)),
-    sumLines.length ? deviceJa(fb.context) : state ? `状態: ${state}` : "",
+    // 送った画面と PC / スマホ (U-05e。scene の無い前の版は PC / スマホだけ)
+    sumLines.length ? [sceneJa(fb.context), deviceJa(fb.context)].filter(Boolean).join(" · ") : state ? `状態: ${state}` : "",
     firstErr ? `直近のエラー: ${String(firstErr).slice(0, 160)}` : "",
   ].filter(Boolean).join("\n").slice(0, 1900) + `\n-# 要望の id ${fb.id}`;
   try {
