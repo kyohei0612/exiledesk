@@ -67,9 +67,9 @@ const spotZoom = computed((): { items: Array<{ id: string; h: number; dy: number
   let s = 1 / 1.5;
   for (let i = 0; i < c.length; i++) for (let j = i + 1; j < c.length; j++) s = Math.min(s, Math.max((Math.abs(c[i]!.x - c[j]!.x) * z) / BOX_W, (Math.abs(c[i]!.y - c[j]!.y) * z) / ((c[i]!.h + c[j]!.h) / 2)));
   const k = Math.max(1, s / z), ci = inv.value;
-  // 写しが乗せた手の札・その元の箱にかぶる時は、かぶらない所まで下へずらす (隣の箱どうしで起きやすい。11-14 オーナー「被るくらいなら今の奴と、下にずらした方が良いね拡大したの枠だけど」)
+  // 写しが乗せた手の札 (2 行の札・1.5 倍の大きさで見積もる、11-14 オーナー「手の札と被るの気持ち悪いね」)・その元の箱にかぶる時は、かぶらない所まで下へずらす (隣の箱どうしで起きやすい。11-14 オーナー「被るくらいなら今の奴と、下にずらした方が良いね拡大したの枠だけど」)
   const e = (shownEdges.value as SpotEdge[]).find((x) => x.id === hoverChip.value), src = e ? doc.value.boxes[e.id] : undefined;
-  const obs = [...(e ? [{ x0: e.jx - 150 * ci, x1: e.jx + 150 * ci, y0: e.jy - 16 * ci, y1: e.jy + 16 * ci }] : []),
+  const obs = [...(e ? [{ x0: e.jx - 160 * ci, x1: e.jx + 160 * ci, y0: e.jy - 40 * ci, y1: e.jy + 40 * ci }] : []),
     ...(src ? [{ x0: posOf(src).x, x1: posOf(src).x + BOX_W, y0: posOf(src).y, y1: posOf(src).y + hOf(src.id) }] : [])];
   const items = ids.map((id, i) => {
     const q = c[i]!, x0 = q.x - (BOX_W * k) / 2, x1 = q.x + (BOX_W * k) / 2, y0 = q.y - q.h / 2, y1 = y0 + q.h * k;
