@@ -23,6 +23,7 @@ import { tr } from "../../i18n/lang";
 import { jewelEmotionsOf } from "../htc/patch";
 import { jaTypeName } from "../../i18n/item-names-ja";
 import { tierRankLabel } from "./tier-rank";
+import { anyEleMod } from "./any-ele";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
 export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
@@ -133,7 +134,11 @@ export function tierIdOf(data: PatchData | null | undefined, r: ListRow, t: List
   return { modId, idx: data?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1 };
 }
 
-export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-10 MOD を並べる口
+/** withoutAnyEle = 品に付いている一般の火・冷気・雷耐性 (aim-odds の anyEleMod) を付いていない物として数える (「いずれかの元素耐性」の行の出やすさ = 置いた後も変わらない数、E-80) */
+export interface ModListOpts { withoutAnyEle?: boolean }
+
+export function modListFor(data: PatchData, item: StageItem, o: ModListOpts = {}): ListRow[] { // E-10 MOD を並べる口
+  if (o.withoutAnyEle) item = { ...item, prefixes: item.prefixes.filter((m) => !anyEleMod(data, m.modId)), suffixes: item.suffixes.filter((m) => !anyEleMod(data, m.modId)) };
   // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。出やすさは普通と一緒に引くので一緒に割る
   const eff = effectiveCls(item);
   const pools = eff.pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };

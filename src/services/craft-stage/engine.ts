@@ -86,8 +86,11 @@ export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 // aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
 export { aimCombos, aimChain, aimDone, hits as aimHits, sameAimTarget } from "./aim-odds";
-// aimHeldIn = 品の MOD に狙いが付いているか (「いずれかの元素耐性」n 番は当たる元素耐性が n 個、S-10h ②)。ANY_ELE_FAMILIES = いずれかに数える系統
-export { aimHeldIn, ANY_ELE_FAMILIES } from "./aim-odds";
+// aimHeldIn = 品の MOD に狙いが付いているか (「いずれかの元素耐性」n 番は当たる元素耐性が n 個、S-10h ②)
+export { aimHeldIn } from "./aim-odds";
+// 「いずれかの元素耐性」に数える系統・MOD か・同じ部位の火・冷気・雷の modId (E-80)。MOD の一覧で数えない設定は modListFor の withoutAnyEle
+export { ANY_ELE_FAMILIES, anyEleMod, anyEleIds } from "./any-ele";
+export type { ModListOpts } from "./mod-list";
 // 1 手の費用 (カレンシー + お告げ、発現は 0) と aimChain の回し方の種類 (画面の「どう回したか」の文を分ける)
 export type { AimChainMode } from "./aim-odds";
 export { stepCost, aimChainMode } from "./aim-odds";

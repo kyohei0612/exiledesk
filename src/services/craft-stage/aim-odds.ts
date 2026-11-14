@@ -19,6 +19,7 @@ import { isCraftedSource, tierNoOf } from "./tier-rank";
 import { omenRivals } from "./spec/omen-layer";
 import { OMEN_KEY } from "./spec/omen-keys";
 import { actionClassOfKey } from "./spec/action-class";
+import { ANY_ELE_FAMILIES } from "./any-ele";
 
 /**
  * 狙いの札。anyEle = 「いずれかの元素耐性」の n 番 (1〜3、S-10h ②): 一般の火・冷気・雷耐性のどれかが段 (T = modId の段の数 − minTierIndex) 以上なら当たり、
@@ -69,8 +70,6 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
   return same && tierNoOf(m) <= want.tiers.length - t.minTierIndex;
 };
 const isEssenceSource = isCraftedSource;
-/** 「いずれかの元素耐性」に数える系統 (一般の火・冷気・雷耐性だけ。全ての元素耐性・2 元素・混沌・冒涜・エッセンスは数えない、S-10h ①) */
-export const ANY_ELE_FAMILIES: readonly string[] = ["FireResistance", "ColdResistance", "LightningResistance"];
 /**
  * 「いずれかの元素耐性」の当たり (S-10h ②): 一般の MOD (クラフト・冒涜・エッセンスでない) で系統が火・冷気・雷耐性のどれか、eleSkip に無く、段が狙いの T 以上。
  * data があれば出どころ normal と段の名前の T で比べ、無ければ段の番号で比べる (3 元素とも段の数が同じ 8 なので同じ答え)
