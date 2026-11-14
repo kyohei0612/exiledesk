@@ -28,6 +28,8 @@ const COL = flag("tierWord") ? "text-center" : "text-right";
 const MOD_NONE = flag("modNone");
 
 export interface ModSection { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
+/** 何行かを 1 行に畳む (U-12i。シミュの完成形の「いずれかの元素耐性」= 火・冷気・雷)。members = 畳む行の ListRow.id (開いた時はこの順)、share = 0〜1 */
+export interface ModFold { key: string; members: readonly string[]; text: string; tags?: readonly string[]; share: number }
 
 const props = withDefaults(defineProps<{
   data: PatchData | null;
@@ -70,6 +72,10 @@ const props = withDefaults(defineProps<{
   tierOneLine?: boolean;
   /** 留まる目次の帯を上端から空ける px (既定 0。シミュの完成形の設定は 12 = ページの留まる物の top-3 と同じ、2026-11-03 ブラック 36)。空きは帯の色の影で埋める (下の行が透けた、11-03 オーナー) */
   stickTop?: number;
+  /** 畳む行 (U-12i)。その列で一番上に来る仲間の位置に 1 行、▸ で仲間の行を字下げで下に並べる。slot fold-tier (ティアの列)・fold-lead (行の左) */
+  folds?: readonly ModFold[];
+  /** 選んでいる畳む行に印を付ける (rowOn と同じ見た目) */
+  foldOn?: (f: ModFold) => boolean;
 }>(), { overlay: false, stickTop: 0, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
 
 const rows = computed(() => (props.data && props.item ? modListFor(props.data, props.item) : []));
@@ -83,6 +89,36 @@ const tiersOf = (r: ListRow): ListTier[] => (props.hideDim ? r.tiers.filter((t) 
 const tierShareText =(r: ListRow, t: ListTier): string => (props.tierShare ? props.tierShare(r, t) : !cannowBase(r) ? "0%" : tierFreeShare(r, t));
 const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
 const pct = (x: number): string => fmtPct(x);
+
+/** 畳む行 (U-12i): 開いている畳む行の key */
+const foldOpen = ref(new Set<string>());
+/** 列の 1 行: f あり = 畳む行 (r は一番上の仲間)、sub = 開いた畳む行の下の仲間 */
+type ViewEntry = { r: ListRow; f: ModFold | null; sub: boolean };
+const foldOf = (id: string): ModFold | undefined => props.folds?.find((f) => f.members.includes(id));
+/** 列の並び: 仲間の行は一番上に来る仲間の位置に畳む行 1 つ、開いていれば仲間を下に (仲間が 1 つも無い畳む行は出さない) */
+function viewOf(items: readonly ListRow[]): ViewEntry[] {
+  if (!props.folds?.length) return items.map((r) => ({ r, f: null, sub: false }));
+  const out: ViewEntry[] = [];
+  const done = new Set<string>();
+  for (const r of items) {
+    const f = foldOf(r.id);
+    if (!f) { out.push({ r, f: null, sub: false }); continue; }
+    if (done.has(f.key)) continue;
+    done.add(f.key);
+    out.push({ r, f, sub: false });
+    if (foldOpen.value.has(f.key)) for (const id of f.members) { const m = items.find((x) => x.id === id); if (m) out.push({ r: m, f: null, sub: true }); }
+  }
+  return out;
+}
+/** 畳んだ後の系統の数 */
+const foldedLen = (items: readonly ListRow[]): number => viewOf(items).filter((e) => !e.sub).length;
+/** 棒の 100% (畳む行の % も入れる) */
+const barTop = (items: readonly ListRow[]): number => Math.max(colTop(items), ...viewOf(items).map((e) => e.f?.share ?? 0));
+function toggleFold(key: string, ev: Event): void {
+  keepPlace(ev.currentTarget as Element, () => { const n = new Set(foldOpen.value); if (n.has(key)) n.delete(key); else n.add(key); foldOpen.value = n; });
+}
+/** 仲間の行へ飛ぶ時は畳む行を開く */
+function openFoldOf(id: string): void { const f = foldOf(id); if (f && !foldOpen.value.has(f.key)) foldOpen.value = new Set([...foldOpen.value, f.key]); }
 
 /** 節の並び (既定)。普通 → ルーン → 冒涜 → 創生の樹など → 異界 → エッセンス (2026-10-11 オーナー)。エッセンスはマジック用とレア用を 1 つの節に */
 const GROUPS: ModGroup[] = ["normal", "rune", "desecrated", "special", "otherworldly", "essence"];
@@ -154,7 +190,7 @@ const sections = computed((): ModSection[] => {
       return { side, title: side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix"), items, top: Math.max(0.0001, ...items.map((r) => r.share)) };
     });
     const socketed = rune != null && all.some((r) => r.socketed);
-    return { g, sid, label, rune, socketed, count: SEARCH_FIT || props.hideDim ? list.length : all.length, columns };
+    return { g, sid, label, rune, socketed, count: foldedLen(SEARCH_FIT || props.hideDim ? list : all), columns };
   })
     // 検索で 0 件の節は出さない。hideDim で行が 0 になった節も出さない (U-12d)
     .filter((sec) => (!SEARCH_FIT || !q || sec.count) && (!props.hideDim || sec.count))
@@ -231,6 +267,7 @@ function jumpTo(modId: string, rank: string | null): boolean {
   if (!hit) return false;
   const key = `${hit.sec.sid}:${hit.r.id}`;
   if (phone && secClosed.value.has(hit.sec.sid)) toggleSec(hit.sec.sid);
+  openFoldOf(hit.r.id);
   active.value = hit.sec.sid;
   expanded.value = key;
   jumped.value = { key, modId, rank };
@@ -246,6 +283,7 @@ function jumpTo(modId: string, rank: string | null): boolean {
 function openRow(rowId: string): boolean {
   for (const sec of sections.value) for (const c of sec.columns) if (c.items.some((r) => r.id === rowId)) {
     const key = `${sec.sid}:${rowId}`;
+    openFoldOf(rowId);
     expanded.value = key;
     void nextTick(() => revealOpened(listEl.value?.querySelector(`[data-row-key="${CSS.escape(key)}"]`)));
     return true;
@@ -289,12 +327,32 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
           <p data-mod-col-head class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2" :class="STICKY_HEAD ? 'sticky z-[5] bg-panel-toc/95 pt-0.5' : ''" :style="STICKY_HEAD ? { top: `${tocH + (tocH ? stickTop : 0)}px` } : undefined">
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
-            <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
+            <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ foldedLen(col.items) }} {{ tr("系統", "groups") }}</span>
             <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : '']">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="whitespace-nowrap" :class="[COL, tierW]">{{ tr(TIER, "T") }}</span><span class="w-7" :class="COL">Lv</span></span>
           </p>
           <!-- hideDim で片側の行が全部消えた時は、枠 (見出しと列) はそのまま・中は空 (U-12d、オーナー 11-12「プレサフィだけは非表示でもそのまま枠は残しておいてくれただ何もないけど」) -->
           <p v-if="!col.items.length && !props.hideDim" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
-          <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '', flag('aimTable') ? 'scroll-mt-8' : '']">
+          <template v-for="{ r, f, sub } in viewOf(col.items)" :key="f ? `fold:${f.key}` : r.id">
+          <!-- 畳む行 (U-12i): ▸ で仲間の行を下に開く。ティアの列は差し込み (段のプルダウン)、Lv は「‐」。棒は行の後ろに敷く -->
+          <div v-if="f" class="mb-1" :data-fold-key="f.key">
+            <div class="relative flex items-center gap-0 overflow-hidden rounded-md" :class="props.foldOn?.(f) ? 'bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : ''">
+              <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(f.share / barTop(col.items)) * 100}%` }" />
+              <slot name="fold-lead" :fold="f" />
+              <button type="button" :data-rec="`fold:${f.key}`" :aria-expanded="foldOpen.has(f.key)" class="relative min-w-0 flex-1 rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]" @click="toggleFold(f.key, $event)">
+                <span class="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
+                  <span class="w-3 shrink-0 text-[10px] text-[var(--exile-color-text-tertiary)]" aria-hidden="true">{{ foldOpen.has(f.key) ? "▾" : "▸" }}</span>
+                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod">{{ f.text }}</span>
+                  <span v-for="g in f.tags ?? []" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
+                </span>
+              </button>
+              <span class="relative flex shrink-0 items-center gap-1 pr-2 tabular-nums">
+                <span class="w-14 text-[13px] font-bold" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : 'text-amber-100']">{{ pct(f.share) }}</span>
+                <span class="flex min-w-6 justify-center whitespace-nowrap text-[12px]"><slot name="fold-tier" :fold="f" /></span>
+                <span class="w-7 text-[12px] text-[var(--exile-color-text-tertiary)]" :class="COL">‐</span>
+              </span>
+            </div>
+          </div>
+          <div v-else class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '', flag('aimTable') ? 'scroll-mt-8' : '', sub ? 'ml-5' : '']">
             <!-- 1 系統 1 行。後ろの棒が % (列の一番大きい物を 100%) -->
             <div class="flex items-center gap-0" :class="props.rowOn?.(r) ? 'rounded-md bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : ''">
             <slot name="row-lead" :row="r" />
@@ -306,7 +364,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               :title="props.rowTitle ? props.rowTitle(r) : r.blocked ? blockedTitle(r) : undefined"
               @click="toggleRow(`${sec.sid}:${r.id}`, $event)"
             >
-              <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(shareOf(r) / colTop(col.items)) * 100}%` }" />
+              <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(shareOf(r) / barTop(col.items)) * 100}%` }" />
               <!-- タグは MOD 名の横に細く、右は poe2db と同じく % ・ 段の数 (緑) ・ 一番上の段のレベル (灰) を数字だけ (2026-10-04 オーナー) -->
               <span class="relative flex items-center gap-2">
                 <!-- タグはアイテムの札と同じ色の札。入らなければ次の行へ折り返して全部見せる (2026-10-19 オーナー) -->
@@ -351,6 +409,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               </div>
             </template>
           </div>
+          </template>
         </div>
       </div>
     </section>
