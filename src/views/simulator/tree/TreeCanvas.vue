@@ -42,7 +42,9 @@ const spot = computed((): { arcs: SpotArc[]; css: string } | null => {
   if (!e) return null;
   const ts = [...e.to.filter((o) => o.link).map((o) => ({ id: o.id, back: false })), ...(e.backLines ?? []).map((l) => ({ id: l.id, back: true }))].filter((x) => doc.value.boxes[x.id]);
   if (!ts.length) return null;
-  const arcs = ts.map((x) => ({ ...x, d: spotArc(e.jx, e.jy, posOf(doc.value.boxes[x.id]!), v.flow.findNode(x.id)?.dimensions.height || BOX_H) }));
+  // 何本も出る時は、札の出口を行き先の左右の順に 16 ずつ並べる (交わらない。11-14 オーナー「戻るの線クロスなってるやん」)
+  const order = ts.map((x) => posOf(doc.value.boxes[x.id]!).x).map((x, i) => [x, i] as const).sort((a, z) => a[0] - z[0]).map(([, i]) => i);
+  const arcs = ts.map((x, i) => ({ ...x, d: spotArc(e.jx + (order.indexOf(i) - (ts.length - 1) / 2) * 16, e.jy, posOf(doc.value.boxes[x.id]!), v.flow.findNode(x.id)?.dimensions.height || BOX_H) }));
   return { arcs, css: spotCss(e.id, e.id, arcs) };
 });
 const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id ? (shownEdges.value.find((e: { id: string }) => e.id === id) as { backLines?: Array<{ id: string; d: string }> } | undefined)?.backLines ?? [] : []);

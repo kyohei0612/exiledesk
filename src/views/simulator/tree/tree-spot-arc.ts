@@ -15,9 +15,10 @@ export function spotArc(sx: number, sy: number, q: { x: number; y: number }, h: 
   const cx = q.x + BOX_W / 2;
   const [ex, ey] = Math.abs(cx - sx) < BOX_W / 2 ? [cx, q.y > sy ? q.y : q.y + h] : [cx < sx ? q.x + BOX_W : q.x, q.y + h / 2];
   const dx = ex - sx, dy = ey - sy, len = Math.hypot(dx, dy) || 1;
-  // 2 点を結ぶ向きに直角な 2 つのうち、上 (y が小さい) へ向く方へふくらませる。真上・真下の時は右へ
+  // 2 点を結ぶ向きに直角な 2 つのうち、横長なら上へ、縦長なら行き先の側 (左の行き先は左・右は右、真上・真下は右) へふくらませる
+  // (何本も出る時に交わらない。11-14 オーナー「戻るの線クロスなってるやん」、前は縦長でも上へ寄せて向きがばらけた)
   let nx = -dy / len, ny = dx / len;
-  if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
+  if (Math.abs(dx) > Math.abs(dy) ? ny > 0 : (dx < 0 ? nx > 0 : nx < 0)) { nx = -nx; ny = -ny; }
   const bulge = Math.max(40, Math.min(220, len * 0.25));
   const mx = (sx + ex) / 2 + nx * bulge, my = (sy + ey) / 2 + ny * bulge;
   return `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;
