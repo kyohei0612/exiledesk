@@ -18,6 +18,7 @@ import { DISPOSE_JA } from "../apply-dispose";
 import type { StageItem, StageRarity } from "../types";
 import type { CurrencySpec, Limit, Target } from "./types";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 /** レアリティの組 → 一言 (今の関数の文) */
 function rarityReason(rs: readonly StageRarity[]): string {
@@ -36,6 +37,7 @@ export const groupsFit = (t: Target, item: StageItem): boolean => !t.groups || i
 /** 対象の判定: 部位 → レアリティの順 */
 export function targetBlock(t: Target, item: StageItem): string | null {
   if (!groupsFit(t, item)) return t.groupsReason ? tr(t.groupsReason.ja, t.groupsReason.en) : tr("この部位には使えない", "Can't be used on this item class");
+  if (t.rarity && item.rarity === "normal" && noNormal(item.cls.category)) return tr("ジュエルにノーマル (白) は無い (マジックから)", "Jewels have no Normal rarity (they start Magic)");
   if (t.rarity && !t.rarity.includes(item.rarity as StageRarity)) return t.rarityReason ? tr(t.rarityReason.ja, t.rarityReason.en) : rarityReason(t.rarity);
   return null;
 }
@@ -44,6 +46,11 @@ export function targetBlock(t: Target, item: StageItem): string | null {
  * ジュエルはアイテムレベルを見ない (MOD は全部レベル 1・重みは全部同じで、画面にもアイテムレベルを出さない。2026-10-12 オーナー
  * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
  */
+/**
+ * ノーマル (白) の無いベース = ジュエル (E-18b。外の正解 = poe2db のベース 1 つずつの Mods.enable_rarity: ジュエル 9 種だけ magic, rare, unique、ほかの装備は normal から)。
+ * 新品はマジック (MOD なし) から、白のジュエルには変成・錬金などノーマルに打つ手を打てない。スイッチ jewelMagic (11-14 オーナー「③A」)
+ */
+export const noNormal = (category: string): boolean => inGroup(category, "jewel") && flag("jewelMagic");
 export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
 
 /** mods = その手に掛かるお告げの効き目 (空きの判定はお告げの側で見る)。tag = 触媒の品質の種類。ess = エッセンスの手の鍵 (essenceFamilyFree) */

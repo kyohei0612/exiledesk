@@ -80,6 +80,7 @@
 - **E-16 MOD のタグと冒涜の陣営は poe2db に合わせる** (`htc/poe2db-tag-fixes.json`)。poe2db を取り直したら照合を回す。 — 有効 / 10-18 v0.1.572、`docs/reviews/2026-10-18-tag-audit.md` / 外の正解: `audit-poe2db-tags.mjs --check` (控えに無い食い違いが 0)
 - **E-17 → E-11a (基本動作) を見る。** エッセンスで付けた系統に、後から骨・高貴・カオスで同じ系統は付かない。エッセンスだけの決まりではない。 — 有効 (11-02 に E-11a へまとめた) / メモ poe2-craft-rules-confirmed / 見張り: golden
 - **E-18 フラスコ・チャームはエンジンに足さない。** (貼り付けでは「未対応」) — 有効 / オーナー 10-20
+- **E-18b ジュエルにノーマル (白) は無い。** 新品はマジック (MOD なし) から (`freshItem`・始めの MOD の `startFrom`)。白のジュエルにはノーマルに打つ手 (変成・錬金など、対象のレアリティを持つ手) を打てない (`spec/judge` の targetBlock、理由「ジュエルにノーマル (白) は無い」)。外の正解 = poe2db のベース 1 つずつのページの `Mods.enable_rarity`: ジュエル 9 種 (ルビー・エメラルド・サファイア・ダイヤモンド・タイムロスト 4 種・タイムレス) は magic, rare, unique、ほかの装備は全部 normal から (11-14 シミュ部長 46・47 が 26 種類を全部見た。フラスコ・チャームは normal, magic, unique)。 — オーナー OK 済み・本番待ち (スイッチ `jewelMagic`) / オーナー 11-14「③A」(ブラック 111 経由) / 外の正解
 - **E-18a カレンシーで付かない MOD (創生の樹・ハンドラップ専用) は、置き場の重みが 0 でどの手の候補にも出ない。** MOD としてはあるので、MOD の一覧 (`modListFor`) には別の節 (group `special`) で並べ、手で付ける (指名) 時だけ付く。見分けはデータのタグ (`genesis_tree_*` ほか) と置き場 `pools.special`。グラスピングメイルの暗黙が足す分は E-13。 — 有効 / poe2db (創生の樹の MOD はクラフトの置き場に無い) / 確かめ: MOD の一覧の節
 - **E-19 コラプトで付く・変わる MOD と値の幅はエンジンが 1 か所に持つ** (`services/mods/corruption.ts` + `corruption-mods.json` ← `scripts/build-corruption-mods.mjs`、poe2db から)。 — 有効 / オーナー 10-20
 
