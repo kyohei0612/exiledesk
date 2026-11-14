@@ -109,7 +109,8 @@ export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: s
 export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   setJudgeDay(topic.day);
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
-  const doc = rebuildTree(data, healRecipeV1(raw));
+  // シミュの「いずれかの元素耐性」(S-10h ④) に読み替えさせない印 (daily-open.ts と同じ)。お題の判定は元素ごと
+  const doc = rebuildTree(data, healRecipeV1({ ...raw, eleAny: 1 }));
   const frac = doc.memoAims?.find((a) => a.fractured)?.modId;
   // ✦ の無い木 = フラクチャー無し (11-12 のお題から選べる、D-03)。✦ があればお題の狙いの物だけ
   if (doc.base !== topic.base || (frac && !topic.aims.some((a) => a.modId === frac))) return null;
