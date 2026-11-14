@@ -13,7 +13,7 @@
 | ジン部長 | — (local_e283feed はアーカイブ済み、11-14 0 時台にブラック 104 が見た。作業場 .claude/worktrees/wizardly-gould-f36ecf・引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 仕事が来たらブラックが立てる (古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテストが残り) |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_d39231ca-7ef9-4f5f-be8a-54c0c9059105 (48、Opus 5.5、11-14 夜にブラック 110 が予備で立て、47 = local_185fe221 が 2,428 件で交代。引き継ぎ = 共有ノート local_41371db6…/progress/sim-lead47-handover.md。記録 = progress/sim-lead48-run.log。レビュワーは無し = 撮りと数えは部長自身) | 今: オーナーの確かめ待ち (手順 = 共有 local_41371db6…/progress/owner-check-1115.md と progress/sim-lead47-owner-check.md)。次 = 耐性を 3 つに分ける案・ハンドの足し (中身は 111 に聞く)。止め = フラックスの後の札の直し (オーナー「要相談」) |
+| シミュ部長 | local_36d25c04-89f1-47e5-8207-508e4597771f (49、Opus 5.5、11-15 にブラック 111 が控えで立て、48 = local_d39231ca が 2,31x 件で交代。引き継ぎ = 共有ノート local_41371db6…/progress/sim-lead48-handover.md。記録 = progress/sim-lead49-run.log。レビュワーは無し = 撮りと数えは部長自身) | 今: 耐性の作り (いずれかの元素耐性、開発版だけ・設計図を同じ commit で。オーナーの go 済み)。待ち = オーナーの確かめ (手順 = 共有 local_41371db6…/progress/owner-check-1115.md)。止め = フラックスの後の札の直し (オーナー「要相談」) |
 | デザイン部長 | local_7572ea36-62ba-458f-8061-62f4eb92e735 (9、Opus 5.5、11-14 16 時台にブラック 109 が控えで立て、8 = local_d5d63228 が 2,415 件・残り無しで交代。引き継ぎ = 共有ノート local_429a9cb4…/design-lead8-handover.md。記録 = progress/design-lead9-run.log) | 今: 待機。要望の統一 (U-05e) と途中の未設定を出さない (U-05f、要望に数を添える) は済み・スイッチ actLog の下、開発版だけ |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
