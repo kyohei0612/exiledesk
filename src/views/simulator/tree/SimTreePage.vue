@@ -268,7 +268,8 @@ const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
 /** 未設定の数 = 困り事の出た箱の数。左上の札・赤い札・一覧の見出し・下の帯で同じ (S-89b、11-08 オーナー「足りない所と下の未設定の数字が合わない」) */
 const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).length);
 // 開いた時に黙って外した木の途中の余った印の数を要望に添える (画面には出さない、S-107d・U-05f。スイッチ actLog)
-watch(t.loading, (on) => { if (!on && flag("actLog")) noteOpenHealth({ midUnset: doc.value.midDropped ?? 0 }); });
+// 数は開き終えた後の組み直しで書かれ、#recipe からの開きでは loading が替わらない事もあるので、数そのものを見る (11-14 デザイン 8: ワンドで midDropped 2 なのに openIssues が null)
+watch(() => doc.value.midDropped, (n) => { if (flag("actLog")) noteOpenHealth({ midUnset: n ?? 0 }); }, { immediate: true });
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 最終チェックのボタン: 人を回さず木の枠を辿る精査だけ (11-11 オーナー「何人か回してるよね。やめさせてくれ。普通に全枠2周して未設定やバグないかのチェックが最終チェックだ」、S-201 ②。前は精査の後に試しの 30 人を回していた) */
 async function onTest(): Promise<void> {
