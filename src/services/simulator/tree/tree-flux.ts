@@ -22,8 +22,10 @@ export function fluxAims(data: PatchData, doc: TreeDoc): Aim[] {
  * 狙いの MOD だけを残した品 (外れの MOD は木では中身が見えないので数えない。遊びごとの上書き E-107)。
  * 狙いの MOD かはエンジンの aimHits (段は問わない = 下限 0、同じ系統で文も同じ物も)
  */
-export function aimOnly(data: PatchData, item: StageItem, aims: readonly Aim[]): StageItem {
-  const keep = (m: StageMod): boolean => aims.some((a) => aimHits(m, { modId: a.modId, minTierIndex: 0 }, { data, sameText: true }));
+export function aimOnly(data: PatchData, item: StageItem, aims: readonly Aim[], named?: ReadonlySet<string> | null): StageItem {
+  // named = 箱のカードで名前の出ている MOD (☑ の組、発現した MOD も入る)。狙いでなくても中身が見えているので数える (11-14 オーナー「発現MODの、名前ありにも対応させてくれ」)
+  const ids = [...aims.map((a) => a.modId), ...(named ?? [])];
+  const keep = (m: StageMod): boolean => ids.some((modId) => aimHits(m, { modId, minTierIndex: 0 }, { data, sameText: true }));
   return { ...item, prefixes: item.prefixes.filter(keep), suffixes: item.suffixes.filter(keep) };
 }
 /**
@@ -36,8 +38,8 @@ export function fluxAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   if (![...prev].some((id) => on(before, id) && !on(item, id))) return [];
   return fluxAims(data, doc).filter((a) => !on(before, a.modId) && on(item, a.modId)).map((a) => a.modId);
 }
-/** 棚で打たせない理由: 狙いの耐性の MOD が無ければ打てない (外れの耐性は数えない)。フラックスでなければ null */
-export function fluxBlock(data: PatchData, doc: TreeDoc, item: StageItem | null | undefined, key: string): string | null {
+/** 棚で打たせない理由: 狙いか名前の出ている (named) 耐性の MOD が無ければ打てない (「外れ MOD」の札の物は数えない)。フラックスでなければ null */
+export function fluxBlock(data: PatchData, doc: TreeDoc, item: StageItem | null | undefined, key: string, named?: ReadonlySet<string> | null): string | null {
   if (!fluxOn(key) || !item) return null;
-  return useReason(data, aimOnly(data, item, fluxAims(data, doc)), key, []) ? tr("変えられる狙いの耐性 MOD が無い (外れの MOD には打たない)", "No target resistance mod to convert (not used on junk mods)") : null;
+  return useReason(data, aimOnly(data, item, fluxAims(data, doc), named), key, []) ? tr("変えられる耐性 MOD が無い (「外れ MOD」には打たない)", "No resistance mod to convert (not used on junk mods)") : null;
 }

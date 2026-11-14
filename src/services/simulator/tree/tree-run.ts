@@ -268,7 +268,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
     if (sure) useSureFrac(b.hand, (k, n) => { spent.push([k, n]); });
     // 耐性のフラックスで変えられる狙いの耐性が無い人 (2 周目でもう変えた後など) は打たずに飛ばす: 品のまま・使わない (S-31h、オーナー 11-13「スキップ処理は必要止まるよ」)
-    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) || fluxBlock(data, doc, item, b.hand.currency) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
+    const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) || fluxBlock(data, doc, item, b.hand.currency, aimed) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
     }
