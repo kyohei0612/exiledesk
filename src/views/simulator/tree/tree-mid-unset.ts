@@ -2,11 +2,8 @@
  * tree-mid-unset.ts — 木の途中の未設定 (S-107d: 要確認の印の箱が手を持つ = 下が組めているのに印) の見分けと文 (U-05f、文と色はデザイン部長 8 の渡し 11-14)。
  * 途中の未設定は赤い「未設定 n つ」に数えず、100 人回すも止めない (無視して回せる)。印は琥珀の「?」、開いた時に 1 枚で要望へ誘う。スイッチ actLog の間だけ
  */
-import { computed, shallowRef, watch, type ComputedRef, type Ref } from "vue";
 import type { CheckIssue } from "../../../services/simulator/tree/tree-check";
-import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { cantHandOf } from "../../../services/simulator/tree/tree-frame-check";
-import { craftStage as s } from "../../../state/craft-stage";
+import type { TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { orphanText } from "./use-tree-check";
@@ -17,35 +14,12 @@ export const isMidMark = (b: TreeBox, issue: string | null | undefined): boolean
 /** 途中の未設定の箱の id の集まり (一覧・下の札の数え分け) */
 export const midIdsOf = (mid: readonly CheckIssue[]): ReadonlySet<string> => new Set(flag("actLog") ? mid.map((x) => x.boxId) : []);
 
-/**
- * 開いた直後からある打てない手 (S-107c) の箱。開き終えた時に控え、その箱が同じ手のまま打てない間だけ数える (組む途中で出た物は入れない。
- * オーナー 11-14「１　入れない　２入れる」= 外した前の版の決めは入れない・開いた直後の打てない手は入れる)
- */
-export function useOpenCant(doc: Ref<TreeDoc>, loading: Ref<boolean>): ComputedRef<string[]> {
-  const seen = shallowRef<ReadonlyMap<string, string>>(new Map());
-  const handKey = (d: TreeDoc, id: string): string => JSON.stringify(d.boxes[id]?.hand ?? null);
-  watch([loading, () => !!s.data.value], ([on, ready]) => {
-    if (on || !ready || !flag("actLog")) { if (on) seen.value = new Map(); return; }
-    const data = s.data.value!, d = doc.value;
-    seen.value = new Map(Object.keys(d.boxes).filter((id) => !!cantHandOf(data, d, id)).map((id) => [id, handKey(d, id)]));
-  }, { immediate: true });
-  return computed(() => {
-    const data = s.data.value, d = doc.value;
-    return !data ? [] : [...seen.value].filter(([id, k]) => d.boxes[id] && handKey(d, id) === k && !!cantHandOf(data, d, id)).map(([id]) => id);
-  });
-}
-
 export const midMarkTitle = (): string => tr("途中の未設定 (サイトの不具合)。直さなくても 100 人回せます", "Unset in the middle of the tree (a site bug). You can still run 100 players");
-/** 1 枚の 1 行目 (n = 途中の未設定、m = 開いた直後からある打てない手) */
-export const midCardHead = (n: number, m = 0): string =>
-  n && m ? tr(`木の途中に未設定が ${n} つ・打てない手が ${m} つあります (サイトの不具合)`, `This tree opened with ${n} unset mid-tree and ${m} hands that can't be used (a site bug)`)
-  : m ? tr(`開いた木に打てない手が ${m} つあります (サイトの不具合)`, `This tree opened with ${m} ${m === 1 ? "hand" : "hands"} that can't be used (a site bug)`)
-  : tr(`木の途中に未設定が ${n} つ出ています (サイトの不具合)`, `${n} unset ${n === 1 ? "box" : "boxes"} appeared in the middle of the tree (a site bug)`);
+export const midCardHead = (n: number): string => tr(`木の途中に未設定が ${n} つ出ています (サイトの不具合)`, `${n} unset ${n === 1 ? "box" : "boxes"} appeared in the middle of the tree (a site bug)`);
 export const midCardSub = (): string => tr("直さなくても 100 人回せます。木を触る前に、このまま送ってもらえると原因を直せます", "You can still run 100 players. Send it as-is before changing the tree and we can fix the cause");
 export const midSendAsIs = (): string => tr("このまま送る", "Send as-is");
 export const midWhere = (): string => tr("どこ？", "Where?");
-export const midChip = (n: number, m = 0): string =>
-  [n ? tr(`途中の未設定 ${n} つ`, `${n} unset mid-tree`) : "", m ? tr(`打てない手 ${m} つ`, `${m} unusable ${m === 1 ? "hand" : "hands"}`) : ""].filter(Boolean).join(tr("・", ", "));
+export const midChip = (n: number): string => tr(`途中の未設定 ${n} つ`, `${n} unset mid-tree`);
 export const midListHead = (n: number): string => tr(`途中の未設定 ${n} つ (サイトの不具合)`, `${n} unset mid-tree (a site bug)`);
 export const midListWhat = (): string => tr("手が決まっていて下も組めているのに印が出た箱です。直さなくても 100 人回せます。行を押すとその箱へ移ります", "These boxes already have a hand and the tree continues below, but got a mark. You can still run 100 players. Click a row to jump to it");
 /** 行の 2 行目 (訳と消し方。前の版の決めが今の木で行き場を失った物、S-107d) */

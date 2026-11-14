@@ -45,7 +45,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
 import { backLabelOf } from "./tree-fail";
 import { useTreeCheck } from "./use-tree-check";
-import { noteOpenHealth } from "../../../web/feedback-scene"; import { useOpenCant } from "./tree-mid-unset";
+import { noteOpenHealth } from "../../../web/feedback-scene";
 import TreeIssues from "./TreeIssues.vue";import TreeBugReport, { reportTreeBug } from "./TreeBugReport.vue"; import { issueGroups } from "./hole-check";
 import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
@@ -266,9 +266,8 @@ function openIssues(): void { simOp("open-missing"); issuesShown.value = true; i
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
 /** 未設定の数 = 困り事の出た箱の数。左上の札・赤い札・一覧の見出し・下の帯で同じ (S-89b、11-08 オーナー「足りない所と下の未設定の数字が合わない」) */
-// 開き終えた時の途中の未設定と、開いた直後からある打てない手の数を要望に添える (U-05f・S-107d、0 は null。スイッチ actLog)
-const openCant = useOpenCant(doc, t.loading);
-watch(t.loading, (on) => { if (!on && flag("actLog")) noteOpenHealth({ midUnset: midUnset.value.length, cantUse: openCant.value.length }); });
+// 開き終えた時の途中の未設定の数を要望に添える (U-05f・S-107d、0 は null。スイッチ actLog)
+watch(t.loading, (on) => { if (!on && flag("actLog")) noteOpenHealth({ midUnset: midUnset.value.length }); });
 const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).filter((g) => !flag("actLog") || !g.rows.every((x) => x.kind === "orphan" && midUnset.value.some((m) => m.boxId === x.boxId))).length); // 木の途中の未設定は数えない = 無視して 100 人回せる (S-107d)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 最終チェックのボタン: 人を回さず木の枠を辿る精査だけ (11-11 オーナー「何人か回してるよね。やめさせてくれ。普通に全枠2周して未設定やバグないかのチェックが最終チェックだ」、S-201 ②。前は精査の後に試しの 30 人を回していた) */
@@ -416,7 +415,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" :mid="midUnset" :cant="openCant" @go="goIssue" @report="reportTreeBug(doc, true)" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
+        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :n="holeN" :doc="doc" :mid="midUnset" @go="goIssue" @report="reportTreeBug(doc, true)" />        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <!-- 描き面 (Vue Flow と箱・線・札・回した層・段の札、TreeCanvas.vue)。スイッチ tabKeep の中は一度開いたタブごとに 1 枚、隠れた面は止めて残す (S-09c)。v-show は外の枠に (部品に付けると替えるたびに面を描き直す) -->
         <template v-if="KEEP"><div v-for="k in alive" :key="k" v-show="k === liveKey" class="contents" :data-tree-tab-key="k"><TreeCanvas :tab-key="k" :page="pageCtx" /></div></template>
