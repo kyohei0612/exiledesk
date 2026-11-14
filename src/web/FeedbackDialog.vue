@@ -91,6 +91,10 @@ function modLine(m: StageMod): string {
 const SCENE_ON = flag("actLog");
 /** 窓の下の一言を木の言い方にする画面 (シミュ・デイリー) */
 const treeScene = computed(() => SCENE_ON && props.open && ["sim", "daily"].includes(scenePage()));
+/** 置いた順の記録 (シミュの木の S-104c) を詰めた物。記録の無い端末・作れない時は null */
+async function actLogNow(): Promise<unknown> {
+  try { const m = await import("../views/simulator/tree/act-log"); return await m.actLogCode(40_000); } catch { return null; }
+}
 async function contextNow(): Promise<unknown> {
   const s = craftStage;
   const it = s.item.value;
@@ -125,6 +129,8 @@ async function contextNow(): Promise<unknown> {
     hand: emu ? hand : null,
     // シミュの作りかけの木 (保存していなくても・別のページからでも。web/feedback-tree.ts、11-08 オーナー「1おけ」)。開くのは web.html?page=sim-tree#recipe=<code>
     treeDraft: treeDraftNow(),
+    // 置いた順の記録 (詰めた code = JSON → deflate-raw → base64url、S-104c・U-05e)。どのページから送っても端末に残っている物を
+    ...(SCENE_ON ? { actLog: await actLogNow() } : {}),
   };
 }
 
