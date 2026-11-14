@@ -3,12 +3,12 @@
  * ☑ の無い MOD は外れ MOD (メモ feedback-unchecked-is-junk)、消去の残したい MOD (Hand.keep) もここ。打った前後の比べはエンジンの入口 (outcomeOf の aimDiff)。
  * 分け方は handOutcome の 1 本 (G-1 S-1、11-07): 箱の結果は boxOutcomeOf、手を置く時に起こりうる結果の箱 (possibleOutsOf) は列挙した枝を handOutcome に通して集めるだけ
  */
-import { applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { ANY_ELE_FAMILIES, applyCurrency, familiesOf, isCraftedSource, makeStageMod, mulberry32, unrevealedOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { revealOutcomes, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand, PICK_EFFECTS } from "./tree-hands";
 import { fluxOn } from "./tree-flux";
-import { bothKeyOf, boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, bothKeyOf, bothOf, boxAims, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { sameAim, sameAimMod } from "./tree-hand-core";
 import { essenceTarget, essenceTierIndex, essenceTierVerdict, isInfiniteEssence } from "../../craft-stage/apply-essence"; import { flag } from "../../../web/release-flags";
@@ -52,7 +52,14 @@ const RAW_DRAWS = 24;
 /** 手を置く時の結果の箱の形 (当たりは札 1 つ) */
 type BoxOut = { out: OutKind; aim: Aim | null; junkKey?: string };
 /** 箱の当たりの札 = この手の当たりの箱の ☑ */
-const ownOf = (doc: TreeDoc, b: Pick<TreeBox, "outs">): Aim[] => b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
+// 「2 つとも付いた」の箱 (鍵 a:、S-22d) の組の狙いも札に入れる: 同じ段の「いずれか」2 本は 2 本目だけの当たりの箱が無いので、
+// 箱の狙い (1 本目) だけだと 2 本目が札に無く、2 つ付いた人も 1 本目の当たりになって「2 つとも付いた」の箱の見本が作れなかった (S-10h、11-15 夜)
+const ownOf = (doc: TreeDoc, b: Pick<TreeBox, "outs">): Aim[] => {
+  const goal = new Map((doc.memoAims ?? []).map((g) => [g.modId, g] as const));
+  const xs = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? [...boxAims(c), ...bothOf(c.junkKey).flatMap((m) => { const g = goal.get(m); return g ? [g] : []; })] : []; });
+  const k = (a: Aim): string => `${aimKey(a)}#${a.anyEle ?? 0}`;
+  return xs.filter((a, i) => xs.findIndex((x) => k(x) === k(a)) === i);
+};
 /** 外れ・打った後・外れが消えた・狙いが消えたに側の鍵を付ける (S-65・S-71g。狙いが消えたは消去もほかの手と同じく側で分ける、11-04。鍵があればそのまま) */
 function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
   // 狙いの付かないエッセンスの結果 (当たりで札が空) は洗い出しでは打った後の箱
@@ -237,7 +244,7 @@ function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, h
   if ((oc.out === "hit" && (oc as { hits?: readonly Aim[] }).hits?.length !== 0) || fracFree(doc, h)) return oc;
   // 発現で選ぶ手は打った後に未発現が残らない (③ 見積もりは発現の前の形)
   // 名前の印の MOD が消えた鍵は、残したい MOD を決めていない手の、狙いが消えた以外の結果だけ (決めた手は選んだ MOD が狙い = 消えたら狙いが消えた、選ばなければ外れ。S-27d)
-  const nk = joinKeys(joinKeys(nextKeyOf(before, after, kept, veilPick(h)), !h?.keep && oc.out !== "lost" ? namedGoneKey(doc, before, after, kept) : undefined), oc.out === "lost" ? lostKeyOf(before, after, kept) : undefined);
+  const nk = joinKeys(joinKeys(nextKeyOf(before, after, kept, veilPick(h)), !h?.keep && oc.out !== "lost" ? namedGoneKey(doc, before, after, kept) : undefined), oc.out === "lost" ? lostKeyOf(before, after, kept, doc) : undefined);
   return nk ? { ...oc, junkKey: joinKeys(oc.junkKey, nk) } : oc;
 }
 /**
@@ -245,10 +252,15 @@ function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, h
  * 前は側の数 (s:) だけで、同じ側の別の狙い (例 クリティカル / マナコストのエッセンス) が消えた人が 1 箱にまとまり、下の自動の消去 (S-28g) が
  * 見本の形にしか合わず、もう 1 つの形の人が止まった (11-11 オーナーの木 /r/lefrj8Hz、100 人中 17 人)
  */
-function lostKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): string | undefined {
+function lostKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined, doc?: TreeDoc): string | undefined {
   if (!kept?.size) return undefined;
   const has = (it: StageItem, id: string): boolean => [...it.prefixes, ...it.suffixes].some((m) => m.modId === id);
-  const gone = [...kept].filter((id) => has(before, id) && !has(after, id)).sort();
+  // 「いずれかの元素耐性」の札 (S-10h ③): 印の modId は札の名前で、付いた元素とは限らない (冷気で付いた見本の印も火の modId)。
+  // 札の分は元素を見ず、一般の火・冷気・雷耐性の数が減ったかで 1 つの鍵 `ele` にする (前は冷気・雷で付いた見本だけ鍵が付かず、空の「狙いが消えた」の枠が出た)
+  const ele = new Set((doc?.memoAims ?? []).filter((a) => a.anyEle).map((a) => a.modId));
+  const eles = (it: StageItem): number => [...it.prefixes, ...it.suffixes].filter((m) => !m.desecrated && !m.crafted && ANY_ELE_FAMILIES.includes(m.family)).length;
+  const gone = [...kept].filter((id) => !ele.has(id) && has(before, id) && !has(after, id)).sort();
+  if ([...kept].some((id) => ele.has(id)) && eles(after) < eles(before)) gone.push("ele");
   return gone.length ? `d:${gone.join(",")}` : undefined;
 }
 /**

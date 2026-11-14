@@ -11,7 +11,7 @@ import { isRevealHand } from "./tree-veil";
 import { aimTargetOf } from "./tree-ele-any";
 
 /** 段の名前の T で言う狙い (T1 が一番上) */
-interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[] }
+interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
 interface AimDiffOpts { sameText?: boolean }
 
 const targetOf = (data: PatchData, a: TierAim): AimTarget => aimTargetOf(data, a);
@@ -48,7 +48,7 @@ export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, a
     lost: had.filter((a) => !has.includes(a)),
     junkGone: junk(after) < junk(before),
     fractured,
-    fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], { ...a, anyEle: a.anyEle ? 1 : undefined }, o)) : [],
+    fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], { ...a, anyEle: a.anyEle ? 1 : undefined, eleTiers: undefined } as TierAim, o)) : [], // 固定された 1 つが段を満たすか (割り当ての段の並びは渡さない)
   };
 }
 

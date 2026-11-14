@@ -16,7 +16,7 @@ import { pathKeyOf } from "./tree-recipe-v1";
 import { docPartOf, itemKeyOf, pathKeyOfBox, premiseOf, type PathLink } from "./tree-sample-key";
 import { aimHeldOn } from "./tree-aim";
 import { ECHO, effectOf, isBone, isCatalyst } from "./tree-hands";
-import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
+import { bothOf, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf } from "./tree-outcome";
@@ -68,6 +68,9 @@ export function aimsOf(data: PatchData, doc: TreeDoc): Aim[] {
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => sameAimMod(data, g, b.aim!));
   };
   for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b)) for (const a of boxAims(b)) if (!out.some((x) => sameAim(data, x, a))) out.push(a);
+  // 「2 つとも付いた」の箱 (鍵 a:) の組の狙いも (同じ段の「いずれか」2 本は 2 本目だけの当たりの箱が無く、2 本目が並びに入らなかった、S-10h・S-22d)
+  const goalOf = new Map(goals.filter((g) => !g.fractured).map((g) => [g.modId, g] as const));
+  for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b)) for (const a of bothOf(b.junkKey).flatMap((m) => { const g = goalOf.get(m); return g ? [g] : []; })) if (!out.some((x) => sameAim(data, x, a))) out.push(a);
   // 始めから付いている完成の狙い (スタートの窓の「＋ 外れを狙いに差し替える」)。前は当たりの箱の札だけで、始めの狙いが消える結果を「外れが消えた」と数え、
   // 「狙いが消えた」の箱も作らなかった (10-25 シミュ 28 の洗い出し: 始めにスピリット・キャストを付けた形で、消去・カオス・パーフェクトの全部)
   for (const m of startGoalAims(data, doc)) if (!out.some((x) => sameAim(data, x, m))) out.push(m);

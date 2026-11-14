@@ -20,19 +20,23 @@ export const isEleMod = (data: PatchData, modId: string): boolean => anyEleMod(d
 /** 同じ部位の一般の火・冷気・雷の modId (並びは火・冷気・雷、エンジンの anyEleIds) */
 export const eleIdsOf = (data: PatchData, modId: string): string[] => anyEleIds(data, modId);
 
-/** 「いずれか」の札 (エンジンの AimTarget に anyEle・eleSkip) */
-export type EleTarget = AimTarget & { anyEle?: number; eleSkip?: readonly string[] };
-interface EleAimLike { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[] }
-/** 狙い → エンジンの札 (段の番号。「いずれか」なら番号と数えない系統も)。tier を渡すとその段で */
+/** 「いずれか」の札 (エンジンの AimTarget に anyEle・eleSkip・anyEleTiers) */
+export type EleTarget = AimTarget & { anyEle?: number; eleSkip?: readonly string[]; anyEleTiers?: readonly number[] };
+interface EleAimLike { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
+/**
+ * 狙い → エンジンの札 (段の番号。「いずれか」なら番号・数えない系統・置いた「いずれか」全部の段も)。tier を渡すとその段で。
+ * 全部の段 (eleTiers) を渡すと、付いているかはエンジンの割り当て (厳しい本から順に良い元素耐性を当てる、S-10h ②) で見る
+ */
 export function aimTargetOf(data: PatchData, a: EleAimLike, tier = a.tier): EleTarget {
   const t: EleTarget = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, tier) };
   if (!a.anyEle) return t;
   t.anyEle = a.anyEle;
   if (a.eleSkip?.length) t.eleSkip = a.eleSkip;
+  if (a.eleTiers?.length) t.anyEleTiers = tier === a.tier ? a.eleTiers : a.eleTiers.map((x, i) => (i === a.anyEle! - 1 ? tier : x));
   return t;
 }
 
-const noEle = <A extends EleAimLike>(a: A): A => { if (a.anyEle == null && a.eleSkip == null) return a; const { anyEle: _n, eleSkip: _s, ...r } = a; return r as A; };
+const noEle = <A extends EleAimLike>(a: A): A => { if (a.anyEle == null && a.eleSkip == null && a.eleTiers == null) return a; const { anyEle: _n, eleSkip: _s, eleTiers: _t, ...r } = a; return r as A; };
 /**
  * 完成形の狙いの「いずれか」を揃える: 札の modId (前からの物はそのまま、新しい物は空いた元素へ。空きが無い物は外す)・番号 (段の厳しい順、同じ段は火・冷気・雷の順)・
  * 数えない系統 (元素を決めた狙いの系統)。「いずれか」が無ければそのまま
@@ -48,10 +52,11 @@ export function tidyGoals(data: PatchData, goals: readonly Aim[]): Aim[] {
   const famIx = (a: Aim): number => ELE_FAMILIES.indexOf(data.mods.get(idOf.get(a)!)?.family ?? "");
   const order = [...idOf.keys()].sort((x, y) => x.tier - y.tier || famIx(x) - famIx(y));
   const rank = new Map(order.map((a, i) => [a, i + 1]));
+  const tiers = order.map((a) => a.tier); // 置いた「いずれか」全部の段 (厳しい順)。付いているかはエンジンの割り当てで見る (S-10h ②)
   return goals.filter((a) => !a.anyEle || idOf.has(a)).map((a) => {
     if (!a.anyEle) return noEle(a);
-    const { eleSkip: _s, ...r } = a;
-    return { ...r, modId: idOf.get(a)!, anyEle: rank.get(a)!, ...(skip.length ? { eleSkip: skip } : {}) };
+    const { eleSkip: _s, eleTiers: _t, ...r } = a;
+    return { ...r, modId: idOf.get(a)!, anyEle: rank.get(a)!, ...(skip.length ? { eleSkip: skip } : {}), eleTiers: tiers };
   });
 }
 
@@ -70,8 +75,8 @@ function syncAims(data: PatchData, d: TreeDoc): void {
   const { memoAims: _m, ...rest } = d;
   eachAim(rest, (a) => {
     const g = byId.get(a.modId);
-    if (g) { a.anyEle = g.anyEle; if (g.eleSkip?.length) a.eleSkip = [...g.eleSkip]; else delete a.eleSkip; return; }
-    if (a.anyEle != null || a.eleSkip != null) { delete a.anyEle; delete a.eleSkip; }
+    if (g) { a.anyEle = g.anyEle; if (g.eleSkip?.length) a.eleSkip = [...g.eleSkip]; else delete a.eleSkip; if (g.eleTiers?.length) a.eleTiers = [...g.eleTiers]; else delete a.eleTiers; return; }
+    if (a.anyEle != null || a.eleSkip != null || a.eleTiers != null) { delete a.anyEle; delete a.eleSkip; delete a.eleTiers; }
   });
   void data;
 }
@@ -85,7 +90,15 @@ export const setEleAnyDaily = (f: () => boolean): void => { dailyNow = f; };
  * 木の中の同じ札を「いずれかの元素耐性」にする (段はそのまま、数は元素の数)。印を付けて返す (渡した物は書き換えない)。スイッチ・デイリーの時はそのまま
  */
 export function readEleAny<D extends TreeDoc>(data: PatchData, src: D): D {
-  if (!eleAnyOn() || src.eleAny || dailyNow()) return src;
+  if (!eleAnyOn() || dailyNow()) return src;
+  if (src.eleAny) {
+    // 段の並び (eleTiers) の無い前の保存 (11-15 夜より前) は、開いた時に揃え直す (割り当ての数え方、S-10h ②)
+    if (!(src.memoAims ?? []).some((a) => a.anyEle && !a.eleTiers?.length)) return src;
+    const d = JSON.parse(JSON.stringify(src)) as D;
+    d.memoAims = tidyGoals(data, d.memoAims ?? []);
+    syncAims(data, d);
+    return d;
+  }
   const d = JSON.parse(JSON.stringify(src)) as D;
   d.eleAny = 1;
   const conv = new Set((d.memoAims ?? []).filter((a) => !a.fractured && a.via !== "desecrated" && isEleMod(data, a.modId)).map((a) => a.modId));
@@ -112,13 +125,17 @@ export const eleAnyText = (text: string, n = 1): string =>
   text.replace(/(火|冷気|雷)耐性/, "いずれかの元素耐性").replace(/(Fire|Cold|Lightning) Resistance/, "any Elemental Resistance") + (n > 1 ? tr(` (${n} つ目)`, ` (#${n})`) : "");
 
 /**
- * 手の窓の ☑ の候補の「いずれか」は、まだ付いていない一番小さい番号から、その手で付く数まで (S-10h ②。偉大な高貴なら 2 つ目まで、置いた本数が上限)。
- * n 番は n−1 番の後でしか付かないので、それより上の番号の箱は見本が作れない (白からの錬金で 2 番だけの当たりの箱が「MOD なし」になった)。
+ * 手の窓の ☑ の候補の「いずれか」は、段ごとにまだ付いていない番号の小さい方から、その手で付く数まで (S-10h ②。偉大な高貴なら 2 つ目まで、置いた本数が上限)。
+ * 同じ段の本は小さい番号の後でしか付かないので、その上の番号の箱は見本が作れない (白からの錬金で 2 番だけの当たりの箱が「MOD なし」になった)。
  * 2 つとも付いた人は「2 つとも付いた」の箱 (S-22d)
  */
-export function nextEleOnly<A extends { anyEle?: number }>(open: readonly A[], adds = 1): A[] {
-  const ns = open.filter((a) => a.anyEle).map((a) => a.anyEle!);
-  if (!ns.length) return [...open];
-  const lo = Math.min(...ns), hi = lo + Math.max(1, adds) - 1;
-  return open.filter((a) => !a.anyEle || a.anyEle <= hi);
+export function nextEleOnly<A extends { anyEle?: number; tier: number }>(open: readonly A[], adds = 1): A[] {
+  // 割り当ての数え方 (11-15 夜、S-10h ②): 段の違う本は 1 手でどれも付きうる (T2 以上 + T3 以上なら T2 が付けば 1 番、T3 が付けば 2 番)。
+  // 同じ段の本は番号の小さい方から付くので、段ごとにまだ付いていない番号の小さい方から、その手で付く数 (adds) まで
+  const keep = new Set<A>(), perTier = new Map<number, number>();
+  for (const a of open.filter((x) => x.anyEle).sort((x, y) => x.anyEle! - y.anyEle!)) {
+    const n = perTier.get(a.tier) ?? 0;
+    if (n < Math.max(1, adds)) { keep.add(a); perTier.set(a.tier, n + 1); }
+  }
+  return open.filter((a) => !a.anyEle || keep.has(a));
 }
