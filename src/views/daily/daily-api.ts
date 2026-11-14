@@ -172,6 +172,9 @@ export async function giveUpTry(id: string): Promise<boolean> {
 /** 今日のお題にまだ挑戦できるか (始めていない・14:50 まで、または時間が残り諦めていない)。今日の順位のレシピを見る前の窓を出すか (D-50c) */
 export function canStillTry(id: string, now = Date.now()): boolean {
   if (id !== todayId(now)) return false;
+  // 端末の控えを読み直す: 挑戦を始める前から開いていた別のタブは控えを読み込み時の 1 回しか読まないので、挑戦中でも「始めていない」と見て 14:50 過ぎは窓なしで開いた (11-14)
+  const stored = loadLocal().tries[id];
+  if (stored && stored.startedAt !== daily.local.tries[id]?.startedAt) daily.local.tries[id] = stored;
   const t = daily.local.tries[id];
   return t ? !t.ended && leftMs(t, now) > 0 : canStartAt(now);
 }
