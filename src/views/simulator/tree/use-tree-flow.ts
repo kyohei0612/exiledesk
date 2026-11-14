@@ -79,6 +79,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
   }
   /** 今より 1 段上 / 下 (段の間にいる時は近い側の次) */
   const stepZoom = (dir: 1 | -1, at?: { x: number; y: number }): Promise<void> => {
+    freeX = false; // (revealFreeX) 人が大きさを替えたら左端の留めを戻す
     const ls = levels(), z = zoom.value, next = dir > 0 ? ls.find((l) => l > z + 1e-3) : [...ls].reverse().find((l) => l < z - 1e-3);
     return setZoom(next ?? (dir > 0 ? ZOOM_MAX : ls[0]!), at);
   };
@@ -86,6 +87,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
   const zoomOut = (): Promise<void> => stepZoom(-1);
   /** ホイール (タッチパッドのピンチ = ctrl + ホイールも) はマウスの所を軸に 1 段ずつ。Vue Flow のホイールの拡大縮小は切ってある (SimTreePage) */
   let wheelAcc = 0, wheelT = 0;
+  /** (スイッチ revealFreeX) 寄った後で、左端の留め (laneWall) を横には掛けない間 */
+  let freeX = false;
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
     clearTimeout(wheelT);
@@ -96,6 +99,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
     wheelAcc = 0;
     // スイッチ treeFineWheel (S-147i): 1 回で今の大きさの 1 割 (段に吸い付かない)。マウスの下の点を軸に、下限・上限で止める
     if (flag("treeFineWheel")) {
+      freeX = false; // (revealFreeX) ホイールで大きさを替えたら左端の留めを戻す
       const vp = f.viewport.value, to = Math.min(maxZoom.value, Math.max(minZoom.value, vp.zoom * (dir > 0 ? WHEEL_RATE : 1 / WHEEL_RATE)));
       const n = zoomAt(vp, f.screenToFlowCoordinate({ x: e.clientX, y: e.clientY }), to);
       if (to !== vp.zoom) void zoomPut(n.x, n.y, n.zoom);
@@ -223,6 +227,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
   async function reveal(id: string, mid = false): Promise<void> {
     const b = doc.value.boxes[id];
     if (!b) return;
+    // スイッチ revealFreeX: 寄る時は横も動かし、左端の留め (laneWall) で戻さない。次に人が引っ張る・大きさを替えるまで (11-14 オーナー「真ん中に表示が丸いね同じ画面内でも挙動的にうごっしょカメラ」)
+    if (flag("revealFreeX")) freeX = true;
     const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 24;
     // スイッチ nextInView (S-147c): 箱の本当の高さ + 下の ＋ まで (帯「! 未設定」の下に ＋ を隠さない)
     const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = ((f.findNode(id)?.dimensions.height || BOX_H) + NEXT_H) * z;
@@ -250,6 +256,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
     const b = openBounds(), ns = f.getNodes.value;
     const x0 = Math.min(b.x, ...ns.map((n) => n.position.x)), { mx, my } = edgeLimit(b, x0, Math.min(b.y, ...ns.map((n) => n.position.y)), lw, w, z, topY());
     // スイッチ laneWall (S-147n): 木の左の端を段の札の帯の右の線 + LANE_GAP に留める。引っ張り・ホイール・＋− のどれの後も横はここ (横に長い木は縮めて見る)
+    // スイッチ revealFreeX: 寄った後は横を戻さない (縦の上の端だけ守る)
+    if (flag("laneWall") && freeX) { if (y > my + 0.5) void put(x, my, z); return; }
     if (flag("laneWall")) { const px = lw + LANE_GAP - x0 * z; if (Math.abs(x - px) > 0.5 || y > my + 0.5) void put(px, Math.min(y, my), z); return; }
     if (x > mx + 0.5 || y > my + 0.5) void put(Math.min(x, mx), Math.min(y, my), z);
   }, { flush: "sync" });
@@ -279,6 +287,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
   };
   window.addEventListener("resize", onResize);
   f.onPaneReady(() => { void openView(); });
+  // (スイッチ revealFreeX) 人が引っ張り始めたら左端の留めを戻す (寄せなどの動きは sourceEvent が無い)
+  f.onMoveStart(({ event }) => { if ((event as { sourceEvent?: unknown } | null)?.sourceEvent) freeX = false; });
   /** 段の札の帯 (枠の外の左の列、S-147f) の幅の増えた分。枠の左の端がその分右へ動くので、次の幅の変わりで箱が画面の同じ所に残るように送る */
   let laneD = 0;
   const laneShift = (d: number): void => { laneD += d; };
