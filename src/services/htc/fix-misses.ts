@@ -7,7 +7,7 @@
  * 画面はここを読まない。
  */
 export interface FixMiss {
-  /** どの直しか (weight-overrides / poe2db-weights / rune-weights / poe2db-pools / poe2db-tags / poe2db-values / spell-tags) */
+  /** どの直しか (weight-overrides / poe2db-weights / rune-weights / rune-weights-hand / poe2db-pools / poe2db-tags / poe2db-values / spell-tags) */
   step: string;
   /** 何が当たらなかったか (id・行・段)。控えの鍵になるので、同じ外れはいつも同じ文字 */
   what: string;

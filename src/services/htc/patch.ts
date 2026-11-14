@@ -25,6 +25,7 @@ import { flag } from "../../web/release-flags";
 import { applyPoe2dbValueFixes } from "./poe2db-value-fixes";
 import { applyPoe2dbImplicitFixes, implicitStatOrder } from "./poe2db-implicit-fixes";
 import runeWeights from "./rune-weights.json"; // E-03 公開値の無い重みは CoE (ルーンの特殊 MOD)
+import runeWeightsHand from "./rune-weights-hand.json"; // E-03b オーナーの決めた重み (コルの狩り 11-14)。CoE の後に重ねる
 import modStats from "./mod-stats.json";
 import implicitStats from "./implicit-stats.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -315,7 +316,7 @@ function applyPoe2dbFixes(data: PatchData): PatchData {
   for (const m of fx.mods ?? []) mods.set(m.id, m);
   // ルーン (ソウルコア) の特殊 MOD の重みは Craft of Exile (beta) の Krakenbul の実測 (scripts/build-rune-weights-coe.mjs、2026-10-09)
   // 冒涜専用 MOD どうしの重みは公開されていないので全部等しい (2026-10-16 オーナー「不明につき MOD は全て均一」。指輪の Reddit の実測は使わない)
-  const weightTables: Array<[string, Record<string, Record<string, number>>]> = [["poe2db-weights", fx.weights ?? {}], ["rune-weights", (runeWeights as { weights: Record<string, Record<string, number>> }).weights]];
+  const weightTables: Array<[string, Record<string, Record<string, number>>]> = [["poe2db-weights", fx.weights ?? {}], ["rune-weights", (runeWeights as { weights: Record<string, Record<string, number>> }).weights], ["rune-weights-hand", (runeWeightsHand as { weights: Record<string, Record<string, number>> }).weights]];
   for (const [step, table] of weightTables) for (const [id, byIlvl] of Object.entries(table)) {
     const m = mods.get(id);
     if (!m) { noteFixMiss(step, `MOD が無い ${id}`); continue; }

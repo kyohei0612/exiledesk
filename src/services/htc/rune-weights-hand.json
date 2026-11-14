@@ -1,0 +1,88 @@
+{
+ "source": "手の直し (台本 build-rune-weights-coe.mjs では消えない。rune-weights.json の後に重ねる)。オーナー 11-14「コルの狩りだけど、クリ率あるでしょ、ウェイトはクリダメ一般モッドと同じらしい。投射物は近接レベルと同じウェイトらしい」「呪印は近接レベルと同じ」。手袋の一般 MOD CriticalStrikeMultiplier (1000/1000/1000/500/250) と GlobalIncreaseMeleeSkillGemLevel (500/250) の重みを上の段から順に当てた。オーナー 11-14「呪印投射物は近接レベルのティアの段と同じ。クリ率もダメと同じティア段でそろえるイメージ」 (E-03b)",
+ "weights": {
+  "Gloves_dex/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  },
+  "Gloves_dex/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_dex/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_dex_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  },
+  "Gloves_dex_int/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_dex_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  },
+  "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  },
+  "Gloves_str/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str_dex/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  },
+  "Gloves_str_dex/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str_dex/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  },
+  "Gloves_str_int/Rune_marksman_IncreaseSocketedGemLevel__mark_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level": {
+   "45": 500,
+   "65": 250
+  },
+  "Gloves_str_dex_int/Rune_marksman_CriticalStrikeChanceIncrease": {
+   "45": 1000,
+   "65": 500,
+   "75": 250
+  }
+ }
+}
