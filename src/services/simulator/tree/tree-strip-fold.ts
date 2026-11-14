@@ -101,15 +101,26 @@ const ahead = (d: TreeDoc, id: string): boolean => { const c = d.boxes[id], t = 
 export const linkTargets = (d: TreeDoc, folds = stripFolds(d)): Map<string, string[]> => targetsOf(d, folds, "link");
 /** (S-142j ③) ↩ の畳み: 親の箱 → 戻り先の箱 (乗せた時だけ青い線) */
 export const backTargets = (d: TreeDoc, folds = stripFolds(d)): Map<string, string[]> => targetsOf(d, folds, "back");
+/**
+ * 描く行き先: 行き先がそれ自身も描かない畳みの箱 (指すだけの箱) なら、その先を辿って描く箱へ (S-142j ③)。
+ * 行き先が描かれない箱のままだと、画面の線の絞り (use-tree-surface の shownEdges) が手の札ごと落とした (悪辣のローブの木、11-16)
+ */
+const drawnTarget = (d: TreeDoc, t: string, hidden: ReadonlySet<string>): string => {
+  for (let n = 0, seen = new Set<string>(); n < 50 && hidden.has(t) && !seen.has(t); n++) { seen.add(t); const nx = d.boxes[t]?.back; if (!nx || !d.boxes[nx]) break; t = nx; }
+  return t;
+};
 function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" | "back"): Map<string, string[]> {
-  const m = new Map<string, string[]>(), homes = k === "link" ? homesOf(d, folds) : new Map<string, Home>();
+  const m = new Map<string, string[]>(), homes = k === "link" ? homesOf(d, folds) : new Map<string, Home>(), hidden = stripHidden(d, folds);
   const add = (p: string, t: string): void => { const l = m.get(p) ?? []; if (!l.includes(t)) l.push(t); m.set(p, l); };
-  for (const f of folds.values()) if (f[k]) for (const id of f.mids) {
+  for (const f of folds.values()) if (f.link || f.back) for (const id of f.mids) {
     const c = d.boxes[id];
     if (!c?.parent || !c.back || !d.boxes[c.back]) continue;
+    // 辿った時は緑 (同じ段か先) / 青 (前の段) を辿った先の箱で決め直す
+    const t = drawnTarget(d, c.back, hidden), far = t !== c.back;
+    if ((far ? (t !== "start" && depthOf(d, t) >= depthOf(d, id) ? "link" : "back") : f.link ? "link" : "back") !== k) continue;
     // (スイッチ newerHome) 行き先の箱をこの親の下に描く時は線を引かず、本物の親から線を引く
-    if (homes.get(c.back)?.via === id) { add(d.boxes[c.back]!.parent!, c.back); continue; }
-    add(c.parent, c.back);
+    if (!far && homes.get(c.back)?.via === id) { add(d.boxes[c.back]!.parent!, c.back); continue; }
+    add(c.parent, t);
   }
   return m;
 }
