@@ -9,7 +9,8 @@ import { startPwa, startStaleReload } from "./pwa";
 import { applyNoLogParam, noLog } from "../utils/no-log";
 import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
-import { markFlags } from "./release-flags";
+import { flag, markFlags } from "./release-flags";
+import { startNoContextMenu } from "../utils/no-context-menu";
 // 入っているスイッチを <html> に印 (CSS だけの直しの出し分け。描く前に)
 markFlags();
 import { loadBoot } from "./boot";
@@ -34,6 +35,8 @@ setMarketLoader(async () => {
   const b = await loadBoot();
   return b?.market?.items?.length ? { leagues: b.market.leagues as League[], items: b.market.items as CurrencyItem[] } : null;
 });
+// ブラウザの右クリックのメニューを出さない (文字を打つ欄は残す、U-38)
+if (flag("noCtxMenu")) startNoContextMenu();
 createApp(WebApp).mount("#app");
 // タブの題は言語に合わせる (web.html の題は日本語の既定。2026-10-10 英語の巡回で見つかった)
 // ページ (使い方・コツ・コース) ごとに題を変える (web/page.ts)
