@@ -7,7 +7,7 @@ import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open"
 import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { foldMisses, holdsAt } from "../../../services/simulator/tree/tree-foresee"; import { fluxBlock } from "../../../services/simulator/tree/tree-flux";
 import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, reachOmens, runeOf, sideOfMod, socketCapOf, tierRankOf, unfracturable, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { craftStage } from "../../../state/craft-stage";
+import { craftStage } from "../../../state/craft-stage"; import { emotionKeysFor } from "../../../services/craft-stage/apply-emotion"; // 棚 (CurrencyShelf) と同じ口
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
@@ -494,11 +494,11 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
   return made;
 }
 
-/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
+/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス・液化した感情 (ジュエル)、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
   const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => runeOf(k)) : []; // クラフトのルーン・特別なルーン (ほかは treeHidden で外す)
-  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(data, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k, it));
+  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(data, it).flatMap((g) => g.keys), ...emotionKeysFor(it), ...runes].filter((k) => !treeHidden(k, it));
 }
 /** 棚で持った物の残り (お告げ以外)。hitAims = 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */
 export type PickOpt = Omit<HandPick, "held" | "omens"> & { hitAims?: string[] };
