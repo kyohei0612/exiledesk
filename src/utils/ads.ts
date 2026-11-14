@@ -11,7 +11,7 @@
 import { reactive, ref } from "vue";
 import { DEV_BUILD } from "../web/release-flags";
 
-/** 本物の広告を出す (AdSense の審査が通ったら true) */
+/** 本物の広告を出す。今は道具の画面に広告のコードを置かない (system.md Y-26、11-14「記事オンリーやな」)。戻すのは読み物を足して審査が通った後にオーナーが決める */
 export const ADS_LIVE = false;
 /** 枠を見せる (本物か、開発版の場所だけの枠)。開発版の印は release-flags の DEV_BUILD 1 つ (system.md Y-72) */
 export const AD_FRAMES: boolean = ADS_LIVE || DEV_BUILD;

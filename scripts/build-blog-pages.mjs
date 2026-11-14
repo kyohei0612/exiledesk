@@ -171,6 +171,7 @@ function ogImageOf(p) {
 /** 数える・コピーの JS (scripts/_blog-client.js)。slug が空 = 一覧 */
 const clientTag = (lang, slug) => `<script defer src="/blog/blog.js" data-slug="${esc(slug)}" data-lang="${lang}" data-api="${API}" data-v="${VERSION}" data-copied="${esc(L[lang].copied)}"${DEV ? ' data-dev="1"' : ""}></script>`;
 
+/** 広告のコードは記事 (og.type が article) だけ。一覧には置かない (system.md Y-26、オーナー 11-14「記事オンリーやな」) */
 function page(lang, { title, desc, path, alt, og, ld, body, slug = "", wide = false }) {
   const l = L[lang];
   const other = lang === "ja" ? "en" : "ja";
@@ -194,8 +195,7 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${L[other].prefi
 ${og.published ? `<meta property="article:published_time" content="${og.published}" />\n<meta property="article:modified_time" content="${og.modified}" />\n` : ""}<link rel="icon" href="/favicon.ico" sizes="any" />
 <style>${CSS}</style>
 ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>\n` : ""}${clientTag(lang, slug)}
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
-</head>
+${og.type === "article" ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>\n` : ""}</head>
 <body>
 <header><div class="in"><a href="${l.app}">ExileDesk</a><nav>${l.nav}</nav></div></header>
 <main${wide ? ' class="wide"' : ""}>
