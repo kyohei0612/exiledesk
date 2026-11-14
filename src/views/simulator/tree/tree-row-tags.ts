@@ -16,6 +16,8 @@ import { midAims, placedAims } from "../../../services/simulator/tree/tree-veil"
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
+import { flag } from "../../../web/release-flags";
 import { useTree } from "./use-tree";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
@@ -156,5 +158,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
 /** 「エッセンスと同じ MOD」の箱 id の品で、兄弟の箱のエッセンス / 合金を塞ぐ系統 (エンジンの E-56) */
 function sameModFamilies(d: PatchData, doc: TreeDoc, id: string, it: StageItem): string[] {
   const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
-  return (p?.outs ?? []).flatMap((o) => { const h = doc.boxes[o]?.hand; if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" || v?.verdict === "skip" ? v.families : []; });
+  // エッセンスの箱の下の同格以上 (S-33e ⑦) は親の箱自身の手のエッセンスも (スイッチ sameHiSample。前は兄弟の手だけ見て、雷耐性が外れ MOD と出た)
+  const own = flag("sameHiSample") && doc.boxes[id]?.junkKey === SAME_HI && p?.hand ? [p.hand] : [];
+  return [...own, ...(p?.outs ?? []).map((o) => doc.boxes[o]?.hand)].flatMap((h) => { if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" || v?.verdict === "skip" ? v.families : []; });
 }

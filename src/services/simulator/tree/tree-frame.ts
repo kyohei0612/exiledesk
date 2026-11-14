@@ -9,9 +9,11 @@
 import { mulberry32, occupiedFamiliesOf, stageTuning, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
-import { boxOutcomeOf, essenceHold } from "./tree-outcome";
+import { boxOutcomeOf, essenceHold, SAME_HI } from "./tree-outcome";
+import { sameHiHeld, sameHiSwap } from "./tree-same-hi";
+import { stepOutcomes } from "../sim-engine/outcomes";
 import { outBoxOf } from "./tree-shape";
-import { engineOmens, isCatalyst } from "./tree-hands";
+import { effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
 import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample";
 import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
@@ -312,10 +314,30 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
         // 枝の来ない箱も印はこの箱の手の後 (残したい MOD の ☑ の無い候補は外れ、S-27e)。親の印の写しのままだと、その下の箱で ☑ しなかった MOD が狙いと出た
         // (11-07 カオス + 左側の抹消 b19 と親 b14 の手の窓のカード、a61362897)。品は親の代表のまま (作れない見本 = カードも親の品)
         if (c.seen) { same(o, null); continue; }
-        if (!brs?.length) { const lf = lvFrameOf(o, kids, s.to, f); frames.set(o, lf ?? { ...f, aimed: nextAimed(data, doc, f.aimed, o, f.item, f.item), note: "nobranch" }); continue; }
+        if (!brs?.length) { const hf = hiFrameOf(o, b, f); if (hf) { frames.set(o, hf); continue; } const lf = lvFrameOf(o, kids, s.to, f); frames.set(o, lf ?? { ...f, aimed: nextAimed(data, doc, f.aimed, o, f.item, f.item), note: "nobranch" }); continue; }
         frames.set(o, bestOf(o, brs, f));
       }
     } };
+    /**
+     * エッセンスの箱 b の下の「エッセンスと同じ MOD (同格以上)」(S-33e ⑦) の代表 (スイッチ sameHiSample): 2 つ前より上の手 (needsSameHiUnder と同じ所) の代表と枝から
+     * 同格以上の同じ系統の普通の MOD を探し、エッセンスの箱の代表 f に差し替えた品 (tree-same-hi)。前は枝が来ず f のまま = 雷耐性の無い見本 (11-16 オーナーの絵)
+     */
+    const hiFrameOf = (o: string, b: TreeBox, f: Frame): Frame | null => {
+      const c = doc.boxes[o]!, key = b.hand?.currency;
+      if (!flag("sameHiSample") || c.out !== "blocked" || c.junkKey !== SAME_HI || !key || effectOf(key) !== "essence") return null;
+      const p = b.parent ? doc.boxes[b.parent] : undefined;
+      for (let a = p?.parent ? doc.boxes[p.parent] : undefined; a; a = a.parent ? doc.boxes[a.parent] : undefined) {
+        const fa = frames.get(a.id);
+        if (!fa || !a.hand) continue;
+        for (const x of [fa.item, ...(stepOutcomes(data, fa.item, a.hand.currency, engineOmens(a.hand)) ?? []).filter((r) => !r.void).map((r) => r.item)]) {
+          const m = sameHiHeld(data, x, key), it = m ? sameHiSwap(data, f.item, key, m, f.aimed) : null;
+          if (!it) continue;
+          const am = nextAimed(data, doc, f.aimed, o, it, f.item);
+          return { item: it, aimed: am, key: frameKeyOf(contentOf(data, doc, it, am)), p: f.p, note: null };
+        }
+      }
+      return null;
+    };
     /**
      * 削減の手前の枠 (S-65c) で代表の道からは枝の来ない組の箱: 兄弟の枠 (同じ種類・側の鍵) の代表の外れを、データでその組になる段へ差し替えた品を代表にする
      * (代表の道では残したい MOD と MOD レベルがぴったり同じ外れが出なくても、ほかの道の人は着く。代表が無いとその枠の削減の結果が外れの無い品で作られた)

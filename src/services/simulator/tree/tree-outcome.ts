@@ -145,7 +145,9 @@ export function sameModShown(data: PatchData, doc: TreeDoc, boxId: string, item:
   const b = doc.boxes[boxId], p = b?.parent ? doc.boxes[b.parent] : undefined;
   if (!b || !p || b.out !== "blocked" || (b.junkKey && b.junkKey !== SAME_HI)) return item;
   const hi = b.junkKey === SAME_HI;
-  const key = sameModKids(doc, p).find((k) => essenceHold(data, item, k) === (hi ? "skip" : "blocked"));
+  // エッセンスの箱の下の同格以上 (S-33e ⑦) は親の箱自身の手のエッセンスも (スイッチ sameHiSample)
+  const own = hi && flag("sameHiSample") && p.hand && effectOf(p.hand.currency) === "essence" ? [p.hand.currency] : [];
+  const key = [...own, ...sameModKids(doc, p)].find((k) => essenceHold(data, item, k) === (hi ? "skip" : "blocked"));
   const t = key && !isInfiniteEssence(key) ? essenceTarget(data, item, key) : null, lows = t?.mod.tiers[essenceTierIndex(t.level, t.mod)]?.ranges.map((r) => r[0] ?? 0);
   if (!t || !lows) return item;
   const fams = familiesOf(t.mod);
