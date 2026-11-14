@@ -23,7 +23,7 @@ import { handIcon, handLabel, OUT_LOOK } from "../tree/tree-names";
 import { bandAway, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { useTree } from "../tree/use-tree";
 import { simOp } from "../../../web/track";
-import { tr } from "../../../i18n/lang";
+import { tr } from "../../../i18n/lang"; import { isLowTierBox, LOW_SHORT } from "../../../services/simulator/tree/tree-low-tier";
 import { useMapTouch, type MapBounds } from "./use-map-touch";
 
 const props = defineProps<{ /** 回した結果 (PC と同じ層 TreeRunLayer で線・人数・止まりを重ねる) */ result?: TreeRunResult | null; /** 回す時の 1 人目 (PC と同じ use-tree-run の walk) */ walk?: TreeRunWalk | null }>();
@@ -165,7 +165,7 @@ const chips = computed(() => {
 });
 /** 名前と手の絵 (カードの箱には出さない) */
 const names = computed(() => (m.k.value < NAME_K ? [] : inView.value.filter((b) => !cardIds.value.has(b.id)).map((b) => {
-  const s = SHORT[b.out], icon = b.hand ? handIcon(b.hand.currency) || null : null;
+  const s = isLowTierBox(b) ? LOW_SHORT : SHORT[b.out], icon = b.hand ? handIcon(b.hand.currency) || null : null; // 低ティアの箱 (S-33g) は「低ティア」
   return { id: b.id, x: (b.x + BOX_W / 2) * m.k.value + m.tx.value, y: (yOf(b) + EST_H / 2) * m.k.value + m.ty.value, text: s ? tr(s[0], s[1]) : "", icon };
 })));
 /** 色の札 (カードの裏には出さない。カードの高さは札と違うのではみ出す) */

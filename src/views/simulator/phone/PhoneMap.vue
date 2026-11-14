@@ -12,7 +12,7 @@ import { backTargetsOf } from "../tree/tree-merge";
 import { OUT_LOOK, outName } from "../tree/tree-names";
 import { mapFolded } from "./map-fold";
 import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
-import { tr } from "../../../i18n/lang";
+import { tr } from "../../../i18n/lang"; import { isLowTierBox, LOW_SHORT } from "../../../services/simulator/tree/tree-low-tier";
 import { handIcon as iconOf } from "../tree/tree-names";
 import { stripChains, stripFolds, stripHidden, stripOpen, toggleStripFold, stopToHead } from "../../../services/simulator/tree/tree-strip-fold";
 
@@ -74,7 +74,7 @@ function look(id: string): { fill: string; stroke: string; sw: number; op: numbe
 }
 /** 箱の短い名前 (図が大きく箱が 28px 以上の時だけ箱の中に出す) */
 const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], pass: ["品質", "Qual"], branch: ["分岐", "Split"], blocked: ["同じ MOD", "Same mod"] };
-const shortOf = (id: string): string => { const s = SHORT[q.doc.value.boxes[id]?.out ?? ""]; return s ? tr(s[0], s[1]) : ""; };
+const shortOf = (id: string): string => { const b = q.doc.value.boxes[id], s = isLowTierBox(b) ? LOW_SHORT : SHORT[b?.out ?? ""]; return s ? tr(s[0], s[1]) : ""; }; // 低ティアの箱 (S-33g) は「低ティア」
 /**
  * 色の見方 (大きく開いた時だけ図の下に。木が横に広いと箱が 22px ほどで中の字が出せないので、木にある結果の種類を色と名前で並べる。10-26 夜オーナー OK の 7)
  */

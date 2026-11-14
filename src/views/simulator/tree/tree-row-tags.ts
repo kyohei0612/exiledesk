@@ -17,7 +17,7 @@ import { midAims, placedAims } from "../../../services/simulator/tree/tree-veil"
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
-import { flag } from "../../../web/release-flags";
+import { flag } from "../../../web/release-flags"; import { lowTierKey, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier"; import { aimFams } from "../../../services/simulator/tree/tree-junk-frame";
 import { useTree } from "./use-tree";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
@@ -157,6 +157,9 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   }
   // 「エッセンスと同じ MOD」の箱は、次のエッセンス / 合金と同じ系統の MOD を名前で出す (S-33e ②、11-08 オーナー「それ名前出していいよ」)
   if (box?.id && box.out === "blocked") for (const f of sameModFamilies(d, doc, box.id, it)) for (const m of [...it.prefixes, ...it.suffixes]) if (m.family === f) out.delete(m.modId);
+  // 「<狙い> 低ティア MOD」の箱 (S-33g) は、段の足りない狙いの MOD を名前で出す (題の狙いがどれか分かるように)
+  const ltKey = box?.id && doc.boxes[box.id]?.out === "blocked" && lowTierModOf(doc.boxes[box.id]?.junkKey) ? doc.boxes[box.id]?.junkKey : null, lt = ltKey ? (doc.memoAims ?? []).find((a) => lowTierKey(a) === ltKey) : undefined; // 箱の鍵から狙いを引く
+  if (lt) { const fams = new Set(aimFams(d, lt)); for (const m of [...it.prefixes, ...it.suffixes]) if (fams.has(m.family)) out.delete(m.modId); }
   return out;
 }
 /** 「エッセンスと同じ MOD」の箱 id の品で、兄弟の箱のエッセンス / 合金を塞ぐ系統 (エンジンの E-56) */

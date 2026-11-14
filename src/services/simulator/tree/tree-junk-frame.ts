@@ -10,7 +10,7 @@ import { boxAims, type Aim, type TreeBox, type TreeDoc } from "./tree-model";
 import { isMissMod, missAims, type MissAims } from "./tree-miss";
 
 /** 狙い 1 つの族。「いずれかの元素耐性」(S-10h) は札の 1 元素でなく 3 元素 (除いた元素は入れない) */
-function aimFams(data: PatchData, a: Aim): readonly string[] {
+export function aimFams(data: PatchData, a: Aim): readonly string[] {
   const e = a as Aim & { anyEle?: number; eleSkip?: readonly string[] };
   if (e.anyEle) return ANY_ELE_FAMILIES.filter((f) => !e.eleSkip?.includes(f));
   const md = data.mods.get(a.modId);

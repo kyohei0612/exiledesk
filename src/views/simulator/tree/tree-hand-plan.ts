@@ -34,7 +34,7 @@ import { tr } from "../../../i18n/lang";
 import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
 import { DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
-import { keepablesOf } from "./tree-row-tags";
+import { keepablesOf } from "./tree-row-tags"; import { syncLowTier } from "./tree-low-tier-sync";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -309,7 +309,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
   if (data) syncSameHiUnder(data, d, at); // エッセンスの箱の下の「同格以上」(S-33e ⑦)
-  if (data) { syncSameMod(data, d, d.boxes[at]?.parent ?? null); syncWhittlePre(data, d, d.boxes[at]?.parent ?? null, at); } // 削減の手前の枠 (S-65c)
+  if (data) { syncSameMod(data, d, d.boxes[at]?.parent ?? null); syncWhittlePre(data, d, d.boxes[at]?.parent ?? null, at); syncLowTier(data, d, at); } // 削減の手前の枠 (S-65c)・低ティアの箱 (S-33g)
   linkAllSameHi(d);
   return at;
 }

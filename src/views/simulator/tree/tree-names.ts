@@ -14,9 +14,9 @@ import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
-import { swapGoneOf } from "../../../services/simulator/tree/tree-keep";
+import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { lowTierKey, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
-import { tr } from "../../../i18n/lang";import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
+import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
@@ -90,6 +90,19 @@ export function sameModHead(parent: string | null): string {
   return alloy ? tr("合金と同じ MOD", "Same mod as the alloy") : outName("blocked");
 }
 /**
+ * 外れの箱の題を付いた側で (スイッチ junkSideTitle、11-16 オーナー「Ｐ・ＳにハズレＭＯＤがついたにしようか全体としてハズレＭＯＤの表現は」「外れMODか漢字で」
+ * 「お告げにならって左側にとか右側にとかでもいいかもな」、ブラック 114 経由): 側の鍵 s:<プレの増減>|<サフィの増減> (tree-junk-side) で増えた側。
+ * 増えていない (入れ替え・消える手) 外れ・まとめた箱は今の「外れ」のまま
+ */
+function junkSideHead(b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["out"]> }, k: string | undefined): string | null {
+  if (!flag("junkSideTitle") || b.out !== "junk" || b.mergedOuts?.length) return null;
+  const m = /(?:^|;)s:(-?\d+)\|(-?\d+)/.exec(k ?? ""), p = m ? Number(m[1]) > 0 : false, sf = m ? Number(m[2]) > 0 : false;
+  if (p && sf) return tr("両側 (P・S) に外れ MOD が付いた", "Miss mod added on both sides (prefix & suffix)");
+  if (p) return tr("左側 (P) に外れ MOD が付いた", "Miss mod added on the left (prefix)");
+  if (sf) return tr("右側 (S) に外れ MOD が付いた", "Miss mod added on the right (suffix)");
+  return null;
+}
+/**
  * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
  * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
  */
@@ -99,6 +112,9 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
   // 同格以上 (鍵 hi) は「(同格以上)」を足す (S-33e ⑥)
+  // 低ティアの箱 (鍵 lt:、S-33g) は「<狙い> 低ティア MOD」。狙いの名前は親の手の当たりの箱・完成形の狙いから
+  const lt = lowTierModOf(b.junkKey);
+  if (b.out === "blocked" && lt) { const p = b.parent ? useTree().doc.value.boxes[b.parent] : undefined, a = [...(p?.outs ?? []).flatMap((o) => { const c = useTree().doc.value.boxes[o]; return c?.out === "hit" ? boxAims(c) : []; }), ...(useTree().doc.value.memoAims ?? [])].find((x) => lowTierKey(x) === b.junkKey); const n = a ? modShort(aimShort(a)) : lt; return tr(`${n} 低ティア MOD`, `${n} low-tier mod`); }
   if (b.out === "blocked") return sameModHead(b.parent ?? null) + (b.junkKey === "hi" ? tr(" (同格以上)", " (same tier or higher)") : "");
   // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(S-42)
   const fixed = ph?.pick === "random" || (!!ph && effectOf(ph.currency) === "fracture");
@@ -126,7 +142,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const k = (b as { junkKey?: string }).junkKey;
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
   // 完成形に無いエッセンスの MOD は外れなので、消えても MOD 名の題は作らない (S-33c、11-07。前の「<MOD> が消えた」は撤回)
-  const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
+  const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : junkSideHead(b, k) ?? outsName(b);
   // 木の手で付けたエッセンス / 合金の MOD が消えた枝 (鍵 n:、S-65b): MOD の名前は出さず「エッセンスの MOD が消えた」とだけ付ける (S-33c の MOD 名の題は作らないまま)
   // 合金で付けた MOD なら「合金の MOD が消えた」(11-11 オーナー「おけ」)。種類は親の見本にあってこの箱の見本に無いクラフト MOD をエンジンの craftedKindOf で
   const base = namedGoneOf(k) ? (goneAlloy(b) ? tr(`${base0} (合金の MOD が消えた)`, `${base0} (alloy mod removed)`) : tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`)) : base0;
