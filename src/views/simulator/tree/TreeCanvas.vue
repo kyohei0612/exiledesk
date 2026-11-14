@@ -59,6 +59,8 @@ const spot = computed((): { arcs: SpotArc[]; css: string } | null => {
  * (linkChipHover) 照らしている間、縮めて見ていれば行き先の箱を写し (読むだけ、押した時の等倍の窓の 2/3) で箱の上に重ねる (11-14 オーナー「ライトアップ中は拡大表示してあげてね飛び先の枠」)。
  * 行き先が 2 つ以上で等倍だと重なる時は、重ならない所まで全部を同じだけ小さくする (今の木の倍率より小さくはしない)
  */
+/** 箱の上の辺から上に出る頭の札の高さ (箱の px。札 18 の半分強 + 縁、TreeBox の -top-[10px]・head-a) */
+const HEAD_TAG = 14;
 const spotZoom = computed((): { items: Array<{ id: string; h: number; dy: number }>; k: number } | null => {
   const z = v.flow.viewport.value.zoom, ids = [...new Set(spot.value?.arcs.map((a) => a.id) ?? [])].filter((id) => doc.value.boxes[id]);
   if (!ids.length || z >= 1) return null;
@@ -75,7 +77,8 @@ const spotZoom = computed((): { items: Array<{ id: string; h: number; dy: number
   const order = ids.map((_, i) => i).sort((a, b) => c[a]!.y - c[b]!.y || c[a]!.x - c[b]!.x);
   const dys = new Map<string, number>();
   for (const i of order) {
-    const q = c[i]!, x0 = q.x - (BOX_W * k) / 2, x1 = q.x + (BOX_W * k) / 2, y0 = q.y - q.h / 2, y1 = y0 + q.h * k;
+    // 写しの上の辺から上に出る頭の札 (結果の種類の札、箱の上に半分出る) の分も写しに数える (11-14 Alice07 の b31 で下の写しの札が上の写しに隠れた)
+    const q = c[i]!, x0 = q.x - (BOX_W * k) / 2, x1 = q.x + (BOX_W * k) / 2, y0 = q.y - q.h / 2 - HEAD_TAG * k, y1 = q.y - q.h / 2 + q.h * k;
     // ずらした先でまたかぶる時 (元の箱の下に札がある・ほかの写しがある) は、その下までもう一度ずらす
     let dy = 0;
     for (let n = 0; n <= obs.length; n++) {
