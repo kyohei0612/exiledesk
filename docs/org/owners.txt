@@ -241,6 +241,8 @@ src/views/daily/**                   デイリー
 docs/org/daily/**                    デイリー
 # server/live のデイリーの所は README の決まり 1 で後から持つ (11-06 ブラック 52)
 server/live/src/daily/**             デイリー
+# デイリーの表の migration (0019〜 の *_daily_*.sql、11-15 ブラック 118。表の作りの共有の所は今までどおり)
+server/live/migrations/*_daily_*.sql デイリー
 
 # PoE2 で使える PoE1 のスキンの一覧 (スキン部長、10-25。ページの中身・データ・絵。入口・page.ts・ヘッダーはデザイン)
 src/views/skins/**                   スキン
