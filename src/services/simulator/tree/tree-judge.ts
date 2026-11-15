@@ -23,7 +23,7 @@ import { essenceModOf, midAims, placedAims } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
-import { isLowTierBox } from "./tree-low-tier";
+import { holdsLowTier, isLowTierBox, lowTierKey } from "./tree-low-tier";
 import { flag } from "../../../web/release-flags";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -291,8 +291,23 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const frameAt = (id: string): Frame | null => { const f = fr.frames.get(id); return f && !f.note ? f : null; };
   /** 代表の品の ☑ */
   const aimedAt = (id: string): ReadonlySet<string> => frameAt(id)?.aimed ?? new Set();
-  /** 低ティアの箱の鍵 (lt:<A>)。ほかの箱は null (S-33g ⑧) */
-  const ltOf = (id: string): string | null => (isLowTierBox(doc.boxes[id]) ? doc.boxes[id]!.junkKey ?? null : null);
+  /**
+   * 低ティアの道の鍵 (lt:<A>) = 低ティアの箱か、低ティアの箱の下で代表の品がまだ低い段の A を持つ箱。ほかの箱は null (S-33g ⑧)。
+   * 1 段下 (低ティアの箱に消去を打ってサフィが消えた箱) が普通の外れの道の箱と同じ枠になり、外れの人が低ティアの道へ ↩ した (11-16 ベルトの b14 → b9)
+   */
+  const ltMemo = new Map<string, string | null>();
+  const ltOf = (id: string): string | null => {
+    if (ltMemo.has(id)) return ltMemo.get(id)!;
+    let out: string | null = null;
+    for (let b = doc.boxes[id], n = 0; b && n < 200; b = doc.boxes[b.parent ?? ""], n++) {
+      if (!isLowTierBox(b)) continue;
+      const a = (doc.memoAims ?? []).find((g) => lowTierKey(g) === b.junkKey), f = frameAt(id);
+      out = b.id === id || (a && f && holdsLowTier(data, f.item, a)) ? b.junkKey ?? null : null;
+      break;
+    }
+    ltMemo.set(id, out);
+    return out;
+  };
   /** 箱の作れる見本 (代表の品 1 つ) */
   const samples = (id: string): Array<{ seed: number; item: StageItem }> => { const f = frameAt(id); return f ? [{ seed: 1, item: f.item }] : []; };
   /** 箱の中身 (ふだんの比べ = 冒涜の発現済みの数を落とす。光のお告げの手のある箱と比べる時は full) */
