@@ -151,8 +151,9 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     if (m.fractured || m.unrevealed) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
-    // ☑ の無いまま完成形の狙いを段以上で満たす MOD は名前 + 「予期せぬ狙い MOD」(当たりの扱いにはしない、箱も分けない。スイッチ goalMetTag、11-16 オーナー「Aで」「予期せぬ狙いMODがついたでいこうか」)
-    else if (goalAll && isMissMod(m, miss) && !isMissMod(m, goalAll)) out.set(m.modId, { text: tr("予期せぬ狙い MOD", "Unexpected target mod"), tone: "good", title: tr(`☑ していない完成形の狙いが段以上で付いた (当たりの箱には分けない): ${modText(m)}`, `A goal target mod was added at its tier without being checked (not split into a hit box): ${modText(m)}`) });
+    // ☑ の無いまま完成形の狙いを段以上で満たす MOD は名前だけ (「外れ MOD」にしない。当たりの扱いにはしない、箱も分けない。スイッチ goalMetTag、11-16 オーナー「Aで」)。
+    // 小さい「予期せぬ狙い MOD」の札は付けない (11-16 オーナー「予期せぬ狙いMODってカードには書かなくておkだねそもそも」、止まりの欄と詳細は残す)
+    else if (goalAll && isMissMod(m, miss) && !isMissMod(m, goalAll)) continue;
     else if (isMissMod(m, miss)) {
       putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
       // 完成形の狙いの系統で段の足りない MOD は「外れ MOD (低ティア)」(低ティアの箱を作らず外れの箱とまとめた人、S-33g ⑧ 1A)

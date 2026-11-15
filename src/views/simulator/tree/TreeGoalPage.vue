@@ -342,8 +342,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
                 <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
               </select>
               <button type="button" data-tree-ele-any-remove class="px-1 text-[12px] text-rose-200 hover:text-rose-100" :title="tr('この「いずれかの元素耐性」を外す', 'Remove this any-elemental-resistance target')" @click="ef.remove(i)">×</button>
+              <!-- 「＋ 追加」は最後の 1 本と同じ行の右 (11-16 オーナー「追加とティアが2行に分かれる」) -->
+              <button v-if="i === ef.placed.value.length - 1 && ef.canAdd.value" type="button" data-tree-ele-any-add class="whitespace-nowrap rounded border border-amber-300/40 px-1.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
             </span>
-            <button v-if="ef.placed.value.length && ef.canAdd.value" type="button" data-tree-ele-any-add class="whitespace-nowrap rounded border border-amber-300/40 px-1.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
           </span>
         </template>
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
