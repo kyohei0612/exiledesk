@@ -256,6 +256,11 @@ const fracSplit = computed(() => {
 });
 /** まとめた行の小窓: ホバーで出し、押すと出したまま (スマホ)。枠の外を押す・Esc で閉じる */
 const fracOpen = ref(false);
+/**
+ * (スイッチ fracOneRow、開発版だけ) 枠ごとの行の時、カードは「P✦ フラクチャー: … のどれか 1 つ」の 1 行だけ (「残りのどれか」の行を出さない)。
+ * 中身の小窓は下の行に被せず、P✦ の下に開いて下の行を押し下げる (11-16 オーナー「この場合Ｐ♦のみかな表示的には」、owner-frac-hover-1116.png)
+ */
+const FRAC_ONE_ROW = flag("fracOneRow");
 const fracEl = ref<HTMLElement | null>(null);
 useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = false; }, { swallow: false });
 </script>
@@ -361,7 +366,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
               <span v-fit-text class="min-w-0 flex-1 text-center">{{ fracSplit.head.text }}</span>
               <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
             </p>
-            <p v-for="i in fracSplit.rest.n" :key="`fr-rest-${i}`" data-fracture-rest class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-rarity-magic hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
+            <p v-for="i in FRAC_ONE_ROW ? 0 : fracSplit.rest.n" :key="`fr-rest-${i}`" data-fracture-rest class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-rarity-magic hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
               <span class="shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', fracSplit.rest.cls]">{{ fracSplit.rest.tag }}</span>
               <span v-fit-text class="min-w-0 flex-1 text-center">{{ fracSplit.rest.text }}</span>
               <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
@@ -372,8 +377,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <span v-fit-text class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
             <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
           </p>
-          <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-stage-frame-rare bg-stage-pop-bg/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
-            <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
+          <div data-fracture-pop class="space-y-0.5 rounded border border-stage-frame-rare bg-stage-pop-bg/95 px-2 py-1.5 text-[12px]" :class="FRAC_ONE_ROW && fracSplit ? ['mx-1 mt-0.5', fracOpen ? 'block' : 'hidden group-hover/fg:block'] : ['absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 shadow-[0_6px_20px_rgba(0,0,0,0.7)]', fracOpen ? 'visible' : 'invisible group-hover/fg:visible']">
+            <p class="pb-0.5 text-[11px] text-white/45">{{ FRAC_ONE_ROW && fracSplit ? tr("この中のどれか 1 つが固定され、残りはフラクチャー無しの普通の MOD", "One of these gets fractured; the rest are normal (unfractured) mods") : tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
             <p v-for="r in fracRows" :key="r.key" data-fracture-member :data-card-mod="r.m.modId" class="group/fm flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
               <span class="min-w-7 shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-stage-prefix' : 'text-stage-suffix'">{{ sideTier(r) }}</span>
               <span class="min-w-0 flex-1">{{ r.text }}</span>
