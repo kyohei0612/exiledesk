@@ -117,7 +117,7 @@ const ORBS: readonly OrbDef[] = [
       target: { rarity: ["rare"] },
       actions: [{ fracture: true }],
       limits: [{ kind: "fracturableClass" }, { kind: "modsAtLeast", n: 4 }, { kind: "noFractured" }],
-      source: { client: "currency-hover の説明文、ItemClasses の CanBeFractured", owner: "固定は 1 つ・冒涜の MOD は選ばれない (2026-10-08・10-10 実測)、固定は 3 つまで (11-15 オーナーの決め・スイッチ fracture3)", coe: "対象から等しく 1 つ (package_poe2.js EmulatorManager.fracture、2026-10-16)" },
+      source: { client: "currency-hover の説明文、ItemClasses の CanBeFractured", owner: "固定は 1 つ・冒涜の MOD は選ばれない (2026-10-08・10-10 実測)、固定は 2 つまで (11-15 オーナーの決め・スイッチ fracture3)", coe: "対象から等しく 1 つ (package_poe2.js EmulatorManager.fracture、2026-10-16)" },
     }),
   },
 ];
