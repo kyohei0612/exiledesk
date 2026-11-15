@@ -51,7 +51,7 @@ const tags = computed(() => (props.chosen ?? []).filter((c) => c.extra || picked
 const isChosen = (modId: string): boolean => tags.value.some((c) => sameMod(c.aim, { modId, tier: c.aim.tier }));
 function dropTag(a: Aim): void { pickedHere.value = pickedHere.value.filter((p) => !sameMod(p, a)); emit("drop", a); }
 const MODES = computed((): Array<{ k: BoneMode; label: string }> => [
-  { k: "reveal", label: PICK_KEEP ? tr("発現", "Reveal") : tr("発現 (選んだ MOD が出れば当たり)", "Reveal (a hit if a picked mod shows up)") },
+  { k: "reveal", label: PICK_KEEP ? tr("冒涜を発現する", "Reveal the desecrated mod") : tr("発現 (選んだ MOD が出れば当たり)", "Reveal (a hit if a picked mod shows up)") },
   { k: "free", label: tr("狙い無し (発現させて、出た MOD は外れ)", "No target (reveal it; the mod counts as a miss)") },
   { k: "keep", label: tr("未発現 (未発現のまま付ける)", "Unrevealed (leave it unrevealed)") },
 ]);
