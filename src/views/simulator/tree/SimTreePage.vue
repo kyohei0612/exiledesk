@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { junkSameOn, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
@@ -173,7 +173,7 @@ const backLabel = (b: Box): string => backLabelOf(doc.value, b); // 縮めた時
  */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
   const id = panel.value!.id, q = takeQuitAll(); // q = 確かめの窓で「削減を全部やめる」を選んだ (S-65c5)
-  const same = junkSameOn.value ? sameJunkOf(doc.value, id) : []; // 同じ外れのほかの箱にも同じ手 (S-190d、スイッチ junkSameHand)
+  const same = sameJunkOf(doc.value, id); // 同じ外れのほかの決めていない箱にもいつも同じ手 (S-190d、スイッチ junkSameHand)
   simAct("hand", kind);
   // 外れの箱で打つ前の箱・同じ形の箱と同じ手は applyPick (tree-shape の sameHandReturn) が戻す (S-51。前の sameHandRetry は本番の goalShape で使われなくなったので消した)
   let at = id;

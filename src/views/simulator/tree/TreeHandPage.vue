@@ -13,7 +13,6 @@ import { useTree } from "./use-tree";
 import { canHoldMore, holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { craftStage } from "../../../state/craft-stage";
 import { chaosSkipOk } from "./tree-chaos-skip";
-import { junkSameOn, sameJunkOf } from "./tree-junk-same";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 const t = useTree();
@@ -25,9 +24,6 @@ const hold = computed(() => (more.value ? asHeld.value : holdsAt(t.doc.value, pr
 const title = computed(() => (hold.value ? (props.current ? tr("持つ手を替える (予見)", "Change the held craft (foresight)") : tr("次に持つ手 (予見で結果が見える)", "Next craft to hold (result is foreseen)")) : props.current ? tr("打つ手を替える", "Change the craft") : tr("次に打つ手", "Next craft")));
 const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; aim: []; skip: [] }>();
 /** 「カオススパムまでスキップ」を出すか (スタートのノーマル品・まだ手が無い、S-22f・スイッチ chaosSkip) */
-/** 同じ外れのほかの箱の数 (S-190d)。窓を開くたびに ☑ を既定に戻す */
-const sameN = computed(() => (props.current ? 0 : sameJunkOf(t.doc.value, props.boxId).length));
-junkSameOn.value = true;
 const skipOk = computed(() => chaosSkipOk(craftStage.data.value, t.doc.value, props.boxId));
 /** 持つ / 打つ の選びを手に写す (持つ = held の印。打つは印を外す) */
 function pick(hand: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): void {
@@ -48,11 +44,6 @@ function pick(hand: Hand, kind: HandKind, aims: Aim[], pre: string | null, only:
       <button type="button" class="g-btn sm" :title="tr('変成 → 増強 → 王者を狙い無しで置き、消去 (全部消えてよい) の結果の箱まで木を組む (1 つ戻すで戻せる)', 'Place Transmutation → Augmentation → Regal with no target, then Annulment (any mod may go), and build the tree up to its result boxes (undo restores it)')" @click="emit('skip')">{{ tr("カオススパムまでスキップ", "Skip to chaos spam") }}</button>
       <span class="text-[12px] text-[var(--c-muted,#a99)]">{{ tr("変成 → 増強 → 王者 → 消去 まで自動で組む", "Builds Transmutation → Augmentation → Regal → Annulment for you") }}</span>
     </div>
-    <label v-if="sameN" class="mb-2 flex items-center gap-2 text-[13px]" data-tree-junk-same>
-      <input v-model="junkSameOn" type="checkbox" class="size-4 accent-amber-400" />
-      <span>{{ tr(`同じ外れのほかの ${sameN} 箱にも同じ手を置く`, `Also place this craft on the ${sameN} other matching miss box${sameN > 1 ? "es" : ""}`) }}</span>
-      <span class="text-[12px] text-[var(--c-muted,#a99)]">{{ tr("(同じ手から出た同じ種類の結果で、まだ決めていない箱)", "(same kind of result from the same craft, not decided yet)") }}</span>
-    </label>
     <TreeHandShelf :box-id="boxId" :current="current" @pick="pick" @clear="emit('clear')" @close="emit('close')" @aim="emit('aim')" />
   </ModalShell>
 </template>
