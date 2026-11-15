@@ -136,7 +136,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
       if (my !== token) return;
       const p1 = firstOf.p!;
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
-      const ms = walkMs(path.length);
+      const ms = flag("walkFast") ? Math.min(walkMs(path.length), FRAME_MS) : walkMs(path.length); // 最初から早送りと同じ見える一番速い速さ (S-72d、スイッチ walkFast)
       // 通った箱 (足跡)。全体表示の小さい倍率で速く進んでも、どこを通ったか残る (10-22 オーナー「機能してる？」、光る枠だけでは見えなかった)
       const trail = new Set<string>();
       const stayN = Math.ceil(STAY_MS / ms);
