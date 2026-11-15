@@ -1,6 +1,6 @@
 <!--
   TreeAimRows.vue — 手の窓の「狙う MOD」の ☑ の並び (TreeHandShelf の PC・スマホの 2 段目)。
-  スイッチ aimGroups (S-22g): 完成形に ✦ がある時、3 段に分けて見出しを付ける = フラクチャーの候補 (完成形で ✦ の付いた MOD) / その他の狙い MOD / 狙い無し (slot の free)。
+  スイッチ aimGroups (S-22g): 完成形に ✦ がある時、3 段に分けて見出しを付ける = フラクチャーの候補 (完成形で ✦ の付いた MOD) / 狙い MOD (✦ の候補も混ぜる) / 狙い無し (slot の free)。
   各段の中は完成形のカードの順 (✦ が無い時も順はカード)。閉じている間は前のまま (見出し無し・候補の順)。mid の slot = 今は付けられない狙い・骨の置き石 (その他の後、狙い無しの前)
   seconds (S-10h ②、スイッチ eleAny): 2 つ付く手で同じ段の「いずれか」の 2 本目は行にせず、1 本目の下に字下げの「☐ 2 個目の MOD も狙う」(1 本目が ☑ の時だけ押せる)
 -->
@@ -31,11 +31,12 @@ const marks = computed(() => fractureMarks(t.doc.value));
 const isFrac = (a: Aim): boolean => marks.value.some((g) => same(g, a));
 const groups = computed((): Array<{ key: string; title: string | null; list: Aim[] }> => {
   if (!ON) return [{ key: "all", title: null, list: [...props.aims] }];
-  const sorted = [...props.aims].sort((a, b) => rank(a) - rank(b)), fr = sorted.filter(isFrac), rest = sorted.filter((a) => !isFrac(a));
+  // 狙い MOD の段にはフラクチャーの候補も混ぜる (11-16 オーナー「プレ候補は狙いMODにも混ぜる約束やろ　両対応させるはず」、S-22e)。どちらの行で ☑ しても同じ狙い
+  const sorted = [...props.aims].sort((a, b) => rank(a) - rank(b)), fr = sorted.filter(isFrac);
   if (!marks.value.length) return [{ key: "rest", title: null, list: sorted }];
   return [
     ...(fr.length ? [{ key: "frac", title: tr("フラクチャーの候補 (✦ の段のまま)", "Fracture candidates (✦ tier stays)"), list: fr }] : []),
-    ...(rest.length ? [{ key: "rest", title: tr("その他の狙い MOD (段は完成形の設定で変えられる)", "Other target mods (tier set in the final item)"), list: rest }] : []),
+    ...(sorted.length ? [{ key: "rest", title: tr("狙い MOD (段は完成形の設定で変えられる)", "Target mods (tier set in the final item)"), list: sorted }] : []),
   ];
 });
 const on = (a: Aim): boolean => props.checked.includes(aimKey(a));

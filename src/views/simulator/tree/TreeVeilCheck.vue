@@ -25,6 +25,7 @@ import type { Aim, Hand } from "../../../services/simulator/tree/tree-model";
 import { revealPool, type ListRow, type ListTier, type StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
+import { vFitText } from "../../../utils/fit-text";
 /** 発現で出ない MOD・段を灰色でなく出さない (U-12d、スイッチ modHide。エミュの MOD 一覧と同じ) */
 const MOD_HIDE = flag("modHide");
 
@@ -90,9 +91,10 @@ function pick(a: Aim): void {
     <template v-for="m in MODES" :key="m.k">
       <label data-tree-hand-veil :data-veil-mode="m.k" class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2'">
         <input type="radio" class="shrink-0" :class="big ? 'size-5' : ''" :checked="mode === m.k" @change="($event.target as HTMLInputElement).checked = mode === m.k; onMode(m.k)" />
-        <span class="min-w-0 break-words">{{ m.label }}</span>
+        <span :class="PICK_KEEP && m.k === 'reveal' ? 'shrink-0 whitespace-nowrap' : 'min-w-0 break-words'">{{ m.label }}</span>
+        <!-- 説明は札と同じ 1 行 (11-16 オーナー「1行で収まるようにして」)。入らなければ字を縮める (fit-text) -->
+        <span v-if="PICK_KEEP && m.k === 'reveal'" v-fit-text data-tree-hand-veil-use class="min-w-0 flex-1 font-semibold text-amber-300">{{ tr("使用用途: ブロッキング等で使用 (選んだ MOD が出れば当たり)", "Use: for blocking, etc. (a hit if a picked mod shows up)") }}</span>
       </label>
-      <p v-if="PICK_KEEP && m.k === 'reveal'" data-tree-hand-veil-use class="break-words rounded border border-amber-400/50 bg-amber-950/40 px-2 py-1 text-[12px] font-semibold text-amber-200" :class="big ? '' : 'ml-5'">{{ tr("使用用途: ブロッキング等で使用 (選んだ MOD が出れば当たり)", "Use: for blocking, etc. (a hit if a picked mod shows up)") }}</p>
       <template v-if="mode === m.k && m.k !== 'keep'">
         <label data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
           <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="!!echo" @change="emit('echo', ($event.target as HTMLInputElement).checked)" />
