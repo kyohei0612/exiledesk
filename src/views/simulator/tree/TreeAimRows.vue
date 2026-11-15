@@ -1,6 +1,6 @@
 <!--
   TreeAimRows.vue — 手の窓の「狙う MOD」の ☑ の並び (TreeHandShelf の PC・スマホの 2 段目)。
-  スイッチ aimGroups (S-22g): 完成形に ✦ がある時、3 段に分けて見出しを付ける = フラクチャーの候補 (完成形で ✦ の付いた MOD) / 狙い MOD (✦ の候補も混ぜる) / 狙い無し (slot の free)。箱の品にもうフラクチャーが付いた後 (fractured) はフラクチャーの候補の段を出さない。
+  スイッチ aimGroups (S-22g): 完成形に ✦ がある時、3 段に分けて見出しを付ける = フラクチャーの候補 (完成形で ✦ の付いた MOD) / 狙い MOD (✦ の候補も混ぜる) / 狙い無し (slot の free)。箱の品にもうフラクチャーが付いた後 (fracIds) はフラクチャーの候補の段を出さず、固定された MOD は狙い MOD の段からも外す。
   各段の中は完成形のカードの順 (✦ が無い時も順はカード)。閉じている間は前のまま (見出し無し・候補の順)。mid の slot = 今は付けられない狙い・骨の置き石 (その他の後、狙い無しの前)
   seconds (S-10h ②、スイッチ eleAny): 2 つ付く手で同じ段の「いずれか」の 2 本目は行にせず、1 本目の下に字下げの「☐ 2 個目の MOD も狙う」(1 本目が ☑ の時だけ押せる)
 -->
@@ -14,7 +14,7 @@ import { allMods } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import { useTree } from "./use-tree";
 
-const props = defineProps<{ aims: readonly Aim[]; checked: readonly string[]; noMod: boolean; noModTitle: string; big?: boolean; free?: boolean; fractured?: boolean; seconds?: Readonly<Record<string, Aim>> }>();
+const props = defineProps<{ aims: readonly Aim[]; checked: readonly string[]; noMod: boolean; noModTitle: string; big?: boolean; free?: boolean; fracIds?: readonly string[]; seconds?: Readonly<Record<string, Aim>> }>();
 const emit = defineEmits<{ toggle: [a: Aim] }>();
 const t = useTree();
 const ON = flag("aimGroups");
@@ -28,15 +28,21 @@ const rank = (a: Aim): number => {
   return g >= 0 ? 100 + g : 999;
 };
 const marks = computed(() => fractureMarks(t.doc.value));
+/** 箱の品にもうフラクチャーが付いているか (フラクチャーの手の後の箱) */
+const fractured = computed(() => !!props.fracIds?.length);
+/** 品で固定された MOD か (フラクチャー後は狙いとしては数えないので、狙い MOD の段にも出さない。完成の判定は今のまま、S-22e) */
+const isFixed = (a: Aim): boolean => !!props.fracIds?.some((id) => same({ modId: id, tier: a.tier }, a));
 const isFrac = (a: Aim): boolean => marks.value.some((g) => same(g, a));
 const groups = computed((): Array<{ key: string; title: string | null; list: Aim[] }> => {
   if (!ON) return [{ key: "all", title: null, list: [...props.aims] }];
   // 狙い MOD の段にはフラクチャーの候補も混ぜる (11-16 オーナー「プレ候補は狙いMODにも混ぜる約束やろ　両対応させるはず」、S-22e)。☑ は段ごとに別 (下の rowOn)
-  const sorted = [...props.aims].sort((a, b) => rank(a) - rank(b)), fr = sorted.filter(isFrac);
-  if (!marks.value.length) return [{ key: "rest", title: null, list: sorted }];
-  // 箱の品にもうフラクチャーが付いた後は「フラクチャーの候補」の段を出さない (「狙い MOD」の段だけ。11-16 オーナー「フラクチャー後は上のフラクチャー予定MODは非表示やね」、S-22e)
+  const all = [...props.aims].sort((a, b) => rank(a) - rank(b)), fr = all.filter(isFrac);
+  if (!marks.value.length) return [{ key: "rest", title: null, list: all }];
+  // 箱の品にもうフラクチャーが付いた後は「フラクチャーの候補」の段を出さず、固定された MOD は「狙い MOD」の段からも外す
+  // (11-16 オーナー「フラクチャー後は上のフラクチャー予定MODは非表示やね」「フラクチャー後はそもそも狙いMODとしては機能しないでしょ」、S-22e)
+  const sorted = fractured.value ? all.filter((a) => !isFixed(a)) : all;
   return [
-    ...(fr.length && !props.fractured ? [{ key: "frac", title: tr("フラクチャーの候補 (✦ の段のまま)", "Fracture candidates (✦ tier stays)"), list: fr }] : []),
+    ...(fr.length && !fractured.value ? [{ key: "frac", title: tr("フラクチャーの候補 (✦ の段のまま)", "Fracture candidates (✦ tier stays)"), list: fr }] : []),
     ...(sorted.length ? [{ key: "rest", title: tr("狙い MOD (段は完成形の設定で変えられる)", "Target mods (tier set in the final item)"), list: sorted }] : []),
   ];
 });
@@ -47,7 +53,7 @@ const on = (a: Aim): boolean => props.checked.includes(aimKey(a));
  * どちらかに ☑ があれば手の当たりの狙い (付けば当たり) は同じ。どの段で付けたかは窓の中だけで覚え、開き直した手はフラクチャーの候補の段に出す
  */
 const ticks = ref(new Set<string>());
-const dual = (a: Aim): boolean => ON && marks.value.length > 0 && !props.fractured && isFrac(a);
+const dual = (a: Aim): boolean => ON && marks.value.length > 0 && !fractured.value && isFrac(a);
 const rowOn = (a: Aim, g: string): boolean => {
   if (!dual(a) || !on(a)) return on(a);
   const k = aimKey(a), any = ticks.value.has(`frac|${k}`) || ticks.value.has(`rest|${k}`);
