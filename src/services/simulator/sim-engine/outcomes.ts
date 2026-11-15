@@ -10,7 +10,7 @@
  * 付く MOD の数値は段の下限 (S-202 ②。行き先の区別に数値は使わない)。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, makeStageMod, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
+import { makeStageMod, replaced, room, SIDES, fractureCandidates, withMod, without } from "../../craft-stage/stage-core";
 import { infiniteChoices, isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { dropForesight } from "../../craft-stage/apply-extra";
 import { addCandidatesOf, boneSlotOf, emotionFitsOf, removalOf, spendCatalysing } from "../../craft-stage/spec/basis";
@@ -262,7 +262,7 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
 }
 
 function fractureStep(data: PatchData, item: StageItem): Step {
-  const pool = allMods(item).filter((m) => !unfracturable(data, item, m));
+  const pool = fractureCandidates(data, item);
   if (!pool.length) return "skip";
   return pool.map((m) => {
     const next = { ...m, fractured: true };

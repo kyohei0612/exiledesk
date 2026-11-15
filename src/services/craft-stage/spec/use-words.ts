@@ -11,6 +11,7 @@ import type { Limit } from "./types";
 import { resolveSpec, specOfKey } from "./run-spec";
 import { BONE_SPECS } from "./desecrate-specs";
 import { parseKey } from "../key";
+import { fractureCap } from "../stage-core";
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 
 export interface Words2 { ja: string; en: string }
@@ -65,7 +66,7 @@ export function limitWords(l: Limit): Words2 | null {
     case "hasUnrevealed": return { ja: "未発現の冒涜 MOD がある", en: "Has an Unrevealed Desecrated mod" };
     case "openSlot": return { ja: "付ける側に空きがある (お告げの側があればその側)", en: "Needs an open slot (on the Omen's side, if any)" };
     case "modsAtLeast": return { ja: `MOD が ${l.n} つ以上`, en: `${l.n}+ mods` };
-    case "noFractured": return { ja: "フラクチャーがまだ無い", en: "No Fractured mod yet" };
+    case "noFractured": return fractureCap() > 1 ? { ja: `フラクチャーが ${fractureCap()} つ未満`, en: `Fewer than ${fractureCap()} Fractured mods` } : { ja: "フラクチャーがまだ無い", en: "No Fractured mod yet" };
     case "noAbyssMark": return { ja: "アビサルロードの紋章がまだ無い", en: "No Mark of the Abyssal Lord yet" };
     case "noRevealedDesecrated": return { ja: "発現済みの冒涜 MOD が無い (未発現ならよい)", en: "No revealed Desecrated mod (Unrevealed is fine)" };
     case "craftedSlot": return { ja: "クラフト MOD の空きがある (普通 1 つ、アストリッドの創造性で増える)", en: "A free crafted-mod slot (normally 1, more with Astrid's Creativity)" };

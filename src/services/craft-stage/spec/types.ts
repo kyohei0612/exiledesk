@@ -61,7 +61,7 @@ export type Limit =
   | { kind: "openSlot"; reason?: Words }
   /** MOD が n 個以上 (フラクチャー「with at least 4 modifiers」。未発現の枠も数に入る) */
   | { kind: "modsAtLeast"; n: number }
-  /** 固定 (フラクチャー) した MOD がまだ無い (固定は 1 つ。2026-10-08 オーナー確認) */
+  /** 固定 (フラクチャー) した MOD が上限 (stage-core の fractureCap) 未満。名前は固定 1 つの頃のまま (2026-10-08 オーナー確認で 1 つ、11-15 オーナーの決めでスイッチ fracture3 の下で 3 つ。E-40) */
   | { kind: "noFractured" }
   /** 冒涜の MOD が無い (深淵のエッセンス。計算機と同じ決まり、外の正解は無い) */
   /** アビサルロードの紋章がまだ無い (深淵のエッセンス) */

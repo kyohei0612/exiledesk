@@ -6,7 +6,7 @@
  * 結果は tests/currency-spec-golden.test.ts の控えで見張る。違う引き方にする時は、先にどちらが正しいかを決めてから控えを取り直す
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { addForced, addOne, allMods, catalystRoom, rerollableMods, hasExtraCatalyst, removeForced, type Force, makeStageMod, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without } from "../stage-core";
+import { addForced, addOne, catalystRoom, rerollableMods, hasExtraCatalyst, removeForced, type Force, makeStageMod, replaced, room, SIDES, skip, skipRandom, fractureCandidates, withMod, withValues, without } from "../stage-core";
 import { addSidesOf, catalysingBoost, emotionFitsOf, nothingToRemove, removalOf, removeSideOf, spendCatalysing } from "./basis";
 import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
@@ -182,9 +182,9 @@ function reroll(ctx: PartCtx, item: StageItem): StageApply {
   return { applied: true, item: cur, added, removed: mods };
 }
 
-/** 固定以外の 1 つを等しく固定する。未発現の枠と冒涜の MOD は選ばれない (stage-core の unfracturable、2026-10-10 オーナーが実測) */
+/** 固定以外の 1 つを等しく固定する。未発現の枠と冒涜の MOD・固定済みは選ばれない (stage-core の fractureCandidates、2026-10-10 オーナーが実測) */
 function fracture(ctx: PartCtx, item: StageItem): StageApply {
-  const pool = allMods(item).filter((m) => !unfracturable(ctx.data, item, m));
+  const pool = fractureCandidates(ctx.data, item);
   if (!pool.length) return skip(item, tr("固定できる MOD が無い (冒涜の MOD は固定されない)", "No mod can be Fractured (Desecrated mods can't be)"));
   const m = pool[Math.floor(ctx.rng() * pool.length)]!;
   const next = { ...m, fractured: true };

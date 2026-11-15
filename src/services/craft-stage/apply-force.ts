@@ -13,7 +13,7 @@
  * 守る決まり (ゲームと同じ):
  *   - ノーマルに付けたらマジック。マジックはプレ 1・サフィ 1 (3 つ目は王者でレアにしてから)。レアは側ごとの枠 (ベースの limits)
  *   - 同じ系統の MOD が付いていれば付かない
- *   - 冒涜の MOD はアイテムに 1 つまで、フラクチャーは 1 つまで。どちらもレアにだけ。冒涜で付けられるのは冒涜の MOD と普通の MOD (2026-10-18)
+ *   - 冒涜の MOD はアイテムに 1 つまで、フラクチャーは上限 (E-40 の fractureCap、スイッチ fracture3 で 3) まで。どちらもレアにだけ。冒涜で付けられるのは冒涜の MOD と普通の MOD (2026-10-18)
  *   - エッセンス (クラフト MOD) は 1 つまで (アストリッドの創造性で 2 つ)、同じ系統との重なりはエッセンスの決まり
  *   - ルーンの MOD (特殊 MOD のルーン) はそのルーンを差していないと付かない
  *   - 段のアイテムレベルがアイテムレベルを超える物は付かない (エッセンスは制限なし)
@@ -22,7 +22,7 @@ import { applyRune, runeKeyForId } from "./stage-runes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 import { craftedLimitOf, normalTierOf } from "./apply-essence";
-import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, unfracturable, withMod } from "./stage-core";
+import { allMods, fractureCap, fracturedCount, makeStageMod, room, skip, stageRuneIds, takenFamilies, unfracturable, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 import { isCraftedSource, isDesecratedSource } from "./tier-rank";
@@ -41,6 +41,8 @@ export function parseForce(key: string): { modId: string; rank: string | null; f
 const SIDE_JA: Record<StageSide, string> = { prefix: "プレフィックス", suffix: "サフィックス" };
 /** この付け方のせいで付かない (品の状態ではない、StageApply.way) */
 const skipWay = (item: StageItem, reason: string): StageApply => ({ ...skip(item, reason), way: true });
+/** 固定の上限 (E-40、fractureCap) の断り。1 つの時は前と同じ文 */
+const capWords = (): string => (fractureCap() > 1 ? tr(`フラクチャーは ${fractureCap()} つまで`, `Max ${fractureCap()} Fractured mods`) : tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
 
 export function applyForce(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply {
   const p = parseForce(key);
@@ -85,9 +87,10 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   if (p.flag === "d" && !isDesecratedSource(mod.source) && mod.source !== "normal" && ![...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId)) return skipWay(item, tr("冒涜で付くのは冒涜の MOD だけ", "Only Desecrated mods can be added by Desecration"));
   // フラクチャー: 同じ MOD が付いていればそれを固定する (付け直さない)
   if (p.flag === "f") {
-    if (allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
+    if (fracturedCount(it) >= fractureCap()) return skip(item, capWords());
     const have = allMods(it).find((m) => m.modId === p.modId);
     if (have) {
+      if (have.fractured) return skip(item, tr("この MOD はもう固定されている", "This mod is already Fractured"));
       // エッセンスの MOD は固定できる。冒涜の MOD は発現済みでも未発現でも固定されない (オーブと同じ unfracturable。2026-10-10 ゲームで実測)
       if (unfracturable(data, it, have)) return skipWay(item, tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured"));
       const fixed = { ...have, fractured: true };
@@ -103,7 +106,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
     if (blockers.some((m) => m.fractured)) return skip(item, tr("同じ系統の MOD が固定されている", "A fractured mod of the same group is on the item"));
     for (const m of blockers) drop(m);
   }
-  if (p.flag === "f" && allMods(it).some((m) => m.fractured)) return skip(item, tr("フラクチャーは 1 つまで", "Only 1 Fractured mod"));
+  if (p.flag === "f" && fracturedCount(it) >= fractureCap()) return skip(item, capWords());
   // 固定で付けるエッセンスの MOD は、その印も付ける (上限まで。2026-10-10 要望「創生の樹もフラクチャーできるように」。冒涜は固定できない)
   const otherworldly = [...(it.cls.pools.otherworldly?.prefixes ?? []), ...(it.cls.pools.otherworldly?.suffixes ?? [])].includes(p.modId);
   // 冒涜でしか付かない MOD (冒涜専用・異界) をフラクチャーで付ける事はできない (冒涜専用の MOD は固定されない。2026-10-10)

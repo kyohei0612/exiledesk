@@ -142,6 +142,12 @@ export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...it
 export function unfracturable(_data: PatchData | null | undefined, _item: StageItem, m: StageMod): boolean { // E-41
   return !!(m.unrevealed || m.desecrated);
 }
+/** 1 つの品に固定 (フラクチャー) できる MOD の数 (E-40)。新シーズンで 3 つまで (オーナー 11-15「3つまでにしてくれ上限」、スイッチ fracture3)。閉じている間は 1 つ */
+export const fractureCap = (): number => (flag("fracture3") ? 3 : 1);
+/** 固定 (フラクチャー) 済みの MOD の数 */
+export const fracturedCount = (item: StageItem): number => allMods(item).filter((m) => m.fractured).length;
+/** フラクチャーで次に固定されうる MOD (E-41: 未発現・冒涜を除く。固定済みも除く = 上限が 2 つ以上の時に効く) */
+export const fractureCandidates = (data: PatchData | null | undefined, item: StageItem): StageMod[] => allMods(item).filter((m) => !m.fractured && !unfracturable(data, item, m));
 
 /**
  * 指輪・アミュレットの品質の上限 (POE2Tube 要望 ㉔-3、2026-10-02): ベースの最大品質 + MOD の「品質の最大値 +N%」

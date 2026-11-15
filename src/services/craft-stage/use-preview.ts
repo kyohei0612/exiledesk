@@ -11,7 +11,7 @@
  * お告げを掛けていない時は何も光らせない (お告げで変わる所を見せる物)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { allMods, limitOf, listOf, rerollableMods, room, SIDES, unfracturable } from "./stage-core";
+import { limitOf, listOf, rerollableMods, room, SIDES, fractureCandidates } from "./stage-core";
 import { addSidesOf, boneSlotOf, removalOf } from "./spec/basis";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { planSpec } from "./spec/run-spec";
@@ -50,7 +50,7 @@ export function previewUse(data: PatchData, item: StageItem, key: string, omens:
       else if ("pick" in R) mark(R.pick(cur).filter((m) => !R.voids(cur, m)));
     } else if ("reroll" in a) {
       if (!mods.implicitOnly) mark(rerollableMods(cur));
-    } else if ("fracture" in a) mark(allMods(cur).filter((m) => !unfracturable(data, cur, m)));
+    } else if ("fracture" in a) mark(fractureCandidates(data, cur));
     else if ("addUnrevealed" in a) {
       if (a.addUnrevealed.fill) continue;
       const p = unrevealedPlan(data, cur, a.addUnrevealed, mods);

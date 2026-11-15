@@ -4,7 +4,7 @@
  * 一言は今の関数 (apply-desecrate.ts など) と同じ文にしている (手順の再生の突き合わせで同じ結果になるように)
  */
 import { inAny, inGroup } from "../../mods/item-classes";
-import { allMods, catalystRoom, hasAbyssMark, hasCatalystQuality, hasExtraCatalyst, limitOf, room, SIDES, takenFamilies } from "../stage-core";
+import { allMods, catalystRoom, fractureCap, fracturedCount, hasAbyssMark, hasCatalystQuality, hasExtraCatalyst, limitOf, room, SIDES, takenFamilies } from "../stage-core";
 import { craftedLimitOf, essenceTarget, infiniteChoices, isInfiniteEssence } from "../apply-essence";
 import { familyBlocked } from "../../mods/mod-rules";
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
@@ -75,7 +75,8 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
     case "modsAtLeast":
       return allMods(item).length >= l.n ? null : tr(`MOD が ${l.n} つ以上要る`, `Needs ${l.n}+ mods`);
     case "noFractured":
-      return allMods(item).some((m) => m.fractured) ? tr("もう固定した MOD がある", "Already has a Fractured mod") : null;
+      // E-40: 固定は上限 (fractureCap) まで。1 つの時は前と同じ文
+      return fracturedCount(item) < fractureCap() ? null : fractureCap() > 1 ? tr(`固定した MOD がもう ${fractureCap()} つ (上限)`, `Already has ${fractureCap()} Fractured mods (max)`) : tr("もう固定した MOD がある", "Already has a Fractured mod");
     case "noRevealedDesecrated":
       return allMods(item).some((m) => m.desecrated && !m.unrevealed) ? tr("発現済みの冒涜 MOD があると使えない (未発現なら使える)", "Can't be used while a revealed Desecrated mod is present (unrevealed is fine)") : null;
     case "noAbyssMark":

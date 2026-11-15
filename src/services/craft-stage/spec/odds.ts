@@ -8,7 +8,7 @@
  * 枝分かれした時は、枝ごとに付く割合 (重み ÷ 枝の重みの和) を枝の確率で足し合わせる。付けられない枝は数えない (付かなかった分は表に出ない)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, makeStageMod, unfracturable, without, type Candidate } from "../stage-core";
+import { makeStageMod, fractureCandidates, without, type Candidate } from "../stage-core";
 import { hits, type AimHitOpts } from "../aim-odds";
 import { addCandidatesOf, removalOf } from "./basis";
 import type { StageItem, StageSide } from "../types";
@@ -123,7 +123,7 @@ export function addHitOdds(data: PatchData, item: StageItem, key: string, omens:
  * 未発現の枠・冒涜の MOD は選ばれない)。pool = 固定できる MOD の数 (0 なら打てない)。既にフラクチャー済みのアイテムに打てるかは見ない (棚の条件 = planSpec の側)
  */
 export function fractureHit(data: PatchData, item: StageItem, targets: readonly OddsTarget[], hit?: AimHitOpts): { p: number; pool: number } {
-  const pool = allMods(item).filter((m) => !unfracturable(data, item, m));
+  const pool = fractureCandidates(data, item);
   // 当たりは aimHits 1 本 (省略 = 同じ modId・段の番号以上 = 前の式と同じ。未発現は pool に入らない)
   const n = pool.filter((m) => targets.some((t) => hits(m, t, hit))).length;
   return { p: pool.length ? n / pool.length : 0, pool: pool.length };

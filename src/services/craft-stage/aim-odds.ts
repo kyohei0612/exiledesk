@@ -73,7 +73,7 @@ export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
 };
 const isEssenceSource = isCraftedSource;
 /**
- * 「いずれかの元素耐性」の当たり (S-10h ②): 一般の MOD (クラフト・冒涜・エッセンスでない) で系統が火・冷気・雷耐性のどれか、eleSkip に無く、段が狙いの T 以上。
+ * 「いずれかの元素耐性」の当たり (S-10h ②): 一般の MOD (クラフト・エッセンスでない。冒涜で付いた一般の MOD は当たる = S-10h ④ の付け方 ふつう / フラクチャー / 冒涜、11-15 シミュ 63 の頼み) で系統が火・冷気・雷耐性のどれか、eleSkip に無く、段が狙いの T 以上。
  * data があれば出どころ normal と段の名前の T で比べ、無ければ段の番号で比べる (3 元素とも段の数が同じ 8 なので同じ答え)
  */
 function eleHit(m: StageMod, t: AimTarget, o?: AimHitOpts): boolean {
@@ -81,9 +81,9 @@ function eleHit(m: StageMod, t: AimTarget, o?: AimHitOpts): boolean {
   if (!o) return m.tierIndex >= t.minTierIndex;
   return tierNoOf(m) <= o.data.mods.get(t.modId)!.tiers.length - t.minTierIndex;
 }
-/** 段を見ない「いずれか」に数える元素耐性か (未発現・クラフト・冒涜・エッセンス・eleSkip の系統は数えない) */
+/** 段を見ない「いずれか」に数える元素耐性か (未発現・クラフト・エッセンス・eleSkip の系統は数えない。冒涜で付いた一般の MOD は数える。冒涜専用の MOD は出どころ normal で落ちる) */
 function eleCounts(m: StageMod, t: AimTarget, o?: AimHitOpts): boolean {
-  if (m.unrevealed || m.crafted || m.desecrated || !ANY_ELE_FAMILIES.includes(m.family) || t.eleSkip?.includes(m.family)) return false;
+  if (m.unrevealed || m.crafted || !ANY_ELE_FAMILIES.includes(m.family) || t.eleSkip?.includes(m.family)) return false;
   if (!o) return true;
   return o.data.mods.get(m.modId)?.source === "normal" && !!o.data.mods.get(t.modId);
 }
