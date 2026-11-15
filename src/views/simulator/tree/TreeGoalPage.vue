@@ -276,6 +276,11 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       </div>
       <!-- 木が 2 つ以上ある時はタブもここに (新しいツリーのベース選びの間も前の木へ戻れる、10-24 モンキー初めての人の回 8) -->
       <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
+      <!-- 完成形の注意書き B (S-10e、スイッチ aimGroups。11-16 オーナー「B」= 「注意」の札 + 1 本の枠、owner-snaps/49-ele/goal-note-B.png) -->
+      <p v-if="AIM_NOTE && step === 2" data-tree-goal-note role="note" class="mx-3 mb-2 flex items-center gap-3 rounded-md border border-amber-400/70 bg-[rgba(20,12,4,0.72)] py-2 pl-2 pr-3.5 shadow-[0_0_14px_rgba(232,176,72,0.12)] max-[48rem]:items-start">
+        <span class="shrink-0 rounded-sm bg-[#e8b048] px-2.5 py-0.5 text-[13px] font-extrabold tracking-[0.08em] text-[#1b1206]">{{ tr("注意", "Note") }}</span>
+        <span class="min-w-0 break-words text-[14.5px] leading-normal text-[#f1e6cf]"><b class="font-bold text-[#f6d58e]">{{ tr("狙いたい MOD は全部ここで選んでください", "Pick every mod you want to aim for here") }}</b>{{ tr("（元素耐性を 2 つ狙うなら「＋ 追加」で 2 本）。完成形は見本で、ツリーではここで選んだ物を狙い MOD として使います", " (to aim for two elemental resistances, add two rows with \"+ Add\"). The final item is an example; the tree uses the mods you pick here as target mods.") }}</span>
+      </p>
       <!-- 適正でアイテムレベルを変えた時の一言 (10-24 オーナー: 黙って変わると気づかない、文字は最低限で閉じられる形) -->
       <p v-if="t.ilvlNote.value && t.ilvlNote.value.to === t.doc.value.itemLevel" data-tree-ilvl-note class="flex min-w-0 items-center gap-2 px-3 pb-2 text-[12px] text-amber-200/90">
         <span class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
