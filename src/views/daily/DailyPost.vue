@@ -13,7 +13,7 @@ import { goDaily } from "./daily-open";
 import { itemFromEmu, itemFromText, postBlock, postFractured, shownBad, type PostItem } from "./daily-aims";
 import { flag } from "../../web/release-flags";
 import { myNick, postBox, type BoxError, type DailyBoxItem } from "./daily-api";
-import { fullMods, genesisWhy } from "./daily-check";
+import { boxModsOk, genesisWhy } from "./daily-check";
 import { srcOfEmu, srcOfPaste, type PostSrc } from "./daily-post-src";
 import { cardOfScreen } from "./daily-post-card";
 import { floorAims } from "./daily-gen";
@@ -36,11 +36,13 @@ const asking = ref(false);
 const notFull = (): string => tr("MOD の数がそのベースのプレ・サフィの上限の合計以上の品だけ投稿できる", "Only items with at least as many mods as the base allows (prefix + suffix limits) can be posted");
 /** ① の口の品。スイッチ dailyPostOwnItem の下では投稿の中のエミュで作った品 (エミュのタブとは別の品、D-12b)、閉じている間はエミュのタブの品 */
 const emu = computed(() => { const i = POST_OWN ? postItem.value : s.item.value; return i && allMods(i).length ? i : null; });
-/** 弾く訳 (D-14)。フル MOD でない品も送る前に止める (D-84、確かめの boxCheck と同じ fullMods) */
+/** 箱の投稿は MOD の数を問わない (D-14e、スイッチ dailyBoxAnyMods)。頭の文に一言を足す */
+const ANY_MODS = flag("dailyBoxAnyMods");
+/** 弾く訳 (D-14)。フル MOD でない品も送る前に止める (D-84、確かめの boxCheck と同じ boxModsOk。D-14e の下では MOD が 0 の時だけ) */
 const block = computed(() => {
   const p = item.value, d = s.data.value;
   if (!p) return null;
-  return postBlock(p, LOOSE) ?? (d && !fullMods(d, p.base, p.aims) ? notFull() : null);
+  return postBlock(p, LOOSE) ?? (d && !boxModsOk(d, p.base, p.aims) ? notFull() : null); // 数の止めは D-14e (スイッチ dailyBoxAnyMods の下では MOD が 1 つ以上なら通す)
 });
 /** 止めるのは MOD の数が足りない時と MOD が 0 の時だけ (D-14b、スイッチ dailyPostLoose)。狙いに入らなかった行は赤字で見せるだけ */
 const LOOSE = flag("dailyPostLoose");
@@ -142,7 +144,7 @@ const failText = (e: BoxError): string =>
     </template>
     <template v-else>
       <h2 class="g-brush daily-post-title">{{ tr("作ってほしい装備を投稿する", "Post an item to be crafted") }}</h2>
-      <p class="daily-post-lead">{{ tr("投稿した装備は 16:00 に機械が確かめて、通ればクラフトボックスに入り、次のお題に先に使われる。下のどちらかから選ぶ。", "Posted items are checked at 16:00 JST. If they pass they go into the craft box and are used first for the next challenge. Pick one of the two below.") }}</p>
+      <p class="daily-post-lead">{{ tr("投稿した装備は 16:00 に機械が確かめて、通ればクラフトボックスに入り、次のお題に先に使われる。下のどちらかから選ぶ。", "Posted items are checked at 16:00 JST. If they pass they go into the craft box and are used first for the next challenge. Pick one of the two below.") }}<template v-if="ANY_MODS">{{ tr(" MOD の数はいくつでもよい (ベースの上限より少なくても投稿できる)。", " Any number of mods is fine (fewer than the base allows is OK).") }}</template></p>
       <div class="daily-post-from">
         <section data-daily-from-emu>
           <h3 class="name mb-2 text-[17px] text-[var(--exile-color-text-title)]">{{ tr("エミュレーターのアイテムから", "From the Emulator") }}</h3>

@@ -21,6 +21,7 @@ export function noNormalBase(base: string): boolean {
   return !!cat && inGroup(cat, "jewel");
 }
 import { tr } from "../../i18n/lang";
+import { flag } from "../../web/release-flags";
 
 /** 悪口の表 (D-20・D-51)。名前と一言の両方で見る */
 const BAD = /死ね|しね|氏ね|殺す|ころす|くそ|クソ|ゴミ|カス|きもい|キモい|fuck|shit|bitch|cunt|nigg|retard/i;
@@ -34,6 +35,13 @@ export function fullMods(data: PatchData, base: string, aims: readonly { modId: 
   const lim = sideLimits(data, base);
   return aims.length >= lim.prefix + lim.suffix;
 }
+
+/**
+ * クラフト箱の投稿として MOD の数が足りているか (D-14e)。スイッチ dailyBoxAnyMods の下では数を問わない (MOD が 1 つ以上)、閉じている間はフル MOD (fullMods)。
+ * 投稿の画面の止め・16:00 の機械の確かめ (boxCheck)・箱からお題を選ぶ所 (_daily-roll-entry) が同じここを呼ぶ。忍者の品から作るお題 (daily-gen) は fullMods のまま
+ */
+export const boxModsOk = (data: PatchData, base: string, aims: readonly { modId: string }[]): boolean =>
+  flag("dailyBoxAnyMods") ? aims.length > 0 : fullMods(data, base, aims);
 
 /** 創生の樹の MOD か (D-14)。見分けはエンジンの MOD のタグ (genesis_tree_caster / genesis_tree_minion、ハンドラップの特殊 MOD は持たない) */
 export const isGenesis = (data: PatchData, modId: string): boolean => !!data.mods.get(modId)?.tags.some((t) => t.startsWith("genesis_tree_"));
@@ -71,6 +79,6 @@ export function boxCheck(data: PatchData, item: { base: string; ilvl: number; ai
     if (why) return why;
     done.push(a);
   }
-  if (!fullMods(data, item.base, item.aims)) return "not-full";
+  if (!boxModsOk(data, item.base, item.aims)) return "not-full";
   return null;
 }

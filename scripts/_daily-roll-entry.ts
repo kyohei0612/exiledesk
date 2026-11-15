@@ -10,7 +10,7 @@ import { parseItemText } from "../src/services/simulator/paste/item-text";
 import { htcBaseInfo } from "../src/services/htc/patch";
 import { jaTypeName } from "../src/i18n/item-names-ja";
 import { classOfBase, devSamples, essenceSwap, floorAims,nextFullSample, planWeek, slotOfClass, topicOfPlan, TOPIC_ILVL, type DailySample, type GenAim } from "../src/views/daily/daily-gen";
-import { boxCheck, fullMods } from "../src/views/daily/daily-check";
+import { boxCheck, boxModsOk, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
 import { perBoxOn, runCost, topicPrice } from "../src/views/daily/daily-cost";
 import { byScore, rankCmp } from "../src/views/daily/daily-score";
@@ -312,7 +312,7 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
     const snap = (raw: TopicQuality | null | undefined): { typeSnap?: { quality: TopicQuality } } => { const q = topicQuality(raw); return withQ && q ? { typeSnap: { quality: q } } : {}; }; // 上限超えは 40% にそろえる (TOPIC_QUALITY_MAX)
     const planned = plan.find((p) => p.day === inp.target);
     const day = planned ? toFull(planned) : null;
-    const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no) && fullMods(data, (JSON.parse(x.b.item) as { base: string }).base, x.aims));
+    const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no) && boxModsOk(data, (JSON.parse(x.b.item) as { base: string }).base, x.aims)); // 箱は D-14e (スイッチ dailyBoxAnyMods の下では数を問わない)
     const pick = box.find((x) => day && JSON.parse(x.b.item).base === day.base) ?? (box.length ? box[Math.abs(Math.imul(no, 2654435761)) % box.length]! : null);
     if (pick) {
       const it = JSON.parse(pick.b.item) as { base: string; ilvl: number; quality?: unknown };
