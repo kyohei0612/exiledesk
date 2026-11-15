@@ -18,7 +18,7 @@ import { outBoxOf } from "./tree-shape";
 import { effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
 import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample";
-import { blockMarkOf, contentOf, nextAimed, startAimed, treeFamilies } from "./tree-judge";
+import { blockMarkOf, contentOf, keyForBox, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
 import { carryFloors, floorKeyOf, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants } from "./tree-whittle";
@@ -266,7 +266,8 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
       const sorted = [...brs].sort((x, y) => Number(!!x.off) - Number(!!y.off) || y.p - x.p), heavy = sorted.slice(0, LOOK);
       const all = heavy.map(pick);
       // 1 つの箱に枠の違う品が着く (結果が 2 通り以上なのに箱が 1 つ = S-27d (ア) の外れ、11-11 ごめんね)。「どれか」の当たり・まとめた箱は人が選んだので見ない
-      if (!c.anyOf?.length && !c.mergedOuts?.length && !c.merged && new Set(all.map((fr) => fr.key)).size > 1) mixed.add(o);
+      // 比べは箱をつなぐ時と同じ (keyForBox: この箱の手が要る時だけエッセンス・冒涜の外れの数を見る、S-201c。前は丸ごと比べ、消去の箱に偽の未設定 = r/y5msCmTe の b28)
+      if (!c.anyOf?.length && !c.mergedOuts?.length && !c.merged && new Set(all.map((fr) => keyForBox(doc, o, fr.key))).size > 1) mixed.add(o);
       // 重い順の LOOK に入らない枝も、木の族を塞ぐ MOD の組が違えば 1 つずつ当てる (外れの印 (g) の違う枝、代表には選ばない)
       const seenSig = new Set(heavy.map((r) => famSig(r.item))), marks = new Set(all.map((fr) => blockMarkOf(data, doc, fr.item, fr.aimed))), marked: Frame[] = [];
       for (const r of sorted.slice(LOOK)) {

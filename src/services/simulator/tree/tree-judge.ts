@@ -201,6 +201,8 @@ function junkOne(body: string): string {
 /** 中身の鍵から冒涜の発現済みの数とクラフト MOD の数を落とした物 (ふだんの比べ。光のお告げ・骨・エッセンスの手のある箱と比べる時だけ keyAt で残す) */
 export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+#c\d+\.\d+#a\d+$/, "");
 /** d = 冒涜の発現済みの数を残す、c = クラフト MOD (エッセンス) の数を残す */
+/** 箱 to の手で比べる中身の鍵 (judgeMemo の keyFor と同じ。最終チェックの「中身の違う形の人が着く」も同じ比べ、S-201c) */
+export const keyForBox = (doc: TreeDoc, to: string, k: string): string => keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to));
 const keyAt = (k: string, d: boolean, c: boolean, a = false): string => k.replace(/#d(\d+\.\d+)#c(\d+\.\d+)#a(\d+)$/, (_, xd: string, xc: string, xa: string) => `${d ? `#d${xd}` : ""}${c ? `#c${xc}` : ""}${a ? `#a${xa}` : ""}`);
 /**
  * 冒涜の発現済みの外れの数も合わせる箱か: 光のお告げ (冒涜の MOD しか消さない) を含む手 (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) と、

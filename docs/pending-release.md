@@ -7,6 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| シミュの最終チェックの偽の未設定 (S-201c、スイッチ無し。`tree-frame.ts` の mixed・`tree-judge.ts` の keyForBox) | (この commit) | シミュレーター・デイリーの木で、エッセンスの外れの付いた品に消去などを打つ形で、最終チェックが「中身の違う形の人が着く」と未設定を出す不具合を直しました | Simulator and Daily trees: fixed the final check wrongly flagging a box as unset ("runs with different contents arrive") when an Orb of Annulment or similar is used on items with an essence miss |
 | デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
