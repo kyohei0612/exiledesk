@@ -13,7 +13,7 @@
 | ジン部長 | local_047c4bca-0c2b-487f-933c-4b4c9f49a119 (jin-cast、11-15 夜にブラック 119 が立てた。頼み = 共有 local_41371db6…/progress/jin-cast-brief.md、記録 = progress/jin-cast-run.log。前の local_e283feed はアーカイブ、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: 首飾りのキャストスピードの重み 800 → 1000 (開発版まで)。残り = 古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_a607a4be-69f3-48e7-9227-80dcb38b9e95 (62、Opus 5.5、11-15 にブラック 119 が控えで立て、61 = local_44722f9d が 2,47x 件で交代。引き継ぎ = 共有 local_41371db6…/progress/sim-lead61.md の一番上「61 → 62 の引き継ぎ」。記録 = progress/sim-lead62-run.log、状態 = 共有 progress/sim-lead62.md) | 今: 入った。残り = FmNY7Wwv の開発版の未設定 2 の訳・確かめ帳の ④ はオーナーの相談待ち・goalMetTag の説明文はデザインへ頼み中 |
+| シミュ部長 | local_ead16579-b573-4fbc-873b-f1ab36ba2486 (63、Opus 5.5、11-15 夜にブラック 120 が立てた。62 = local_a607a4be は 2,5xx 件で止まりアーカイブ。頼み = 共有 local_41371db6…/progress/sim-lead63-brief.md、引き継ぎ = 同 sim-lead62.md の一番上。記録 = progress/sim-lead63-run.log) | 今: 完成形の「いずれかの元素耐性」の「付ける ▾」(1/2/3 つ) が重い件の測り (一瞬だけかも)、付け方 (フラクチャー) を選べる形の調べ。大改装はオーナーの「出して」待ち |
 | デザイン部長 | local_3ed491bd-6a49-406c-8ed0-46ff35f6a2be (10、Opus 5.5、11-15 18 時台にブラック 119 が立てた。9 = local_7572ea36 から交代。頼み = 共有 local_41371db6…/progress/design-lead10-brief.md、進み = 同 design-lead10.md。記録 = progress/design-lead10-run.log) | 今: 済み (32aa5a12f・e59eb1ee2) → 11-15 夜にブラック 120 がアーカイブ。仕事が来たら立てる |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
