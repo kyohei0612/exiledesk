@@ -325,7 +325,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         @pick="pick" />
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
-    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[48rem]:flex-col max-[48rem]:items-stretch">
+    <!-- 表とカード (480) を横に並べると表の名前の列が細く縦に折れる幅 (1120 未満、768 で表が 200px ほど) はスマホと同じくカードを上・表を下に積む (11-16 ブラック 117「バグとして直して」) -->
+    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[70rem]:flex-col max-[70rem]:items-stretch">
       <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="ef.listItem.value" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)" :folds="ef.folds.value" :fold-on="ef.foldOn">
         <!-- いずれかの元素耐性 (S-10h ①、オーナー 11-15「×２の所を追加ボタンにしたら？」): 1 本ずつ段のプルダウンと ×、「＋ 追加」はサフィの空きがある間だけ -->
         <template #fold-tier>
@@ -369,7 +370,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める。上端から 12px = ページの留まる物の top-3 と同じ、11-03) -->
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <!-- 右の列は貼り付けない (sticky だと列が画面より高い時に品質・ルーンの下が見切れた。窓全体の 1 つのスクロールで左の一覧と一緒に動く、11-08 夜オーナー「スクロールのセットで動かしちゃっていいよ」) -->
-      <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[48rem]:order-first min-[48rem]:w-[480px]">
+      <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[70rem]:order-first min-[48rem]:w-[480px] min-[48rem]:max-w-full">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
