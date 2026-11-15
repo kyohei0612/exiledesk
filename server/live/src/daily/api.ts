@@ -12,10 +12,10 @@ import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOL
 
 /** 1 日の順位に返す人数 */
 const RANK_TOP = 50;
-/** 投稿は同じ IP から 1 時間 5 件・item 4KB まで、recipe は 32KB まで (D-56) */
+/** 投稿は同じ IP から 1 時間 5 件・item 4KB まで、recipe は 48KB まで (D-56。11-15 に 32KB から上げた = 打ち方に組み上がった木の写し builtZ を足すため、D-50h) */
 const BOX_PER_HOUR = 5;
 const ITEM_MAX = 4096;
-const RECIPE_MAX = 32 * 1024;
+const RECIPE_MAX = 48 * 1024;
 const NOTE_MAX = 100;
 /** 提出の一言 (D-35e) は 40 字まで。悪口・URL は断る (書き直してもらう) */
 const SUBMIT_NOTE_MAX = 40;
@@ -296,16 +296,17 @@ export async function dailyBoxStatus(db: D1Database, ids: string[]): Promise<unk
  * GET /daily/recipe.json?id=&name=: 順位の行のレシピ (D-50b、オーナー 11-05「ランキングーはレシピ見れるようにできるよね」)。
  * 締めた日と今日 (今日は見る前に画面が「見たら諦めた扱い」の窓を出す、D-50c)。順位と同じ条件 = 解決・検算で外れていない行だけ
  */
-export async function dailyRecipe(db: D1Database, id: string, name: string, now: number): Promise<{ recipe: string | null } | { error: string }> {
+export async function dailyRecipe(db: D1Database, id: string, name: string, now: number): Promise<{ recipe: string | null; cost?: number; rate?: number } | { error: string }> {
   const no = noOfId(id);
   if (no == null || !name || name.length > 40) return { error: "id" };
   // 今日のお題も返す (D-50c、カンニングの窓は画面が出す)。来ていない日は無い
   if (no > dayNoOf(now)) return { error: "open" };
   const r = await db
-    .prepare(`SELECT t.recipe FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id WHERE t.topic_id = ? AND n.name = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0)`)
+    .prepare(`SELECT t.recipe, t.cost, t.rate FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id WHERE t.topic_id = ? AND n.name = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0)`)
     .bind(id, name)
-    .first<{ recipe: string | null }>();
-  return { recipe: r?.recipe ?? null };
+    .first<{ recipe: string | null; cost: number | null; rate: number | null }>();
+  // 提出の数 (順位と同じ) も返す = 組み上がった木の写しで開いた時に出す (D-50h)
+  return r?.recipe ? { recipe: r.recipe, ...(r.cost != null ? { cost: r.cost } : {}), ...(r.rate != null ? { rate: r.rate } : {}) } : { recipe: null };
 }
 
 /** その日の始まり (16:00) より前の投稿だけ候補 (D-84)。台本が使う */

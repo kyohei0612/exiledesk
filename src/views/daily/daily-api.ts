@@ -35,7 +35,7 @@ export type DailyTopic = { id: string; day: string; dayNo: number; base: string;
   out?: { ms: number; timeout?: true }[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** 画面の組み上がった木の写し (縮めた文字、提出で tree に足して送る。D-50h、スイッチ dailyBuilt) */ builtZ?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
 /** views = そのレシピを開いた人の数 (D-50e、1 人も開いていない行には無い) */
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number; /** 提出の一言 (D-35e、無い人は無し) */ note?: string };
 /** 提出の一言の字数の上限 (D-35e、サーバーの SUBMIT_NOTE_MAX と同じ) */
@@ -157,7 +157,7 @@ export async function recheckTry(id: string): Promise<void> {
   const r = await call<{ has?: boolean }>("/daily/mine", { ...a, id });
   if (r?.has === false && daily.local.tries[id]) { delete daily.local.tries[id]; save(); }
 }
-export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "from" | "tree" | "saved">>): void {
+export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "from" | "tree" | "saved" | "builtZ">>): void {
   const t = daily.local.tries[id];
   if (t) { Object.assign(t, patch); save(); }
 }
@@ -184,11 +184,19 @@ export function canStillTry(id: string, now = Date.now()): boolean {
 }
 /** 残り時間 (実際の時計、ページを閉じても進む) */
 export const leftMs = (t: DailyTry, now = Date.now()): number => t.startedAt + TIME_LIMIT_MS - now;
+/**
+ * 提出で送る木: 打ち方 (exiledesk-recipe/1) に、画面の組み上がった木の写し builtZ を足す (D-50h)。
+ * 写しが無い・読めない時は打ち方だけ (検算 runCost と打ち方の読みは builtZ を読まない)
+ */
+function recipeToSend(t: DailyTry): string | null {
+  if (!t.tree || !t.builtZ || !DAILY_BUILT) return t.tree ?? null;
+  try { return JSON.stringify({ ...(JSON.parse(t.tree) as Record<string, unknown>), builtZ: t.builtZ }); } catch { return t.tree; }
+}
 /** POST /daily/submit。1 回だけで、出したら挑戦は終わり (D-35c)。木 (recipe) も一緒に送る (D-55、検算 D-58 の材料)。1 時間 + 30 秒を過ぎたらサーバーが断る */
 export async function submitTry(id: string, cost: number, rate: number, note = "", now = Date.now()): Promise<{ ok: boolean; best: DailyRecord | null; /** 一言が悪口・URL で断られた (D-35e) */ badNote?: boolean }> {
   const a = auth(), t = daily.local.tries[id];
   if (!a || !t) return { ok: false, best: t?.best ?? null };
-  const r = await call<{ ok?: boolean; best?: DailyRecord | null; error?: string }>("/daily/submit", { ...a, id, cost, rate, recipe: t.tree ?? null, ...(note.trim() ? { note: note.trim() } : {}) });
+  const r = await call<{ ok?: boolean; best?: DailyRecord | null; error?: string }>("/daily/submit", { ...a, id, cost, rate, recipe: recipeToSend(t), ...(note.trim() ? { note: note.trim() } : {}) });
   if (r?.error === "note") return { ok: false, best: t.best ?? null, badNote: true };
   // 前に出していた (別の画面・別の PC) 時も終わりの印を付ける
   if (r?.error === undefined && (r as { done?: boolean } | null)?.done) { t.ended = true; t.submitted = true; save(); }
@@ -255,9 +263,20 @@ export function rankOf(id: string): DailyRankRow[] {
 }
 /** GET /daily/recipe.json。締めた日の順位の人の木 (exiledesk-recipe/1 の JSON、D-50b)。今日の分・無い時は null */
 export async function rankRecipe(id: string, name: string): Promise<string | null> {
-  const r = await call<{ recipe?: string | null }>(`/daily/recipe.json?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
-  return r?.recipe ?? null;
+  return (await rankRecipeOf(id, name))?.recipe ?? null;
 }
+/** 同じ口で、提出の数 (順位と同じ cost・rate) も一緒に (D-50h。返さない古いサーバーの時は数が無い) */
+export async function rankRecipeOf(id: string, name: string): Promise<{ recipe: string; cost?: number; rate?: number } | null> {
+  const r = await call<{ recipe?: string | null; cost?: number; rate?: number }>(`/daily/recipe.json?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
+  return r?.recipe ? { recipe: r.recipe, ...(typeof r.cost === "number" ? { cost: r.cost } : {}), ...(typeof r.rate === "number" ? { rate: r.rate } : {}) } : null;
+}
+/**
+ * 提出した時の形のまま開く (D-50h): 提出で組み上がった木の写し builtZ を送り、順位から開く時に写しと提出の数を渡す。
+ * 出すまでは開発版の画面だけ (シミュの受ける口ができるまでは渡すだけ)。出す時は true か、デザインにスイッチを足してもらう
+ */
+export const DAILY_BUILT: boolean = DEV_BUILD;
+/** 写しの上限 (縮めた字数)。超える木は写しを付けない (開く時は打ち方から組み直して注記、D-50h) */
+export const BUILT_Z_MAX = 16 * 1024;
 /** 「記録しない」の端末から挑戦中の控えを送らない (D-57b、オーナー 11-13「やめる」)。出すまでは開発版の画面だけ = 出す時に true */
 export const LIVE_NO_LOG: boolean = DEV_BUILD;
 /** 端末で「記録しない」を選んだか (utils/no-log.ts の控えと同じ鍵)。手元の開発版・録画の時の「送らない」は見ない = 開発版は手元の口に置くだけなので試せる */

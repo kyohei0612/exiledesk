@@ -29,7 +29,7 @@ import DailySubmitAsk from "./DailySubmitAsk.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyRestartAsk from "./DailyRestartAsk.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
-import { dailyRecipeName, dailyUnsaved, saveDailyCopy } from "./daily-save";
+import { dailyRecipeName, dailyUnsaved, keepDailyBuilt, saveDailyCopy } from "./daily-save";
 import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
 import { DEV_RUN, DEV_RUN0, devState, devTry } from "./daily-dev-states";
 import { DEV_BUILD, flag } from "../../web/release-flags";
@@ -193,7 +193,7 @@ watch(() => t.doc.value, (d) => {
   // 完成形と同じ形の箱は自動で完成 (D-35b ②)。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
   if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims); }); return; }
   clearTimeout(saveT);
-  if (!dev) saveT = window.setTimeout(() => updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }), 500);
+  if (!dev) saveT = window.setTimeout(() => { updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }); void keepDailyBuilt(props.topic.id, d); }, 500); // 写し = 提出した時の形のまま開く用 (D-50h)
   if (!dev) liveDoc(d);
 });
 const runUnmet = ref<ReadonlySet<string>>(new Set());

@@ -9,7 +9,8 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { currentTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
 import { track } from "../../utils/track";
-import { getTry, updateTry, type DailyTopic } from "./daily-api";
+import { packJson } from "../../services/craft-stage/share";
+import { BUILT_Z_MAX, DAILY_BUILT, getTry, updateTry, type DailyTopic } from "./daily-api";
 
 const v1Of = (d: TreeDoc): string => JSON.stringify(toRecipeV1(d));
 
@@ -40,3 +41,18 @@ export function dailyUnsaved(topicId: string, d: TreeDoc): boolean {
   return !!d.memoAims?.length && Object.keys(d.boxes).length > 1;
 }
 
+
+/**
+ * 画面の組み上がった木の写しを縮めて挑戦の控えに覚える (D-50h)。提出で打ち方に足して送る (daily-api の recipeToSend)。
+ * 例のアイテム・前の写しは抜く。縮めて BUILT_Z_MAX を超える木は覚えない (前の写しも消す = 古い形を送らない)
+ */
+let builtSeq = 0;
+export async function keepDailyBuilt(topicId: string, d: TreeDoc): Promise<void> {
+  if (!DAILY_BUILT) return;
+  const seq = ++builtSeq;
+  const { examples: _e, built: _b, ...doc } = d;
+  let z: string | undefined;
+  try { z = await packJson(doc); } catch { z = undefined; }
+  if (seq !== builtSeq) return; // 縮める間に木が替わった = 新しい方が覚える
+  updateTry(topicId, { builtZ: z && z.length <= BUILT_Z_MAX ? z : undefined });
+}

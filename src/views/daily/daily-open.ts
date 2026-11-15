@@ -7,18 +7,20 @@ import { packJson } from "../../services/craft-stage/share";
 import { openSharedRecipe } from "../../state/for-share/sim-links";
 import { closeDailyPage, openDailyPage } from "../../web/page";
 import { dailyPage, type DailyView } from "../../state/web-page";
-import { rankRecipe, viewPost } from "./daily-api";
+import { DAILY_BUILT, rankRecipeOf, viewPost } from "./daily-api";
 
 /** 開けたら true。今日の分・木が無い・つながらない時は false (画面が一言出す) */
 export async function openRankRecipe(id: string, name: string, day: string): Promise<boolean> {
-  const recipe = await rankRecipe(id, name);
-  if (!recipe) return false;
+  const got = await rankRecipeOf(id, name);
+  if (!got) return false;
   let t: unknown;
-  try { t = JSON.parse(recipe); } catch { return false; }
+  try { t = JSON.parse(got.recipe); } catch { return false; }
   // 開けた時に 1 回、開いた記録を置く (D-50e。自分のレシピ・記録しない端末は送らない)
   viewPost(id, name);
   // シミュの「いずれかの元素耐性」(S-10h) の読み替えをさせない印。お題の判定は元素ごとなので、写しも元素ごとの狙いのまま開く (シミュ部長 49 と合わせ、11-14)
   if (t && typeof t === "object") (t as { eleAny?: number }).eleAny = 1;
+  // 提出した時の形のまま開く印 (D-50h): 提出の数を渡す。写し builtZ は提出の木に入ったまま。受けるのはシミュの口 (版を比べず写しで開く・写しが無ければ注記)
+  if (DAILY_BUILT && t && typeof t === "object" && got.cost != null && got.rate != null) (t as { dailyPast?: { cost: number; rate: number } }).dailyPast = { cost: got.cost, rate: got.rate };
   const code = await packJson({ v: 2, n: `${name} (${day})`, t });
   // #recipe= は一覧を閉じる前に置く (閉じると木のページが開き、開き直し resumeTree が #recipe= を見て前のレシピを戻さない。
   // 後に置くと、前に開いた昨日のレシピで今日のレシピが上書きされた、11-14 オーナーのスマホ。URL の書き直し urlFor は # を残す)
