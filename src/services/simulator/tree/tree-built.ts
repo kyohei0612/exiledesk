@@ -51,6 +51,8 @@ export async function fromDailyPast(tree: TreeDoc): Promise<TreeDoc | null> {
     const doc = JSON.parse(JSON.stringify(b)) as TreeDoc;
     delete doc.built;
     if (tree.examples) doc.examples = JSON.parse(JSON.stringify(tree.examples)) as NonNullable<TreeDoc["examples"]>;
+    // 読み替えさせない印 (daily-open が付ける) は写しにも (写しに印が無いと完成形が「いずれかの元素耐性」に読み替わった、デイリー部長 23)
+    if (tree.eleAny) doc.eleAny = tree.eleAny;
     return doc;
   } catch { return null; }
 }
