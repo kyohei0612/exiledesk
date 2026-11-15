@@ -8,7 +8,7 @@ import { ref, type ShallowRef } from "vue";
 import type { PatchData } from "../../../services/craft-stage/engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { rebuildInSteps } from "./tree-rebuild";
-import { fromBuilt } from "../../../services/simulator/tree/tree-built";
+import { fromBuilt, fromDailyPast, markDailyPast } from "../../../services/simulator/tree/tree-built";
 
 /** 開いている間 (木は触れない。読み込み中の覆いを出す) */
 export const treeLoading = ref(false);
@@ -25,7 +25,10 @@ export async function openStepped(data: PatchData, tree: TreeDoc, doc: ShallowRe
   try {
     await frame();
     // 同じ組み方の版・同じ打ち方の組み上がった木の写しがあれば組み直さない (S-104b、開く速さの案 E)。無ければ・違えば今どおり組み直す
-    if (no === openNo) done = fromBuilt(tree) ?? (await rebuildInSteps(data, tree, () => {}, () => no === openNo));
+    // デイリーの順位から開く木 (提出の数 dailyPast がある木) は提出した時の写し builtZ で、版を比べず組み直さない (D-50h・S-104d)
+    const past = no === openNo ? await fromDailyPast(tree) : null;
+    if (no === openNo) done = past ?? fromBuilt(tree) ?? (await rebuildInSteps(data, tree, () => {}, () => no === openNo));
+    if (done) markDailyPast(tree, done, !past);
   } finally {
     if (no === openNo) {
       doc.value = openFrom!; openFrom = null; treeLoading.value = false;

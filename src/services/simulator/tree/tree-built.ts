@@ -7,6 +7,7 @@
 import type { TreeDoc } from "./tree-model";
 import { toRecipeV1 } from "./tree-recipe-v1";
 import { DEV_BUILD } from "../../../web/release-flags";
+import { unpackJson } from "../../craft-stage/share";
 
 declare const __TREE_BUILD__: string | undefined;
 /** 画面の ?off= で切ったスイッチ (開発版の作りだけ効く。名前を並べて版に足す = 切り方が違えば写しを使わない、11-13 最終チェック長 12) */
@@ -31,6 +32,38 @@ export function builtOf(d: TreeDoc): TreeBuilt | undefined {
   // 大きすぎる木は写しを持たない (保存したレシピは手元の保存の場所に積むので。開く時は今どおり組み直す)
   if (s.length > BUILT_MAX) return undefined;
   return { v: TREE_BUILD, rec: recOf(d), doc: JSON.parse(s) as TreeDoc };
+}
+
+/** デイリーの順位から開く木の提出の数 (D-50h・S-104d)。rebuilt = 写しが無く打ち方から組み直した、key = 開いた時の打ち方 (変わったら 1 行を出さない) */
+export interface DailyPast { cost: number; rate: number; rebuilt?: boolean; key?: string }
+/** 打ち方の並びの鍵 (開いた後に手を置く・外すと変わる) */
+const picksKey = (d: TreeDoc): string => { try { return JSON.stringify(toRecipeV1(d).picks ?? []); } catch { return ""; } };
+const isPast = (p: unknown): p is DailyPast => !!p && typeof p === "object" && typeof (p as DailyPast).cost === "number" && typeof (p as DailyPast).rate === "number";
+/**
+ * デイリーの順位から開く木 (提出の数 dailyPast がある木) で、提出の木に入った写し builtZ があれば、組み方の版を比べず組み直さずにその木 (S-104d)。
+ * 写しが無い・読めない・提出の数が無い時は null (今どおり)
+ */
+export async function fromDailyPast(tree: TreeDoc): Promise<TreeDoc | null> {
+  if (!isPast(tree.dailyPast) || typeof tree.builtZ !== "string" || !tree.builtZ) return null;
+  try {
+    const b = (await unpackJson(tree.builtZ)) as TreeDoc | null;
+    if (!b?.boxes?.start) return null;
+    const doc = JSON.parse(JSON.stringify(b)) as TreeDoc;
+    delete doc.built;
+    if (tree.examples) doc.examples = JSON.parse(JSON.stringify(tree.examples)) as NonNullable<TreeDoc["examples"]>;
+    return doc;
+  } catch { return null; }
+}
+/** 開いた木 done に提出の数と写しを載せる (保存したレシピにも残る)。rebuilt = 打ち方から組み直した */
+export function markDailyPast(tree: TreeDoc, done: TreeDoc, rebuilt: boolean): void {
+  if (!isPast(tree.dailyPast)) return;
+  done.dailyPast = { cost: tree.dailyPast.cost, rate: tree.dailyPast.rate, ...(rebuilt ? { rebuilt: true } : {}), key: picksKey(done) };
+  if (tree.builtZ) done.builtZ = tree.builtZ;
+}
+/** 木の上の 1 行に出す提出の数 (打ち方が開いた時と同じ間だけ)。無ければ null */
+export function dailyPastOf(d: TreeDoc): DailyPast | null {
+  const p = d.dailyPast;
+  return isPast(p) && (!p.key || p.key === picksKey(d)) ? p : null;
 }
 
 /** 保存の形 tree の写しが今の組み方の版・同じ打ち方なら、組み上がった木 (例のアイテムは保存の形の物)。使えなければ null = 組み直す */
