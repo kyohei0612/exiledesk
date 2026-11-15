@@ -19,6 +19,7 @@ import { NO_FRAC } from "./daily-aims";
 import { flag } from "../../web/release-flags";
 import DailyEssNote from "./DailyEssNote.vue";
 import type { TopicQuality } from "./daily-quality";
+import { withTopicQuality } from "./daily-quality-item";
 
 const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string; /** 完成形の品質 (D-03d) */ quality?: TopicQuality | null }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
@@ -28,13 +29,13 @@ const from = ref<StartFrom | null>(props.fourOnly ? "four" : (props.initialFrom 
 /** 完成形のカードはお題の狙いを付けた形 (木の完成形と同じ作り)。選んだ後の木はお題から作り直すので、ここで狙いを入れても残らない */
 onMounted(() => {
   t.startTreeWith(props.base, props.ilvl);
-  t.edit((d) => {
-    d.memoAims = props.aims.map((a) => ({ modId: a.modId, tier: a.tier })); d.goal = { rarity: "rare" }; delete d.ilvlFit;
-    // 完成形の品質 (D-03d) も木の完成形と同じ欄に (カードの品質の行に出る)
-    if (props.quality) { d.goalQualityOn = true; d.goalQuality = props.quality.value; d.goalQualityTag = props.quality.tag; if (props.quality.value > 20) d.goalQualityCap = props.quality.value; }
-  });
+  t.edit((d) => { d.memoAims = props.aims.map((a) => ({ modId: a.modId, tier: a.tier })); d.goal = { rarity: "rare" }; delete d.ilvlFit; });
 });
-const card = computed(() => t.goalItem.value?.item ?? null);
+// 完成形の品質 (D-03d) もカードに載せる (お題の完成形のカードと同じ口)
+const card = computed(() => {
+  const it = t.goalItem.value?.item ?? null, data = s.data.value;
+  return it && data ? withTopicQuality(data, it, props.quality) : it;
+});
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });
 /** シミュの始め方の窓 (S-13) の (a) / (b) と同じ文 (1 か所 = tree-names の startFromWords、D-37j)。✦ は 1 つなので確定フラクチャーの素材は ×3 */
 const FROMS: Array<{ k: StartFrom; title: [string, string]; sub: [string, string] }> = startFromWords(1);
@@ -85,7 +86,7 @@ watch(peek, (id) => {
       <div class="daily-frac-card" data-daily-frac-card>
         <StageItemCard v-if="card" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="400" compact tier-at-least />
         <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
-        <DailyEssNote v-if="card" :day="day" style="max-width: 400px" />
+        <DailyEssNote v-if="card" :day="day" :quality="quality" style="max-width: 400px" />
       </div>
       <div v-if="!chosen" class="min-w-0">
         <ul class="daily-frac-from" :aria-label="tr('始め方', 'How to start')">

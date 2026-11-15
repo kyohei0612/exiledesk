@@ -18,7 +18,7 @@ import { fitDailySide } from "./daily-side-fit";
 import DailyEssNote from "./DailyEssNote.vue";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
-import { fillTopicDoc } from "./daily-aims";
+import { fillTopicDoc, setGoalQuality } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
 import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
 import { qualityWords } from "./daily-quality-words";
@@ -111,7 +111,7 @@ function openTree(): void {
   treeStep.value = "tree";
   justOpened = true; doneSeen = new Set(); doneNote.value = null;
   const saved = x.tree ? (JSON.parse(x.tree) as TreeDoc) : null;
-  if (saved) t.open(saved);
+  if (saved) { setGoalQuality(saved, x.quality); t.open(saved); } // 完成形の品質はお題から (D-03d)
   else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from, x.quality)); } // 完成形の品質 (D-03d)
   treeOn.value = true;
   // 挑戦中の木と動作の控えをサーバーへ (D-57b)。見本・終わった挑戦では送らない
@@ -176,7 +176,9 @@ function doneGate(d: TreeDoc): boolean {
   if (!fresh.length) return false;
   keepNote = true;
   if (opened || !t.canUndo.value) {
-    doneNote.value = tr(`完成形を満たさない「完成」の印を ${fresh.length} つ外しました。デイリーで完成にできるのは、完成形の MOD を全部持つ箱だけです。`, `Removed ${fresh.length} "finished" mark(s) that don't match the target item. In the daily challenge, only boxes with every target mod can be finished.`);
+    doneNote.value = x.quality // 品質のあるお題は品質も (D-03d)
+      ? tr(`完成形を満たさない「完成」の印を ${fresh.length} つ外しました。デイリーで完成にできるのは、完成形の MOD を全部持ち、${qualityWords(x.quality)}の箱だけです。`, `Removed ${fresh.length} "finished" mark(s) that don't match the target item. In the daily challenge, only boxes with every target mod and ${qualityWords(x.quality)} can be finished.`)
+      : tr(`完成形を満たさない「完成」の印を ${fresh.length} つ外しました。デイリーで完成にできるのは、完成形の MOD を全部持つ箱だけです。`, `Removed ${fresh.length} "finished" mark(s) that don't match the target item. In the daily challenge, only boxes with every target mod can be finished.`);
     t.edit((doc) => { for (const id of fresh) if (doc.boxes[id]) doc.boxes[id]!.done = null; });
   } else {
     const miss = missingAims(data, d, fresh[0]!, x.aims).map((a) => `${t.aimShort({ modId: a.modId, tier: a.tier })} (${tierRankLabel(a.tier)})`);
@@ -329,7 +331,7 @@ const REFUSED: Record<StartError, () => string> = {
     <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.submitted ? submittedNote() : tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
     <p v-else-if="unmet.length" data-daily-unmet class="daily-note">{{ tr(`「完成」の箱のうち ${unmet.length} つがお題の狙いを全部は持っていない。デイリーでは狙いを全部満たした箱だけを完成にでき、このままでは提出できない。`, `${unmet.length} finished box(es) don't have every target. In the daily challenge only boxes with all targets count as finished, so you can't submit yet.`) }}</p>
     <!-- 回した時に完成の箱へ着いた人の一部が完成形に足りない (D-35b ④)。提出は止めない (数はもう足りない人を除いた物) -->
-    <p v-if="runUnmetN && treeOn && !over" data-daily-run-unmet class="daily-note daily-done-note" role="status"><span aria-hidden="true">⚠</span><span>{{ tr(`「完成」の箱 ${runUnmetN} つに、完成形の MOD が足りない人が着いています。その人は完成に数えていません (費用には入ります)。`, `${runUnmetN} finished box(es) received items that are missing target mods. Those runs are not counted as finished (their cost still counts).`) }}</span></p>
+    <p v-if="runUnmetN && treeOn && !over" data-daily-run-unmet class="daily-note daily-done-note" role="status"><span aria-hidden="true">⚠</span><span>{{ tryOf?.quality ? tr(`「完成」の箱 ${runUnmetN} つに、完成形の MOD か品質 (${qualityWords(tryOf.quality)}) が足りない人が着いています。その人は完成に数えていません (費用には入ります)。`, `${runUnmetN} finished box(es) received items missing target mods or quality (${qualityWords(tryOf.quality)}). Those runs are not counted as finished (their cost still counts).`) : tr(`「完成」の箱 ${runUnmetN} つに、完成形の MOD が足りない人が着いています。その人は完成に数えていません (費用には入ります)。`, `${runUnmetN} finished box(es) received items that are missing target mods. Those runs are not counted as finished (their cost still counts).`) }}</span></p>
     <!-- 完成を押した時の精査の訳 (D-35b ③)。注意書きと同じ金の縦線の枠 -->
     <p v-if="doneNote && treeOn && !over" data-daily-done-note class="daily-note daily-done-note" role="alert"><span aria-hidden="true">⚠</span><span>{{ doneNote }}</span></p>
 
@@ -340,7 +342,7 @@ const REFUSED: Record<StartError, () => string> = {
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
     <Teleport v-if="treeOn && !picking" defer :to="actsTo">
-      <DailyEssNote v-if="!sideShut" :day="topic.id" />
+      <DailyEssNote v-if="!sideShut" :day="topic.id" :quality="tryOf?.quality" />
       <div class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
         <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
         <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>

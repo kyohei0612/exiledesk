@@ -111,14 +111,19 @@ export const postFractured = (p: PostItem): boolean[] => p.start.map((f) => !!f.
 
 /** 「フラクチャー無し」を選んだ印 (DailyTry.fractured に入れる。どの狙いにも当たらないので ✦ は付かず、白い品から始まる。D-03・D-37j、11-12 のお題から) */
 export const NO_FRAC = "none";
-/** お題の木を作る: ✦ を 1 つ付け (フラクチャー無しなら付けない)、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
-export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured", quality?: TopicQuality | null): void {
-  // 完成形の品質はお題から (D-03d)。シミュの「品質を狙う」(S-31c) の欄に入れる = 木の完成形のカードに出る。保存の木の書き換えは効かせない (品質の無いお題は品質を狙わない)
+/**
+ * 完成形の品質はお題から (D-03d)。シミュの「品質を狙う」(S-31c) の欄に入れる = 木の完成形のカードに出る。保存の木の書き換えは効かせない (品質の無いお題は品質を狙わない)。
+ * お題の木を作る時 (fillTopicDoc) と、覚えた木を開く時 (DailyPlay の openTree) に呼ぶ
+ */
+export function setGoalQuality(d: TreeDoc, quality: TopicQuality | null | undefined): void {
   delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap; delete d.goalQualityOn; delete d.goalQualityNo;
-  if (quality) {
-    d.goalQualityOn = true; d.goalQuality = quality.value; d.goalQualityTag = quality.tag;
-    if (quality.value > 20) d.goalQualityCap = quality.value; // 既定の上限 20% を超える品質 (ブリーチのエッセンス、E-70a) は上限も合わせる (シミュの貼る口と同じ)
-  }
+  if (!quality) return;
+  d.goalQualityOn = true; d.goalQuality = quality.value; d.goalQualityTag = quality.tag;
+  if (quality.value > 20) d.goalQualityCap = quality.value; // 既定の上限 20% を超える品質 (ブリーチのエッセンス、E-70a) は上限も合わせる (シミュの貼る口と同じ)
+}
+/** お題の木を作る:✦ を 1 つ付け (フラクチャー無しなら付けない)、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
+export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured", quality?: TopicQuality | null): void {
+  setGoalQuality(d, quality);
   const list: Aim[] = aims.map((a) => ({ modId: a.modId, tier: a.tier, ...(a.modId === fractured ? { fractured: true as const } : {}) }));
   d.memoAims = list;
   delete d.ilvlFit; // アイテムレベルはお題のまま (適正へ下げない)

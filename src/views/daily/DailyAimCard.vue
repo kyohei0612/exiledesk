@@ -8,9 +8,8 @@ import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { usePhone } from "../../utils/use-phone";
-import { applyCurrency, qualityCapOf, tierRankLabel } from "../../services/craft-stage/engine";
-import { qualityCapKey } from "../../services/craft-stage/apply-currency";
-import { SET_PREFIX } from "../../services/craft-stage/key";
+import { tierRankLabel } from "../../services/craft-stage/engine";
+import { withTopicQuality } from "./daily-quality-item";
 import { placeWithSlots } from "../simulator/tree/tree-slot-mods";
 import type { DailyAim } from "./daily-api";
 import DailyEssNote from "./DailyEssNote.vue";
@@ -28,13 +27,10 @@ const placed = computed(() => {
   const fr = props.fractured;
   return placeWithSlots(data, props.base, props.ilvl, props.aims.map((a, i) => ({ modId: a.modId, tier: a.tier, fractured: !!fr?.[i] })), [], () => 0.5);
 });
-// 品質のあるお題は品にその品質と種類を載せる (カードの品質の行・品質で伸びた値がゲームの品と同じに出る、D-03d)。
-// 載せるのはエンジンの品質の欄の手 (上限 qcap → 品質 qset、エミュの品質の帯と同じ口)。画面の側で品を書き換えない
+// 品質のあるお題は品にその品質と種類を載せる (カードの品質の行・品質で伸びた値がゲームの品と同じに出る、D-03d)
 const item = computed(() => {
-  const it = placed.value?.item ?? null, q = props.quality, data = s.data.value;
-  if (!it || !q || !data) return it;
-  const capped = applyCurrency(data, it, qualityCapKey(Math.max(q.value, qualityCapOf(it))), () => 0.5).item;
-  return applyCurrency(data, capped, `${SET_PREFIX.quality}${q.value}:${q.tag}`, () => 0.5).item;
+  const it = placed.value?.item ?? null, data = s.data.value;
+  return it && data ? withTopicQuality(data, it, props.quality) : it;
 });
 /** カードに乗らなかった狙い (枠が足りない等)。黙って消さず文で下に出す */
 const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.find((a) => a.modId === x.modId)).filter((a): a is DailyAim => !!a));
@@ -44,7 +40,7 @@ const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.fin
   <div data-daily-aim-card class="daily-aim-card">
     <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="width ?? (phone ? 340 : 400)" compact tier-at-least />
     <p v-else class="text-[14px] opacity-70">{{ tr("読み込み中", "Loading") }}</p>
-    <DailyEssNote v-if="essNote && item" :day="day" :style="{ width: '100%', maxWidth: `${width ?? (phone ? 340 : 400)}px` }" />
+    <DailyEssNote v-if="essNote && item" :day="day" :quality="quality" :style="{ width: '100%', maxWidth: `${width ?? (phone ? 340 : 400)}px` }" />
     <ul v-if="left.length" data-daily-aim-left class="mt-2 text-[14px]">
       <li v-for="a in left" :key="a.modId">{{ tr(`カードに乗らない狙い: ${a.ja}`, `Not on the card: ${a.en}`) }} <small>{{ tierRankLabel(a.tier) }}</small></li>
     </ul>
