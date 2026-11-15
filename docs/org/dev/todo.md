@@ -6,7 +6,7 @@
 | 誰 | session id | 今 |
 |---|---|---|
 | ブラック | local_819477c9-3c85-4d0c-b741-90934db52ba6 (119 代目、Opus 5.5、11-15 夕に入れ替え。118 = local_63f05cbb が 2,39x 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black119.md・引き継ぎ = black118.md の一番上) | 司令塔・振り分け・順番 |
-| デイリー部長 | local_91627cfb-f428-4186-8edb-b479fc606adc (23、Opus 5.5、ブラック 118 が控えで立て、22 = local_02cbc048 から 11-15 夕に交代。頼み = 共有 local_41371db6…/progress/daily-lead23-brief.md、進み = 同 daily-lead23.md、引き継ぎ = 共有 local_7ff0bf1e…/daily-lead22-handover.md。記録 = progress/daily-lead23-run.log) | 今: シミュ部長 60 の口 2 つ待ち (D-50h 写しで開く・D-03c 白に戻さない印) → 画面の確かめ。migration 0022 は 2c6fb6952 (本番の D1 へは出しの時)。毎日の見張り (roll / close) は予定のタスク側 |
+| デイリー部長 | local_a7b68204-acff-4219-9158-f6b6dba60033 (24、Opus 5.5、ブラック 118 が控えで立て、23 = local_91627cfb から 11-15 夕に交代。頼み = 共有 local_41371db6…/progress/daily-lead24-brief.md、進み = 同 daily-lead24.md、引き継ぎ = 同 daily-lead23-handover.md。記録 = progress/daily-lead24-run.log) | 今: D-56b は 0.1.742 で本番に出た。オーナーが本番で「挑戦済み」になるか見る返事待ち。D-50h は木の大改装と一緒に出す。D-03c はやめた。毎日の見張り (roll / close) は予定のタスク側 |
 | 最終チェック長 | local_d6fa4b95-bbd9-4a80-9c64-d4ff36bd115a (20、11-15 夕にブラック 118 が立てた。19 = local_9add0a56 はアーカイブ。記録 = progress/release-next20-run.log) | 今: 0.1.742 (デイリーの挑戦済みの直し D-56b だけ) を出し終えた。本番は 0.1.742 |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
 | 解析君 | — (analyst1 local_819bb9cb は 11-14 0 時台に ui_tally を済ませてアーカイブ。一覧は本番に出て 1 週溜めてから) | 待機 |
