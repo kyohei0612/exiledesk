@@ -11,6 +11,7 @@ import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf, essenceHold, SAME_HI } from "./tree-outcome";
 import { sameHiHeld, sameHiSwap } from "./tree-same-hi";
+import { aimFloorItem } from "./tree-aim-floor";
 import { goalFamilies, itemTaking, junkClean, junkTaking, swapJunk } from "./tree-junk-frame";
 import { stepOutcomes } from "../sim-engine/outcomes";
 import { outBoxOf } from "./tree-shape";
@@ -294,6 +295,9 @@ export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
           if (l < bestLost - 1e-9) { best = fr; bestLost = l; }
         }
       }
+      // 見本の ☑ の狙い MOD は狙いの段の一番下 (S-200 ③、スイッチ aimFloor)。鍵が替わる時は替えない
+      const fl = aimFloorItem(data, doc, o, from.item, best.item, best.aimed), flf = fl ? pick({ item: fl, p: sum }) : null;
+      if (flf && flf.key === best.key) best = flf;
       // 代表と枠の違う形: 手の箱はその手を当て、手の無い ↩ の箱は ↩ 先の手を当てる (S-21 を配置で。↩ の箱は前は代表 1 つだけ = FmNY7Wwv b23)
       const at = c.hand ? o : c.back && doc.boxes[c.back] ? c.back : null;
       // 枠が同じでも外れの印 (g) が違えば当てる (印は枠の比べに入れない、tree-judge の blockMarkOf)
