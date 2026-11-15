@@ -227,6 +227,8 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
     if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
     // 「エッセンスと同じ MOD (同格以上)」の既定の統合 (S-33e ⑥、tree-hand-plan の linkSameHi) は中身で見直さない (特例でエッセンスとして扱う)
     if (b.out === "blocked" && b.junkKey === "hi") continue;
+    // 低ティアの箱の隣の外れと同じ扱いの ↩ (S-33g ④、tree-low-tier-sync の fillLike) も中身で見直さない (A を名前で持つので外れの箱と中身が合わない)
+    if (b.out === "blocked" && b.junkKey?.startsWith("lt:")) continue;
     // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない。同じ枠の候補が 2 つ以上でも外さない (戻り先はいつも 1 つ、S-52b 11-08 夜)
     // 完成への道の結果から上の段への自動の ↩ は外す (S-50g、スイッチ idealNoBack。人が同じ手で戻った handBack は人の決めなので残す)
     const up = b.handBack ? 0 : idealNoUp(doc, b.id);
