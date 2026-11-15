@@ -65,7 +65,15 @@ export const sureFracWhyText = (why: "desecrated" | "none"): string =>
   why === "desecrated" ? tr("冒涜で付いた MOD にはフラクチャーを打てません。", "Desecrated mods can't be fractured.") : tr("フラクチャー予定の MOD がまだ付いていません。", "The mod you chose to fracture isn't on this item yet.");
 
 /** 確定フラクチャーで使う物: カレンシーとお告げを FRACTURE_POOL 回分 (3 回に 1 回成功 = 33%、文は tree-names の sureFracText と同じ数) */
-export function useSureFrac(h: Hand, use: (key: string, n: number) => void): void {
+/**
+ * 確定フラクチャーの使う物 (S-43a)。オーブとお告げは 3 回分。スイッチ sureFracAll の間は、今の品でフラクチャーまでに使った物全部も 3 回分にする
+ * (uses − itemUses = 今の品を始めてから使った物、その 2 回分を足す。始まりの品の値段の 2 回分は呼ぶ側が足す = sureFracRedo)
+ */
+export function useSureFrac(h: Hand, use: (key: string, n: number) => void, uses: Readonly<Record<string, number>> = {}, itemUses: Readonly<Record<string, number>> = {}): void {
   use(h.currency, FRACTURE_POOL);
   for (const o of engineOmens(h)) use(o, FRACTURE_POOL);
+  if (!flag("sureFracAll")) return;
+  for (const [k, n] of Object.entries(uses)) { const d = n - (itemUses[k] ?? 0); if (d > 0) use(k, d * (FRACTURE_POOL - 1)); }
 }
+/** 確定フラクチャーで足す始まりの品の数 (スイッチ sureFracAll の間は 2 = 3 回分のうち足りない分、閉じている間は 0) */
+export const sureFracRedo = (): number => (flag("sureFracAll") ? FRACTURE_POOL - 1 : 0);

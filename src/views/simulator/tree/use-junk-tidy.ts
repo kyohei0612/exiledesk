@@ -9,6 +9,7 @@ import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-mod
 import { tidyJunk } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { idealPath } from "../../../services/simulator/tree/tree-ideal-first";
+import { idealHidden } from "../../../services/simulator/tree/tree-ideal-hide";
 
 export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) => void, go: (id: string) => void, issues: Ref<CheckIssue[] | null>, passed: Ref<boolean>) {
   const on = computed(() => tidyOn());
@@ -30,7 +31,7 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   const ideal = computed(() => idealPath(doc.value));
   const idealGrayOf = (b: TreeBox): boolean => !!ideal.value?.gray.has(b.id);
   /** 帯の数も光る箱と同じ物差し (S-89b) */
-  const shownIssues = computed(() => (guide.value ? (issues.value ?? []).filter((x) => targets.value.has(x.boxId)) : ideal.value ? issues.value?.filter((x) => !ideal.value!.gray.has(x.boxId)) ?? null : issues.value));
+  const shownIssues = computed(() => { const hid = idealHidden(doc.value), l = guide.value ? (issues.value ?? []).filter((x) => targets.value.has(x.boxId)) : ideal.value ? issues.value?.filter((x) => !ideal.value!.gray.has(x.boxId)) ?? null : issues.value; return hid.size && l ? l.filter((x) => !hid.has(x.boxId)) : l; }); // 隠した外れの箱 (S-142n) は数えない
   /** 完成を押し直したら案内へ戻る */
   // noTidyBtn: 完成の箱の数で見る (前は押した印 doneNow の数で、完成を外して押し直しても印が残って数が増えず戻らなかった。戻る道は名残の「ハズレ整理」だけだった)
   watch(() => Object.values(doc.value.boxes).filter((b) => (flag("noTidyBtn") ? b.done === "main" : b.doneNow)).length, (n, was) => { if (n > was) paused.value = false; });

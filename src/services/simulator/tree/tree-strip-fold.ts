@@ -10,6 +10,7 @@ import { ref, type Ref } from "vue";
 import { effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
+import { idealHidden } from "./tree-ideal-hide";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -173,6 +174,7 @@ export function stripHidden(d: TreeDoc, folds: ReadonlyMap<string, StripFold> = 
   for (const f of folds.values()) for (const id of f.mids) if (id !== f.head || f.link || f.back) s.add(id); // 直に線・↩ の畳みは札も描かない
   // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
   if (flag("treeFoldMerged")) for (const f of folds.values()) for (const id of f.tucked) s.add(id);
+  for (const id of idealHidden(d)) s.add(id); // 完成を押すまで隠す外れの箱 (S-142n、スイッチ idealHide)
   return s;
 }
 /** 描く子 (札は止まった箱全部、描かない箱は子無し。札の親はそのまま = 札は親の子の箱の場所) */

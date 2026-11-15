@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { junkSameOn, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
@@ -160,7 +160,7 @@ const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
 useDismiss(() => clearArm.is(), [clearBtn], clearArm.clear);
 // 白紙に戻した後は開いた時と同じ寄せ (75%・スタートを横の真ん中の一番上) へカメラも戻す (10-26 夜オーナー「ツリーのどこにあるか分からんからな」)
-function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 作りかけは 3 択 (10-26 オーナー「ツリー消す作業」)、保存済みは 2 回押し
+function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (!flag("treeClearArm") && unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 2 回押し (1 つ戻すで戻せるので保存は聞かない、S-02b・スイッチ treeClearArm)。閉じている間は作りかけだけ 3 択
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
@@ -173,13 +173,14 @@ const backLabel = (b: Box): string => backLabelOf(doc.value, b); // 縮めた時
  */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
   const id = panel.value!.id, q = takeQuitAll(); // q = 確かめの窓で「削減を全部やめる」を選んだ (S-65c5)
+  const same = junkSameOn.value ? sameJunkOf(doc.value, id) : []; // 同じ外れのほかの箱にも同じ手 (S-190d、スイッチ junkSameHand)
   simAct("hand", kind);
   // 外れの箱で打つ前の箱・同じ形の箱と同じ手は applyPick (tree-shape の sameHandReturn) が戻す (S-51。前の sameHandRetry は本番の goalShape で使われなくなったので消した)
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
   // 視点は holdBox (S-147e)。削減の手を打ち直してほかの枠の手が消える時、手の窓の確かめ「この手以降は削除されます」(下の箱が消える時に出る) で伝えていなければ先に聞く (S-65c4)
-  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); fillHeldDefaults(d, id); S().tidyOf(d); }); return at; });
+  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); if (same.length && s.data.value) pickSameJunk(s.data.value, d, same, h, kind, aims, pre); fillHeldDefaults(d, id); S().tidyOf(d); }); return at; });
     panel.value = null; }, q || drawnBelow(doc.value, id).length > 0);
 }
 /**
@@ -209,6 +210,8 @@ function startDrag(b: Box, e: PointerEvent): void {
   });
 }
 function closeHand(): void { simOp("cancel", "hand-pick"); panel.value = null; }
+/** カオススパムまでスキップ (S-22f): スタートから消去の結果の箱まで 1 つの組み替えで組む (1 つ戻すで丸ごと戻る) */
+function skipChaos(): void { const id = panel.value!.id, data = s.data.value; if (!data) return; simOp("chaos-skip"); void v.holdBox(id, () => { t.edit((d) => { chaosSkip(data, d, id); S().tidyOf(d); }); return id; }); panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
 /** 箱の × = この箱を作った手 (親の手) を消す。結果の箱すべてとその下も消え、親は手を選び直せる形に (10-27 オーナー、TreeBox の rm) */
 function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; askLane(doc.value, p, (d) => clearHandAt(d, p), () => { simOp("remove-hand"); t.edit((d) => clearHandAt(d, p)); }); }
@@ -251,7 +254,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
 }
 function onDone(b: Box): void { const on = !b.done; t.edit((d) => setDone(d, b.id, b.done ? null : "main")); if (on && doc.value.boxes[b.id]?.done === "main") tidyNow(); } // 完成を押した時は見やすい木へ (S-142k)
 /** 失敗 (ここで終わり) の印を付ける・外す  */
-function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
+function onFail(b: Box): void { const same = b.done === "fail" ? [] : sameJunkOf(doc.value, b.id); t.edit((d) => { setDone(d, b.id, b.done === "fail" ? null : "fail"); for (const o of same) setDone(d, o, "fail"); }); } // 付ける時は同じ外れのまだ決めていない箱にも (S-190d)
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value && !t.loading.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
@@ -375,7 +378,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
     <h1 v-if="t.goalInline.value && t.goalPage.value === 1" data-sim-base-band class="g-tabbar g-brush mb-3 flex min-w-0 items-center px-8 text-[22px] max-[48rem]:!min-h-[40px] max-[48rem]:px-6 max-[48rem]:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ tr("ベースを選ぶ", "Choose a base") }}</span></h1>
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <div class="mb-3 flex flex-wrap items-center gap-2"><ModeTabs /><SiteSkinPicker class="ml-auto" /></div><!-- 色はタブの行の右端 (U-49) -->
-    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
+    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @skip="skipChaos" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 pb-0.5 pt-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : '-mb-3.5'">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->

@@ -18,7 +18,7 @@ import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { contentDiff, goalsOn, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
-import { sureFracOn, sureFracture, useSureFrac } from "./tree-sure-frac";
+import { sureFracOn, sureFracRedo, sureFracture, useSureFrac } from "./tree-sure-frac";
 import { defaultCapDiv } from "./run-price";
 import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
 import { boxStreams, mergeRetry, retryable, type RetryPart } from "./tree-run-retry";
@@ -124,13 +124,13 @@ export interface TreeRunResult {
   edges: Record<string, number>;
   /** 回した時のベースの値段 (神) と、人ごとの費用・作り直しの回数・完成したか (ベースの値段を替えた時に回し直さず足し直す、withStartCost) */
   startCost: number;
-  persons: Array<{ cost: number; restarts: number; done: boolean }>;
+  persons: Array<{ cost: number; restarts: number; done: boolean; redo?: number }>;
   /** 1 人目の挑戦 (S-72c、opts.firstTry の時だけ): 終わり方・費用・作り直しの回数 */
   firstTry?: { end: End; cost: number; restarts: number };
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; /** 確定フラクチャーで足した始まりの品の数 (S-43a) */ redo?: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -154,7 +154,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   // この人の ☑ で付いた狙い (tree-judge。当たりの箱に着いたらその札、消えたら外れる)
   let aimed: ReadonlySet<string> = startAimed(data, doc, item);
   const arrive = (box: string, it: StageItem, was?: StageItem): void => { aimed = nextAimed(data, doc, aimed, box, it, was); };
-  let cost = o.startCost;
+  let cost = o.startCost, itemUses: Record<string, number> = {}, redo = 0; // itemUses = 今の品を始めた時の使った物・redo = 確定フラクチャーで足した始まりの品の数 (S-43a)
   const uses: Record<string, number> = {};
   const visits: Person["visits"] = [];
   const use = (key: string, n = 1): void => { uses[key] = (uses[key] ?? 0) + n; cost += o.price(key) * n; if (light) ops.push({ key, n }); };
@@ -166,7 +166,8 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   // (10-29 オーナー「なんか止まり方が戻った先で止まるんだよな。結果を選んでその結果にしたがってるだけなのに」)
   let blame: string | null = null;
   let marks: GoalMark[] = []; // 狙い無しの手で付いた完成形の狙い (tree-goal-stop)
-  const fin = (p: Person): Person => {
+  const fin = (p0: Person): Person => {
+    const p: Person = redo ? { ...p0, redo } : p0;
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
     const goalAt = p.end === "stuck" && !p.essAt ? goalStopAt(marks, p.why?.item ?? item) : undefined;
@@ -190,7 +191,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail" && !o.retryFail) return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     // 1 人目の挑戦 (S-72c): 失敗の箱でもスタートから作り直す (作り直しの手 RESTART と同じ数え)。打ち切りは打ち止めの上限
-    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); marks = []; cost += o.startCost; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
+    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); marks = []; cost += o.startCost; itemUses = { ...uses }; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
     if (b.done === "main") {
       if (o.doneOk && !o.doneOk(item, at)) return fin({ end: "failed", unmet: true, cost, at, visits, uses, restarts, odd });
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)。
@@ -210,7 +211,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
       if (b.back === RESTART) {
         item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
         aimed = startAimed(data, doc, item); marks = [];
-        cost += o.startCost;
+        cost += o.startCost; itemUses = { ...uses };
         forget();
         restarts++;
         at = "start";
@@ -259,7 +260,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e): 手を使わず品のまま、boxOutcomeOf が当たり / 塞がったの箱へ分ける。前は「打てません」で止まった
     // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品、使う物は 3 回分
     const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
-    if (sure) useSureFrac(b.hand, (k, n) => { spent.push([k, n]); });
+    if (sure) { useSureFrac(b.hand, (k, n) => { spent.push([k, n]); }, uses, itemUses); const x = sureFracRedo(); cost += x * o.startCost; redo += x; }
     // 前の手でエッセンス / 合金と同じ系統が付いて打てない人は止まり (S-33e ⑧、スイッチ essSameStop)。耐性のフラックスで変えられる狙いの耐性が無い人 (2 周目でもう変えた後など) は打たずに飛ばす: 品のまま・使わない (S-31h、オーナー 11-13「スキップ処理は必要止まるよ」)
     const es = sure ? null : essStopOf(data, b.hand.currency, item, marks); if (es) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ...(es.box ? { essAt: es.box } : {}), why: { reason: es.why, short: es.why, item } });
     const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) || fluxBlock(data, doc, item, b.hand.currency, aimed) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
@@ -416,7 +417,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
-    startCost, persons: people.map((p) => ({ cost: p.cost, restarts: p.restarts, done: p.end === "done" })),
+    startCost, persons: people.map((p) => ({ cost: p.cost, restarts: p.restarts, done: p.end === "done", ...(p.redo ? { redo: p.redo } : {}) })),
   };
 }
 
@@ -429,7 +430,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
 export function withStartCost(r: TreeRunResult, startCost: number): TreeRunResult {
   const d = startCost - r.startCost;
   if (!d || !r.persons) return r;
-  const persons = r.persons.map((p) => ({ ...p, cost: p.cost + d * (1 + p.restarts) }));
+  const persons = r.persons.map((p) => ({ ...p, cost: p.cost + d * (1 + p.restarts + (p.redo ?? 0)) }));
   const total = persons.reduce((a, p) => a + p.cost, 0);
   const costs = persons.filter((p) => p.done).map((p) => p.cost).sort((a, b) => a - b);
   const q = (p: number): number => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(p * costs.length))]! : NaN);
