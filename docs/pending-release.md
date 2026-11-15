@@ -7,6 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | デイリーの LIVE_NO_LOG (`daily-api.ts`、出す時に true) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
+| シミュの読み込み中は窓だけ (S-196e、スイッチ無し。`TreeLoadingCover.vue` の地、オーナー 11-15 見た目「おｋでいいんじゃない」) | (この commit) | シミュレーターでレシピを読み込んでいる間、下の白紙の木や「未設定」が透けて見えないようにしました | Simulator: while a recipe is loading, the blank tree and the "unset" bar no longer show through behind the loading message |
 | デイリーの名前の受け口を幅だけに (`server/live/src/daily/nick.ts`、D-51a。サーバーの出しだけ、画面は 0.1.731 で済み) | (この commit) | (中の話 = 更新内容に書かない) | (internal, no changelog line) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
