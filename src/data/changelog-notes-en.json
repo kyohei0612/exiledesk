@@ -1,4 +1,7 @@
 {
+  "0.1.742": [
+    "Daily: fixed today's challenge still showing \"Start the 1-hour challenge\" after you had already submitted or given up in another tab or on another device. It now shows as already challenged when you open the page or return to the tab."
+  ],
   "0.1.741": [
     "Simulator and Daily trees: fixed the final check wrongly flagging a box as unset (\"runs with different contents arrive\") when an Orb of Annulment or similar is used on items with an essence miss."
   ],
