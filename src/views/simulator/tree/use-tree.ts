@@ -17,7 +17,7 @@ import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
-import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check"; import { eleAnyText, setEleAnyDaily, tidyEleAny } from "../../../services/simulator/tree/tree-ele-any"; import { page as webPage } from "../../../web/page"; setEleAnyDaily(() => webPage.value === "daily"); // デイリーのお題の木は読み替えない (S-10h ④)
+import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check"; import { eleAnyText, tidyEleAny } from "../../../services/simulator/tree/tree-ele-any"; // デイリーのお題の木は印 eleAny を付けて開く = 読み替えない (S-10h ④、daily-open・daily-cost)。web/page は読まない (検算の束ねに入り history で落ちた、11-16)
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 

@@ -81,16 +81,12 @@ function syncAims(data: PatchData, d: TreeDoc): void {
   void data;
 }
 
-/** 開いている所がデイリーか (お題の木は読み替えない、S-10h ④。お題の狙いはデイリー部長と決める) */
-let dailyNow: () => boolean = () => false;
-export const setEleAnyDaily = (f: () => boolean): void => { dailyNow = f; };
-
 /**
  * 前の木の読み替え (S-10h ④ = オーナー「Aだね」): 印 eleAny の無い木の、完成形の一般の火・冷気・雷の狙い (✦ と冒涜で付ける物は除く) と、
- * 木の中の同じ札を「いずれかの元素耐性」にする (段はそのまま、数は元素の数)。印を付けて返す (渡した物は書き換えない)。スイッチ・デイリーの時はそのまま
+ * 木の中の同じ札を「いずれかの元素耐性」にする (段はそのまま、数は元素の数)。印を付けて返す (渡した物は書き換えない)。スイッチの off はそのまま (デイリーのお題の木は開く側が印 eleAny を付ける = 読み替えない、S-10h ④)
  */
 export function readEleAny<D extends TreeDoc>(data: PatchData, src: D): D {
-  if (!eleAnyOn() || dailyNow()) return src;
+  if (!eleAnyOn()) return src;
   if (src.eleAny) {
     // 段の並び (eleTiers) の無い前の保存 (11-15 夜より前) は、開いた時に揃え直す (割り当ての数え方、S-10h ②)
     if (!(src.memoAims ?? []).some((a) => a.anyEle && !a.eleTiers?.length)) return src;
@@ -113,7 +109,7 @@ export function readEleAny<D extends TreeDoc>(data: PatchData, src: D): D {
  * 書き換えるのは d そのもの
  */
 export function tidyEleAny(data: PatchData, d: TreeDoc): void {
-  if (!eleAnyOn() || dailyNow()) return;
+  if (!eleAnyOn()) return;
   if (!d.eleAny) { const r = readEleAny(data, d); for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, r); return; }
   if (!(d.memoAims ?? []).some((a) => a.anyEle) && !JSON.stringify(d.boxes).includes("\"anyEle\"")) return;
   d.memoAims = tidyGoals(data, d.memoAims ?? []);
