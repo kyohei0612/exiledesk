@@ -54,7 +54,27 @@ function loadLocal(): Local {
   const empty: Local = { tries: {}, box: [] };
   try { return { ...empty, ...(JSON.parse(localStorage.getItem(KEY) ?? "null") as Partial<Local> | null) }; } catch { return empty; }
 }
-function save(): void { try { localStorage.setItem(KEY, JSON.stringify(toRaw(daily.local))); } catch { /* 覚えられなくてもその場は動く */ } }
+/** わざと捨てた挑戦の控え (サーバーに行が無い = 置き場のリセット等)。save で保存の側から拾い直さない */
+const dropped = new Set<string>();
+let wiped = false;
+/**
+ * 控えを書く。前は画面の控えを丸ごと書き戻したので、挑戦を始める前から開いていた別のタブが一覧を移る (refreshDaily)・称号を数え直すたびに、
+ * ほかのタブが書いた今日の挑戦と投稿を古い控えで消していた (11-15 オーナー「俺の記録表示されてるのに始めるボタンになってるよ」→「別タブだったかも、読み直しても始めるのままだった」、D-56b)。
+ * 書く前に保存の側を読み、こちらに無い挑戦・投稿と、こちらでまだ終わっていない同じ挑戦の終わった印を拾ってから書く (画面を揺らさないよう素の物へ)
+ */
+function save(): void {
+  try {
+    const raw = toRaw(daily.local), st = wiped ? null : loadLocal();
+    for (const [id, s] of Object.entries(st?.tries ?? {})) {
+      const cur = raw.tries[id];
+      if (dropped.has(id)) continue;
+      if (!cur) raw.tries[id] = s;
+      else if (cur.startedAt === s.startedAt && s.ended && !cur.ended) raw.tries[id] = { ...cur, ...s, ...(cur.tree && !s.tree ? { tree: cur.tree } : {}) };
+    }
+    for (const b of st?.box ?? []) if (!raw.box.some((x) => x.id === b.id)) raw.box.push(b);
+    localStorage.setItem(KEY, JSON.stringify(raw));
+  } catch { /* 覚えられなくてもその場は動く */ }
+}
 
 /** 画面が読む控え。remote = 最後に読んだ GET /daily.json、failed = 読めなかった */
 export const daily = reactive<{ remote: Remote | null; failed: boolean; local: Local }>({ remote: null, failed: false, local: loadLocal() });
@@ -79,7 +99,9 @@ async function devFollowReset(): Promise<void> {
   const r = await call<DailyNick | { error: string }>("/daily/nick", { name: n.name, code: n.code });
   if (!r || !("error" in r) || r.error !== "wrong") return;
   daily.local = { tries: {}, box: [] };
+  wiped = true;
   save();
+  wiped = false;
   await createNick(n.name);
 }
 
@@ -155,7 +177,7 @@ export async function recheckTry(id: string): Promise<void> {
   const a = auth();
   if (!a || !daily.local.tries[id]) return;
   const r = await call<{ has?: boolean }>("/daily/mine", { ...a, id });
-  if (r?.has === false && daily.local.tries[id]) { delete daily.local.tries[id]; save(); }
+  if (r?.has === false && daily.local.tries[id]) { dropped.add(id); delete daily.local.tries[id]; save(); }
 }
 /**
  * 今日のお題の真ん中のボタンの前に、端末の挑戦の控えをそろえる (D-56b、11-15 オーナー「本番同じブラウザで俺の記録表示されてるのに始めるボタンになってるよ」)。
