@@ -157,6 +157,25 @@ export async function recheckTry(id: string): Promise<void> {
   const r = await call<{ has?: boolean }>("/daily/mine", { ...a, id });
   if (r?.has === false && daily.local.tries[id]) { delete daily.local.tries[id]; save(); }
 }
+/**
+ * 今日のお題の真ん中のボタンの前に、端末の挑戦の控えをそろえる (D-56b、11-15 オーナー「本番同じブラウザで俺の記録表示されてるのに始めるボタンになってるよ」)。
+ * ① 端末の控えを読み直す (挑戦を始める前から開いていた別のタブは、読み込み時の控えのままで「始める」を出していた)。
+ * ② それでも控えが無い・終わっていない時は、サーバーに自分の行を聞き (POST /daily/mine、読むだけ)、行が終わっていれば (提出・諦め) 控えをその行で埋める = 別の端末・別のブラウザで挑戦した日も「挑戦済み」。
+ * 行の中身を返さない古いサーバー・つながらない時は今まで通り
+ */
+export async function syncTodayTry(id: string): Promise<void> {
+  const stored = loadLocal().tries[id], cur = daily.local.tries[id];
+  if (stored && (!cur || stored.startedAt !== cur.startedAt || (!!stored.ended && !cur.ended))) daily.local.tries[id] = stored;
+  const a = auth(), t = daily.local.tries[id];
+  if (!a || t?.ended) return;
+  const r = await call<{ has?: boolean; try?: DailyTry }>("/daily/mine", { ...a, id });
+  const got = r?.try;
+  if (!got || got.topicId !== id || !got.ended) return;
+  const now = daily.local.tries[id];
+  // 同じ挑戦なら端末の木・始め方は残して、終わった印と数だけサーバーの物に
+  daily.local.tries[id] = now && now.startedAt === got.startedAt ? { ...now, ...got } : got;
+  save();
+}
 export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "from" | "tree" | "saved" | "builtZ">>): void {
   const t = daily.local.tries[id];
   if (t) { Object.assign(t, patch); save(); }
