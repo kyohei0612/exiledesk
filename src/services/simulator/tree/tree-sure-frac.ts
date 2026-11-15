@@ -10,13 +10,19 @@ import { stepOutcomes } from "../sim-engine";
 import { FRACTURE_POOL } from "../sim-odds";
 import { newlyFractured } from "./tree-frac-pick";
 import { effectOf, engineOmens } from "./tree-hands";
-import { fractureMarks, startsFractured, type Hand, type TreeDoc } from "./tree-model";
+import { fractureMarks, multiFracWhite, startsFractured, type Hand, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
-/** この木のこの手が確定フラクチャーか (デイリーの印・ベースから・フラクチャーの手・✦ の印がある) */
+/**
+ * この木のフラクチャーが確定か (ベースから・✦ の印がある木で、デイリーの印 か シミュの始め方「(b) 白から確定フラクチャー」= ✦ が 1 つ)。
+ * ✦ が 2 つ以上で自動で白ベースからになった木 (S-13、窓は「白ベースから」) は乱数のまま。シミュの木はスイッチ simSureFrac (S-43a、オーナー 11-15「フラクチャー固定設定なのに失敗が枠出る」)
+ */
+export const sureFracDoc = (doc: TreeDoc): boolean =>
+  !startsFractured(doc) && fractureMarks(doc).length > 0 && (!!doc.start?.sureFrac || (flag("simSureFrac") && !multiFracWhite(doc)));
+/** この木のこの手が確定フラクチャーか (確定の木のフラクチャーの手) */
 export const sureFracOn = (doc: TreeDoc, h: Hand | null | undefined): boolean =>
-  !!h && !!doc.start?.sureFrac && effectOf(h.currency) === "fracture" && !startsFractured(doc) && fractureMarks(doc).length > 0;
+  !!h && effectOf(h.currency) === "fracture" && sureFracDoc(doc);
 
 /**
  * 確定フラクチャーの結果: エンジンの結果のうち ✦ の印の MOD が新しく固定された物 (一番起こりやすい物)。

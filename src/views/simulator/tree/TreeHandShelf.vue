@@ -26,7 +26,7 @@ import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./Tre
 import { useHandKeep } from "./use-hand-keep"; import TreeBoxModBtn from "./TreeBoxModBtn.vue"; import { bothLabel, useEleSecond } from "./use-ele-second"; import { useEleSingles } from "./use-ele-singles"; import { fracOnceBlock } from "../../../services/simulator/tree/tree-sample";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import { lvRowTags } from "./tree-whittle-marks"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
-import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model"; import { sureFracDoc } from "../../../services/simulator/tree/tree-sure-frac";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core"; import { fracStopNote, stopSureFrac } from "./tree-frac-stop";
@@ -100,7 +100,7 @@ const checked = ref<string[]>((() => {
   if (!c || c.free) return [];
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
-const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !!fractureMarks(t.doc.value).length); const sureFrac = computed(() => !!t.doc.value.start?.sureFrac && !startsFractured(t.doc.value)); // 印の無い木の乱数は狙いの欄。sureFrac = デイリーの確定フラクチャー (D-03、tree-sure-frac)
+const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !!fractureMarks(t.doc.value).length); const sureFrac = computed(() => sureFracDoc(t.doc.value)); // 確定でない木の乱数は狙いの欄。sureFrac = デイリーとシミュの (b) の確定フラクチャー (D-03・S-43a、tree-sure-frac)
 /**
  * 骨の手のアビスの反響のお告げ (発現の候補を 1 回引き直す) = お告げの並びの「アビスの反響のお告げ」そのもの (omens に ECHO)。骨を持ったら既定で掛ける
  * (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」、10-26 夜「オンは嘘だし、でかいアイコンもある」: 前は並びとは別の印と大きな札で、並びの方は掛かっていなかった)。
