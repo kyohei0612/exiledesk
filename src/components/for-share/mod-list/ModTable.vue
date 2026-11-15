@@ -255,6 +255,19 @@ const ESS_TIER = flag("essTier");
 const NARROW = flag("tierNarrow");
 /** 段の行のエッセンス名は行の札と同じ枠付きのチップで文の後ろへ続け、入らなければ次の行の頭 (U-12b、スイッチ essChip。オーナー 10-29「枠は必要だねどのみち」) */
 const ESS_CHIP = flag("essChip");
+/**
+ * U-12j (スイッチ modOneLine、オーナー 11-15「折り曲げて2行にしたくない」「やすさとティア逆だし右詰め」): PC は系統の行・畳む行の名前を 1 行で後ろを「…」(乗せると全文)。
+ * 段の表は数を見出しと同じ並び・位置 (出やすさ・ティア・Lv) の 1 つの td に入れ、差し込みのボタン (tier-actions) は文と数の間。スマホ・狭い列はボタンを 2 段目へ (order-last)
+ */
+const ONE = flag("modOneLine");
+const nameCls = ONE ? "md:truncate" : "";
+const wrapCls = ONE ? "flex-wrap md:flex-nowrap" : "flex-wrap";
+function tierRowShape(): string[] {
+  const one = props.tierOneLine;
+  if (!ONE) return [one ? "max-md:items-center" : "max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full", NARROW && !one ? "@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full" : ""];
+  return [one ? "max-md:items-center max-md:[&>[data-tier-text]~td:not([data-tier-end])]:order-last" : "max-md:flex-wrap max-md:[&>[data-tier-text]~td:not([data-tier-end])]:order-last max-md:[&>[data-tier-text]~td:not([data-tier-end])]:basis-full",
+    NARROW && !one ? "@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-text]~td:not([data-tier-end])]:order-last @max-lg/tcol:[&>[data-tier-text]~td:not([data-tier-end])]:basis-full" : ""];
+}
 const tierTags = (r: ListRow, t: ListTier): string[] => { if (!t.modId || t.modId === r.id && r.tiers.every((u) => u.modId === t.modId)) return []; const m = props.data?.mods.get(t.modId); return m ? shownTags(m.displayTags ?? m.tags) : []; };
 
 /**
@@ -339,9 +352,9 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <span class="pointer-events-none absolute inset-y-0 left-0" :class="toneOf(sec).bar" :style="{ width: `${(f.share / barTop(col.items)) * 100}%` }" />
               <slot name="fold-lead" :fold="f" />
               <button type="button" :data-rec="`fold:${f.key}`" :aria-expanded="foldOpen.has(f.key)" class="relative min-w-0 flex-1 rounded-md px-2 py-1 text-left transition hover:bg-white/[0.05]" @click="toggleFold(f.key, $event)">
-                <span class="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
+                <span class="flex min-w-0 items-center gap-x-1 gap-y-0.5 leading-tight" :class="wrapCls">
                   <span class="w-3 shrink-0 text-[10px] text-[var(--exile-color-text-tertiary)]" aria-hidden="true">{{ foldOpen.has(f.key) ? "▾" : "▸" }}</span>
-                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod">{{ f.text }}</span>
+                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod" :class="nameCls" :title="ONE ? f.text : undefined">{{ f.text }}</span>
                   <span v-for="g in f.tags ?? []" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                 </span>
               </button>
@@ -368,9 +381,9 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <!-- タグは MOD 名の横に細く、右は poe2db と同じく % ・ 段の数 (緑) ・ 一番上の段のレベル (灰) を数字だけ (2026-10-04 オーナー) -->
               <span class="relative flex items-center gap-2">
                 <!-- タグはアイテムの札と同じ色の札。入らなければ次の行へ折り返して全部見せる (2026-10-19 オーナー) -->
-                <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
+                <span class="flex min-w-0 flex-1 items-center gap-x-1 gap-y-0.5 leading-tight" :class="wrapCls">
                   <!-- 勢力 (アマナム・クルガル・ウラマン) は文の頭に札で (2026-10-16 オーナー) -->
-                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
+                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod" :class="nameCls" :title="ONE ? r.text : undefined"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
                   <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                   <span v-if="essName(r, props.item)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r, props.item) }}</span>
                   <span v-if="r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
@@ -389,18 +402,31 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <slot name="row-open" :row="r" />
               <table class="mt-1 w-full text-[11px]">
                 <tbody>
-                  <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', tierDimOf(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
+                  <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[...tierRowShape(), tierDimOf(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
                     <slot name="tier-lead" :row="r" :tier="t" />
-                    <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
-                    <td class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
+                    <td v-if="!ONE" class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
+                    <td data-tier-text class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="[NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : '', ONE ? 'pl-2' : '']">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナー) -->
                     <template v-if="ESS_CHIP && t.essence" />
                     <td v-else-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" :class="NARROW ? '@max-2xl/tcol:hidden' : ''" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
                     <td v-else-if="isEssenceGroup(r.group)" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
+                    <template v-if="!ONE">
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[NARROW ? '@max-lg/tcol:shrink-0' : '', props.tierOneLine ? 'max-md:w-11' : '']">Lv {{ t.ilvl }}</td>
                     <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[props.tone === 'sky' ? 'text-sky-200' : '', NARROW ? '@max-lg/tcol:shrink-0' : '', props.tierOneLine ? 'max-md:w-10' : '']" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
                     <!-- スマホは行を折り返し、tier-actions の td (data-tier-end より後ろ) は 2 段目いっぱいに (MOD の文が 1〜3 文字ずつ縦に折れた、シミュ部長 29 10-25) -->
                     <slot name="tier-actions" :row="r" :tier="t" />
+                    </template>
+                    <!-- U-12j: ボタンは文と数の間、数は見出し (出やすさ・ティア・Lv) と同じ幅・並び・右の空き (pr-2) -->
+                    <template v-else>
+                    <slot name="tier-actions" :row="r" :tier="t" />
+                    <td data-tier-end class="w-px whitespace-nowrap py-0.5 pr-2 max-md:ml-auto max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:ml-auto @max-lg/tcol:shrink-0' : ''">
+                      <span class="flex items-center justify-end gap-1 tabular-nums">
+                        <span class="w-14 opacity-80" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : '']" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</span>
+                        <span class="font-bold text-amber-200" :class="[COL, tierW]">{{ t.rank }}</span>
+                        <span class="w-7 opacity-70" :class="COL">{{ t.ilvl }}</span>
+                      </span>
+                    </td>
+                    </template>
                   </tr>
                 </tbody>
               </table>
