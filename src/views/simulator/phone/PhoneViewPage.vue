@@ -8,6 +8,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
+import TreeDailyPast from "../tree/TreeDailyPast.vue";
 import { blocksRun, unsetIssues } from "../../../services/simulator/tree/tree-check";
 import { unfinishedText } from "../tree/hole-check";
 import { useGoalShown } from "../tree/use-goal-shown";
@@ -92,6 +93,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
     <ModeTabs />
     <PhoneViewEmpty v-if="noTree" />
     <template v-else>
+      <TreeDailyPast /><!-- デイリーの順位から開いた木の提出した時の数 (S-104d、PC と同じ 1 行を一番上に) -->
       <!-- レシピとシェアだけ (保存・メモ・白紙は無し)。落ちる窓はシートの上に重なる -->
       <div data-phone-recipe data-tree-own class="relative z-40 flex min-w-0 flex-wrap items-center justify-between gap-1 text-[13px]">
         <TreeRecipeBar class="!contents" view flat="flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-sim-body aria-expanded:text-amber-100" />
