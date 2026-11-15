@@ -28,7 +28,7 @@ const props = defineProps<{ tabKey: number; page: PageCtx }>();
 const root = ref<HTMLElement | null>(null);
 // 置き場の手と窓 (全部の面で同じ物) と、この面の作り (テンプレートは切り出す前と同じ名前で使う。ref は上の段なので自動で外れる)
 const { t, hand, panel, jt, glowOf, tr100, issueOf, startDrag, onAim, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, startLink, goIssue, onPaneClick, onNodeClick } = props.page;
-const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine } = useTreeSurface(props.tabKey, props.page, root);
+const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, chipInv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine } = useTreeSurface(props.tabKey, props.page, root);
 /** (S-142j ③、スイッチ hitsSide) 乗せている手の札 (その手の ↩ の畳みの戻り先へ青い線を出す) */
 const hoverChip = ref<string | null>(null);
 /**
@@ -59,7 +59,7 @@ const spot = computed((): { key: string; arcs: SpotArc[]; css: string } | null =
   if (!ts.length) return null;
   // 出口は札の上の辺 (行き先が札より下なら下の辺) に、行き先の左右の順に等間隔 (札の幅 200 を本数 + 1 で割る。弧の決まり 1、交わらない)。札は倍率の逆数で描くので幅と高さも inv 倍
   const order = ts.map((x) => posOf(doc.value.boxes[x.id]!).x).map((x, i) => [x, i] as const).sort((a, z) => a[0] - z[0]).map(([, i]) => i);
-  const k = inv.value, step = (200 * k) / (ts.length + 1);
+  const k = chipInv.value, step = (200 * k) / (ts.length + 1);
   const arcs = ts.map((x, i) => ({ ...x, d: spotArc(e.jx + (order.indexOf(i) - (ts.length - 1) / 2) * step, e.jy + (posOf(doc.value.boxes[x.id]!).y > e.jy ? 14 : -14) * k, posOf(doc.value.boxes[x.id]!), bodyH(x.id)) }));
   // 関わる物を全部照らす: 乗せた札とその元の箱・行き先の箱・同じ行き先を指すほかの手の札とその元の箱 (11-14 オーナー「その範囲で全部ライトアップして」)
   const want = new Set(ts.map((x) => x.id)), mine = ts.every((x) => x.back);
@@ -83,7 +83,7 @@ const spotZoom = computed((): { items: Array<{ id: string; h: number; dy: number
   // 大きさは縮めて見ている時に箱を押した等倍の窓の 1/1.5 (11-14 オーナー「もう1.5倍小さくていいぞサイズ」)
   let s = 1 / 1.5;
   for (let i = 0; i < c.length; i++) for (let j = i + 1; j < c.length; j++) s = Math.min(s, Math.max((Math.abs(c[i]!.x - c[j]!.x) * z) / BOX_W, (Math.abs(c[i]!.y - c[j]!.y) * z) / ((c[i]!.h + c[j]!.h) / 2)));
-  const k = Math.max(1, s / z), ci = inv.value;
+  const k = Math.max(1, s / z), ci = chipInv.value;
   // 写しが乗せた手の札 (2 行の札・1.5 倍の大きさで見積もる、11-14 オーナー「手の札と被るの気持ち悪いね」)・その元の箱にかぶる時は、かぶらない所まで下へずらす (隣の箱どうしで起きやすい。11-14 オーナー「被るくらいなら今の奴と、下にずらした方が良いね拡大したの枠だけど」)
   const e = (shownEdges.value as SpotEdge[]).find((x) => x.id === hoverChip.value), src = e ? doc.value.boxes[e.id] : undefined;
   const obs = [...(e ? [{ x0: e.jx - 160 * ci, x1: e.jx + 160 * ci, y0: e.jy - 40 * ci, y1: e.jy + 40 * ci }] : []),
@@ -150,7 +150,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
         <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
         <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
-        <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
+        <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="chipInv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
         <!-- (linkChipHover) 照らしている間の行き先の箱の写し (読むだけ・押せない。箱の上の辺の真ん中を軸に大きく = 下へ伸びる) -->
         <div v-for="{ id, h, dy } in spotZoom?.items ?? []" :key="`spot-zoom-${id}`" data-tree-spot-zoom :data-spot-zoom-of="id" :data-spot-zoom-dy="Math.round(dy) || undefined" class="pointer-events-none absolute z-[6] rounded-xl"
           :style="{ left: `${posOf(doc.boxes[id]!).x}px`, top: `${posOf(doc.boxes[id]!).y + dy}px`, width: `${BOX_W}px`, height: `${h}px`, transform: `scale(${spotZoom!.k})`, transformOrigin: '50% 0', boxShadow: '0 0 0 2px rgba(255,255,255,0.08), 0 10px 30px rgba(0,0,0,0.7)' }">

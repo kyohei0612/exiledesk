@@ -25,6 +25,7 @@ import { useTreeMerge } from "./use-tree-merge";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeBands } from "./use-tree-bands";
 import { backLabelOf } from "./tree-fail";
+import { flag } from "../../../web/release-flags";
 import { pauseTree, provideSurfaceDoc } from "./tree-surface";
 import type { useTree } from "./use-tree";
 import type { useJunkTidy } from "./use-junk-tidy";
@@ -81,6 +82,8 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
    * (箱の中の押せる物が 24px を切った、オーナー 10-22 OK。1920 以上は今のまま)。75% でまで戻すと 1.57 倍になり箱の中で重なった (zoom-steps 29 件) ので 75% は前のまま
    */
   const inv = computed(() => (viewOnly.value ? 1 : zoom.value < 1 ? 1 / zoom.value : Math.max(1, 1 / (zoom.value * pageZ.value))));
+  /** 線の上の手の札の倍率の逆数。(スイッチ chipShrink) 札は戻さず木と一緒に小さく = 1 (11-16 オーナー「Aで」、S-142j ③。hitsSide の 1.5 倍 CHIP_K はそのまま) */
+  const chipInv = computed(() => (flag("chipShrink") ? 1 : inv.value));
   // ドラッグ中は Vue Flow の箱だけが動き、離した時に 1 回だけ組み替える (置き場の startDrag)。線は引っ張っている位置に合わせる
   const posOf = (b: Box): { x: number; y: number } => (p.drag.value?.id === b.id ? { x: p.drag.value.x, y: p.drag.value.y } : { x: b.x, y: b.y });
   const boxes = computed(() => Object.values(doc.value.boxes));
@@ -101,7 +104,7 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
     const el = (root.value ?? document).querySelector<HTMLElement>(`[data-hand-of="${id}"]`);
     if (!el) return undefined;
     const name = el.querySelector<HTMLElement>(".truncate");
-    return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value) * CHIP_K; // 札の大きさの倍率 (スイッチ hitsSide)
+    return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, chipInv.value) * CHIP_K; // 札の大きさの倍率 (スイッチ hitsSide)
   };
   // 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す)
   const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
@@ -131,6 +134,6 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
   const api = { key, doc, kept, v, sf, rv, bd, plus, hoverBox, cardBox, linesAll, measureBox, chipNatural, tidyOf };
   p.register(key, api);
   onBeforeUnmount(() => p.register(key, null));
-  return { ...api, flowId, pageZ, zoom, viewOnly, inv, grid, lanes, posOf, shown, passes, shownEdges, edgeHot, chipRoom, merged, plusLine, onPlus, backLabel };
+  return { ...api, flowId, pageZ, zoom, viewOnly, inv, chipInv, grid, lanes, posOf, shown, passes, shownEdges, edgeHot, chipRoom, merged, plusLine, onPlus, backLabel };
 }
 export type Surface = ReturnType<typeof useTreeSurface>;
