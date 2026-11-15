@@ -21,6 +21,7 @@ import { seenTo } from "./tree-foresee";
 import { sureFracOn, sureFracture, useSureFrac } from "./tree-sure-frac";
 import { defaultCapDiv } from "./run-price";
 import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
+import { boxStreams, mergeRetry, retryable, type RetryPart } from "./tree-run-retry";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -68,19 +69,6 @@ export interface TreeRunOpts {
   doneOk?: (item: StageItem, box: string) => boolean;
   /** 1 人目の挑戦 (S-72c、スイッチ firstTry): 100 人とは別にもう 1 人、失敗の箱でも作り直して完成まで回す。結果は firstTry に (100 人の数には入れない) */
   firstTry?: boolean;
-}
-/** 箱ごとの列 (perBox)。種・何人目・箱の名前を混ぜて 1 本ずつ作る */
-function boxStreams(seed: number, i: number): (box: string) => () => number {
-  const m = new Map<string, () => number>();
-  return (box) => {
-    let f = m.get(box);
-    if (!f) {
-      let h = 2166136261 ^ seed;
-      for (const c of `${i}|${box}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-      m.set(box, (f = mulberry32(h >>> 0)));
-    }
-    return f;
-  };
 }
 interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -142,7 +130,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -394,7 +382,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
   const goalStop: Record<string, number> = {}, essStop: Record<string, number> = {};
-  for (const p of people) if (p.end === "stuck") { if (p.goalAt) goalStop[p.goalAt] = (goalStop[p.goalAt] ?? 0) + 1; if (p.essAt) essStop[p.essAt] = (essStop[p.essAt] ?? 0) + 1; }
+  for (const p of people) for (const s of [...(p.retried ?? []), ...(p.end === "stuck" ? [p] : [])]) { if (s.goalAt) goalStop[s.goalAt] = (goalStop[s.goalAt] ?? 0) + 1; if (s.essAt) essStop[s.essAt] = (essStop[s.essAt] ?? 0) + 1; } // やり直した人の止まりも数えに残す (S-33g ②)
   const moved: Record<string, number> = {};
   for (const p of people) for (const id of new Set(p.visits.filter((v) => v.pass).map((v) => v.box))) moved[id] = (moved[id] ?? 0) + 1;
   const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number }> = {};
@@ -473,10 +461,16 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const every = Math.max(1, opts.every ?? 10);
   for (let i = 0; i < opts.n; i++) {
     // 細切れの時は 1 区切りごとに holdDocSig で包む (覚えは捨てて作り直すだけ = 結果は同じ)。無ければ今までどおり 1 人を一気に
-    const g = runOne(data, doc, aims, j, rng, opts.perBox ? boxStreams(opts.seed, i) : null, o);
-    let p: Person;
-    if (!o.slice) p = holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } });
-    else for (;;) { const s = holdDocSig(doc, () => g.next()); if (s.done) { p = s.value; break; } yield i; }
+    // 予期せぬ狙い MOD で止まった人は最初からやり直す (S-33g ②、スイッチ goalRetry。同じ乱数の列の続き・費用は足す・1 人 3 回まで、tree-run-retry)
+    const pick = opts.perBox ? boxStreams(opts.seed, i) : null;
+    let p: Person | null = null;
+    do {
+      const g = runOne(data, doc, aims, j, rng, pick, o);
+      let q: Person;
+      if (!o.slice) q = holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } });
+      else for (;;) { const s = holdDocSig(doc, () => g.next()); if (s.done) { q = s.value; break; } yield i; }
+      p = p ? mergeRetry(p, q) : q;
+    } while (retryable(p));
     people.push(p);
     opts.onPerson?.(p, i);
     // 止まった人は間引いても必ず知らせる (画面はその時点の止まりの箱で止める)
