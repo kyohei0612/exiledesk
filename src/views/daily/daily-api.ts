@@ -12,6 +12,7 @@ import { floorAims, SLOTS, type GenAim } from "./daily-gen";
 import { boxCheck } from "./daily-check";
 import type { PostSrc } from "./daily-post-src";
 import type { PostCard } from "./daily-post-card";
+import type { TopicQuality } from "./daily-quality";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
 import { byScore, rankCmp } from "./daily-score";
 import { DEV_BUILD, flag } from "../../web/release-flags";
@@ -28,21 +29,21 @@ export const SLOT_NAMES: readonly { ja: string; en: string }[] = SLOTS.map(({ ja
 
 export type DailyAim = GenAim;
 /** 一覧に出す形。aims は締めた日だけ入る (D-32b) */
-export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[];
+export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[]; /** 完成形の品質 (D-03d)。aims と同じく締めた日だけ、品質の無いお題は無し */ quality?: TopicQuality;
   /** 参加の数 (D-50g、server/live の turnout.ts)。挑戦 = 提出 + 諦め + 時間切れ + 挑戦中、始める前の諦めは入れない。古いサーバーは無し */
   turnout?: { tried: number; submitted: number; gaveUp: number; timeout: number; playing: number };
   /** 諦めた人の並び (D-50f)。名前は来ない。粘った時間の長い順、timeout = 時間切れ。古いサーバーは無し */
   out?: { ms: number; timeout?: true }[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** 画面の組み上がった木の写し (縮めた文字、提出で tree に足して送る。D-50h、スイッチ dailyBuilt) */ builtZ?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 完成形の品質 (D-03d、始めた時にサーバーが返す。品質の無いお題は無し) */ quality?: TopicQuality;/** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** 画面の組み上がった木の写し (縮めた文字、提出で tree に足して送る。D-50h、スイッチ dailyBuilt) */ builtZ?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
 /** views = そのレシピを開いた人の数 (D-50e、1 人も開いていない行には無い) */
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number; /** 提出の一言 (D-35e、無い人は無し) */ note?: string };
 /** 提出の一言の字数の上限 (D-35e、サーバーの SUBMIT_NOTE_MAX と同じ) */
 export const SUBMIT_NOTE_MAX = 40;
 export type DailyNick = { id: string; name: string; code: string };
 /** status: wait = 受けた (16:00 の台本が機械の確かめをする)、ok = 通って箱の中、no = 落ちた (why に訳)、used = お題に出た (D-20) */
-export type DailyBoxItem = { id: string; at: number; note: string; base: string; baseJa: string; ilvl: number; aims: DailyAim[]; status: "wait" | "ok" | "no" | "used"; why?: string };
+export type DailyBoxItem = { id: string; at: number; note: string; base: string; baseJa: string; ilvl: number; aims: DailyAim[]; /** 品の品質 (D-03d、指輪・アミュレット・ジュエル) */ quality?: TopicQuality; status: "wait" | "ok" | "no" | "used"; why?: string };
 type Title = { ja: string; en: string; rank: number };
 type WeekDay = { id: string; wd: number; md: string; today: boolean; t: DailyTopic | null };
 /** GET /daily.json の形 (server/live/src/daily/api.ts の dailyJson) */

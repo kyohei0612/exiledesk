@@ -18,8 +18,9 @@ import type { DailyAim } from "./daily-api";
 import { NO_FRAC } from "./daily-aims";
 import { flag } from "../../web/release-flags";
 import DailyEssNote from "./DailyEssNote.vue";
+import type { TopicQuality } from "./daily-quality";
 
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string }>();
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; /** 開発版の見本 (dev=frac) だけ: 2 段目から開く */ initialFrom?: StartFrom; /** (b) 白から確定フラクチャーだけの日 (D-03、fourOnlyOn)。1 段目を出さず、始め方を選び直させない */ fourOnly?: boolean; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string; /** 完成形の品質 (D-03d) */ quality?: TopicQuality | null }>();
 const emit = defineEmits<{ pick: [modId: string, from: StartFrom] }>();
 const t = useTree();
 /** 1 段目で選んだ始め方 (null = まだ選んでいない) */
@@ -27,7 +28,11 @@ const from = ref<StartFrom | null>(props.fourOnly ? "four" : (props.initialFrom 
 /** 完成形のカードはお題の狙いを付けた形 (木の完成形と同じ作り)。選んだ後の木はお題から作り直すので、ここで狙いを入れても残らない */
 onMounted(() => {
   t.startTreeWith(props.base, props.ilvl);
-  t.edit((d) => { d.memoAims = props.aims.map((a) => ({ modId: a.modId, tier: a.tier })); d.goal = { rarity: "rare" }; delete d.ilvlFit; });
+  t.edit((d) => {
+    d.memoAims = props.aims.map((a) => ({ modId: a.modId, tier: a.tier })); d.goal = { rarity: "rare" }; delete d.ilvlFit;
+    // 完成形の品質 (D-03d) も木の完成形と同じ欄に (カードの品質の行に出る)
+    if (props.quality) { d.goalQualityOn = true; d.goalQuality = props.quality.value; d.goalQualityTag = props.quality.tag; if (props.quality.value > 20) d.goalQualityCap = props.quality.value; }
+  });
 });
 const card = computed(() => t.goalItem.value?.item ?? null);
 const aimText = (a: DailyAim): string => t.aimShort({ modId: a.modId, tier: a.tier });

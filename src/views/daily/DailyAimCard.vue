@@ -8,15 +8,18 @@ import { tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { usePhone } from "../../utils/use-phone";
-import { tierRankLabel } from "../../services/craft-stage/engine";
+import { applyCurrency, qualityCapOf, tierRankLabel } from "../../services/craft-stage/engine";
+import { qualityCapKey } from "../../services/craft-stage/apply-currency";
+import { SET_PREFIX } from "../../services/craft-stage/key";
 import { placeWithSlots } from "../simulator/tree/tree-slot-mods";
 import type { DailyAim } from "./daily-api";
 import DailyEssNote from "./DailyEssNote.vue";
+import type { TopicQuality } from "./daily-quality";
 
 /** width = カードの幅 (無ければ PC 400・スマホ 340) */
 /** essNote = カードの下に「エッセンスで代用可」の注意書きを出す (お題の完成形の時だけ。投稿の確かめでは出さない、D-37e3) */
 /** fractured = 狙いと同じ順のフラクチャーの印 (投稿の確かめで、読んだ品の印を見せるだけ。D-14b) */
-const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean; fractured?: readonly boolean[]; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string }>();
+const props = defineProps<{ base: string; ilvl: number; aims: readonly DailyAim[]; width?: number; essNote?: boolean; fractured?: readonly boolean[]; /** お題の id (注意書きの字を完成の物差しの日の門に合わせる、D-37e3) */ day?: string; /** 完成形の品質 (D-03d)。カードの品質の行に出す */ quality?: TopicQuality | null }>();
 const phone = usePhone();
 const placed = computed(() => {
   const data = s.data.value;
@@ -25,7 +28,14 @@ const placed = computed(() => {
   const fr = props.fractured;
   return placeWithSlots(data, props.base, props.ilvl, props.aims.map((a, i) => ({ modId: a.modId, tier: a.tier, fractured: !!fr?.[i] })), [], () => 0.5);
 });
-const item = computed(() => placed.value?.item ?? null);
+// 品質のあるお題は品にその品質と種類を載せる (カードの品質の行・品質で伸びた値がゲームの品と同じに出る、D-03d)。
+// 載せるのはエンジンの品質の欄の手 (上限 qcap → 品質 qset、エミュの品質の帯と同じ口)。画面の側で品を書き換えない
+const item = computed(() => {
+  const it = placed.value?.item ?? null, q = props.quality, data = s.data.value;
+  if (!it || !q || !data) return it;
+  const capped = applyCurrency(data, it, qualityCapKey(Math.max(q.value, qualityCapOf(it))), () => 0.5).item;
+  return applyCurrency(data, capped, `${SET_PREFIX.quality}${q.value}:${q.tag}`, () => 0.5).item;
+});
 /** カードに乗らなかった狙い (枠が足りない等)。黙って消さず文で下に出す */
 const left = computed(() => (placed.value?.left ?? []).map((x) => props.aims.find((a) => a.modId === x.modId)).filter((a): a is DailyAim => !!a));
 </script>

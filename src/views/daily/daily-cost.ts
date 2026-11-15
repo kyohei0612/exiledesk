@@ -21,6 +21,7 @@ import type { GenAim } from "./daily-gen";
 import { freshItem } from "../../services/craft-stage/engine";
 import { marketStore } from "../../state/market-store";
 import { priceOfKey } from "../../state/for-share/craft-stage-shelf";
+import type { TopicQuality } from "./daily-quality";
 
 /** 回す人数 (S-70 の RUN_N と同じ) */
 export const RUN_N = 100;
@@ -57,20 +58,33 @@ const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { m
   aims.every((a) => mods.some((m) => dailyHit(data, m, a)));
 
 /**
+ * 品がお題の品質 (D-03d) に届いているか = カタリストの種類が同じで % がお題以上。品質の無いお題 (q = null) はいつも届いている (今までどおり)。
+ * 指輪・アミュレット・ジュエルは品質がそのままカタリストの品質 (StageItem.quality)、別の欄を持つベースは catalystQuality
+ */
+export const qualityMet = (item: StageItem, q: TopicQuality | null | undefined): boolean =>
+  !q || (item.qualityTag === q.tag && (item.catalystQuality ?? item.quality ?? 0) >= q.value);
+/** その箱の見本の品がお題の品質に足りないか (D-03d)。見本が読めない箱は足りない扱い */
+export function qualityShort(data: PatchData, doc: TreeDoc, boxId: string, q: TopicQuality | null | undefined): boolean {
+  if (!q) return false;
+  try { return !qualityMet(sampleOf(data, doc, boxId, 1).item, q); } catch { return true; }
+}
+
+/**
  * 回す時に完成の箱へ着いた人の品を見る物差し (D-35b ④、スイッチ dailyDoneCheck。シミュの回しの口 doneOk = S-05b へ渡す)。
  * お題の狙いを段の下限まで全部持つ人だけ完成に数え、足りない人はその箱の失敗と同じ数え (そこで終わり・費用は合計に入る)。
  * 完成の精査 (missingAims) は箱の見本の品 1 つを見るので、見本は満たすが着く人の一部は満たさない箱 (最後の手の ☑ の段がお題より緩い時など) を回す所で受ける。
  * 挑戦の画面 (DailyPlay の treeRunRig) と 16:00 の検算 (runCost) が同じここを呼ぶ。スイッチが切れている間と、日の門 (NEW_JUDGE_FROM) より前の日のお題は undefined = 今までどおり全員完成
  */
-export const doneOkOf = (data: PatchData, aims: readonly { modId: string; tier: number }[]): ((item: StageItem) => boolean) | undefined =>
-  flag("dailyDoneCheck") && newJudgeNow() ? (item) => holdsAll(data, [...item.prefixes, ...item.suffixes], aims) : undefined;
+export const doneOkOf = (data: PatchData, aims: readonly { modId: string; tier: number }[], q?: TopicQuality | null): ((item: StageItem) => boolean) | undefined =>
+  // 品質のあるお題 (D-03d) は品質も見る (品質つきのお題は日の門 QUALITY_FROM の後にしか無いので、スイッチ・日の門に関係なく)
+  (flag("dailyDoneCheck") && newJudgeNow()) || q ? (item) => holdsAll(data, [...item.prefixes, ...item.suffixes], aims) && qualityMet(item, q) : undefined;
 
 /**
  * 完成の箱のうち、お題の狙いを段の下限まで全部持っていない物の id (D-35b)。シミュでは完成は人が決める (S-05) が、デイリーで完成に数えるのは狙いを満たした品だけ。
  * 箱の見本の品 (sampleOf) で見る。当たりの判定は dailyHit (シミュの isAimMod + 同じ文のエッセンスの版)
  */
-export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
-  return Object.values(doc.boxes).filter((b) => b.done === "main").filter((b) => missingAims(data, doc, b.id, aims).length > 0).map((b) => b.id);
+export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[], q?: TopicQuality | null): string[] {
+  return Object.values(doc.boxes).filter((b) => b.done === "main").filter((b) => missingAims(data, doc, b.id, aims).length > 0 || qualityShort(data, doc, b.id, q)).map((b) => b.id);
 }
 /**
  * その箱の見本の品に足りないお題の狙い (D-35b)。完成の判定の物差しはここ 1 つ = unmetDone (提出・16:00 の検算) と、完成を押した時の精査 (D-35b ③、DailyPlay) が同じ物を呼ぶ。
@@ -87,16 +101,16 @@ export function missingAims<A extends { modId: string; tier: number }>(data: Pat
  * 手も戻りも分かれ目も無く、印がまだ無い (null) 結果の箱のうち、見本の品がお題の狙いを全部持つ物。見方は unmetDone と同じ isAimMod。
  * 人が「失敗」を付けた箱は触らない
  */
-export function metBoxes(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): string[] {
+export function metBoxes(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[], q?: TopicQuality | null): string[] {
   return Object.values(doc.boxes).filter((b) => b.out !== "start" && b.done == null && !b.hand && !b.back && !b.split?.length).filter((b) => {
-    let mods;
-    try { const it = sampleOf(data, doc, b.id, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return false; }
-    return holdsAll(data, mods, aims);
+    let it: StageItem;
+    try { it = sampleOf(data, doc, b.id, 1).item; } catch { return false; }
+    return holdsAll(data, [...it.prefixes, ...it.suffixes], aims) && qualityMet(it, q); // 品質のあるお題は品質も (D-03d)
   }).map((b) => b.id);
 }
 /** 完成形と同じ形の箱に完成の印を付ける (挑戦の木と 16:00 の検算で同じ)。付けた数 */
-export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[]): number {
-  const ids = metBoxes(data, doc, aims);
+export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[], q?: TopicQuality | null): number {
+  const ids = metBoxes(data, doc, aims, q);
   for (const id of ids) doc.boxes[id]!.done = "main";
   return ids.length;
 }
@@ -106,7 +120,7 @@ export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: s
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
-export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
+export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string; /** お題の品質 (D-03d、無ければ品質を見ない) */ quality?: TopicQuality | null }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   setJudgeDay(topic.day);
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
   // シミュの「いずれかの元素耐性」(S-10h ④) に読み替えさせない印 (daily-open.ts と同じ)。お題の判定は元素ごと
@@ -115,10 +129,10 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   // ✦ の無い木 = フラクチャー無し (11-12 のお題から選べる、D-03)。✦ があればお題の狙いの物だけ
   if (doc.base !== topic.base || (frac && !topic.aims.some((a) => a.modId === frac))) return null;
   doc.itemLevel = topic.ilvl;
-  fillTopicDoc(doc, topic.aims, frac ?? NO_FRAC, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
-  markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
-  if (unmetDone(data, doc, topic.aims).length) return null;
-  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox, doneOk: doneOkOf(data, topic.aims) }), 0));
+  fillTopicDoc(doc, topic.aims, frac ?? NO_FRAC, doc.start?.from === "four" ? "four" : "fractured", topic.quality); // 始め方は提出の木のまま (D-37j)。完成形の品質はお題から (D-03d)
+  markMet(data, doc, topic.aims, topic.quality); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
+  if (unmetDone(data, doc, topic.aims, topic.quality).length) return null;
+  return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox, doneOk: doneOkOf(data, topic.aims, topic.quality) }), 0));
 }
 
 /**

@@ -20,7 +20,8 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
-import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
+import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
+import { qualityWords } from "./daily-quality-words";
 import { tierRankLabel, type StageItem } from "../../services/craft-stage/engine";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
@@ -111,7 +112,7 @@ function openTree(): void {
   justOpened = true; doneSeen = new Set(); doneNote.value = null;
   const saved = x.tree ? (JSON.parse(x.tree) as TreeDoc) : null;
   if (saved) t.open(saved);
-  else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from)); }
+  else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from, x.quality)); } // 完成形の品質 (D-03d)
   treeOn.value = true;
   // 挑戦中の木と動作の控えをサーバーへ (D-57b)。見本・終わった挑戦では送らない
   if (!dev && !x.ended) liveStart(props.topic.id, x.startedAt);
@@ -168,7 +169,7 @@ function doneGate(d: TreeDoc): boolean {
   const data = s.data.value, x = tryOf.value;
   if (!flag("dailyDoneCheck") || !data || !x || over.value) return false;
   if (keepNote) keepNote = false; else doneNote.value = null;
-  const bad = unmetDone(data, d, x.aims), opened = justOpened;
+  const bad = unmetDone(data, d, x.aims, x.quality), opened = justOpened;
   justOpened = false;
   const fresh = opened ? bad : bad.filter((id) => !doneSeen.has(id));
   doneSeen = new Set(Object.values(d.boxes).filter((b) => b.done === "main" && !fresh.includes(b.id)).map((b) => b.id));
@@ -179,6 +180,8 @@ function doneGate(d: TreeDoc): boolean {
     t.edit((doc) => { for (const id of fresh) if (doc.boxes[id]) doc.boxes[id]!.done = null; });
   } else {
     const miss = missingAims(data, d, fresh[0]!, x.aims).map((a) => `${t.aimShort({ modId: a.modId, tier: a.tier })} (${tierRankLabel(a.tier)})`);
+    // 品質が足りない時も同じ 1 行に (D-03d)
+    if (x.quality && qualityShort(data, d, fresh[0]!, x.quality)) miss.push(qualityWords(x.quality));
     doneNote.value = tr(`完成にできません。完成形に足りない MOD: ${miss.join("・")}`, `Can't mark this as finished. Missing from the target item: ${miss.join(", ")}`);
     t.undo();
   }
@@ -191,7 +194,7 @@ watch(() => t.doc.value, (d) => {
   const data = s.data.value;
   if (doneGate(d)) return;
   // 完成形と同じ形の箱は自動で完成 (D-35b ②)。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
-  if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims); }); return; }
+  if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims, tryOf.value.quality).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims, tryOf.value!.quality); }); return; }
   clearTimeout(saveT);
   if (!dev) saveT = window.setTimeout(() => { updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }); void keepDailyBuilt(props.topic.id, d); }, 500); // 写し = 提出した時の形のまま開く用 (D-50h)
   if (!dev) liveDoc(d);
@@ -207,7 +210,7 @@ watch([treeOn, tryOf, () => s.data.value], ([on, x, data]) => {
   if (treeRunRig.value && key === rigKey) return;
   rigKey = key;
   // 完成の箱に着いた人の品も見る (D-35b ④、検算と同じ物差し doneOkOf)。足りない人の着いた箱を控えて 1 行で知らせる
-  const ok = doneOkOf(data!, x!.aims);
+  const ok = doneOkOf(data!, x!.aims, x!.quality);
   const doneOk = ok && ((item: StageItem, box: string): boolean => { const r = ok(item); if (!r && !runUnmet.value.has(box)) runUnmet.value = new Set([...runUnmet.value, box]); return r; });
   treeRunRig.value = { seed: x!.seed!, price, startCost: 0, perBox: perBoxOn(props.topic.id), doneOk }; // 箱ごとの乱数は D-58b の日から (検算と同じ)
 }, { immediate: true });
@@ -240,7 +243,7 @@ watch(run, (r) => { if (!r && runUnmet.value.size) runUnmet.value = new Set(); }
 /** 今も完成の印のある箱だけ数える (印を外した・失敗に替えた箱は知らせない) */
 const runUnmetN = computed(() => (run.value ? [...runUnmet.value].filter((id) => t.doc.value.boxes[id]?.done === "main").length : 0));
 /** お題の狙いを満たさない完成の箱 (D-35b)。あれば提出できない (シミュでは完成は人が決めるが、デイリーで完成に数えるのは狙いを満たした品だけ) */
-const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims) : []));
+const unmet = computed(() => (treeOn.value && s.data.value && tryOf.value ? unmetDone(s.data.value, t.doc.value, tryOf.value.aims, tryOf.value.quality) : []));
 /** 提出の確かめと結果の窓 (D-35c)。出したら挑戦は終わり */
 const asking = ref<{ cost: number | null; rate: number } | null>(null);
 /** 開発版の見本の「終わった後の結果」(dev=done) */
@@ -332,7 +335,7 @@ const REFUSED: Record<StartError, () => string> = {
 
     <DailySubmitAsk v-if="asking" :id="topic.id" :open="!!asking" :cost="asking.cost" :rate="asking.rate" :shown="doneShown" :dev="!!dev" @close="asking = null" @done="submitted" />
     <p v-if="devNoAims" class="daily-note">{{ tr("開発の見本: このお題の狙いが見えない (締めた日のお題か、この端末で始めたお題の id を q に)。", "Dev sample: this topic's targets aren't visible (use a closed day's id or one you started here).") }}</p>
-    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyHere(topic.id)" :day="topic.id" @pick="pick" />
+    <DailyFracPick v-if="picking" :base="topic.base" :ilvl="topic.ilvl" :aims="tryOf!.aims" :quality="tryOf!.quality":initial-from="dev === 'frac' ? 'fractured' : undefined" :four-only="fourOnlyHere(topic.id)" :day="topic.id" @pick="pick" />
     <SimTreePage v-else-if="treeOn" />
     <p v-else-if="!refused" class="daily-note">{{ tr("読み込み中", "Loading") }}</p>
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->

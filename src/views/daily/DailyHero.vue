@@ -40,6 +40,8 @@ const start = (): void => { if (devT) { location.assign(devTreeUrl(props.topic.i
 const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
 /** 完成形のカードに出す狙い: 締めた日はお題の狙い (D-37e)、今日のお題は挑戦済みの人だけ挑戦の控えの狙い (D-37e2)。挑戦前・挑戦中は伏せたまま (D-32b) */
 const cardAims = computed(() => props.topic.aims ?? (TRIED_CARD && over.value && t.value?.aims?.length ? t.value.aims : null));
+/** 完成形のカードの品質 (D-03d): 狙いと同じ出し分け */
+const cardQuality = computed(() => (props.topic.aims ? props.topic.quality : t.value?.quality) ?? null);
 // 置き場でリセットされた挑戦は、端末の控えが終わったままだと「挑戦済み」で始め直せなかった (11-10、要望 c28f225a の後)。今日のお題で控えが終わっている時だけ、開いた時に 1 回サーバーに行があるかを聞く
 onMounted(() => { if (props.today && !devT && over.value) void recheckTry(props.topic.id); });
 // 今日のお題は、開いた時とタブに戻った時に端末の控えをそろえる (別のタブ・別の端末で挑戦した日も「挑戦済み」に、D-56b、11-15 オーナー「俺の記録表示されてるのに始めるボタンになってるよ」)
@@ -77,7 +79,7 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
         </div>
       </div>
       <!-- 締めた日・挑戦済みの人は狙いを完成形のカードで (D-37e・D-37e2)。挑戦前・挑戦中の今日のお題は伏せたまま (D-32b) -->
-      <DailyAimCard v-if="cardAims" data-daily-aims ess-note :day="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" />
+      <DailyAimCard v-if="cardAims" data-daily-aims ess-note :day="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" :quality="cardQuality" />
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>

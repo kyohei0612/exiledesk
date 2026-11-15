@@ -12,6 +12,8 @@ import { tr } from "../../i18n/lang";
 import type { DailyAim } from "./daily-api";
 import { genesisOver, genesisWhy, isGenesis, isGenesisLine } from "./daily-check";
 import { logPaste, pasteAfter } from "./paste-log";
+import { cleanQuality, type TopicQuality } from "./daily-quality";
+import { catalystQualityApplies, freshItem } from "../../services/craft-stage/engine";
 
 /**
  * 狙いに入らなかった行。soft = 読めなかった行ではない (2 行で 1 つの MOD のもう 1 行 = もう数えてある・トレードの合計の行 = MOD ではない)。
@@ -20,7 +22,13 @@ import { logPaste, pasteAfter } from "./paste-log";
 export type PostBad = { line: string; why: string; soft?: boolean };
 /** 読みが飛ばした行のうち、読めなかった行に数えない物 (D-14b) */
 const SOFT_SKIP: ReadonlySet<string> = new Set(["hybridPart", "pseudoTotal"]);
-export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: PostBad[]; /** 狙いと同じ順の「始めの MOD」(エンジンの Force)。投稿には送らず、確かめの品を投稿の中のエミュに載せる時に渡す (D-12b)。フラクチャーの印は読んだ品の物をそのまま流す */ start: Force[]; /** 貼った文を読んだ結果のまとめ (揃え直す前の段。投稿に添えて残す用、D-14c。エミュから来た品には無い) */ read?: Record<string, unknown> };
+export type PostItem = { base: string; baseJa: string; ilvl: number; aims: DailyAim[]; bad: PostBad[]; /** 狙いと同じ順の「始めの MOD」(エンジンの Force)。投稿には送らず、確かめの品を投稿の中のエミュに載せる時に渡す (D-12b)。フラクチャーの印は読んだ品の物をそのまま流す */ start: Force[]; /** 貼った文を読んだ結果のまとめ (揃え直す前の段。投稿に添えて残す用、D-14c。エミュから来た品には無い) */ read?: Record<string, unknown>; /** カタリストの品質 (指輪・アミュレット・ジュエル、D-03d)。お題の完成形の品質になる */ quality?: TopicQuality };
+
+/** 品の品質をお題の品質にする (D-03d): カタリストの品質の部位 (シミュの catalystPart と同じ) で、種類があり 1% 以上の時だけ */
+const itemQuality = (value: number | null | undefined, tag: string | null | undefined): { quality?: TopicQuality } => {
+  const q = cleanQuality({ value, tag });
+  return q ? { quality: q } : {};
+};
 
 const tierOf = (m: ItemTextMod): number => Number(m.tier!.label.replace(/^T/, ""));
 
@@ -52,7 +60,10 @@ export function itemFromText(data: PatchData, text: string): PostItem | string {
   if (r.rarity === "unique") return tr("ユニークはお題にできない", "Uniques can't be used");
   const reading = r.readings?.[0] ?? { mods: r.mods, skipped: r.skipped };
   const p = take(data, r.base, r.itemLevel ?? 82, reading.mods, reading.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en), ...(SOFT_SKIP.has(x.code) ? { soft: true } : {}) })));
-  return { ...genesisLines(data, p, text), read: pasteAfter(r) };
+  // 品質 (D-03d): 貼った文の「品質 (○○の MOD): +40%」の値と種類。カタリストの品質の部位だけ
+  let q: { quality?: TopicQuality } = {};
+  try { if (r.quality?.tag && catalystQualityApplies(freshItem(data, r.base.en, r.itemLevel ?? 82))) q = itemQuality(r.quality.value, r.quality.tag); } catch { q = {}; }
+  return { ...genesisLines(data, p, text), read: pasteAfter(r), ...q };
 }
 
 /**
@@ -78,7 +89,8 @@ export function itemFromEmu(data: PatchData, item: StageItem): PostItem {
     const known = data.mods.has(m.modId), text = tr(m.textJa, m.textEn);
     return { text, modId: m.unrevealed ? null : m.modId, unrevealed: !!m.unrevealed, fractured: !!m.fractured, tier: known && !m.unrevealed ? { label: tierRankLabel(tierRankOf(data, m.modId, m.tierIndex), false) } : null } as ItemTextMod;
   });
-  return take(data, { en: item.base, ja: item.baseJa }, item.itemLevel, mods, []);
+  const p = take(data, { en: item.base, ja: item.baseJa }, item.itemLevel, mods, []);
+  return catalystQualityApplies(item) ? { ...p, ...itemQuality(item.catalystQuality ?? item.quality, item.qualityTag) } : p;
 }
 
 /**
@@ -100,7 +112,13 @@ export const postFractured = (p: PostItem): boolean[] => p.start.map((f) => !!f.
 /** 「フラクチャー無し」を選んだ印 (DailyTry.fractured に入れる。どの狙いにも当たらないので ✦ は付かず、白い品から始まる。D-03・D-37j、11-12 のお題から) */
 export const NO_FRAC = "none";
 /** お題の木を作る: ✦ を 1 つ付け (フラクチャー無しなら付けない)、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
-export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured"): void {
+export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured", quality?: TopicQuality | null): void {
+  // 完成形の品質はお題から (D-03d)。シミュの「品質を狙う」(S-31c) の欄に入れる = 木の完成形のカードに出る。保存の木の書き換えは効かせない (品質の無いお題は品質を狙わない)
+  delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap; delete d.goalQualityOn; delete d.goalQualityNo;
+  if (quality) {
+    d.goalQualityOn = true; d.goalQuality = quality.value; d.goalQualityTag = quality.tag;
+    if (quality.value > 20) d.goalQualityCap = quality.value; // 既定の上限 20% を超える品質 (ブリーチのエッセンス、E-70a) は上限も合わせる (シミュの貼る口と同じ)
+  }
   const list: Aim[] = aims.map((a) => ({ modId: a.modId, tier: a.tier, ...(a.modId === fractured ? { fractured: true as const } : {}) }));
   d.memoAims = list;
   delete d.ilvlFit; // アイテムレベルはお題のまま (適正へ下げない)

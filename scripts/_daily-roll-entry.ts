@@ -14,6 +14,7 @@ import { boxCheck, fullMods } from "../src/views/daily/daily-check";
 import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-titles";
 import { perBoxOn, runCost, topicPrice } from "../src/views/daily/daily-cost";
 import { byScore, rankCmp } from "../src/views/daily/daily-score";
+import { cleanQuality, qualityOfSnap, qualityOn, topicQuality, type TopicQuality } from "../src/views/daily/daily-quality";
 export { loadPatchSync } from "./_htc-bridge-entry";
 
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
@@ -34,7 +35,7 @@ const startAt = (no: number): number => no * DAY + H16 - JST;
 const allDoneAt = (no: number): number => startAt(no + 1) - 9.5 * 60e3;
 
 type FetchItem = { slot: string; base: string; ilvl: number | null; quality: number | null; quality_kind: string | null; mods: string; fractured: string | null; desecrated: string | null; corrupted: number; sanctified?: number | null; who: string };
-type TopicRow = { id: string; day: string; slot: number; item_class: string | null; base: string; box_id: string | null; sample_id: string | null; seed?: number; prices?: string | null; ilvl?: number; aims?: string };
+type TopicRow = { id: string; day: string; slot: number; item_class: string | null; base: string; box_id: string | null; sample_id: string | null; seed?: number; prices?: string | null; ilvl?: number; aims?: string; /** お題の写し (品質 D-03d を {quality} で持つ) */ type_snap?: string | null };
 type BoxRow = { id: string; created: number; note: string; item: string; status: string; nick: string | null };
 type TryRow = { nick_id: string; name: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; recipe: string | null; checked: number | null };
 type ResultRow = { day: string; nick_id: string; place: number | null; cost: number; rate: number; used_ms: number; solved_n: number; entered_n: number; slot: number; base: string };
@@ -56,6 +57,10 @@ const plain = (s: string): string => s.replace(/\[([^\]|]*)\|([^\]]*)\]/g, "$2")
 
 /** 1 品を DailySample の mods に。読めない行が 1 つでもあれば null (1 人分をそのまま使うので欠けた並びは作らない、D-06) */
 export function sampleModsOf(data: PatchData, it: FetchItem): Array<{ name: string; tier: number }> | null {
+  return sampleReadOf(data, it)?.mods ?? null;
+}
+/** 1 品を読んだ MOD と、カタリストの品質 (種類の読める物だけ = 指輪・アミュレット・ジュエル。D-03d) */
+function sampleReadOf(data: PatchData, it: FetchItem): { mods: Array<{ name: string; tier: number }>; quality: TopicQuality | null } | null {
   const lines = [
     ...(JSON.parse(it.mods) as string[]).map(plain),
     ...(it.fractured ? (JSON.parse(it.fractured) as string[]).map((s) => `${plain(s)} (fractured)`) : []),
@@ -87,7 +92,7 @@ export function sampleModsOf(data: PatchData, it: FetchItem): Array<{ name: stri
     if (!row) return null;
     out.push({ name: row.id.slice(row.id.indexOf("/") + 1), tier: Number(m.tier.label.slice(1)) || 1 });
   }
-  return out.length ? out : null;
+  return out.length ? { mods: out, quality: r.quality?.tag ? cleanQuality(r.quality) : null } : null;
 }
 
 const hashOf = (s: string): string => {
@@ -102,20 +107,30 @@ export function sampleRowsOf(data: PatchData, items: FetchItem[]): Array<DailySa
 }
 
 /** 週の取得の品 → 型 (同じベース・同じ並びは n で数える、同じアカウントは 1 人に) */
-export function samplesOf(data: PatchData, items: FetchItem[]): { samples: DailySample[]; read: number; skipped: number } {
-  const by = new Map<string, { s: DailySample; who: Set<string> }>();
+export function samplesOf(data: PatchData, items: FetchItem[]): { samples: DailySample[]; read: number; skipped: number; quality: Map<string, TopicQuality> } {
+  const by = new Map<string, { s: DailySample; who: Set<string>; qs: TopicQuality[] }>();
   let read = 0, skipped = 0;
   for (const it of items) {
-    const mods = sampleModsOf(data, it);
-    if (!mods) { skipped++; continue; }
+    const got = sampleReadOf(data, it);
+    if (!got) { skipped++; continue; }
+    const mods = got.mods;
     read++;
     const key = `${it.base}|${mods.map((m) => `${m.name}:${m.tier}`).join(",")}`;
-    const e = by.get(key) ?? { s: { id: `s-${hashOf(key)}`, base: it.base, mods, n: 0 }, who: new Set<string>() };
+    const e = by.get(key) ?? { s: { id: `s-${hashOf(key)}`, base: it.base, mods, n: 0 }, who: new Set<string>(), qs: [] };
+    if (!e.who.has(it.who) && got.quality) e.qs.push(got.quality);
     e.who.add(it.who);
     e.s.n = e.who.size;
     by.set(key, e);
   }
-  return { samples: [...by.values()].map((e) => e.s), read, skipped };
+  // 型の品質 (D-03d) = 同じ型の人の中で一番多い種類と % (同じ数なら高い %)。品質の無い人の方が多ければ品質なし
+  const quality = new Map<string, TopicQuality>();
+  for (const e of by.values()) {
+    const count = new Map<string, { q: TopicQuality; n: number }>();
+    for (const q of e.qs) { const k = `${q.tag}:${q.value}`; const c = count.get(k) ?? { q, n: 0 }; c.n++; count.set(k, c); }
+    const top = [...count.values()].sort((a, b) => b.n - a.n || b.q.value - a.q.value)[0];
+    if (top && top.n * 2 >= e.s.n) quality.set(e.s.id, top.q);
+  }
+  return { samples: [...by.values()].map((e) => e.s), read, skipped, quality };
 }
 
 // --- 締め (D-59 ①・D-50・D-100・D-101) ---
@@ -130,7 +145,7 @@ const VERIFY_TOP = 10;
  * 費用 (0.1 神) と完成率が提出と同じなら 1。木が読めない・ベースやフラクチャーが違う時も -1。
  * 値段の引き方は挑戦の画面と同じ topicPrice (daily-cost.ts)。11-10 から画面もお題の種・値段で回す。予定のタスクの締めに --verify を付けるのは、その形が本番に出た後に始まった日から
  */
-export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null; perBox?: boolean; day?: string }): Verify {
+export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null; perBox?: boolean; day?: string; quality?: TopicQuality | null }): Verify {
   const price = topicPrice(data, topic);
   if (!price) return () => null;
   return (t) => {
@@ -251,7 +266,7 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
 
   // ③ 前の日を締める (D-59 ①)
   const ct = inp.topics.find((t) => t.day === inp.closing);
-  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null, perBox: perBoxOn(ct.day), day: ct.day }) : () => null; // day = 日の門 (新しい完成の物差しが効く日か、daily-cost.ts の NEW_JUDGE_FROM)
+  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null, perBox: perBoxOn(ct.day), day: ct.day, quality: qualityOfSnap(ct.type_snap) }) : () => null; // quality = お題の品質 (D-03d、無ければ品質を見ない) // day = 日の門 (新しい完成の物差しが効く日か、daily-cost.ts の NEW_JUDGE_FROM)
   const close = closeDay(inp, verify);
   if (close) {
     body.close = close;
@@ -292,18 +307,23 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
 
   // ④ お題 (D-84): 箱にその日の予定のベース → 箱から抽選 → 予定。候補はその日の 16:00 より前に通った投稿で、そのベースのフル MOD 以上の物だけ (前に通った物も見直す)
   if (!inp.topics.some((t) => t.day === inp.target)) {
+    // お題の品質 (D-03d): 箱は投稿の品質、予定は今週取った忍者の品の型の品質。日の門 (QUALITY_FROM) より前の日は入れない
+    const withQ = qualityOn(inp.target, (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.DAILY_QUALITY_ALL === "1");
+    const snap = (raw: TopicQuality | null | undefined): { typeSnap?: { quality: TopicQuality } } => { const q = topicQuality(raw); return withQ && q ? { typeSnap: { quality: q } } : {}; }; // 上限超えは 40% にそろえる (TOPIC_QUALITY_MAX)
     const planned = plan.find((p) => p.day === inp.target);
     const day = planned ? toFull(planned) : null;
     const box = checkedBox.filter((x) => x.status === "ok" && x.b.created < startAt(no) && fullMods(data, (JSON.parse(x.b.item) as { base: string }).base, x.aims));
     const pick = box.find((x) => day && JSON.parse(x.b.item).base === day.base) ?? (box.length ? box[Math.abs(Math.imul(no, 2654435761)) % box.length]! : null);
     if (pick) {
-      const it = JSON.parse(pick.b.item) as { base: string; ilvl: number };
+      const it = JSON.parse(pick.b.item) as { base: string; ilvl: number; quality?: unknown };
       const cls = classOfBase(it.base);
-      body.topic = { day: inp.target, boxId: pick.b.id, slot: (cls && slotOfClass(cls)) ?? weekdayOf(no), itemClass: cls, base: it.base, baseJa: jaTypeName(it.base), ilvl: it.ilvl, aims: pick.aims, engineVer, rulesVer: RULES_VER };
-      log.push(`お題 ${inp.target}: 投稿 ${pick.b.id} (${it.base})`);
+      const q = cleanQuality(it.quality);
+      body.topic = { day: inp.target, boxId: pick.b.id, slot: (cls && slotOfClass(cls)) ?? weekdayOf(no), itemClass: cls, base: it.base, baseJa: jaTypeName(it.base), ilvl: it.ilvl, aims: pick.aims, ...snap(q), engineVer, rulesVer: RULES_VER };
+      log.push(`お題 ${inp.target}: 投稿 ${pick.b.id} (${it.base}${withQ && q ? `・品質 ${q.tag} ${q.value}%` : ""})`);
     } else if (day?.aims) {
-      body.topic = { day: inp.target, sampleId: day.sampleId, slot: day.slot, itemClass: classOfBase(day.base), base: day.base, baseJa: jaTypeName(day.base), ilvl: day.ilvl, aims: day.aims, engineVer, rulesVer: RULES_VER };
-      log.push(`お題 ${inp.target}: 予定 (${day.base})`);
+      const q = day.sampleId ? samplesOf(data, inp.items).quality.get(day.sampleId) : null;
+      body.topic = { day: inp.target, sampleId: day.sampleId, slot: day.slot, itemClass: classOfBase(day.base), base: day.base, baseJa: jaTypeName(day.base), ilvl: day.ilvl, aims: day.aims, ...snap(q), engineVer, rulesVer: RULES_VER };
+      log.push(`お題 ${inp.target}: 予定 (${day.base}${withQ && q ? `・品質 ${q.tag} ${q.value}%` : ""})`);
     } else log.push(`お題 ${inp.target}: 出せる物が無い`);
   } else log.push(`お題 ${inp.target}: もう出ている`);
   return { body, log };

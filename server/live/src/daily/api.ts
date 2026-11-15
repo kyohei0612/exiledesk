@@ -8,6 +8,7 @@ import type { BoxCard, BoxPost } from "./box-notify";
 import { viewCounts } from "./views";
 import { turnoutOf, type TurnRow } from "./turnout";
 import { byScore, rankOrderSql } from "../../../../src/views/daily/daily-score";
+import { cleanQuality, qualityOfSnap } from "../../../../src/views/daily/daily-quality";
 import { canStartAt, dayName, dayNoOf, dayNoOfName, idOf, noOfId, seedOfDay, SOLVE_RATE, startAt, SUBMIT_GRACE_MS, TIME_LIMIT_MS, weekdayOf, weekOf } from "./time";
 
 /** 1 日の順位に返す人数 */
@@ -22,7 +23,7 @@ const SUBMIT_NOTE_MAX = 40;
 const submitNoteBad = (s: string): boolean => hasBadWord(s) || /https?:|www\.|\.[a-z]{2,}\//i.test(s.normalize("NFKC"));
 
 type Aim = { modId: string; tier: number; ja: string; en: string };
-type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string };
+type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string; /** お題の写し (JSON)。品質 (D-03d) を {quality} で持つ */ type_snap?: string | null };
 type TryRow = { topic_id: string; nick_id: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; checked: number | null; gave_up_at?: number | null };
 
 /**
@@ -53,8 +54,8 @@ export async function settleFromPlan(db: D1Database, upTo: number, prices: strin
     const prev = await db.prepare("SELECT * FROM daily_topics WHERE day = ?").bind(dayName(dayNoOfName(p.day) - 1)).first<TopicRow>();
     if (prev)
       await db
-        .prepare("INSERT OR IGNORE INTO daily_topics (id, day, week, box_id, sample_id, slot, item_class, base, base_ja, ilvl, aims, prices, seed, shown_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'repeat')")
-        .bind(`d${p.day}`, p.day, p.week, prev.box_id, prev.sample_id, prev.slot, prev.item_class, prev.base, prev.base_ja, prev.ilvl ?? 82, prev.aims, prices, seedOfDay(p.day))
+        .prepare("INSERT OR IGNORE INTO daily_topics (id, day, week, box_id, sample_id, slot, item_class, base, base_ja, ilvl, type_snap, aims, prices, seed, shown_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'repeat')")
+        .bind(`d${p.day}`, p.day, p.week, prev.box_id, prev.sample_id, prev.slot, prev.item_class, prev.base, prev.base_ja, prev.ilvl ?? 82, prev.type_snap ?? null, prev.aims, prices, seedOfDay(p.day)) // 品質 (D-03d) も前の日のまま
         .run();
     else
       await db
@@ -69,11 +70,11 @@ const rankSql = (topicId: string): string => `SELECT n.name, t.cost, t.rate, t.s
   WHERE t.topic_id = ? AND t.rate >= ${SOLVE_RATE} AND t.cost IS NOT NULL AND (t.checked IS NULL OR t.checked >= 0) ORDER BY ${rankOrderSql(byScore(topicId))} LIMIT ?`;
 
 function topicOut(t: TopicRow, tries: number, closed: boolean): Record<string, unknown> {
-  const aims = JSON.parse(t.aims) as Aim[], no = noOfId(t.id)!;
+  const aims = JSON.parse(t.aims) as Aim[], no = noOfId(t.id)!, quality = qualityOfSnap(t.type_snap);
   return {
     id: t.id, day: t.day.slice(5).replace("-", "/"), dayNo: no, base: t.base, baseJa: t.base_ja ?? t.base, ilvl: t.ilvl, modCount: aims.length, slot: t.slot, tries,
     // sample = 手の辞書の見本の型から出たお題 (週のファイルが無い時の控え、D-80。daily-gen.ts の devSamples の id は dev- で始まる)
-    sample: !!t.sample_id?.startsWith("dev-"), fromBox: !!t.box_id, ...(closed ? { aims } : {}),
+    sample: !!t.sample_id?.startsWith("dev-"), fromBox: !!t.box_id, ...(closed ? { aims, ...(quality ? { quality } : {}) } : {}), // 品質 (D-03d) も狙いと同じく締めた日だけ
   };
 }
 
@@ -123,8 +124,13 @@ async function titlesOf(db: D1Database, names: string[]): Promise<Record<string,
 }
 
 type Body = Record<string, unknown>;
+/** お題の品質 (D-03d) の欄。品質の無いお題は欄ごと無し */
+const qualityField = (t: TopicRow): { quality?: { value: number; tag: string } } => {
+  const q = qualityOfSnap(t.type_snap);
+  return q ? { quality: q } : {};
+};
 const tryOut = (t: TryRow, topic: TopicRow) => ({
-  topicId: t.topic_id, startedAt: t.started_at, ...(t.gave_up_at ? { ended: true, gaveUpAt: t.gave_up_at } : {}), ...(t.submitted_at ? { ended: true, submitted: true } : {}), aims: JSON.parse(topic.aims) as Aim[], base: topic.base, ilvl: topic.ilvl, seed: topic.seed, prices: topic.prices ? JSON.parse(topic.prices) : null,
+  topicId: t.topic_id, startedAt: t.started_at, ...(t.gave_up_at ? { ended: true, gaveUpAt: t.gave_up_at } : {}), ...(t.submitted_at ? { ended: true, submitted: true } : {}), aims: JSON.parse(topic.aims) as Aim[], ...qualityField(topic), base: topic.base, ilvl: topic.ilvl, seed: topic.seed, prices: topic.prices ? JSON.parse(topic.prices) : null,
   ...(t.cost != null ? { best: t.rate! >= SOLVE_RATE ? { cost: t.cost, rate: t.rate, ms: t.submitted_at! - t.started_at, at: t.submitted_at } : undefined, last: { cost: t.cost, rate: t.rate, ms: t.submitted_at! - t.started_at, at: t.submitted_at } } : {}),
 });
 
@@ -271,7 +277,9 @@ export async function dailyBox(db: D1Database, b: Body, ip: string, now: number)
   const nick = b.nickId ? await authNick(db, b.nickId, b.code) : null;
   const note = typeof b.note === "string" ? b.note.slice(0, NOTE_MAX) : "";
   const aims = Array.isArray(b.aims) ? b.aims : [];
-  const core = { base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims };
+  // 品質 (D-03d): 指輪・アミュレット・ジュエルのカタリストの品質と種類。形が違えば無し (今までどおり)
+  const quality = cleanQuality(b.quality);
+  const core = { base: b.base, baseJa: b.baseJa, ilvl: b.ilvl, aims, ...(quality ? { quality } : {}) };
   if (typeof b.base !== "string" || !b.base || !Number.isInteger(b.ilvl) || !aims.length) return { error: "item" };
   if (JSON.stringify(core).length > ITEM_MAX) return { error: "large" };
   // 貼った元の文と読んだ結果かエミュから来た印 (D-14c)・絵の元 (D-20c)。品の欄の中に足して残すだけで、確かめ・お題には使わない。上限は品の上限と別に切る

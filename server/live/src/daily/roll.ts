@@ -22,7 +22,7 @@ export async function rollJson(db: D1Database, now: number, dayParam: string | n
     all("SELECT id, base, mods, n FROM daily_samples WHERE week = ?", week),
     all("SELECT id, base, mods, n FROM daily_samples WHERE week = ?", prevWeek),
     all("SELECT * FROM daily_plan WHERE week = ? ORDER BY day", week),
-    all("SELECT id, day, slot, item_class, base, box_id, sample_id, seed, prices, ilvl, aims FROM daily_topics ORDER BY day"),
+    all("SELECT id, day, slot, item_class, base, box_id, sample_id, seed, prices, ilvl, aims, type_snap FROM daily_topics ORDER BY day"),
     all("SELECT b.id, b.created, b.note, b.item, b.status, n.name AS nick FROM daily_box b LEFT JOIN daily_nicks n ON n.id = b.nick_id WHERE b.status IN ('wait', 'ok') ORDER BY b.created"),
     all("SELECT t.nick_id, n.name, t.started_at, t.submitted_at, t.cost, t.rate, t.recipe, t.checked FROM daily_tries t JOIN daily_nicks n ON n.id = t.nick_id WHERE t.topic_id = ?", idOf(no - 1)),
     all("SELECT r.*, n.name FROM daily_results r JOIN daily_nicks n ON n.id = r.nick_id ORDER BY r.day"),
@@ -41,7 +41,7 @@ export async function rollJson(db: D1Database, now: number, dayParam: string | n
  *   box    [{id, status: ok|no, why?, aims?}] — 機械の確かめ (D-20) の結果
  *   close  {day, results: [{nickId, place, cost, rate, usedMs, solvedN, enteredN, slot, itemClass, base, checked, engineVer, facts}], checked: [{nickId, checked}], awards: [{nickId, id, ver, firstDay, count, retired, ja, en, rank}]}
  *   planFix [{day, slot, itemClass, base, baseJa, sampleId, ilvl, aims}] — 今週の残りの予定でフル MOD でない日の差し替え (D-82)。お題が出た日は変えない
- *   topic  {day, boxId?, sampleId?, slot, itemClass, base, baseJa, ilvl, aims, typeSnap?, engineVer, rulesVer} — 出した後は変えない
+ *   topic  {day, boxId?, sampleId?, slot, itemClass, base, baseJa, ilvl, aims, typeSnap?, engineVer, rulesVer} — 出した後は変えない。typeSnap = {quality} (D-03d、品質の無いお題は無し)
  */
 export async function rollPost(db: D1Database, b: Body, prices: string | null): Promise<unknown> {
   const stmts: D1PreparedStatement[] = [];

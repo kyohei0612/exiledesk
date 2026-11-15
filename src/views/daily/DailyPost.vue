@@ -83,7 +83,7 @@ async function send(): Promise<void> {
   sending.value = true;
   // 絵の元 = 今この画面に出ている確かめのカードの字 (札の段だけ、送る時に揃え直した段に。D-20c、スイッチ dailyBoxCard)
   const card = cardOfScreen(document.querySelector("[data-daily-post]"), p.base, p.aims, floorAims(d, p.base, p.ilvl, p.aims), postFractured(p));
-  const r = await postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims }, src.value, card);
+  const r = await postBox(d, { note: note.value.trim().slice(0, 80), base: p.base, baseJa: p.baseJa, ilvl: p.ilvl, aims: p.aims, ...(p.quality ? { quality: p.quality } : {}) }, src.value, card); // 品質 (D-03d)
   sending.value = false;
   if (typeof r === "string") sendFail.value = r; else { sendFail.value = null; sent.value = r; if (POST_OWN) clearPostItem(); void nextTick(() => window.scrollTo(0, 0)); } // 送れた後の文は頭に出るので、頭へ送る (D-15b)
 }
@@ -121,7 +121,7 @@ const failText = (e: BoxError): string =>
         </div>
       </div>
       <!-- 狙いは完成形のカード (D-37e)。読めなかった行だけ文で下に -->
-      <DailyAimCard v-if="item.aims.length" data-daily-post-aims class="mb-3" :base="item.base" :ilvl="item.ilvl" :aims="item.aims" :fractured="fracs" />
+      <DailyAimCard v-if="item.aims.length" data-daily-post-aims class="mb-3" :base="item.base" :ilvl="item.ilvl" :aims="item.aims" :fractured="fracs" :quality="item.quality" />
       <p v-if="fracs.some(Boolean)" data-daily-post-frac-note class="mb-3 text-[14px] opacity-80">{{ tr("フラクチャーはお題には引き継がれません (挑戦する人が選びます)。", "Fractured mods aren't carried into the challenge (each challenger picks their own).") }}</p>
       <ul v-if="bads.length" class="mb-3 text-[15px]">
         <li v-for="b in bads" :key="b.line" data-daily-post-bad class="py-0.5 text-[var(--exile-color-signal-down)]">{{ b.line }} ({{ b.why }})</li>
