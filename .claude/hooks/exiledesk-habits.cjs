@@ -42,11 +42,19 @@ process.stdin.on("end", () => {
       process.stdout.write(`【長さ】このセッションは ${n} 件になった (${LONG} 前後で交代の決まり、メモ feedback-request-rules)。今の頼みの区切りで引き継ぎを書いて止まり、控えに交代する (ブラックならオーナーに交代を言う)。\n`);
     else if (n >= SPARE && !black && firstTime(sid, SPARE))
       process.stdout.write(`【長さ】このセッションは ${n} 件 (${SPARE} を超えた、上限は ${LONG})。ブラックに「${SPARE} 超え」と 1 行だけ報告して仕事は続ける。控えはブラックがオーナーの番に立てる。\n`);
+    // 控えが入ったら題から「控え」を外す (G-37 ②、オーナー 11-16「控えのままじゃん名前」): 題に「控え」が残ったまま commit したら毎番出す
+    const own = desk.get(sid);
+    if (own && /控え/.test(own.title) && /"command":"[^"]*\bgit\b[^"]*\bcommit\b/.test(readTail(tp, 3_000_000)))
+      process.stdout.write(`【名前】題がまだ「${own.title}」(控え) のまま commit している = もう入っている。set_session_title "self" で役の名前 (例「シミュ部長」「ブラック」) に直す (G-37 ②)。\n`);
     if (black && ownerTurn) {
       const longs = longSessions(tp, desk);
       if (n >= SPARE && !handedOver(desk.get(sid), desk)) longs.unshift(`ブラック自身 (${n} 件)`);
       if (longs.length)
         process.stdout.write(`【控え】${SPARE} 件を超えたセッション: ${longs.join("・")}。オーナーが話したこの番のうちに控えを立てて読ませて待たせる (上限 ${LONG}、メモ feedback-ask-before-spawn)。もう控えがあれば立てない。\n`);
+      // 終わり (G-37 ①、オーナー 11-16「てか終わりにするんでしょ上限の奴」): 上限を超えた・交代した前の物はアーカイブする
+      const ends = endedSessions(tp, desk);
+      if (ends.length)
+        process.stdout.write(`【終わり】上限 ${LONG} を超えた / 交代した前のセッション: ${ends.join("・")}。引き継ぎが済んでいればアーカイブする (立てた係は先に detach。サーバー係は 1440 が止まるので見てから)。まだ引き継いでいなければ引き継がせてから (G-37 ①)。\n`);
     }
     process.exit(0);
   }
@@ -150,11 +158,30 @@ function longSessions(self, desk) {
       if (path.resolve(p) === path.resolve(self)) continue;
       try { if (Date.now() - fs.statSync(p).mtimeMs > 3600_000) continue; } catch { continue; }
       const info = desk.get(f.replace(/\.jsonl$/, ""));
-      if (info && (info.archived || handedOver(info, desk))) continue;
+      // 交代した前の物 (題に「(前」) は控えでなく【終わり】の方に出す (G-37 ①)
+      if (info && (info.archived || handedOver(info, desk) || /[(（]前/.test(info.title))) continue;
       const n = countLines(p);
       if (n < SPARE) continue;
       const m = readHead(p, 60000).match(/あなたは([^\s。、,(（\\"]{2,30})/);
       out.push(`${info && info.title ? info.title.split(/[：:]/)[0].trim() : m ? m[1] : f.slice(0, 8)} (${n} 件)`);
+    }
+  }
+  return out;
+}
+// アーカイブしていない ExileDesk のセッション (worktree も) で、LONG 件を超えた物か題に「(前」がある物 (G-37 ①)。時間では絞らない (止まった物ほど古い)
+function endedSessions(self, desk) {
+  const root = path.join(os.homedir(), ".claude", "projects");
+  const out = [];
+  let projs = [];
+  try { projs = fs.readdirSync(root).filter((d) => d.startsWith(PROJ)); } catch { return out; }
+  for (const d of projs) {
+    for (const [cli, info] of desk) {
+      if (info.archived) continue;
+      const p = path.join(root, d, `${cli}.jsonl`);
+      if (path.resolve(p) === path.resolve(self) || !fs.existsSync(p)) continue;
+      const before = /[(（]前/.test(info.title);
+      const n = countLines(p);
+      if (before || n >= LONG) out.push(`${info.title || cli.slice(0, 8)} (${n} 件)`);
     }
   }
   return out;
