@@ -22,7 +22,7 @@ export const eleIdsOf = (data: PatchData, modId: string): string[] => anyEleIds(
 
 /** 「いずれか」の札 (エンジンの AimTarget に anyEle・eleSkip・anyEleTiers) */
 export type EleTarget = AimTarget & { anyEle?: number; eleSkip?: readonly string[]; anyEleTiers?: readonly number[] };
-interface EleAimLike { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
+interface EleAimLike { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[]; eleOne?: boolean }
 /**
  * 狙い → エンジンの札 (段の番号。「いずれか」なら番号・数えない系統・置いた「いずれか」全部の段も)。tier を渡すとその段で。
  * 全部の段 (eleTiers) を渡すと、付いているかはエンジンの割り当て (厳しい本から順に良い元素耐性を当てる、S-10h ②) で見る
@@ -71,11 +71,21 @@ function eachAim(x: unknown, f: (a: EleAimLike & Record<string, unknown>) => voi
 }
 /** 完成形の「いずれか」の番号・数えない系統を木の中の同じ札 (手の ☑・残したい MOD・当たりの箱) へ写す。完成形の「いずれか」で無くなった元素の札は印を外す */
 function syncAims(data: PatchData, d: TreeDoc): void {
-  const goals = d.memoAims ?? [], byId = new Map(goals.filter((a) => a.anyEle).map((a) => [a.modId, a]));
+  const goals = d.memoAims ?? [], any = goals.filter((a) => a.anyEle), byId = new Map(any.map((a) => [a.modId, a]));
+  const loose = any.length ? Math.max(...any.map((a) => a.tier)) : 0, skip = any[0]?.eleSkip;
   const { memoAims: _m, ...rest } = d;
   eachAim(rest, (a) => {
+    if (a.eleOne) return; // 手の窓で単体で選んだ元素 (S-10h ⑩) は元素を決めた狙いのまま
     const g = byId.get(a.modId);
     if (g) { a.anyEle = g.anyEle; if (g.eleSkip?.length) a.eleSkip = [...g.eleSkip]; else delete a.eleSkip; if (g.eleTiers?.length) a.eleTiers = [...g.eleTiers]; else delete a.eleTiers; return; }
+    // 使い回しの札 (完成形に置いた本数より後の番号、S-10h ⑧ = tree-ele-reuse): 印は残し、数えない系統と段の並びを完成形に揃える
+    if (a.anyEle && a.anyEle > any.length && any.length) {
+      if (skip?.length) a.eleSkip = [...skip]; else delete a.eleSkip;
+      const t = any.map((x) => x.tier).sort((x, y) => x - y).slice(0, a.anyEle);
+      while (t.length < a.anyEle) t.push(loose);
+      a.eleTiers = t;
+      return;
+    }
     if (a.anyEle != null || a.eleSkip != null || a.eleTiers != null) { delete a.anyEle; delete a.eleSkip; delete a.eleTiers; }
   });
   void data;

@@ -3,6 +3,7 @@
   スイッチ aimGroups (S-22g): 完成形に ✦ がある時、3 段に分けて見出しを付ける = フラクチャーの候補 (完成形で ✦ の付いた MOD) / 狙い MOD (✦ の候補も混ぜる) / 狙い無し (slot の free)。箱の品にもうフラクチャーが付いた後 (fracIds) はフラクチャーの候補の段を出さず、固定された MOD は狙い MOD の段からも外す。
   各段の中は完成形のカードの順 (✦ が無い時も順はカード)。閉じている間は前のまま (見出し無し・候補の順)。mid の slot = 今は付けられない狙い・骨の置き石 (その他の後、狙い無しの前)
   seconds (S-10h ②、スイッチ eleAny): 2 つ付く手で同じ段の「いずれか」の 2 本目は行にせず、1 本目の下に字下げの「☐ 2 個目の MOD も狙う」(1 本目が ☑ の時だけ押せる)
+  singles (S-10h ⑩): 「いずれか」の行の下に火・冷気・雷の単体の ☑ (字下げ)。「いずれか」が ☑ の間は含まれる形で ☑ (押せない)、外すと単体で選べ元素ごとに箱が分かれる (use-ele-singles)
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -13,9 +14,10 @@ import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { allMods } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import { useTree } from "./use-tree";
+import type { EleSingle } from "./use-ele-singles";
 
-const props = defineProps<{ aims: readonly Aim[]; checked: readonly string[]; noMod: boolean; noModTitle: string; big?: boolean; free?: boolean; fracIds?: readonly string[]; seconds?: Readonly<Record<string, Aim>> }>();
-const emit = defineEmits<{ toggle: [a: Aim] }>();
+const props = defineProps<{ aims: readonly Aim[]; checked: readonly string[]; noMod: boolean; noModTitle: string; big?: boolean; free?: boolean; fracIds?: readonly string[]; seconds?: Readonly<Record<string, Aim>>; singles?: Readonly<Record<string, EleSingle[]>>; shownOf?: (a: Aim, fam: string) => boolean }>();
+const emit = defineEmits<{ toggle: [a: Aim]; single: [a: Aim, fam: string] }>();
 const t = useTree();
 const ON = flag("aimGroups");
 /** 同じ MOD か (木の狙いの比べ sameAimMod。段は見ない) */
@@ -81,6 +83,11 @@ const head = "mt-1.5 text-[11px] font-bold text-amber-200/80 first:mt-0";
       <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" :disabled="noMod" :checked="rowOn(a, g.key)" @change="($event.target as HTMLInputElement).checked = rowOn(a, g.key); rowToggle(a, g.key)" />
       <span v-if="big" class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
       <span v-else class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
+    </label>
+    <label v-for="x in singles?.[aimKey(a)] ?? []" :key="x.fam" data-tree-hand-aim-single :data-fam="x.fam"
+      :class="[big ? 'ml-6 flex min-h-11 min-w-0 items-center gap-3 px-3' : 'ml-[26px] flex min-h-6 min-w-0 items-center gap-2 text-[12px]', noMod ? 'cursor-not-allowed opacity-40' : on(a) ? 'cursor-default opacity-60' : 'cursor-pointer']" :title="on(a) ? tr('「いずれか」に含まれる (単体で狙う時は「いずれか」を外す)', 'Included in any (untick any to aim for this one alone)') : undefined">
+      <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" :disabled="noMod || on(a)" :checked="!!shownOf?.(a, x.fam)" @change="($event.target as HTMLInputElement).checked = !!shownOf?.(a, x.fam); emit('single', a, x.fam)" />
+      <span class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="t.aimLabel(x.aim)">{{ t.aimLabel(x.aim) }}</span>
     </label>
     <label v-if="seconds?.[aimKey(a)]" data-tree-hand-aim-second :data-aim="aimKey(seconds[aimKey(a)]!)"
       :class="[big ? 'ml-6 flex min-h-11 min-w-0 items-center gap-3 rounded-lg border-l-2 border-amber-400/60 bg-amber-400/[.08] px-3' : 'ml-[26px] flex min-h-7 min-w-0 items-center gap-2 rounded border-l-2 border-amber-400/60 bg-amber-400/[.08] px-2 py-0.5', noMod || !on(a) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer']">

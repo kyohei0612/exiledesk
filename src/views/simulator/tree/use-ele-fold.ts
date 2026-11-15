@@ -12,6 +12,7 @@ import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../../serv
 import { simOp } from "../../../web/track";
 import type { ModFold } from "../../../components/for-share/mod-list/ModTable.vue";
 import { useTree } from "./use-tree";
+import type { AttachWay } from "./tree-attach";
 
 export const ELE_FOLD_KEY = "eleAny";
 
@@ -61,6 +62,8 @@ export function useEleFold() {
   });
   /** n 本を同じ段で置き直す (0 = 全部外す) */
   const setCount = (n: number, tier: number): void => change((_xs, lead) => Array.from({ length: n }, (_, i) => ({ modId: lead, tier, anyEle: i + 1 })));
+  /** 付け方を選んで 1 本置き直す (S-10h ①、ふつう / ✦ フラクチャー / 冒涜 = tree-attach。前の 2・3 本の木も 1 本になる。2 本目からは手の窓で使い回す ⑧) */
+  const setWay = (w: AttachWay, tier: number): void => change((_xs, lead) => { const a: Aim = { modId: lead, tier, anyEle: 1 }; if (w === "fracture") a.fractured = true; else if (w === "desecrated") a.via = "desecrated"; return [a]; }); // 狙いの札の印 (tree-attach の attachIn と同じ)
   /** 置いた本の段を全部替える */
   const setTierAll = (tier: number): void => change((xs) => xs.map((a) => ({ ...a, tier })));
   /**
@@ -71,5 +74,5 @@ export function useEleFold() {
     const it = t.goalItem.value?.item, ids = new Set(placed.value.map((a) => a.modId));
     return it && ids.size ? { ...it, suffixes: it.suffixes.filter((m) => !ids.has(m.modId)) } : it ?? null;
   });
-  return { listItem, folds, foldOn: (f: ModFold): boolean => f.key === ELE_FOLD_KEY && placed.value.length > 0, steps, placed, canAdd, setTier, add, remove, room, setCount, setTierAll };
+  return { listItem, folds, foldOn: (f: ModFold): boolean => f.key === ELE_FOLD_KEY && placed.value.length > 0, steps, placed, canAdd, setTier, add, remove, room, setCount, setWay, setTierAll };
 }
