@@ -115,8 +115,8 @@ export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: s
   if (list.some((a) => a.fractured)) delete d.start!.noFracOrb; else d.start!.noFracOrb = true;
   // 始めの品に MOD は付けない (お題の木の始めは白い品か ✦ 1 つだけ、D-03)。保存の木の始めに狙いの MOD を書き込んだ木を、検算がそのまま回して通していた (11-12)
   d.start!.mods = [];
+  // MOD の無いレアから始める日 (D-03c): 印 blankRare を立て、稀さはシミュの startRarity がレアにする (開き直し・組み直し・共有でも白に戻さない、S-13c)。
+  // ✦ は付けない (fractured = NO_FRAC で来る)・フラクチャーのオーブは打たせない (上の noFracOrb)。印の無い日は前の印を消す
+  if (rare) d.start!.blankRare = true; else delete d.start!.blankRare;
   d.start!.rarity = startRarity(d);
-  // MOD の無いレアから始める日 (D-03c): 稀さだけレアに。✦ は付けない (fractured = NO_FRAC で来る)・フラクチャーのオーブは打たせない (上の noFracOrb)。
-  // 開き直し・組み直しで白に戻さない印はシミュの始まりの側 (startRarity) が持つ (シミュ部長に頼み中)
-  if (rare) d.start!.rarity = "rare";
 }
