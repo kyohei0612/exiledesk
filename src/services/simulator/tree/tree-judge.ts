@@ -91,20 +91,22 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
  * 残したい MOD に選んだ後は狙いと数え、同じ MOD の 10 段目と 13 段目が別の枠になった)。
  * 体 (bodyOf) の外れは印の札での外れの式 1 本 (tree-miss の isMissMod。同じ文の別 modId も当たり = 印の札と外れの両方には数えない)
  */
-export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
-  const c = contentParts(data, doc, it, aimed);
+export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>, eleJunk = false): string {
+  const c = contentParts(data, doc, it, aimed, eleJunk);
   // 狙いとして発現した冒涜の MOD の数 (#a。骨の手のある箱と比べる時だけ見る = 冒涜の MOD は 1 品 1 つ E-60。外れの冒涜は #d)
   const da = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed && !m.fractured && !isMissMod(m, c.miss)).length;
   return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}#a${da}`;
 }
 /** 中身の鍵の部分 (keys = 印の札、miss = 印の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
-function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): { keys: Set<string>; miss: MissAims; body: string } {
+// eleJunk = 体の外れの数えで「いずれか」の札を使わない (一般の火・冷気・雷耐性は全部外れの数に入る。付いている本数は keys の n 番で見る)。
+// 精査の混ざり (tree-frame の bestOf) だけが使う: 狙い無しの手で 2 つ目の元素耐性が付いた人 (外れに数えない、S-10h ③) と外れが付いた人を同じ形と見る
+function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>, eleJunk = false): { keys: Set<string>; miss: MissAims; body: string } {
   const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
   const keys = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => !a.anyEle && isAimMod(m, targetsOf(data, [a]), opts)); if (g) keys.add(g.modId); }
   // いずれかの元素耐性の n 番は、当たる元素耐性が n 個ある時だけ (S-10h ②。MOD ごとに 1 番目の札へ寄せると 2 番が鍵に入らなかった)
   for (const a of goals) if (a.anyEle && aimHeldOn(data, it, a, { sameText: true })) keys.add(a.modId);
-  return { keys, miss, body: bodyOf(data, doc, it, miss) };
+  return { keys, miss, body: bodyOf(data, doc, it, eleJunk ? missAims(data, goals.filter((a) => !a.anyEle)) : miss) };
 }
 /**
  * この人 (item・aimed) が箱 to の代表の品 (配置) と違う所の言葉 (止まりの文、S-64)。判定 (fitsItem) と同じ部品で比べ、違う狙い・外れは MOD の名前で出す。
