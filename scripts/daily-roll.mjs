@@ -75,6 +75,8 @@ else {
 // 束ねた中に読み込みの時に location を読む画面の部品がある (daily-cost → シミュの木 → web/track → utils/no-log、11-08 から)。
 // 画面の無い台本なので、無い時だけ住所の無い形を置く (no-log は手元の住所でないので「送る」扱いだが、台本は記録を送らない)
 globalThis.location ??= { hostname: "", href: "", search: "", hash: "", pathname: "/" };
+// 同じく読み込みの時に history を読む部品 (daily-cost → シミュの木 → use-tree → web/page.ts の histOf、11-14 の 49b1e5f7e から)。11-15 15:01 に落ちた
+globalThis.history ??= { state: null, replaceState() {}, pushState() {}, back() {} };
 const M = await bundleEntry("scripts/_daily-roll-entry.ts");
 const data = M.loadPatchSync();
 const ver = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
