@@ -360,8 +360,9 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               </button>
               <span class="relative flex shrink-0 items-center gap-1 pr-2 tabular-nums">
                 <span class="w-14 text-[13px] font-bold" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : 'text-amber-100']">{{ pct(f.share) }}</span>
-                <span class="flex min-w-6 justify-center whitespace-nowrap text-[12px]"><slot name="fold-tier" :fold="f" /></span>
-                <span class="w-7 text-[12px] text-[var(--exile-color-text-tertiary)]" :class="COL">‐</span>
+                <!-- U-12j: Lv の「‐」は出さず、差し込み (段の選び・付ける) を行の右端へ詰める (オーナー 11-15「いずれかはレベルのとこ無視で右詰め」) -->
+                <span class="flex min-w-6 whitespace-nowrap text-[12px]" :class="ONE ? 'justify-end' : 'justify-center'"><slot name="fold-tier" :fold="f" /></span>
+                <span v-if="!ONE" class="w-7 text-[12px] text-[var(--exile-color-text-tertiary)]" :class="COL">‐</span>
               </span>
             </div>
           </div>
