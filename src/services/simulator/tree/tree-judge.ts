@@ -227,6 +227,8 @@ export function sampleAimed(data: PatchData, doc: TreeDoc, id: string, seed: num
   m.set(id, out);
   return out;
 }
+/** 箱 id の代表 (見本の 1 番目) に狙い a が名前の印で付いているか (低ティアの箱の「初めて」、S-33g ①・レビュワー 1 の 26) */
+export const heldOnRep = (data: PatchData, doc: TreeDoc, id: string, a: Aim): boolean => aimedList(data, doc, sampleAimed(data, doc, id, 1)).some((x) => sameAimMod(data, x, a));
 /** 見本を出す時の写し (値を揃えたカード、tree-fixed-values) → 元の見本 */
 const COPY_OF = new WeakMap<StageItem, StageItem>();
 /** copy は sample の写し (☑ は元の見本の物を引く) */

@@ -36,16 +36,24 @@ export function holdsLowTier(data: PatchData, item: StageItem, a: Aim): boolean 
 /** 箱 b の手の当たりの箱の狙い (☑) */
 const pickedOf = (doc: TreeDoc, b: TreeBox): Aim[] => b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" ? boxAims(c) : []; });
 
+/** 箱 id の代表に狙い a が付いているか (代表の名前の印。呼ぶ側 tree-low-tier-sync が tree-judge の sampleAimed で渡す = tree-judge との循環を避ける) */
+export type HeldAt = (id: string, a: Aim) => boolean;
+
 /**
- * 箱 b の手で ☑ した狙いのうち、その道 (始まりから b まで) で初めて ☑ した物。エッセンス / 合金の手は「エッセンスと同じ MOD」(S-33e) が受けるので無し。
+ * 箱 b の手で ☑ した狙いのうち、その道でまだ付いていない時に ☑ した物 (= 初めて A を付けに行く手)。held があれば b の代表に A が付いていない狙い
+ * (別の ☑ が当たった道・狙いが消えた下の道でも、A が付いていなければ初めて。レビュワー 1 の 26、11-16 オーナー「その１おすすめで」)。
+ * held が無ければ前の形 (上の手で A を ☑ していなければ初めて)。エッセンス / 合金の手は「エッセンスと同じ MOD」(S-33e) が受けるので無し。
  * 「いずれかの元素耐性」(S-10h) は 1 元素の低い段で他の元素が塞がらないので無し
  */
-export function firstAimsOf(data: PatchData, doc: TreeDoc, b: TreeBox): Aim[] {
+export function firstAimsOf(data: PatchData, doc: TreeDoc, b: TreeBox, held?: HeldAt): Aim[] {
   if (!b.hand || effectOf(b.hand.currency) === "essence") return [];
   const seen: Aim[] = [];
-  for (let p = b.parent ? doc.boxes[b.parent] : undefined; p; p = p.parent ? doc.boxes[p.parent] : undefined) seen.push(...pickedOf(doc, p));
+  if (!held) for (let p = b.parent ? doc.boxes[b.parent] : undefined; p; p = p.parent ? doc.boxes[p.parent] : undefined) seen.push(...pickedOf(doc, p));
   const out: Aim[] = [];
-  for (const a of pickedOf(doc, b)) if (!a.anyEle && !seen.some((x) => sameAim(data, x, a)) && !out.some((x) => sameAim(data, x, a))) out.push(a);
+  for (const a of pickedOf(doc, b)) {
+    if (a.anyEle || out.some((x) => sameAim(data, x, a))) continue;
+    if (held ? !held(b.id, a) : !seen.some((x) => sameAim(data, x, a))) out.push(a);
+  }
   return out;
 }
 
@@ -66,7 +74,7 @@ function lowAtRaw(data: PatchData, doc: TreeDoc, id: string, a: Aim, self: boole
  * 箱 bId の手の結果に「<a> 低ティア MOD」の箱が要るか: この箱の見本とその手の結果、上の手 (始まりまで) の結果、↩ でこの箱へ着く箱の道の手の結果の
  * どれかが a を段の足りない形で持ちうる時。代表の外れは狙いの族を取らない (外れは枠だけ、S-200 ③) ので、この箱の見本だけでは見ない (レビュワー 1 の 16)
  */
-export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim, memo?: Map<string, boolean>): boolean {
+export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim, memo?: Map<string, boolean>, held?: HeldAt): boolean {
   // memo = 1 回のそろえ (syncLowTier) の中の控え。同じ箱・同じ狙いの見本 × 手の結果を何度も打たない (レビュワー 1 の 28、根の近くに手を置いた時の重さ)
   const lowAt = (d: PatchData, dc: TreeDoc, id: string, x: Aim, self: boolean): boolean => {
     if (!memo) return lowAtRaw(d, dc, id, x, self);
@@ -80,7 +88,8 @@ export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim,
   for (const r of roots) {
     const start = r === bId ? doc.boxes[bId]?.parent : r;
     for (let p = start ? doc.boxes[start] : undefined; p; p = p.parent ? doc.boxes[p.parent] : undefined) {
-      if (p.id !== r && pickedOf(doc, p).some((x) => sameAim(data, x, a))) break; // 上で同じ狙いを ☑ した手より上は、その手の低ティアの箱が受ける
+      // 上で同じ狙いを ☑ した手より上は、その手の低ティアの箱が受ける。代表に A が付いている箱より上も見ない (A を持つ道、レビュワー 1 の 26)
+      if (p.id !== r && (pickedOf(doc, p).some((x) => sameAim(data, x, a)) || !!held?.(p.id, a))) break;
       if (lowAt(data, doc, p.id, a, false)) return true;
     }
   }

@@ -1,9 +1,10 @@
 /**
  * tree-low-tier-sync.ts — 手を決めた時に「<狙い> 低ティア MOD」の箱 (S-33g、スイッチ lowTierBox) を木にそろえる。箱を足すかの判定は
- * services の tree-low-tier (needsLowTier) を呼ぶだけ。上の手で同じ狙いを ☑ すると下の箱は「初めて」でなくなるので、手を置いた箱の下も全部見直す
+ * services の tree-low-tier (needsLowTier) を呼ぶだけ。「初めて」= 箱の代表に狙いがまだ付いていない手 (レビュワー 1 の 26)。上の手が変わると下の箱の代表も変わるので、手を置いた箱の下も全部見直す
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { drop, subtree, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { drop, subtree, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { heldOnRep } from "../../../services/simulator/tree/tree-judge";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { firstAimsOf, lowTierKey, lowTierModOf, needsLowTier } from "../../../services/simulator/tree/tree-low-tier";
 import { flag } from "../../../web/release-flags";
@@ -12,7 +13,9 @@ import { flag } from "../../../web/release-flags";
 function syncOne(data: PatchData, d: TreeDoc, id: string, memo: Map<string, boolean>): void {
   const b = d.boxes[id];
   if (!b) return;
-  const want = flag("lowTierBox") && b.hand ? firstAimsOf(data, d, b).filter((a) => needsLowTier(data, d, id, a, memo)) : [];
+  // 「初めて」は代表に A が付いていないかで見る (レビュワー 1 の 26)。代表 = 見本の 1 番目の名前の印
+  const held = (bid: string, a: Aim): boolean => heldOnRep(data, d, bid, a);
+  const want = flag("lowTierBox") && b.hand ? firstAimsOf(data, d, b, held).filter((a) => needsLowTier(data, d, id, a, memo, held)) : [];
   const keys = new Set(want.map(lowTierKey));
   for (const o of [...b.outs]) {
     const c = d.boxes[o];
