@@ -1,4 +1,7 @@
 {
+  "0.1.741": [
+    "Simulator and Daily trees: fixed the final check wrongly flagging a box as unset (\"runs with different contents arrive\") when an Orb of Annulment or similar is used on items with an essence miss."
+  ],
   "0.1.740": [
     "Daily: the ranking now shows how many players tried, submitted, gave up or timed out, plus an anonymous list of those who gave up with how long they lasted. Each day this week also shows its player count, and Wednesday's tag is now 'Off-hand'."
   ],

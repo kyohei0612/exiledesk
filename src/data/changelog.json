@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.741",
+  "date": "2026-11-15",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター・デイリーの木で、エッセンスの外れの付いた品に消去などを打つ形で、最終チェックが「中身の違う形の人が着く」と未設定を出す不具合を直しました",
+    "en": "Simulator and Daily trees: fixed the final check wrongly flagging a box as unset (\"runs with different contents arrive\") when an Orb of Annulment or similar is used on items with an essence miss."
+   }
+  ]
+ },
+ {
   "v": "0.1.740",
   "date": "2026-11-14",
   "items": [
@@ -880,18 +892,6 @@
     "area": "",
     "text": "デイリー: 挑戦の記録がリセットされた時は、一覧から今日の挑戦を始め直せるようにしました",
     "en": "Daily: when your challenge record has been reset, you can now start today’s challenge again from the list"
-   }
-  ]
- },
- {
-  "v": "0.1.701",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 木のスタートのカードに「スタートからやり直す」を足しました。確かめの後に木をリセットして、始め方とフラクチャーする MOD を選び直せます (残り時間は止まりません)",
-    "en": "Daily: the tree’s start card now has “Restart from the start”. After a confirmation it resets the tree so you can pick the start and the mod to fracture again (the timer keeps running)"
    }
   ]
  }
