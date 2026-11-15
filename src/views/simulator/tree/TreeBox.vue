@@ -25,7 +25,7 @@ import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { lvLook } from "./tree-whittle-marks";
 import type { BandView } from "./use-tree-bands";
 import { bandsInto } from "../../../services/simulator/tree/tree-band";
-import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
+import { handLabel, handLines, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
 import { foreseenAt, holdsAt, noHitHeld } from "../../../services/simulator/tree/tree-foresee";
@@ -286,7 +286,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
       <span v-if="box.seen" data-tree-box-seen class="w-full text-violet-200/80">{{ skipped ? tr("打たない枠 · 手は使わずアイテムはこのまま", "Skipped frame · craft not used, item unchanged") : tr(`当たり以外 ${joinedIn + 1} 通り · 手は使わずアイテムはこのまま`, `${joinedIn + 1} non-hit result(s) · craft not used, item unchanged`) }}</span>
       <span v-if="allMiss" data-tree-foresee-nohit class="w-full text-amber-200" :title="tr('ヒネコラの後は狙いの結果だけ使い、ほかはハズレ (打たない)。手の札を押して狙いの MOD に ☑ する', 'After Hinekora only the targeted result is used; everything else is a miss. Click the craft and tick the target mods')">{{ tr("狙いを ☑ して (今は全部ハズレ)", "Tick a target (all results are misses now)") }}</span>
-      <span v-if="box.hand && !bands?.length" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} {{ handLabel(box.hand) }}</span>
+      <span v-if="box.hand && !bands?.length" data-tree-next-hand class="min-w-0 break-words" :class="hold ? 'text-violet-100' : 'text-amber-100/90'" :title="handLabel(box.hand)">{{ hold ? tr("持つ:", "Hold:") : "→" }} <template v-if="handLines(box.hand).length > 1"><span v-for="(n, i) in handLines(box.hand)" :key="i" class="block">・{{ n }}</span></template><template v-else>{{ handLabel(box.hand) }}</template></span>
       <span v-if="cantHand" data-tree-cant-hand class="w-full break-words text-rose-300">{{ tr(`この品には打てない手 (${cantHand})`, `Can't be used on this item (${cantHand})`) }}</span>
       <!-- 「エッセンスと同じ MOD (同格以上)」はボタン 2 つでいつも選ぶ: 選んでいる方が点き、選んでいない方はグレー (押すと切り替え)。既定は「エッセンスと同じ枠で扱う」。
            選んだ後も「→ n 段目へ進む」の文に置き換えない。下の行の頭に全幅の 1 行で、ほかの札と同じ高さ (S-33e ⑥、11-08 夜オーナー「ボタンは2つね…選んでないほうグレーアウト」「4段目へ進むとかに切り替えなくておk」「枠の中が整頓してくれ」) -->

@@ -43,6 +43,8 @@ const runeOn = computed((): string | null => {
 const sd = useSurfaceDoc(); // この描き面の木 (S-09c。面の外では今のタブの木)
 const hold = computed(() => !!props.hand && holdsAt(sd.doc.value, props.id));
 const maxW = computed(() => `${Math.round(props.room / (props.inv * CHIP_K))}px`);
+/** 札の名前 (カレンシー・お告げ)。2 つ以上は 1 つずつ行に分け頭に「・」、行の中は折らず札は横に太くなってよい (S-142m、11-16 オーナー「・で区切って3行にしてくれ」) */
+const names = computed(() => (props.hand ? [props.hand.currency, ...props.hand.omens].map((k) => handName(k)) : []));
 /** 札の倍率 (画面の倍率の戻し × 札の大きさ、スイッチ hitsSide で 1.5 倍) */
 const sc = computed(() => String(props.inv * CHIP_K));
 /**
@@ -66,7 +68,7 @@ const whittleNoAim = computed(() => {
     ◇ {{ tr(`分かれ目 (${split ?? 0} 行)`, `Split (${split ?? 0} rows)`) }}<span v-if="choice" data-tree-hand-choice class="text-amber-200">→ {{ choice }} ▾</span>
   </button>
   <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-2xl border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
-    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: sc, maxWidth: maxW, ...(laneRgb ? { borderColor: `rgb(${laneRgb})` } : {}) }" :data-hand-lane="lane || undefined" :title="handLabel(hand)" @click="$emit('open')">
+    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: sc, maxWidth: names.length > 1 ? undefined : maxW, ...(laneRgb ? { borderColor: `rgb(${laneRgb})` } : {}) }" :data-hand-lane="lane || undefined" :title="handLabel(hand)" @click="$emit('open')">
     <span v-if="links || backs" class="pointer-events-none absolute bottom-full left-1/2 mb-1 flex w-max -translate-x-1/2 gap-1 whitespace-nowrap text-[10px] font-semibold leading-4">
       <span v-if="links" data-tree-hand-link-tag class="rounded-sm border border-[#6fd08c]/70 bg-[#0f1a12] px-1.5 text-[#9fe3b4] shadow-[0_0_8px_rgba(111,208,140,0.5)]">{{ tr(links > 1 ? `行き先は同じ枠へ (${links})` : "行き先は同じ枠へ", links > 1 ? `Goes to the same box (${links})` : "Goes to the same box") }}</span>
       <span v-if="backs" data-tree-hand-back-tag class="rounded-sm border border-[#5fd0e0]/70 bg-[#0d181a] px-1.5 text-[#a3e6ef] shadow-[0_0_8px_rgba(95,208,224,0.5)]">{{ tr(backs > 1 ? `↩ 前の段へ戻る (${backs})` : "↩ 前の段へ戻る", backs > 1 ? `↩ Back to an earlier step (${backs})` : "↩ Back to an earlier step") }}</span>
@@ -75,7 +77,8 @@ const whittleNoAim = computed(() => {
     <span v-if="hold" data-tree-hand-hold class="shrink-0 rounded-sm bg-violet-400/25 px-1 text-[10px] text-violet-100" :title="tr('予見の枠: まだ使わずに持って結果を見る', 'Foresight: held, not used yet')">{{ tr("持つ", "Hold") }}</span>
     <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->
-    <span data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ [hand.currency, ...hand.omens].map((k) => handName(k)).join(" + ") }}</span>
+    <span v-if="names.length > 1" data-tree-hand-name class="flex min-w-0 flex-col items-start leading-tight"><span v-for="(n, i) in names" :key="i" class="whitespace-nowrap">・{{ n }}</span></span>
+    <span v-else data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ names[0] }}</span>
     <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
     <!-- 骨は 3 択 (S-37、11-07): 未発現のままは「未発現」、発現させて狙い無しは「発現・狙い無し」 -->

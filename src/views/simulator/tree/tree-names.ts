@@ -176,20 +176,33 @@ export const handName = (key: string): string => nameOfKey(key, baseItem.value);
 /** 値段のキー → 絵 (骨の絵も部位で変わるので木のベースで引く。前はクラフト台のアイテムで引いていた、10-28) */
 export const handIcon = (key: string): string => iconOfKey(key, baseItem.value);
 
-/** 矢印に出す 1 行 (触媒の時は先にカタリスト → カレンシー + お告げ、繰り返しは「当たるまで」。10-22 オーナー「カタリストを打つルートが無い」で先に出す) */
+/**
+ * 手の中身を 1 つずつ (先に打つカタリスト・カレンシー (残す MOD・狙い無し・発現などの付け足し込み)・お告げ…)。
+ * 2 つ以上ある時は「+」でつながず 1 つずつ行に分け頭に「・」を付ける (S-142m、11-16 オーナー「・で区切って3行にしてくれ分かりづらいし太くなってもいい」)。
+ * 行に分けて描くのは木の線の上の手の札・箱の下の手の行 (handLines)、文の中は handLabel (「・」でつなぐ 1 行)
+ */
+export function handLines(h: Hand): string[] {
+  if (h.noUse) return [handLabel(h)];
+  const cat = h.catalyst && h.omens.includes(CATALYSING)
+    ? (h.catalystCount ? tr(`${handName(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${handName(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${handName(h.catalyst)} ${tr("最大まで", "to max")}`)
+    : null;
+  return [...(cat ? [cat] : []), handName(h.currency) + handTail(h), ...h.omens.map(handName)];
+}
+/** 矢印に出す 1 行 (触媒の時は先にカタリスト → カレンシー・お告げ、繰り返しは「当たるまで」。10-22 オーナー「カタリストを打つルートが無い」で先に出す)。つなぎは「・」(S-142m) */
 export function handLabel(h: Hand): string {
   if (h.noUse) return tr(`打たない (${handLabel({ ...h, noUse: undefined })})`, `Skip (${handLabel({ ...h, noUse: undefined })})`); // ヒネコラで持つ削減を打たない枠 (S-39 ②b)
-  const cat = h.catalyst && h.omens.includes(CATALYSING)
-    ? `${h.catalystCount ? tr(`${handName(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${handName(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${handName(h.catalyst)} ${tr("最大まで", "to max")}`} → `
-    : "";
+  const ls = handLines(h), cat = h.catalyst && h.omens.includes(CATALYSING) ? ls.shift() : null;
+  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」。中は今まで通り当たるまで)
+  return (cat ? `${cat} → ` : "") + ls.join(tr("・", " + "));
+}
+/** カレンシーの行の付け足し (残す MOD・狙い無し・骨の発現・品質を最大まで) */
+function handTail(h: Hand): string {
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
   // 骨は 3 択の名前だけ (S-37、11-07): (発現) / (発現・狙い無し) / (未発現のまま)。前は未発現にも「(狙い無し)」が付いていた
   const boneVeil = veilKeep(h) ? "keep" : veilPick(h) && !isRevealHand(h.currency) ? (h.free ? "free" : "reveal") : null;
   const veilTag = boneVeil === "keep" ? tr(" (未発現のまま)", " (left unrevealed)") : boneVeil === "free" ? tr(" (発現・狙い無し)", " (reveal, no target)") : boneVeil === "reveal" ? tr(" (発現)", " (reveal)") : "";
-  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free && !boneVeil ? tr(" (狙い無し)", " (no target)") : "") + veilTag + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
-  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」。中は今まで通り当たるまで)
-  return label;
+  return keep + (h.free && !boneVeil ? tr(" (狙い無し)", " (no target)") : "") + veilTag + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */
 export const rarityName = (r: TreeRarity): string => (r === "normal" ? tr("ノーマル", "Normal") : r === "magic" ? tr("マジック", "Magic") : tr("レア", "Rare"));

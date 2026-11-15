@@ -393,7 +393,7 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="hand ? handLabel(hand) : ''">{{ [handName(held), ...used.map(handName), ...(echo && isBone(held) ? [handName(ECHO)] : [])].join(" + ") }}</b>
+        <b class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="hand ? handLabel(hand) : ''">{{ [handName(held), ...used.map(handName), ...(echo && isBone(held) ? [handName(ECHO)] : [])].join(tr("・", " + ")) }}</b>
       </div><p v-if="lvHint" data-tree-hand-lv-hint class="break-words text-[12px] text-amber-200">{{ tr(lvHint[0], lvHint[1]) }}</p><!-- 分かれ方の一行は手の名前のすぐ下 (送らずに見える、S-65c ⑨) -->
       <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
       <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
