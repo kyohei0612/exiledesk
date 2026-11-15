@@ -170,7 +170,8 @@ const sameModKids = (doc: TreeDoc, a: Pick<TreeBox, "outs">, out?: OutKind): str
  * a の見本に a の手を打った結果のどれかが、結果の箱に置いたエッセンス / 合金と同じ系統の普通の MOD を低い段で持つ (E-56 の塞がる) 時だけ。前の手で付きようが無ければ作らない
  */
 export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string, hold: "blocked" | "skip" = "blocked"): boolean {
-  const a = doc.boxes[aId], keys = a ? sameModKids(doc, a) : [];
+  // スイッチ essSameStop の間は作らない (S-33e ⑧。前の手で同じ系統が付いた人はエッセンスの箱で止まり = 予期せぬ狙い MOD の詳細へ)
+  const a = doc.boxes[aId], keys = a && !flag("essSameStop") ? sameModKids(doc, a) : [];
   if (!a?.hand || !keys.length) return false;
   for (let i = 1; i <= SINGLE_SEEDS; i++) {
     const smp = sampleOf(data, doc, aId, i);
@@ -188,7 +189,7 @@ export function needsSameMod(data: PatchData, doc: TreeDoc, aId: string, hold: "
  */
 export function needsSameHiUnder(data: PatchData, doc: TreeDoc, eId: string): boolean {
   const e = doc.boxes[eId], key = e?.hand?.currency;
-  if (!key || effectOf(key) !== "essence") return false;
+  if (!key || effectOf(key) !== "essence" || flag("essSameStop")) return false;
   const p = e.parent ? doc.boxes[e.parent] : undefined;
   for (let a = p?.parent ? doc.boxes[p.parent] : undefined; a; a = a.parent ? doc.boxes[a.parent] : undefined) {
     if (!a.hand) continue;
@@ -210,7 +211,8 @@ function handOutcome(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, 
   // 目標の数値を決めた神 (S-202): 目標に届いたら以上、届かなければ未満
   if (isDivineAim(h)) return divineOutcome(after, h!);
   // 打たなかったエッセンス / 合金 (品が変わらない): 塞がる = 塞がったの箱、飛ばす = 当たりの箱 (付く MOD は狙いに数えない = 打った後の形も受ける、S-33e)
-  if (key && after === before) { const hold = essenceHold(data, before, key); if (hold) return { out: hold === "blocked" ? "blocked" : "hit", hits: [] }; }
+  // スイッチ essSameStop の間は同格以上も飛ばさず塞がる (S-33e ⑧。行き先の箱は作らないので止まり)
+  if (key && after === before) { const hold = essenceHold(data, before, key); if (hold) return { out: hold === "blocked" || flag("essSameStop") ? "blocked" : "hit", hits: [] }; }
   // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = withoutUnaimed(data, doc, before, aimed, noStones(data, doc, h, keptAimedOf(data, doc, h, aimed)));
   const aims = countedAims(data, doc, h, before, aims0, aimed);
@@ -429,7 +431,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const all = w ? rankVariants(data, item, w.wanted, doc.boxes[boxId]?.junkKey, w.miss, w.side).map((v) => v.item) : [item];
     for (const it of all) {
       // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝
-      if (essenceHold(data, it, h.currency)) { const e = boxOutOf(handOutcome(data, doc, h, extra, extra, it, it, aims, aimed), freeSide); found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e); continue; }
+      // スイッチ essSameStop の間は打てない見本として飛ばす (その人はエッセンスの箱で止まり、S-33e ⑧)
+      if (essenceHold(data, it, h.currency)) { if (flag("essSameStop")) continue; const e =boxOutOf(handOutcome(data, doc, h, extra, extra, it, it, aims, aimed), freeSide); found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e); continue; }
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 枝に分けられない手は、エンジンの 1 手そのもの (applyCurrency) を決まった乱数で RAW_DRAWS 回打ち、回す時と同じ分け方で狙いが消える人がいるかだけ見る
       // (11-11 枝のフルチェック: 狙い 1 のマジックに錬金 = 振り直しで大半の人の狙いが消えるのに、手の種類の既定 (当たり + 外れ) に「狙いが消えた」が無く止まった)

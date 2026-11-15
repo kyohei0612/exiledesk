@@ -20,7 +20,7 @@ import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
 import { sureFracOn, sureFracture, useSureFrac } from "./tree-sure-frac";
 import { defaultCapDiv } from "./run-price";
-import { goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
+import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -117,7 +117,7 @@ export interface TreeRunResult {
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
   /** 予期せぬ狙い MOD で止まった人 (止まりにも数える) の、狙い無しの手の箱ごとの数 (S-33g ②、スイッチ goalMetTag) */
-  goalStop?: Record<string, number>;
+  goalStop?: Record<string, number>; /** エッセンス / 合金と同じ系統が前の手で付いて止まった人の、付いた手の箱ごとの数 (S-33e ⑧、スイッチ essSameStop) */ essStop?: Record<string, number>;
   /** 着いた箱 (手の結果の箱・戻り先) の形が実物と違い、形の合う箱へ移した人数 (箱ごと、settle。照らしの台本は形合わせを辿らないので、これのある木は比べ方が違う、10-24) */
   moved: Record<string, number>;
   /** 全員の合計 ÷ 完成数 (完成 0 なら NaN) */
@@ -142,7 +142,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -181,7 +181,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   const fin = (p: Person): Person => {
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
-    const goalAt = p.end === "stuck" ? goalStopAt(marks, p.why?.item ?? item) : undefined;
+    const goalAt = p.end === "stuck" && !p.essAt ? goalStopAt(marks, p.why?.item ?? item) : undefined;
     return blame && p.end === "stuck" ? { ...p, blame, goalAt } : goalAt ? { ...p, goalAt } : p;
   };
   /** 付いている名前の印になりうる MOD (箱の中身の鍵と同じ口 goalsOn。前は完成形の狙いだけで、行き先探しの前にエッセンス / 合金の印が落ちた) */
@@ -272,7 +272,8 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品、使う物は 3 回分
     const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
     if (sure) useSureFrac(b.hand, (k, n) => { spent.push([k, n]); });
-    // 耐性のフラックスで変えられる狙いの耐性が無い人 (2 周目でもう変えた後など) は打たずに飛ばす: 品のまま・使わない (S-31h、オーナー 11-13「スキップ処理は必要止まるよ」)
+    // 前の手でエッセンス / 合金と同じ系統が付いて打てない人は止まり (S-33e ⑧、スイッチ essSameStop)。耐性のフラックスで変えられる狙いの耐性が無い人 (2 周目でもう変えた後など) は打たずに飛ばす: 品のまま・使わない (S-31h、オーナー 11-13「スキップ処理は必要止まるよ」)
+    const es = sure ? null : essStopOf(data, b.hand.currency, item, marks); if (es) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ...(es.box ? { essAt: es.box } : {}), why: { reason: es.why, short: es.why, item } });
     const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) || fluxBlock(data, doc, item, b.hand.currency, aimed) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
     if (!r.applied) {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", short: STOP.cantUse(r.reason ?? ""), item } });
@@ -392,8 +393,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   }
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
-  const goalStop: Record<string, number> = {};
-  for (const p of people) if (p.end === "stuck" && p.goalAt) goalStop[p.goalAt] = (goalStop[p.goalAt] ?? 0) + 1;
+  const goalStop: Record<string, number> = {}, essStop: Record<string, number> = {};
+  for (const p of people) if (p.end === "stuck") { if (p.goalAt) goalStop[p.goalAt] = (goalStop[p.goalAt] ?? 0) + 1; if (p.essAt) essStop[p.essAt] = (essStop[p.essAt] ?? 0) + 1; }
   const moved: Record<string, number> = {};
   for (const p of people) for (const id of new Set(p.visits.filter((v) => v.pass).map((v) => v.box))) moved[id] = (moved[id] ?? 0) + 1;
   const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number }> = {};
@@ -423,7 +424,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, failed: people.filter((p) => p.end === "failed").length, failAt, unmetAt, stuckWhy, loopAt, unexpected, goalStop, moved, perItem,
+    stuckAt, failed: people.filter((p) => p.end === "failed").length, failAt, unmetAt, stuckWhy, loopAt, unexpected, goalStop, essStop, moved, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
