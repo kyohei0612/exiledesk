@@ -18,7 +18,7 @@ import { fitDailySide } from "./daily-side-fit";
 import DailyEssNote from "./DailyEssNote.vue";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
-import { fillTopicDoc, NO_FRAC } from "./daily-aims";
+import { fillTopicDoc } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
 import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
 import { tierRankLabel, type StageItem } from "../../services/craft-stage/engine";
@@ -101,9 +101,7 @@ const phone = usePhone();
 watch([() => s.data.value, phone], () => { if (!phone.value) void begin(); }, { immediate: true });
 
 /** 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j、DailyFracPick)。諦めた後は選ばない */
-/** MOD の無いレアから始める日 (D-03c): 始め方の窓を出さず、フラクチャー無しで始める */
-const rareStart = computed(() => props.topic.start === "rare");
-const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended && !rareStart.value);
+const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended);
 
 /** お題の木を開く。覚えた木があればそれを、無ければお題から白紙で */
 function openTree(): void {
@@ -113,7 +111,7 @@ function openTree(): void {
   justOpened = true; doneSeen = new Set(); doneNote.value = null;
   const saved = x.tree ? (JSON.parse(x.tree) as TreeDoc) : null;
   if (saved) t.open(saved);
-  else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from, rareStart.value)); }
+  else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from)); }
   treeOn.value = true;
   // 挑戦中の木と動作の控えをサーバーへ (D-57b)。見本・終わった挑戦では送らない
   if (!dev && !x.ended) liveStart(props.topic.id, x.startedAt);
@@ -154,8 +152,6 @@ function pick(modId: string, from: StartFrom): void {
   openTree();
   liveAct("pick", { mod: modId, from });
 }
-// MOD の無いレアから始める日 (D-03c): 窓を出さずにフラクチャー無しで選んだ扱いにして開く (説明も出さない)
-watch(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended && rareStart.value, (go) => { if (go) pick(NO_FRAC, "four"); }, { immediate: true });
 
 // 完成形のカードはいつも開く (デイリーでは畳むボタンを隠しているので、畳んだまま開けなくなっていた、11-09)。開く物はシミュのカードの畳みの印 (この端末の覚え) を押すだけ
 watch(treeOn, (on) => { if (on) setTimeout(() => void nextTick(() => document.querySelector<HTMLButtonElement>('[data-daily-play] [data-tree-goal-fold][aria-expanded="false"]')?.click()), 0); }, { immediate: true });

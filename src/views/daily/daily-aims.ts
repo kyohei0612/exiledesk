@@ -100,7 +100,7 @@ export const postFractured = (p: PostItem): boolean[] => p.start.map((f) => !!f.
 /** 「フラクチャー無し」を選んだ印 (DailyTry.fractured に入れる。どの狙いにも当たらないので ✦ は付かず、白い品から始まる。D-03・D-37j、11-12 のお題から) */
 export const NO_FRAC = "none";
 /** お題の木を作る: ✦ を 1 つ付け (フラクチャー無しなら付けない)、(a) フラクチャー済みから / (b) 白から確定フラクチャー (four)。始めの値段は数えない (D-03・D-37j)。木の中身は edit に渡す */
-export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured", /** MOD の無いレアから始める日 (D-03c) */ rare = false): void {
+export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured"): void {
   const list: Aim[] = aims.map((a) => ({ modId: a.modId, tier: a.tier, ...(a.modId === fractured ? { fractured: true as const } : {}) }));
   d.memoAims = list;
   delete d.ilvlFit; // アイテムレベルはお題のまま (適正へ下げない)
@@ -115,8 +115,5 @@ export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: s
   if (list.some((a) => a.fractured)) delete d.start!.noFracOrb; else d.start!.noFracOrb = true;
   // 始めの品に MOD は付けない (お題の木の始めは白い品か ✦ 1 つだけ、D-03)。保存の木の始めに狙いの MOD を書き込んだ木を、検算がそのまま回して通していた (11-12)
   d.start!.mods = [];
-  // MOD の無いレアから始める日 (D-03c): 印 blankRare を立て、稀さはシミュの startRarity がレアにする (開き直し・組み直し・共有でも白に戻さない、S-13c)。
-  // ✦ は付けない (fractured = NO_FRAC で来る)・フラクチャーのオーブは打たせない (上の noFracOrb)。印の無い日は前の印を消す
-  if (rare) d.start!.blankRare = true; else delete d.start!.blankRare;
   d.start!.rarity = startRarity(d);
 }

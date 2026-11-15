@@ -22,7 +22,7 @@ const SUBMIT_NOTE_MAX = 40;
 const submitNoteBad = (s: string): boolean => hasBadWord(s) || /https?:|www\.|\.[a-z]{2,}\//i.test(s.normalize("NFKC"));
 
 type Aim = { modId: string; tier: number; ja: string; en: string };
-type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string; /** 始まり (D-03c、migration 0022)。'rare' = MOD の無いレアから。列が無い・NULL は今まで */ start?: string | null };
+type TopicRow = { id: string; day: string; week: string; box_id: string | null; sample_id: string | null; slot: number; item_class: string | null; base: string; base_ja: string | null; ilvl: number; aims: string; prices: string | null; seed: number; shown_by: string };
 type TryRow = { topic_id: string; nick_id: string; started_at: number; submitted_at: number | null; cost: number | null; rate: number | null; checked: number | null; gave_up_at?: number | null };
 
 /**
@@ -73,7 +73,7 @@ function topicOut(t: TopicRow, tries: number, closed: boolean): Record<string, u
   return {
     id: t.id, day: t.day.slice(5).replace("-", "/"), dayNo: no, base: t.base, baseJa: t.base_ja ?? t.base, ilvl: t.ilvl, modCount: aims.length, slot: t.slot, tries,
     // sample = 手の辞書の見本の型から出たお題 (週のファイルが無い時の控え、D-80。daily-gen.ts の devSamples の id は dev- で始まる)
-    sample: !!t.sample_id?.startsWith("dev-"), fromBox: !!t.box_id, ...(closed ? { aims } : {}), ...(t.start === "rare" ? { start: "rare" } : {}),
+    sample: !!t.sample_id?.startsWith("dev-"), fromBox: !!t.box_id, ...(closed ? { aims } : {}),
   };
 }
 

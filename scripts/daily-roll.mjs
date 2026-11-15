@@ -17,7 +17,6 @@
  *            お題の相場の写しは KV の market を wrangler で読む。覚えていた GET /daily.json (60 秒) は捨てないので、最大 60 秒は前の形が出る
  *     --week-only = 週の予定 (①) だけを書く (日曜 16:05 の週の取得の続き、scripts/daily-fetch-home.mjs)。締め・投稿・お題は書かない
  *   node scripts/daily-roll.mjs --d1 --redo [--day …] [--dry]   (直す口、D-59、2026-11-12。中身は _daily-redo.mjs)
- *     --start rare = 置いたお題を MOD の無いレアから始める日にする (D-03c、11-15。--redo と一緒にも使える。列は migration 0022 = 本番に当てた後だけ)
  *     置いた次の日のお題を、出る前 (16:00 より前)・挑戦が 0 の時だけ消して、同じ回の中で組み直す (箱から出たお題なら箱の印も戻す)。
  *     消す前の行は docs/org/daily/notes/redo-<日>-<時刻>.json に控え、組み直しが落ちたら控えから戻す。手で戻すのは --redo-restore <控え>。
  *     予定のタスクは付けない (人が回す時だけ)。--dry = 消す行と組み直したお題を出すだけで書かない
@@ -37,11 +36,6 @@ const WEEK_ONLY = args.includes("--week-only");
 // 検算 (D-58)。画面がお題の種・値段で回す形 (11-10) が本番に出る前の日の締めには付けない (前の版の提出は合わない)
 const VERIFY = args.includes("--verify");
 const dayArg = args[args.indexOf("--day") + 1];
-// --start rare (D-03c、11-15): 置くお題を MOD の無いレアから始める日にする (オーナーが日を指して付ける。予定のタスクは付けない)。--d1 の時だけ
-const startAt = args.indexOf("--start");
-const START_RARE = startAt >= 0 && args[startAt + 1] === "rare";
-if (startAt >= 0 && (!START_RARE || !D1)) { console.error("--start は rare だけ、--d1 と一緒の時だけ (D-03c)"); process.exit(1); }
-if (START_RARE && DRY) console.log("--start rare: --dry なので書かない (置いたら daily_topics.start = 'rare')");
 if (!KEY && !D1) {
   console.error("EXILEDESK_LIVE_KEY が要る (server/live の REFRESH_KEY)。鍵なしは --d1");
   process.exit(1);
@@ -128,13 +122,6 @@ if (D1) {
   let out;
   try { out = await R.rollPost(big ? big.db : db, body, big ? big.mark : market); } catch (e) { if (redo) await redo.restore(`書き込みが落ちた (${String(e).slice(0, 120)})`); throw e; }
   console.log(`topic (d1): ${JSON.stringify(out)}`);
-  // --start rare (D-03c): 置いたお題を「MOD の無いレアから始める日」にする。挑戦の行が無い時だけ (始めた人の始まりを替えない)。列は migration 0022
-  if (START_RARE && body.topic) {
-    const id = `d${body.topic.day}`;
-    await db.prepare("UPDATE daily_topics SET start = 'rare' WHERE id = ? AND NOT EXISTS (SELECT 1 FROM daily_tries WHERE topic_id = ?)").bind(id, id).run();
-    const got = await db.prepare("SELECT start FROM daily_topics WHERE id = ?").bind(id).first();
-    console.log(`始まり (D-03c): ${id} = ${got?.start ?? "今まで (挑戦の行があったので替えない)"}`);
-  }
   if (redo) process.exit(await redo.check());
   moreAndAgain();
   process.exit(0);
