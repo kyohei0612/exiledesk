@@ -42,6 +42,7 @@ import { isCraftAim } from "./tree-way-mods";
 import { useEditReset } from "./use-edit-reset";
 import { useDismiss } from "../../../utils/use-dismiss";
 import TreeAttachPick from "./TreeAttachPick.vue";
+import TreeEleAnyPick from "./TreeEleAnyPick.vue";
 import TreeGoalRunes from "./TreeGoalRunes.vue";
 import { wayName } from "./tree-attach";
 import { simOp } from "../../../web/track";
@@ -237,7 +238,8 @@ function toTree(after?: () => void): void {
 function onCardRemove(modId: string): void {
   const g = t.goals.value.find((a) => a.modId === modId);
   // 「いずれかの元素耐性」の 1 本は 1 回で丸ごと外す (一覧の × と同じ。前は借りた元素の MOD を普通の狙いとして外し、火・冷気・雷が 1 つずつ消えた、11-16 オーナー「UI上はそもそも1発で消えて欲しい」)
-  if (g?.anyEle) { const i = ef.placed.value.indexOf(g); if (i >= 0) { ef.remove(i); return; } }
+  // カードは 1 行「× n」なので組ごと外す (S-10h ①、11-16)
+  if (g?.anyEle) { ef.setCount(0, g.tier); return; }
   if (g) t.toggleGoal(g.modId, g.tier);
 }
 /** カードの行の右クリック = その狙いの段で印を付け外し (狙いでない MOD は来ない) */
@@ -279,7 +281,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- 完成形の注意書き B (S-10e、スイッチ aimGroups。11-16 オーナー「B」= 「注意」の札 + 1 本の枠、owner-snaps/49-ele/goal-note-B.png) -->
       <p v-if="AIM_NOTE && step === 2" data-tree-goal-note role="note" class="mx-3 mb-2 flex items-center gap-3 rounded-md border border-amber-400/70 bg-[rgba(20,12,4,0.72)] py-2 pl-2 pr-3.5 shadow-[0_0_14px_rgba(232,176,72,0.12)] max-[48rem]:items-start">
         <span class="shrink-0 rounded-sm bg-[#e8b048] px-2.5 py-0.5 text-[13px] font-extrabold tracking-[0.08em] text-[#1b1206]">{{ tr("注意", "Note") }}</span>
-        <span class="min-w-0 break-words text-[14.5px] leading-normal text-[#f1e6cf]"><b class="font-bold text-[#f6d58e]">{{ tr("狙いたい MOD は全部ここで選んでください", "Pick every mod you want to aim for here") }}</b>{{ tr("（元素耐性を 2 つ狙うなら「＋ 追加」で 2 本）。完成形は見本で、ツリーではここで選んだ物を狙い MOD として使います", " (to aim for two elemental resistances, add two rows with \"+ Add\"). The final item is an example; the tree uses the mods you pick here as target mods.") }}</span>
+        <span class="min-w-0 break-words text-[14.5px] leading-normal text-[#f1e6cf]"><b class="font-bold text-[#f6d58e]">{{ tr("狙いたい MOD は全部ここで選んでください", "Pick every mod you want to aim for here") }}</b>{{ tr("（元素耐性を 2 つ狙うなら「いずれかの元素耐性」の「付ける」で「2 つ」）。完成形は見本で、ツリーではここで選んだ物を狙い MOD として使います", " (to aim for two elemental resistances, choose \"2\" under \"Add\" on the any-elemental-resistance row). The final item is an example; the tree uses the mods you pick here as target mods.") }}</span>
       </p>
       <!-- 適正でアイテムレベルを変えた時の一言 (10-24 オーナー: 黙って変わると気づかない、文字は最低限で閉じられる形) -->
       <p v-if="t.ilvlNote.value && t.ilvlNote.value.to === t.doc.value.itemLevel" data-tree-ilvl-note class="flex min-w-0 items-center gap-2 px-3 pb-2 text-[12px] text-amber-200/90">
@@ -327,25 +329,10 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <!-- 表とカード (480) を横に並べると表の名前の列が細く縦に折れる幅はスマホと同じくカードを上・表を下に積む。1700 未満 (1280 で横に並べると列が 385px で名前とタグが 2 行に折れた、11-16 オーナー「アとアで」S-10d ②) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[106.25rem]:flex-col max-[106.25rem]:items-stretch">
-      <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="ef.listItem.value" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)" :folds="ef.folds.value" :fold-on="ef.foldOn">
-        <!-- いずれかの元素耐性 (S-10h ①、オーナー 11-15「×２の所を追加ボタンにしたら？」): 1 本ずつ段のプルダウンと ×、「＋ 追加」はサフィの空きがある間だけ -->
+      <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="ef.listItem.value" :keep-open="['[data-mod-attach-ways]', '[data-ele-any-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)" :folds="ef.folds.value" :fold-on="ef.foldOn">
+        <!-- いずれかの元素耐性 (S-10h ①): 段の選び 1 つと「付ける ▾」(1 つ / 2 つ / 3 つ / 外す) だけ (11-16 オーナー「付けるボタンとティアボタンのみでおk」) -->
         <template #fold-tier>
-          <span class="flex flex-col items-end gap-0.5 py-0.5" @click.stop>
-            <span v-if="!ef.placed.value.length" class="flex items-center gap-1">
-              <select data-tree-ele-any-tier class="w-[3.25rem] rounded border border-amber-300/40 bg-black/40 px-0.5 py-0 text-[11px] text-amber-100" :value="0" :disabled="!ef.canAdd.value" @change="ef.setTier(0, Number(($event.target as HTMLSelectElement).value))">
-                <option :value="0">‐</option>
-                <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
-              </select>
-            </span>
-            <span v-for="(a, i) in ef.placed.value" :key="i" data-tree-ele-any-line class="flex items-center gap-1">
-              <select data-tree-ele-any-tier class="w-[3.25rem] rounded border border-amber-300/40 bg-black/40 px-0.5 py-0 text-[11px] text-amber-100" :value="a.tier" @change="ef.setTier(i, Number(($event.target as HTMLSelectElement).value))">
-                <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
-              </select>
-              <button type="button" data-tree-ele-any-remove class="px-1 text-[12px] text-rose-200 hover:text-rose-100" :title="tr('この「いずれかの元素耐性」を外す', 'Remove this any-elemental-resistance target')" @click="ef.remove(i)">×</button>
-              <!-- 「＋ 追加」は最後の 1 本と同じ行の右 (11-16 オーナー「追加とティアが2行に分かれる」) -->
-              <button v-if="i === ef.placed.value.length - 1 && ef.canAdd.value" type="button" data-tree-ele-any-add class="whitespace-nowrap rounded border border-amber-300/40 px-1 py-0 text-[11px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
-            </span>
-          </span>
+          <TreeEleAnyPick :ef="ef" />
         </template>
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->

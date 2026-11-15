@@ -1,7 +1,7 @@
 /**
  * use-ele-fold.ts — 完成形の MOD 一覧の「いずれかの元素耐性」の畳む行 (S-10h ①、スイッチ eleAny)。行の口はデザインの ModTable の folds (U-12i)。
  * 畳む行 = 一般の火・冷気・雷耐性の 3 行。出やすさ = 3 元素の合計 (元素耐性を付いていない物として数える、エンジンの modListFor の withoutAnyEle)。
- * 「いずれか」は 1 本ずつ段のプルダウンと × を持ち、「＋ 追加」で増やす。増やせるのはサフィの空きがある間 (ゲームの決まり、オーナー 11-15「上限はサフィ数だね」)。
+ * 「いずれか」は段の選び 1 つと「付ける ▾」(1 つ / 2 つ / 3 つ / 外す) で置く。置けるのはサフィの空きの分まで (ゲームの決まり、オーナー 11-15「上限はサフィ数だね」)。
  * 置いた後の番号・札の modId は木を変えた時に揃う (tree-ele-any の tidyEleAny)
  */
 import { computed } from "vue";
@@ -35,7 +35,7 @@ export function useEleFold() {
     return [{ key: ELE_FOLD_KEY, members: rs.map((r) => r.id), text: eleAnyText(rs[0]!.text), tags, share: rs.reduce((n, r) => n + r.share, 0) }];
   });
   /** 段のプルダウンの段 (値は 3 元素で同じ。火の行の段) */
-  const tiers = computed(() => (rows.value[0]?.tiers ?? []).map((x) => ({ tier: x.tier, label: tierRankLabel(x.tier) })));
+  const steps = computed(() => (rows.value[0]?.tiers ?? []).map((x) => ({ tier: x.tier, label: tierRankLabel(x.tier) })));
   /** 完成形の「いずれか」を書き換える (i 番目を f で。null を返すと外す)。札の modId と番号は揃える時に決まる */
   function change(f: (list: Aim[], lead: string) => Aim[]): void {
     const lead = rows.value[0]?.tiers[0]?.modId ?? rows.value[0]?.id;
@@ -54,6 +54,15 @@ export function useEleFold() {
   const add = (): void => { if (canAdd.value) change((xs, lead) => [...xs, { modId: lead, tier: xs[xs.length - 1]?.tier ?? 2, anyEle: xs.length + 1 }]); };
   /** i 本目を外す */
   const remove = (i: number): void => change((xs) => xs.filter((_, j) => j !== i));
+  /** 置ける本数 (サフィの空き + 今置いている本、3 元素まで。11-16 オーナー「付けるボタンとティアボタンのみでおk」) */
+  const room = computed(() => {
+    const it = t.goalItem.value?.item;
+    return it ? Math.min(rows.value.length, limitOf(it, "suffix") - it.suffixes.length + placed.value.length) : 0;
+  });
+  /** n 本を同じ段で置き直す (0 = 全部外す) */
+  const setCount = (n: number, tier: number): void => change((_xs, lead) => Array.from({ length: n }, (_, i) => ({ modId: lead, tier, anyEle: i + 1 })));
+  /** 置いた本の段を全部替える */
+  const setTierAll = (tier: number): void => change((xs) => xs.map((a) => ({ ...a, tier })));
   /**
    * 一覧に渡す品: 完成形の品から「いずれか」の札に借りた元素の MOD だけを外した物 (借りた火・冷気が一覧で「付いている 0%」と出た。
    * 元素を決めて選んだ狙いは「付いている」のまま出したいので、元素耐性を全部外す withoutAnyEle は使わない)
@@ -62,5 +71,5 @@ export function useEleFold() {
     const it = t.goalItem.value?.item, ids = new Set(placed.value.map((a) => a.modId));
     return it && ids.size ? { ...it, suffixes: it.suffixes.filter((m) => !ids.has(m.modId)) } : it ?? null;
   });
-  return { listItem, folds, foldOn: (f: ModFold): boolean => f.key === ELE_FOLD_KEY && placed.value.length > 0, tiers, placed, canAdd, setTier, add, remove };
+  return { listItem, folds, foldOn: (f: ModFold): boolean => f.key === ELE_FOLD_KEY && placed.value.length > 0, steps, placed, canAdd, setTier, add, remove, room, setCount, setTierAll };
 }
