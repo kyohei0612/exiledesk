@@ -7,7 +7,7 @@
 import { familiesOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { flag } from "../../../web/release-flags";
-import { boxAims, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { boxAims, subtree, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { isMissMod, missAims } from "./tree-miss";
 import { aimFams } from "./tree-junk-frame";
 import { sameAim } from "./tree-hand-core";
@@ -92,6 +92,20 @@ export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim,
       if (p.id !== r && (pickedOf(doc, p).some((x) => sameAim(data, x, a)) || !!held?.(p.id, a))) break;
       if (lowAt(data, doc, p.id, a, false)) return true;
     }
+  }
+  return false;
+}
+
+/**
+ * 箱 bId の手の外れ側の結果の箱 (当たり・狙いが消えた・塞がったを除く) の下 (outs を辿る、↩ は辿らない) に、同じ狙い a を ☑ する手があるか (S-33g ⑧、11-16 オーナー「1A」)。
+ * 無ければ低ティアの人は外れの箱とまとめてよい (以後 A を付けに行く手が無いので、A が付かない事で行き先が変わらない)
+ */
+export function reaimedBelow(data: PatchData, doc: TreeDoc, bId: string, a: Aim): boolean {
+  const b = doc.boxes[bId];
+  for (const o of b?.outs ?? []) {
+    const c = doc.boxes[o];
+    if (!c || c.out === "hit" || c.out === "lost" || c.out === "blocked") continue;
+    for (const id of subtree(doc, o)) { const x = doc.boxes[id]; if (x?.hand && pickedOf(doc, x).some((y) => sameAim(data, y, a))) return true; }
   }
   return false;
 }

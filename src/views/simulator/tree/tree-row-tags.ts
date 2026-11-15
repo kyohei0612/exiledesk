@@ -153,7 +153,12 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
     // ☑ の無いまま完成形の狙いを段以上で満たす MOD は名前 + 「予期せぬ狙い MOD」(当たりの扱いにはしない、箱も分けない。スイッチ goalMetTag、11-16 オーナー「Aで」「予期せぬ狙いMODがついたでいこうか」)
     else if (goalAll && isMissMod(m, miss) && !isMissMod(m, goalAll)) out.set(m.modId, { text: tr("予期せぬ狙い MOD", "Unexpected target mod"), tone: "good", title: tr(`☑ していない完成形の狙いが段以上で付いた (当たりの箱には分けない): ${modText(m)}`, `A goal target mod was added at its tier without being checked (not split into a hit box): ${modText(m)}`) });
-    else if (isMissMod(m, miss)) putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
+    else if (isMissMod(m, miss)) {
+      putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
+      // 完成形の狙いの系統で段の足りない MOD は「外れ MOD (低ティア)」(低ティアの箱を作らず外れの箱とまとめた人、S-33g ⑧ 1A)
+      const t = out.get(m.modId);
+      if (t && flag("lowTierBox") && !m.crafted && (doc.memoAims ?? []).some((a) => !a.anyEle && aimFams(d, a).includes(m.family) && isMissMod(m, missAims(d, [a])))) out.set(m.modId, { ...t, text: tr("外れ MOD (低ティア)", "Miss (low tier)") });
+    }
   }
   // 「エッセンスと同じ MOD」の箱は、次のエッセンス / 合金と同じ系統の MOD を名前で出す (S-33e ②、11-08 オーナー「それ名前出していいよ」)
   if (box?.id && box.out === "blocked") for (const f of sameModFamilies(d, doc, box.id, it)) for (const m of [...it.prefixes, ...it.suffixes]) if (m.family === f) out.delete(m.modId);
