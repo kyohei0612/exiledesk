@@ -13,7 +13,7 @@
 | ジン部長 | — (local_e283feed はアーカイブ済み、11-14 0 時台にブラック 104 が見た。作業場 .claude/worktrees/wizardly-gould-f36ecf・引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 仕事が来たらブラックが立てる (古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテストが残り) |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_44722f9d-cdfb-4b10-a3c6-da1b38831196 (61、Opus 5.5、11-15 にブラック 118 が控えで立て、60 = local_71be7e94 が 2,505 件で交代。引き継ぎ = 共有 local_41371db6…/progress/sim-lead60.md の一番上「60 → 61 の引き継ぎ」。記録 = progress/sim-lead61-run.log、状態 = 共有 progress/sim-lead61.md) | 今: 入った。残り = blankRare を消す (デイリー側は aafb41918 で外れた)・lowTierBox の見張りの結果を 118 へ・見本の違う箱の訳 |
+| シミュ部長 | local_a607a4be-69f3-48e7-9227-80dcb38b9e95 (62、Opus 5.5、11-15 にブラック 119 が控えで立て、61 = local_44722f9d が 2,47x 件で交代。引き継ぎ = 共有 local_41371db6…/progress/sim-lead61.md の一番上「61 → 62 の引き継ぎ」。記録 = progress/sim-lead62-run.log、状態 = 共有 progress/sim-lead62.md) | 今: 入った。残り = FmNY7Wwv の開発版の未設定 2 の訳・確かめ帳の ④ はオーナーの相談待ち・goalMetTag の説明文はデザインへ頼み中 |
 | デザイン部長 | local_7572ea36-62ba-458f-8061-62f4eb92e735 (9、Opus 5.5、11-14 16 時台にブラック 109 が控えで立て、8 = local_d5d63228 が 2,415 件・残り無しで交代。引き継ぎ = 共有ノート local_429a9cb4…/design-lead8-handover.md。記録 = progress/design-lead9-run.log) | 今: 待機。要望の統一 (U-05e) と途中の未設定を出さない (U-05f、要望に数を添える) は済み・スイッチ actLog の下、開発版だけ |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
