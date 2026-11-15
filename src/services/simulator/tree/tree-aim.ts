@@ -19,10 +19,12 @@ const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDi
  * (並びは aims のまま。オーナー 10-22: 行き先は数え上げず heldOdds の答えをそのまま、錬金・大いなる高貴・骨の候補も heldOdds の物)。
  * もう付いている狙いは見ない (呼ぶ側が外して渡す)。どの見本でも heldOdds に % が 1 つも無い (打てない・確率の表が無い手) 時は null (呼ぶ側が決める)
  */
-export function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
-  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
+export function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}, withItem = false): A[] | null {
+  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [{ ms, it }] : []; });
   if (!pools.length) return null;
-  return aims.filter((a) => pools.some((ms) => heldOn(data, ms, a, o)));
+  // withItem (手の窓の使い回しの候補だけ): 「いずれか」の n 番は品にもう付いている元素耐性と合わせて n 個 (S-10h ⑧。付きうる MOD だけで見ると、火・冷気の付いた品の 3 番が雷 1 つでは届かないとされた)。
+  // 組み直しの既定では今のまま (前の木の当たりの箱が変わらない)
+  return aims.filter((a) => pools.some(({ ms, it }) => heldOn(data, withItem && a.anyEle ? [...ms, ...it.prefixes, ...it.suffixes] : ms, a, o)));
 }
 /** heldOdds で % が 0 より大きい段の MOD (数値は段の真ん中、当たりの判定にだけ使う) */
 function poolOf(data: PatchData, h: HeldOdds): StageMod[] {
