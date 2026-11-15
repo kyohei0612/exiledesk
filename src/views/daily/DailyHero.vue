@@ -3,13 +3,13 @@
   スタートは今日のお題だけ、14:50 まで、1 日 1 回 (D-01・D-33)。ニックネームが無ければ先に決める (D-51)。幅 1280 未満は今は挑戦できない (D-70、シミュの PC の木の境)
 -->
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { DAILY_SKIN_KEY } from "./skin/skin";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import { goDaily } from "./daily-open";
-import { canStartAt, getTry, leftMs, myNick, recheckTry, SLOT_NAMES, TRIED_CARD, type DailyTopic } from "./daily-api";
+import { canStartAt, getTry, leftMs, myNick, recheckTry, SLOT_NAMES, syncTodayTry, TRIED_CARD, type DailyTopic } from "./daily-api";
 import { devBackState, devBackTry, devTreeUrl } from "./daily-dev-states";
 import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
@@ -42,6 +42,10 @@ const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
 const cardAims = computed(() => props.topic.aims ?? (TRIED_CARD && over.value && t.value?.aims?.length ? t.value.aims : null));
 // 置き場でリセットされた挑戦は、端末の控えが終わったままだと「挑戦済み」で始め直せなかった (11-10、要望 c28f225a の後)。今日のお題で控えが終わっている時だけ、開いた時に 1 回サーバーに行があるかを聞く
 onMounted(() => { if (props.today && !devT && over.value) void recheckTry(props.topic.id); });
+// 今日のお題は、開いた時とタブに戻った時に端末の控えをそろえる (別のタブ・別の端末で挑戦した日も「挑戦済み」に、D-56b、11-15 オーナー「俺の記録表示されてるのに始めるボタンになってるよ」)
+const sync = (): void => { if (props.today && !devT && document.visibilityState === "visible") void syncTodayTry(props.topic.id); };
+onMounted(() => { sync(); document.addEventListener("visibilitychange", sync); });
+onUnmounted(() => document.removeEventListener("visibilitychange", sync));
 /** 押せる物: 始める (今日・14:50 まで) / 続きから始める (残りがある) / 挑戦済み (押せない) / 無し */
 const action = computed(() => {
   // 諦めた後も (木を開く前に諦めた = 今日の順位のレシピを見た D-50c も) 提出の後と同じく「挑戦済み」の灰色 (D-35c、11-09 オーナー「このURLは諦めた後か。ならなってないねボタンが」)

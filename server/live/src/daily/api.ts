@@ -156,8 +156,11 @@ export async function dailyMine(db: D1Database, b: Body): Promise<unknown> {
   const nick = await authNick(db, b.nickId, b.code);
   if (!nick) return { error: "nick" };
   const id = typeof b.id === "string" ? b.id : "";
-  const had = await db.prepare("SELECT 1 FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first();
-  return { has: !!had };
+  const had = await db.prepare("SELECT * FROM daily_tries WHERE topic_id = ? AND nick_id = ?").bind(id, nick.id).first<TryRow>();
+  if (!had) return { has: false };
+  // 自分の行の中身も返す (D-56b、11-15): 別のタブ・別の端末で挑戦した日も、画面の真ん中を「挑戦済み」にそろえる。本人だけ (合言葉) なので、始めた後の MOD を返してよい
+  const topic = await db.prepare("SELECT * FROM daily_topics WHERE id = ?").bind(id).first<TopicRow>();
+  return { has: true, ...(topic ? { try: tryOut(had, topic) } : {}) };
 }
 
 /** POST /daily/submit: 1 回だけ (出したら挑戦は終わり、D-35c。11-09 まで何回でも出せて一番安い解決を残した)。サーバーの始めた時刻から 1 時間 + 30 秒を過ぎたら受けない (D-32・D-56) */
