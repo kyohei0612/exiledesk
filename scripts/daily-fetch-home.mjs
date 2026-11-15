@@ -102,6 +102,7 @@ function fetchSql(job, items) {
 async function planSql(D1, day, fetched) {
   // 束ねた中に読み込みの時に location を読む画面の部品がある (daily-roll.mjs と同じ守り)
   globalThis.location ??= { hostname: "", href: "", search: "", hash: "", pathname: "/" };
+  globalThis.history ??= { state: null, replaceState() {}, pushState() {}, back() {} }; // 読み込みの時に web/page.ts が history を読む (daily-roll.mjs と同じ守り、11-15)
   const R = await bundleEntry("server/live/src/daily/roll.ts");
   const M = await bundleEntry("scripts/_daily-roll-entry.ts");
   const inp = await R.rollJson(D1, Date.now(), day);
@@ -153,6 +154,7 @@ if (args.includes("--more")) {
     const got = await fetchLocal(J, mweek, () => new Date(inWindow + (Date.now() - t0)));
     if (!got.job || got.tripped || !got.items.length) { record(`取り直し 週 ${mweek} (${done + 1} 回目・1 ビルド ${size} 人): 取れなかった ${got.tripped ? `確認ページ (${got.tripped})` : `${got.job?.state ?? "始まらない"}・${got.items.length} 品`} = 前の品のまま`); process.exit(1); }
     globalThis.location ??= { hostname: "", href: "", search: "", hash: "", pathname: "/" };
+    globalThis.history ??= { state: null, replaceState() {}, pushState() {}, back() {} }; // 読み込みの時に web/page.ts が history を読む (daily-roll.mjs と同じ守り、11-15)
     const M = await bundleEntry("scripts/_daily-roll-entry.ts");
     const items = got.items.map((it) => Object.fromEntries(ITEM_COLS.filter((c) => c !== "week" && c !== "asc" && c !== "skill").map((c) => [c, it[c]])));
     const rows = M.sampleRowsOf(M.loadPatchSync(), items);
