@@ -325,25 +325,25 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         @pick="pick" />
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
-    <!-- 表とカード (480) を横に並べると表の名前の列が細く縦に折れる幅 (1120 未満、768 で表が 200px ほど) はスマホと同じくカードを上・表を下に積む (11-16 ブラック 117「バグとして直して」) -->
-    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[70rem]:flex-col max-[70rem]:items-stretch">
+    <!-- 表とカード (480) を横に並べると表の名前の列が細く縦に折れる幅はスマホと同じくカードを上・表を下に積む。1700 未満 (1280 で横に並べると列が 385px で名前とタグが 2 行に折れた、11-16 オーナー「アとアで」S-10d ②) -->
+    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-[106.25rem]:flex-col max-[106.25rem]:items-stretch">
       <div class="min-w-0 flex-1"><ModTable overlay :stick-top="12" :data="s.data.value" :item="ef.listItem.value" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']" :tier-on="(r, tt) => t.hasGoal(tt.modId ?? r.id, tt.tier)" :folds="ef.folds.value" :fold-on="ef.foldOn">
         <!-- いずれかの元素耐性 (S-10h ①、オーナー 11-15「×２の所を追加ボタンにしたら？」): 1 本ずつ段のプルダウンと ×、「＋ 追加」はサフィの空きがある間だけ -->
         <template #fold-tier>
           <span class="flex flex-col items-end gap-0.5 py-0.5" @click.stop>
             <span v-if="!ef.placed.value.length" class="flex items-center gap-1">
-              <select data-tree-ele-any-tier class="rounded border border-amber-300/40 bg-black/40 px-1 py-0.5 text-[12px] text-amber-100" :value="0" :disabled="!ef.canAdd.value" @change="ef.setTier(0, Number(($event.target as HTMLSelectElement).value))">
+              <select data-tree-ele-any-tier class="w-[3.25rem] rounded border border-amber-300/40 bg-black/40 px-0.5 py-0 text-[11px] text-amber-100" :value="0" :disabled="!ef.canAdd.value" @change="ef.setTier(0, Number(($event.target as HTMLSelectElement).value))">
                 <option :value="0">‐</option>
                 <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
               </select>
             </span>
             <span v-for="(a, i) in ef.placed.value" :key="i" data-tree-ele-any-line class="flex items-center gap-1">
-              <select data-tree-ele-any-tier class="rounded border border-amber-300/40 bg-black/40 px-1 py-0.5 text-[12px] text-amber-100" :value="a.tier" @change="ef.setTier(i, Number(($event.target as HTMLSelectElement).value))">
+              <select data-tree-ele-any-tier class="w-[3.25rem] rounded border border-amber-300/40 bg-black/40 px-0.5 py-0 text-[11px] text-amber-100" :value="a.tier" @change="ef.setTier(i, Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="x in ef.tiers.value" :key="x.tier" :value="x.tier">{{ x.label }}</option>
               </select>
               <button type="button" data-tree-ele-any-remove class="px-1 text-[12px] text-rose-200 hover:text-rose-100" :title="tr('この「いずれかの元素耐性」を外す', 'Remove this any-elemental-resistance target')" @click="ef.remove(i)">×</button>
               <!-- 「＋ 追加」は最後の 1 本と同じ行の右 (11-16 オーナー「追加とティアが2行に分かれる」) -->
-              <button v-if="i === ef.placed.value.length - 1 && ef.canAdd.value" type="button" data-tree-ele-any-add class="whitespace-nowrap rounded border border-amber-300/40 px-1.5 py-0.5 text-[12px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
+              <button v-if="i === ef.placed.value.length - 1 && ef.canAdd.value" type="button" data-tree-ele-any-add class="whitespace-nowrap rounded border border-amber-300/40 px-1 py-0 text-[11px] text-amber-100 hover:bg-amber-300/10" @click="ef.add()">{{ tr("＋ 追加", "+ Add") }}</button>
             </span>
           </span>
         </template>
@@ -371,7 +371,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める。上端から 12px = ページの留まる物の top-3 と同じ、11-03) -->
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <!-- 右の列は貼り付けない (sticky だと列が画面より高い時に品質・ルーンの下が見切れた。窓全体の 1 つのスクロールで左の一覧と一緒に動く、11-08 夜オーナー「スクロールのセットで動かしちゃっていいよ」) -->
-      <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[70rem]:order-first min-[48rem]:w-[480px] min-[48rem]:max-w-full">
+      <div data-tree-goal-card class="flex shrink-0 flex-col gap-2 max-[106.25rem]:order-first min-[48rem]:w-[480px] min-[48rem]:max-w-full">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (31% 以上はブリーチのエッセンスを木で打つ、行は完成形に足さない = S-31) -->
