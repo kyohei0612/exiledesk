@@ -7,7 +7,7 @@
 |---|---|---|
 | ブラック | local_63f05cbb-fee4-4e12-8459-5d25262cf6c4 (118 代目、Opus 5.5、11-15 午後に入れ替え。117 = local_7ff0bf1e が 2,44x 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black118.md・引き継ぎ = black117.md の一番上) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_91627cfb-f428-4186-8edb-b479fc606adc (23、Opus 5.5、ブラック 118 が控えで立て、22 = local_02cbc048 から 11-15 夕に交代。頼み = 共有 local_41371db6…/progress/daily-lead23-brief.md、進み = 同 daily-lead23.md、引き継ぎ = 共有 local_7ff0bf1e…/daily-lead22-handover.md。記録 = progress/daily-lead23-run.log) | 今: シミュ部長 60 の口 2 つ待ち (D-50h 写しで開く・D-03c 白に戻さない印) → 画面の確かめ。migration 0022 は 2c6fb6952 (本番の D1 へは出しの時)。毎日の見張り (roll / close) は予定のタスク側 |
-| 最終チェック長 | local_9add0a56-535f-40df-81a6-6f38f2897f19 (19、11-15 にブラック 118 が立てた。18 = local_bd769d85 から交代。記録 = progress/release-next19-run.log) | 今: シミュの偽の「未設定」の直しだけを 0.1.741 で出す (オーナーの「出して」済み)。本番は 0.1.740 |
+| 最終チェック長 | local_d6fa4b95-bbd9-4a80-9c64-d4ff36bd115a (20、11-15 にブラック 118 が立てた。19 = local_9add0a56 から交代。記録 = progress/release-next20-run.log) | 今: デイリーの「提出済みなのに挑戦を始める」の直し (D-56b) だけを 0.1.742 で出す (オーナーの「出して」済み)。本番は 0.1.741 |
 | サーバー係 | local_f6d61d7a-84b0-4083-a562-8a70d8ee1a19 (4 代目 server-keeper4、Opus 5.5、11-13 21 時台にブラック 101 が控えに立て、3 代目 local_723fe780 が 2,39x 件で交代。頼み = 共有ノート progress/server-keeper4-brief.md) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
 | 解析君 | — (analyst1 local_819bb9cb は 11-14 0 時台に ui_tally を済ませてアーカイブ。一覧は本番に出て 1 週溜めてから) | 待機 |
 | ジン部長 | — (local_e283feed はアーカイブ済み、11-14 0 時台にブラック 104 が見た。作業場 .claude/worktrees/wizardly-gould-f36ecf・引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 仕事が来たらブラックが立てる (古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテストが残り) |
