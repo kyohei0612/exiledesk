@@ -106,7 +106,7 @@ export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: s
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
-export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
+export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string; /** 始まり (D-03c) */ start?: string | null }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   setJudgeDay(topic.day);
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
   // シミュの「いずれかの元素耐性」(S-10h ④) に読み替えさせない印 (daily-open.ts と同じ)。お題の判定は元素ごと
@@ -115,7 +115,8 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   // ✦ の無い木 = フラクチャー無し (11-12 のお題から選べる、D-03)。✦ があればお題の狙いの物だけ
   if (doc.base !== topic.base || (frac && !topic.aims.some((a) => a.modId === frac))) return null;
   doc.itemLevel = topic.ilvl;
-  fillTopicDoc(doc, topic.aims, frac ?? NO_FRAC, doc.start?.from === "four" ? "four" : "fractured"); // 始め方は提出の木のまま (D-37j)
+  // 始め方は提出の木のまま (D-37j)。MOD の無いレアから始める日 (D-03c) はお題の印で始まりを作り直す (提出の木の始まりを信じない)
+  fillTopicDoc(doc, topic.aims, topic.start === "rare" ? NO_FRAC : frac ?? NO_FRAC, topic.start === "rare" ? "four" : doc.start?.from === "four" ? "four" : "fractured", topic.start === "rare");
   markMet(data, doc, topic.aims); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims).length) return null;
   return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox, doneOk: doneOkOf(data, topic.aims) }), 0));

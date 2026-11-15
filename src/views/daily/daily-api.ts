@@ -29,6 +29,8 @@ export const SLOT_NAMES: readonly { ja: string; en: string }[] = SLOTS.map(({ ja
 export type DailyAim = GenAim;
 /** 一覧に出す形。aims は締めた日だけ入る (D-32b) */
 export type DailyTopic = { id: string; day: string; dayNo: number; base: string; baseJa: string; ilvl: number; modCount: number; slot: number; tries: number; sample: boolean; fromBox: boolean; aims?: DailyAim[];
+  /** 始まり (D-03c)。"rare" = 始め方を選ばず MOD の無いレアから。無ければ今まで (D-03) */
+  start?: "rare";
   /** 参加の数 (D-50g、server/live の turnout.ts)。挑戦 = 提出 + 諦め + 時間切れ + 挑戦中、始める前の諦めは入れない。古いサーバーは無し */
   turnout?: { tried: number; submitted: number; gaveUp: number; timeout: number; playing: number };
   /** 諦めた人の並び (D-50f)。名前は来ない。粘った時間の長い順、timeout = 時間切れ。古いサーバーは無し */
