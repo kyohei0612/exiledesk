@@ -78,8 +78,8 @@ export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
  */
 function idealNoUp(doc: TreeDoc, id: string): number {
   const out = doc.boxes[id]?.out;
-  // スイッチ junkGoneHit の間は「外れが消えた」も完成への道の結果 (S-50g、11-14 オーナー「理想形に消去の形入ることあるからな」)
-  return flag("idealNoBack") && (out === "hit" || out === "any" || (out === "junkGone" && flag("junkGoneHit"))) ? depthOf(doc, id) : 0;
+  // 「外れが消えた」は入れない (実験 junkGoneHit は 11-16 にやめた = S-50g)
+  return flag("idealNoBack") && (out === "hit" || out === "any") ? depthOf(doc, id) : 0;
 }
 /** 自動の ↩ の候補 (親 → 浅い段・先に作った箱の順) */
 export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {

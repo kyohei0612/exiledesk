@@ -48,11 +48,8 @@ export function nextCmp(d: TreeDoc): (a: string, z: string) => number {
 
 /** 完成への道の結果 (S-50g と同じ当たり・打った後に、通り抜け・分かれ目) */
 const HIT_SIDE: ReadonlySet<string> = new Set(["hit", "any", "pass", "branch"]);
-/**
- * 当たりの道に入る結果か。スイッチ junkGoneHit (S-50g・S-142j ⑤、開発版だけ・実験) の間は消去などの「外れが消えた」も入れる
- * (11-14 オーナー「理想形に消去の形入ることあるからな」)
- */
-export const onHitSide = (out: string | undefined): boolean => !!out && (HIT_SIDE.has(out) || (out === "junkGone" && flag("junkGoneHit")));
+/** 当たりの道に入る結果か (消去などの「外れが消えた」は入れない。実験 junkGoneHit は 11-16 にやめた = S-50g) */
+export const onHitSide = (out: string | undefined): boolean => !!out && HIT_SIDE.has(out);
 const RANK = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk", "blocked"];
 
 /**
