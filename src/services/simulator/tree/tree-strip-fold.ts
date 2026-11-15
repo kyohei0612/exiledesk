@@ -109,6 +109,8 @@ const drawnTarget = (d: TreeDoc, t: string, hidden: ReadonlySet<string>): string
   for (let n = 0, seen = new Set<string>(); n < 50 && hidden.has(t) && !seen.has(t); n++) { seen.add(t); const nx = d.boxes[t]?.back; if (!nx || !d.boxes[nx]) break; t = nx; }
   return t;
 };
+/** (S-142j ③、linkChipHover) 描いた箱の ↩ の戻り先 (指すだけの箱なら辿った先の描く箱)。箱に乗せた時の青い弧に使う */
+export const drawnBackOf = (d: TreeDoc, id: string, folds = stripFolds(d)): string | null => { const b = d.boxes[id]?.back; return b && d.boxes[b] ? drawnTarget(d, b, stripHidden(d, folds)) : null; };
 function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" | "back"): Map<string, string[]> {
   const m = new Map<string, string[]>(), homes = k === "link" ? homesOf(d, folds) : new Map<string, Home>(), hidden = stripHidden(d, folds);
   const add = (p: string, t: string): void => { const l = m.get(p) ?? []; if (!l.includes(t)) l.push(t); m.set(p, l); };

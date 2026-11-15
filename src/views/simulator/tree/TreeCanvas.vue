@@ -20,6 +20,7 @@ import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { useTreeSurface, type PageCtx } from "./use-tree-surface";
 import { spotArc, spotCss, spotZoomRim, type SpotArc } from "./tree-spot-arc";
+import { drawnBackOf } from "../../../services/simulator/tree/tree-strip-fold";
 
 type Lane = { text: string };
 type ChipEdge = { chip?: unknown };
@@ -37,15 +38,29 @@ const hoverChip = ref<string | null>(null);
 type LinkTo = { link?: boolean };
 const hideLink = (o: LinkTo): boolean => !!o.link && flag("linkChipHover");
 type SpotEdge = { id: string; jx: number; jy: number; to: Array<{ id: string; link?: boolean }>; backLines?: Array<{ id: string }> };
-const spot = computed((): { arcs: SpotArc[]; css: string } | null => {
+/** 箱の本体の高さ (下の削減の帯を入れない。弧は本体の下の辺へ着く = 帯の下で止まらない、11-16 B2) */
+const bodyH = (id: string): number => root.value?.querySelector<HTMLElement>(`[data-tree-box][data-box-id="${id}"]`)?.offsetHeight || v.flow.findNode(id)?.dimensions.height || BOX_H;
+/**
+ * (linkChipHover) ↩ を持つ描いた箱 (「↩ n 段目へ戻る」の枠) に乗せた時も、手の札と同じく戻り先を照らし、箱の上の辺から青い弧で引っ張る
+ * (11-16 オーナー「前の段に戻るは青線で引っ張るんでしょライトアップして　手の札と枠両方実装しないとダメじゃね」)
+ */
+const boxSpot = (): { key: string; arcs: SpotArc[]; css: string } | null => {
+  const b = hoverBox.value ? doc.value.boxes[hoverBox.value] : undefined, to = b && !sf.folds.value.has(b.id) ? drawnBackOf(doc.value, b.id) : null;
+  if (!b || !to || to === b.id) return null;
+  const p = posOf(b), q = posOf(doc.value.boxes[to]!), up = q.y < p.y, k = inv.value;
+  const arcs = [{ id: to, back: true, d: spotArc(p.x + BOX_W / 2, up ? p.y - HEAD_TAG : p.y + bodyH(b.id), q, bodyH(to)) }];
+  const lit = [{ id: b.id, back: true }, { id: to, back: true }];
+  return { key: b.id, arcs, css: spotCss(b.id, lit, [], k) };
+};
+const spot = computed((): { key: string; arcs: SpotArc[]; css: string } | null => {
   const id = hoverChip.value, e = id && flag("linkChipHover") ? (shownEdges.value as SpotEdge[]).find((x) => x.id === id) : null;
-  if (!e) return null;
+  if (!e) return flag("linkChipHover") && !hoverChip.value ? boxSpot() : null;
   const ts = [...e.to.filter((o) => o.link).map((o) => ({ id: o.id, back: false })), ...(e.backLines ?? []).map((l) => ({ id: l.id, back: true }))].filter((x) => doc.value.boxes[x.id]);
   if (!ts.length) return null;
   // 出口は札の上の辺 (行き先が札より下なら下の辺) に、行き先の左右の順に等間隔 (札の幅 200 を本数 + 1 で割る。弧の決まり 1、交わらない)。札は倍率の逆数で描くので幅と高さも inv 倍
   const order = ts.map((x) => posOf(doc.value.boxes[x.id]!).x).map((x, i) => [x, i] as const).sort((a, z) => a[0] - z[0]).map(([, i]) => i);
   const k = inv.value, step = (200 * k) / (ts.length + 1);
-  const arcs = ts.map((x, i) => ({ ...x, d: spotArc(e.jx + (order.indexOf(i) - (ts.length - 1) / 2) * step, e.jy + (posOf(doc.value.boxes[x.id]!).y > e.jy ? 14 : -14) * k, posOf(doc.value.boxes[x.id]!), v.flow.findNode(x.id)?.dimensions.height || BOX_H) }));
+  const arcs = ts.map((x, i) => ({ ...x, d: spotArc(e.jx + (order.indexOf(i) - (ts.length - 1) / 2) * step, e.jy + (posOf(doc.value.boxes[x.id]!).y > e.jy ? 14 : -14) * k, posOf(doc.value.boxes[x.id]!), bodyH(x.id)) }));
   // 関わる物を全部照らす: 乗せた札とその元の箱・行き先の箱・同じ行き先を指すほかの手の札とその元の箱 (11-14 オーナー「その範囲で全部ライトアップして」)
   const want = new Set(ts.map((x) => x.id)), mine = ts.every((x) => x.back);
   const peers = (shownEdges.value as SpotEdge[]).filter((o) => o.id !== e.id).flatMap((o) => {
@@ -53,7 +68,7 @@ const spot = computed((): { arcs: SpotArc[]; css: string } | null => {
     return hit.length ? [{ id: o.id, back: hit.every(Boolean) }] : [];
   });
   const chips = [{ id: e.id, back: mine }, ...peers];
-  return { arcs, css: spotCss(e.id, [...ts, ...chips], chips, k) };
+  return { key: e.id, arcs, css: spotCss(e.id, [...ts, ...chips], chips, k) };
 });
 /**
  * (linkChipHover) 照らしている間、縮めて見ていれば行き先の箱を写し (読むだけ、押した時の等倍の窓の 2/3) で箱の上に重ねる (11-14 オーナー「ライトアップ中は拡大表示してあげてね飛び先の枠」)。
@@ -100,7 +115,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
   <div ref="root" data-tree-surface class="contents">
   <TreeLaneTags v-if="!t.needBase.value" inside :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
   <component :is="'style'" v-if="spot">{{ spot.css }}</component>
-  <div data-tree-canvas data-overflow-ok :data-spot="spot ? hoverChip : undefined" class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
+  <div data-tree-canvas data-overflow-ok :data-spot="spot?.key" class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
     <VueFlow :id="flowId" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
       :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
       :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
@@ -144,7 +159,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
         <button v-for="b in rv.done.value ? passes.filter((x: Box) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
           :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>
-        <TreeMergeLayer v-if="merged && rv.done.value" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :sel="panel?.id ?? null" :show-all="linesAll" @hover="(id) => (hoverBox = id)" />
+        <TreeMergeLayer v-if="merged && rv.done.value" :lines="merged.lines" :paths="merged.paths" :hover="spot && spot.key === hoverBox ? null : hoverBox" :sel="panel?.id ?? null" :show-all="linesAll" @hover="(id) => (hoverBox = id)" />
         <TreeRunLayer v-if="(tr100.result.value || tr100.walk.value) && tr100.shown.value && rv.done.value" :result="tr100.result.value" :walk="tr100.walk.value" :k="1 / zoom" :boxes="shown" :pos-of="posOf" :edges="shownEdges" :lines="merged?.lines ?? []" :paths="merged?.paths ?? new Map()" :height-of="(id: string) => v.flow.findNode(id)?.dimensions.height ?? 0" @go="goIssue" />
         <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
         <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
