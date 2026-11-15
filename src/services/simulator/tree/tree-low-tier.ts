@@ -7,7 +7,7 @@
 import { familiesOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { flag } from "../../../web/release-flags";
-import { boxAims, subtree, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { boxAims, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { isMissMod, missAims } from "./tree-miss";
 import { aimFams } from "./tree-junk-frame";
 import { sameAim } from "./tree-hand-core";
@@ -98,16 +98,48 @@ export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim,
 
 /**
  * 箱 bId の手の外れ側の結果の箱 (当たり・狙いが消えた・塞がったを除く) の下 (outs を辿る、↩ は辿らない) に、同じ狙い a を ☑ する手があるか (S-33g ⑧、11-16 オーナー「1A」)。
- * 無ければ低ティアの人は外れの箱とまとめてよい (以後 A を付けに行く手が無いので、A が付かない事で行き先が変わらない)
+ * 無ければ低ティアの人は外れの箱とまとめてよい (以後 A を付けに行く手が無いので、A が付かない事で行き先が変わらない)。
+ * 辿る途中で、外れの箱の見本でその手が A の側に足した外れ MOD が見本から全部消えた箱 (消す手・入れ替える手・サフィを消すエッセンスの後) より下は見ない:
+ * 低ティアの人の A もそこで同じく消え、以後は外れの人と同じ品になる (⑧「次の手が消去など消す手」。11-15 y5msCmTe の偽の未設定、ブラック 118 経由)
  */
 export function reaimedBelow(data: PatchData, doc: TreeDoc, bId: string, a: Aim): boolean {
   const b = doc.boxes[bId];
+  const side = data.mods.get(a.modId)?.type;
   for (const o of b?.outs ?? []) {
     const c = doc.boxes[o];
     if (!c || c.out === "hit" || c.out === "lost" || c.out === "blocked") continue;
-    for (const id of subtree(doc, o)) { const x = doc.boxes[id]; if (x?.hand && pickedOf(doc, x).some((y) => sameAim(data, y, a))) return true; }
+    const junk = addedJunk(data, doc, bId, o, side);
+    const walk = (id: string): boolean => {
+      const x = doc.boxes[id];
+      if (!x) return false;
+      if (id !== o && junk.size && !stillHolds(data, doc, id, junk)) return false;
+      if (x.hand && pickedOf(doc, x).some((y) => sameAim(data, y, a))) return true;
+      return x.outs.some(walk);
+    };
+    if (walk(o)) return true;
   }
   return false;
+}
+
+/** 見本 (代表の品、種 1) の MOD の modId。見本が出せない箱は null (分からない = 辿りを止めない) */
+function sampleMods(data: PatchData, doc: TreeDoc, id: string): StageItem["prefixes"] | null {
+  const s = sampleOf(data, doc, id, 1);
+  if (s.note === "none" || s.note?.startsWith("cant:")) return null;
+  return [...s.item.prefixes, ...s.item.suffixes];
+}
+/** MOD の系統 (E-11a、エンジンの familiesOf。同じ系統は品に 1 つだけ = 系統で「同じ外れが残っているか」を見る) */
+const famsOfMod = (data: PatchData, m: StageItem["prefixes"][number]): readonly string[] => { const md = data.mods.get(m.modId); return md ? familiesOf(md) : []; };
+/** 箱 pId の手で外れの箱 oId の見本に、側 side に新しく付いた MOD の系統 (低ティアの人はこの外れの代わりに低い段の A を持つ) */
+function addedJunk(data: PatchData, doc: TreeDoc, pId: string, oId: string, side: string | undefined): ReadonlySet<string> {
+  const before = sampleMods(data, doc, pId), after = sampleMods(data, doc, oId);
+  if (!before || !after || !side) return new Set();
+  const had = new Set(before.flatMap((m) => famsOfMod(data, m)));
+  return new Set(after.filter((m) => m.side === side).flatMap((m) => famsOfMod(data, m)).filter((f) => !had.has(f)));
+}
+/** 箱 id の見本がまだ外れの系統 junk のどれかを持つか (見本が出せない時は持つと見る) */
+function stillHolds(data: PatchData, doc: TreeDoc, id: string, junk: ReadonlySet<string>): boolean {
+  const ms = sampleMods(data, doc, id);
+  return !ms || ms.some((m) => famsOfMod(data, m).some((f) => junk.has(f)));
 }
 
 /**
