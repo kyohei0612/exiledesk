@@ -5,13 +5,14 @@
 import { aimHeldIn, aimHits as hits, heldOdds, makeStageMod, type AimHitOpts, type AimTarget, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { isMissMod, type MissAims } from "./tree-miss";
 import { aimTargetOf } from "./tree-ele-any";
+import { withEssEle } from "./tree-ess-ele";
 
 // 付きうる狙い (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits を呼ぶだけ。10-25 に画面の tree-hand-plan から精査と一緒に使うここへ)
 interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
 interface AimDiffOpts { sameText?: boolean }
 const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
   const t = aimTargetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
-  return aimHeldIn(mods, t, opts);
+  return aimHeldIn(withEssEle(data, mods), t, opts);
 };
 /**
  * この手で付きうる狙い = items (同じ箱の見本など) のどれかで、クラフト台でそのカレンシーを持った時に出る % (heldOdds。CoE と合わせ済み) が 0 より大きい段がある狙い
@@ -51,5 +52,5 @@ export function junkOf(item: StageItem, x: MissAims): { prefix: StageMod[]; suff
 export function aimHeldOn(data: PatchData, item: StageItem, a: TierAim, o?: { sameText?: boolean }): boolean {
   const t: AimTarget = aimTargetOf(data, a);
   const opts = o?.sameText ? { data, sameText: true } : undefined;
-  return aimHeldIn([...item.prefixes, ...item.suffixes], t, opts);
+  return aimHeldIn(withEssEle(data, [...item.prefixes, ...item.suffixes]), t, opts);
 }

@@ -10,6 +10,7 @@ import type { Aim, TreeDoc } from "./tree-model";
 import { placedAims } from "./tree-veil";
 import { looseTierOf } from "./tree-frac-dual";
 import { aimTargetOf } from "./tree-ele-any";
+import { essEleAsNormal, essEleOn } from "./tree-ess-ele";
 
 /** 外れの式の相手 = 当たりに数える札を段の番号にした物 (1 回作って MOD ごとに使う) */
 export interface MissAims { readonly targets: readonly AimTarget[]; readonly opts: AimHitOpts }
@@ -30,4 +31,9 @@ export function aimedList(data: PatchData, doc: TreeDoc, aimed?: ReadonlySet<str
   return [...goals, ...(o.stones === false ? [] : placedAims(data, doc))].filter((a) => aimed.has(a.modId));
 }
 /** 外れ = 当たりに数える札のどれにも当たらない MOD */
-export const isMissMod = (m: StageMod, x: MissAims): boolean => !x.targets.some((t) => aimHits(m, t, x.opts));
+export const isMissMod = (m: StageMod, x: MissAims): boolean => {
+  if (x.targets.some((t) => aimHits(m, t, x.opts))) return false;
+  // エッセンスの火・冷気・雷耐性は値で一般の段に読み替えても見る (S-10h ⑨、スイッチ essEleHit)
+  const n = essEleOn() ? essEleAsNormal(x.opts.data, m) : null;
+  return !n || !x.targets.some((t) => aimHits(n, t, x.opts));
+};

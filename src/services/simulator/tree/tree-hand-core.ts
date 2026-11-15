@@ -9,6 +9,7 @@ import { ECHO as ABYSSAL_ECHO_OMEN, splitOmens } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { isRevealHand } from "./tree-veil";
 import { aimTargetOf } from "./tree-ele-any";
+import { withEssEle } from "./tree-ess-ele";
 
 /** 段の名前の T で言う狙い (T1 が一番上) */
 interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
@@ -18,7 +19,7 @@ const targetOf = (data: PatchData, a: TierAim): AimTarget => aimTargetOf(data, a
 const modsOf = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
 const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
   const t = targetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
-  return aimHeldIn(mods, t, opts);
+  return aimHeldIn(withEssEle(data, mods), t, opts);
 };
 
 interface AimDiff<A extends TierAim = TierAim> {
