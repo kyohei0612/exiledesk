@@ -23,7 +23,7 @@ import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./t
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue"; import TreeAimRows from "./TreeAimRows.vue";
 import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import TreeHeldPick from "./TreeHeldPick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine"; import TreeAimLocked from "./TreeAimLocked.vue"; import { lockedAimRows } from "./tree-aim-why";
-import { useHandKeep } from "./use-hand-keep"; import TreeBoxModBtn from "./TreeBoxModBtn.vue"; import { bothLabel, useEleSecond } from "./use-ele-second"; import { useEleSingles } from "./use-ele-singles";
+import { useHandKeep } from "./use-hand-keep"; import TreeBoxModBtn from "./TreeBoxModBtn.vue"; import { bothLabel, useEleSecond } from "./use-ele-second"; import { useEleSingles } from "./use-ele-singles"; import { fracOnceBlock } from "../../../services/simulator/tree/tree-sample";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import { lvRowTags } from "./tree-whittle-marks"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, startsFractured, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
@@ -139,7 +139,7 @@ const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value
 const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
 const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
 /** フラクチャー無しで始めた木 (印 noFracOrb、デイリー) ではフラクチャーのオーブを打たせない (S-13b) */
-const noFracBlock = (k: string): string | null => (k === "fracture" && t.doc.value.start?.noFracOrb ? tr("フラクチャー無しで始めた木では使えない", "Not usable in a tree started without a fracture") : null);
+const noFracBlock = (k: string): string | null => (k === "fracture" && t.doc.value.start?.noFracOrb ? tr("フラクチャー無しで始めた木では使えない", "Not usable in a tree started without a fracture") : item.value ? fracOnceBlock(item.value, k) : null); // 木のフラクチャーは 1 回 (S-22e)
 // 完成形の使用ルーンは棚のルーンの節の先頭に (S-31g、11-05 オーナー「おｋ先頭で」)
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k) ?? noFracBlock(k) ?? foreseeBlock(t.doc.value, props.boxId, k) ?? (s.data.value && item.value ? fluxBlock(s.data.value, t.doc.value, item.value, k, aimedOfCard(s.data.value, t.doc.value, props.boxId, item.value)) : null), () => (t.doc.value.goalRunes ?? []).map((en) => `${RUNE_PREFIX}${en}`));
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
