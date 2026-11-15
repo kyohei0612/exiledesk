@@ -13,7 +13,7 @@
  *
  * ## 埋める値 — Craft of Exile (beta, PoE2) の重み (2026-09-23 確定)
  * CoE の普通 MOD の重みは私たちの表 (poe2db) と全部一致する (指輪の普通 MOD 30 種で確認)。
- * 仮置きの所だけ CoE で埋める。キャスピは**指輪 1 段 1,000 / 首飾り 1 段 800**。
+ * 仮置きの所だけ CoE で埋める。キャスピは**指輪 1 段 1,000 / 首飾り 1 段 800** (首飾りは 11-15 にオーナーが 1,000 に、E-03c)。
  *
  * 経緯: 一度「動画でカオス約 500 回に 1 回」から 1 段 60 に下げたが、その 500 回はキャスピ **T1** の
  * 回数だった。CoE のシミュレーターで、固定済みの樹 MOD 1 つ + 外れ 1 つのニーモニックリングに
@@ -28,6 +28,7 @@
  * 2. **どこにも数字が無い物 (クロスボウのグレネード 3 個) は、CoE の値をそのまま使う**。
  */
 import { tr } from "../../i18n/lang";
+import { flag } from "../../web/release-flags";
 import { noteFixMiss } from "./fix-misses";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -45,10 +46,10 @@ const OVERRIDES: Record<string, { source: string; byIlvl: Record<number, number>
     source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-5 / ring",
     byIlvl: { 1: 1000, 18: 1000, 35: 1000, 51: 1000, 60: 1000 },
   },
-  "Amulets/IncreasedCastSpeed": {
-    source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-6 / amulet",
-    byIlvl: { 1: 800, 18: 800, 35: 800, 51: 800, 60: 800, 66: 800 },
-  },
+  // E-03c: オーナー 11-15 に 1 段 1,000 (CoE は 800)。本番で隠す OK 待ち (スイッチ amuletCastWeight)
+  "Amulets/IncreasedCastSpeed": flag("amuletCastWeight")
+    ? { source: "owner 2026-11-15 (E-03c、Craft of Exile は 800)", byIlvl: { 1: 1000, 18: 1000, 35: 1000, 51: 1000, 60: 1000, 66: 1000 } }
+    : { source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-6 / amulet", byIlvl: { 1: 800, 18: 800, 35: 800, 51: 800, 60: 800, 66: 800 } },
   "Crossbows_cannon/GrenadeCooldownUse": {
     source: "Craft of Exile GrenadeSkillAdditionalCooldownUse1-2 (500 / 250)",
     byIlvl: { 72: 500, 81: 250 },

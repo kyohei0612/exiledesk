@@ -41,6 +41,11 @@ describe("重み", () => {
   it("指輪のキャストスピードは Craft of Exile の 1000 (仮置き 1 のままだと 1/1000 扱いになる)", () => {
     expect(data.mods.get("Rings/IncreasedCastSpeed")!.tiers.every((t) => t.weight === 1000)).toBe(true);
   });
+  it("首飾りのキャストスピードはオーナーの 1000 (E-03c、スイッチ amuletCastWeight が閉じていれば CoE の 800)", async () => {
+    const { flag } = await import("../src/web/release-flags");
+    const want = flag("amuletCastWeight") ? 1000 : 800;
+    expect(data.mods.get("Amulets/IncreasedCastSpeed")!.tiers.map((t) => t.weight)).toEqual([want, want, want, want, want, want]);
+  });
 });
 
 describe("上位プレイヤー MOD 一覧の段の表", () => {
