@@ -23,6 +23,8 @@ import { essenceModOf, midAims, placedAims } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
+import { isLowTierBox } from "./tree-low-tier";
+import { flag } from "../../../web/release-flags";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
@@ -289,6 +291,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const frameAt = (id: string): Frame | null => { const f = fr.frames.get(id); return f && !f.note ? f : null; };
   /** 代表の品の ☑ */
   const aimedAt = (id: string): ReadonlySet<string> => frameAt(id)?.aimed ?? new Set();
+  /** 低ティアの箱の鍵 (lt:<A>)。ほかの箱は null (S-33g ⑧) */
+  const ltOf = (id: string): string | null => (isLowTierBox(doc.boxes[id]) ? doc.boxes[id]!.junkKey ?? null : null);
   /** 箱の作れる見本 (代表の品 1 つ) */
   const samples = (id: string): Array<{ seed: number; item: StageItem }> => { const f = frameAt(id); return f ? [{ seed: 1, item: f.item }] : []; };
   /** 箱の中身 (ふだんの比べ = 冒涜の発現済みの数を落とす。光のお告げの手のある箱と比べる時は full) */
@@ -337,6 +341,9 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない
       // (11-06 オーナー「同じ枠判定は見るところは枠だけでええからなその後のカレンシーは見なくていいから」、S-60c・S-60d の箱どうしの所を外した)
       if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
+      // (スイッチ lowTierBox、S-33g ⑧) 低ティアの箱と違う箱 (普通の外れ・別の狙いの低ティア) は箱どうしでは同じ枠にしない = 自動の ↩・まとめの相手にしない。
+      // 中身の鍵は低い段の A を外れ 1 つと数えるので同じに見えるが、低ティアの人は以後 A が付かない。人の行き先 (fitsItem) は変えない (11-16 オーナー「両方Ａで」)
+      if (flag("lowTierBox") && ltOf(from) !== ltOf(to)) return false;
       const lf = lvOf(from), lt = lvOf(to);
       if (lf !== lt) {
         // 削減の手前の枠 (l:) を持たない箱 (削減を打った後など) は中身 (名前の印は ☑ どおり) が同じなら枠へ戻る (S-65c ⑩、11-10 オーナー「おｋ」。前は札で比べ、中身が全部同じでも枠に戻れず
