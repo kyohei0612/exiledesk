@@ -50,6 +50,8 @@ import TreeTierBulk from "./TreeTierBulk.vue";
 import { useEleFold } from "./use-ele-fold";
 /** 狙うMODの一括ティア調整をここにも (S-10f、スイッチ tierDown。✦ の段はここで決める、11-13 オーナー「次MOD選びの段階でティア調整ボタンは配置しておくべき」) */
 const TIER_DOWN = flag("tierDown");
+/** (スイッチ resetDim、開発版だけ) 木を消す確かめの帯が出ている間は、ほかを暗くして押せなくし帯だけ明るく (S-67b、11-16 オーナー「これが出たら全部グレーアウトでここだけライトアップ」) */
+const RESET_DIM = flag("resetDim");
 const tierOpen = ref(false);
 /** 見本の MOD はツリーで狙いにできる、の注意書き (S-10e、スイッチ aimGroups) */
 const AIM_NOTE = flag("aimGroups");
@@ -280,7 +282,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
       <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67) -->
-      <div v-if="edits.ask.value" ref="resetAskEl" data-tree-edit-reset-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] z-10 mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+      <div v-if="edits.ask.value && RESET_DIM" data-tree-edit-reset-dim aria-hidden="true" class="fixed inset-0 z-[59] bg-black/70" @pointerdown.prevent.stop @click.prevent.stop />
+      <div v-if="edits.ask.value" ref="resetAskEl" data-tree-edit-reset-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]" :class="RESET_DIM ? 'z-[60] shadow-[0_0_0_2px_rgba(251,113,133,0.5),0_8px_30px_rgba(0,0,0,0.8)]' : 'z-10'">
         <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
         <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
         <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>

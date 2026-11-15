@@ -14,6 +14,9 @@ import { tr } from "../../../i18n/lang";
 import TreeStartPick from "./TreeStartPick.vue";
 import { useTree } from "./use-tree";
 import { useEditReset } from "./use-edit-reset";
+import { flag } from "../../../web/release-flags";
+/** (スイッチ resetDim) 木を消す確かめの帯の間はほかを暗く (S-67b、TreeGoalPage と同じ) */
+const RESET_DIM = flag("resetDim");
 
 const t = useTree();
 /** 始め方・始まりの MOD を変えたら木はスタートだけに (出る時に保存を聞く。S-67) */
@@ -26,7 +29,8 @@ const item = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.valu
 
 <template>
   <ModalShell :open="true" rec="tree-start" :title="tr('スタート', 'Start')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-full max-w-[72rem]" full-on-phone body-class="px-3 pb-3" @close="close">
-    <div v-if="edits.ask.value" data-tree-edit-reset-ask class="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+    <div v-if="edits.ask.value && RESET_DIM" data-tree-edit-reset-dim aria-hidden="true" class="fixed inset-0 z-[59] bg-black/70" @pointerdown.prevent.stop @click.prevent.stop />
+    <div v-if="edits.ask.value" data-tree-edit-reset-ask class="sticky top-0 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]" :class="RESET_DIM ? 'z-[60] shadow-[0_0_0_2px_rgba(251,113,133,0.5),0_8px_30px_rgba(0,0,0,0.8)]' : 'z-10'">
       <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
       <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
       <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>
