@@ -11,6 +11,20 @@ import { ELE_FAMILIES } from "./tree-ele-any";
 export const essEleOn = (): boolean => flag("essEleHit");
 const isEss = (src: string | undefined): boolean => src === "essence" || src === "perfect_essence";
 
+type ModOf = NonNullable<ReturnType<PatchData["mods"]["get"]>>;
+/** 同じ部位 (head = modId の「/」まで)・同じ系統の一般の MOD (data.mods の並びで最初の物)。当たりを見るたびに MOD を全部探していた (付ける 1 回目が約 50ms、11-15 63) ので data ごとに覚える */
+const normalMemo = new WeakMap<PatchData, Map<string, ModOf | null>>();
+function normalOf(data: PatchData, head: string, family: string): ModOf | null {
+  let memo = normalMemo.get(data);
+  if (!memo) { memo = new Map(); normalMemo.set(data, memo); }
+  const key = `${head}|${family}`;
+  if (memo.has(key)) return memo.get(key)!;
+  let normal: ModOf | null = null;
+  for (const [id, x] of data.mods) if (id.startsWith(head) && x.source === "normal" && x.family === family) { normal = x; break; }
+  memo.set(key, normal);
+  return normal;
+}
+
 /** エッセンスの火・冷気・雷耐性 1 つ → 値で読み替えた一般の MOD の写し (読み替えられない・対象外なら null) */
 export function essEleAsNormal(data: PatchData, m: StageMod): StageMod | null {
   if (m.unrevealed || !ELE_FAMILIES.includes(m.family)) return null;
@@ -18,9 +32,7 @@ export function essEleAsNormal(data: PatchData, m: StageMod): StageMod | null {
   if (!mod || !isEss(mod.source)) return null;
   const v = m.values[0];
   if (v == null) return null;
-  const head = m.modId.slice(0, m.modId.indexOf("/") + 1);
-  let normal = null;
-  for (const [id, x] of data.mods) if (id.startsWith(head) && x.source === "normal" && x.family === m.family) { normal = x; break; }
+  const normal = normalOf(data, m.modId.slice(0, m.modId.indexOf("/") + 1), m.family);
   if (!normal) return null;
   // 段は下から上へ (添字が大きいほど上)。下限 (ranges[0][0]) が値以下の一番上の段
   let ti = -1;
