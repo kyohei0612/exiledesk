@@ -36,6 +36,11 @@ const props = defineProps<{ modelValue: boolean; mode?: BoneMode; big?: boolean;
 const emit = defineEmits<{ "update:modelValue": [boolean]; mode: [BoneMode]; add: [Aim]; drop: [Aim]; echo: [boolean] }>();
 /** 窓で続けて選ぶ (押すたびに ☑ を付け外し、閉じるまで選び続ける) + 選んだ MOD をタグで並べる (S-32c、スイッチ veilMulti) */
 const MULTI = flag("veilMulti");
+/**
+ * (スイッチ veilPickKeep、開発版だけ) 11-16 オーナー (owner-manifest-label / tier-pick / tier-decide-spot-1116.png):
+ * ① 発現の札は括弧の説明をやめ、下に目立つ説明「使用用途: ブロッキング等で使用」 ② 段を ☑ しても開いた段の表を閉じない ③ 窓の見出しの右に「決定」(× で閉じても選んだ物はそのまま)
+ */
+const PICK_KEEP = flag("veilPickKeep");
 /** この手の窓で、完成の狙いの候補にある MOD を窓から選んだ物 (置き石でなくてもタグに出す = 窓で選んだ物は必ずタグに出る) */
 const pickedHere = ref<Aim[]>([]);
 const sameMod = (x: Aim, a: Aim): boolean => { const d = s.data.value; return !!d && sameAimMod(d, x, a); };
@@ -45,7 +50,7 @@ const tags = computed(() => (props.chosen ?? []).filter((c) => c.extra || picked
 const isChosen = (modId: string): boolean => tags.value.some((c) => sameMod(c.aim, { modId, tier: c.aim.tier }));
 function dropTag(a: Aim): void { pickedHere.value = pickedHere.value.filter((p) => !sameMod(p, a)); emit("drop", a); }
 const MODES = computed((): Array<{ k: BoneMode; label: string }> => [
-  { k: "reveal", label: tr("発現 (選んだ MOD が出れば当たり)", "Reveal (a hit if a picked mod shows up)") },
+  { k: "reveal", label: PICK_KEEP ? tr("発現", "Reveal") : tr("発現 (選んだ MOD が出れば当たり)", "Reveal (a hit if a picked mod shows up)") },
   { k: "free", label: tr("狙い無し (発現させて、出た MOD は外れ)", "No target (reveal it; the mod counts as a miss)") },
   { k: "keep", label: tr("未発現 (未発現のまま付ける)", "Unrevealed (leave it unrevealed)") },
 ]);
@@ -87,6 +92,7 @@ function pick(a: Aim): void {
         <input type="radio" class="shrink-0" :class="big ? 'size-5' : ''" :checked="mode === m.k" @change="($event.target as HTMLInputElement).checked = mode === m.k; onMode(m.k)" />
         <span class="min-w-0 break-words">{{ m.label }}</span>
       </label>
+      <p v-if="PICK_KEEP && m.k === 'reveal'" data-tree-hand-veil-use class="break-words rounded border border-amber-400/50 bg-amber-950/40 px-2 py-1 text-[12px] font-semibold text-amber-200" :class="big ? '' : 'ml-5'">{{ tr("使用用途: ブロッキング等で使用 (選んだ MOD が出れば当たり)", "Use: for blocking, etc. (a hit if a picked mod shows up)") }}</p>
       <template v-if="mode === m.k && m.k !== 'keep'">
         <label data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
           <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="!!echo" @change="emit('echo', ($event.target as HTMLInputElement).checked)" />
@@ -115,10 +121,10 @@ function pick(a: Aim): void {
   </div>
   <!-- エミュの「このベースに付く MOD」の重ね窓と同じ枠 (CraftStage.vue の ModalShell と同じ大きさ、スマホは画面いっぱい) と同じ表 (S-38) -->
   <ModalShell :open="picking" rec="tree-veil-mods" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="MULTI ? tr('閉じる', 'Close') : tr('閉じる (選ばない)', 'Close (pick nothing)')" width="w-[75%] h-[75%] max-[48rem]:h-auto" full-on-phone body-class="px-3 pb-3" @close="picking = false">
-    <template #header><span class="g-sec-sub max-[48rem]:hidden">{{ plain ? tr('狙いに足す MOD (段の「狙う」で当たりに)', 'Mod to target (use Target on a tier)') : tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>
+    <template #header><button v-if="PICK_KEEP && MULTI" type="button" data-tree-hand-veil-decide class="g-btn sm order-last ml-auto" @click="picking = false">{{ tr("決定", "Done") }}</button><span class="g-sec-sub max-[48rem]:hidden">{{ plain ? tr('狙いに足す MOD (段の「狙う」で当たりに)', 'Mod to target (use Target on a tier)') : tr('発現で選ぶ MOD (段の「発現で選ぶ」で当たりに)', 'Mod to pick when revealing (use Pick on a tier)') }}</span></template>
     <div data-tree-hand-veil-pick>
       <ModTable
-        overlay :data="s.data.value" :item="item"
+        overlay :data="s.data.value" :item="item" :close-after="PICK_KEEP && MULTI ? '[data-rec=&quot;aim-decide&quot;]' : undefined"
         :share="shares.shareOf" :tier-share="shares.tierShareOf" :row-dim="dimRow" :tier-dim="dimTier" :hide-dim="MOD_HIDE" :row-title="shares.rowTitle" :tier-title="shares.tierTitle" :share-title="shares.shareTitle"
         :share-head="shares.shareHead.value" :tone="shares.heldCands.value ? 'sky' : 'amber'" :section-late="shares.sectionLate"
       >
