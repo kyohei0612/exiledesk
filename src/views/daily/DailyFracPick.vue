@@ -42,7 +42,10 @@ const FROMS: Array<{ k: StartFrom; title: [string, string]; sub: [string, string
 /** 1 段目の文 (D-37l、11-09 夜にオーナーの言葉で言い直した)。細かい文 (FROMS の sub) は押す物の説明に */
 const SHORT: Record<StartFrom, { title: [string, string]; sub: [string, string] }> = {
   fractured: { title: ["フラクチャー付きのレアから", "From a fractured rare"], sub: ["1 MOD をフラクチャーした状態から始める", "Start with one mod already fractured"] },
-  four: { title: ["ベースから", "From the base"], sub: ["MOD の無い品から始める。フラクチャーは選んだ MOD が必ず付き、費用は 3 回に 1 回成功 (33%) として数える", "Start with no mods. Fracturing always fixes the chosen mod; its cost counts as 1 success in 3 tries (33%)"] },
+  four: { title: ["ベースから", "From the base"], sub: flag("sureFracAll")
+    // D-03f (スイッチ sureFracAll): 費用はフラクチャーまでに使った物全部の 3 倍
+    ? ["MOD の無い品から始める。フラクチャーは選んだ MOD が必ず付き、費用はここまでに使った物全部を 3 回に 1 回成功 (33%) として数える", "Start with no mods. Fracturing always fixes the chosen mod; everything spent up to it counts as 1 success in 3 tries (33%)"]
+    : ["MOD の無い品から始める。フラクチャーは選んだ MOD が必ず付き、費用は 3 回に 1 回成功 (33%) として数える", "Start with no mods. Fracturing always fixes the chosen mod; its cost counts as 1 success in 3 tries (33%)"] },
 };
 /**
  * 2 段目の MOD の行はカードと同じ並び (D-37l、11-09 夜オーナー「完成と並びが一致しない」)。カード (StageItemCard の rowGroup 無し) の並べ方の写し:
@@ -106,7 +109,7 @@ watch(peek, (id) => {
         <!-- 上の説明も下と同じ注意書きの枠で (D-37j、11-12 オーナー「を注意書きで表示させてくれ」。「MOD の無い品から始める」は外した) -->
         <p v-if="fourOnly && flag('dailyNoFracNote')" class="daily-frac-none-note daily-frac-top-note" data-daily-frac-four-note role="note">
           <span aria-hidden="true">⚠</span>
-          <span>{{ tr("下記で選んだ MOD が、", "The mod you pick below ") }}<b>{{ tr("フラクチャーの時に必ず付与されます。", "is always applied when you fracture.") }}</b>{{ tr("費用は 3 回に 1 回成功 (33%) として数えます。", " Its cost counts as 1 success in 3 tries (33%).") }}</span>
+          <span>{{ tr("下記で選んだ MOD が、", "The mod you pick below ") }}<b>{{ tr("フラクチャーの時に必ず付与されます。", "is always applied when you fracture.") }}</b>{{ flag("sureFracAll") ? tr("費用は、フラクチャーまでに使った物全部を 3 回に 1 回成功 (33%) として数えます。", " Everything spent up to the fracture counts as 1 success in 3 tries (33%).") : tr("費用は 3 回に 1 回成功 (33%) として数えます。", " Its cost counts as 1 success in 3 tries (33%).") }}</span>
         </p>
         <p v-else-if="fourOnly" class="mb-3 text-[13px] opacity-70" data-daily-frac-four-note>{{ tr(...SHORT.four.sub) }}</p>
         <ul class="daily-frac-list" :aria-label="tr('フラクチャー予定の MOD', 'Mod to fracture')">
