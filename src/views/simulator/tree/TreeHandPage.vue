@@ -40,10 +40,14 @@ function pick(hand: Hand, kind: HandKind, aims: Aim[], pre: string | null, only:
       <button type="button" class="rounded border px-3 py-1" :class="asHeld ? 'border-violet-400 bg-violet-400/15 text-violet-200' : 'border-white/15 text-white/70'" :aria-pressed="asHeld" @click="asHeld = true">{{ (asHeld ? "● " : "") + tr("持つ (もう 1 つ予見で見る)", "Hold (foresee one more)") }}</button>
       <span v-if="asHeld" class="text-[12px] text-violet-200/80">{{ tr("前の持つ手でどれも出なかった人が、この手の予見を見て、狙いが出たら打つ", "Players with no hit from the earlier held crafts foresee this one and use it on a hit") }}</span>
     </div>
-    <div v-if="skipOk" class="mb-2 flex flex-wrap items-center gap-2 text-[13px]" data-tree-chaos-skip>
+    <TreeHandShelf :box-id="boxId" :current="current" @pick="pick" @clear="emit('clear')" @close="emit('close')" @aim="emit('aim')">
+      <!-- カオススパムまでスキップは MOD 一覧の下、カレンシーを持ったら消える (S-22f、11-16 オーナー「スパムスキップはモッド一覧の下に表示。カレンシーもったら消えるでおk」) -->
+      <template #below-mod>
+    <div v-if="skipOk" class="flex flex-col items-start gap-1 text-[13px]" data-tree-chaos-skip>
       <button type="button" class="g-btn sm" :title="tr('変成 → 増強 → 王者を狙い無しで置き、消去 (全部消えてよい) の結果の箱まで木を組む (1 つ戻すで戻せる)', 'Place Transmutation → Augmentation → Regal with no target, then Annulment (any mod may go), and build the tree up to its result boxes (undo restores it)')" @click="emit('skip')">{{ tr("カオススパムまでスキップ", "Skip to chaos spam") }}</button>
       <span class="text-[12px] text-[var(--c-muted,#a99)]">{{ tr("変成 → 増強 → 王者 → 消去 まで自動で組む", "Builds Transmutation → Augmentation → Regal → Annulment for you") }}</span>
     </div>
-    <TreeHandShelf :box-id="boxId" :current="current" @pick="pick" @clear="emit('clear')" @close="emit('close')" @aim="emit('aim')" />
+      </template>
+    </TreeHandShelf>
   </ModalShell>
 </template>
