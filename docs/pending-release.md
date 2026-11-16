@@ -13,6 +13,7 @@
 | シミュの木: 普段の 100 人回しは押すたびに新しい乱数 (S-70c、スイッチ無し。デイリーは同じ乱数のまま) | 823e155aa | シミュレーター: 「100 人回す」を押すたびに違う乱数で回すようにしました (デイリーは今までどおり同じ乱数です) | Simulator: each press of "Run 100" now uses a new random seed (the daily challenge still uses the same seed) |
 | 段の表: 付かない段を隠す表で T1〜T3 が全部隠れた MOD は、残りの上から 3 段を出す (U-34、スイッチ無し = 不具合の直し。ふつうの表は今のまま) | 9456d80f5 | シミュレーター: 「狙いの MOD を足す」の窓で MOD を開いた時、付く段が「もっと見る」の中に全部隠れて押せる段が無く見えていたのを直しました | Simulator: in the "Add a target mod" window, opening a mod now shows the tiers you can pick right away (they were all hidden under "Show more") |
 | シミュの木: 「適正」の間に出ている数と同じアイテムレベルを打っても適正を外す (S-01c、スイッチ無し = 不具合の直し、次の出しでそのまま入る) | f3080268c | シミュレーター: アイテムレベルの欄に今出ている数と同じ数を打った時も、その数で決まるようにしました (前は「適正」のままで、狙いを足すと別のレベルに変わっていました) | Simulator: typing the same item level that Fit is showing now locks that level too (before, Fit stayed on and the level changed when you added targets) |
+| シミュの木: 上の帯を今の幅のまま 2 行に (1 行目 = 手順の 1〜4 と割合の札、2 行目 = 残りを小さく左詰め、横の送り棒なし) (S-94k、スイッチ `barTwoRows`、見た目 OK (11-16 23 時台「おｋ全部準備でおｋ」)) | cf5090b7f (行 288cfcc82) | シミュレーター: 上のボタンの帯を 2 行に分け、100 人回した後もボタンが右で切れずに全部見えるようにしました | Simulator: the top toolbar is now split into two rows, so no buttons get cut off on the right after running 100 crafts |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
