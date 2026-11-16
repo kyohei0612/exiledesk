@@ -15,6 +15,7 @@ import { flag } from "../../web/release-flags";
 import { newJudgeNow, setJudgeDay } from "./daily-judge-day";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
+import { tidyJunk } from "../simulator/tree/tree-hand-plan";
 import { NO_FRAC, fillTopicDoc } from "./daily-aims";
 import { lowHitOf } from "./daily-hit";
 import type { GenAim } from "./daily-gen";
@@ -135,6 +136,7 @@ export function runCost(data: PatchData, topic: { base: string; ilvl: number; ai
   if (doc.base !== topic.base || (frac && !topic.aims.some((a) => a.modId === frac))) return null;
   doc.itemLevel = topic.ilvl;
   fillTopicDoc(doc, topic.aims, frac ?? NO_FRAC, doc.start?.from === "four" ? "four" : "fractured", topic.quality); // 始め方は提出の木のまま (D-37j)。完成形の品質はお題から (D-03d)
+  tidyJunk(doc, true, data); // 画面の木と同じ整理を 1 回 (組み直しの後に残る打てない先への ↩・つなぎを画面と同じに外す、D-35b 11-17)
   markMet(data, doc, topic.aims, topic.quality); // 完成形と同じ形の箱は完成 (D-35b ②、挑戦の木と同じ)
   if (unmetDone(data, doc, topic.aims, topic.quality).length) return null;
   return runShown(withStartCost(runTree(data, doc, { n: RUN_N, seed: topic.seed, price: runPrice(price), startCost: 0, perBox: !!topic.perBox, doneOk: doneOkOf(data, topic.aims, topic.quality) }), 0));
