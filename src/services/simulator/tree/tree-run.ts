@@ -271,7 +271,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     marks = goalMarks(data, doc, at, before, r.item, marks);
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, aimed);
     // ☑ した狙いが低いティアで付いた人は、結果の箱へ行かずにここで止まる = 予期せぬ狙い MOD (S-33g、スイッチ lowTierBox。使った物は数える)
-    const lt = oc ? lowTierStopOf(data, doc, b, oc, r.item) : null;
+    const lt = oc ? lowTierStopOf(data, doc, b, oc, r.item, before) : null;
     if (lt) { for (const [k, n] of spent) use(k, n); return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ltAt: at, why: { reason: lt.why, short: lt.why, item: r.item } }); }
     const next = oc ? outBoxOf(data, doc, b, oc, r.item) : null;
     // 予見で当たり以外が見えた人: 手を使わず、アイテム・☑・費用は持つ前のまま、まとめたハズレ箱の手へ (S-39)
