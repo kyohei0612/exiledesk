@@ -6,15 +6,14 @@ import { foldMisses } from "./tree-foresee";
 import type { PatchData } from "../../craft-stage/engine";
 import { judgeMemo } from "./tree-judge";
 import { idleLoop, straightUp } from "./tree-judge-link";
-import { isGrayBox, junkPath } from "./tree-junk-tidy";
+import { junkPath } from "./tree-junk-tidy";
 import type { Hand, TreeDoc } from "./tree-model";
 
 /**
  * 箱 id に手 h を決めた後 (to = 人が行く箱。同じ手なら戻る S-51 で id が ↩ になった時はその行き先)。
- * had = 手を決める前にあった箱。pre (触媒の前のカタリスト) 付きの手は保存の手と打ち方が揃わないので探さない
+ * pre (触媒の前のカタリスト) 付きの手は保存の手と打ち方が揃わないので探さない
  */
-export function afterHandSet(data: PatchData | null, d: TreeDoc, id: string, to: string, h: Hand, had: ReadonlySet<string> | null, pre: string | null): void {
-  if (had && d.tidyRan) for (const b of Object.values(d.boxes)) if (!had.has(b.id) && !b.hand && !b.done && !b.split) b.tidied = true;
+export function afterHandSet(data: PatchData | null, d: TreeDoc, id: string, to: string, h: Hand, pre: string | null): void {
   if (data && !pre) linkSameFrame(data, d, id, to, h);
   foldMisses(d, id); // ヒネコラで持った手は当たり以外を 1 つのハズレ箱へ (S-39)
 }
@@ -26,7 +25,7 @@ export function afterHandSet(data: PatchData | null, d: TreeDoc, id: string, to:
 export function linkSameFrame(data: PatchData, d: TreeDoc, id: string, to: string, h: Hand): string[] {
   const j = judgeMemo(data, d), out: string[] = [];
   for (const y of Object.values(d.boxes)) {
-    if (y.id === id || y.id === to || !junkPath(y) || y.hand || y.back || y.done || y.split || y.noAutoBack || isGrayBox(y)) continue;
+    if (y.id === id || y.id === to || !junkPath(y) || y.hand || y.back || y.done || y.split || y.noAutoBack) continue;
     if (straightUp(d, y.id, to) || !j.fitsBox(y.id, id) || idleLoop(d, y.id, to, j)) continue;
     y.back = to; y.autoBack = true; y.handBack = { ...h }; delete y.merged;
     out.push(y.id);

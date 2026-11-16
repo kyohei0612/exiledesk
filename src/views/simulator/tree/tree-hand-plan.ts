@@ -289,7 +289,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const trunk = found && depthOf(d, found) > depthOf(d, id) ? found : null;
   const to = trunk ? null : found;
   if (trunk) { clearHand(d, trunk); setBack(d, trunk, id); d.boxes[trunk]!.autoBack = true; d.boxes[trunk]!.handBack = { ...h }; }
-  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; afterHandSet(data, d, id, to, h, null, pre); return id; }
+  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; afterHandSet(data, d, id, to, h, pre); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
@@ -304,7 +304,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   foldMisses(d, id);
   if (data) relinkByContent(data, d, had);
   if (data && isAnnulHand(h)) extendAnnul(data, d, [at]); // 消去は同じ枠か残り 1 MOD まで続ける (S-28g)
-  afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
+  afterHandSet(data, d, id, id, h, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
   pinDivineMisses(d);
   // 同じ中身は木に 1 箱 (S-51d): 中身の同じ手のある箱が浅い所にあればこの箱を ↩ そこへ、深い所にあればそちらを ↩ この箱へ (手が違っても)
   if (data && d.boxes[at]?.hand) foldAround(d, at, () => judgeMemo(data, d));
@@ -378,8 +378,7 @@ export function tidyJunk(d: TreeDoc, auto = false): void {
   if (addArrivedOuts(data, d).length) link();
   dropUnplayable(data, d);
   pinDivineMisses(d);
-  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main" && !auto) b.doneNow = true; }
-  d.tidyRan = true;
+  for (const b of Object.values(d.boxes)) if (b.done === "main" && !auto) b.doneNow = true;
 }
 /** 見本に ↩ 先の手を打てない人がいる自動の ↩ は外して未設定にする (止まる所を ↩ 元の箱へ、S-193) */
 function dropUnplayable(data: PatchData, d: TreeDoc): void {

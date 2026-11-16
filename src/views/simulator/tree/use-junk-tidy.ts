@@ -3,7 +3,7 @@
  * 整理はハズレ整理と最終チェックの時だけ。光る箱 = 帯の数 = 未設定の箱、未設定 0 の後は最終チェックで止まる人を送り出す箱
  */
 import { computed, ref, watch, type Ref } from "vue";
-import { guideOn, isGrayBox, tidyOn, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
+import { guideOn, tidyOn, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
 import { NOTICE_KINDS, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tidyJunk } from "./tree-hand-plan";
@@ -46,5 +46,5 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   }
   const settledOf = (b: TreeBox): boolean => guide.value && !!b.back && !!b.autoBack && !targets.value.has(b.id);
   const dimOf = (b: TreeBox): boolean => (guide.value && !targets.value.has(b.id) && !settledOf(b));
-  return { on, step, unset, guide, busy, empty, sort, shownIssues, press: (): void => { if (step.value === "tidy") void sort(); }, back: () => { paused.value = true; }, grayOf: (b: TreeBox) => isGrayBox(b), dimOf, settledOf, targetOf: (b: TreeBox) => targets.value.has(b.id), finalLit: computed(() => guide.value && raw.value === "check" && !targets.value.size) };
+  return { on, step, unset, guide, busy, empty, sort, shownIssues, press: (): void => { if (step.value === "tidy") void sort(); }, back: () => { paused.value = true; }, dimOf, settledOf, targetOf: (b: TreeBox) => targets.value.has(b.id), finalLit: computed(() => guide.value && raw.value === "check" && !targets.value.size) };
 }

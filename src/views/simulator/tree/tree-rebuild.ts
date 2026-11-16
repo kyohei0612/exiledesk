@@ -14,7 +14,7 @@ import { autoTarget, foldToTrunks, graftDecided, idleLoop, offByParent, sameHand
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan"; import { linkAllSameHi } from "./tree-same-mod-sync";
 import { extendAnnul, holdAnnul, trimAnnul } from "./tree-annul-chain";
-import { junkPath, staysGray } from "../../../services/simulator/tree/tree-junk-tidy";
+import { junkPath } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isFixedHand } from "../../../services/simulator/tree/tree-hands";
@@ -215,7 +215,6 @@ function* rebuildSteps(data: PatchData, src0: TreeDoc, stepped = false): Generat
   if (flag("treeNoAnnulAuto") && extendAnnul(data, d)) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
   fillHeldHi(d); // ヒネコラで持つ削減の「高い」の枠は既定で打たない (S-39 ②b、11-11)
   linkAllSameHi(d); // 「エッセンスと同じ MOD (同格以上)」は押していなければ既定の統合 (保存・見直しで外れていても、S-33e ⑥)
-  for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
   // 決めの無い枠の印 (open) は札の箱が今の木に無くても知らせない (データで付きえなくなった組の枠、S-65c ⑪)

@@ -38,7 +38,7 @@ import { pageZoom } from "../../../utils/zoom";
 import { fillHeldDefaults } from "./tree-held-use";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
-import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
+import { openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
 import { feedbackPage, recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
@@ -160,7 +160,7 @@ const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
 useDismiss(() => clearArm.is(), [clearBtn], clearArm.clear);
 // 白紙に戻した後は開いた時と同じ寄せ (75%・スタートを横の真ん中の一番上) へカメラも戻す (10-26 夜オーナー「ツリーのどこにあるか分からんからな」)
-function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (!flag("treeClearArm") && unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 2 回押し (1 つ戻すで戻せるので保存は聞かない、S-02b・スイッチ treeClearArm)。閉じている間は作りかけだけ 3 択
+function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (clearArm.arm()) go(); } // 2 回押し (1 つ戻すで戻せるので保存は聞かない、S-02b)
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 

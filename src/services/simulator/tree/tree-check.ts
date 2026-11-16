@@ -13,7 +13,6 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名�
 import { fractureMarks, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimsOf, handAims, sampleOf, startItemOf } from "./tree-sample";
 import type { TreeRunResult } from "./tree-run";
-import { isGrayBox } from "./tree-junk-tidy";
 import { depthRows } from "./tree-row-tops";
 import { MATCH, RESTART } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
@@ -73,7 +72,7 @@ export function unsetIssues(doc: TreeDoc): CheckIssue[] {
   const boxes = Object.values(doc.boxes), out: CheckIssue[] = [];
   for (const b of boxes) {
     if (b.split?.some((r) => !r.to)) out.push({ boxId: b.id, kind: "open", text: tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)") });
-    if (!b.hand && !b.back && !b.done && !b.split && !isGrayBox(b)) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
+    if (!b.hand && !b.back && !b.done && !b.split) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
     if (b.out === "hit" && !b.aim) out.push({ boxId: b.id, kind: "noAim", text: tr("付く MOD を選んでいない", "No mod picked for this hit") });
   }
   if (!boxes.some((b) => b.done === "main")) out.push(...noDoneMarks(doc));

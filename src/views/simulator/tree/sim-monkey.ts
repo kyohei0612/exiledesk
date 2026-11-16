@@ -42,7 +42,7 @@ import { DEV_BUILD, flag } from "../../../web/release-flags";
 import { isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
 import { modText } from "../../../i18n/lang";
 import { afterQualityOf, alignEssenceAims, applyPick, autoCatOf, hitChoicesOf, holdLinks, kindOf, needAimOf, onlyOf, planPick, preFillOf, shelfKeysOf, tidyJunk, type PickOpt } from "./tree-hand-plan";
-import { isGrayBox, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
+import { tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
 import { useTree } from "./use-tree";
 import { boxTagsOf, chosenMod, treeRowTags } from "./tree-row-tags";
 import { fixedValues } from "./tree-fixed-values";
@@ -95,7 +95,7 @@ export function installSimMonkey(): () => void {
     },
     addable(): Array<{ id: string; out: string; needAim: boolean; rarity: string | null }> {
       return Object.values(t.doc.value.boxes)
-        .filter((b) => !b.hand && !b.back && !b.done && !b.split && !isGrayBox(b))
+        .filter((b) => !b.hand && !b.back && !b.done && !b.split)
         .map((b) => { const smp = sample(b.id); return { id: b.id, out: b.out, needAim: needAimOf(t.doc.value, b.id, smp?.note), rarity: smp?.item.rarity ?? null }; });
     },
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
@@ -209,7 +209,7 @@ export function installSimMonkey(): () => void {
     tidy() { t.edit(tidyJunk); return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value) }; },
     /** 木を開き終えたか (開いている間は木を変えない、S-196) */
     ready() { return !t.loading.value; },
-    tidyState() { return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value), gray: Object.values(t.doc.value.boxes).filter(isGrayBox).map((b) => b.id) }; },
+    tidyState() { return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value), gray: [] as string[] }; },
     setDone(id: string, on: boolean | "fail" = true) {
       const v = on === "fail" ? "fail" : on ? "main" : null;
       t.edit((d) => setDone(d, id, v));

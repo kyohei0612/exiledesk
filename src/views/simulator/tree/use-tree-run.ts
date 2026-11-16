@@ -45,21 +45,7 @@ const PACE_MS = 60;
 /** 試しの 30 人 (test) は 1 人の途中でもこの間ごとに画面へ返す (11-09 猿: 見本のアミュで 1 人 0.24 秒ずつ 30 回固まった)。100 人回しは今までどおり 1 人ずつ */
 const SLICE_MS = 30;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
-/** 1 人目の再生の速さ (前の速さの何倍か。10-25 オーナー「今の3倍速がデフォでいいな」)。3 秒とどまったら早送りの決まりは今のまま */
-const WALK_SPEED = 3;
-/** 1 人目の 1 箱の間 (ms)。長い道 (始めに戻るが多い) は全体で 20 秒ほどに縮める、最低 40ms (金の指輪は 540 箱、90ms で 49 秒かかった)。それを WALK_SPEED 倍の速さに */
-const walkMs = (len: number): number => Math.round(Math.max(40, Math.min(450, 20000 / Math.max(1, len))) / WALK_SPEED);
-/**
- * 1 人目が同じ所に 3 秒とどまったら、そこを抜けるまで早送り (10-25 オーナー「1人目沼ったら長い時間待つ」「3秒同じとこにとどまったら高速化で」)。
- * 同じ所 = 直近 3 秒の手が LOOP_BOXES 箱以内で、どの箱も平均 2 回以上通るくり返し (カオスの外れ → 親の箱、冒涜の外れ → エッセンスの結果 3 つ → 冒涜の輪など)。
- * 早送りは輪の長さによらず FAST_MS ほどで抜け、抜けたら元の速さ。一度早送りした輪にまた入ったら 3 秒待たずにすぐ早送り (10-25 オーナー)
- */
-const STAY_MS = 3000;
-// 6 では輪の箱 7 つ (オーナーのアミュの道) が入らず 4.7 分這った (11-03)。平均 2 回以上通るの決めはそのまま
-const LOOP_BOXES = 10;
-const FAST_MS = 1200;
-/** 一度早送りした輪にまた入った時の早送りの長さ (見たことのある輪なので短く) */
-const FAST_AGAIN_MS = 400;
+/** 1 人目の 1 箱の間の元 (ms)。1 人目は 1 箱 20ms = この 1.5 倍の速さ (S-72d) */
 const FRAME_MS = 30;
 
 /** 回す時の値段 (相場は高貴建て → 神に直す) は services の run-price 1 か所 (デイリーの検算と同じ数え方) */
@@ -69,8 +55,8 @@ export { runPrice };
  * price は相場のまま (高貴建て、priceOfKey と同じ形)。神に直すのは runPrice。入れた画面が出る時に null に戻す
  */
 export type TreeRunRig = { seed: number; price: (key: string) => number; startCost?: number; perBox?: boolean; /** 完成の箱に着いた人の品を完成に数えてよいか (S-05b、回しの doneOk へそのまま渡す。無ければ全員完成) */ doneOk?: TreeRunOpts["doneOk"] };
-/** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・1 箱の間 ms・通った箱・早送り中か)。PC の木とスマホの全体図が同じ物を描く */
-export type TreeRunWalk = { box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean };
+/** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・1 箱の間 ms・通った箱)。PC の木とスマホの全体図が同じ物を描く */
+export type TreeRunWalk = { box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string> };
 export const treeRunRig = shallowRef<TreeRunRig | null>(null);
 /**
  * _onHalt = 前の「止まった人が出て止めた時 (その箱へ寄る)」。11-07 から止めずに最後まで回すので呼ばない (S-205 ③)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ)。
@@ -136,56 +122,21 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
       if (my !== token) return;
       const p1 = firstOf.p!;
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
-      // 最初から早送りの 1.5 倍 = 1 箱 20ms (長い道で今の方が速ければそのまま)。早送り (輪で 3 秒とどまったら) は無し (S-72d、スイッチ walkFast。
-      // 11-16 オーナー「100人まだ遅いな。最初からマックス早送りの1.5倍かな　早送りもういらんしな」)
-      const fastAll = flag("walkFast");
-      // 長い道は早送りが無い分、歩き全体を 20 秒の 1.5 倍の速さ (約 13 秒) に収める (1 箱の間は描き直しより短くてよい、下で時間どおりに進む)
-      const ms = fastAll ? Math.min(Math.round(FRAME_MS / 1.5), 20000 / 1.5 / Math.max(1, path.length)) : walkMs(path.length);
+      // 最初から一番速く = 1 箱 20ms、長い道は歩き全体を約 13 秒 (20 秒の 1.5 倍の速さ) に収める。輪の早送りは無し (S-72d)
+      const ms = Math.min(Math.round(FRAME_MS / 1.5), 20000 / 1.5 / Math.max(1, path.length));
       // 通った箱 (足跡)。全体表示の小さい倍率で速く進んでも、どこを通ったか残る (10-22 オーナー「機能してる？」、光る枠だけでは見えなかった)
       const trail = new Set<string>();
-      const stayN = Math.ceil(STAY_MS / ms);
-      // since = 元の速さで進み始めた手 (早送りの後は 3 秒数え直す)
-      let since = 0;
-      /** 一度早送りした輪 (箱の組) */
-      const known: Set<string>[] = [];
       const w0 = performance.now();
       for (let i = 0; i < path.length && !skip; i++) {
         trail.add(path[i]!.box);
-        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail), fast: false };
+        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail) };
         onWalk(path[i]!.box, i);
         await new Promise((res) => setTimeout(res, ms));
         if (my !== token) return;
-        if (fastAll) {
-          // 描き直しが 1 箱の間に追いつかない時は、時間どおりの所まで進む (飛ばした箱も足跡に残す)。前は描くたびに遅れ、オーナーの木 (6,849 箱) で 1 箱 30〜130ms に落ちていた
-          const at = Math.min(path.length, Math.floor((performance.now() - w0) / ms));
-          for (let k = i + 1; k < at; k++) trail.add(path[k]!.box);
-          if (at > i + 1) i = at - 1; // 次は at 番目の箱 (ループの i++ の後)
-          continue;
-        }
-        // 一度早送りした輪にまた入ったら (今の箱と次の箱がその輪の箱)、3 秒待たずにすぐ早送り (10-25 オーナー「同じルートまた来たら早送りでいいな 今毎回3秒考えてるでしょ」)
-        const again = i + 1 < path.length ? known.find((L) => L.has(path[i]!.box) && L.has(path[i + 1]!.box)) : undefined;
-        let stay: Set<string>;
-        if (again) stay = again;
-        else {
-          if (i - since + 1 < stayN) continue;
-          stay = new Set(path.slice(i - stayN + 1, i + 1).map((v) => v.box));
-          if (stay.size > LOOP_BOXES || stay.size * 2 > stayN) continue;
-        }
-        let j = i + 1;
-        while (j < path.length && stay.has(path[j]!.box)) j++;
-        const n = j - 1 - i;
-        // 覚えた輪を通り抜けるだけ (1 手) は早送りしない
-        if (!n || (again && n < 2)) continue;
-        if (!again) known.push(stay);
-        const frames = Math.max(1, Math.min(Math.round((again ? FAST_AGAIN_MS : FAST_MS) / FRAME_MS), n));
-        for (let f = 1; f <= frames && !skip; f++) {
-          const at = i + Math.round((n * f) / frames);
-          walk.value = { box: path[at]!.box, step: at + 1, total: path.length, cost: path[at]!.cost, ms: FRAME_MS, trail: new Set(trail), fast: true };
-          await new Promise((res) => setTimeout(res, FRAME_MS));
-          if (my !== token) return;
-        }
-        i = j - 1;
-        since = j;
+        // 描き直しが 1 箱の間に追いつかない時は、時間どおりの所まで進む (飛ばした箱も足跡に残す)。前は描くたびに遅れ、オーナーの木 (6,849 箱) で 1 箱 30〜130ms に落ちていた
+        const at = Math.min(path.length, Math.floor((performance.now() - w0) / ms));
+        for (let k = i + 1; k < at; k++) trail.add(path[k]!.box);
+        if (at > i + 1) i = at - 1; // 次は at 番目の箱 (ループの i++ の後)
       }
       walk.value = null; walking = false;
       raw.value = f0.done ? f0.value : last;

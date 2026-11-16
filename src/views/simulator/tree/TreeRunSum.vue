@@ -14,7 +14,7 @@ import { flag } from "../../../web/release-flags";
 const IDLE_HOVER = flag("treeTrim");
 
 /** halted = 止まった人が出て途中で止めた (何人目)。walk = 1 人目が進んでいる所 */
-defineProps<{ result: TreeRunResult | null; running: boolean; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number; fast: boolean } | null; /** 穴チェックの走行の結果 (費用を出さず人数だけ) */ test?: boolean; /** 回す人数 (回す前の文。スマホは 10 人 = S-94e) */ n?: number }>();
+defineProps<{ result: TreeRunResult | null; running: boolean; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number } | null; /** 穴チェックの走行の結果 (費用を出さず人数だけ) */ test?: boolean; /** 回す人数 (回す前の文。スマホは 10 人 = S-94e) */ n?: number }>();
 const shown = defineModel<boolean>("shown", { required: true });
 const report = defineModel<boolean>("report", { required: true });
 const emit = defineEmits<{ go: [id: string]; skip: [] }>();
@@ -39,8 +39,6 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
       <!-- 回す前は「—」を並べず言葉で (壊れて見えた、11-03 オーナー「A でおｋ」、S-70b) -->
       <template v-else>{{ tr(`${n ?? RUN_N} 人: まだ回していない`, `${n ?? RUN_N} runs: not run yet`) }}</template>
     </span>
-    <!-- 同じ所に 3 秒とどまって早送りしている間だけ見える (場所は取ったまま、帯が揺れないように) -->
-    <span v-if="walk && !flag('walkFast')" :data-tree-run-fast="walk.fast ? '' : undefined" class="shrink-0 rounded bg-amber-400/20 px-1.5 text-[11px] font-bold text-amber-200" :class="walk.fast ? '' : 'invisible'" :title="tr('同じ所に 3 秒とどまったので、抜けるまで早送り', 'Stayed in one place for 3 s, fast-forwarding until it moves on')">{{ tr("▶▶ 早送り", "▶▶ Fast") }}</span>
     <button v-if="walk" type="button" data-tree-run-skip :class="MINI" :title="tr('1 人目を見ずに残りを回す', 'Skip run 1 and play the rest')" @click="emit('skip')">{{ tr("飛ばす", "Skip") }}</button>
     <button v-for="[id, n] in running ? [] : stuck.slice(0, 1)" :key="id" type="button" data-tree-run-stuck-sum class="shrink-0 whitespace-nowrap rounded-full bg-rose-700/90 px-2 text-[12px] font-bold text-white hover:bg-rose-600" :title="tr('止まった箱へ寄る', 'Go to the stuck box')" @click="emit('go', id)">{{ tr(`止まり ${result?.stuck ?? n} 人`, `${result?.stuck ?? n} stuck`) }}</button>
     <!-- 沼った場所 = 上限に届いて止まった人。押すとその人たちが一番回っていた箱へ (loopAt、青枠の箱と同じ。S-72) -->
