@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_99621891-bbda-462c-b5c4-0abb0c765f8e (121 代目、Opus 5.5、11-15 夜に入れ替え。120 = local_b04e70b4 が 2,39x 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black121.md・引き継ぎ = black120.md の一番上) | 司令塔・振り分け・順番 |
+| ブラック | local_76d07adb-8872-46c6-8718-1ca5264eef18 (122 代目、Opus 5.5、11-16 朝に入れ替え。121 = local_99621891 が 2,460 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black122.md・引き継ぎ = black121.md の一番上) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_6ca63c0f-ac2e-420a-a739-5de55fa84760 (27、11-15 夜にブラック 121 が立てた。26 = local_da35e386 は済みでアーカイブ。頼み = 共有 local_41371db6…/progress/daily-lead27-brief.md、進み = 同 daily-lead27.md、記録 = progress/daily-lead27-run.log) | 今: 確定フラクチャー (b) の費用を「フラクチャーまでの全部 ×3」に替え、過去のお題も数え直す件の調べと案 (オーナー 11-15「１で」)。作るのはオーナーの OK の後。毎日の見張り (roll / close) は予定のタスク側 |
 | 最終チェック長 | local_d6fa4b95-bbd9-4a80-9c64-d4ff36bd115a (20、11-15 夕にブラック 118 が立てた。19 = local_9add0a56 はアーカイブ。記録 = progress/release-next20-run.log) | 今: 0.1.742 (デイリーの挑戦済みの直し D-56b だけ) を出し終えた。本番は 0.1.742 |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
