@@ -10,11 +10,14 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { sameHand, type Aim, type Hand, type HandKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { applyPick, holdLinks, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
+import { effectOf } from "../../../services/simulator/tree/tree-hands";
 
 /** 同じ外れに数える結果の種類 (当たり・完成への道・塞がった箱は入れない) */
 const KINDS = new Set(["junk", "junkGone", "lost", "any"]);
+/** フラクチャーで固定された箱 (フラクチャーの手の当たり = 「〜が固定された」)。兄弟枠に入れる (S-190d、11-16 オーナー「フラクチャー後の消去も兄弟判定になってない」→「おｋ」) */
+const fracHit = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; const h = b?.parent ? d.boxes[b.parent]?.hand : null; return !!b && b.out === "hit" && !!h && effectOf(h.currency) === "fracture"; };
 /** 兄弟枠に入る・写す元になれる箱 = 手・↩・完成 / 失敗が無く、人が手を消した箱 (sameOff) でもない (11-16 オーナー「自動で置いたやつを編集したり消したりするときはその枠だけで良さそうやね」) */
-const open = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && KINDS.has(b.out) && !b.hand && !b.back && !b.done && !b.sameOff; };
+const open = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && (KINDS.has(b.out) || fracHit(d, id)) && !b.hand && !b.back && !b.done && !b.sameOff; };
 
 /** id の箱と同じ外れの、まだ決めていないほかの箱 (木の並びの順)。id が決め済み・外れでなければ空 */
 export function sameJunkOf(d: TreeDoc, id: string): string[] {
@@ -22,7 +25,8 @@ export function sameJunkOf(d: TreeDoc, id: string): string[] {
   const ph = d.boxes[d.boxes[id]!.parent ?? ""]?.hand;
   if (!ph) return [];
   const out = d.boxes[id]!.out;
-  return Object.values(d.boxes).filter((o) => o.id !== id && o.out === out && open(d, o.id) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })()).map((o) => o.id);
+  const aim = d.boxes[id]!.aim?.modId ?? null; // フラクチャーで固定された箱どうしは固定された狙いも同じ物だけ
+  return Object.values(d.boxes).filter((o) => o.id !== id && o.out === out && (out !== "hit" || (o.aim?.modId ?? null) === aim) && open(d, o.id) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })()).map((o) => o.id);
 }
 
 /** 決めた手を同じ外れのほかの箱にも置く (呼ぶ側の edit の中で、元の箱に置いた後)。間に自動でつながった箱は飛ばす */

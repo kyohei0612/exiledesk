@@ -10,7 +10,7 @@ import { EST_H } from "../../../services/simulator/tree/tree-row-tops";
 import { placeTree } from "../../../services/simulator/tree/tree-place";
 import type { KeptOrder } from "../../../services/simulator/tree/tree-place-order";
 import { freezeFront } from "../../../services/simulator/tree/tree-front-path";
-import { stripFoldKey } from "../../../services/simulator/tree/tree-strip-fold";
+import { drawnUp, stripFoldKey } from "../../../services/simulator/tree/tree-strip-fold";
 import { setSigShown } from "../../../services/simulator/tree/tree-frame";
 import { flag } from "../../../web/release-flags";
 import { settleAnnul } from "./tree-shape-tag";
@@ -47,8 +47,9 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
  */
 export function tidyView(doc: Ref<TreeDoc>, measure: (id: string) => number | undefined, chipW?: (id: string) => number | undefined, kept: KeptOrder = placeKept): void {
   if (!flag("treeTidyOnDone")) return;
+  const up = drawnUp(doc.value); // 道は並べ直す前に描いていた親でたどる (控えを空にする前に。S-22g)
   kept.clear();
-  freezeFront(doc.value, kept); // (S-22g、スイッチ pathLeftCol) 今の一番進んだ道を凍らせて左の列へ (組んでいる間は凍らせ直さない)
+  freezeFront(doc.value, kept, up); // (S-22g、スイッチ pathLeftCol) 今の一番進んだ道を凍らせて左の列へ (組んでいる間は凍らせ直さない)
   settleAnnul(doc.value); // 消去の下の「形が変わる見込み」の札はここで消える (S-142l)
   if (placeTree(doc.value, boxHeightOf(measure), chipW, kept)) triggerRef(doc);
 }

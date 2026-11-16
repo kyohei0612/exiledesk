@@ -144,17 +144,25 @@ export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<
   // (S-22g) 凍らせた道 (並べ直しの時の道) が変われば数え直す
   const front = frontOf(d), memo = homeMemo.get(folds);
   if (memo && memo.front === front) return memo.m;
-  const m = new Map<string, Home>();
+  const m = homesWith(d, folds, front);
   homeMemo.set(folds, { front, m });
+  return m;
+}
+/**
+ * 描く親を求める本体。front = 凍らせた道 (S-22g)。道の箱は、道が通る親 (凍らせた道に入っている親) の下に描く
+ * (本物の親が道に入っていれば動かさない。11-16 オーナー「完成品の最終チェックもなぜか完成版より左側に作られる」→ 道は描いている親でたどる、tree-front-path の frontPath)
+ */
+function homesWith(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, front: ReadonlySet<string> | null): Map<string, Home> {
+  const m = new Map<string, Home>();
   if (!homeMoveOn()) return m;
   const hidden = stripHidden(d, folds), by = new Map<string, string[]>(), cmp = treeOrder(d);
-  // (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しで凍らせた道の箱は本物の親の下のまま (動かすと道が右の親の下へ移り、斜めに下りた)
   for (const f of folds.values()) if (f.link) for (const a of f.mids) { const t = d.boxes[a]?.back; if (t && d.boxes[t]) by.set(t, [...(by.get(t) ?? []), a]); }
   for (const [t, as] of by) {
     const T = d.boxes[t]!;
-    if (!T.parent || t === "start" || hidden.has(t) || front?.has(t)) continue;
-    // 時刻は見ず、同じ段から指す中で木の並びの一番左の場所の親 (本物の場所が一番左なら動かさない)
-    const via = [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp)[0];
+    if (!T.parent || t === "start" || hidden.has(t)) continue;
+    const same = [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp);
+    // 時刻は見ず、同じ段から指す中で木の並びの一番左の場所の親 (本物の場所が一番左なら動かさない)。凍らせた道の箱は道が通る親の場所
+    const via = front?.has(t) ? same.find((a) => front.has(d.boxes[a]!.parent!)) : same[0];
     if (!via || via === t) continue;
     const p = d.boxes[via]!.parent!;
     if (!p || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
@@ -164,6 +172,11 @@ export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<
   const upOf = (id: string): string | null => m.get(id)?.p ?? d.boxes[id]?.parent ?? null;
   for (const t of [...m.keys()]) { let x = upOf(t), n = 0; while (x && x !== t && n++ < 500) x = upOf(x); if (x === t) m.delete(t); }
   return m;
+}
+/** (S-22g) 道を凍らせる前の描く親 (凍らせた道を見ない = 開いた時・組んでいる間の描き方)。並べ直しの時の道はこれでたどる (tree-front-path の freezeFront) */
+export function drawnUp(d: TreeDoc): (id: string) => string | null {
+  const m = homesWith(d, stripFolds(d), null);
+  return (id) => m.get(id)?.p ?? d.boxes[id]?.parent ?? null;
 }
 /** 未設定の子 (手も行き先も無い・完成でない・通り抜けでない) */
 const unset = (c: TreeBox | undefined): boolean => !!c && !c.hand && !c.back && !c.done && c.out !== "pass" && !c.outs.length;

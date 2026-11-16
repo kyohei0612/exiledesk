@@ -15,7 +15,7 @@ export const FRONT_KEY = "\u0000front";
  * (S-22g) 一番進んだ箱までの道 (始まりからその箱までの箱)。一番進んだ箱 = 完成の印の箱 (木の並びで前の物)、
  * 無ければ道の上の 当たりの数 − 狙いが消えたの数 が一番多い箱 (同じなら深い方 → 木の並びで前の方)。11-16 オーナー「斜めになるな左から順につくってみて」
  */
-export function frontPath(d: TreeDoc): Set<string> {
+export function frontPath(d: TreeDoc, up: (id: string) => string | null = (id) => d.boxes[id]?.parent ?? null): Set<string> {
   const order = treeOrder(d), memo = new Map<string, [number, number]>();
   /** [当たり − 狙いが消えた, 深さ] */
   const score = (id: string): [number, number] => {
@@ -38,13 +38,14 @@ export function frontPath(d: TreeDoc): Set<string> {
     }
   }
   const path = new Set<string>();
-  for (let x = best ? d.boxes[best] : undefined, n = 0; x && n < 500; x = x.parent ? d.boxes[x.parent] : undefined, n++) path.add(x.id);
+  // 道は描いている親でたどる (up。合流した箱は本物の親でなく、開いた時・組んでいる間に描いている親 = 組んだ側。11-16 オーナー「完成品の最終チェックもなぜか完成版より左側に作られる」→「おｋ」)
+  for (let x = best ? d.boxes[best] : undefined, n = 0; x && n < 500; n++) { if (path.has(x.id)) break; path.add(x.id); const u = up(x.id); x = u ? d.boxes[u] : undefined; }
   return path;
 }
 
-/** 並べ直しの瞬間 (tidyView) に今の道を控えへ凍らせる。控えを空にする (木を開いた時) と一緒に忘れる */
-export function freezeFront(d: TreeDoc, kept: KeptOrder): void {
-  if (flag("pathLeftCol")) kept.set(FRONT_KEY, [...frontPath(d)]);
+/** 並べ直しの瞬間 (tidyView) に今の道を控えへ凍らせる。控えを空にする (木を開いた時) と一緒に忘れる。up = 描いている親 (tree-strip-fold の drawnUp) */
+export function freezeFront(d: TreeDoc, kept: KeptOrder, up?: (id: string) => string | null): void {
+  if (flag("pathLeftCol")) kept.set(FRONT_KEY, [...frontPath(d, up)]);
 }
 
 /** 控えの中身に凍らせた道以外があるか (凍らせた道だけの控えは「空」= 開いた・並べ直しの時と同じに扱う) */
