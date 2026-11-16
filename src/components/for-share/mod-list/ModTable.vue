@@ -148,9 +148,11 @@ watch(expanded, () => { moreOpen.value = null; });
 function tierView(key: string, r: ListRow): { shown: ListTier[]; rest: number; forced: boolean } {
   const all = tiersOf(r);
   if (!TIER_MORE) return { shown: all, rest: 0, forced: false };
-  const deep = all.filter((t) => t.tier > SHOWN_TIERS);
+  // 付かない段を隠す表 (hideDim) で T1〜T3 が全部隠れた時は、残った段の上から 3 段を出す (U-34、11-16)
+  const top = all.some((t) => t.tier <= SHOWN_TIERS) ? all.filter((t) => t.tier <= SHOWN_TIERS) : all.slice(0, SHOWN_TIERS);
+  const deep = all.filter((t) => !top.includes(t));
   const forced = deep.some((t) => props.tierOn?.(r, t) || isJumpTier(key, t.modId ?? r.id, t.rank));
-  return { shown: forced || moreOpen.value === key ? all : all.filter((t) => t.tier <= SHOWN_TIERS), rest: deep.length, forced };
+  return { shown: forced || moreOpen.value === key ? all : top, rest: deep.length, forced };
 }
 /** もっと見る / たたむ。押したボタンは画面の同じ所に残す (U-24) */
 function toggleMore(key: string, e: Event): void {
