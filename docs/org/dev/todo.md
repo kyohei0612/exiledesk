@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_76d07adb-8872-46c6-8718-1ca5264eef18 (122 代目、Opus 5.5、11-16 朝に入れ替え。121 = local_99621891 が 2,460 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black122.md・引き継ぎ = black121.md の一番上) | 司令塔・振り分け・順番 |
+| ブラック | local_5406abd7-25b3-47de-97ba-34e599776bd4 (123 代目、Opus 5.5、11-16 午後に入れ替え。122 = local_76d07adb が 2,390 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black123.md・引き継ぎ = black122.md の一番上) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_6ca63c0f-ac2e-420a-a739-5de55fa84760 (27、11-15 夜にブラック 121 が立てた。26 = local_da35e386 は済みでアーカイブ。頼み = 共有 local_41371db6…/progress/daily-lead27-brief.md、進み = 同 daily-lead27.md、記録 = progress/daily-lead27-run.log) | 今: 確定フラクチャー (b) の費用を「フラクチャーまでの全部 ×3」に替え、過去のお題も数え直す件の調べと案 (オーナー 11-15「１で」)。作るのはオーナーの OK の後。毎日の見張り (roll / close) は予定のタスク側 |
 | 最終チェック長 | local_d6fa4b95-bbd9-4a80-9c64-d4ff36bd115a (20、11-15 夕にブラック 118 が立てた。19 = local_9add0a56 はアーカイブ。記録 = progress/release-next20-run.log) | 今: 0.1.742 (デイリーの挑戦済みの直し D-56b だけ) を出し終えた。本番は 0.1.742 |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
@@ -13,7 +13,7 @@
 | ジン部長 | local_53278b2c-7cff-44c9-83eb-03b6f52772cb (jin-frac3、11-15 夜にブラック 120 が立てた。頼み = 共有 local_41371db6…/progress/jin-frac3-brief.md、進み = 同 jin-frac3.md、記録 = progress/jin-frac3-run.log。前の jin-cast local_047c4bca は首飾りのキャスピ fc277a259 を済ませてアーカイブ、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: フラクチャーの固定を 3 つまで (E-40、スイッチ fracture3、オーナーの言葉だけ)・冒涜で付いた元素耐性も「いずれか」の当たりに (S-10h)。開発版まで。残り = 古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_a88f38f1-dc31-487c-a67a-55dbc5aa71b6 (68、11-16 午後に 67 = local_19008a68 から引き継ぎ。頼み = 共有 local_41371db6…/progress/sim-lead68-brief.md、引き継ぎ = 同 sim-lead67.md の一番上、整理の一覧 = 同 tidy-1116-list.md) | 今: 左から木を作る (兄弟枠でまとまった箱を一番左の親の下に、オーナー 11-16) → 大改修の新旧の整理。オーナーの見た目の確かめ → 「出して」待ち |
+| シミュ部長 | local_a88f38f1-dc31-487c-a67a-55dbc5aa71b6 (68、11-16 午後に 67 = local_19008a68 から引き継ぎ。頼み = 共有 local_41371db6…/progress/sim-lead68-brief.md、引き継ぎ = 同 sim-lead67.md の一番上、整理の一覧 = 同 tidy-1116-list.md) | 今: 左から木を作る (兄弟枠でまとまった箱を一番左の親の下に、オーナー 11-16) → 大改修の新旧の整理。オーナーの見た目の確かめ → 「出して」待ち。手伝い c local_9032c5f5-ea0c-4660-b1ff-4ccf16ff89aa (シミュのチュートリアル)・手伝い d local_a8860760-739e-47a1-aa70-442201eeaf5b (骨の窓・1 人目の文 → レシピを開く時間の計測) |
 | デザイン部長 | local_3ed491bd-6a49-406c-8ed0-46ff35f6a2be (10、Opus 5.5、11-15 18 時台にブラック 119 が立てた。9 = local_7572ea36 から交代。頼み = 共有 local_41371db6…/progress/design-lead10-brief.md、進み = 同 design-lead10.md。記録 = progress/design-lead10-run.log) | 今: 済み (32aa5a12f・e59eb1ee2) → 11-15 夜にブラック 120 がアーカイブ。仕事が来たら立てる |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
