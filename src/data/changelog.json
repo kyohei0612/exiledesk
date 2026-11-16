@@ -1,5 +1,114 @@
 [
  {
+  "v": "0.1.743",
+  "date": "2026-11-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 「ベースから」始めた時のフラクチャーの費用を、フラクチャーを打つまでに使った物全部の 3 回分で数えるようにしました (11-12 からの順位の費用も同じ数え方に直しました)",
+    "en": "Daily: when you start \"From the base\", the fracture now costs three times everything you spent up to the fracture (rankings since Nov 12 were recounted the same way)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: クラフト箱には MOD が上限まで付いていない品も投稿できるようになりました",
+    "en": "Daily: you can now submit items to the Craft Box even if they don't have the maximum number of mods"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 指輪・アミュレット・ジュエルのお題で、品質 (カタリスト) も完成の条件に入るようになりました",
+    "en": "Daily: ring, amulet and jewel challenges now also require the target quality (catalyst) to complete"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターとデイリーの貼り付けで、創生の樹などドロップ限定の MOD も取り込めるようになりました",
+    "en": "Simulator and Daily: pasted items now keep drop-only mods (such as Genesis Tree mods) instead of skipping them"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターでレシピを読み込んでいる間、下の白紙の木や「未設定」が透けて見えないようにしました",
+    "en": "Simulator: while a recipe is loading, the blank tree and the \"unset\" bar no longer show through behind the loading message"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターのツリーを組みやすくしました。完成への道を左から先に組み、手を決めていない外れの箱は「完成」を押すまで隠れます。同じ外れの箱には 1 回で同じ手が入り、行き先だけの箱 (同じ枠へ・前の段へ戻る) は畳んで、手の札に乗せると行き先が光ります",
+    "en": "The craft route tree is easier to build. Routes to Done are laid out from the left first, and miss boxes you haven't decided stay hidden until you press Done. Matching miss boxes get the same craft in one go, and boxes that only point elsewhere (same frame / back to an earlier step) are folded — hover the craft label to light up where they go"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "100 人回すで、狙いの MOD が低いティアで付いた人や予期せぬ狙い MOD で止まった人は、最初から作り直します (3 回まで)。止まった理由は結果のまとめで分けて見られます。1 人目の再生も速くしました",
+    "en": "In Run 100, runs that got a target mod at too low a tier or stopped by an unexpected target mod now start over (up to 3 times). The summary shows why runs stopped. The first-run replay is faster too"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "フラクチャーの設定をまとめ、固定した MOD が違う時は箱を分けるようにしました。確定フラクチャーの費用は、フラクチャーまでに使った物を全部数えます (デイリーも)",
+    "en": "Fracture settings are in one place, and runs with different Fractured mods go to separate boxes. The cost of a guaranteed fracture now counts everything used up to the fracture (Daily too)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "火・冷気・雷の耐性を「いずれかの元素耐性」1 行で狙えるようにし、エッセンスで付いた耐性も当たりに数えます。骨の窓を簡単にし、普通の手の窓から狙いの MOD を足せます",
+    "en": "Fire, cold and lightning resistances can be targeted as one \"any elemental resistance\" row, and resistances from essences count as hits too. The bone window is simpler, and you can add a target mod from the window of a normal craft"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "古い形で保存したレシピはそのまま見られます (「古いレシピ」の印、触ると今の形で組み直し)。共有 URL は読み終えるまで「レシピ読み込み中」を出します",
+    "en": "Recipes saved in an older format open as they were (marked \"Old recipe\"; editing rebuilds them in the current format). Shared links show \"Loading recipe…\" until they finish loading"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーターとシミュレーターで、ノーマル (白) の無いジュエルは新品をマジック (MOD なし) から始めるようにしました",
+    "en": "Emulator and Simulator: jewels that have no Normal rarity now start as a fresh Magic item with no mods"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD の表で、ティアの表を開いたままカレンシーを持ち替えても閉じないようにしました。付けられる MOD が無い時は「付けられる MOD はありません」と出します。長い MOD の名前は 1 行に収め (乗せると全文)、出やすさ・ティア・Lv の数を見出しと同じ並びで右に揃えました",
+    "en": "Mod list: the tier list now stays open when you pick up a different currency. When no mod can be added, it says \"No mods can be added\". Long mod names fit on one line (hover to see the full text), and the weight, tier and level numbers line up under their headers on the right"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "文字を打つ欄・コピーする欄のほかでは、右クリックでブラウザのメニュー (コピー・検証など) が出ないようにしました",
+    "en": "Right-clicking no longer opens the browser menu (copy, inspect, etc.), except in text boxes and fields meant for copying"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの完成形の設定から品質の欄をなくし、品質を決めなくてもツリーへ進めるようにしました",
+    "en": "Simulator: the final item settings no longer ask about quality, so you can go to the tree without deciding it"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターで、狭い画面でも木の上の「戻す・やり直し・白紙・MOD 一覧」がいつも見えるようにしました。貼り付けで取り込んだ暗黙の MOD の値が変わる不具合を直しました",
+    "en": "Simulator: Undo, Redo, Clear and Mod list above the tree stay visible on narrower screens. Fixed implicit values changing when you paste an item"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターで、レシピを開いた直後に「戻す」を押すと、木と一緒に右のレシピの名前も開く前に戻るようにしました (前のまま保存して上書きしてしまうのを防ぎます)",
+    "en": "Simulator: pressing Undo right after opening a recipe now also switches the recipe name back, so saving no longer overwrites the opened recipe by mistake"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターのチュートリアルで、骨を打ち直す段の後に進めず最終チェックが通らなかったのを直しました",
+    "en": "Fixed the Simulator tutorial getting stuck after the step that uses a bone again, so the final check couldn't pass"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.742",
   "date": "2026-11-15",
   "items": [
@@ -844,48 +953,6 @@
     "area": "",
     "text": "デイリー: お題の MOD の段の下限を、どれも T3 以上に揃えました",
     "en": "Daily: the minimum tier of every challenge mod is now T3 or better"
-   }
-  ]
- },
- {
-  "v": "0.1.703",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 当たりの箱を、付いた狙いの多い順に左から並べるようにしました (偉大なる高貴なお告げの「2 つとも付いた」の箱が左端に来ます)",
-    "en": "Simulator: hit boxes are now ordered left to right by how many targets landed (the “both landed” box of the Omen of Greater Exaltation now comes first)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減のお告げの枠 (外れの MOD レベルが低い・同じ・高い) が「低い」1 つしかできなかったり、打った後の箱が前の枠へ戻れずに枠が増え続けたりしていたのを直しました",
-    "en": "Simulator: fixed Omen of Whittling frames (miss mod level lower, same or higher) where only “lower” could be made, or where a box after the whittle could not return to its earlier frame and the frames kept piling up"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 次に打つ手の窓のカードにも、削減の枠の印 (比べる相手と ▼ ＝ ▲) を出すようにしました",
-    "en": "Simulator: the cards in the next-move window now also show the whittling frame marks (the mod compared against and ▼ ＝ ▲)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木を開く時の組み直しを速くしました",
-    "en": "Simulator: trees now open faster when they are rebuilt"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: PC で木が枠の下で切れた時、「n 段目」の札が下の帯の横まで出ていたのを直しました",
-    "en": "Simulator: on PC, fixed the “Step n” labels running past the bottom of the tree into the bar below when the tree was cut off"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望: 送る要望にデイリーの名前を添えるようにしました (困った時に今日の挑戦をやり直せるよう手助けできます)",
-    "en": "Feedback: feedback you send now includes your Daily name, so we can help you restart today’s challenge if something goes wrong"
    }
   ]
  }

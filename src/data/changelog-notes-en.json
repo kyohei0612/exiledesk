@@ -1,4 +1,23 @@
 {
+  "0.1.743": [
+    "Daily: when you start \"From the base\", the fracture now costs three times everything you spent up to the fracture (rankings since Nov 12 were recounted the same way)",
+    "Daily: you can now submit items to the Craft Box even if they don't have the maximum number of mods",
+    "Daily: ring, amulet and jewel challenges now also require the target quality (catalyst) to complete",
+    "Simulator and Daily: pasted items now keep drop-only mods (such as Genesis Tree mods) instead of skipping them",
+    "Simulator: while a recipe is loading, the blank tree and the \"unset\" bar no longer show through behind the loading message",
+    "The craft route tree is easier to build. Routes to Done are laid out from the left first, and miss boxes you haven't decided stay hidden until you press Done. Matching miss boxes get the same craft in one go, and boxes that only point elsewhere (same frame / back to an earlier step) are folded — hover the craft label to light up where they go",
+    "In Run 100, runs that got a target mod at too low a tier or stopped by an unexpected target mod now start over (up to 3 times). The summary shows why runs stopped. The first-run replay is faster too",
+    "Fracture settings are in one place, and runs with different Fractured mods go to separate boxes. The cost of a guaranteed fracture now counts everything used up to the fracture (Daily too)",
+    "Fire, cold and lightning resistances can be targeted as one \"any elemental resistance\" row, and resistances from essences count as hits too. The bone window is simpler, and you can add a target mod from the window of a normal craft",
+    "Recipes saved in an older format open as they were (marked \"Old recipe\"; editing rebuilds them in the current format). Shared links show \"Loading recipe…\" until they finish loading",
+    "Emulator and Simulator: jewels that have no Normal rarity now start as a fresh Magic item with no mods",
+    "Mod list: the tier list now stays open when you pick up a different currency. When no mod can be added, it says \"No mods can be added\". Long mod names fit on one line (hover to see the full text), and the weight, tier and level numbers line up under their headers on the right",
+    "Right-clicking no longer opens the browser menu (copy, inspect, etc.), except in text boxes and fields meant for copying",
+    "Simulator: the final item settings no longer ask about quality, so you can go to the tree without deciding it",
+    "Simulator: Undo, Redo, Clear and Mod list above the tree stay visible on narrower screens. Fixed implicit values changing when you paste an item",
+    "Simulator: pressing Undo right after opening a recipe now also switches the recipe name back, so saving no longer overwrites the opened recipe by mistake",
+    "Fixed the Simulator tutorial getting stuck after the step that uses a bone again, so the final check couldn't pass"
+  ],
   "0.1.742": [
     "Daily: fixed today's challenge still showing \"Start the 1-hour challenge\" after you had already submitted or given up in another tab or on another device. It now shows as already challenged when you open the page or return to the tab."
   ],
