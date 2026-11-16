@@ -4,7 +4,11 @@
  * (自前の置き場は作らない)。段は出うる中で一番低い段 = 「その段以上」で全部の段が当たり。
  * 窓の % と灰色 (S-38) はここで引かず、エミュと同じ for-share の useHeldShares (エンジンの heldOdds) と revealPool (TreeVeilCheck)
  */
-import { revealPool, tierRankOf, unrevealedOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { anyEleMod, revealPool, tierRankOf, unrevealedOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
+import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
+import { nextEleOnly } from "../../../services/simulator/tree/tree-ele-any";
+import { withEleReuse } from "../../../services/simulator/tree/tree-ele-reuse";
 import { stepOutcomes } from "../../../services/simulator/sim-engine";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -27,5 +31,17 @@ export function revealAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item:
   const out = [...worst].map(([modId, tier]) => ({ modId, tier: goals.find((g) => g.modId === modId)?.tier ?? tier }));
   const at = (a: Aim): number => { const i = goals.findIndex((g) => g.modId === a.modId); return i < 0 ? 999 : i; };
   return out.sort((a, z) => at(a) - at(z));
+}
+
+/**
+ * 骨の発現の手の窓の ☑ = 発現で出うる MOD のうち完成の狙い (高貴の窓と同じ。置き石は TreeVeilCheck の「冒涜で発現 MOD を追加」)。
+ * 「いずれかの元素耐性」(S-10h) の狙いは番号付きの札なので MOD の照らしでは落ちる → 発現で一般の火・冷気・雷耐性が出うる時、
+ * まだ付いていない一番小さい番号を足す (発現は 1 つなので 1 本。reuse = 手の窓だけ使い回しの次の番号も ⑧)。11-16 オーナー「1 は出して」
+ */
+export function revealGoalAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, reuse: boolean): Aim[] {
+  const rev = revealAimsOf(data, doc, boxId, item, h), goals = doc.memoAims ?? [], any = goals.filter((g) => g.anyEle);
+  const out = rev.filter((a) => goals.some((g) => sameAimMod(data, g, a)));
+  if (!any.length || !rev.some((a) => anyEleMod(data, a.modId))) return out;
+  return [...out, ...nextEleOnly((reuse ? withEleReuse(data, item, any) : any).filter((a) => !aimHeldOn(data, item, a, { sameText: true })), 1)];
 }
 

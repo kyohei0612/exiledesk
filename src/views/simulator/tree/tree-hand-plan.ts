@@ -27,7 +27,7 @@ import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, drop, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { backChoicesOf } from "./use-tree-link";
-import { revealAimsOf } from "./tree-reveal-aims";
+import { revealAimsOf, revealGoalAimsOf } from "./tree-reveal-aims";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick"; import { phaseAim } from "../../../services/simulator/tree/tree-frac-dual";
 import { tr } from "../../../i18n/lang";
@@ -157,7 +157,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // 神のオーブは MOD を付けない = 当たりは無し (目標があれば以上 / 未満の 2 枝 S-202、無ければ打った後の 1 箱 S-39 ⑤b)
   if (veilKeep(h) || fracFree(doc, h) || rerollsValues(h.currency)) return [];
   // 窓の ☑ は完成の狙いだけ (高貴の窓と同じ。置き石は TreeVeilCheck の「ほかの MOD を選ぶ」、10-28 オーナー)
-  if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h).filter((a) => (doc.memoAims ?? []).some((g) => sameAimMod(data, g, a)));
+  if (veilPick(h)) return revealGoalAimsOf(data, doc, boxId, item, h, reuse); // 「いずれかの元素耐性」も (S-10h)
   const kind = kindOf(h);
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind === "essence") {
