@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_075aab01-f316-4948-adad-5ac722f6f966 (124 代目、Opus 5.5、11-16 夕に入れ替え。123 = local_5406abd7 が 2,432 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black124.md・引き継ぎ = black123.md の一番上) | 司令塔・振り分け・順番 |
+| ブラック | local_33e72b40-4eac-41e5-864e-fdbe3467cd53 (125 代目、Opus 5.5、11-16 夜に入れ替え。124 = local_075aab01 が 2,338 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black125.md・引き継ぎ = black124.md の一番上) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_384664fe-3080-40eb-8e63-6744d8701291 (28、11-16 午後にブラック 123 が立てた。頼み = 共有 local_41371db6…/progress/daily-lead28-brief.md、進み = 同 daily-lead28.md、記録 = progress/daily-lead28-run.log) | 今: お題が決まった時に #日報 の Discord へ「今日のお題」を 1 通 (オーナー 11-16)。出しの時は過去のお題の費用の数え直し。毎日の見張り (roll / close) は予定のタスク側 |
 | 最終チェック長 | local_7420a28a-dc20-4243-adac-b45460479af5 (22、11-16 夕にブラック 124 が控えで立て、19:13 に 21 = local_72a7f3aa から交代。記録 = progress/release-next22-run.log、進み = 共有 local_41371db6…/progress/release-next22.md) | 今: 待機。本番は 0.1.743 (11-16 19:14、後片付けのずれ 0) |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
