@@ -10,6 +10,7 @@ import { sureFracWhy, sureFracWhyText } from "./tree-sure-frac";
 import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
+import { OUT_WORDS } from "./tree-out-words";
 
 export interface FrameIssue { boxId: string; kind: "frameMiss" | "cantUse" | "frameDone" | "frameMix"; text: string }
 
@@ -27,8 +28,6 @@ export function cantHandOf(data: PatchData, doc: TreeDoc, id: string): string | 
   return sf ? sureFracWhyText(sf) : null;
 }
 
-const OUT_JA: Record<string, string> = { hit: "当たり", junk: "外れ", lost: "狙いが消えた", any: "打った後", junkGone: "外れが消えた" };
-const OUT_EN: Record<string, string> = { hit: "hit", junk: "miss", lost: "target lost", any: "after", junkGone: "miss removed" };
 
 export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
   const fr = frameOfDoc(data, doc), out: FrameIssue[] = [];
@@ -36,7 +35,7 @@ export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
   for (const m of fr.miss) {
     // 当たるまでの手は外れでも同じ手を打ち直すので、当たり以外の行き先は要らない
     if (!doc.boxes[m.box] || doc.boxes[m.box]!.hand?.repeat) continue;
-    const ja = OUT_JA[m.oc.out] ?? m.oc.out, en = OUT_EN[m.oc.out] ?? m.oc.out;
+    const ja = OUT_WORDS[m.oc.out]?.[0] ?? m.oc.out, en = OUT_WORDS[m.oc.out]?.[1] ?? m.oc.out; // 名前の表は tree-out-words (整理 ③-6)
     add({ boxId: m.box, kind: "frameMiss", text: m.from
       ? tr(`↩ で着く人がこの手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `Runs arriving by ↩ can end up "${en}" here with no box to go to (they stop here)`)
       : tr(`この手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `This craft can end up "${en}" with no box to go to (runs stop here)`) });

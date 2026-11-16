@@ -23,6 +23,7 @@ import { defaultCapDiv } from "./run-price";
 import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
 import { lowTierStopOf } from "./tree-low-tier";
 import { boxStreams, firstTryRun, mergeRetry, retryable, stopCounts, type RetryPart } from "./tree-run-retry";
+import { OUT_WORDS } from "./tree-out-words";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -304,11 +305,10 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
 
 /** 手の結果の名前 (止まりの文。当たりは付いた MOD の文) */
 /** 箱の呼び名「n 段目の外れ」(止まりの文の来た道。段は深さ、S-141) */
-const BOX_WORD: Partial<Record<OutKind | "start", [string, string]>> = { start: ["スタート", "start"], hit: ["当たり", "hit"], any: ["打った後", "result"], junk: ["外れ", "miss"], junkGone: ["外れが消えた", "miss removed"], lost: ["狙いが消えた", "target lost"], pass: ["品質の後", "after quality"], branch: ["分かれ目", "branch"] };
 function boxWord(doc: TreeDoc, id: string): string {
   let n = 0;
   for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++;
-  const w = BOX_WORD[doc.boxes[id]?.out ?? "start"] ?? ["箱", "box"];
+  const w = OUT_WORDS[doc.boxes[id]?.out ?? "start"] ?? ["箱", "box"]; // 名前の表は tree-out-words (整理 ③-6)
   return tr(`${n + 1} 段目の「${w[0]}」`, `step ${n + 1} "${w[1]}"`);
 }
 /**
@@ -350,9 +350,8 @@ export function stuckDetail(doc: TreeDoc, w: { item: StageItem; backs: readonly 
   const way = [...w.backs.map((id) => `↩ ${boxWord(doc, id)}`), ...(w.moved ?? []).map((id) => tr(`${boxWord(doc, id)} から移った`, `moved from ${boxWord(doc, id)}`))];
   return tr(`この人の MOD: ${mods || "無し"}${way.length ? `。来た道: ${way.join("・")}` : ""}`, `This run's mods: ${mods || "none"}${way.length ? `. Path: ${way.join(", ")}` : ""}`);
 }
-const OUT_TEXT: Partial<Record<OutKind, [string, string]>> = { junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
 function outcomeText(data: PatchData, item: StageItem, oc: { out: OutKind; hits: Aim[] }): string {
-  if (oc.out !== "hit") { const n = OUT_TEXT[oc.out]; return n ? tr(n[0], n[1]) : oc.out; }
+  if (oc.out !== "hit") { const n = OUT_WORDS[oc.out]; return n ? tr(n[0], n[1]) : oc.out; }
   const mods = [...item.prefixes, ...item.suffixes];
   const names = oc.hits.map((a) => { const t = targetsOf(data, [a]), m = mods.find((x) => isAimMod(x, t, aimOpts(data))); return m ? modText(m) : a.modId; });
   return tr(`当たり ${names.join("・")}`, `Hit ${names.join(", ")}`);

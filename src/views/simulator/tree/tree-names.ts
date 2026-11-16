@@ -16,7 +16,7 @@ import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simula
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { lowTierAimOf, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
-import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
+import { tr } from "../../../i18n/lang"; import { OUT_WORDS } from "../../../services/simulator/tree/tree-out-words"; import { flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
@@ -28,17 +28,17 @@ const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, t.doc.va
  * 色は線の色 (SimTreePage の LINE) と同じ系統: 進む = 金 / 外れ・消えた = 赤・草色・灰 / 始まり = 水色。箱 (TreeBox) とまとめた札 (TreeMergeLayer) で同じ
  */
 export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: string; icon: string }> = {
-  start: { ja: "スタート", en: "Start", c: "95,180,224", icon: "sparkles" },
-  hit: { ja: "当たり", en: "Hit", c: "224,176,96", icon: "target" },
-  junk: { ja: "外れ", en: "Miss", c: "224,112,122", icon: "x" },
-  junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },
-  lost: { ja: "狙いが消えた", en: "Target lost", c: "176,190,104", icon: "rotate" }, // 草色 (11-09、前の薄紫はヒネコラの予見の紫 S-39 ⑤ と見分けにくい)
-  any: { ja: "打った後", en: "After", c: "200,184,150", icon: "plus" },
-  pass: { ja: "品質を上げた後", en: "Quality raised", c: "200,184,150", icon: "plus" },
+  start: { ja: OUT_WORDS.start[0], en: OUT_WORDS.start[1], c: "95,180,224", icon: "sparkles" },
+  hit: { ja: OUT_WORDS.hit[0], en: OUT_WORDS.hit[1], c: "224,176,96", icon: "target" },
+  junk: { ja: OUT_WORDS.junk[0], en: OUT_WORDS.junk[1], c: "224,112,122", icon: "x" },
+  junkGone: { ja: OUT_WORDS.junkGone[0], en: OUT_WORDS.junkGone[1], c: "154,167,184", icon: "check" },
+  lost: { ja: OUT_WORDS.lost[0], en: OUT_WORDS.lost[1], c: "176,190,104", icon: "rotate" }, // 草色 (11-09、前の薄紫はヒネコラの予見の紫 S-39 ⑤ と見分けにくい)
+  any: { ja: OUT_WORDS.any[0], en: OUT_WORDS.any[1], c: "200,184,150", icon: "plus" },
+  pass: { ja: OUT_WORDS.pass[0], en: OUT_WORDS.pass[1], c: "200,184,150", icon: "plus" },
   // 分かれ目の行の箱 (打たずに分けた先。副題は行の条件、splitWhenText)
-  branch: { ja: "分かれ目の先", en: "Branch", c: "120,200,190", icon: "arrow-right" },
+  branch: { ja: OUT_WORDS.branch[0], en: OUT_WORDS.branch[1], c: "120,200,190", icon: "arrow-right" },
   // 次のエッセンス / 合金と同じ系統の MOD が前の手で付いた (エッセンスを打つ前の分かれ、S-33e。合金の時の題は headOf。11-08 オーナー「エッセンスと同じMOD　でいいと思う」)
-  blocked: { ja: "エッセンスと同じ MOD", en: "Same mod as the essence", c: "196,140,90", icon: "x" },
+  blocked: { ja: OUT_WORDS.blocked[0], en: OUT_WORDS.blocked[1], c: "196,140,90", icon: "x" },
 };
 
 /** 分かれ目の 1 行の条件の文 (画面で選べる 4 つ + 組み合わせ。空 = それ以外) */

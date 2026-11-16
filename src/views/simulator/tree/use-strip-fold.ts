@@ -7,15 +7,15 @@ import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { backLabelOf } from "./tree-fail";
 import { tr } from "../../../i18n/lang";
+import { OUT_WORDS } from "../../../services/simulator/tree/tree-out-words";
 import { foldOf, resetStripFolds, stripChains, stripFolds, stripHidden, stripOpen, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
 
-const OUT_WORD: Record<string, [string, string]> = { hit: ["当たり", "Hit"], any: ["打った後", "Result"], junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
 /** まとめた ↩ だけの箱の行 (S-142j ②、スイッチ foldEnds): 行き先ごとに「外れ ×2 → 再度挑戦 · 10 段目へ戻る」 */
 function endsLines(d: TreeDoc, ids: readonly string[]): string[] {
   const by = new Map<string, string[]>();
   for (const id of ids) { const b = d.boxes[id]; if (!b) continue; const to = backLabelOf(d, b); by.set(to, [...(by.get(to) ?? []), b.out]); }
   return [...by].map(([to, outs]) => {
-    const words = [...new Set(outs)].map((o) => tr(...(OUT_WORD[o] ?? [o, o]))).join(tr("・", " / "));
+    const words = [...new Set(outs)].map((o) => tr(...((OUT_WORDS as Record<string, readonly [string, string]>)[o] ?? [o, o])) /* 名前の表は tree-out-words (整理 ③-6) */).join(tr("・", " / "));
     return `${words}${outs.length > 1 ? ` ×${outs.length}` : ""} → ${to}`;
   });
 }
