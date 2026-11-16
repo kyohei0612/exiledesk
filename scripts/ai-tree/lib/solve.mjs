@@ -26,7 +26,7 @@ function actionsOf(M, data, r, price, cls, item, rng) {
   const aimIds = Object.values(r.aims).flatMap((a) => a.mods.map((m) => (typeof m === "string" ? m : m.id)));
   const tags = new Set(aimIds.flatMap((id) => data.mods.get(id)?.tags ?? []));
   const all = [...Object.keys(K.currency), "desecrate", "desecrate_ancient", "desecrate_gnawed", "desecrate_altered", ...Object.keys(M.ESSENCE_KEYS), ...Object.keys(M.RUNES).map((n) => `rune:${n}`), ...(r.solve?.allow ?? [])];
-  const magic = M.applyCurrency(data, item, "transmute", rng).item, rare = M.applyCurrency(data, item, "alchemy", rng).item;
+  const magic = M.applyCurrency(data, item, "transmute", rng).item, rare = M.applyCurrency(data, magic, "regal", rng).item; // 錬金は使わない (S-20d)
   // 始めが固定 1 つのレアだと打てない手 (カオスなど) もあるので、MOD を足したレアでも見る
   let full = rare;
   for (let i = 0; i < 3; i++) { const x = M.applyCurrency(data, full, "exalt", rng); if (x.applied) full = x.item; }

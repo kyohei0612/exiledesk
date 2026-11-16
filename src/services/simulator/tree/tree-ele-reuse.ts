@@ -19,10 +19,15 @@ function nth(base: Aim, modId: string, n: number, steps: readonly number[], loos
   return { ...r, modId, tier: loose, anyEle: n, eleTiers: t };
 }
 
-/** 候補 pool に「付いた数 + 1」番目の「いずれか」を足す (足す物が無ければ pool のまま) */
-export function withEleReuse(data: PatchData, item: StageItem, pool: readonly Aim[]): Aim[] {
+/**
+ * 候補 pool に「付いた数 + 1」番目の「いずれか」を足す (足す物が無ければ pool のまま)。
+ * サフィの空きは手を打った後の品で見る (after = その手の結果の品。サフィが 1 つ埋まったマジックに高貴ならレアの空き。11-16 S-10h ⑧ の直し)
+ */
+export function withEleReuse(data: PatchData, item: StageItem, pool: readonly Aim[], after?: () => readonly StageItem[] | null | undefined): Aim[] {
   const any = pool.filter((a) => a.anyEle);
-  if (!any.length || limitOf(item, "suffix") - item.suffixes.length <= 0) return [...pool];
+  if (!any.length) return [...pool];
+  const room = limitOf(item, "suffix") - item.suffixes.length > 0 || (after?.() ?? []).some((o) => limitOf(o, "suffix") > item.suffixes.length);
+  if (!room) return [...pool];
   const steps = any.map((a) => a.tier), loose = Math.max(...steps), lead = any[0]!;
   // 品に付いている「いずれか」の数 (緩い段で 1, 2, 3 番が付いているか)
   let held = 0;

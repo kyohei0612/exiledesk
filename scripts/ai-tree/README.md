@@ -31,7 +31,7 @@ node scripts/ai-tree/ai-tree.mjs trace scripts/ai-tree/recipes/pariah-ess.json -
 node scripts/ai-tree/ai-tree.mjs log --tail 20
 node scripts/ai-tree/ai-tree.mjs compare r1 r2
 node scripts/ai-tree/ai-tree.mjs play new p1 --base "Pariah Mask" --seed 3
-node scripts/ai-tree/ai-tree.mjs play use p1 alchemy
+node scripts/ai-tree/ai-tree.mjs play use p1 transmute
 node scripts/ai-tree/ai-tree.mjs play use p1 chaos --as p1-b
 node scripts/ai-tree/ai-tree.mjs play show p1
 ```
@@ -52,7 +52,8 @@ node scripts/ai-tree/ai-tree.mjs play show p1
   },
   "goal": { "life": 1, "res": 2 },
   "rules": [
-    { "if": { "rarity": "normal" }, "use": "alchemy", "note": "説明" },
+    { "if": { "rarity": "normal" }, "use": "transmute", "note": "説明" },
+    { "if": { "rarity": "magic" }, "use": "regal", "note": "錬金は使わない (S-20d)。ノーマル → レアは 変成 → 王者" },
     { "if": { "used": "annul", "min": 30 }, "restart": true },
     { "if": { "spent": true, "min": 300 }, "stop": true },
     { "if": { "aim": "life", "max": 0 }, "use": "exalt_greater", "omens": ["OmenofSinistralExaltation"] },

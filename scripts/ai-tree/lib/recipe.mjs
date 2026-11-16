@@ -20,6 +20,7 @@ export function readRecipe(path) {
 
 /** 手として打ってよいか (棚にある手と発現だけ、S-173)。棚の正は ORBS と、エッセンス・カタリスト・骨・ルーンの棚 */
 export function allowedHand(M, key, cls) {
+  if (key === "alchemy") return false; // 木に錬金の道を置かない (S-20d、11-16 オーナー「ツリーに関係する錬金は削除」)。ノーマル → レアは 変成 → 王者
   if (key === "reveal") return true;
   if (!nameOf(M, key, cls)) return false;
   return M.ORBS.some((g) => g.keys.includes(key)) || /^(essence:|j?catalyst_|desecrate|rune:)/.test(key);
