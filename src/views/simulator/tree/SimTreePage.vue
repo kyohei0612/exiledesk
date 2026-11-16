@@ -104,7 +104,8 @@ const v = new Proxy({ zoom, viewOnly, pageZ } as unknown as Flow, { get: (o, k) 
 /** 全画面 (帯のボタン。スイッチ treeTrim で外した、前は視点の持ち物) */
 const full = ref(false);
 const toggleFull = (): void => { full.value = !full.value; };
-const ONE_ROW = flag("treeTrim"); // 上の帯を全部 1 行・左詰め (戻す・白紙も)、入らない幅は折り返さず帯の中を横に送る (S-94j、スイッチ treeTrim、オーナー 11-14「全部1行で左詰めで」)
+const TWO_ROWS = flag("barTwoRows"); // 上の帯を 2 行に: 1 行目 = 手順と割合の札、2 行目 = 残りを小さく、送り棒なし (S-94k、スイッチ barTwoRows)
+const ONE_ROW = flag("treeTrim") && !TWO_ROWS; // 上の帯を全部 1 行・左詰め (戻す・白紙も)、入らない幅は折り返さず帯の中を横に送る (S-94j、スイッチ treeTrim、オーナー 11-14「全部1行で左詰めで」)
 // 猿の台本が呼ぶ口 window.__simMonkey (開発の時だけ、sim-monkey.ts)
 onBeforeUnmount(installSimMonkey());
 
@@ -386,7 +387,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <!-- 11-11 オーナー「上も余りまくってるし」「1行でいいだろこんなん」: 手順の段と下の帯を 1 行に並べる。入りきらない幅だけ帯が次の行へ折り返す (帯の basis は道具が全部見える幅 950px、帯の中は今までどおり横に送る) -->
       <TreeDailyPast /><!-- デイリーの順位から開いた木の提出した時の数 (S-104d) --><TreeOldRecipe /><!-- 古いレシピ (S-104e) -->
-      <div data-tree-head class="flex min-w-0 items-center gap-x-3 gap-y-1.5" :class="ONE_ROW ? 'flex-nowrap' : 'flex-wrap'">
+      <div data-tree-head class="flex min-w-0 items-center gap-x-3 gap-y-1.5" :class="TWO_ROWS ? 'flex-col !items-start' : ONE_ROW ? 'flex-nowrap' : 'flex-wrap'">
       <div class="flex shrink-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
         <!-- 箱の割合・100 人回しの費用はゲームが公表していない重みの目安 (U-46 の青の札、11-09 オーナー「全て洗って注意喚起」。箱ごとには付けず帯に 1 つ) -->
@@ -394,22 +395,22 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
       </div>
       <!-- 帯は 1 行 (10-26 夜オーナー「1 行で表示させてくれ」「必要なのは下段」「テストで回すと 100 人で回すは上の枠内上部でおけ」): 穴チェック・足りない所・100 人回す・結果、タブ、道具。
            幅で形を変えない (字を短くしない・隠さない)。入らない幅は帯の中を横に送る (11-08 夜オーナー「pxみじけーやつは苦労させろ精神」、S-94g)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
-      <div class="relative flex min-w-0 flex-[1_1_950px] items-center gap-1.5 text-[13px]">
+      <div class="relative flex min-w-0 items-center gap-1.5" :data-tree-bar-two="TWO_ROWS || undefined" :class="TWO_ROWS ? 'w-full flex-wrap gap-y-1 text-[12px] [&_button]:!text-[12px] [&_button]:!min-h-[26px] [&_button]:!py-0.5' : 'flex-[1_1_950px] text-[13px]'">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
         <TreeIssues v-if="jt.shownIssues.value?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="jt.shownIssues.value" :doc="doc" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" @report="reportTreeBug(doc)" /><TreeBugReport />
         <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />
         <!-- 横に送る所 (浮く窓 = 足りない所の一覧・レシピの窓は送りの外に置く。送りの中に置くと切れる) -->
-        <div data-tree-bar-scroll class="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto [scrollbar-width:thin]" :class="ONE_ROW ? 'flex-[0_1_auto]' : 'flex-1'">
+        <div data-tree-bar-scroll class="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto [scrollbar-width:thin]" :class="TWO_ROWS ? 'flex-[0_1_auto] !flex-wrap gap-y-1 !overflow-visible' : ONE_ROW ? 'flex-[0_1_auto]' : 'flex-1'">
         <template v-if="!t.needBase.value">
           <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesOpen }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: holeN, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes-on="openIssues" @list="onTopUnset" @run="tr100.run" @go="goIssue" />
           <TreeRunSum class="shrink-0" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact no-mod :class="ONE_ROW ? 'shrink-0' : 'flex-1'" @switched="onSwitched" />
-        <span v-else-if="!ONE_ROW" class="flex-1" />
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact no-mod :class="ONE_ROW || TWO_ROWS ? 'shrink-0' : 'flex-1'" @switched="onSwitched" />
+        <span v-else-if="!ONE_ROW && !TWO_ROWS" class="flex-1" />
         </div>
         <!-- 戻す・やり直し・白紙は送りの外 (いつも見える。1280 未満の窓で送りの後ろに隠れた、猿 21 11-16) -->
-        <span class="flex shrink-0 items-center" :class="ONE_ROW ? '' : 'ml-auto'"><TreeTabs mod-only /></span>
+        <span class="flex shrink-0 items-center" :class="ONE_ROW || TWO_ROWS ? '' : 'ml-auto'"><TreeTabs mod-only /></span>
         <span ref="clearBtn" class="shrink-0"><TreeTopTools :lines-all="cur?.linesAll.value ?? false" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="setLines(!cur?.linesAll.value)" @memo="memoOpen = !memoOpen" @full="toggleFull" @clear="onClear" /></span>
       </div>
       </div>
