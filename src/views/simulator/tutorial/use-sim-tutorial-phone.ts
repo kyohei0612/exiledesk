@@ -8,6 +8,7 @@
  * その箱が聞かれたら、戻り先の箱の手 (手順) と同じ手を選ばせる (同じ手は戻りになる = 木は PC と同じ)。この「戻りの選び」は 14 段に数えない
  */
 import { SPELL } from "./tut-route";
+import { flag } from "../../../web/release-flags";
 import type { TutStepDef } from "./tut-data";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handOpen, inView, shown } from "./tut-dom";
@@ -55,7 +56,7 @@ export function phoneNow(c: TutCtx): TutNow {
     if (!(d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL)) return { key: k("frac"), target: `[data-tree-goal-card] [data-card-mod="${SPELL}"]`, draft: say(`カードの「${names.mod(SPELL)}」の行を押して ✦ を付ける`, `Tap the "${names.mod(SPELL)}" row on the card to mark it ✦`) };
     const extra = (d.memoAims ?? []).find((a) => a.fractured && a.modId !== SPELL);
     if (extra) return { key: k("frac-off"), target: `[data-tree-goal-card] [data-card-mod="${extra.modId}"]`, draft: say(`「${names.mod(extra.modId)}」の ✦ は外す (もう一度押す)`, `Remove the ✦ from "${names.mod(extra.modId)}" (tap it again)`) };
-    if (!d.goalQualityNo || d.goalQualityOn) return { key: k("quality"), target: "[data-tree-goal-quality-no]", draft: say("「品質は狙わない」に ☑ を入れる", "Check \"No quality\"") };
+    if (!flag("noGoalQuality") && (!d.goalQualityNo || d.goalQualityOn)) return { key: k("quality"), target: "[data-tree-goal-quality-no]", draft: say("「品質は狙わない」に ☑ を入れる", "Check \"No quality\"") };
     return { key: k("main"), target: "[data-tree-goal-done]", draft: say("「決めた (ツリーへ)」を押す", "Tap \"Done (back to the tree)\"") };
   }
   if (st.kind === "start") return startScene(c, k);

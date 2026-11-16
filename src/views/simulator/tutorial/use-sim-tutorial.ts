@@ -56,7 +56,7 @@ const pickOk = (d: TreeDoc, st: Extract<TutStepDef, { kind: "pick" }>): boolean 
 /** 完成形 = 4 つが付け方どおり、ほかは無し、品質は狙わない */
 const goalOk = (d: TreeDoc): boolean => {
   const aims = d.memoAims ?? [];
-  return aims.length === TUT_GOALS.length && TUT_GOALS.every((g) => goalMatches(aims.find((a) => a.modId === g.modId), g)) && !!d.goalQualityNo && !d.goalQualityOn;
+  return aims.length === TUT_GOALS.length && TUT_GOALS.every((g) => goalMatches(aims.find((a) => a.modId === g.modId), g)) && (flag("noGoalQuality") || (!!d.goalQualityNo && !d.goalQualityOn));
 };
 /** 始め方: フラクチャー済みから (✦ の MOD は start.mods でなく完成形の印から読む = tree-start-choice) */
 const startOk = (d: TreeDoc): boolean => !!d.fracAsked && d.start?.from === "fractured" && (d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL);
@@ -155,7 +155,7 @@ function pcNow(c: TutCtx): TutNow {
     return attachScene(k, st.mod, st.tier, st.way, false, say(`「${names.mod(st.mod)}」の T${st.tier} の「付ける」→「${w}」`, `"${names.mod(st.mod)}" T${st.tier}: "Add" → "${w}"`));
   }
   if (st.kind === "goal") {
-    if (!d.goalQualityNo || d.goalQualityOn) return { key: k("quality"), target: "[data-tree-goal-quality-no]", draft: say("「品質は狙わない」に ☑ を入れる", "Check \"No quality\"") };
+    if (!flag("noGoalQuality") && (!d.goalQualityNo || d.goalQualityOn)) return { key: k("quality"), target: "[data-tree-goal-quality-no]", draft: say("「品質は狙わない」に ☑ を入れる", "Check \"No quality\"") };
     return { key: k("main"), target: "[data-tree-goal-done]", draft: say("「決めた (ツリーへ)」を押す", "Click \"Done (back to the tree)\"") };
   }
   if (st.kind === "start") return startScene(c, k);

@@ -19,9 +19,11 @@ export function useTreePop(doc: Ref<TreeDoc>, v: ReturnType<typeof useTreeFlow>)
   /** 中の箱の本当の高さ (MOD の多い箱は最低の高さ BOX_H より高い)。スイッチ treePopFit: 窓の中の枠をこの高さにして、窓の地と置き場の数えが箱の下の「完成」「失敗」まで届く (S-147e2) */
   const boxH = ref(0);
   const popBoxH = computed(() => (flag("treePopFit") ? Math.max(BOX_H, boxH.value) : BOX_H));
-  const popRo = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => { const e = popEl.value; if (e) { popSize.value = { w: e.offsetWidth, h: e.offsetHeight }; boxH.value = e.querySelector<HTMLElement>("[data-tree-box-wrap]")?.offsetHeight ?? 0; } });
+  // 測った値で窓の高さが変わるので次のコマで書く (同じコマで書くと ResizeObserver loop の知らせ、猿 21 11-16)
+  let popRaf = 0;
+  const popRo = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => { cancelAnimationFrame(popRaf); popRaf = requestAnimationFrame(() => { const e = popEl.value; if (e) { popSize.value = { w: e.offsetWidth, h: e.offsetHeight }; boxH.value = e.querySelector<HTMLElement>("[data-tree-box-wrap]")?.offsetHeight ?? 0; } }); });
   watch(popEl, (el) => { popRo?.disconnect(); if (el) { popRo?.observe(el); const w = el.querySelector("[data-tree-box-wrap]"); if (w) popRo?.observe(w); } else { popSize.value = { w: 0, h: 0 }; boxH.value = 0; } }, { flush: "post" });
-  onBeforeUnmount(() => popRo?.disconnect());
+  onBeforeUnmount(() => { popRo?.disconnect(); cancelAnimationFrame(popRaf); });
   /** ポップアップの置き場 */
   const popStyle = computed(() => {
     const b = pop.value ? doc.value.boxes[pop.value] : null;

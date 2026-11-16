@@ -21,7 +21,8 @@ import { saveTreeRecipe } from "../../../state/simulator/tree-recipes";
 
 const emit = defineEmits<{ switched: [] }>();
 /** compact = 木の枠の上の 1 行の帯の中 (SimTreePage、10-26 夜オーナー「1 行で」): 新しいツリー・コピーを道具の列と同じ平たいボタンにし、名前は帯が広い時だけ */
-defineProps<{ compact?: boolean }>();
+/** modOnly = 「MOD 一覧」のボタンと窓だけ (帯の送りの外、戻す・白紙の左に置く。1280 未満の窓で送りの奥に隠れた、猿 21 11-16)。noMod = その時はこちらで出さない */
+defineProps<{ compact?: boolean; modOnly?: boolean; noMod?: boolean }>();
 const FLAT = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-[#15110c]/95 px-1.5 ring-1 ring-white/10 text-[12px] text-sim-body hover:bg-white/10 hover:text-white";
 const t = useTree();
 /** 帯の「MOD 一覧」(スイッチ simModList、PC の帯だけ): 棚 + MOD の表の窓 (共通の ModListWin)。見るだけで木には何もしない */
@@ -76,7 +77,11 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, tru
 </script>
 
 <template>
-  <div data-tree-tabs class="flex items-center gap-1.5">
+  <span v-if="modOnly" class="contents">
+    <button v-if="MOD_WIN && !t.needBase.value" type="button" data-tree-modlist :class="FLAT" :title="tr('このベースに付く MOD とカレンシーの棚 (棚の物を押すと、それで付く MOD だけと確率)', 'Mods for this base with the currency shelf (pick a currency to see only what it can roll)')" @click="modWin = true"><span>{{ tr("MOD 一覧", "Mod list") }}</span></button>
+    <ModListWin v-if="MOD_WIN" :open="modWin" :blank="modItem" :box-item="modWin ? pickedBoxItem : null" :hidden="treeHidden" @close="modWin = false" />
+  </span>
+  <div v-else data-tree-tabs class="flex items-center gap-1.5">
     <!-- タブは縮めない (幅で形を変えない。入らない幅は上の帯ごと横に送る、11-08 夜オーナー「pxみじけーやつは苦労させろ精神」) -->
     <span class="flex items-center gap-1.5">
     <!-- 文は中の span で右を … で切る (g-tab は真ん中寄せなので、ボタンで切ると頭と終わりが両側から切れた。タブは縮めて「新しいツリー」を押し出さない、10-23 モンキー 6) -->
@@ -90,9 +95,9 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, tru
     <template v-if="compact">
       <button type="button" data-tree-tab-add :class="FLAT" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-4" /><span class="">{{ tr("新規", "New") }}</span></button>
       <button type="button" data-tree-tab-copy :class="FLAT" :aria-label="tr('コピー', 'Copy')" :title="tr('今のツリーを丸ごと写して新しいタブで開く (元は変わらない)', 'Copy this whole tree into a new tab (the original stays)')" @click="copy"><Icon name="copy" class="size-4" /><span class="">{{ tr("コピー", "Copy") }}</span></button>
-      <button v-if="MOD_WIN && !t.needBase.value" type="button" data-tree-modlist :class="FLAT" :title="tr('このベースに付く MOD とカレンシーの棚 (棚の物を押すと、それで付く MOD だけと確率)', 'Mods for this base with the currency shelf (pick a currency to see only what it can roll)')" @click="modWin = true"><span>{{ tr("MOD 一覧", "Mod list") }}</span></button>
+      <button v-if="MOD_WIN && !noMod && !t.needBase.value" type="button" data-tree-modlist :class="FLAT" :title="tr('このベースに付く MOD とカレンシーの棚 (棚の物を押すと、それで付く MOD だけと確率)', 'Mods for this base with the currency shelf (pick a currency to see only what it can roll)')" @click="modWin = true"><span>{{ tr("MOD 一覧", "Mod list") }}</span></button>
       <!-- 押している箱の品 (tree-picked) は読むたびに見本を作るので、窓が開いている時だけ渡す。箱が無ければ窓は切り替えを出さない -->
-      <ModListWin v-if="MOD_WIN" :open="modWin" :blank="modItem" :box-item="modWin ? pickedBoxItem : null" :hidden="treeHidden" @close="modWin = false" />
+      <ModListWin v-if="MOD_WIN && !noMod" :open="modWin" :blank="modItem" :box-item="modWin ? pickedBoxItem : null" :hidden="treeHidden" @close="modWin = false" />
     </template>
     <template v-else>
       <button type="button" data-tree-tab-add class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-3.5" /><span class="max-[48rem]:hidden">{{ tr("新しいツリー", "New tree") }}</span></button>

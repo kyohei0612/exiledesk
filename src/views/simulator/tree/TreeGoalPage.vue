@@ -53,6 +53,8 @@ import { useEleFold } from "./use-ele-fold";
 const TIER_DOWN = flag("tierDown");
 /** (スイッチ resetDim、開発版だけ) 木を消す確かめの帯が出ている間は、ほかを暗くして押せなくし帯だけ明るく (S-67b、11-16 オーナー「これが出たら全部グレーアウトでここだけライトアップ」) */
 const RESET_DIM = flag("resetDim");
+/** 品質の欄を出さず「決めた」も品質で止めない (S-31i) */
+const NO_QUALITY = flag("noGoalQuality");
 const tierOpen = ref(false);
 /** 見本の MOD はツリーで狙いにできる、の注意書き (S-10e、スイッチ aimGroups) */
 const AIM_NOTE = flag("aimGroups");
@@ -228,7 +230,7 @@ function askNeedMod(): boolean {
 }
 function toTree(after?: () => void): void {
   if (askNeedMod()) return;
-  if (qualityUndecided(t.doc.value, t.goalItem.value?.item)) { simOp("goal-need-quality"); qualityTried.value = true; document.querySelector("[data-tree-goal-quality]")?.scrollIntoView({ block: "nearest" }); return; }
+  if (!NO_QUALITY && qualityUndecided(t.doc.value, t.goalItem.value?.item)) { simOp("goal-need-quality"); qualityTried.value = true; document.querySelector("[data-tree-goal-quality]")?.scrollIntoView({ block: "nearest" }); return; }
   simOp("goal-done", t.goals.value.length);
   const go = (): void => edits.leave(() => { closeNow(); after?.(); });
   // 狙いが無い時はフラクチャーにする物が無いので聞かずに進む (答えた扱い)
@@ -314,7 +316,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <TreePasteBox class="min-w-[420px] flex-1 max-[48rem]:min-w-0 max-[48rem]:basis-full" @done="onPasted" />
       </div>
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
-      <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+      <!-- 帯の間はほかを暗くして押せなくする (S-67b と同じ膜、11-16 オーナー「2修正」。前は別のベースを押すと帯の名前が替わった) -->
+      <div v-if="asking && RESET_DIM" data-tree-base-ask-dim aria-hidden="true" class="fixed inset-0 z-[59] bg-black/70" @pointerdown.prevent.stop @click.prevent.stop />
+      <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]" :class="RESET_DIM ? 'z-[60] shadow-[0_0_0_2px_rgba(251,113,133,0.5),0_8px_30px_rgba(0,0,0,0.8)]' : 'z-10'">
         <p class="min-w-0 flex-1 max-[48rem]:basis-full">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
         <!-- 保存は名前を聞かずその場で (開いていたレシピなら上書き、tree-save.ts。10-26 オーナー「保存しますかって聞かれたら保存でおｋ」) -->
         <button type="button" data-tree-base-save class="g-btn sm" @click="changeBase(true)">{{ tr("保存して替える", "Save and change") }}</button>
@@ -366,7 +370,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <ul v-if="AIM_NOTE && t.goalItem.value" data-tree-goal-aim-note class="list-disc pl-5 text-[12px] leading-snug text-sim-dim"><li>{{ tr("上記の見本に入れた MOD (フラクチャーの候補も) は、ツリーで狙い MOD として設定できます。同じ MOD をもう一度足す必要はありません", "Mods in the item above (fracture candidates too) can be set as target mods in the tree. No need to add the same mod again") }}</li></ul>
         <button v-if="TIER_DOWN && t.goals.value.length" type="button" data-tree-goal-tier-step2 class="g-btn sm self-end" :title="tr('狙うMODの一括ティア調整 (フラクチャーの候補 ✦ の段もここで決める)', 'Adjust target mod tiers (set fracture candidate tiers here too)')" @click="tierOpen = true">{{ tr("ティア調整", "Tiers") }}</button>
         <TreeTierBulk v-if="tierOpen" frac @close="tierOpen = false" />
-        <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
+        <TreeGoalQuality v-if="t.goalItem.value && !NO_QUALITY" :warn="qualityWarn" />
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <TreeGoalRunes />
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>

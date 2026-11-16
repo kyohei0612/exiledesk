@@ -397,16 +397,18 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
         <TreeIssues v-if="jt.shownIssues.value?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="jt.shownIssues.value" :doc="doc" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" @report="reportTreeBug(doc)" /><TreeBugReport />
         <TreeRecipeBar v-if="t.needBase.value" data-tree-own @opened="v.openView()" />
         <!-- 横に送る所 (浮く窓 = 足りない所の一覧・レシピの窓は送りの外に置く。送りの中に置くと切れる) -->
-        <div data-tree-bar-scroll class="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto [scrollbar-width:thin]">
+        <div data-tree-bar-scroll class="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto [scrollbar-width:thin]" :class="ONE_ROW ? 'flex-[0_1_auto]' : 'flex-1'">
         <template v-if="!t.needBase.value">
           <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesOpen }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: holeN, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes-on="openIssues" @list="onTopUnset" @run="tr100.run" @go="goIssue" />
           <TreeRunSum class="shrink-0" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact :class="ONE_ROW ? 'shrink-0' : 'flex-1'" @switched="onSwitched" />
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact no-mod :class="ONE_ROW ? 'shrink-0' : 'flex-1'" @switched="onSwitched" />
         <span v-else-if="!ONE_ROW" class="flex-1" />
-        <span ref="clearBtn" class="shrink-0" :class="ONE_ROW ? '' : 'ml-auto'"><TreeTopTools :lines-all="cur?.linesAll.value ?? false" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="setLines(!cur?.linesAll.value)" @memo="memoOpen = !memoOpen" @full="toggleFull" @clear="onClear" /></span>
         </div>
+        <!-- 戻す・やり直し・白紙は送りの外 (いつも見える。1280 未満の窓で送りの後ろに隠れた、猿 21 11-16) -->
+        <span class="flex shrink-0 items-center" :class="ONE_ROW ? '' : 'ml-auto'"><TreeTabs mod-only /></span>
+        <span ref="clearBtn" class="shrink-0"><TreeTopTools :lines-all="cur?.linesAll.value ?? false" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="setLines(!cur?.linesAll.value)" @memo="memoOpen = !memoOpen" @full="toggleFull" @clear="onClear" /></span>
       </div>
       </div>
       <!-- PC の形 (1280 以上、U-53) だけ。1100px 未満で右の列を木の下へ回す分かれ道は消した -->

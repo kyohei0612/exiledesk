@@ -10,6 +10,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { GOAL_RUNE_MAX } from "../../../services/simulator/sim-engine";
 import { parseItemText } from "../../../services/simulator/paste/item-text";
+import { pastedImplicitFixed } from "../../../services/simulator/paste/item-text-implicit";
 import type { ItemTextMod, ItemTextReading } from "../../../services/simulator/paste/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { StageItem } from "../../../services/craft-stage/types";
@@ -58,7 +59,9 @@ function importPaste(text: string): void {
   const r = parseItemText(data, text);
   if (!r.base) return;
   // 読み方 (ジン部長の parseItemText の readings。無ければ mods の 1 通り)。先頭 = 一番もっともらしい読み
-  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }], null, r.quality ? { value: r.quality.value, tag: r.quality.tag ?? null } : null, r.sockets.names ?? []);
+  // 暗黙は貼った値のまま (S-08k。前は種から振り直して値が変わった)
+  const fixed = pastedImplicitFixed(r);
+  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }], null, r.quality ? { value: r.quality.value, tag: r.quality.tag ?? null } : null, r.sockets.names ?? [], fixed ? { base: r.base.en, implicitFixed: fixed } : null);
   track("sim:paste");
 }
 
@@ -82,9 +85,9 @@ export function requestEmuItem(item: StageItem): void {
 }
 
 /** 読めたアイテム (ベース・アイテムレベル・読み方) を木に入れて ② 完成の MOD のページへ (貼り付けとエミュの共通) */
-/** emu = エミュから来た時の暗黙の振り (TreeDoc.goalImplicit)。貼り付けは無し */
+/** emu = エミュから来た時の暗黙の振り (TreeDoc.goalImplicit)。貼り付けは無し。implicit = 完成形の暗黙 (既定は emu、貼り付けは貼った値 S-08k) */
 /** quality = 貼った文・エミュのアイテムの品質と種類。完成形の品質の欄に入れておき、「品質も狙う」☑ をオンにした時にその値で出す (☑ は既定オフのまま。10-27 夜オーナー) */
-function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null, quality: { value: number; tag: string | null } | null = null, runes: readonly string[] = []): void {
+function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null, quality: { value: number; tag: string | null } | null = null, runes: readonly string[] = [], implicit: TreeDoc["goalImplicit"] | null = emu): void {
   const t = useTree();
   t.setBase(base.en, itemLevel ?? t.doc.value.itemLevel);
   // 貼った文のアイテムレベルを使う (白紙の木は適正で作られ、狙いに合わせて変わるので外す。文に無ければ今のまま)
@@ -100,7 +103,7 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
   t.needBase.value = false;
   // 新しく取り込んだ完成形は、フラクチャーの設定をまだ答えていない扱い (スイッチ fracFirst)
-  t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; delete d.fracAsked; });
+  t.edit((d) => { if (implicit) d.goalImplicit = implicit; else delete d.goalImplicit; delete d.fracAsked; });
   // エミュで嵌めていたルーンはソケットの順で使用ルーンへ (S-31g)。貼り付けは文のルーンの行から戻した名前 (S-08e)
   t.edit((d) => { if (runes.length) d.goalRunes = runes.slice(0, GOAL_RUNE_MAX); else delete d.goalRunes; });
   const g = t.goalItem.value?.item;

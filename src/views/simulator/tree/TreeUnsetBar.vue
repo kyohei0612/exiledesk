@@ -4,7 +4,7 @@
   押すと上から順に 1 つずつその箱へ寄る (最後の次は最初へ)。色は足りない所と同じ赤 (未設定と穴を別の色にしない)
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { tr } from "../../../i18n/lang";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { CheckIssue } from "../../../services/simulator/tree/tree-check";
@@ -21,6 +21,8 @@ const ids = computed(() => {
   return set.sort(nextCmp(d)); // buildHitsFirst の ① は当たりの道を左の枝から深く (S-142j ⑤)、ほかは上の段から
 });
 const at = ref(-1);
+// 未設定の顔ぶれが変わったら最初から (前は位置が残り、完成を押した後の 1 回目が 2 番目から始まった。猿 21 11-16)
+watch(() => ids.value.join(","), () => { at.value = -1; });
 function next(): void {
   if (!ids.value.length) return;
   at.value = (at.value + 1) % ids.value.length;
