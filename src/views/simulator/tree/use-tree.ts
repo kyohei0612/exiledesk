@@ -184,10 +184,18 @@ const canUndo = shallowRef(false);
 /** やり直し (1 つ戻した物を戻す。新しく組み替えると消える、10-23 モンキー 1「戻した物がやり直しで戻らない」) */
 const redoStack: string[] = [];
 const canRedo = shallowRef(false);
+/** レシピを開いた控えだけ = 開く前のレシピの id (無ければ空) + RS + 木の JSON。戻すと今のレシピ (名前・保存先) も開く前に戻る (S-196g)。ほかの控えは木の JSON だけ (保存した後に戻してもつながりは外さない) */
+const RS = "";
+const withRec = (json: string, rec: string | null): string => `${rec ?? ""}${RS}${json}`;
+const splitRec = (v: string): [string | null | undefined, string] => { const i = v.indexOf(RS); return i < 0 || v.startsWith("{") ? [undefined, v] : [v.slice(0, i) || null, v.slice(i + 1)]; };
+/** 開く時だけ: 開く前のレシピ (開く側が先に今のレシピを替えるので、控えには替える前の物を入れる) */
+let openFrom: string | null | undefined;
+export function noteOpenFrom(id: string | null): void { openFrom = id; }
 const STEP_MANY = 20; let bigDoc: TreeDoc | null = null; const bigStepNow = (): boolean => !!bigDoc && bigDoc === doc.value; // 1 つ戻す・やり直しで箱がこれ以上増えた木は箱を段ごとに順に出す (S-196c)
 /** 組み替えを 1 回 (写しを書き換えて差し替える。前の形は 1 つ戻す用に控える) */
 function edit(fn: (d: TreeDoc) => void, open = false): void {
   if (loading.value) return; // 開いている間は木を変えない (S-196)
+  const from = open ? openFrom : undefined; if (open) openFrom = undefined;
   if (!open && isOldRecipe(doc.value)) { void renewOld(); return; } // 古いレシピは触る前に今の決まりで組み直す (S-104e。この決めはもう一度押す)
   const before = JSON.stringify(doc.value);
   const d = JSON.parse(before) as TreeDoc;
@@ -197,7 +205,7 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   if (d.boxes.start) tidyJunk(d, true); // 幅は見ない (S-197「同じ木は幅で変わらない」)
   const after = JSON.stringify(d);
   if (after === before) return;
-  undoStack.push(before);
+  undoStack.push(from !== undefined ? withRec(before, from) : before);
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   canUndo.value = true;
   redoStack.length = 0;
@@ -208,9 +216,12 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
 /** 控えの形へ移る (今の形は反対側の控えへ)。ツリーのメモの文は動かさない (メモ欄の中の Ctrl+Z が受け持つ。ツリーの Ctrl+Z で書いた文がまとめて消えた、10-22) */
 function step(from: string[], to: string[]): void {
   if (loading.value) return;
-  const prev = from.pop();
-  if (prev) {
-    to.push(JSON.stringify(doc.value));
+  const prev0 = from.pop();
+  if (prev0) {
+    const [rec, prev] = splitRec(prev0);
+    const now = JSON.stringify(doc.value);
+    to.push(rec !== undefined ? withRec(now, currentTreeRecipeId.value) : now);
+    if (rec !== undefined && rec !== currentTreeRecipeId.value) setCurrentTreeRecipe(rec);
     const d = JSON.parse(prev) as TreeDoc;
     // 箱が一度に多く増える時 (白紙の後の 1 つ戻すなど) は箱を段ごとに順に出す (S-196c、use-tree-reveal。木の中身は一度に置く)
     d.note = doc.value.note; if (Object.keys(d.boxes).length - Object.keys(doc.value.boxes).length >= STEP_MANY) bigDoc = d;

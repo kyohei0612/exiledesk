@@ -14,7 +14,7 @@ import { feedbackPage } from "../../../state/web-page";
 import { askLeave, openRecipesPage } from "../../../web/page";
 import { copyRecipeUrl, fmtDate, seedDevRecipes, closeNewer, sharedNewer, treeShortUrl, useRecipeUrl } from "../recipe-share";
 import { xIntentUrl } from "../../../services/craft-stage/share";
-import { useTree } from "./use-tree";
+import { noteOpenFrom, useTree } from "./use-tree";
 import { autoName, quickSave, unsaved } from "./tree-save";
 import { useViewOnlyWidth } from "../../../utils/use-phone";
 import { recipeSummary } from "./recipe-summary";
@@ -124,7 +124,7 @@ const root = ref<HTMLElement | null>(null);
 const recent = computed(() => [...treeRecipes.value].sort((a, b) => touchedAtTree(b) - touchedAtTree(a)).slice(0, 8));
 /** レシピを開く。今の木が作りかけなら 3 択 (保存して進む = 今の木を保存してから開く。10-26 オーナー「レシピを開いて今の木を替える」も) */
 function open(r: TreeRecipe): void {
-  const go = (): void => { simOp("open-recipe"); setCurrentTreeRecipe(r.id); t.open(r.tree, true); pop.value = false; emit("opened"); track("tree-recipe:open"); };
+  const go = (): void => { simOp("open-recipe"); noteOpenFrom(currentTreeRecipe.value?.id ?? null); setCurrentTreeRecipe(r.id); t.open(r.tree, true); pop.value = false; emit("opened"); track("tree-recipe:open"); };
   if (t.focusRecipeTab(r.id)) { pop.value = false; emit("opened"); return; } // ほかのタブで開いていればそのタブへ (S-09 ②)
   if (dirty.value && currentTreeRecipe.value?.id !== r.id) { pop.value = false; askLeave(go, () => void quickSave()); }
   else go();

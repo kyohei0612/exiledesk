@@ -17,7 +17,7 @@ import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTree
 import { askLeave, openTreePage, setLeaveGuard } from "../../web/page";
 import { treePage } from "../../state/web-page";
 import { copyRecipeUrl, fmtDate, seedDevRecipes, useRecipeUrl } from "./recipe-share";
-import { useTree } from "./tree/use-tree";
+import { noteOpenFrom, useTree } from "./tree/use-tree";
 import { recipeSummary } from "./tree/recipe-summary";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";
 import { track } from "../../utils/track";
@@ -67,6 +67,7 @@ function open(r: TreeRecipe): void {
 function openNow(r: TreeRecipe): void {
   simOp("open-recipe");
   track("tree-recipe:open");
+  noteOpenFrom(currentTreeRecipeId.value); // 開いた直後の 1 つ戻すで今のレシピも戻す (S-196g)
   setCurrentTreeRecipe(r.id);
   t.open(r.tree, true);
   openTreePage();

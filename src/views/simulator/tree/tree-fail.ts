@@ -12,6 +12,8 @@ import { depthRows } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedSameRow } from "../../../services/simulator/tree/tree-merge-open";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
+import { addsRandomMod } from "../../../services/simulator/tree/tree-hands";
+import { veilPick } from "../../../services/simulator/tree/tree-veil";
 
 /** 箱の段 (始まり = 1 段目、画面の段の並び。戻り方の文は全部「n 段目へ戻る」、10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」「1段目へ戻るとかにするか？全て、矢印は違うから段が同じもどり方でも」) */
 export function stepOf(doc: TreeDoc, id: string): number {
@@ -133,11 +135,13 @@ export function retryOf(doc: TreeDoc, id: string | null, link: ReadonlyMap<strin
 }
 
 /** 完成の狙い (memoAims) に無い MOD を当たりにしている箱 (完成の MOD で狙いを外しても箱は残る。知らせと箱の札、10-26 モンキー 7 の 5)。完成の狙いが無い木は数えない */
-export function orphanHits(doc: TreeDoc): string[] {
+/** stones = false で置き石 (普通の手の「狙いの MOD を足す」・発現で選んだ MOD の当たりの箱、S-33・S-33f) を数えない = 箱の札 (11-16 オーナー「1外す」) */
+export function orphanHits(doc: TreeDoc, stones = true): string[] {
   const goals = doc.memoAims ?? [];
   if (!goals.length) return [];
+  const stoneBox = (b: TreeBox): boolean => { const h = b.parent ? doc.boxes[b.parent]?.hand : null; return !!h && (addsRandomMod(h.currency) || veilPick(h)); };
   // 「いずれかの元素耐性」の使い回しの番号 (S-10h ⑧) は札の modId が完成形と違う元素を借りるが、完成形に「いずれか」があれば狙いのうち (11-16 の直し)。単体で ☑ した元素 (eleOne、S-10h ⑩) も同じ (前は冷気・雷だけ札が付いた)
   const anyGoal = goals.some((g) => g.anyEle);
-  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && boxAims(b).every((x) => !(anyGoal && (x.anyEle || x.eleOne)) &&!goals.some((g) => g.modId === x.modId))).map((b) => b.id);
+  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && (stones || !stoneBox(b)) && boxAims(b).every((x) => !(anyGoal && (x.anyEle || x.eleOne)) &&!goals.some((g) => g.modId === x.modId))).map((b) => b.id);
 }
 

@@ -154,7 +154,7 @@ const free = computed(() => !props.box.hand && !props.box.split && !props.box.ba
 const jl = computed(() => joinLook(sd.doc.value, props.box.id));
 const join = useTreeJoin();
 /** 完成の狙いから外した MOD の当たりの箱 (tree-fail の orphanHits) */
-const orphan = computed(() => props.box.out === "hit" && orphanHits(sd.doc.value).includes(props.box.id));
+const orphan = computed(() => props.box.out === "hit" && orphanHits(sd.doc.value, false).includes(props.box.id));
 /** 分かれ目の先の箱の文 = 親の分かれ目の行の条件 */
 const branchText = computed(() => { const r = props.box.parent ? sd.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
 /** 押せる物を隠す時 (一望) */
