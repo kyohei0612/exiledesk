@@ -22,7 +22,7 @@ import { sureFracOn, sureFracRedo, sureFracture, useSureFrac } from "./tree-sure
 import { defaultCapDiv } from "./run-price";
 import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
 import { lowTierStopOf } from "./tree-low-tier";
-import { boxStreams, mergeRetry, retryable, stopCounts, type RetryPart } from "./tree-run-retry";
+import { boxStreams, firstTryRun, mergeRetry, retryable, stopCounts, type RetryPart } from "./tree-run-retry";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -138,7 +138,6 @@ const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageIte
 const STOP_AIMED = new WeakMap<StageItem, ReadonlySet<string>>();
 /** 止まりの記録 (stuckWhy) のアイテムの人の ☑ (分からなければ null) */
 export const stopAimedOf = (item: StageItem): ReadonlySet<string> | null => STOP_AIMED.get(item) ?? null;
-
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
@@ -484,9 +483,9 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   }
   const out = summarize(doc, people, o.startCost);
   if (opts.firstTry) {
-    // 1 人目の挑戦 (S-72c): 100 人とは別の乱数の列で 1 人 (100 人の数は変えない)
-    const g = runOne(data, doc, aims, j, mulberry32((opts.seed ^ 0x9e3779b9) >>> 0), opts.perBox ? boxStreams(opts.seed, -1) : null, { ...o, slice: 0, retryFail: true });
-    const p = holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } });
+    // 1 人目の挑戦 (S-72c): 100 人とは別の乱数の列で 1 人 (100 人の数は変えない)。予期せぬ狙い MOD で止まったら同じ列の続きで最初から (firstTryRun)
+    const rng1 = mulberry32((opts.seed ^ 0x9e3779b9) >>> 0), pick1 = opts.perBox ? boxStreams(opts.seed, -1) : null;
+    const p = firstTryRun(() => { const g = runOne(data, doc, aims, j, rng1, pick1, { ...o, slice: 0, retryFail: true }); return holdDocSig(doc, () => { for (;;) { const s = g.next(); if (s.done) return s.value; } }); }, o.capDiv, o.capSteps);
     out.firstTry = { end: p.end, cost: p.cost, restarts: p.restarts };
   }
   return out;

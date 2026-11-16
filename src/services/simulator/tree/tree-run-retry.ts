@@ -47,6 +47,19 @@ export function mergeRetry<P extends RetryPart>(prev: P, next: P): P {
 }
 
 /**
+ * 1 人目の挑戦 (S-72c): 予期せぬ狙い MOD で止まったら最初から作り直す (11-16 オーナー「1人目も予期せぬなら作り直しで」)。
+ * 100 人の 3 回までの上限は無く、足した費用が打ち止めの神 (capDiv) を超えるか作り直しが手の上限 (capSteps) 回に届いたら打ち止め。one は 1 回分 (同じ乱数の列の続き)
+ */
+export function firstTryRun<P extends RetryPart>(one: () => P, capDiv: number, capSteps: number): P {
+  let p = one();
+  for (let k = 0; p.end === "stuck" && (p.goalAt || p.essAt || p.ltAt); k++) {
+    if (p.cost > capDiv || k >= capSteps) return { ...p, end: "capped" } as P;
+    p = mergeRetry(p, one());
+  }
+  return p;
+}
+
+/**
  * 予期せぬ狙い MOD の止まりの数え (S-33g ②・S-33e ⑧・低いティア)。goal / ess / low = 止めた手の箱ごとの回数 (やり直した分も入れる)、
  * stuckOdd = 止まりで終わった人のうち予期せぬ狙い MOD で止まった人の、止まった箱ごとの人数 (止まりの欄で「予期せぬ」と「木の不具合」を分ける)
  */
