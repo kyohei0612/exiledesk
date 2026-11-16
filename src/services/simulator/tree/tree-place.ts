@@ -16,7 +16,6 @@ import { flag } from "../../../web/release-flags";
 import { keepOrder, type KeptOrder } from "./tree-place-order";
 import { wideOrder, wideX } from "./tree-place-wide";
 import { frontOf, keptHasOrder, takeFront } from "./tree-front-path";
-import { idealPath } from "./tree-ideal-first";
 import { unsetBoxes } from "./tree-junk-tidy";
 import { linkTargets } from "./tree-strip-fold";
 
@@ -27,13 +26,11 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   if (!d.boxes.start) return false;
   const before = new Map(Object.values(d.boxes).map((b) => [b.id, `${b.x},${b.y}`]));
   // 描く子を結果の順に (当たり → 狙いが消えた → 外れが消えた → 外れ、同じ順は作った順)。
-  // 完成への枝 (完成の印の前は組んでいる道、treeIdealFirst) を左端、ほかは結果の順のまま (S-142j ③)
+  // 完成への枝を左端、ほかは結果の順のまま (S-142j ③)。左へ寄せる決まりは S-22g の凍らせた道 1 つ (buildHitsFirst・treeIdealFirst の道の寄せは 11-16 にやめた、整理の決め)
   /** (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しの瞬間に凍らせた道 (控えにある時だけ。組んでいる間に凍らせ直さない) */
   const homesWas = frontOf(d);
   const front = takeFront(d, kept);
   const reorder = wideOrder(d, front);
-  /** (S-142i) 組んでいる道の箱。組んでいる間 (控えがある時) も、道の箱は兄弟の左端へ移す (動くのは手の無い兄弟だけ) */
-  const ip = idealPath(d);
   /** (S-142j) 縦に積んだ箱 → 並べ方で数える 1 つ目の箱 (同じ x に置く) */
   const stacked = new Map<string, string>();
   // 組んでいる間は、もう並んでいる兄弟の順を入れ替えない (S-142g、kept = 画面が持つ控え。無ければ毎回決まりどおり)
@@ -49,8 +46,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     ks = reorder(l);
     if (fresh && !(kept!.get(id) ?? []).some((k) => ks!.includes(k))) ks = freshOrder(ks); // 子が全部新しい (手を置いた・替えた) 時だけ
     if (kept) ks = keepOrder(kept, id, ks);
-    if (ip && kept) { const on = ks.filter((k) => ip.path.has(k)); if (on.length) { ks = [...on, ...ks.filter((k) => !ip.path.has(k))]; kept.set(id, [...ks]); } }
-    // (S-22g、スイッチ pathLeftCol) 凍らせた道 1 本は、控えの順・組んでいる道の寄せより前 = 兄弟の左端 (並べ直しの後もそのまま)
+    // (S-22g、スイッチ pathLeftCol) 凍らせた道 1 本は、控えの順より前 = 兄弟の左端 (並べ直しの後もそのまま)
     if (front) { const on = ks.filter((k) => front.has(k)); if (on.length) ks = [...on, ...ks.filter((k) => !front.has(k))]; }
     ks = bandsTogether(d, ks); // 帯の枠は帯の頭のすぐ右に (S-65c ⑫、スイッチ treeLaneOwnHand)
     // (S-142j) ↩ で戻るだけの箱が 2 つ以上なら 1 列に縦に積む: 並べ方では一番左の 1 つだけを数え、残りは同じ x に置く

@@ -3,7 +3,7 @@
  * 状態は木から決める (箱の tidied の印 = 整理で見た箱)。保存しない: 開いた時は組み直しが整理まで済ませる (S-196)
  */
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
-import { idealGray, nextCmp } from "./tree-ideal-first";
+import { nextCmp } from "./tree-ideal-first";
 import { idealHidden } from "./tree-ideal-hide";
 import type { OutKind, TreeBox, TreeDoc } from "./tree-model";
 
@@ -16,8 +16,8 @@ export const tidyOn = (): boolean => !(typeof window !== "undefined" && window.i
 const open = (b: TreeBox): boolean => !b.hand && !b.back && !b.done && !b.split;
 /** 組む間は触れない外れの箱 (S-191)。人が × で外した箱は決めた箱 */
 export const isGrayBox = (b: TreeBox): boolean => JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;
-/** 整理の後に残った、人が決める箱 (S-192 ③)。上の段から。完成を押すまでの灰色 (S-142i) は数えない (最終チェックが灰色の箱へ寄って止まった、11-13 レビュー) */
-export const unsetBoxes = (d: TreeDoc): string[] => Object.values(d.boxes).filter((b) => open(b) && !isGrayBox(b) && !idealGray(d, b.id) && !idealHidden(d).has(b.id)).map((b) => b.id).sort(nextCmp(d)); // buildHitsFirst の ① は当たりの道を左の枝から深く (S-142j ⑤)
+/** 整理の後に残った、人が決める箱 (S-192 ③)。上の段から。完成を押すまで隠す外れの箱 (S-142n、idealHide) は数えない */
+export const unsetBoxes = (d: TreeDoc): string[] => Object.values(d.boxes).filter((b) => open(b) && !isGrayBox(b) && !idealHidden(d).has(b.id)).map((b) => b.id).sort(nextCmp(d)); // buildHitsFirst の ① は当たりの道を左の枝から深く (S-142j ⑤)
 /** ボタンの状態 (S-192): unset = 未設定 n つ (押す物が無い)、check = 最終チェック。整理は木を変えるたびに走るので「ハズレ整理」の状態は無い (S-201 ①) */
 export type TidyStep = "tidy" | "unset" | "check";
 export function tidyStep(d: TreeDoc): TidyStep {

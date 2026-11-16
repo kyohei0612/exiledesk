@@ -84,7 +84,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     return [{ x: px, y: jy }, { x: px, y: band }, { x: col, y: band }, { x: col, y: ty }, { x: tq.x + BOX_W, y: ty }];
   };
   const backPath = (px0: number, jy: number, t: string, lane = 0, stem: number | null = null): string => roundPath(backPts(px0, jy, t, lane, stem));
-  /** (スイッチ newerHome) 縦・横の真っ直ぐな所がほかの描く箱を横切るか (行き先と出元の箱は除く。端から 4 内側で見る) */
+  /** (S-22g・S-142j ③、スイッチ pathLeftCol) 縦・横の真っ直ぐな所がほかの描く箱を横切るか (行き先と出元の箱は除く。端から 4 内側で見る) */
   const pierces = (segs: readonly Seg[], skip: readonly string[]): boolean => avoid.value.some((a) => !skip.includes(a.id) && segs.some((g) => {
     const x0 = Math.min(g.x0, g.x1), x1 = Math.max(g.x0, g.x1), y0 = Math.min(g.y0, g.y1), y1 = Math.max(g.y0, g.y1);
     return x1 > a.x + 4 && x0 < a.x + a.w - 4 && y1 > a.y + 4 && y0 < a.y + a.h - 4;
@@ -168,7 +168,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     for (const t of links.value.get(b.id) ?? []) {
       const tq = posOf(doc.value.boxes[t]!), th = heightOf?.(t) || BOX_H, ty = tq.y + th / 2;
       const off = flag("hitsSide") ? nth++ * LANE_GAP() * (tq.x + BOX_W / 2 < px0 ? -1 : 1) : 0, px = px0 + off;
-      // (スイッチ newerHome) 真下へまっすぐ・L 字のどちらもほかの箱を貫通する時は、箱を避ける道 (S-145 の sideRoute) で行き先の横の辺の真ん中へ
+      // (S-22g・S-142j ③、スイッチ pathLeftCol) 真下へまっすぐ・L 字のどちらもほかの箱を貫通する時は、箱を避ける道 (S-145 の sideRoute) で行き先の横の辺の真ん中へ
       // (11-14 オーナー「貫通してんのこれ」「Ｌ字は例だから。臨機応変にしてほしいけどそこは」)
       if (homeMoveOn()) {
         const ex0 = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x;

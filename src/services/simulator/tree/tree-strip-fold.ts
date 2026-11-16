@@ -123,21 +123,20 @@ function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" 
     // 辿った時は緑 (同じ段か先) / 青 (前の段) を辿った先の箱で決め直す
     const t = drawnTarget(d, c.back, hidden), far = t !== c.back;
     if ((far ? (t !== "start" && depthOf(d, t) >= depthOf(d, id) ? "link" : "back") : f.link ? "link" : "back") !== k) continue;
-    // (スイッチ newerHome) 行き先の箱をこの親の下に描く時は線を引かず、本物の親から線を引く
+    // (S-22g、スイッチ pathLeftCol) 行き先の箱をこの親の下に描く時は線を引かず、本物の親から線を引く
     if (!far && homes.get(c.back)?.via === id) { add(d.boxes[c.back]!.parent!, c.back); continue; }
     add(c.parent, t);
   }
   return m;
 }
-/** 行き先の箱を本物の親でない親の下に描き移すか (S-142j ③ の newerHome = 新しい方、S-22g の pathLeftCol = 一番左の親) */
-export const homeMoveOn = (): boolean => flag("newerHome") || flag("pathLeftCol");
-/** (S-142j ③、スイッチ newerHome) 行き先の箱を描く親 (p) と、その親の子の並びで行き先の箱に置き換える畳んだ箱 (via) */
+/** 行き先の箱を本物の親でない親の下に描き移すか (S-22g「組んでいる間も左から」、スイッチ pathLeftCol = 同じ段の一番左の親。前の newerHome「新しい方」は 11-16 にやめた) */
+export const homeMoveOn = (): boolean => flag("pathLeftCol");
+/** (S-22g、スイッチ pathLeftCol) 行き先の箱を描く親 (p) と、その親の子の並びで行き先の箱に置き換える畳んだ箱 (via) */
 interface Home { p: string; via: string }
-const seqOf = (id: string): number => Number(id.slice(1)) || 0;
 const homeMemo = new WeakMap<ReadonlyMap<string, StripFold>, { front: ReadonlySet<string> | null; m: Map<string, Home> }>();
 /**
- * 同じ箱を本物の親と畳んだ箱の親の 2 か所以上が指す時、人が最後に手を置いた方 (親の箱の touched が一番後) の親の下に描く
- * (11-14 オーナー「後から設定した奴と前から設定した奴が同じ箱だった場合新しい方優先で表示でいいと思うわ」「１だね。ただ、実験段階」)。
+ * 同じ箱を本物の親と畳んだ箱の親の 2 か所以上が同じ段から指す時、木の並びで一番左の場所の親の下に描く (S-22g「組んでいる間も左から」、
+ * 11-16 オーナー「基本どこから始めても左から先にツリー作ってほしい」。前の newerHome = 人が最後に手を置いた方は、兄弟枠で右の箱の時刻が数 ms 後になり右に出たのでやめた)。
  * 描く場所だけ (木の形・回す・保存は変えない)。輪になる時・描かない箱が絡む時は動かさない
  */
 export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<string, Home> {
@@ -147,23 +146,17 @@ export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<
   const m = new Map<string, Home>();
   homeMemo.set(folds, { front, m });
   if (!homeMoveOn()) return m;
-  const hidden = stripHidden(d, folds), by = new Map<string, string[]>(), left = flag("pathLeftCol"), cmp = left ? treeOrder(d) : null;
+  const hidden = stripHidden(d, folds), by = new Map<string, string[]>(), cmp = treeOrder(d);
   // (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しで凍らせた道の箱は本物の親の下のまま (動かすと道が右の親の下へ移り、斜めに下りた)
   for (const f of folds.values()) if (f.link) for (const a of f.mids) { const t = d.boxes[a]?.back; if (t && d.boxes[t]) by.set(t, [...(by.get(t) ?? []), a]); }
   for (const [t, as] of by) {
     const T = d.boxes[t]!;
     if (!T.parent || t === "start" || hidden.has(t) || front?.has(t)) continue;
-    // 新しい方 = 人が最後に手を置いた時刻 (親の touched) が一番後の親。時刻の無い親 (開いただけ・前の保存) は 0 = 動かさない
-    // (11-14 オーナー「後から手を加えて足したかどうかじゃね」、ブラック 105 の決め: 組む順の後に手を置き直した所だけ)
-    const at = (id: string): number => d.boxes[d.boxes[id]?.parent ?? ""]?.touched ?? 0;
-    // (S-22g「組んでいる間も左から」、スイッチ pathLeftCol) 時刻は見ず、同じ段から指す中で木の並びの一番左の場所の親 (本物の場所が一番左なら動かさない)
-    // (11-16 オーナー「基本どこから始めても左から先にツリー作ってほしい」。兄弟枠で左右の外れに同じ手が入ると、右の箱の時刻が数 ms 後で右の親の下に描かれた)
-    const via = left
-      ? [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp!)[0]
-      : as.filter((a) => !!d.boxes[a]?.parent).sort((x, y) => at(y) - at(x) || seqOf(y) - seqOf(x))[0];
+    // 時刻は見ず、同じ段から指す中で木の並びの一番左の場所の親 (本物の場所が一番左なら動かさない)
+    const via = [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp)[0];
     if (!via || via === t) continue;
     const p = d.boxes[via]!.parent!;
-    if (!p || (!left && at(via) <= at(t)) || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
+    if (!p || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
     m.set(t, { p, via });
   }
   // 動かした先どうしで輪になる物は外す (描く親をたどって自分に戻る)
@@ -194,7 +187,7 @@ export function foldOuts(d: TreeDoc, b: TreeBox, folds = stripFolds(d), hidden =
   const outs = (folds.get(b.id)?.stops ?? b.outs).filter((o) => !hidden.has(o)); // まとめた兄弟 (S-142j ②) は親の子から外す
   const homes = homesOf(d, folds);
   if (!homes.size) return outs;
-  // (スイッチ newerHome) 新しい方の親は畳んだ箱の場所に行き先の箱を描き、本物の親の子からは外す
+  // (S-22g、スイッチ pathLeftCol) 一番左の親は畳んだ箱の場所に行き先の箱を描き、本物の親の子からは外す
   const via = new Map([...homes].map(([t, h]) => [h.via, t] as const));
   return [...(folds.get(b.id)?.stops ?? b.outs)].flatMap((o) => (via.has(o) && homes.get(via.get(o)!)!.p === b.id ? [via.get(o)!] : outs.includes(o) && !(homes.get(o) && homes.get(o)!.p !== b.id) ? [o] : []));
 }

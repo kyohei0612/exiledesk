@@ -10,7 +10,6 @@
  */
 import { BOX_W, type TreeDoc } from "./tree-model";
 import type { RowLayout } from "./tree-row-tops";
-import { idealOn, idealPath } from "./tree-ideal-first";
 import { flag } from "../../../web/release-flags";
 
 type Row = [number, number];
@@ -18,7 +17,6 @@ type Row = [number, number];
 /** 箱の x (始まりの箱は今の x)。kidsOf は並べ順の決まった描く子 (縦に積んだ 2 つ目からは除いた物) */
 export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[], chipW: ((id: string) => number | undefined) | undefined, gaps: { leaf: number; deep: number; reserve?: boolean }, stackHead: (id: string) => boolean = () => false, linkDown: ReadonlySet<string> = new Set()): Map<string, number> {
   const x = new Map<string, number>([["start", d.boxes.start!.x]]);
-  const leafFree = idealOn();
   const seen = new Set<string>(["start"]), kids = new Map<string, string[]>(), up = new Map<string, string>();
   const walk = (id: string): void => { const ks = kidsOf(id).filter((k) => !seen.has(k)); for (const k of ks) { seen.add(k); up.set(k, id); } kids.set(id, ks); ks.forEach(walk); };
   walk("start");
@@ -45,14 +43,11 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
         let kx = sib ? x.get(sib)! + BOX_W + sibGap(sib, k) : x.get(p)!;
         if (prev) kx = Math.max(kx, edge + (deep(prev) || deep(k) ? gaps.deep : gaps.leaf) - e[0]);
         // 別の親の箱の真下なら、その箱の右へずらす (上は動かさない)。
-        // (S-142i、スイッチ treeIdealFirst) 下に子の無い箱は真下をふさがない = 灰色の兄弟の真下を道の子に使う。完成を押して灰色が外れても並びは跳ねず、
-        // 後からその箱に手を置いた時は、その子が右へ出る (上は動かさない)
         // (スイッチ kidsUnderOwn、開発版だけ) 別の親の真下でもずらさない = ぶつかるのは同じ段の前の箱とだけ (11-14 オーナー「何その親の下は置かないみたいなルール撤廃でしょ」)
         for (let moved = !flag("kidsUnderOwn"); moved; ) {
           moved = false;
           for (const a of above) {
-            // (S-142j ③、スイッチ hitsSide) 子が ↩ の畳みだけの箱も真下を塞がない (線は手の札で止まる。11-14 オーナー「下に来るはず」)
-            if (a === p || (leafFree && !kids.get(a)?.length && !linkDown.has(a))) continue;
+            if (a === p) continue;
             const ax = x.get(a)!;
             if (kx < ax + BOX_W + gaps.leaf && kx + BOX_W + gaps.leaf > ax) { kx = ax + BOX_W + gaps.leaf; moved = true; }
           }
@@ -67,7 +62,7 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
 
 /**
  * 兄弟の順: 完成の箱を下に持つ枝を左端、ほかは渡された順 (結果の順) のまま。
- * 完成の印がまだ無い間は、組んでいる道 (tree-ideal-first、スイッチ treeIdealFirst) を完成への枝の代わりに左端に置く
+ * 左へ寄せる決まりは S-22g の凍らせた道 (スイッチ pathLeftCol) 1 つ (buildHitsFirst の当たりの道を左端にするのは 11-16 にやめた、整理の決め)
  */
 export function wideOrder(d: TreeDoc, front: ReadonlySet<string> | null = null): (kids: string[]) => string[] {
   const memo = new Map<string, boolean>();
@@ -76,7 +71,7 @@ export function wideOrder(d: TreeDoc, front: ReadonlySet<string> | null = null):
     if (v === undefined) { memo.set(id, false); v = d.boxes[id]?.done === "main" || (d.boxes[id]?.outs ?? []).some((o) => !!d.boxes[o] && hasDone(o)); memo.set(id, v); }
     return v;
   };
-  const ip = idealPath(d), first = (k: string): boolean => (ip ? ip.path.has(k) : hasDone(k));
+  const first = hasDone;
   // (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しで凍らせた道 1 本をどの段でも左端に (道が左の列を縦に下りる)。その次に今までの順
   if (front) return (kids) => { const a = kids.filter((k) => front.has(k)), b = kids.filter((k) => !front.has(k)); return [...a, ...b.filter(first), ...b.filter((k) => !first(k))]; };
   return (kids) => [...kids.filter(first), ...kids.filter((k) => !first(k))];

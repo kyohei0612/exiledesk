@@ -39,7 +39,7 @@ export function chaosSkip(data: PatchData, x: TreeDoc, startId: string): void {
       if (!b || b.hand || b.back || b.done) continue;
       const h = handOf(c);
       const at = holdLinks(() => applyPick(x, id, h, kindOf(h), [], null, onlyOf(data, x, id, h, null, [])));
-      // 自動で組んだ手なので「人が手を置いた時刻」は残さない (newerHome の描く親が置いた順の数 ms で右の親へ移り、まとめ先の箱が右に出た)
+      // 自動で組んだ手なので「人が手を置いた時刻」は残さない (要望の場面の「最後に置いた手」に数えない)
       delete x.boxes[id]?.touched;
       for (const o of x.boxes[at]?.outs ?? []) if (!next.includes(o)) next.push(o);
     }
