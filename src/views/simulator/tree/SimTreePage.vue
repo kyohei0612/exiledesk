@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
@@ -180,7 +180,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
   // 視点は holdBox (S-147e)。削減の手を打ち直してほかの枠の手が消える時、手の窓の確かめ「この手以降は削除されます」(下の箱が消える時に出る) で伝えていなければ先に聞く (S-65c4)
-  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); if (same.length && s.data.value) pickSameJunk(s.data.value, d, same, h, kind, aims, pre); fillHeldDefaults(d, id); S().tidyOf(d); }); return at; });
+  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { const before = new Set(Object.keys(d.boxes)); at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); if (same.length && s.data.value) pickSameJunk(s.data.value, d, same, h, kind, aims, pre); if (s.data.value) fillLaterSame(s.data.value, d, before); fillHeldDefaults(d, id); S().tidyOf(d); }); return at; });
     panel.value = null; }, q || drawnBelow(doc.value, id).length > 0);
 }
 /**

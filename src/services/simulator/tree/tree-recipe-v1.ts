@@ -75,6 +75,12 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
   const c = b.outs.length === 1 ? d.boxes[b.outs[0]!] : null;
   return b.hand && kind(b.hand) === "quality" && !b.hand.quality && c?.out === "pass" && c.hand?.omens.includes(CATALYSING) ? c : null;
 }
+/** 箱に置いてある手を置き直せる形 (手・触媒の前のカタリスト・☑ の狙い)。触媒の前の通り抜けの箱は 1 つの決めにまとめる。手が無ければ null */
+export function handPickOf(d: TreeDoc, b: TreeBox): { hand: Hand; pre: string | null; aims: Aim[] } | null {
+  if (!b.hand) return null;
+  const pass = preChildOf(d, b);
+  return pass ? { hand: clone(pass.hand!), pre: b.hand.currency, aims: hitAimsOf(d, pass) } : { hand: clone(b.hand), pre: null, aims: hitAimsOf(d, b) };
+}
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
 const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld", "midDropped", "examples", "built", "oldBuilt"]);
 

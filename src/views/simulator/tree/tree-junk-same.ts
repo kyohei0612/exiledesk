@@ -7,8 +7,9 @@
  * 手を消した箱 (sameOff) は兄弟枠に入れず、写す元にもしない
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { sameHand, type Aim, type Hand, type HandKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { applyPick, holdLinks, onlyOf } from "./tree-hand-plan";
+import { sameHand, type Aim, type Hand, type HandKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { handPickOf } from "../../../services/simulator/tree/tree-recipe-v1";
+import { applyPick, holdLinks, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 
@@ -19,14 +20,49 @@ const fracHit = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; co
 /** 兄弟枠に入る・写す元になれる箱 = 手・↩・完成 / 失敗が無く、人が手を消した箱 (sameOff) でもない (11-16 オーナー「自動で置いたやつを編集したり消したりするときはその枠だけで良さそうやね」) */
 const open = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && (KINDS.has(b.out) || fracHit(d, id)) && !b.hand && !b.back && !b.done && !b.sameOff; };
 
+/** id の箱と同じ外れの種類のほかの箱 (決めの有無は見ない、木の並びの順)。同じ手の親の同じ種類の結果。フラクチャーで固定された箱どうしは固定された狙いも同じ物だけ */
+function frameMates(d: TreeDoc, id: string): TreeBox[] {
+  const b = d.boxes[id];
+  const ph = b?.parent ? d.boxes[b.parent]?.hand : null;
+  if (!b || !ph || !(KINDS.has(b.out) || fracHit(d, id))) return [];
+  const aim = b.aim?.modId ?? null;
+  return Object.values(d.boxes).filter((o) => o.id !== id && o.out === b.out && (b.out !== "hit" || (o.aim?.modId ?? null) === aim) && (KINDS.has(o.out) || fracHit(d, o.id)) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })());
+}
+
 /** id の箱と同じ外れの、まだ決めていないほかの箱 (木の並びの順)。id が決め済み・外れでなければ空 */
 export function sameJunkOf(d: TreeDoc, id: string): string[] {
   if (!flag("junkSameHand") || !open(d, id)) return [];
-  const ph = d.boxes[d.boxes[id]!.parent ?? ""]?.hand;
-  if (!ph) return [];
-  const out = d.boxes[id]!.out;
-  const aim = d.boxes[id]!.aim?.modId ?? null; // フラクチャーで固定された箱どうしは固定された狙いも同じ物だけ
-  return Object.values(d.boxes).filter((o) => o.id !== id && o.out === out && (out !== "hit" || (o.aim?.modId ?? null) === aim) && open(d, o.id) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })()).map((o) => o.id);
+  return frameMates(d, id).filter((o) => open(d, o.id)).map((o) => o.id);
+}
+
+/** 写す手を比べる鍵 (手・触媒の前・☑ の狙い) */
+const pickKey = (p: { hand: Hand; pre: string | null; aims: Aim[] }): string => `${p.pre ?? ""}|${p.aims.map((a) => `${a.modId}/${a.tier}`).sort().join(",")}`;
+
+/**
+ * 後からできた箱にも兄弟枠の手を写す (S-190d ③、スイッチ sameLater)。before = この組み替えの前にあった箱。
+ * 新しくできた決めていない外れの箱ごとに、兄弟枠で手を持つ箱 (手を消した印・消去の続きの自動の手は見ない) の手が全部同じならその手を置く。
+ * 写した手でまた新しくできた箱にも続けて写す。何か写したら true (呼ぶ側の edit の中で、整理の前に呼ぶ)
+ */
+export function fillLaterSame(data: PatchData, d: TreeDoc, before: ReadonlySet<string>): boolean {
+  if (!flag("junkSameHand") || !flag("sameLater")) return false;
+  const tried = new Set<string>();
+  let any = false;
+  for (let round = 0; round < 50; round++) {
+    let put = 0;
+    for (const id of Object.keys(d.boxes)) {
+      if (before.has(id) || tried.has(id) || !open(d, id)) continue;
+      tried.add(id);
+      const picks = frameMates(d, id).filter((o) => o.hand && !o.sameOff && !o.autoAnnul).map((o) => handPickOf(d, o)!);
+      if (!picks.length) continue;
+      const p = picks[0]!;
+      if (picks.some((q) => !sameHand(q.hand, p.hand) || pickKey(q) !== pickKey(p))) continue; // 兄弟どうしで手が違う = 写さず空のまま
+      holdLinks(() => applyPick(d, id, p.hand, kindOf(p.hand), p.aims, p.pre, onlyOf(data, d, id, p.hand, p.pre, p.aims)));
+      put++;
+    }
+    if (!put) break;
+    any = true;
+  }
+  return any;
 }
 
 /** 決めた手を同じ外れのほかの箱にも置く (呼ぶ側の edit の中で、元の箱に置いた後)。間に自動でつながった箱は飛ばす */
