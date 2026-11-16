@@ -319,8 +319,8 @@ export async function rankRecipeOf(id: string, name: string): Promise<{ recipe: 
 export const DAILY_BUILT: boolean = DEV_BUILD;
 /** 写しの上限 (縮めた字数)。超える木は写しを付けない (開く時は打ち方から組み直して注記、D-50h) */
 export const BUILT_Z_MAX = 16 * 1024;
-/** 「記録しない」の端末から挑戦中の控えを送らない (D-57b、オーナー 11-13「やめる」)。出すまでは開発版の画面だけ = 出す時に true */
-export const LIVE_NO_LOG: boolean = DEV_BUILD;
+/** 「記録しない」の端末から挑戦中の控えを送らない (D-57b、オーナー 11-13「やめる」)。11-16 の出しから本番も true */
+export const LIVE_NO_LOG = true;
 /** 端末で「記録しない」を選んだか (utils/no-log.ts の控えと同じ鍵)。手元の開発版・録画の時の「送らない」は見ない = 開発版は手元の口に置くだけなので試せる */
 const optedOut = (): boolean => { try { return localStorage.getItem("exiledesk.noLog") === "1"; } catch { return false; } };
 /**

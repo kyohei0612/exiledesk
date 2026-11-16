@@ -40,6 +40,6 @@ export function qualityOfSnap(snap: unknown): TopicQuality | null {
  * お題に品質を入れる最初のお題の日 (D-03d の日の門)。16:00 の台本は手元の本線から回るので、本番の Web とサーバーに出す前に品質つきのお題を出さない
  * (古い画面は品質を見ずに提出し、新しい検算は品質で外す = 順位から落ちる)。出した日に「出した後に最初に始まるお題の日」に直す。それまでは来ない日
  */
-export const QUALITY_FROM = "2099-01-01";
+export const QUALITY_FROM = "2026-11-17";
 /** その日 ("YYYY-MM-DD"、お題の id "dYYYY-MM-DD" も可) のお題に品質を入れるか。手元の確かめは台本に DAILY_QUALITY_ALL=1 を付ける */
 export const qualityOn = (day: string, all = false): boolean => all || day.replace(/^d/, "") >= QUALITY_FROM;
