@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.744",
+  "date": "2026-11-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーで、☑ した手で狙いの MOD が低いティアで付いた時に、作り直しで止まらず外れの道へ進むようにしました",
+    "en": "Simulator: in the tree, when a checked step adds a target mod at a low tier, the craft now continues down the miss path instead of stopping"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 最終チェックで、前の手で同じ系統が付いたエッセンスの手を「未設定」と数えないようにしました",
+    "en": "Simulator: the final check no longer counts an Essence step as \"not set\" when an earlier step already added the same mod group"
+   }
+  ]
+ },
+ {
   "v": "0.1.743",
   "date": "2026-11-16",
   "items": [
@@ -929,30 +947,6 @@
     "area": "",
     "text": "シミュレーター: 保存・共有したレシピの木を開くのを速くしました (スマホで固まる時間がおよそ 4 割短くなります)",
     "en": "Simulator: saved and shared recipe trees now open faster (about 40% less freezing on phones)"
-   }
-  ]
- },
- {
-  "v": "0.1.704",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 神のオーブを持っている時、窓のどこでもホイールで中身を送れるようにしました (前は光った欄の上でしか送れませんでした)",
-    "en": "Simulator: while holding a Divine Orb, the mouse wheel now scrolls the window from anywhere (before, it only scrolled over the highlighted area)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 100 人回して完成 0% でも提出できるようにしました。今日の記録として残ります (順位には載りません)",
-    "en": "Daily: you can now submit even if 0% of the 100 runs finish. It is saved as today’s record (it does not appear in the ranking)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: お題の MOD の段の下限を、どれも T3 以上に揃えました",
-    "en": "Daily: the minimum tier of every challenge mod is now T3 or better"
    }
   ]
  }

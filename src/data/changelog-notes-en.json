@@ -1,4 +1,8 @@
 {
+  "0.1.744": [
+    "Simulator: in the tree, when a checked step adds a target mod at a low tier, the craft now continues down the miss path instead of stopping",
+    "Simulator: the final check no longer counts an Essence step as \"not set\" when an earlier step already added the same mod group"
+  ],
   "0.1.743": [
     "Daily: when you start \"From the base\", the fracture now costs three times everything you spent up to the fracture (rankings since Nov 12 were recounted the same way)",
     "Daily: you can now submit items to the Craft Box even if they don't have the maximum number of mods",
