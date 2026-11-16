@@ -3,7 +3,7 @@
   スイッチ aimGroups (S-22g): 完成形に ✦ がある時、3 段に分けて見出しを付ける = フラクチャーの候補 (完成形で ✦ の付いた MOD) / 狙い MOD (✦ の候補も混ぜる) / 狙い無し (slot の free)。箱の品にもうフラクチャーが付いた後 (fracIds) はフラクチャーの候補の段を出さず、固定された MOD は狙い MOD の段からも外す。
   各段の中は完成形のカードの順 (✦ が無い時も順はカード)。閉じている間は前のまま (見出し無し・候補の順)。mid の slot = 今は付けられない狙い・骨の置き石 (その他の後、狙い無しの前)
   seconds (S-10h ②、スイッチ eleAny): 2 つ付く手で同じ段の「いずれか」の 2 本目は行にせず、1 本目の下に字下げの「☐ 2 個目の MOD も狙う」(1 本目が ☑ の時だけ押せる)
-  singles (S-10h ⑩): 「いずれか」の行の下に火・冷気・雷の単体の ☑ (字下げ)。「いずれか」が ☑ の間は含まれる形で ☑ (押せない)、外すと単体で選べ元素ごとに箱が分かれる (use-ele-singles)
+  singles (S-10h ⑩): 「いずれか」の行の下に火・冷気・雷の単体の ☑ (字下げ)。「いずれか」が ☑ の間は含まれる形で ☑ (押せない)、外すと単体で選べ元素ごとに箱が分かれる (use-ele-aims)
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -14,7 +14,7 @@ import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { allMods } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import { useTree } from "./use-tree";
-import type { EleSingle } from "./use-ele-singles";
+import type { EleSingle } from "./use-ele-aims";
 
 const props = defineProps<{ aims: readonly Aim[]; checked: readonly string[]; noMod: boolean; noModTitle: string; big?: boolean; free?: boolean; fracIds?: readonly string[]; seconds?: Readonly<Record<string, Aim>>; singles?: Readonly<Record<string, EleSingle[]>>; shownOf?: (a: Aim, fam: string) => boolean }>();
 const emit = defineEmits<{ toggle: [a: Aim]; single: [a: Aim, fam: string] }>();
