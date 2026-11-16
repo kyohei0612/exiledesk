@@ -225,7 +225,7 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
   for (const b of Object.values(doc.boxes)) {
     // ヒネコラのハズレのまとめ (S-39、tree-foresee の foldMisses) は中身で見直さない
     if (!b.autoBack || !b.back || b.seen || b.back === MATCH_BACK || b.back === RESTART || !doc.boxes[b.back]) continue;
-    // 「エッセンスと同じ MOD (同格以上)」の既定の統合 (S-33e ⑥、tree-hand-plan の linkSameHi) は中身で見直さない (特例でエッセンスとして扱う)
+    // 「エッセンスと同じ MOD (同格以上)」の既定の統合 (S-33e ⑥、tree-same-mod-sync の linkSameHi) は中身で見直さない (特例でエッセンスとして扱う)
     if (b.out === "blocked" && b.junkKey === "hi") continue;
     // 低ティアの箱の隣の外れと同じ扱いの ↩ (S-33g ④、tree-low-tier-sync の fillLike) も中身で見直さない (A を名前で持つので外れの箱と中身が合わない)
     if (b.out === "blocked" && b.junkKey?.startsWith("lt:")) continue;

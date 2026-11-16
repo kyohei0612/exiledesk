@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, setSameHiOwn, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";

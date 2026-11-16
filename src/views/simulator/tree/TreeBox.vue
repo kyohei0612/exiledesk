@@ -20,7 +20,7 @@ import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags"; import { shapeTagOf } from "./tree-shape-tag";
 import { useTree } from "./use-tree"; import { useSurfaceDoc } from "./tree-surface";
-import { setSameHiOwn } from "./tree-hand-plan";
+import { setSameHiOwn } from "./tree-same-mod-sync";
 import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { lvLook } from "./tree-whittle-marks";
 import type { BandView } from "./use-tree-bands";

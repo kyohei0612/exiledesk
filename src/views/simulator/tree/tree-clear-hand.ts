@@ -6,7 +6,7 @@
  */
 import { craftStage } from "../../../state/craft-stage";
 import { clearHand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { syncSameMod } from "./tree-hand-plan";
+import { syncSameMod } from "./tree-same-mod-sync";
 import { syncWhittlePre } from "./tree-whittle-pre";
 import { syncLowTier } from "./tree-low-tier-sync";
 import { flag } from "../../../web/release-flags";

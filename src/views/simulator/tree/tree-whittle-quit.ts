@@ -10,7 +10,7 @@ import { clearHand, subtree, type Aim, type Hand, type HandKind, type TreeBox, t
 import { isWhittleHand, lvPart } from "../../../services/simulator/tree/tree-whittle";
 import { frameSiblings } from "../../../services/simulator/tree/tree-whittle-scene";
 import { flag } from "../../../web/release-flags";
-import { applyPick, syncSameMod, type OnlyOut } from "./tree-hand-plan";
+import { applyPick, type OnlyOut } from "./tree-hand-plan"; import { syncSameMod } from "./tree-same-mod-sync";
 import { syncWhittlePre } from "./tree-whittle-pre";
 import { syncLowTier } from "./tree-low-tier-sync";
 

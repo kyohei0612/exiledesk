@@ -12,7 +12,7 @@ import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { autoTarget, foldToTrunks, graftDecided, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
-import { alignEssenceAims, applyPick, arrivedSteps, kindOf, linkAllSameHi, onlyOf } from "./tree-hand-plan";
+import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan"; import { linkAllSameHi } from "./tree-same-mod-sync";
 import { extendAnnul, holdAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath, staysGray } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
