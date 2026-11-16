@@ -236,6 +236,8 @@ const putTree = (t: TreeDoc): void => { needBase.value = false; opened.value++; 
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
 function open(tree: TreeDoc, stepped = false): void {
   if (stepped && s.data.value) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
+  // (S-196f、スイッチ sharedOpenWait) データがまだの時は読み込み中のまま待ち、来たら組む方で開く (前は待つ間に白紙の木が見えてベース選びへ移った)
+  if (stepped && flag("sharedOpenWait")) { loading.value = true; const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree, stepped); } }); return; }
   const f = openForm(tree, s.data.value);
   if (f.wait) { const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree, stepped); } }); }
   putTree(f.doc);

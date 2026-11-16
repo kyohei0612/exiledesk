@@ -69,7 +69,7 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
  * 兄弟の順: 完成の箱を下に持つ枝を左端、ほかは渡された順 (結果の順) のまま。
  * 完成の印がまだ無い間は、組んでいる道 (tree-ideal-first、スイッチ treeIdealFirst) を完成への枝の代わりに左端に置く
  */
-export function wideOrder(d: TreeDoc): (kids: string[]) => string[] {
+export function wideOrder(d: TreeDoc, front: ReadonlySet<string> | null = null): (kids: string[]) => string[] {
   const memo = new Map<string, boolean>();
   const hasDone = (id: string): boolean => {
     let v = memo.get(id);
@@ -77,5 +77,7 @@ export function wideOrder(d: TreeDoc): (kids: string[]) => string[] {
     return v;
   };
   const ip = idealPath(d), first = (k: string): boolean => (ip ? ip.path.has(k) : hasDone(k));
+  // (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しで凍らせた道 1 本をどの段でも左端に (道が左の列を縦に下りる)。その次に今までの順
+  if (front) return (kids) => { const a = kids.filter((k) => front.has(k)), b = kids.filter((k) => !front.has(k)); return [...a, ...b.filter(first), ...b.filter((k) => !first(k))]; };
   return (kids) => [...kids.filter(first), ...kids.filter((k) => !first(k))];
 }

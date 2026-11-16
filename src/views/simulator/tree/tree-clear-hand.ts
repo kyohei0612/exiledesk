@@ -19,6 +19,7 @@ export function clearHandAt(d: TreeDoc, id: string): void {
   const wasAuto = flag("treeNoAnnulAuto") && !!d.boxes[id]?.autoAnnul;
   clearHand(d, id);
   if (wasAuto) d.boxes[id]!.noAnnul = true;
+  if (flag("junkSameHand") && d.boxes[id]) d.boxes[id]!.sameOff = true; // 手を消した箱はまた置いてもこの箱だけ (兄弟枠、S-190d)
   const data = craftStage.data.value;
   if (!data || !p) return;
   syncSameMod(data, d, p);

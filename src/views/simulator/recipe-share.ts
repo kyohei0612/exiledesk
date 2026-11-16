@@ -13,7 +13,8 @@ import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { recipeOf } from "../../services/simulator/tree/tree-frame";
 import { craftStage } from "../../state/craft-stage";
 import { addTreeRecipe, removeTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
-import { DEV_BUILD } from "../../web/release-flags";
+import { DEV_BUILD, flag } from "../../web/release-flags";
+import { treeLoading } from "./tree/use-tree-open";
 import { recipeCardOf } from "./recipe-card";
 import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
@@ -124,9 +125,13 @@ export async function openSharedRecipe(): Promise<void> {
   const m = /^#recipe=([A-Za-z0-9_-]+)$/.exec(location.hash);
   // 開いた後は URL から外す (読み直すたびに足されないように)。外すのと一緒に、前に開いていたレシピの戻り先も捨てる (外した後は resumeTree が #recipe= を見られず前のレシピを開いた、S-02)
   forgetResume();
+  // (S-196f、スイッチ sharedOpenWait) 読み終えて木が入るまで「読み込み中」。木の頁を白紙と見てベース選びへ移らない (URL の印を外した後に木の頁が開くと、白紙と見て移っていた)
+  const wait = flag("sharedOpenWait");
+  if (wait) treeLoading.value = true;
   try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 外せなくても開く */ }
   // タップ 1 回で木まで: スマホは「完成形と全体図」の窓を開いて着く (PC は木のページがそのまま木。S-103、スイッチ recipeJump)
-  const ok = !!m && (await openRecipeCode(m[1]!));
+  const ok = !!m && (await openRecipeCode(m[1]!).catch(() => false));
+  if (wait && !ok) treeLoading.value = false; // 読めない時は外す (読めた時は木を組む方 openStepped が組み終えて外す)
   logRecord("tree_recipe_open", { ok });
   if (ok) setMapFold(false);
   // 読めない URL (1 字欠けた・使えない字が混ざった) は黙らず一言 (S-103c)。シミュを止めている時は読まないだけなので出さない

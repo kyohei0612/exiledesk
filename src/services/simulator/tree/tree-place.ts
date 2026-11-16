@@ -15,6 +15,7 @@ import { bandsTogether } from "./tree-band";
 import { flag } from "../../../web/release-flags";
 import { keepOrder, type KeptOrder } from "./tree-place-order";
 import { wideOrder, wideX } from "./tree-place-wide";
+import { frontOf, keptHasOrder, takeFront } from "./tree-front-path";
 import { idealPath } from "./tree-ideal-first";
 import { unsetBoxes } from "./tree-junk-tidy";
 import { linkTargets } from "./tree-strip-fold";
@@ -27,7 +28,10 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const before = new Map(Object.values(d.boxes).map((b) => [b.id, `${b.x},${b.y}`]));
   // 描く子を結果の順に (当たり → 狙いが消えた → 外れが消えた → 外れ、同じ順は作った順)。
   // 完成への枝 (完成の印の前は組んでいる道、treeIdealFirst) を左端、ほかは結果の順のまま (S-142j ③)
-  const reorder = wideOrder(d);
+  /** (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しの瞬間に凍らせた道 (控えにある時だけ。組んでいる間に凍らせ直さない) */
+  const homesWas = frontOf(d);
+  const front = takeFront(d, kept);
+  const reorder = wideOrder(d, front);
   /** (S-142i) 組んでいる道の箱。組んでいる間 (控えがある時) も、道の箱は兄弟の左端へ移す (動くのは手の無い兄弟だけ) */
   const ip = idealPath(d);
   /** (S-142j) 縦に積んだ箱 → 並べ方で数える 1 つ目の箱 (同じ x に置く) */
@@ -36,7 +40,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const memo = new Map<string, string[]>();
   // (S-142k、スイッチ treeTidyOnDone) 組んでいる間に手を置いて新しく出た子の枠は、出た瞬間に 狙いどおり (当たり) → 未設定 → 残り (自動の ↩ など決まった物) の順。
   // 開いた時・並べ直しの時 (控えが空) と、もうある箱 (控えのある親) は今の順のまま (11-13 オーナー「狙い通りが一番左やね枝出る内の」「その次未設定って感じで」)
-  const fresh = !!kept && kept.size > 0 && flag("treeTidyOnDone"), unset = fresh ? new Set(unsetBoxes(d)) : null;
+  const fresh = keptHasOrder(kept) && flag("treeTidyOnDone"), unset = fresh ? new Set(unsetBoxes(d)) : null;
   const freshOrder = (ks: string[]): string[] => { const g = (k: string): number => (d.boxes[k]?.out === "hit" ? 0 : unset!.has(k) ? 1 : 2); return ks.map((k, i) => ({ k, i })).sort((a, z) => g(a.k) - g(z.k) || a.i - z.i).map((x) => x.k); };
   const kidsOf = (id: string): string[] => {
     let ks = memo.get(id);
@@ -46,6 +50,8 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     if (fresh && !(kept!.get(id) ?? []).some((k) => ks!.includes(k))) ks = freshOrder(ks); // 子が全部新しい (手を置いた・替えた) 時だけ
     if (kept) ks = keepOrder(kept, id, ks);
     if (ip && kept) { const on = ks.filter((k) => ip.path.has(k)); if (on.length) { ks = [...on, ...ks.filter((k) => !ip.path.has(k))]; kept.set(id, [...ks]); } }
+    // (S-22g、スイッチ pathLeftCol) 凍らせた道 1 本は、控えの順・組んでいる道の寄せより前 = 兄弟の左端 (並べ直しの後もそのまま)
+    if (front) { const on = ks.filter((k) => front.has(k)); if (on.length) ks = [...on, ...ks.filter((k) => !front.has(k))]; }
     ks = bandsTogether(d, ks); // 帯の枠は帯の頭のすぐ右に (S-65c ⑫、スイッチ treeLaneOwnHand)
     // (S-142j) ↩ で戻るだけの箱が 2 つ以上なら 1 列に縦に積む: 並べ方では一番左の 1 つだけを数え、残りは同じ x に置く
     const ends = new Set(stackEnds(d, d.boxes[id]!));
@@ -65,5 +71,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   // (S-142j) 縦に積んだ箱を 1 つ目の箱と同じ x、段の上の枠 + 下げ幅に置く
   for (const [k, head] of stacked) { const b = d.boxes[k]!, r = L.rows.get(k); b.x = d.boxes[head]!.x; if (r != null) b.y = L.top[r]! + (L.off.get(k) ?? 0); }
   centerMerged(d);
-  return Object.values(d.boxes).some((b) => before.get(b.id) !== `${b.x},${b.y}`);
+  // (S-22g) 凍らせた道がこの木で初めて付いた・変わった時も描き直す (描く親 homesOf は道を見て描き移しを止めるので、位置が同じでも線が変わる)
+  const frontMoved = (homesWas?.size ?? 0) !== (front?.size ?? 0) || [...(front ?? [])].some((id) => !homesWas?.has(id));
+  return frontMoved || Object.values(d.boxes).some((b) => before.get(b.id) !== `${b.x},${b.y}`);
 }

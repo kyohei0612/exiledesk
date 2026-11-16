@@ -11,10 +11,12 @@ import { useTree } from "./use-tree";
 import { resumeTree } from "./tree-save";
 import { treeLoading } from "./use-tree-open";
 import { openTreePage, treeStep } from "../../../web/page";
+import { flag } from "../../../web/release-flags";
 
 export function openTreeFirst(): void {
   const t = useTree();
-  if (treeLoading.value) return; // レシピを組んでいる間は白紙に見えるだけ (途中の木を描かない、S-196)。ベース選びへ移らない
+  if (treeLoading.value) return;
+  if (flag("sharedOpenWait") && location.hash.startsWith("#recipe=")) return; // 共有 URL はこの後に読む (S-196f。白紙と見てベース選びへ移らない) // レシピを組んでいる間は白紙に見えるだけ (途中の木を描かない、S-196)。ベース選びへ移らない
   if (resumeTree()) return; // 保存したレシピを開いていた時はそれを開き直してツリーへ (tree-save)
   if (!t.takeAskBase()) return;
   // 端末に残る作りかけの木からは続けない = 開いたらベース選び (S-02、11-10 オーナー「前回の続きからじゃなくていいややっぱり。シミュレーター開いたら同じくベース画面がいい」)

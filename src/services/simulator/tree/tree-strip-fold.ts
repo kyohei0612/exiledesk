@@ -11,6 +11,7 @@ import { effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 import { idealHidden } from "./tree-ideal-hide";
+import { frontOf } from "./tree-front-path";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -130,23 +131,25 @@ function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" 
 /** (S-142j ③、スイッチ newerHome) 行き先の箱を描く親 (p) と、その親の子の並びで行き先の箱に置き換える畳んだ箱 (via) */
 interface Home { p: string; via: string }
 const seqOf = (id: string): number => Number(id.slice(1)) || 0;
-const homeMemo = new WeakMap<ReadonlyMap<string, StripFold>, Map<string, Home>>();
+const homeMemo = new WeakMap<ReadonlyMap<string, StripFold>, { front: ReadonlySet<string> | null; m: Map<string, Home> }>();
 /**
  * 同じ箱を本物の親と畳んだ箱の親の 2 か所以上が指す時、人が最後に手を置いた方 (親の箱の touched が一番後) の親の下に描く
  * (11-14 オーナー「後から設定した奴と前から設定した奴が同じ箱だった場合新しい方優先で表示でいいと思うわ」「１だね。ただ、実験段階」)。
  * 描く場所だけ (木の形・回す・保存は変えない)。輪になる時・描かない箱が絡む時は動かさない
  */
 export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<string, Home> {
-  const memo = homeMemo.get(folds);
-  if (memo) return memo;
+  // (S-22g) 凍らせた道 (並べ直しの時の道) が変われば数え直す
+  const front = frontOf(d), memo = homeMemo.get(folds);
+  if (memo && memo.front === front) return memo.m;
   const m = new Map<string, Home>();
-  homeMemo.set(folds, m);
+  homeMemo.set(folds, { front, m });
   if (!flag("newerHome")) return m;
   const hidden = stripHidden(d, folds), by = new Map<string, string[]>();
+  // (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しで凍らせた道の箱は本物の親の下のまま (動かすと道が右の親の下へ移り、斜めに下りた)
   for (const f of folds.values()) if (f.link) for (const a of f.mids) { const t = d.boxes[a]?.back; if (t && d.boxes[t]) by.set(t, [...(by.get(t) ?? []), a]); }
   for (const [t, as] of by) {
     const T = d.boxes[t]!;
-    if (!T.parent || t === "start" || hidden.has(t)) continue;
+    if (!T.parent || t === "start" || hidden.has(t) || front?.has(t)) continue;
     // 新しい方 = 人が最後に手を置いた時刻 (親の touched) が一番後の親。時刻の無い親 (開いただけ・前の保存) は 0 = 動かさない
     // (11-14 オーナー「後から手を加えて足したかどうかじゃね」、ブラック 105 の決め: 組む順の後に手を置き直した所だけ)
     const at = (id: string): number => d.boxes[d.boxes[id]?.parent ?? ""]?.touched ?? 0;
