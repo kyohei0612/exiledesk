@@ -11,6 +11,7 @@ import { sameHand, type Aim, type Hand, type HandKind, type TreeBox, type TreeDo
 import { handPickOf } from "../../../services/simulator/tree/tree-recipe-v1";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { useReason } from "../../../services/craft-stage/engine";
+import { craftStage } from "../../../state/craft-stage";
 import { applyPick, holdLinks, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -28,7 +29,16 @@ export function frameMates(d: TreeDoc, id: string): TreeBox[] {
   const ph = b?.parent ? d.boxes[b.parent]?.hand : null;
   if (!b || !ph || !(KINDS.has(b.out) || fracHit(d, id))) return [];
   const aim = b.aim?.modId ?? null;
-  return Object.values(d.boxes).filter((o) => o.id !== id && o.out === b.out && (b.out !== "hit" || (o.aim?.modId ?? null) === aim) && (KINDS.has(o.out) || fracHit(d, o.id)) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })());
+  const all = Object.values(d.boxes).filter((o) => o.id !== id && o.out === b.out && (b.out !== "hit" || (o.aim?.modId ?? null) === aim) && (KINDS.has(o.out) || fracHit(d, o.id)) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })());
+  // 残っている MOD の数が同じ箱だけ (スイッチ sameModCount、11-16 オーナー「2と3はそれでおｋ」)
+  const data = craftStage.data.value;
+  if (!flag("sameModCount") || !data || !all.length) return all;
+  const n = modCountOf(data, d, id);
+  return all.filter((o) => modCountOf(data, d, o.id) === n);
+}
+/** 箱の見本の品に残っている MOD の数 (見本が作れなければ -1 = どの箱とも別扱いにしない) */
+function modCountOf(data: PatchData, d: TreeDoc, id: string): number {
+  try { const it = sampleOf(data, d, id, 1)?.item; return it ? it.prefixes.length + it.suffixes.length : -1; } catch { return -1; }
 }
 
 /** id の箱と同じ外れの、まだ決めていないほかの箱 (木の並びの順)。id が決め済み・外れでなければ空 */
