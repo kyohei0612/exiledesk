@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュの木: 兄弟枠を後からできた箱にも写す (S-190d ③、スイッチ `sameLater`、見た目の OK 待ち。兄弟の手が混ざる枠は写さない = オーナーの決め待ち) | 8dd86b18e (行 4d20d321a) | シミュレーター: 同じ外れの箱にもう手を決めてあれば、後から出てきた同じ外れの箱にも同じ手が自動で入るようにしました | Simulator: when a new box appears for the same miss, it now automatically gets the step its matching boxes already have |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
