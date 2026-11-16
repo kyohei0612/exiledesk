@@ -13,7 +13,7 @@
 | ジン部長 | local_53278b2c-7cff-44c9-83eb-03b6f52772cb (jin-frac3、11-15 夜にブラック 120 が立てた。頼み = 共有 local_41371db6…/progress/jin-frac3-brief.md、進み = 同 jin-frac3.md、記録 = progress/jin-frac3-run.log。前の jin-cast local_047c4bca は首飾りのキャスピ fc277a259 を済ませてアーカイブ、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: フラクチャーの固定を 3 つまで (E-40、スイッチ fracture3、オーナーの言葉だけ)・冒涜で付いた元素耐性も「いずれか」の当たりに (S-10h)。開発版まで。残り = 古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_d7809dcb-702f-41ce-98b8-fe510e43d364 (73、11-16 夜に 72 = local_273079f4 から交代。頼み = 共有 local_41371db6…/progress/sim-lead73-brief.md、進み = 同 sim-lead73.md、記録 = progress/sim-lead73-run.log) | 今: r/VeImcb7b の直し 2・3 (fd9e9e6d5) の画面の確かめと「完成の後に左側に未設定」の調べ |
+| シミュ部長 | local_e987247f-de09-4d32-b8fc-9e15a6eb6c98 (75、11-16 21 時台に 74 = local_c7cef57c から交代。頼み = 共有 local_41371db6…/progress/sim-lead75-brief.md、進み = 同 sim-lead75.md、記録 = progress/sim-lead75-run.log) | 今: 100 人回しで木が縮む (本番の直し)・普段の 100 人回しの種をばらけさせる・兄弟枠を残り MOD 数で組む (sameModCount) の絵 |
 | デザイン部長 | local_3ed491bd-6a49-406c-8ed0-46ff35f6a2be (10、Opus 5.5、11-15 18 時台にブラック 119 が立てた。9 = local_7572ea36 から交代。頼み = 共有 local_41371db6…/progress/design-lead10-brief.md、進み = 同 design-lead10.md。記録 = progress/design-lead10-run.log) | 今: 済み (32aa5a12f・e59eb1ee2) → 11-15 夜にブラック 120 がアーカイブ。仕事が来たら立てる |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
