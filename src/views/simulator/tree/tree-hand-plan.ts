@@ -360,8 +360,9 @@ function fillMissOuts(data: PatchData, d: TreeDoc, at: string): void {
 export const holdLinks = <T>(fn: () => T): T => fn();
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
 /** auto = 木を変えるたびに回す整理 (S-201 ①)。完成の後の案内 (S-198 の doneNow) は完成を押した時だけなので、ここでは立てない */
-export function tidyJunk(d: TreeDoc, auto = false): void {
-  const data = craftStage.data.value;
+/** given = データを渡す口 (デイリーの検算 runCost は画面の状態を持たない所でも呼ぶ、D-35b 11-17) */
+export function tidyJunk(d: TreeDoc, auto = false, given?: PatchData): void {
+  const data = given ?? craftStage.data.value;
   if (!data) return;
   const link = (): void => {
     // 見る順は木の並び (S-50e の足し、tree-order。前は段と箱の番号で、開き直すとまとめ先が入れ替わった)
@@ -399,7 +400,7 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
   // 前は次の候補を試さず未設定にした = 0yH8kjGg の b38、浅い方のエッセンスは打てずカオスの箱は打てた)
   for (const b of drop) {
     const was = b.back, alt = backChoicesOf(data, d, b.id).filter((to) => to !== was).sort(shallow(d));
-    setBack(d, b.id, null); b.noAutoBack = true;
+    setBack(d, b.id, null, true); // 自動で外した ↩ に人の × の印は付けない (S-50e、11-17)
     if (alt.length) { setBack(d, b.id, alt[0]!); b.autoBack = true; }
   }
 }

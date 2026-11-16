@@ -461,11 +461,12 @@ export function setAim(d: TreeDoc, id: string, aim: Aim | null): void {
 }
 
 /** 戻りの矢印 (to = null で外す)。次の手のある箱・自分自身へは張らない */
-export function setBack(d: TreeDoc, id: string, to: string | null): void {
+/** auto = 整理が自動で外した時 (人の × の印 noAutoBack を立てない = 次の手の時にまた候補を探す、S-50e 11-17) */
+export function setBack(d: TreeDoc, id: string, to: string | null, auto = false): void {
   const b = d.boxes[id];
   if (!b || b.out === "start" || b.hand) return;
   if (to && (to === id || !d.boxes[to])) return;
-  if (!to && b.back) b.noAutoBack = true;
+  if (!to && b.back && !auto) b.noAutoBack = true;
   if (to) delete b.noAutoBack;
   b.back = to;
   delete b.autoBack; delete b.merged; delete b.handBack;
