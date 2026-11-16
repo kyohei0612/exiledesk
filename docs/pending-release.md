@@ -7,8 +7,10 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | シミュの木: 兄弟枠に打てない手を写さない (S-190d ①・③、スイッチ無し = junkSameHand の中の不具合の直し、次の出しでそのまま入る) | 67bf47e93 | シミュレーター: 同じ外れの箱へ手を自動で入れる時、その箱では打てない手 (足す枠が無い等) は入れないようにしました | Simulator: steps that can't be used on a box (e.g. no free mod slot) are no longer copied into matching miss boxes |
-| シミュの木: 兄弟枠を残っている MOD の数が同じ箱だけで組む (S-190d、スイッチ `sameModCount`、見た目の OK 待ち) | a1c692856 (行 ac62ad1cc) | シミュレーター: 手を自動で入れる同じ外れの箱は、残っている MOD の数が同じ箱だけにしました | Simulator: steps are now copied only between miss boxes with the same number of remaining mods |
-| シミュの木: 兄弟枠を後からできた箱にも写す (S-190d ③、スイッチ `sameLater`、見た目の OK 待ち。兄弟の手が混ざる枠は写さない = オーナーの決め待ち) | 8dd86b18e (行 4d20d321a) | シミュレーター: 同じ外れの箱にもう手を決めてあれば、後から出てきた同じ外れの箱にも同じ手が自動で入るようにしました | Simulator: when a new box appears for the same miss, it now automatically gets the step its matching boxes already have |
+| シミュの木: 兄弟枠を残っている MOD の数が同じ箱だけで組む (S-190d、スイッチ `sameModCount`、見た目 OK (11-16 22 時台)) | a1c692856 (行 ac62ad1cc) | シミュレーター: 手を自動で入れる同じ外れの箱は、残っている MOD の数が同じ箱だけにしました | Simulator: steps are now copied only between miss boxes with the same number of remaining mods |
+| シミュの木: 兄弟枠を後からできた箱にも写す (S-190d ③、スイッチ `sameLater`、見た目 OK (11-16 22 時台)。兄弟の手が混ざる枠は写さない、1 手で写る数に上限は置かない = 11-16 オーナー「上限なしでおｋ」) | 8dd86b18e (行 4d20d321a) | シミュレーター: 同じ外れの箱にもう手を決めてあれば、後から出てきた同じ外れの箱にも同じ手が自動で入るようにしました | Simulator: when a new box appears for the same miss, it now automatically gets the step its matching boxes already have |
+| シミュの木: 100 人回しの 1 人目の歩きは描いている木が全部入る大きさで、回し終わったら押す前の大きさへ戻す (S-147o、スイッチ無し = 本番の不具合の直し、見た目 OK (11-16 22 時台)) | 823e155aa | シミュレーター: 100 人回す時に木が小さくなりすぎて上の段が隠れていたのを直し、木全体がちょうど入る大きさで回すようにしました。回し終わると元の大きさに戻ります | Simulator: when running 100 crafts, the tree no longer shrinks so far that the top rows go off screen. It now fits the whole tree while running and returns to your previous zoom when done |
+| シミュの木: 普段の 100 人回しは押すたびに新しい乱数 (S-70c、スイッチ無し。デイリーは同じ乱数のまま) | 823e155aa | シミュレーター: 「100 人回す」を押すたびに違う乱数で回すようにしました (デイリーは今までどおり同じ乱数です) | Simulator: each press of "Run 100" now uses a new random seed (the daily challenge still uses the same seed) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
