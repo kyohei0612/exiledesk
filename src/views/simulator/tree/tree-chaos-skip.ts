@@ -32,12 +32,15 @@ export function chaosSkip(data: PatchData, x: TreeDoc, startId: string): void {
   let layer = [startId];
   for (const c of CHAOS_SKIP_STEPS) {
     const next: string[] = [];
-    // 右の箱から置く: 同じ中身の結果は後に置いた方 (左の箱の子) へまとまるので、組んだ道が左の列を縦に下りる (S-22f、11-16 オーナー「左から縦作っていって欲しい。斜めになる」)
-    for (const id of [...layer].reverse()) {
+    // 変成・増強・王者は右の箱から置く: 同じ中身の結果は後に置いた方 (左の箱の子) へまとまるので、組んだ道が左の列を縦に下りる (S-22f、11-16 オーナー「左から縦作っていって欲しい。斜めになる」)。
+    // 消去は左の箱から置く: 消去の自動の続きが先に置いた箱の下に伸び、後の箱の結果はそこへ ↩ でまとまる = 未設定の箱も左の列に出る (11-16 オーナー「消去も左から打ってこれ？」)
+    for (const id of c === "annul" ? layer : [...layer].reverse()) {
       const b = x.boxes[id];
       if (!b || b.hand || b.back || b.done) continue;
       const h = handOf(c);
       const at = holdLinks(() => applyPick(x, id, h, kindOf(h), [], null, onlyOf(data, x, id, h, null, [])));
+      // 自動で組んだ手なので「人が手を置いた時刻」は残さない (newerHome の描く親が置いた順の数 ms で右の親へ移り、まとめ先の箱が右に出た)
+      delete x.boxes[id]?.touched;
       for (const o of x.boxes[at]?.outs ?? []) if (!next.includes(o)) next.push(o);
     }
     layer = next;
