@@ -11,6 +11,7 @@
 | シミュの木: 兄弟枠を後からできた箱にも写す (S-190d ③、スイッチ `sameLater`、見た目 OK (11-16 22 時台)。兄弟の手が混ざる枠は写さない、1 手で写る数に上限は置かない = 11-16 オーナー「上限なしでおｋ」) | 8dd86b18e (行 4d20d321a) | シミュレーター: 同じ外れの箱にもう手を決めてあれば、後から出てきた同じ外れの箱にも同じ手が自動で入るようにしました | Simulator: when a new box appears for the same miss, it now automatically gets the step its matching boxes already have |
 | シミュの木: 100 人回しの 1 人目の歩きは描いている木が全部入る大きさで、回し終わったら押す前の大きさへ戻す (S-147o、スイッチ無し = 本番の不具合の直し、見た目 OK (11-16 22 時台)) | 823e155aa | シミュレーター: 100 人回す時に木が小さくなりすぎて上の段が隠れていたのを直し、木全体がちょうど入る大きさで回すようにしました。回し終わると元の大きさに戻ります | Simulator: when running 100 crafts, the tree no longer shrinks so far that the top rows go off screen. It now fits the whole tree while running and returns to your previous zoom when done |
 | シミュの木: 普段の 100 人回しは押すたびに新しい乱数 (S-70c、スイッチ無し。デイリーは同じ乱数のまま) | 823e155aa | シミュレーター: 「100 人回す」を押すたびに違う乱数で回すようにしました (デイリーは今までどおり同じ乱数です) | Simulator: each press of "Run 100" now uses a new random seed (the daily challenge still uses the same seed) |
+| シミュの木: 「適正」の間に出ている数と同じアイテムレベルを打っても適正を外す (S-01c、スイッチ無し = 不具合の直し、次の出しでそのまま入る) | f3080268c | シミュレーター: アイテムレベルの欄に今出ている数と同じ数を打った時も、その数で決まるようにしました (前は「適正」のままで、狙いを足すと別のレベルに変わっていました) | Simulator: typing the same item level that Fit is showing now locks that level too (before, Fit stayed on and the level changed when you added targets) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
