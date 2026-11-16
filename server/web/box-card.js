@@ -15,7 +15,7 @@ export function readBox(get) {
   const rows = (Array.isArray(j.r) ? j.r : []).slice(0, 12).map((x) => ({ side: x?.s === "S" ? "S" : "P", tag: str(x?.g, 12), text: str(x?.t, 120), frac: !!x?.f })).filter((x) => x.text);
   const name = str(j.n, 60);
   if (!name || !rows.length) return null;
-  return { en: get("l") === "en", name, art: /^[A-Za-z0-9_]{1,80}$/.test(j.a ?? "") ? j.a : null, head: (Array.isArray(j.h) ? j.h : []).slice(0, 8).map((x) => str(x, 60)).filter(Boolean), rows };
+  return { en: get("l") === "en", topic: j.k === "topic", name, art: /^[A-Za-z0-9_]{1,80}$/.test(j.a ?? "") ? j.a : null, head: (Array.isArray(j.h) ? j.h : []).slice(0, 8).map((x) => str(x, 60)).filter(Boolean), rows };
 }
 
 /** 幅 640 の縦長の 1 枚 (高さは行の数で決まる)。上 = ベースの絵と名前、下 = ゲームのアイテムの説明と同じ形のカード */
@@ -25,7 +25,7 @@ export async function boxCardImage(url, env, c) {
   const [art, size] = artPath ? await Promise.all([dataUrl(env, url, artPath), pngSize(env, url, artPath)]) : [null, null];
   const k = size ? Math.min(1.6, 92 / size.w, 92 / size.h) : 1, aw = size ? Math.round(size.w * k) : 0, ah = size ? Math.round(size.h * k) : 0;
   const [frame, hl, hm, hr, sep, logo] = await Promise.all(["/og-art/_ui-frame-s.png", "/og-art/_ui-ihead-rare-l.png", "/og-art/_ui-ihead-rare-m.png", "/og-art/_ui-ihead-rare-r.png", "/og-art/_ui-isep-rare.png", "/web/icon-192.png"].map((p) => dataUrl(env, url, p)));
-  const kicker = c.en ? "Craft box post" : "クラフト箱の投稿", meta = c.head.slice(0, 2).join(" · ");
+  const kicker = c.topic ? (c.en ? "Today's craft challenge" : "本日のクラフトお題") : c.en ? "Craft box post" : "クラフト箱の投稿", meta = c.head.slice(0, 2).join(" · ");
   // 字の大きさは幅から (全角 1・半角 0.55 で数える、recipe-card.js と同じ)
   const units = (t) => [...t].reduce((n, ch) => n + (ch.charCodeAt(0) > 0xff ? 1 : 0.55), 0);
   const TW = IW - 28 - TAGW - 30;
