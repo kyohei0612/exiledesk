@@ -34,7 +34,7 @@ export function boxContent(p: BoxPost, nickName: string | null): string {
  * 絵の元 (D-20c): 投稿の確かめの画面のカードの字 (画面が投稿の時に添える、src/views/daily/daily-post-card.ts の PostCard と同じ形)。
  * n = 品の名前、a = ベースの絵のファイル名、h = 種類・アイテムレベル・数値の行、r = MOD の行 (s = 側、g = 札、t = 文、f = フラクチャー)、l = 言語
  */
-export type BoxCard = { n: string; a: string | null; h: string[]; r: Array<{ s: "P" | "S"; g: string; t: string; f?: 1 }>; l: "ja" | "en" };
+export type BoxCard = { n: string; a: string | null; h: string[]; r: Array<{ s: "P" | "S"; g: string; t: string; f?: 1 }>; l: "ja" | "en"; /** 絵の見出しの種類 (topic = 本日のクラフトお題、D-85b。無ければクラフト箱の投稿) */ k?: "topic" };
 
 /** 絵を作る配信のサーバー (server/web の /og/<code>.png、シェアのカードと同じ道。中身の並びは server/web/og-card.js の PACK) */
 export const CARD_ORIGIN = "https://exiledesk.com";
@@ -44,7 +44,7 @@ const CARD_WAIT_MS = 8000, CARD_MAX_BYTES = 4 * 1024 * 1024;
 /** 絵の元を配信のサーバーの絵の道の code に詰める (JSON の配列を deflate-raw → base64url、og-card.js の unpack の逆) */
 export async function packCard(card: BoxCard): Promise<string> {
   const arr: Array<string | null> = Array.from({ length: PACK_N }, () => null);
-  arr[PACK_L] = card.l; arr[PACK_KD] = "box"; arr[PACK_BX] = JSON.stringify({ n: card.n, a: card.a, h: card.h, r: card.r });
+  arr[PACK_L] = card.l; arr[PACK_KD] = "box"; arr[PACK_BX] = JSON.stringify({ n: card.n, a: card.a, h: card.h, r: card.r, ...(card.k ? { k: card.k } : {}) });
   const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(arr)]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
   let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);

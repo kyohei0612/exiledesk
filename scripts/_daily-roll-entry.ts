@@ -15,6 +15,9 @@ import { awardsOf, type Award, type DayResult } from "../src/views/daily/daily-t
 import { perBoxOn, runCost, topicPrice } from "../src/views/daily/daily-cost";
 import { byScore, rankCmp } from "../src/views/daily/daily-score";
 import { cleanQuality, qualityOfSnap, qualityOn, topicQuality, type TopicQuality } from "../src/views/daily/daily-quality";
+import { topicCard } from "../src/views/daily/daily-topic-card";
+/** お題の知らせの絵の元 (D-85b)。手元の確かめが同じ関数で作れるよう出す */
+export { topicCard };
 export { loadPatchSync } from "./_htc-bridge-entry";
 
 const DAY = 86400e3, JST = 9 * 3600e3, H16 = 16 * 3600e3;
@@ -325,6 +328,10 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
       body.topic = { day: inp.target, sampleId: day.sampleId, slot: day.slot, itemClass: classOfBase(day.base), base: day.base, baseJa: jaTypeName(day.base), ilvl: day.ilvl, aims: day.aims, ...snap(q), engineVer, rulesVer: RULES_VER };
       log.push(`お題 ${inp.target}: 予定 (${day.base}${withQ && q ? `・品質 ${q.tag} ${q.value}%` : ""})`);
     } else log.push(`お題 ${inp.target}: 出せる物が無い`);
+    // お題の知らせ (D-85b) に付ける品の絵の元を、お題の写しに一緒に残す (Worker はエンジンを持たないので MOD の側をここで引く)
+    const t = body.topic as { base: string; ilvl: number; aims: GenAim[]; typeSnap?: { quality?: TopicQuality } } | undefined;
+    const card = t ? topicCard(data, t.base, t.ilvl, t.aims, t.typeSnap?.quality ?? null) : null;
+    if (t && card) t.typeSnap = { ...(t.typeSnap ?? {}), card } as typeof t.typeSnap;
   } else log.push(`お題 ${inp.target}: もう出ている`);
   return { body, log };
 }
