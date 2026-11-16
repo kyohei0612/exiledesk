@@ -35,6 +35,11 @@ export function inFrame(el: HTMLElement | null): boolean {
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   return x > f.left && x < f.right && y > f.top && y < f.bottom - bar;
 }
+/** その箱の「完成にする」のボタン (目印が無いので文字で探す) */
+export function doneButton(boxId: string): HTMLElement | null {
+  const box = document.querySelector(`[data-box-id="${CSS.escape(boxId)}"]`);
+  return [...(box?.querySelectorAll<HTMLElement>("button") ?? [])].find((b) => /^(完成にする|完成|Mark done|Done)$/.test(b.textContent?.trim() ?? "")) ?? null;
+}
 /** チェックの欄 (label の中の input) が ☑ か */
 export const checked = (sel: string): boolean => !!document.querySelector<HTMLInputElement>(`${sel} input:checked`);
 /** 狙う MOD の欄 (☑ の MOD ごと) の目印 */

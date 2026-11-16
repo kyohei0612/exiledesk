@@ -13,7 +13,7 @@ import { markRan, noteClick, openGoalPage, startTutorial, stopTutorial, tutHasPr
 import { TUT_EDITABLE, tutDirty } from "./tut-data";
 import SimTutorialEditor from "./SimTutorialEditor.vue";
 import { isPhoneWidth } from "../../../utils/use-phone";
-import { handOpen, inView } from "./tut-dom";
+import { doneButton, handOpen, inView } from "./tut-dom";
 import { clipRect, litRect, maskPath, softPath, type Rect } from "./tut-mask";
 
 const tut = useSimTutorial();
@@ -26,10 +26,7 @@ const editing = ref(false);
 /** 光らせる要素 (done:<箱> = その箱の「完成にする」のボタン。目印が無いので文字で探す) */
 function targetEl(sel: string | null): HTMLElement | null {
   if (!sel) return null;
-  if (sel.startsWith("done:")) {
-    const box = document.querySelector(`[data-box-id="${CSS.escape(sel.slice(5))}"]`);
-    return [...(box?.querySelectorAll<HTMLElement>("button") ?? [])].find((b) => /^(完成にする|完成|Mark done|Done)$/.test(b.textContent?.trim() ?? "")) ?? null;
-  }
+  if (sel.startsWith("done:")) return doneButton(sel.slice(5));
   try { return [...document.querySelectorAll<HTMLElement>(sel)].find((e) => e.offsetParent || e.getClientRects().length) ?? null; } catch { return null; }
 }
 const cardEl = ref<HTMLElement | null>(null);

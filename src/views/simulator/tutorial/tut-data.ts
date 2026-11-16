@@ -11,9 +11,11 @@
 import { ref } from "vue";
 import seed from "../../../data/sim-tutorial.json";
 import type { Role } from "./tut-route";
+import { flag, type Flag } from "../../../web/release-flags";
 
 export type TutText = { ja: string; en: string };
-export type TutStepDef =
+/** unless = そのスイッチが入っている間は並びから外す手順 (兄弟枠 S-190d で自動で済む q のカオスなど、T-21) */
+export type TutStepDef = { unless?: Flag } & (
   | {
     id: string; kind: "hand"; box: Role; key: string; omens: string[];
     /** 窓の「狙う MOD」でチェックする MOD */ aim?: string;
@@ -21,18 +23,21 @@ export type TutStepDef =
     /** 消去の「残したい MOD」で ☑ する MOD (S-27) */ keep?: string;
     /** 残したい MOD は ☑ 無し = どれが消えてもよい (S-27) */ keepNone?: boolean;
     /** 骨の手を発現させる (☑ の狙いは発現で選ぶ MOD、S-32) */ veil?: boolean;
+    /** 手を置くと中身の同じその役の箱へ畳まれる (S-51d。手と下が消えて ↩ だけ残るので、↩ がその役を指せば済み) */ foldTo?: Role;
   }
   /** pick = 完成形の設定の MOD 一覧で、その MOD の段を「付ける」でその付け方にする (S-10b) */
   | { id: string; kind: "pick"; mod: string; tier: number; way: "normal" | "fracture" | "desecrated" }
   /** done = 箱の「完成にする」、fail = 光った箱の「失敗」(S-53) */
   | { id: string; kind: "done" | "fail"; box: Role }
   /** goal = 完成形の設定 (品質の決めと「決めた」)、start = 始め方の窓、unset = 帯「! 未設定 ▸ 次へ」、test = 最終チェックの ✓、run = 100 人 → 結果 → 終わる */
-  | { id: string; kind: "goal" | "start" | "unset" | "test" | "run" | "end" | "note" };
+  | { id: string; kind: "goal" | "start" | "unset" | "test" | "run" | "end" | "note" });
 export type TutData = { v: 1; course: string; steps: TutStepDef[]; texts: Record<string, TutText>; targets: Record<string, string> };
 
 const clone = (d: unknown): TutData => JSON.parse(JSON.stringify(d)) as TutData;
 /** 今の手順と文 (dev で書き換えるとそのまま画面に出る。保存するまで JSON は変わらない) */
 export const tutData = ref<TutData>(clone(seed));
+/** 今の並び (unless のスイッチが入っている手順を外す。札の「n / 全部」もこの並び) */
+export const liveSteps = (steps: TutStepDef[]): TutStepDef[] => steps.filter((s) => !s.unless || !flag(s.unless));
 /** 保存していない書き換えがある */
 export const tutDirty = ref(false);
 /** 書ける画面か (手元の dev だけ。開発版・本番のビルドでは書く所を出さない) */

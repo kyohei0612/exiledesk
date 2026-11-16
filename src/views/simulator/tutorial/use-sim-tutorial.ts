@@ -16,8 +16,9 @@ import { simOp } from "../../../web/track";
 import { pauseUiTallyWhen } from "../../../web/ui-tally";
 import { DRAFT_WHY, ECHO_OMEN, SPELL, TUT_GOALS, goalMatches, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { wayName } from "../tree/tree-attach";
-import { tutData, type TutStepDef } from "./tut-data";
-import { aimSel, aimsChecked, checked, handOpen, holding, inFrame, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
+import { liveSteps, tutData, type TutStepDef } from "./tut-data";
+import { flag } from "../../../web/release-flags";
+import { aimSel, aimsChecked, checked, doneButton, handOpen, holding, inFrame, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
 import { overviewOpen, phoneIndex, phoneNow } from "./use-sim-tutorial-phone";
 
 /** 案内中か */
@@ -29,7 +30,7 @@ export const tutTick = ref(0);
 export const tutPhone = ref(false);
 /** 100 人回した (結果のまとめが出た) */
 const ran = ref(false);
-/** 帯「! 未設定 ▸ 次へ」を押した (手順 8)・テストを押した (手順 12) */
+/** 帯「! 未設定 ▸ 次へ」を押した (T-21 の 14・16 段で寄る時)・最終チェックを押した (17 段)・100 人回すを押した (18 段) */
 const barUsed = ref(false), testPressed = ref(false), runPressed = ref(false);
 /** スマホ: 全体図を開いた (P11) */
 const mapSeen = ref(false);
@@ -68,7 +69,7 @@ export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
   if (st.kind === "pick") return pickOk(d, st);
   if (st.kind === "goal") return goalOk(d) && (!!d.fracAsked || startAskOpen());
   if (st.kind === "start") return startOk(d);
-  if (st.kind === "hand") return !!r[st.box] && handMatches(d, r[st.box]!, st);
+  if (st.kind === "hand") return !!r[st.box] && (handMatches(d, r[st.box]!, st) || (!!st.foldTo && !!r[st.foldTo] && d.boxes[r[st.box]!]?.back === r[st.foldTo]));
   // スマホは完成が自動 (S-91) なので札の「次へ」で済み (P10)、帯の代わりは全体図を開いて閉じる (P11)
   if (st.kind === "done") return tutPhone.value ? notesDone.value.includes(st.id) : !!r[st.box] && d.boxes[r[st.box]!]?.done === "main";
   if (st.kind === "fail") return !!r[st.box] && d.boxes[r[st.box]!]?.done === "fail";
@@ -107,7 +108,7 @@ export function inHand(st: HandStep, k: (s: string) => string, names: TutNames, 
   if (!holding(st.key)) return { key: k("hold"), target: shelfSel(st.key), draft: say(`棚の「${names.item(st.key)}」を押して持つ`, `Click "${names.item(st.key)}" on the shelf to hold it`) };
   const extra = omensOnNow().find((o) => !st.omens.includes(o));
   if (extra) return { key: k("omen-off"), target: `[data-held-omens] [data-key="${extra}"]`, draft: say(`「${names.item(extra)}」は使わないので押して外す`, `"${names.item(extra)}" isn't used here; click it to turn it off`) };
-  // アビスの反響は発現を選んでから掛ける (骨の窓の「発現」の下にも ☑ がある、inChecks)
+  // アビスの反響は ☑ の後に聞く (inChecks)。骨を持つと既定で掛かる。スイッチ veilPickKeep が閉じている間は骨の窓の「発現」の下にも反響の ☑ がある
   const need = st.omens.find((o) => o !== ECHO_OMEN && !omenOn(o));
   if (need) return { key: k("omen"), target: `[data-held-omens] [data-key="${need}"]`, draft: say(`お告げ「${names.item(need)}」を押して掛ける`, `Click "${names.item(need)}" to apply it`) };
   return use();
@@ -118,8 +119,10 @@ export function inChecks(st: HandStep, k: (s: string) => string, names: TutNames
   if (off) return { key: k("aim-off"), target: aimSel(off), draft: say(`「${names.mod(off)}」の ☑ を外す`, `Uncheck "${names.mod(off)}"`) };
   if (st.aim && shown(aimSel(st.aim)) && !checked(aimSel(st.aim))) return { key: k("aim"), target: aimSel(st.aim), draft: say(`狙う MOD の「${names.mod(st.aim)}」に ☑ を入れる`, `Check "${names.mod(st.aim)}" under target mods`) };
   if (st.free && shown("[data-tree-hand-free]") && !checked("[data-tree-hand-free]")) return { key: k("free"), target: "[data-tree-hand-free]", draft: say("「狙い無し」に ☑ を入れる (何が付いても次へ)", "Check \"No target\" (anything counts)") };
-  if (st.omens.includes(ECHO_OMEN) && !omenOn(ECHO_OMEN) && !checked("[data-tree-hand-veil-echo]")) {
-    const sel = shown(`[data-held-omens] [data-key="${ECHO_OMEN}"]`) ? `[data-held-omens] [data-key="${ECHO_OMEN}"]` : "[data-tree-hand-veil-echo]";
+  // 反響を外した人へ掛け直しを案内する。veilPickKeep の間は骨の窓の反響の ☑ が無いので、右のお告げの列だけを指す (S-32d ④)
+  const veilEcho = !flag("veilPickKeep");
+  if (st.omens.includes(ECHO_OMEN) && !omenOn(ECHO_OMEN) && !(veilEcho && checked("[data-tree-hand-veil-echo]"))) {
+    const sel = !veilEcho || shown(`[data-held-omens] [data-key="${ECHO_OMEN}"]`) ? `[data-held-omens] [data-key="${ECHO_OMEN}"]` : "[data-tree-hand-veil-echo]";
     return { key: k("echo"), target: sel, draft: say(`お告げ「${names.item(ECHO_OMEN)}」を掛ける (発現の候補を 1 回引き直す)`, `Apply "${names.item(ECHO_OMEN)}" (rerolls the reveal options once)`) };
   }
   if (st.keepNone) {
@@ -168,7 +171,15 @@ function pcNow(c: TutCtx): TutNow {
     }
     return inHand(st, k, names, () => inChecks(st, k, names) ?? { key: k("use"), target: "[data-tree-hand-card]", draft: say("左のアイテムのカードを押して、この手にする", "Click the item card on the left to make it this craft") });
   }
-  if (st.kind === "done") return { key: k("main"), target: r[st.box] ? `done:${r[st.box]}` : null, draft: say(`「${c.boxName(st.box)}」の箱の「完成」を押す`, `Click "Done" on the "${c.boxName(st.box, true)}" box`) };
+  if (st.kind === "done") {
+    // 木が大きくなって一望 (75% 未満) まで縮むと、箱のボタン (「完成にする」) は描かれない (＋ だけ遠くでも出る)。まず右下の ＋ で広げる (1280×800・1440×900 の通し、11-16)
+    // 広げた後、箱が木の枠の外 (帯の裏) なら、木はホイールで拡大縮小なので、つかんで動かして出すよう案内する
+    const btn = r[st.box] ? doneButton(r[st.box]!) : null;
+    if (r[st.box] && !btn && shown("[data-tree-zoom-in]")) return { key: k("zoom"), target: "[data-tree-zoom-in]", draft: say("木が小さくて箱のボタンが出ていない。右下の ＋ で 75% 以上に広げる", "The tree is too small to show box buttons. Zoom in to 75% or more with + at the bottom right") };
+    // 光らせるのは木の枠ごと (箱は枠の外で見えず、幕が木を覆うとつかめない)
+    if (btn && !inFrame(btn)) return { key: k("drag"), target: "[data-tree-frame]", draft: say(`木をつかんで上へ動かし、「${c.boxName(st.box)}」の箱の「完成にする」を出す`, `Drag the tree up to show "Mark done" on the "${c.boxName(st.box, true)}" box`) };
+    return { key: k("main"), target: r[st.box] ? `done:${r[st.box]}` : null, draft: say(`「${c.boxName(st.box)}」の箱の「完成」を押す`, `Click "Done" on the "${c.boxName(st.box, true)}" box`) };
+  }
   if (st.kind === "fail") {
     const id = r[st.box];
     if (!id) return { key: k("missing"), target: null, act: "undo", draft: MISSING };
@@ -230,7 +241,7 @@ export function useSimTutorial() {
     // 英語の短い名前は頭の「+ to」「increased」を外す (「+ to Spirit」→「Spirit」)
     mod: (modId) => modShort(t.aimShort({ modId, tier: 1 })).replace(/^\+?\s*to\s+/i, "").replace(/^(increased|reduced)\s+/i, ""),
   };
-  const steps = computed(() => tutData.value.steps);
+  const steps = computed(() => liveSteps(tutData.value.steps));
   const roles = computed(() => rolesOf(t.doc.value));
   const onRoute = computed(() => isTutorialDoc(t.doc.value));
   const index = computed(() => {
