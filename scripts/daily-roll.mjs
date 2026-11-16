@@ -122,7 +122,8 @@ if (D1) {
   let out;
   try { out = await R.rollPost(big ? big.db : db, body, big ? big.mark : market); } catch (e) { if (redo) await redo.restore(`書き込みが落ちた (${String(e).slice(0, 120)})`); throw e; }
   console.log(`topic (d1): ${JSON.stringify(out)}`);
-  if (redo) process.exit(await redo.check());
+  if (redo) { const code = await redo.check(); await pingTopic(); process.exit(code); }
+  await pingTopic();
   moreAndAgain();
   process.exit(0);
 }
@@ -130,6 +131,18 @@ const w = await fetch(`${BASE}/daily/topic`, { method: "POST", headers, body: JS
 console.log(`topic: ${w.status} ${(await w.text()).slice(0, 200)}`);
 if (!w.ok) process.exit(1);
 moreAndAgain();
+
+/**
+ * D-85b: --d1 は Worker を通らずに書くので、お題を書いた後に Worker の鍵なしの口を叩いて #日報・報告 に「今日のお題」を流させる
+ * (口は D1 のお題を見て流していない物だけ流す。落ちても書き込みは済んでいるので止めない。叩き損ねても一覧が読まれた時に Worker が拾う)
+ */
+async function pingTopic() {
+  if (!body.topic) return;
+  try {
+    const r = await fetch(`${BASE}/daily/topic-ping`, { method: "POST", signal: AbortSignal.timeout(15000) });
+    console.log(`お題の知らせ (D-85b): ${r.status} ${(await r.text()).slice(0, 120)}`);
+  } catch (e) { console.log(`お題の知らせ (D-85b): 叩けなかった (${String(e).slice(0, 120)})`); }
+}
 
 /**
  * D-80f: 明日から先にお題に使える人のいない日 (needMore) があれば、今日のお題を書いた後に忍者から人数を増やして同じ週をもう 1 回取り

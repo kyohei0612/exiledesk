@@ -10,6 +10,7 @@ import { nickPost } from "./nick";
 import { dailyView } from "./views";
 import { dayNoOf, noOfId } from "./time";
 import { rollJson, rollPost } from "./roll";
+import { notifyTopics } from "./topic-notify";
 
 type Json = (body: unknown, status?: number, extra?: Record<string, string>) => Response;
 /** GET /daily.json の端のキャッシュ (D-56)。今日の伏せは誰にでも同じなので全員で 1 つ */
@@ -30,6 +31,8 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
     const hit = cache ? await cache.match(key) : undefined;
     if (hit) return hit;
     const body = (await dailyJson(db, now, await prices())) as { week: Array<{ today: boolean; t: unknown }> };
+    // 流しそびれたお題の知らせを拾う (D-85b: 台本が回らず、いま予定から出した日・台本が口を叩き損ねた日)。覚えが切れた時だけ通るので 1 分に 1 回ほど
+    ctx.waitUntil(notifyTopics(env, now).then(() => undefined).catch(() => undefined));
     // 今日のお題がまだ無い時 (16:00 の台本の前) は覚えない。出た後の形だけ 60 秒覚える
     const ready = body.week.some((d) => d.today && d.t);
     const res = json(body, 200, { "cache-control": ready ? `public, max-age=${DAILY_TTL}` : "no-store" });
@@ -50,6 +53,8 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
     return json(await rollJson(db, now, day), 200, { "cache-control": "no-store" });
   }
   if (req.method !== "POST") return json({ error: "無い道" }, 404);
+  // お題が決まったら #日報・報告 に 1 通 (D-85b)。15:00 の台本は --d1 で D1 に直に書くので、書いた後にここを叩く。体は読まず、D1 のお題で流していない物だけ流す (誰が叩いても 1 つのお題で 1 通まで)
+  if (p === "/daily/topic-ping") return json({ ok: true, sent: await notifyTopics(env, now).catch(() => []) });
   // 誰でも書ける口は 64KB まで。鍵つきの /daily/topic は週の型 (300 件ほどで 100KB) を一度に書くので 1MB まで (11-06)
   if (Number(req.headers.get("content-length") ?? 0) > (p === "/daily/topic" ? 1024 : 64) * 1024) return json({ error: "large" }, 413);
   let body: Record<string, unknown>;
@@ -98,6 +103,8 @@ export async function dailyRoute(req: Request, env: Env, url: URL, ctx: Executio
         if (cache) ctx.waitUntil(cache.delete(new Request(`${url.origin}/daily.json`, { method: "GET" })).then(() => undefined));
         // 16:00 の台本のついでに、30 日より前の挑戦中の動作の列を空にする (D-57b。表がまだ無いサーバーでは何もしない)
         ctx.waitUntil(pruneDailyLive(db, now).catch(() => undefined));
+        // お題を書いたら #日報・報告 に 1 通 (D-85b)
+        if ((out as { done?: string[] }).done?.includes("topic")) ctx.waitUntil(notifyTopics(env, now).then(() => undefined).catch(() => undefined));
         return json(out);
       }
   }
