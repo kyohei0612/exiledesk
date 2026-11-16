@@ -32,7 +32,8 @@ export function chaosSkip(data: PatchData, x: TreeDoc, startId: string): void {
   let layer = [startId];
   for (const c of CHAOS_SKIP_STEPS) {
     const next: string[] = [];
-    for (const id of layer) {
+    // 右の箱から置く: 同じ中身の結果は後に置いた方 (左の箱の子) へまとまるので、組んだ道が左の列を縦に下りる (S-22f、11-16 オーナー「左から縦作っていって欲しい。斜めになる」)
+    for (const id of [...layer].reverse()) {
       const b = x.boxes[id];
       if (!b || b.hand || b.back || b.done) continue;
       const h = handOf(c);
