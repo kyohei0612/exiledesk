@@ -96,6 +96,28 @@ sql(SAMPLE.map(([name, cost, rate, mins], i) =>
   `INSERT OR IGNORE INTO daily_tries (topic_id, nick_id, started_at, submitted_at, cost, rate, recipe) VALUES (${q(y)}, ${q(`ndev${i}`)}, ${yStart + i * 600e3}, ${yStart + i * 600e3 + mins * 60e3}, ${cost}, ${rate}, ${M ? q(recipeOf(i)) : "NULL"});`).join(" "));
 console.log("[dev:daily-api] 昨日の順位の見本 5 人");
 roll(today);
+await todayFromProd();
+
+/**
+ * 今日のお題が手元で組めなかった時の控え (11-16 デイリー部長 28): 手元は週の取得の品が無く手の辞書の見本だけで組むので、
+ * 2 週目は前の週に使ったベースを避けて曜日の見本が尽き、その日の予定が空になる (11-16 の週の月〜水)。挑戦の画面を見られないので、
+ * 本番の今日のお題の 1 行を読むだけで (wrangler のログイン、本番には書かない Y-71) 手元に写す。相場の写しは 1 文の上限 (100KB) を超えるので空で入れて 60KB ずつ足す
+ */
+async function todayFromProd() {
+  const id = `d${dayName(today)}`;
+  const has = (await (await fetch(`${BASE}/daily.json`)).json()).week?.some((d) => d.today && d.t);
+  if (has) return;
+  const rd = wr(["d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `"SELECT * FROM daily_topics WHERE id = '${id}'"`], { maxBuffer: 64 * 1024 * 1024 });
+  let row = null;
+  try { row = JSON.parse(rd.stdout)[0].results[0] ?? null; } catch { /* 読めない (ログイン切れ等) */ }
+  if (!row) { console.log(`[dev:daily-api] 今日のお題が組めず、本番の ${id} も読めなかった (wrangler login を確かめる)。挑戦は始められない`); return; }
+  const cols = Object.keys(row), big = row.prices ?? null;
+  const val = (c) => (c === "prices" && big ? "''" : row[c] == null ? "NULL" : typeof row[c] === "number" ? String(row[c]) : q(row[c]));
+  const parts = [];
+  for (let i = 0; big && i < big.length; i += 60000) parts.push(`UPDATE daily_topics SET prices = prices || ${q(big.slice(i, i + 60000))} WHERE id = ${q(id)};`);
+  sql([`INSERT OR REPLACE INTO daily_topics (${cols.join(", ")}) VALUES (${cols.map(val).join(", ")});`, ...parts].join("\n"));
+  console.log(`[dev:daily-api] お題 ${dayName(today)}: 手元で組めないので本番のお題を写した (${row.base}、読むだけ)`);
+}
 
 console.log(`[dev:daily-api] できた。1440 のデイリー (http://localhost:1440/web.html?page=daily) がここ (${BASE}) につながる。止めるのは Ctrl+C`);
 await new Promise(() => {});
