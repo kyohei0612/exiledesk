@@ -136,7 +136,11 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
       if (my !== token) return;
       const p1 = firstOf.p!;
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
-      const ms = flag("walkFast") ? Math.min(walkMs(path.length), FRAME_MS) : walkMs(path.length); // 最初から早送りと同じ見える一番速い速さ (S-72d、スイッチ walkFast)
+      // 最初から早送りの 1.5 倍 = 1 箱 20ms (長い道で今の方が速ければそのまま)。早送り (輪で 3 秒とどまったら) は無し (S-72d、スイッチ walkFast。
+      // 11-16 オーナー「100人まだ遅いな。最初からマックス早送りの1.5倍かな　早送りもういらんしな」)
+      const fastAll = flag("walkFast");
+      // 長い道は早送りが無い分、歩き全体を 20 秒の 1.5 倍の速さ (約 13 秒) に収める (1 箱の間は描き直しより短くてよい、下で時間どおりに進む)
+      const ms = fastAll ? Math.min(Math.round(FRAME_MS / 1.5), 20000 / 1.5 / Math.max(1, path.length)) : walkMs(path.length);
       // 通った箱 (足跡)。全体表示の小さい倍率で速く進んでも、どこを通ったか残る (10-22 オーナー「機能してる？」、光る枠だけでは見えなかった)
       const trail = new Set<string>();
       const stayN = Math.ceil(STAY_MS / ms);
@@ -144,12 +148,20 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
       let since = 0;
       /** 一度早送りした輪 (箱の組) */
       const known: Set<string>[] = [];
+      const w0 = performance.now();
       for (let i = 0; i < path.length && !skip; i++) {
         trail.add(path[i]!.box);
         walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail), fast: false };
         onWalk(path[i]!.box, i);
         await new Promise((res) => setTimeout(res, ms));
         if (my !== token) return;
+        if (fastAll) {
+          // 描き直しが 1 箱の間に追いつかない時は、時間どおりの所まで進む (飛ばした箱も足跡に残す)。前は描くたびに遅れ、オーナーの木 (6,849 箱) で 1 箱 30〜130ms に落ちていた
+          const at = Math.min(path.length, Math.floor((performance.now() - w0) / ms));
+          for (let k = i + 1; k < at; k++) trail.add(path[k]!.box);
+          if (at > i + 1) i = at - 1; // 次は at 番目の箱 (ループの i++ の後)
+          continue;
+        }
         // 一度早送りした輪にまた入ったら (今の箱と次の箱がその輪の箱)、3 秒待たずにすぐ早送り (10-25 オーナー「同じルートまた来たら早送りでいいな 今毎回3秒考えてるでしょ」)
         const again = i + 1 < path.length ? known.find((L) => L.has(path[i]!.box) && L.has(path[i + 1]!.box)) : undefined;
         let stay: Set<string>;
