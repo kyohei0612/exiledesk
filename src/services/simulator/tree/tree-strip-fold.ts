@@ -81,12 +81,13 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
   // (11-14 オーナー「2段以上ならまとめたるか」「もはや1段も同じ枠あるから非表示でいいだろうし」)
   if (flag("hitsSide")) for (const b of Object.values(d.boxes)) {
     const ends = b.outs.filter((o) => backOnly(d.boxes[o]));
-    // その手の子に未設定 (手も行き先も無い・完成でない) が 1 つでもあれば畳まない (11-14 オーナー「そもそも未設定あるならたたまないけど」)
-    if (b.outs.some((o) => unset(d.boxes[o]))) continue;
+    // その手の子に未設定 (手も行き先も無い・完成でない) が 1 つでもあれば ↩ は畳まない (11-14 オーナー「そもそも未設定あるならたたまないけど」)。
+    // → 同じ枠へ・→ 同じ中身の箱の続きへ は未設定の兄弟がいても畳む (11-16 オーナー「同じ枠で2周目から変えるなんてことはないから畳むでOK」)
+    const open = b.outs.some((o) => unset(d.boxes[o]));
     if (!ends.length || ends.some((id) => out.has(id))) continue;
     // 行き先が同じ段か先の箱は札も出さず直に線 (11-14 オーナー「表示せず枠を」「同じ枠系はそのごの枠へつなげばいいのでは」)。
     // 前の段へ戻る (↩) も札を出さず、手の札に乗せた時だけ青い線 (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
-    const links = ends.filter((id) => ahead(d, id)), backs = ends.filter((id) => !ahead(d, id));
+    const links = ends.filter((id) => ahead(d, id)), backs = open ? [] : ends.filter((id) => !ahead(d, id));
     if (links.length) out.set(links[0]!, { head: links[0]!, mids: links, stops: [], steps: 0, tucked: [], ends: true, link: true });
     if (backs.length) out.set(backs[0]!, { head: backs[0]!, mids: backs, stops: [], steps: 0, tucked: [], ends: true, back: true });
   }
