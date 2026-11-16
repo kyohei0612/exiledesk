@@ -273,7 +273,9 @@ const holeN = computed(() => issueGroups(jt.shownIssues.value, doc.value).length
 // 開いた時に黙って外した木の途中の余った印の数を要望に添える (画面には出さない、S-107d・U-05f。スイッチ actLog)
 // 数は開き終えた後の組み直しで書かれ、#recipe からの開きでは loading が替わらない事もあるので、数そのものを見る (11-14 デザイン 8: ワンドで midDropped 2 なのに openIssues が null)
 watch(() => doc.value.midDropped, (n) => { if (flag("actLog")) noteOpenHealth({ midUnset: n ?? 0 }); }, { immediate: true });
-const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
+// 1 人目の歩き: 始めに描いている木が全部入る大きさへ、歩きの間は動かさない、回し終わったら押す前の視点へ (S-147o)
+const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (_id, i) => { if (!i) void v.walkFit(); });
+watch(() => tr100.running.value, (on) => { if (!on) void v.walkBack(); });
 /** 最終チェックのボタン: 人を回さず木の枠を辿る精査だけ (11-11 オーナー「何人か回してるよね。やめさせてくれ。普通に全枠2周して未設定やバグないかのチェックが最終チェックだ」、S-201 ②。前は精査の後に試しの 30 人を回していた) */
 async function onTest(): Promise<void> {
   tidyNow(); // 最終チェックを押した時も見やすい木へ (S-142k)。整理で未設定が出たらそこで止め、全部決まったら押し直さずに続ける (S-190・S-190c)

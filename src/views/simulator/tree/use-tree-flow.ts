@@ -59,6 +59,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
 
   /** 倍率を変える (段に吸い付く。at = 軸にする画面の点 (clientX / clientY)、無ければ画面の真ん中。clear = 段の札の帯にかぶる箱を寄せる (人が大きさを変えた時、S-147k)) */
   async function setZoom(z: number, at?: { x: number; y: number }, clear = true): Promise<void> {
+    if (walkSet) walkTouched = true; // 歩きの間に人が大きさを変えた (S-147o: 回し終わりに戻さない)
     const to = snapZoom(z) * pageZ.value, vp = f.viewport.value;
     if (!at && !(clear && laneOn())) { await scale(to); return; }
     // 軸の点の下のツリーの座標が、倍率を変えた後も同じ画面の点に来るように (軸が無い時は枠の真ん中)
@@ -88,6 +89,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
   let wheelAcc = 0, wheelT = 0;
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
+    if (walkSet) walkTouched = true; // 歩きの間のホイール (S-147o)
     clearTimeout(wheelT);
     wheelT = window.setTimeout(() => { wheelAcc = 0; }, 200);
     wheelAcc += e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1);
@@ -167,6 +169,27 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
     if (!whole && (innerWidth < VIEW_ONLY_MAX)) await startTop(Math.max(lv, PHONE_MIN));
     else await startTop(lv, true);
   }
+  /** 100 人回しの歩きの前の視点 (戻す先) と、歩きの始めに置いた視点 (人が動かしたかを見る)。S-147o */
+  let walkWas: { x: number; y: number; zoom: number } | null = null, walkSet: { x: number; y: number; zoom: number } | null = null, walkTouched = false;
+  /** 歩きの始め (S-147o): 押す前の視点を覚え、今描いている箱が全部入る一番大きい大きさ (100% まで、下限なし) で、木の上を枠の上・木の真ん中を枠の真ん中へ */
+  async function walkFit(): Promise<void> {
+    const ns = f.getNodes.value.filter((n) => !n.hidden), w = f.dimensions.value.width - laneW(), h = f.dimensions.value.height;
+    if (!ns.length || w <= 0 || !h) return;
+    const l = Math.min(...ns.map((n) => n.position.x)), r = Math.max(...ns.map((n) => n.position.x + (n.dimensions.width || BOX_W)));
+    const t0 = Math.min(...ns.map((n) => n.position.y)), b = Math.max(...ns.map((n) => n.position.y + (n.dimensions.height || BOX_H))) + NEXT_H;
+    const top = topY(), z = Math.min(pageZ.value, (w - 2 * LEFT_PAD) / Math.max(1, r - l), (h - top - PAD_MIN) / Math.max(1, b - t0));
+    if (!walkWas) walkWas = { ...f.viewport.value };
+    walkSet = { x: laneW() + w / 2 - ((l + r) / 2) * z, y: top - t0 * z, zoom: z };
+    await put(walkSet.x, walkSet.y, walkSet.zoom);
+  }
+  /** 回し終わり (S-147o): 歩きの間に人が視点を動かしていなければ (ホイール・ドラッグ・＋ / −)、押す前の視点へ戻す。木の側の小さな寄せ (数 px) では見分けない */
+  async function walkBack(): Promise<void> {
+    const was = walkWas, set = walkSet, touched = walkTouched;
+    walkWas = walkSet = null; walkTouched = false;
+    if (was && set && !touched) await put(was.x, was.y, was.zoom);
+  }
+  // 人の操作 (d3 の元の出来事があるドラッグ・ピンチ) は歩きの間なら印を付ける。視点を書く口 (put・center・scale) からの動きは元の出来事が無い
+  f.onMoveStart((e) => { if (walkSet && (e.event as { sourceEvent?: unknown } | undefined)?.sourceEvent) walkTouched = true; });
   /** 開いた時の寄りを呼んだ回数 (S-147h: 木を変えた後の縮めが、木を開く・タブを替える時の寄りを上書きしないように見る) */
   let opens = 0;
   /** 最後に開いた時の寄りを掛けた時刻 (その直後の並べ直しでは視点を動かさない) */
@@ -291,5 +314,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
     void put(vp.x + (w - old) / 2 - d / 2, vp.y, vp.zoom);
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, ...follow, toggleFull, centerOn, rectOf, laneShift, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, walkFit, walkBack, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, ...follow, toggleFull, centerOn, rectOf, laneShift, dispose: () => window.removeEventListener("resize", onResize) };
 }

@@ -18,8 +18,13 @@ import { capDivOf, runPrice } from "../../../services/simulator/tree/run-price";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
-/** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
+/** 回す人数 (帯の「100 人回した時」と同じ) */
 export const RUN_N = 100;
+/** 普段の 100 人回しの種 (S-70c): 押すたびに新しい数。開発版だけ URL の seed=<数> で決められる (前後を比べる台本用) */
+function freshSeed(): number {
+  const fixed = import.meta.env.DEV ? Number(new URLSearchParams(location.search).get("seed")) : 0;
+  return fixed > 0 ? fixed : 1 + Math.floor(Math.random() * 0x7fffffff);
+}
 /**
  * 穴チェックの走行の人数 (10-27 オーナー「テストで回す」: 足りない所があっても断らず回し、どの箱で何人止まったか・どこでループしたかを出す。
  * 「変な作りでも普通にカレンシーを付けた時の動きだから止まる事は無いでしょ、ループはあると思うけど。それで止まる所が分かる」)。1 人目の歩きは見せず、止まった人が出ても止めない
@@ -51,7 +56,7 @@ const FRAME_MS = 30;
 /** 回す時の値段 (相場は高貴建て → 神に直す) は services の run-price 1 か所 (デイリーの検算と同じ数え方) */
 export { runPrice };
 /**
- * 木を外から持たせる画面 (デイリーの挑戦、D-41 ④) が回す時の種・値段・ベースの値段 (S-70c)。null = 普段 (種 1・木の相場・木のベースの値段)。
+ * 木を外から持たせる画面 (デイリーの挑戦、D-41 ④) が回す時の種・値段・ベースの値段 (S-70c)。null = 普段 (押すたびに新しい種・木の相場・木のベースの値段)。
  * price は相場のまま (高貴建て、priceOfKey と同じ形)。神に直すのは runPrice。入れた画面が出る時に null に戻す
  */
 export type TreeRunRig = { seed: number; price: (key: string) => number; startCost?: number; perBox?: boolean; /** 完成の箱に着いた人の品を完成に数えてよいか (S-05b、回しの doneOk へそのまま渡す。無ければ全員完成) */ doneOk?: TreeRunOpts["doneOk"] };
@@ -97,12 +102,14 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     const d = doc.value;
     // 精査で回した同じ 30 人を使い回す (S-71b)。走行は 1 人 鏡 2 個分の神で打ち止め (S-71) なので、誰も届いていない時だけ同じ結果になる
     const re = opt.reuse, rig = treeRunRig.value;
+    // 種 (S-70c): デイリーは入れた種のまま、穴チェックの走行は 1、普段の 100 人回しは押すたびに新しい種 (開発版は URL の seed= で決められる)
+    const seed = rig?.seed ?? (opt.test ? 1 : freshSeed());
     const priceIn = runPrice(rig?.price ?? priceOf);
     const capDiv = capDivOf(priceIn);
     // 種・値段を外から持たせている間は使い回さない (精査は種 1・木の相場で回している)
     // 1 人目の挑戦 (S-72c、スイッチ firstTry) は 100 人回しだけ。精査の 30 人には居ないので使い回さない
     const first = flag("firstTry") && !opt.test && !view;
-    if (re && !rig && !first && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost < capDiv)) {
+    if (re && !rig && !first && seed === 1 && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost < capDiv)) {
       await nextTick();
       if (my === token) { raw.value = re.run; running.value = false; logRun(); }
       return;
@@ -111,7 +118,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: rig?.seed ?? 1, perBox: rig?.perBox, doneOk: rig?.doneOk, price: priceIn, capDiv, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0, firstTry: first,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed, perBox: rig?.perBox, doneOk: rig?.doneOk, price: priceIn, capDiv, startCost: startCost(), every: PROGRESS_EVERY, slice: opt.test ? SLICE_MS : 0, firstTry: first,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {
