@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.745",
+  "date": "2026-11-16",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成・最終チェックを押した時の並べ直しで、完成までの道が組んだ側の列に縦に並ぶようにしました (完成の箱が組んだ枝より左に出ていた)",
+    "en": "Simulator: when you press Done or Final check, the path to the finished item now lines up in the column you built it in (the finished box used to appear left of its branch)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: フラクチャーで固定された箱どうしも、1 つに手を置くと固定された MOD が同じほかの箱に同じ手が入るようにしました",
+    "en": "Simulator: boxes locked by a Fracturing Orb now get the same craft at once when you set it on one of them (boxes with the same locked mod)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ☑ した手で狙いの MOD が低いティアで付いた人が、外れの箱から同じ手に戻った時に「予期せぬ狙い MOD」で止まっていたのを直しました (外れのまま続けます)。止まる人の文も「前の手で付いていた」に分けました",
+    "en": "Simulator: fixed runs stopping as an \"unexpected target mod\" when a checked craft had added the target at a low tier and the run came back to the same craft (it now continues as a miss). The stop message now says the mod was added by an earlier craft"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦の途中で一覧に戻った時も、今日の順位の数字とひとことはぼかして見せるようにしました (提出・諦め・時間切れの後に見えます)",
+    "en": "Daily: today's ranking numbers and notes now stay blurred while your own attempt is still in progress (they show once you submit, give up, or run out of time)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦のツリーで、狙いがそろった箱に自動で「完成」が付かなくなりました。シミュレーターと同じく「完成」を押した箱だけが完成です (押していない箱は最終チェックで「未設定」に出ます)",
+    "en": "Daily: in the challenge tree, boxes that meet the target are no longer marked \"Finished\" automatically. As in the Simulator, only boxes you mark as finished count (unmarked ones show as \"not set\" in the final check)"
+   }
+  ]
+ },
+ {
   "v": "0.1.744",
   "date": "2026-11-16",
   "items": [
@@ -935,18 +971,6 @@
     "area": "",
     "text": "要望: 送る窓の説明に「デイリーの名前は入ります」と書くようにしました",
     "en": "Feedback: the send window now says that your Daily name is included"
-   }
-  ]
- },
- {
-  "v": "0.1.705",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 保存・共有したレシピの木を開くのを速くしました (スマホで固まる時間がおよそ 4 割短くなります)",
-    "en": "Simulator: saved and shared recipe trees now open faster (about 40% less freezing on phones)"
    }
   ]
  }

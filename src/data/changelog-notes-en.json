@@ -1,4 +1,11 @@
 {
+  "0.1.745": [
+    "Simulator: when you press Done or Final check, the path to the finished item now lines up in the column you built it in (the finished box used to appear left of its branch)",
+    "Simulator: boxes locked by a Fracturing Orb now get the same craft at once when you set it on one of them (boxes with the same locked mod)",
+    "Simulator: fixed runs stopping as an \"unexpected target mod\" when a checked craft had added the target at a low tier and the run came back to the same craft (it now continues as a miss). The stop message now says the mod was added by an earlier craft",
+    "Daily: today's ranking numbers and notes now stay blurred while your own attempt is still in progress (they show once you submit, give up, or run out of time)",
+    "Daily: in the challenge tree, boxes that meet the target are no longer marked \"Finished\" automatically. As in the Simulator, only boxes you mark as finished count (unmarked ones show as \"not set\" in the final check)"
+  ],
   "0.1.744": [
     "Simulator: in the tree, when a checked step adds a target mod at a low tier, the craft now continues down the miss path instead of stopping",
     "Simulator: the final check no longer counts an Essence step as \"not set\" when an earlier step already added the same mod group"
