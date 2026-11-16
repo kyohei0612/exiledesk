@@ -15,7 +15,7 @@ import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
-import { effectOf, isRuneHand, rerollsValues } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, rerollsValues } from "../../../services/simulator/tree/tree-hands";
 import { RUNE_PREFIX, runeNameOf } from "../../../services/craft-stage/engine";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { addsRandomMod, CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -23,7 +23,7 @@ import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./t
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue"; import TreeAimRows from "./TreeAimRows.vue";
 import TreeKeepList from "./TreeKeepList.vue"; import TreeDivinePick from "./TreeDivinePick.vue"; import TreeHeldPick from "./TreeHeldPick.vue"; import { divineStart } from "../../../services/simulator/tree/tree-divine"; import TreeAimLocked from "./TreeAimLocked.vue"; import { lockedAimRows } from "./tree-aim-why";
-import { useHandKeep } from "./use-hand-keep"; import TreeBoxModBtn from "./TreeBoxModBtn.vue"; import { bothLabel, useEleSecond } from "./use-ele-second"; import { useEleSingles } from "./use-ele-singles"; import { fracOnceBlock } from "../../../services/simulator/tree/tree-sample";
+import { useHandKeep } from "./use-hand-keep"; import { useHandRune } from "./use-hand-rune"; import TreeBoxModBtn from "./TreeBoxModBtn.vue"; import { bothLabel, useEleSecond } from "./use-ele-second"; import { useEleSingles } from "./use-ele-singles"; import { fracOnceBlock } from "../../../services/simulator/tree/tree-sample";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { putMiss } from "./tree-row-tags"; import { aimedMiss, isMissMod } from "../../../services/simulator/tree/tree-miss"; import { cardFor } from "./box-card"; import { lvRowTags } from "./tree-whittle-marks"; import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model"; import { sureFracDoc } from "../../../services/simulator/tree/tree-sure-frac";
@@ -264,30 +264,8 @@ const keepAsk = k.ask;
 const keepShow = computed(() => k.show.value || k.fixedOnly.value);
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
 const addLabels = computed((): string[] => (keepShow.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
-/**
- * ルーンはカードのソケットに置く (S-31f、11-05 オーナー「エミュみたいにここに設置」)。はまったソケットを押す = その番号へ (入れ替え、エンジンの rune:名前@n)、
- * 本体 (と空き) = 空きへ。木でソケットを足す手は無い (11-07 オーナー「熟練工はそもそもつりーでうてんでしょ」)。
- * 全部埋まっている時は押したソケットと入れ替えるだけで、本体・「使う」では左から置き換えない (11-07 オーナー「同じ動作で刺す方にクリックしたらつけれるはず」)。
- * 足す空きの丸はカードに出さない (11-05 オーナー「規格外スタートだから空き穴ないでしょ」= B)
- */
-const runeAt = ref<number | null>(null);
-/** 置き換えられないソケット (バウンド) を押した訳。その押しだけ断り、持った物はそのまま (猿 release-668 ①: 断った後に別のソケットも押せなくなっていた) */
-const socketWhy = ref<string | null>(null);
-watch(held, () => { runeAt.value = null; socketWhy.value = null; });
-const runeHold = computed(() => !!held.value && isRuneHand(held.value));
-/** ルーンを持っていてソケットが全部埋まっている (まだソケットを押していない) = 入れ替えるソケットを選ぶ番 */
-const runePick = computed(() => { const it = item.value ?? shelfItem.value, n = it?.sockets ?? 0; return runeHold.value && !runeAt.value && n > 0 && (it?.augments?.length ?? 0) >= n; });
-const RUNE_PICK = (): string => tr("ソケットが埋まっている", "All sockets are filled");
-const runeNote = computed(() => (runeHold.value ? `${socketWhy.value ? `${socketWhy.value} · ` : ""}${runePick.value ? tr("入れ替えるルーンのソケットを押す · 右クリック / Esc で手放す", "Click the socket whose rune to swap · Right-click / Esc to drop") : tr("ルーンのソケットを押すと入れ替え · カードを押すと空きへ · 右クリック / Esc で手放す", "Click a filled socket to swap its rune · Click the item to use an empty socket · Right-click / Esc to drop")}` : undefined));
-function onSocket(n: number): void {
-  // ルーン以外を持っている時はアイテムを押したのと同じ (StageItemCard の onSocket の決まり。前は何もせず、ルーンの入ったソケットを押しても打てなかった、11-05 動画の木)
-  if (!runeHold.value) { ok(); return; }
-  runeAt.value = n;
-  const why = problem.value;
-  if (why) { socketWhy.value = tr(`${n} 番目: ${why}`, `Socket ${n}: ${why}`); runeAt.value = null; return; }
-  socketWhy.value = null;
-  ok();
-}
+/** ルーンのソケットの選び (S-31f、use-hand-rune) */
+const { runeAt, socketWhy, runeHold, runePick, RUNE_PICK, runeNote, onSocket } = useHandRune(held, item, shelfItem, () => problem.value, () => ok());
 const handRaw = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: k.aims.value } : {}), ...(divOn.value && divTargets.value.length ? { targets: divTargets.value.map((x) => ({ ...x })), ...(divReset.value && item.value?.foreseen ? { foreReset: true as const } : {}) } : {}) }) : null));
 const hand = computed((): Hand | null => { const h = handRaw.value; return h && runeAt.value && runeHold.value ? { ...h, currency: `${RUNE_PREFIX}${runeNameOf(h.currency)}@${runeAt.value}` } : h; });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
