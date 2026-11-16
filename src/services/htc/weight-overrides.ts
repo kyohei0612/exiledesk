@@ -28,7 +28,6 @@
  * 2. **どこにも数字が無い物 (クロスボウのグレネード 3 個) は、CoE の値をそのまま使う**。
  */
 import { tr } from "../../i18n/lang";
-import { flag } from "../../web/release-flags";
 import { noteFixMiss } from "./fix-misses";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -46,10 +45,8 @@ const OVERRIDES: Record<string, { source: string; byIlvl: Record<number, number>
     source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-5 / ring",
     byIlvl: { 1: 1000, 18: 1000, 35: 1000, 51: 1000, 60: 1000 },
   },
-  // E-03c: オーナー 11-15 に 1 段 1,000 (CoE は 800)。本番で隠す OK 待ち (スイッチ amuletCastWeight)
-  "Amulets/IncreasedCastSpeed": flag("amuletCastWeight")
-    ? { source: "owner 2026-11-15 (E-03c、Craft of Exile は 800)", byIlvl: { 1: 1000, 18: 1000, 35: 1000, 51: 1000, 60: 1000, 66: 1000 } }
-    : { source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-6 / amulet", byIlvl: { 1: 800, 18: 800, 35: 800, 51: 800, 60: 800, 66: 800 } },
+  // 首飾りは CoE の 800 のまま (E-03c の 1,000 は 11-16 にやめた、オーナー「首飾り削除いらない」)
+  "Amulets/IncreasedCastSpeed": { source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-6 / amulet", byIlvl: { 1: 800, 18: 800, 35: 800, 51: 800, 60: 800, 66: 800 } },
   "Crossbows_cannon/GrenadeCooldownUse": {
     source: "Craft of Exile GrenadeSkillAdditionalCooldownUse1-2 (500 / 250)",
     byIlvl: { 72: 500, 81: 250 },
