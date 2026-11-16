@@ -17,7 +17,9 @@ let openNo = 0, openFrom: TreeDoc | null = null;
 /** 1 コマ返す (読み込み中の覆いを先に描く)。隠れたタブでも止まらない */
 const frame = (): Promise<void> => new Promise((ok) => { const t = setTimeout(ok, 100); requestAnimationFrame(() => setTimeout(() => { clearTimeout(t); ok(); }, 0)); });
 
-export async function openStepped(data: PatchData, tree: TreeDoc, doc: ShallowRef<TreeDoc>, start: () => void, put: (t: TreeDoc) => void): Promise<void> {
+/** fresh = 写しを使わず打ち方から今の決まりで組み直す (古いレシピの組み直し S-104e)。組めた木を返す (別の木を開いて捨てた時は null) */
+export async function openStepped(data: PatchData, tree0: TreeDoc, doc: ShallowRef<TreeDoc>, start: () => void, put: (t: TreeDoc) => void, fresh = false): Promise<TreeDoc | null> {
+  const tree = fresh ? (({ built: _b, oldBuilt: _o, builtZ: _z, dailyPast: _p, ...r }) => r as TreeDoc)(tree0) : tree0;
   const no = ++openNo;
   openFrom ??= doc.value;
   treeLoading.value = true; start();
@@ -35,4 +37,5 @@ export async function openStepped(data: PatchData, tree: TreeDoc, doc: ShallowRe
       if (done) put(done);
     }
   }
+  return no === openNo ? done : null;
 }

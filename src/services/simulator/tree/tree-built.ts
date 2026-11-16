@@ -6,7 +6,7 @@
  */
 import type { TreeDoc } from "./tree-model";
 import { toRecipeV1 } from "./tree-recipe-v1";
-import { DEV_BUILD } from "../../../web/release-flags";
+import { DEV_BUILD, flag } from "../../../web/release-flags";
 import { unpackJson } from "../../craft-stage/share";
 
 declare const __TREE_BUILD__: string | undefined;
@@ -27,6 +27,8 @@ const recOf = (d: TreeDoc): string => { const { examples: _e, built: _b, ...r } 
 
 /** 組み上がった木 d の写し (版が空・箱の無い保存の形なら作らない) */
 export function builtOf(d: TreeDoc): TreeBuilt | undefined {
+  // 古いレシピ (S-104e) は元の写しのまま (古い箱に今の版を付けない = 開き直しても古いレシピ)
+  if (d.oldBuilt) return JSON.parse(JSON.stringify(d.oldBuilt)) as TreeBuilt;
   if (!TREE_BUILD || !d.boxes?.start || d.schema?.startsWith("exiledesk-recipe/")) return undefined;
   const { examples: _e, built: _b, ...doc } = d, s = JSON.stringify(doc);
   // 大きすぎる木は写しを持たない (保存したレシピは手元の保存の場所に積むので。開く時は今どおり組み直す)
@@ -71,9 +73,15 @@ export function dailyPastOf(d: TreeDoc): DailyPast | null {
 /** 保存の形 tree の写しが今の組み方の版・同じ打ち方なら、組み上がった木 (例のアイテムは保存の形の物)。使えなければ null = 組み直す */
 export function fromBuilt(tree: TreeDoc): TreeDoc | null {
   const b = tree.built;
-  if (!TREE_BUILD || !b || b.v !== TREE_BUILD || !b.doc?.boxes?.start) return null;
+  if (!TREE_BUILD || !b || !b.doc?.boxes?.start) return null;
+  // 組み方の版が違う写しは、古いレシピとして写しのまま見るだけにする (S-104e、スイッチ oldRecipeView)。無ければ今どおり組み直す
+  const old = b.v !== TREE_BUILD;
+  if (old && !flag("oldRecipeView")) return null;
   try { if (b.rec !== recOf(tree)) return null; } catch { return null; }
   const doc = JSON.parse(JSON.stringify(b.doc)) as TreeDoc;
   if (tree.examples) doc.examples = JSON.parse(JSON.stringify(tree.examples)) as NonNullable<TreeDoc["examples"]>;
+  if (old) doc.oldBuilt = JSON.parse(JSON.stringify(b)) as TreeBuilt;
   return doc;
 }
+/** 古いレシピ (S-104e) の印のある木か (印の間は 100 人回す・最終チェックを止め、触る前に今の決まりで組み直す) */
+export const isOldRecipe = (d: TreeDoc): boolean => !!d.oldBuilt && flag("oldRecipeView");

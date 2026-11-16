@@ -11,18 +11,22 @@ import { tr } from "../../../i18n/lang";
 import { RUN_N } from "./use-tree-run";
 import { simOp } from "../../../web/track";
 import { flag } from "../../../web/release-flags";
+import { isOldRecipe } from "../../../services/simulator/tree/tree-built";
+import { useTree } from "./use-tree";
 import { finalLockedWhy, finalName, finalTitle, holeBusy, holeName, holesCount, holesShowTitle, holeTitle, runLockedWhy } from "./hole-check";
 
 /** test = 穴チェック (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は灰色で押せない (S-70)。halted = 止まった人が出て途中で止めた */
 const props = defineProps<{ /** ハズレ整理のボタンの状態 (S-192) */ tidy?: { on: boolean; step: string; unset: number; guide: boolean; busy: boolean; empty?: boolean; finalLit: boolean }; result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
 const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: []; /** ハズレ整理 (S-192) */ tidy: []; /** 完成の後の案内から組む所へ戻る (S-198) */ tidyBack: [] }>();
 /** 穴チェックに合格していないので「100 人回す」を止める (回している間は別の理由) */
-const locked = computed(() => !props.test.passed);
+const locked = computed(() => !props.test.passed || old.value);
+/** 古いレシピ (S-104e): 印の間は 100 人回す・最終チェック (穴チェック) を押せない */
+const old = computed(() => isOldRecipe(useTree().doc.value));
 /**
  * 押せない訳 (乗せた時だけ帯の下に 1 行、S-70b)。前はボタンの title (ブラウザの吹き出し) と TreeRunSum の「100 人: まだ回していない」が 2 つ同時に出た
  * (オーナー 11-14「100人回すホバーで2種出るな」「回していないを今の合格すると回せる文言に変えるか」)。押せない間は title を付けず、押せる時は title だけ
  */
-const lockWhy = computed(() => (props.running || !locked.value ? null : props.tidy?.on ? finalLockedWhy() : runLockedWhy(props.test.busy, props.test.holes)));
+const lockWhy = computed(() => (props.running || !locked.value ? null : old.value ? tr("古いレシピのため 100 人で回せません (手を触る・組み直すと今の決まりで組み直します)", "Old recipe: can't run 100 (touching a craft or rebuilding rebuilds it with current rules)") : props.tidy?.on ? finalLockedWhy() : runLockedWhy(props.test.busy, props.test.holes)));
 /** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。TreeRunSum の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
 const report = defineModel<boolean>("report", { required: true });
 watch(() => props.running, (on, was) => {
@@ -37,7 +41,7 @@ watch(() => props.running, (on, was) => {
   <!-- 未設定の間の灰色の「未設定 n つ」は出さない (赤い「未設定 n つ ▾」と同じ数が 2 つ並んでいた。11-11 オーナー「おすすめ」= 上の行を 1 行にする案 A) -->
   <button v-if="tidy && tidy.step !== 'check' && tidy.step !== 'unset'" type="button" data-tree-tidy :data-step="tidy.step" class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy.guide && tidy.step === 'tidy' ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="tidy.busy || running || tidy.empty || tidy.step === 'unset'" :title="tidy.empty ? tr('手を足すと押せる', 'Add a craft first') : tidy.step === 'unset' ? tr('光る箱を決めると最終チェックへ進める', 'Decide the lit boxes to reach the final check') : tr('同じ枠へ自動でつなぎ、残りを未設定として洗い出す', 'Link outcomes to matching boxes and list what is left')" @click="emit('tidy')">{{ tidy.busy ? tr("整理中", "Sorting") : tidy.step === "unset" ? holesCount(tidy.unset) : tr("ハズレ整理", "Sort misses") }}</button>
   <button v-if="tidy?.guide" type="button" data-tree-tidy-back class="g-btn sm shrink-0 whitespace-nowrap" :title="tr('案内を閉じて手を足せる形に戻す (決めた所はそのまま)', 'Leave the guide and go back to building (your choices stay)')" @click="emit('tidyBack')">{{ tr("組むに戻る", "Back to building") }}</button>
-  <button v-if="!tidy || tidy.step === 'check'" type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy?.finalLit ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="test.busy || running" :title="tidy?.on ? finalTitle() : holeTitle()" @click="emit('test')">
+  <button v-if="!tidy || tidy.step === 'check'" type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy?.finalLit ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="test.busy || running || old" :title="tidy?.on ? finalTitle() : holeTitle()" @click="emit('test')">
     <template v-if="tidy?.busy">{{ tr("整理中", "Sorting") }}</template>
     <template v-else-if="test.busy">{{ holeBusy() }}</template>
     <template v-else-if="tidy?.on">{{ finalName() }}</template>

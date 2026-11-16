@@ -18,7 +18,7 @@ import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from ".
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SiteSkinPicker from "../../../components/for-share/SiteSkinPicker.vue";
 import PhoneViewPage from "../phone/PhoneViewPage.vue";
-import TreeLoadingCover from "./TreeLoadingCover.vue"; import TreeDailyPast from "./TreeDailyPast.vue";
+import TreeLoadingCover from "./TreeLoadingCover.vue"; import TreeDailyPast from "./TreeDailyPast.vue"; import TreeOldRecipe from "./TreeOldRecipe.vue"; import { guardOldRecipe } from "./tree-old-recipe";
 import { VIEW_ONLY_MAX, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import { useTreeDraft } from "./use-tree-draft"; import { useActLog } from "./act-log";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
@@ -68,7 +68,7 @@ const viewPhone = computed(() => viewWidth.value);
 useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */
 /** add = 横の ＋ で開いた選ぶ窓 (id は押した横の箱。選んで決めた時に初めて箱を足す、at = 引っ張って置いた所) */
-const panel = ref<Panel | null>(null);
+const panel = ref<Panel | null>(null); guardOldRecipe(panel); // 古いレシピは窓を開く前に今の決まりで組み直す (S-104e)
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
 const MEMO_KEY = "exiledesk.tree.memo-open";
 const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
@@ -383,7 +383,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
     <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 pb-0.5 pt-2 max-[48rem]:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : '-mb-3.5'">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <!-- 11-11 オーナー「上も余りまくってるし」「1行でいいだろこんなん」: 手順の段と下の帯を 1 行に並べる。入りきらない幅だけ帯が次の行へ折り返す (帯の basis は道具が全部見える幅 950px、帯の中は今までどおり横に送る) -->
-      <TreeDailyPast /><!-- デイリーの順位から開いた木の提出した時の数 (S-104d) -->
+      <TreeDailyPast /><!-- デイリーの順位から開いた木の提出した時の数 (S-104d) --><TreeOldRecipe /><!-- 古いレシピ (S-104e) -->
       <div data-tree-head class="flex min-w-0 items-center gap-x-3 gap-y-1.5" :class="ONE_ROW ? 'flex-nowrap' : 'flex-wrap'">
       <div class="flex shrink-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
