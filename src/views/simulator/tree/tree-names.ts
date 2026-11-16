@@ -14,7 +14,7 @@ import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
-import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { lowTierKey, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
+import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { lowTierAimOf, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
@@ -114,7 +114,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 同格以上 (鍵 hi) は「(同格以上)」を足す (S-33e ⑥)
   // 低ティアの箱 (鍵 lt:、S-33g) は「<狙い> 低ティア MOD」。狙いの名前は親の手の当たりの箱・完成形の狙いから
   const lt = lowTierModOf(b.junkKey);
-  if (b.out === "blocked" && lt) { const p = b.parent ? useTree().doc.value.boxes[b.parent] : undefined, a = [...(p?.outs ?? []).flatMap((o) => { const c = useTree().doc.value.boxes[o]; return c?.out === "hit" ? boxAims(c) : []; }), ...(useTree().doc.value.memoAims ?? [])].find((x) => lowTierKey(x) === b.junkKey); const n = a ? modShort(aimShort(a)) : lt; return tr(`${n} 低ティア MOD`, `${n} low-tier mod`); }
+  if (b.out === "blocked" && lt) { const a = lowTierAimOf(useTree().doc.value, b, true); const n = a ? modShort(aimShort(a)) : lt; return tr(`${n} 低ティア MOD`, `${n} low-tier mod`); }
   if (b.out === "blocked") return sameModHead(b.parent ?? null) + (b.junkKey === "hi" ? tr(" (同格以上)", " (same tier or higher)") : "");
   // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(S-42)
   const fixed = ph?.pick === "random" || (!!ph && effectOf(ph.currency) === "fracture");

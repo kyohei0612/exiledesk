@@ -34,6 +34,13 @@ export function holdsLowTier(data: PatchData, item: StageItem, a: Aim): boolean 
 /** 箱 b の手の当たりの箱の狙い (☑) */
 const pickedOf = (doc: TreeDoc, b: TreeBox): Aim[] => b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" ? boxAims(c) : []; });
 
+/** 前に作った低ティアの箱 b の狙い (鍵 lt:<modId> と同じ modId の完成形の狙い。withParent の時は親の手の当たりの箱の狙いを先に見る = 箱の名前) */
+export function lowTierAimOf(doc: TreeDoc, b: (Pick<TreeBox, "out" | "junkKey"> & { parent?: string | null }) | undefined, withParent = false): Aim | undefined {
+  if (!b || !isLowTierBox(b)) return undefined;
+  const p = withParent && b.parent ? doc.boxes[b.parent] : undefined;
+  return [...(p ? pickedOf(doc, p) : []), ...(doc.memoAims ?? [])].find((x) => lowTierKey(x) === b.junkKey);
+}
+
 /**
  * 箱 b の手 (結果 oc、手の後の品 after) で ☑ した狙いが低いティアで付いた人の止まり (スイッチ lowTierBox。無ければ null)。
  * 当たり・狙いが消えた・塞がったの人はそのまま。エッセンス / 合金の手は S-33e (essSameStop) が受け、「いずれかの元素耐性」(S-10h) は 1 元素の低い段で

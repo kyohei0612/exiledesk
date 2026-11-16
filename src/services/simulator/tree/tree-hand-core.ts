@@ -2,25 +2,16 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { aimHeldIn, applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, sameAimTarget, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { junkOf } from "./tree-aim";
+import { applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, sameAimTarget, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { heldOn, junkOf, type AimDiffOpts, type TierAim } from "./tree-aim";
 import { missAims } from "./tree-miss";
 import { ECHO as ABYSSAL_ECHO_OMEN, splitOmens } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { isRevealHand } from "./tree-veil";
 import { aimTargetOf } from "./tree-ele-any";
-import { withEssEle } from "./tree-ess-ele";
-
-/** 段の名前の T で言う狙い (T1 が一番上) */
-interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
-interface AimDiffOpts { sameText?: boolean }
 
 const targetOf = (data: PatchData, a: TierAim): AimTarget => aimTargetOf(data, a);
 const modsOf = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
-const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
-  const t = targetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
-  return aimHeldIn(withEssEle(data, mods), t, opts);
-};
 
 interface AimDiff<A extends TierAim = TierAim> {
   /** 前に無く後に付いている狙い (並びは aims のまま) */

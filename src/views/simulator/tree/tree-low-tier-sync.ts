@@ -4,7 +4,7 @@
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { drop, subtree, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
+import { isLowTierBox } from "../../../services/simulator/tree/tree-low-tier";
 
 /** 箱 id の手の結果の低ティアの箱のうち、人の決めの無い物を消す */
 function syncOne(d: TreeDoc, id: string): void {
@@ -12,7 +12,7 @@ function syncOne(d: TreeDoc, id: string): void {
   if (!b) return;
   for (const o of [...b.outs]) {
     const c = d.boxes[o];
-    if (!c || c.out !== "blocked" || !lowTierModOf(c.junkKey)) continue;
+    if (!c || !isLowTierBox(c)) continue;
     if (!c.hand && (!c.back || c.autoBack) && !c.done) { drop(d, [c.id]); b.outs = b.outs.filter((x) => x !== c.id); }
   }
 }

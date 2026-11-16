@@ -23,7 +23,7 @@ import { essenceModOf, midAims, placedAims } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
-import { holdsLowTier, isLowTierBox, lowTierKey } from "./tree-low-tier";
+import { holdsLowTier, isLowTierBox, lowTierAimOf } from "./tree-low-tier";
 import { flag } from "../../../web/release-flags";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -305,7 +305,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     let out: string | null = null;
     for (let b = doc.boxes[id], n = 0; b && n < 200; b = doc.boxes[b.parent ?? ""], n++) {
       if (!isLowTierBox(b)) continue;
-      const a = (doc.memoAims ?? []).find((g) => lowTierKey(g) === b.junkKey), f = frameAt(id);
+      const a = lowTierAimOf(doc, b), f = frameAt(id);
       out = b.id === id || (a && f && holdsLowTier(data, f.item, a)) ? b.junkKey ?? null : null;
       break;
     }

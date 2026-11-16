@@ -8,9 +8,11 @@ import { aimTargetOf } from "./tree-ele-any";
 import { withEssEle } from "./tree-ess-ele";
 
 // 付きうる狙い (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits を呼ぶだけ。10-25 に画面の tree-hand-plan から精査と一緒に使うここへ)
-interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
-interface AimDiffOpts { sameText?: boolean }
-const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
+/** 段の名前の T で言う狙い (T1 が一番上) */
+export interface TierAim { modId: string; tier: number; anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[] }
+export interface AimDiffOpts { sameText?: boolean }
+/** MOD の並び mods が狙い a を持つか (エッセンスの元素も足して見る。tree-hand-core の aimDiff もこれ) */
+export const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
   const t = aimTargetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
   return aimHeldIn(withEssEle(data, mods), t, opts);
 };
