@@ -266,7 +266,9 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
    * 木を送れる範囲の左と上の端 (S-142h、スイッチ treeOpenStartLeft): 木は始まりの箱から右と下へだけ伸びるので、始まりの箱が開いた時の位置 (横に入らない木 = 木の面の左上、
    * 入る木 = 木が真ん中に来る所) より右・下へは送れない = 左と上の空きを見せない。手で左へ引っ張った箱がある時はその箱まで。スマホの形 (U-53) は今のまま
    */
-  watch(() => `${f.viewport.value.x}|${f.viewport.value.y}|${f.viewport.value.zoom}`, () => {
+  // 手を置いて木の形 (箱の左・上の端) が変わった時も掛け直す (11-17、オーナー「Aでおｋ」。前は視点が動いた時だけで、置いた後の寄せの後に端より右に残り、掴んだ 1 歩目に左へ飛んだ)
+  const shapeKey = (): string => { const ns = f.getNodes.value; let x = Infinity, y = Infinity; for (const n of ns) { if (n.position.x < x) x = n.position.x; if (n.position.y < y) y = n.position.y; } return `${ns.length}|${Math.round(x)}|${Math.round(y)}`; };
+  watch(() => `${f.viewport.value.x}|${f.viewport.value.y}|${f.viewport.value.zoom}|${shapeKey()}`, () => {
     // スイッチ treeZoomLane (S-147k): ここは描き直しの前なので帯はまだ前の倍率の幅。倍率 z の幅で数える (古い幅で端を数えると、帯の右へ出した箱を帯の下へ押し戻した)
     const d = doc.value, { x, y, zoom: z } = f.viewport.value, lw = laneOn() ? laneWAt(z) : laneW(), w = f.dimensions.value.width - lw;
     if (!flag("treeOpenStartLeft") || innerWidth < VIEW_ONLY_MAX || !d.boxes.start || w <= 0) return;
