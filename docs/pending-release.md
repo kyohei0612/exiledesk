@@ -6,6 +6,9 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュの木: 完成・最終チェックの並べ直しの道を、組んだ側 (描いている親) でたどる (S-22g、スイッチ pathLeftCol の中、シミュ部長 72・73) | fd9e9e6d5 | 完成・最終チェックを押した時の並べ直しで、完成までの道が組んだ側の列に縦に並ぶようにしました (完成の箱が組んだ枝より左に出ていた) | When you press Done or Final check, the path to the finished item now lines up in the column you built it in (the finished box used to appear left of its branch) |
+| シミュの木: 兄弟枠にフラクチャーで固定された箱も入れる (S-190d、スイッチ junkSameHand の中、シミュ部長 72・73) | fd9e9e6d5 | フラクチャーで固定された箱どうしも、1 つに手を置くと固定された MOD が同じほかの箱に同じ手が入るようにしました | Boxes locked by a Fracturing Orb now get the same craft at once when you set it on one of them (boxes with the same locked mod) |
+| シミュの木: ☑ した手で付いた低ティアは後の手で止めない (S-33g ①、スイッチ lowTierJunk の中、シミュ部長 73) | e899cee97 | ☑ した手で狙いの MOD が低いティアで付いた人が、外れの箱から同じ手に戻った時に「予期せぬ狙い MOD」で止まっていたのを直しました (外れのまま続けます)。止まる人の文も「前の手で付いていた」に分けました | Fixed runs stopping as an "unexpected target mod" when a checked craft had added the target at a low tier and the run came back to the same craft (it now continues as a miss). The stop message now says the mod was added by an earlier craft |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
