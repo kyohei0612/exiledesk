@@ -9,6 +9,8 @@
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { sameHand, type Aim, type Hand, type HandKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handPickOf } from "../../../services/simulator/tree/tree-recipe-v1";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { useReason } from "../../../services/craft-stage/engine";
 import { applyPick, holdLinks, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -21,7 +23,7 @@ const fracHit = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; co
 const open = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && (KINDS.has(b.out) || fracHit(d, id)) && !b.hand && !b.back && !b.done && !b.sameOff; };
 
 /** id の箱と同じ外れの種類のほかの箱 (決めの有無は見ない、木の並びの順)。同じ手の親の同じ種類の結果。フラクチャーで固定された箱どうしは固定された狙いも同じ物だけ */
-function frameMates(d: TreeDoc, id: string): TreeBox[] {
+export function frameMates(d: TreeDoc, id: string): TreeBox[] {
   const b = d.boxes[id];
   const ph = b?.parent ? d.boxes[b.parent]?.hand : null;
   if (!b || !ph || !(KINDS.has(b.out) || fracHit(d, id))) return [];
@@ -33,6 +35,15 @@ function frameMates(d: TreeDoc, id: string): TreeBox[] {
 export function sameJunkOf(d: TreeDoc, id: string): string[] {
   if (!flag("junkSameHand") || !open(d, id)) return [];
   return frameMates(d, id).filter((o) => open(d, o.id)).map((o) => o.id);
+}
+
+/** その箱の見本でこの手を打てるか (棚と同じ useReason。触媒の前のカタリストも)。打てない手は写さない (S-190d ①・③、11-16) */
+function playable(data: PatchData, d: TreeDoc, id: string, h: Hand, pre: string | null): boolean {
+  let it: ReturnType<typeof sampleOf>["item"] | null = null;
+  try { it = sampleOf(data, d, id, 1)?.item ?? null; } catch { return true; }
+  if (!it) return true;
+  if (pre && useReason(data, it, pre, [])) return false;
+  return !useReason(data, it, h.currency, h.omens);
 }
 
 /** 写す手を比べる鍵 (手・触媒の前・☑ の狙い) */
@@ -56,6 +67,7 @@ export function fillLaterSame(data: PatchData, d: TreeDoc, before: ReadonlySet<s
       if (!picks.length) continue;
       const p = picks[0]!;
       if (picks.some((q) => !sameHand(q.hand, p.hand) || pickKey(q) !== pickKey(p))) continue; // 兄弟どうしで手が違う = 写さず空のまま
+      if (!playable(data, d, id, p.hand, p.pre)) continue;
       holdLinks(() => applyPick(d, id, p.hand, kindOf(p.hand), p.aims, p.pre, onlyOf(data, d, id, p.hand, p.pre, p.aims)));
       put++;
     }
@@ -68,7 +80,7 @@ export function fillLaterSame(data: PatchData, d: TreeDoc, before: ReadonlySet<s
 /** 決めた手を同じ外れのほかの箱にも置く (呼ぶ側の edit の中で、元の箱に置いた後)。間に自動でつながった箱は飛ばす */
 export function pickSameJunk(data: PatchData, d: TreeDoc, ids: string[], h: Hand, kind: HandKind, aims: Aim[], pre: string | null): void {
   for (const id of ids) {
-    if (!open(d, id)) continue;
+    if (!open(d, id) || !playable(data, d, id, h, pre)) continue;
     holdLinks(() => applyPick(d, id, h, kind, aims, pre, onlyOf(data, d, id, h, pre, aims)));
   }
 }
