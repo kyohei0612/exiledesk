@@ -5,6 +5,7 @@
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import { nextCmp } from "./tree-ideal-first";
 import { idealHidden } from "./tree-ideal-hide";
+import { flag } from "../../../web/release-flags";
 import type { OutKind, TreeBox, TreeDoc } from "./tree-model";
 
 /** 外れの道 = 狙いを持って打って狙い通りにいかなかった結果 (外れ・狙いが消えた)。狙い無しの結果 (打った後・消去の外れが消えた) はグレーにしない (S-191・S-190b。消去もほかの手と同じ、11-04) */
@@ -14,8 +15,8 @@ export const junkPath = (b: TreeBox): boolean => JUNK.has(b.out);
 /** 見るだけの幅の外 = ツリーを組める幅だけ (S-197・S-94g)。画面の案内 (整理の流れ・光らせ) だけが見る。木の中身 (整理・グレーの判定・開く時の組み直し) は幅を見ない (11-09、同じ木は幅で変わらない。前は 390 で外れの整理が走らず、自動の戻り先が PC と別の段になった) */
 export const tidyOn = (): boolean => !(typeof window !== "undefined" && window.innerWidth < VIEW_ONLY_MAX);
 const open = (b: TreeBox): boolean => !b.hand && !b.back && !b.done && !b.split;
-/** 組む間は触れない外れの箱 (S-191)。人が × で外した箱は決めた箱 */
-export const isGrayBox = (b: TreeBox): boolean => JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;
+/** 組む間は触れない外れの箱 (S-191)。人が × で外した箱は決めた箱。スイッチ idealHide の間はグレーにしない (完成まで隠す S-142n と灰色を 2 つ持たない、11-16 オーナー「隠すでOK」) */
+export const isGrayBox = (b: TreeBox): boolean => !flag("idealHide") && JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;
 /** 整理の後に残った、人が決める箱 (S-192 ③)。上の段から。完成を押すまで隠す外れの箱 (S-142n、idealHide) は数えない */
 export const unsetBoxes = (d: TreeDoc): string[] => Object.values(d.boxes).filter((b) => open(b) && !isGrayBox(b) && !idealHidden(d).has(b.id)).map((b) => b.id).sort(nextCmp(d)); // buildHitsFirst の ① は当たりの道を左の枝から深く (S-142j ⑤)
 /** ボタンの状態 (S-192): unset = 未設定 n つ (押す物が無い)、check = 最終チェック。整理は木を変えるたびに走るので「ハズレ整理」の状態は無い (S-201 ①) */
