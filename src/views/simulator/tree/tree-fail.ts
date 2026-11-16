@@ -136,8 +136,8 @@ export function retryOf(doc: TreeDoc, id: string | null, link: ReadonlyMap<strin
 export function orphanHits(doc: TreeDoc): string[] {
   const goals = doc.memoAims ?? [];
   if (!goals.length) return [];
-  // 「いずれかの元素耐性」の使い回しの番号 (S-10h ⑧) は札の modId が完成形と違う元素を借りるが、完成形に「いずれか」があれば狙いのうち (11-16 の直し)
+  // 「いずれかの元素耐性」の使い回しの番号 (S-10h ⑧) は札の modId が完成形と違う元素を借りるが、完成形に「いずれか」があれば狙いのうち (11-16 の直し)。単体で ☑ した元素 (eleOne、S-10h ⑩) も同じ (前は冷気・雷だけ札が付いた)
   const anyGoal = goals.some((g) => g.anyEle);
-  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && boxAims(b).every((x) => !(anyGoal && x.anyEle) && !goals.some((g) => g.modId === x.modId))).map((b) => b.id);
+  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && boxAims(b).every((x) => !(anyGoal && (x.anyEle || x.eleOne)) &&!goals.some((g) => g.modId === x.modId))).map((b) => b.id);
 }
 

@@ -244,7 +244,7 @@ const showAims = computed(() => !divOn.value && (canFree.value || (isInfinite.va
 const freeOn = computed(() => showAims.value && !spam.value && !pickedAims.value.length && !(boneVeil.value && boneMode.value === "reveal")); // 骨の発現は狙い無しにしない (10-28 オーナー)。骨の狙い無し・未発現は狙い無しの手
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
 function toggleFree(e: Event): void { const vWas = veilOn.value, om = [...omens.value]; touched = true; checked.value = []; ele1.clear(); if (boneVeil.value && vWas) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } (e.target as HTMLInputElement).checked = true; } // 骨: 狙い無し = 未発現のまま次へ
-/** 単体の ☑ (S-10h ⑩。「いずれか」が ☑ の間は含まれるので押せない) */ function onSingle(a: Aim, fam: string): void { touched = true; ele1.toggle(a, fam, checked.value.includes(aimKey(a))); } function toggleAim(a: Aim): void {
+/** 単体の ☑ (S-10h ⑩。「いずれか」が ☑ の間は含まれるので押せない) */ function onSingle(a: Aim, fam: string): void { touched = true; ele1.toggle(a, fam, checked.value.includes(aimKey(a))); const any = ele1.apply(checkedAims.value).length > 0; if (boneVeil.value && any) { boneFree.value = false; veilOn.value = true; } else if (boneVeil.value && veilOn.value && !any) { veilOn.value = false; omens.value = omens.value.filter((o) => o !== ECHO); } } /* 骨は単品の ☑ でも発現 (toggleAim と同じ、S-10h ⑩) */ function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey); touched = true; ele1.reset(a);
   checked.value = ele2.fix(cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]);
   if (boneVeil.value && !cur.includes(k)) boneFree.value = false; // 骨で ☑ = 発現 (狙い無しから移る)
