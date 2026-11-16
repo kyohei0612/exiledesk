@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { tr } from "../../i18n/lang";
-import { canEditNote, canStillTry, getTry, myNick, rankByScore, rankOf, type DailyTopic } from "./daily-api";
+import { canEditNote, canStillTry, getTry, myNick, rankByScore, rankOf, VEIL_PLAYING, type DailyTopic } from "./daily-api";
 import { scoreOf } from "./daily-score";
 import { flag } from "../../web/release-flags";
 import { usePhone } from "../../utils/use-phone";
@@ -31,8 +31,8 @@ const noteWide = computed(() => noteSideOn && phone.value);
 const noteOpen = ref(false);
 const myNote = computed(() => rows.value.find((r) => r.me)?.note ?? "");
 const noteEditable = computed(() => showNote && canEditNote(props.topic.id) && rows.value.some((r) => r.me));
-/** 挑戦前のぼかし (D-50): 今日のお題でまだ始めていない人は順位と名前だけ。数は画面に置かず仮の字をぼかす */
-const veiled = computed(() => score.value && !closed.value && !getTry(props.topic.id));
+/** 挑戦前・挑戦中のぼかし (D-50): 今日のお題でまだ始めていない人と、始めてまだ終えていない人 (VEIL_PLAYING) は順位と名前だけ。数は画面に置かず仮の字をぼかす */
+const veiled = computed(() => score.value && !closed.value && (!getTry(props.topic.id) || (VEIL_PLAYING && canStillTry(props.topic.id))));
 const num = (real: string, fake: string): string => (veiled.value ? fake : real);
 /** 締めた日 (狙いが見える日) か。行はいつも押せる。自分の行は窓なし・諦めの扱いもなしで開く (D-50c、11-11 オーナー「あと自分のレシピクリックして見れないじゃん」) */
 const closed = computed(() => !!props.topic.aims);

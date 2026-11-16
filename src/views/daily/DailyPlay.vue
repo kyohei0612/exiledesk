@@ -20,7 +20,7 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc, setGoalQuality } from "./daily-aims";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
-import { doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
+import { DONE_BY_PRESS, doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
 import { qualityWords } from "./daily-quality-words";
 import { tierRankLabel, type StageItem } from "../../services/craft-stage/engine";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
@@ -195,8 +195,8 @@ watch(() => t.doc.value, (d) => {
   if (d.base !== props.topic.base || !d.memoAims?.length) { openTree(); return; }
   const data = s.data.value;
   if (doneGate(d)) return;
-  // 完成形と同じ形の箱は自動で完成 (D-35b ②)。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
-  if (data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims, tryOf.value.quality).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims, tryOf.value!.quality); }); return; }
+  // 完成形と同じ形の箱は自動で完成 (D-35b ② の前の形)。DONE_BY_PRESS の下では付けず、押した箱だけ完成。付けた後の木でもう一度ここへ来る (その時は付ける物が無い)
+  if (!DONE_BY_PRESS && data && tryOf.value && !over.value && metBoxes(data, d, tryOf.value.aims, tryOf.value.quality).length) { t.edit((x) => { markMet(data, x, tryOf.value!.aims, tryOf.value!.quality); }); return; }
   clearTimeout(saveT);
   if (!dev) saveT = window.setTimeout(() => { updateTry(props.topic.id, { tree: JSON.stringify(toRecipeV1(d)) }); void keepDailyBuilt(props.topic.id, d); }, 500); // 写し = 提出した時の形のまま開く用 (D-50h)
   if (!dev) liveDoc(d);

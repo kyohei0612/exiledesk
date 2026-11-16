@@ -289,6 +289,8 @@ export async function livePost(id: string, acts: readonly object[], last = false
 export const rankByScore = (id: string): boolean => byScore(id, DEV_BUILD);
 /** 挑戦済み (提出・諦め・時間切れ) の人には今日のお題でも品の絵の代わりに完成形のカード (D-37e2、11-11 オーナー「挑戦済みならここアイテムカード完成形のMOD表示していいのでは挑戦後だし」)。オーナー 11-11 見た目「おｋ」で本番も */
 export const TRIED_CARD: boolean = true;
+/** 挑戦中 (始めて時間が残り・提出も諦めもしていない) も順位の数字と一言をぼかす (D-50、11-16 オーナー「ここモザイクかけてくれ」)。出すまでは開発版だけ (開発版で `&off=dailyVeilPlaying` を付けると前の見え方) */
+export const VEIL_PLAYING: boolean = DEV_BUILD && !(typeof location !== "undefined" && (new URLSearchParams(location.search).get("off") ?? "").split(",").includes("dailyVeilPlaying"));
 /**
  * 順位 (D-50)。解決だけ、費用の安い順 (D-02b の日からはスコアの小さい順、同じなら使った時間の短い人)、それも同じなら先の人 (サーバーの並びのまま = 安定の並べ替え)。
  * 自分の行はサーバーの数が正 (回し直しで差し替えた数も出す、11-11 ブラック 82)。サーバーの表は 60 秒古いことがあるので、サーバーに自分の行がまだ無い間だけこの端末の記録を足す

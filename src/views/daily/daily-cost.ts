@@ -11,7 +11,7 @@ import { aimOpts, sampleOf, targetsOf } from "../../services/simulator/tree/tree
 import { isAimMod } from "../../services/simulator/tree/tree-aim";
 import { tierNoOf } from "../../services/craft-stage/tier-rank";
 import type { StageItem, StageMod } from "../../services/craft-stage/engine";
-import { flag } from "../../web/release-flags";
+import { DEV_BUILD, flag } from "../../web/release-flags";
 import { newJudgeNow, setJudgeDay } from "./daily-judge-day";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { rebuildTree } from "../simulator/tree/tree-rebuild";
@@ -108,7 +108,12 @@ export function metBoxes(data: PatchData, doc: TreeDoc, aims: readonly { modId: 
     return holdsAll(data, [...it.prefixes, ...it.suffixes], aims) && qualityMet(it, q); // 品質のあるお題は品質も (D-03d)
   }).map((b) => b.id);
 }
-/** 完成形と同じ形の箱に完成の印を付ける (挑戦の木と 16:00 の検算で同じ)。付けた数 */
+/**
+ * 挑戦の木では自動で完成を付けず、「完成にする」を押した箱だけ完成 (D-35b ②、11-16 オーナー「デイリーもそうだね完成ボタン押してからかな完成は」)。
+ * そろった箱は最終チェックの「決めていない芽」に出る。16:00 の検算 (runCost) の markMet は残す (新しい木では付ける物が無い)。出すまでは開発版だけ (`&off=dailyDonePress` で前の動き)
+ */
+export const DONE_BY_PRESS: boolean = DEV_BUILD && !(typeof location !== "undefined" && (new URLSearchParams(location.search).get("off") ?? "").split(",").includes("dailyDonePress"));
+/** 完成形と同じ形の箱に完成の印を付ける (16:00 の検算。DONE_BY_PRESS の前は挑戦の木でも)。付けた数 */
 export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: string; tier: number }[], q?: TopicQuality | null): number {
   const ids = metBoxes(data, doc, aims, q);
   for (const id of ids) doc.boxes[id]!.done = "main";
