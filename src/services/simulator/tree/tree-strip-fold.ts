@@ -12,6 +12,7 @@ import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 import { idealHidden } from "./tree-ideal-hide";
 import { frontOf } from "./tree-front-path";
+import { treeOrder } from "./tree-order";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -128,6 +129,8 @@ function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" 
   }
   return m;
 }
+/** 行き先の箱を本物の親でない親の下に描き移すか (S-142j ③ の newerHome = 新しい方、S-22g の pathLeftCol = 一番左の親) */
+export const homeMoveOn = (): boolean => flag("newerHome") || flag("pathLeftCol");
 /** (S-142j ③、スイッチ newerHome) 行き先の箱を描く親 (p) と、その親の子の並びで行き先の箱に置き換える畳んだ箱 (via) */
 interface Home { p: string; via: string }
 const seqOf = (id: string): number => Number(id.slice(1)) || 0;
@@ -143,8 +146,8 @@ export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<
   if (memo && memo.front === front) return memo.m;
   const m = new Map<string, Home>();
   homeMemo.set(folds, { front, m });
-  if (!flag("newerHome")) return m;
-  const hidden = stripHidden(d, folds), by = new Map<string, string[]>();
+  if (!homeMoveOn()) return m;
+  const hidden = stripHidden(d, folds), by = new Map<string, string[]>(), left = flag("pathLeftCol"), cmp = left ? treeOrder(d) : null;
   // (S-22g、スイッチ pathLeftCol) 完成・最終チェックの並べ直しで凍らせた道の箱は本物の親の下のまま (動かすと道が右の親の下へ移り、斜めに下りた)
   for (const f of folds.values()) if (f.link) for (const a of f.mids) { const t = d.boxes[a]?.back; if (t && d.boxes[t]) by.set(t, [...(by.get(t) ?? []), a]); }
   for (const [t, as] of by) {
@@ -153,9 +156,14 @@ export function homesOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Map<
     // 新しい方 = 人が最後に手を置いた時刻 (親の touched) が一番後の親。時刻の無い親 (開いただけ・前の保存) は 0 = 動かさない
     // (11-14 オーナー「後から手を加えて足したかどうかじゃね」、ブラック 105 の決め: 組む順の後に手を置き直した所だけ)
     const at = (id: string): number => d.boxes[d.boxes[id]?.parent ?? ""]?.touched ?? 0;
-    const via = as.filter((a) => !!d.boxes[a]?.parent).sort((x, y) => at(y) - at(x) || seqOf(y) - seqOf(x))[0];
-    const p = via ? d.boxes[via]!.parent! : null;
-    if (!via || !p || at(via) <= at(t) || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
+    // (S-22g「組んでいる間も左から」、スイッチ pathLeftCol) 時刻は見ず、同じ段から指す中で木の並びの一番左の場所の親 (本物の場所が一番左なら動かさない)
+    // (11-16 オーナー「基本どこから始めても左から先にツリー作ってほしい」。兄弟枠で左右の外れに同じ手が入ると、右の箱の時刻が数 ms 後で右の親の下に描かれた)
+    const via = left
+      ? [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp!)[0]
+      : as.filter((a) => !!d.boxes[a]?.parent).sort((x, y) => at(y) - at(x) || seqOf(y) - seqOf(x))[0];
+    if (!via || via === t) continue;
+    const p = d.boxes[via]!.parent!;
+    if (!p || (!left && at(via) <= at(t)) || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
     m.set(t, { p, via });
   }
   // 動かした先どうしで輪になる物は外す (描く親をたどって自分に戻る)

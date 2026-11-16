@@ -29,9 +29,10 @@ const t = useTree();
 const div = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 /** 1 人目の挑戦の 1 行 (S-72c) */
 const firstTryLine = (f: NonNullable<TreeRunResult["firstTry"]>): string =>
-  f.end === "done" ? tr(`1 人目の挑戦: ${f.restarts} 回作り直して完成 · ${div(f.cost)} 神`, `First run: done after ${f.restarts} restart(s) · ${div(f.cost)} div`)
-  : f.end === "capped" ? tr(`1 人目の挑戦: 上限まで挑戦したが完成せず (${f.restarts} 回作り直し)`, `First run: hit the limit without finishing (${f.restarts} restart(s))`)
-  : tr("1 人目の挑戦: 途中で止まった", "First run: got stuck");
+  tr("1 人目の挑戦 (100 人とは別、失敗しても最初から作り直す): ", "First run (separate from the 100, restarts from scratch on failure): ")
+  + (f.end === "done" ? tr(`${f.restarts} 回作り直して完成 · ${div(f.cost)} 神`, `done after ${f.restarts} restart(s) · ${div(f.cost)} div`)
+  : f.end === "capped" ? tr(`上限まで挑戦したが完成せず (${f.restarts} 回作り直し)`, `hit the limit without finishing (${f.restarts} restart(s))`)
+  : tr("途中で止まった", "got stuck"));
 const pct = computed(() => Math.round((props.result.finished / (props.result.n || 1)) * 100));
 /** 1 個 (高貴建ての値段 → 神、回した時と同じ) */
 const price = (k: string): number => t.treePrice(k) / (t.treePrice("divine") || 1);

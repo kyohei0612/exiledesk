@@ -9,7 +9,7 @@ import { nudgeLines, segsOfPts } from "./tree-lines-nudge";
 import { gridRoute, sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
-import { backTargets, FOLD_H, foldOuts, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { backTargets, FOLD_H, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
 
@@ -52,7 +52,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** (S-142j ③、スイッチ hitsSide) ↩ の畳み: 親 → 戻り先の箱 (手の札に乗せた時だけ青い線) */
   const backs = computed(() => backTargets(doc.value, fold.value.folds));
   /** 戻りの青い線が避ける箱 (描く箱だけ) */
-  const avoid = computed(() => backs.value.size || (flag("newerHome") && links.value.size) ? boxes.value.filter((b) => b.out !== "pass" && !fold.value.hidden.has(b.id) && !mergedAway(doc.value, b) && !bandAway(doc.value, b)).map((b) => ({ id: b.id, ...posOf(b), w: BOX_W, h: heightOf?.(b.id) || BOX_H })) : []);
+  const avoid = computed(() => backs.value.size || (homeMoveOn() && links.value.size) ? boxes.value.filter((b) => b.out !== "pass" && !fold.value.hidden.has(b.id) && !mergedAway(doc.value, b) && !bandAway(doc.value, b)).map((b) => ({ id: b.id, ...posOf(b), w: BOX_W, h: heightOf?.(b.id) || BOX_H })) : []);
   /**
    * 手の札 (px, jy) から戻り先の箱の横の辺の真ん中への道 (S-145 の探し方 sideRoute、ほかの箱を避ける)。通れなければ箱の間の列と段の間を折れて進む (gridRoute)、それも無ければ右の外を回る
    * (11-14 オーナー「戻る時は手の札からカーソルホバーで青で表示したら？」)
@@ -170,7 +170,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
       const off = flag("hitsSide") ? nth++ * LANE_GAP() * (tq.x + BOX_W / 2 < px0 ? -1 : 1) : 0, px = px0 + off;
       // (スイッチ newerHome) 真下へまっすぐ・L 字のどちらもほかの箱を貫通する時は、箱を避ける道 (S-145 の sideRoute) で行き先の横の辺の真ん中へ
       // (11-14 オーナー「貫通してんのこれ」「Ｌ字は例だから。臨機応変にしてほしいけどそこは」)
-      if (flag("newerHome")) {
+      if (homeMoveOn()) {
         const ex0 = tq.x + BOX_W / 2 < px ? tq.x + BOX_W : tq.x;
         const lSegs: Seg[] = px >= tq.x && px <= tq.x + BOX_W ? [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: tq.y }] : [{ x0: px, y0: jy + CHIP_HALF, x1: px, y1: ty }, { x0: px, y0: ty, x1: ex0, y1: ty }];
         if (pierces(lSegs, [t, b.id])) { const p0 = backPts(px, jy, t, nth - 1, px0), d0 = roundPath(p0); to.push({ id: t, w: 2, color: LINK_COLOR, kind: "fwd", link: true, d: d0, bad: false, mk: () => d0, h: null, pts: p0 }); continue; }
