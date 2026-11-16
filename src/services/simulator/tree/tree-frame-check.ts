@@ -11,6 +11,7 @@ import type { TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { OUT_WORDS } from "./tree-out-words";
+import { effectOf } from "./tree-hands";
 
 export interface FrameIssue { boxId: string; kind: "frameMiss" | "cantUse" | "frameDone" | "frameMix"; text: string }
 
@@ -35,10 +36,16 @@ export function frameIssues(data: PatchData, doc: TreeDoc): FrameIssue[] {
   for (const m of fr.miss) {
     // 当たるまでの手は外れでも同じ手を打ち直すので、当たり以外の行き先は要らない
     if (!doc.boxes[m.box] || doc.boxes[m.box]!.hand?.repeat) continue;
+    // スイッチ essSameStop の間、エッセンス / 合金の手の「エッセンスと同じ MOD」は箱を作らず予期せぬ狙い MOD で止めて作り直す決まり (S-33e ⑧) なので未設定に数えない
+    // (11-16 オーナー「なんで未設定なのあそこ」、r/VeImcb7b のヒステリーの箱: 前の狙い無しの高貴で普通のクリティカルが付いた人)
+    if (flag("essSameStop") && m.oc.out === "blocked" && effectOf(doc.boxes[m.box]!.hand?.currency ?? "") === "essence") continue;
     const ja = OUT_WORDS[m.oc.out]?.[0] ?? m.oc.out, en = OUT_WORDS[m.oc.out]?.[1] ?? m.oc.out; // 名前の表は tree-out-words (整理 ③-6)
-    add({ boxId: m.box, kind: "frameMiss", text: m.from
+    // from がその箱自身 = ↩ でなく、この箱に入る形の違う枝 (狙い無しの結果を 1 箱にした any など)
+    add({ boxId: m.box, kind: "frameMiss", text: m.from && m.from !== m.box
       ? tr(`↩ で着く人がこの手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `Runs arriving by ↩ can end up "${en}" here with no box to go to (they stop here)`)
-      : tr(`この手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `This craft can end up "${en}" with no box to go to (runs stop here)`) });
+      : m.from
+        ? tr(`この箱に来る形の一部がこの手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `Some shapes reaching this box can end up "${en}" here with no box to go to (they stop here)`)
+        : tr(`この手で「${ja}」になると行く箱が無い (回すとここで止まる)`, `This craft can end up "${en}" with no box to go to (runs stop here)`) });
   }
   // 代表のほかの形 (↩ で着く人・外れが狙いの系統を塞いでいる枝 = S-200 ② の (g)) で手が打てない・当たるまでが当たらない
   for (const c of fr.cant) {
