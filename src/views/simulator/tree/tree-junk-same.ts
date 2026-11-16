@@ -11,6 +11,7 @@ import { sameHand, type Aim, type Hand, type HandKind, type TreeBox, type TreeDo
 import { handPickOf } from "../../../services/simulator/tree/tree-recipe-v1";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { handBlockAt } from "../../../services/simulator/tree/tree-copy-block";
+import { fitsAt } from "./tree-copy-fit";
 import { craftStage } from "../../../state/craft-stage";
 import { applyPick, holdLinks, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
@@ -46,6 +47,11 @@ export function sameJunkOf(d: TreeDoc, id: string): string[] {
   if (!flag("junkSameHand") || !open(d, id)) return [];
   return frameMates(d, id).filter((o) => open(d, o.id)).map((o) => o.id);
 }
+/** 失敗の印を写す先 (S-190d ②)。「打った後」「狙いが消えた」の兄弟枠には理想の道の箱と外れの箱が一緒に入りうるので写さない (係 f #2) */
+export function sameFailOf(d: TreeDoc, id: string): string[] {
+  const k = d.boxes[id]?.out;
+  return k === "any" || k === "lost" ? [] : sameJunkOf(d, id);
+}
 
 /** その箱でこの手を打てるか = 手の窓・棚の灰色・箱の印と同じ 1 本の判定 (tree-copy-block の handBlockAt。見本が作れない箱は写さない)。打てない手は写さない (S-190d ①・③) */
 const playable = (data: PatchData, d: TreeDoc, id: string, h: Hand, pre: string | null): boolean => !handBlockAt(data, d, id, h, pre);
@@ -67,11 +73,12 @@ export function fillLaterSame(data: PatchData, d: TreeDoc, before: ReadonlySet<s
     for (const id of Object.keys(d.boxes)) {
       if (before.has(id) || tried.has(id) || !open(d, id)) continue;
       tried.add(id);
-      const picks = frameMates(d, id).filter((o) => o.hand && !o.sameOff && !o.autoAnnul).map((o) => handPickOf(d, o)!);
+      const from = frameMates(d, id).filter((o) => o.hand && !o.sameOff && !o.autoAnnul);
+      const picks = from.map((o) => handPickOf(d, o)!);
       if (!picks.length) continue;
       const p = picks[0]!;
       if (picks.some((q) => !sameHand(q.hand, p.hand) || pickKey(q) !== pickKey(p))) continue; // 兄弟どうしで手が違う = 写さず空のまま
-      if (!playable(data, d, id, p.hand, p.pre)) continue;
+      if (!playable(data, d, id, p.hand, p.pre) || !fitsAt(data, d, from[0]!.id, id, p.hand, p.aims)) continue; // 設定が写す先で意味を持たない手も写さない
       holdLinks(() => applyPick(d, id, p.hand, kindOf(p.hand), p.aims, p.pre, onlyOf(data, d, id, p.hand, p.pre, p.aims)));
       put++;
     }
@@ -81,10 +88,10 @@ export function fillLaterSame(data: PatchData, d: TreeDoc, before: ReadonlySet<s
   return any;
 }
 
-/** 決めた手を同じ外れのほかの箱にも置く (呼ぶ側の edit の中で、元の箱に置いた後)。間に自動でつながった箱は飛ばす */
-export function pickSameJunk(data: PatchData, d: TreeDoc, ids: string[], h: Hand, kind: HandKind, aims: Aim[], pre: string | null): void {
+/** 決めた手を同じ外れのほかの箱にも置く (呼ぶ側の edit の中で、元の箱 src に置いた後)。間に自動でつながった箱・設定が意味を持たない箱 (fitsAt) は飛ばす */
+export function pickSameJunk(data: PatchData, d: TreeDoc, src: string, ids: string[], h: Hand, kind: HandKind, aims: Aim[], pre: string | null): void {
   for (const id of ids) {
-    if (!open(d, id) || !playable(data, d, id, h, pre)) continue;
+    if (!open(d, id) || !playable(data, d, id, h, pre) || !fitsAt(data, d, src, id, h, aims)) continue;
     holdLinks(() => applyPick(d, id, h, kind, aims, pre, onlyOf(data, d, id, h, pre, aims)));
   }
 }
