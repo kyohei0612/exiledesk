@@ -10,7 +10,7 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { sameHand, type Aim, type Hand, type HandKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handPickOf } from "../../../services/simulator/tree/tree-recipe-v1";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { useReason } from "../../../services/craft-stage/engine";
+import { handBlockAt } from "../../../services/simulator/tree/tree-copy-block";
 import { craftStage } from "../../../state/craft-stage";
 import { applyPick, holdLinks, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
@@ -47,14 +47,8 @@ export function sameJunkOf(d: TreeDoc, id: string): string[] {
   return frameMates(d, id).filter((o) => open(d, o.id)).map((o) => o.id);
 }
 
-/** その箱の見本でこの手を打てるか (棚と同じ useReason。触媒の前のカタリストも)。打てない手は写さない (S-190d ①・③、11-16) */
-function playable(data: PatchData, d: TreeDoc, id: string, h: Hand, pre: string | null): boolean {
-  let it: ReturnType<typeof sampleOf>["item"] | null = null;
-  try { it = sampleOf(data, d, id, 1)?.item ?? null; } catch { return true; }
-  if (!it) return true;
-  if (pre && useReason(data, it, pre, [])) return false;
-  return !useReason(data, it, h.currency, h.omens);
-}
+/** その箱でこの手を打てるか = 手の窓・棚の灰色・箱の印と同じ 1 本の判定 (tree-copy-block の handBlockAt。見本が作れない箱は写さない)。打てない手は写さない (S-190d ①・③) */
+const playable = (data: PatchData, d: TreeDoc, id: string, h: Hand, pre: string | null): boolean => !handBlockAt(data, d, id, h, pre);
 
 /** 写す手を比べる鍵 (手・触媒の前・☑ の狙い) */
 const pickKey = (p: { hand: Hand; pre: string | null; aims: Aim[] }): string => `${p.pre ?? ""}|${p.aims.map((a) => `${a.modId}/${a.tier}`).sort().join(",")}`;

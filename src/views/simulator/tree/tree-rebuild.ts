@@ -336,7 +336,7 @@ function mergeIntoDecided(data: PatchData, d: TreeDoc, decided: readonly string[
   const j = judgeMemo(data, d), depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
   for (const x of decided) {
     for (const l of Object.values(d.boxes)) {
-      if (l.id === x || l.hand || l.done || l.split || l.noAutoBack || (l.back && !l.autoBack) || !OPEN.has(l.out) || depth(l.id) !== depth(x) || !j.fitsBox(l.id, x)) continue;
+      if (l.id === x || l.hand || l.done || l.split || l.noAutoBack || (l.back && !l.autoBack) || !OPEN.has(l.out) || depth(l.id) !== depth(x) || !j.fitsBox(l.id, x) || !j.playsAt(l.id, x)) continue; // 打てるかは手の窓と同じ 1 本 (S-60f、11-17)
       for (const o of Object.values(d.boxes)) if (o.autoBack && o.back === l.id) o.back = x;
       l.back = x; l.autoBack = true; l.merged = true;
     }

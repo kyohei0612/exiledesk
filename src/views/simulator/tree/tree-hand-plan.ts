@@ -15,6 +15,7 @@ import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountabl
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isFixedHand, PICK_EFFECTS, rerollsValues, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { handBlockOn } from "../../../services/simulator/tree/tree-hand-block";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { infiniteAim, SAME_HI } from "../../../services/simulator/tree/tree-outcome"; import { linkAllSameHi, syncSameHiUnder, syncSameMod } from "./tree-same-mod-sync"; import { flag } from "../../../web/release-flags"; import { syncBeforeHand, syncWhittlePre } from "./tree-whittle-pre";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
@@ -389,7 +390,7 @@ function dropUnplayable(data: PatchData, d: TreeDoc): void {
     if (!to || (b.out === "blocked" && b.junkKey === SAME_HI)) return false;
     for (let seed = 1; seed <= 8; seed++) {
       const s = sampleOf(data, d, b.id, seed);
-      if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;
+      if (s.note === "none" || s.note?.startsWith("cant:") || !handBlockOn(data, d, b.id, s.item, to)) continue; // 手の窓と同じ 1 本 (11-17)
       return true;
     }
     return false;

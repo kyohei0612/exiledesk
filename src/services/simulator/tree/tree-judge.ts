@@ -8,13 +8,13 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { kindOf, mulberry32, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
 import { bodyOf, fracCountKey } from "./tree-box-shape";
 import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
-import { aimOpts, playHand, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
@@ -24,6 +24,7 @@ import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
 import { holdsLowTier, isLowTierBox, lowTierAimOf } from "./tree-low-tier";
+import { handBlockOn } from "./tree-hand-block";
 import { flag } from "../../../web/release-flags";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -351,10 +352,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   return {
     contents,
     playsAt(from, to) {
+      // 打てるかは手の窓・棚と同じ 1 本 (tree-hand-block の handBlockOn、S-60f・S-190d 11-17)。前はエンジンで 1 回打つだけで、確定フラクチャー・木のフラクチャー 1 回・予見・フラックス・触媒のお告げの品質を見なかった
       const h = doc.boxes[to]?.hand, f = h ? frameAt(from) : null;
       if (!h || !f || f.note) return true;
-      const r = playHand(data, f.item, { ...h, repeat: null }, mulberry32(1));
-      return r.applied || !!r.random;
+      return !handBlockOn(data, doc, from, f.item, h, null, f.aimed);
     },
     fitsBox(from, to) {
       // 箱どうしは枠 (配置) だけで比べる。to に置いた手 (触媒のお告げ・カタリストの n %・光のお告げ・骨・エッセンス) は見ない

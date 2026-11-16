@@ -232,7 +232,7 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
     // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない。同じ枠の候補が 2 つ以上でも外さない (戻り先はいつも 1 つ、S-52b 11-08 夜)
     // 完成への道の結果から上の段への自動の ↩ は外す (S-50g、スイッチ idealNoBack。人が同じ手で戻った handBack は人の決めなので残す)
     const up = b.handBack ? 0 : idealNoUp(doc, b.id);
-    if (!(up && depthOf(doc, b.back) < up) && j.fitsBox(b.id, b.back) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue;
+    if (!(up && depthOf(doc, b.back) < up) && j.fitsBox(b.id, b.back) && (!!b.handBack || (j.playsAt(b.id, b.back) && !qualityBetween(doc, b.id, b.back))) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue; // 打てるか・カタリストを挟む上の箱も autoTargets と同じに見直す (11-17)
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }
