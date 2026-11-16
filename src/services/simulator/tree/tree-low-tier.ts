@@ -46,10 +46,25 @@ export function lowTierAimOf(doc: TreeDoc, b: (Pick<TreeBox, "out" | "junkKey"> 
  * 当たり・狙いが消えた・塞がったの人はそのまま。エッセンス / 合金の手は S-33e (essSameStop) が受け、「いずれかの元素耐性」(S-10h) は 1 元素の低い段で
  * ほかの元素が塞がらないので見ない
  */
-export function lowTierStopOf(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKind }, after: StageItem, before?: StageItem): { why: string } | null {
+export function lowTierStopOf(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKind }, after: StageItem, before?: StageItem, okLow?: ReadonlySet<string>): { why: string } | null {
   if (!flag("lowTierBox") || !b.hand || effectOf(b.hand.currency) === "essence" || oc.out === "hit" || oc.out === "lost" || oc.out === "blocked") return null;
   // (スイッチ lowTierJunk) この手で低い段が付いた人 (打つ前は持っていない) は止めず外れ MOD と同じ扱い = 結果の箱へ。止めるのは前の手で付いていた人だけ (11-16 オーナー「低ティアの扱いってそもそも1つ前に出た時云々じゃないの？」)
+  // A を ☑ した手で付いた低い段 (okLow、lowTierOk) は前から持っていても止めない (外れの箱が ↩ で同じカオスへ戻った人、S-33g ①)
   const junkNow = flag("lowTierJunk") && !!before;
-  const a = pickedOf(doc, b).find((x) => !x.anyEle && holdsLowTier(data, after, x) && !(junkNow && !holdsLowTier(data, before!, x)));
-  return a ? { why: tr("☑ した狙いの MOD が低いティアで付いた (以後この狙いは付かない。予期せぬ狙い MOD)", "The checked target mod was added at a low tier (it can no longer be added; unexpected target mod)") } : null;
+  const a = pickedOf(doc, b).find((x) => !x.anyEle && holdsLowTier(data, after, x) && !(junkNow && (!holdsLowTier(data, before!, x) || !!okLow?.has(lowTierKey(x)))));
+  if (!a) return null;
+  return { why: junkNow
+    ? tr("前の手 (この狙いを ☑ していない手) で狙いの MOD が低いティアで付いていた (以後この狙いは付かない。予期せぬ狙い MOD)", "The target mod was already added at a low tier by an earlier craft that didn't check it (it can no longer be added; unexpected target mod)")
+    : tr("☑ した狙いの MOD が低いティアで付いた (以後この狙いは付かない。予期せぬ狙い MOD)", "The checked target mod was added at a low tier (it can no longer be added; unexpected target mod)") };
+}
+/**
+ * (スイッチ lowTierJunk、S-33g ①) 人ごとの「A を ☑ した手で付いた低い段の狙い」(鍵 lowTierKey) を、手の後の品で更新する。
+ * その手が ☑ した狙いで、打つ前は持たず後で低い段を持つ物を足し、低い段を持たなくなった物は外す
+ */
+export function lowTierOk(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, ok: ReadonlySet<string>): ReadonlySet<string> {
+  if (!flag("lowTierJunk")) return ok;
+  const goal = new Map((doc.memoAims ?? []).map((g) => [lowTierKey(g), g] as const));
+  const next = new Set([...ok].filter((m) => { const g = goal.get(m); return !!g && holdsLowTier(data, after, g); }));
+  for (const x of pickedOf(doc, b)) if (!x.anyEle && holdsLowTier(data, after, x) && !holdsLowTier(data, before, x)) next.add(lowTierKey(x));
+  return next.size || ok.size ? next : ok;
 }

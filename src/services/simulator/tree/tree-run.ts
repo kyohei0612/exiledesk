@@ -21,7 +21,7 @@ import { seenTo } from "./tree-foresee";
 import { sureFracOn, sureFracRedo, sureFracture, useSureFrac } from "./tree-sure-frac";
 import { defaultCapDiv } from "./run-price";
 import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
-import { lowTierStopOf } from "./tree-low-tier";
+import { lowTierOk, lowTierStopOf } from "./tree-low-tier";
 import { boxStreams, firstTryRun, mergeRetry, retryable, stopCounts, type RetryPart } from "./tree-run-retry";
 import { OUT_WORDS } from "./tree-out-words";
 
@@ -166,7 +166,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   // 止まりの付け先 (S-72、スイッチ bodyStrict): 体 (外れの側・数) の違う人を ↩ で送り出した箱・形の合う箱へ移した箱。止まったらそこに数える
   // (10-29 オーナー「なんか止まり方が戻った先で止まるんだよな。結果を選んでその結果にしたがってるだけなのに」)
   let blame: string | null = null;
-  let marks: GoalMark[] = []; // 狙い無しの手で付いた完成形の狙い (tree-goal-stop)
+  let marks: GoalMark[] = [], okLow: ReadonlySet<string> = new Set(); // 狙い無しの手で付いた完成形の狙い (tree-goal-stop)・☑ した手で付いた低い段の狙い (S-33g ①、lowTierOk)
   const fin = (p0: Person): Person => {
     const p: Person = redo ? { ...p0, redo } : p0;
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
@@ -192,7 +192,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail" && !o.retryFail) return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     // 1 人目の挑戦 (S-72c): 失敗の箱でもスタートから作り直す (作り直しの手 RESTART と同じ数え)。打ち切りは打ち止めの上限
-    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); marks = []; cost += o.startCost; itemUses = { ...uses }; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
+    if (b.done === "fail") { item = o.start ? o.start(rng) : startItemOf(data, doc, rng); aimed = startAimed(data, doc, item); marks = []; okLow = new Set(); cost += o.startCost; itemUses = { ...uses }; forget(); restarts++; at = "start"; if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd }); continue; }
     if (b.done === "main") {
       if (o.doneOk && !o.doneOk(item, at)) return fin({ end: "failed", unmet: true, cost, at, visits, uses, restarts, odd });
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。完成形の品質は指標なので見ない = S-205、11-07 オーナー「完成形はあくまでも指標」)。
@@ -211,7 +211,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
       if (++hops > 1000) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: STOP.loop(), short: STOP.loop(), item } });
       if (b.back === RESTART) {
         item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
-        aimed = startAimed(data, doc, item); marks = [];
+        aimed = startAimed(data, doc, item); marks = []; okLow = new Set();
         cost += o.startCost; itemUses = { ...uses };
         forget();
         restarts++;
@@ -271,8 +271,9 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     marks = goalMarks(data, doc, at, before, r.item, marks);
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, aimed);
     // ☑ した狙いが低いティアで付いた人は、結果の箱へ行かずにここで止まる = 予期せぬ狙い MOD (S-33g、スイッチ lowTierBox。使った物は数える)
-    const lt = oc ? lowTierStopOf(data, doc, b, oc, r.item, before) : null;
+    const lt = oc ? lowTierStopOf(data, doc, b, oc, r.item, before, okLow) : null;
     if (lt) { for (const [k, n] of spent) use(k, n); return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ltAt: at, why: { reason: lt.why, short: lt.why, item: r.item } }); }
+    okLow = lowTierOk(data, doc, b, before, r.item, okLow);
     const next = oc ? outBoxOf(data, doc, b, oc, r.item) : null;
     // 予見で当たり以外が見えた人: 手を使わず、アイテム・☑・費用は持つ前のまま、まとめたハズレ箱の手へ (S-39)
     if (next && doc.boxes[next]?.seen && !b.hand.repeat) { const to = seenTo(doc, next); if (to !== next) visit(next, true); at = to; continue; }
