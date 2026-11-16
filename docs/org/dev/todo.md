@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_33e72b40-4eac-41e5-864e-fdbe3467cd53 (125 代目、Opus 5.5、11-16 夜に入れ替え。124 = local_075aab01 が 2,338 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black125.md・引き継ぎ = black124.md の一番上) | 司令塔・振り分け・順番 |
+| ブラック | local_6a07b33e-3780-4a03-8f86-53ccebfa5729 (126 代目、Opus 5.5、11-16 21 時台に入れ替え。125 = local_33e72b40 が 2,33x 件で交代。控えは無し、進み = 共有 local_41371db6…/progress/black126.md・引き継ぎ = black125.md の一番上) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_3dc532a3-f59c-4ab6-85fb-9529ad6ab3fc (29、11-16 夜にブラック 125 が立てた。28 = local_384664fe はアーカイブ。頼み = 共有 local_41371db6…/progress/daily-lead29-brief.md、進み = 同 daily-lead29.md、記録 = progress/daily-lead29-run.log) | 今: 挑戦中のぼかし・押した箱だけ完成 (76837c02f、開発版)、ごめんねの木の数え直し (書くのはオーナーの OK の後)。お題が決まった時に #日報 へ「今日のお題」を 1 通 |
 | 最終チェック長 | — (23 = local_6dba114b が 0.1.744 を 11-16 19:54 に出し、後片付け def51adc1 でアーカイブ) | 出しの時にブラックが立てる。本番は 0.1.744 |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
