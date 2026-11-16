@@ -29,10 +29,10 @@ import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { blocksRun, checkTreeAsync } from "../../../services/simulator/tree/tree-check";
-import { heldOnRep, sampleAimed } from "../../../services/simulator/tree/tree-judge";
+import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { boxShape, sameShape } from "../../../services/simulator/tree/tree-box-shape";
 import { judgeOf } from "./tree-hand-plan"; import { clearHandAt } from "./tree-clear-hand";
-import { setAim, setBack, setDone, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { setAim, setBack, setDone, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -53,7 +53,6 @@ import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isFixedHand } from "../../../services/simulator/tree/tree-hands";
 import { fillHeldDefaults } from "./tree-held-use";
 import { capDivOf } from "../../../services/simulator/tree/run-price";
-import { firstAimsOf, needsLowTier } from "../../../services/simulator/tree/tree-low-tier";
 
 type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
@@ -230,7 +229,7 @@ export function installSimMonkey(): () => void {
       const price = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = t.treePrice(k) / div; memo.set(k, v); } return v; };
       const capDiv = capDivOf(price);
       const r = runTree(d, t.doc.value, { n, seed, price, capDiv, startCost: t.startPrice() });
-      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, failed: r.failed, failAt: r.failAt, unexpected: r.unexpected, goalStop: r.goalStop, essStop: r.essStop, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
+      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, failed: r.failed, failAt: r.failAt, unexpected: r.unexpected, goalStop: r.goalStop, essStop: r.essStop, lowStop: r.lowStop, stuckOdd: r.stuckOdd, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv, capSteps: 20000 };
     },
@@ -318,17 +317,6 @@ export function installSimMonkey(): () => void {
       return { ok: true, at };
     },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
-    /** 今の木で「<狙い> 低ティア MOD」の箱が要る所 (S-33g)。old = 上の手で ☑ したかで「初めて」を見る前の形、now = 代表に付いていないかで見る形 (レビュワー 1 の 26)。木は変えない */
-    lowTierWant() {
-      const d = s.data.value, doc = t.doc.value;
-      if (!d) return null;
-      const held = (id: string, a: Aim): boolean => heldOnRep(d, doc, id, a);
-      const list = (useHeld: boolean): string[] => Object.values(doc.boxes).filter((b) => b.hand).flatMap((b) => {
-        const memo = new Map<string, boolean>();
-        return firstAimsOf(d, doc, b, useHeld ? held : undefined).filter((a) => needsLowTier(d, doc, b.id, a, memo, useHeld ? held : undefined)).map((a) => `${b.id}:${a.modId}`);
-      });
-      return { old: list(false), now: list(true) };
-    },
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };
   (window as unknown as { __simMonkey?: typeof api }).__simMonkey = api;

@@ -22,7 +22,6 @@ import { goalTierOf, gotOf, isSwapEssence, keptAimedOf, keptAimsOf, swapKeyOf, v
 import { mainSideOf } from "./tree-uncountable";
 import { sureFracMissing, sureFracOn } from "./tree-sure-frac";
 import { divineOutcome, divineOuts, isDivineAim } from "./tree-divine";
-import { lowTierOutcome } from "./tree-low-tier";
 
 /**
  * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) は ☑ した能力値だけ当たり、ほかが付いたら外れ MOD (10-27 オーナー「知性を選んだら知性が付いた = 当たり、
@@ -86,7 +85,7 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
     if (b.outs.some((id) => doc.boxes[id]?.out === "blocked" && doc.boxes[id]?.junkKey === key) && sameModKids(doc, b, oc.out).some((k) => essenceHold(data, after, k) === hold)) return { out: "blocked", hits: [], ...(key ? { junkKey: key } : {}) };
   }
   // その道で初めて ☑ した狙いを段の足りない形で持つ人は「<狙い> 低ティア MOD」の箱へ (S-33g、その箱がある時だけ)
-  return lvKeyed(data, doc, b, lowTierOutcome(data, doc, b, oc, after), after, aimed);
+  return lvKeyed(data, doc, b, oc, after, aimed);
 }
 /** 箱 b の手の結果 (「エッセンスと同じ MOD」・削減の枠の振り分けの前の本体) */
 function plainOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
@@ -147,9 +146,7 @@ export function sameModShown(data: PatchData, doc: TreeDoc, boxId: string, item:
   const b = doc.boxes[boxId], p = b?.parent ? doc.boxes[b.parent] : undefined;
   if (!b || !p || b.out !== "blocked" || (b.junkKey && b.junkKey !== SAME_HI)) return item;
   const hi = b.junkKey === SAME_HI;
-  // エッセンスの箱の下の同格以上 (S-33e ⑦) は親の箱自身の手のエッセンスも (スイッチ sameHiSample)
-  const own = hi && flag("sameHiSample") && p.hand && effectOf(p.hand.currency) === "essence" ? [p.hand.currency] : [];
-  const key = [...own, ...sameModKids(doc, p)].find((k) => essenceHold(data, item, k) === (hi ? "skip" : "blocked"));
+  const key = sameModKids(doc, p).find((k) => essenceHold(data, item, k) === (hi ? "skip" : "blocked"));
   const t = key && !isInfiniteEssence(key) ? essenceTarget(data, item, key) : null, lows = t?.mod.tiers[essenceTierIndex(t.level, t.mod)]?.ranges.map((r) => r[0] ?? 0);
   if (!t || !lows) return item;
   const fams = familiesOf(t.mod);

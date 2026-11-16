@@ -1,27 +1,25 @@
 /**
- * tree-low-tier.ts — 「<狙い> 低ティア MOD」の箱 (S-33g、スイッチ lowTierBox、11-16 オーナー「Aだけど、王者だけじゃなくて初めてその狙いＭＯＤを付けた時の挙動として
- * 起こりうるタイミング全部に枠ださんといかんな」、ブラック 114 経由)。その道で初めて狙い A を ☑ した手の結果に、手の後の品が A の系統を段の足りない形で持つ人
- * (その手で付いた・前の狙い無しの手で付いていた) の箱を A ごとに 1 つ (out blocked・鍵 lt:<modId>)。同じ系統は 1 つなので、その人には以後 A が付かない。
- * 判定は外れの式 (tree-miss の isMissMod = エンジンの aimHits、段の番号) と系統 (E-11a) だけ。木の形を変えるのは ☑ のある手の結果だけ (☑ の無い木は今のまま)
+ * tree-low-tier.ts — 狙いが低いティアで付いた人 (S-33g、スイッチ lowTierBox)。11-16 オーナー「低ティアの枠はどうすっかね。もう排除するか…全部予期せぬMODに入れちゃっておk。
+ * その回どうせ回しなおすんでしょ？」(ブラック 122 経由) = 木に「<狙い> 低ティア MOD」の箱は作らない。回した時に ☑ した手の後の品が狙い A の系統を段の足りない形で
+ * 持つ人 (同じ系統は 1 つなので以後 A は付かない) は、そこで「予期せぬ狙い MOD」の止まり (S-33g ②) になり、やり直し (goalRetry) に入る。
+ * 判定は外れの式 (tree-miss の isMissMod = エンジンの aimHits、段の番号) と系統 (E-11a) だけ。前に作った低ティアの箱 (鍵 lt:<modId>) の名前・見分けは残す (前の木を開いた時)
  */
 import { familiesOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { stepOutcomes } from "../../simulator/sim-engine";
 import { flag } from "../../../web/release-flags";
+import { tr } from "../../../i18n/lang";
 import { boxAims, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { isMissMod, missAims } from "./tree-miss";
 import { aimFams } from "./tree-junk-frame";
-import { sameAim } from "./tree-hand-core";
-import { effectOf, engineOmens } from "./tree-hands";
-import { sampleOf, SINGLE_SEEDS } from "./tree-sample";
+import { effectOf } from "./tree-hands";
 
-/** 低ティアの箱の鍵の頭 (後ろは狙いの modId) */
+/** 低ティアの箱の鍵の頭 (後ろは狙いの modId。前に作った箱だけ) */
 export const LOW_TIER = "lt:";
 export const lowTierKey = (a: Pick<Aim, "modId">): string => `${LOW_TIER}${a.modId}`;
 /** 鍵が低ティアの箱なら狙いの modId */
 export const lowTierModOf = (k: string | undefined): string | null => (k?.startsWith(LOW_TIER) ? k.slice(LOW_TIER.length) : null);
 /** スマホの全体図の短い名前 */
 export const LOW_SHORT: readonly [string, string] = ["低ティア", "Low tier"];
-/** 低ティアの箱か (「エッセンスと同じ MOD」と同じ種類 blocked で、鍵だけ違う) */
+/** 低ティアの箱か (「エッセンスと同じ MOD」と同じ種類 blocked で、鍵だけ違う。前に作った箱) */
 export const isLowTierBox = (b: Pick<TreeBox, "out" | "junkKey"> | undefined): boolean => b?.out === "blocked" && !!lowTierModOf(b.junkKey);
 
 /** 品 item が狙い a の系統を段の足りない形で持つか (a に当たる MOD は持たない)。未発現は見ない */
@@ -36,122 +34,13 @@ export function holdsLowTier(data: PatchData, item: StageItem, a: Aim): boolean 
 /** 箱 b の手の当たりの箱の狙い (☑) */
 const pickedOf = (doc: TreeDoc, b: TreeBox): Aim[] => b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" ? boxAims(c) : []; });
 
-/** 箱 id の代表に狙い a が付いているか (代表の名前の印。呼ぶ側 tree-low-tier-sync が tree-judge の sampleAimed で渡す = tree-judge との循環を避ける) */
-export type HeldAt = (id: string, a: Aim) => boolean;
-
 /**
- * 箱 b の手で ☑ した狙いのうち、その道でまだ付いていない時に ☑ した物 (= 初めて A を付けに行く手)。held があれば b の代表に A が付いていない狙い
- * (別の ☑ が当たった道・狙いが消えた下の道でも、A が付いていなければ初めて。レビュワー 1 の 26、11-16 オーナー「その１おすすめで」)。
- * held が無ければ前の形 (上の手で A を ☑ していなければ初めて)。エッセンス / 合金の手は「エッセンスと同じ MOD」(S-33e) が受けるので無し。
- * 「いずれかの元素耐性」(S-10h) は 1 元素の低い段で他の元素が塞がらないので無し
+ * 箱 b の手 (結果 oc、手の後の品 after) で ☑ した狙いが低いティアで付いた人の止まり (スイッチ lowTierBox。無ければ null)。
+ * 当たり・狙いが消えた・塞がったの人はそのまま。エッセンス / 合金の手は S-33e (essSameStop) が受け、「いずれかの元素耐性」(S-10h) は 1 元素の低い段で
+ * ほかの元素が塞がらないので見ない
  */
-export function firstAimsOf(data: PatchData, doc: TreeDoc, b: TreeBox, held?: HeldAt): Aim[] {
-  if (!b.hand || effectOf(b.hand.currency) === "essence") return [];
-  const seen: Aim[] = [];
-  if (!held) for (let p = b.parent ? doc.boxes[b.parent] : undefined; p; p = p.parent ? doc.boxes[p.parent] : undefined) seen.push(...pickedOf(doc, p));
-  const out: Aim[] = [];
-  for (const a of pickedOf(doc, b)) {
-    if (a.anyEle || out.some((x) => sameAim(data, x, a))) continue;
-    if (held ? !held(b.id, a) : !seen.some((x) => sameAim(data, x, a))) out.push(a);
-  }
-  return out;
-}
-
-/** 箱 id の見本と、その手を打った結果 (エンジンの数え上げ) のどれかが a を段の足りない形で持つか */
-function lowAtRaw(data: PatchData, doc: TreeDoc, id: string, a: Aim, self: boolean): boolean {
-  const b = doc.boxes[id];
-  if (!b?.hand) return false;
-  for (let i = 1; i <= SINGLE_SEEDS; i++) {
-    const smp = sampleOf(data, doc, id, i);
-    if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
-    if (self && holdsLowTier(data, smp.item, a)) return true;
-    if ((stepOutcomes(data, smp.item, b.hand.currency, engineOmens(b.hand)) ?? []).some((o) => !o.void && holdsLowTier(data, o.item, a))) return true;
-  }
-  return false;
-}
-
-/**
- * 箱 bId の手の結果に「<a> 低ティア MOD」の箱が要るか: この箱の見本とその手の結果、上の手 (始まりまで) の結果、↩ でこの箱へ着く箱の道の手の結果の
- * どれかが a を段の足りない形で持ちうる時。代表の外れは狙いの族を取らない (外れは枠だけ、S-200 ③) ので、この箱の見本だけでは見ない (レビュワー 1 の 16)
- */
-export function needsLowTier(data: PatchData, doc: TreeDoc, bId: string, a: Aim, memo?: Map<string, boolean>, held?: HeldAt): boolean {
-  // memo = 1 回のそろえ (syncLowTier) の中の控え。同じ箱・同じ狙いの見本 × 手の結果を何度も打たない (レビュワー 1 の 28、根の近くに手を置いた時の重さ)
-  const lowAt = (d: PatchData, dc: TreeDoc, id: string, x: Aim, self: boolean): boolean => {
-    if (!memo) return lowAtRaw(d, dc, id, x, self);
-    const k = `${id}|${x.modId}|${x.tier}|${self ? 1 : 0}`;
-    let v = memo.get(k);
-    if (v === undefined) { v = lowAtRaw(d, dc, id, x, self); memo.set(k, v); }
-    return v;
-  };
-  if (lowAt(data, doc, bId, a, true)) return true;
-  const roots = [bId, ...Object.values(doc.boxes).filter((x) => x.back === bId).map((x) => x.id)];
-  for (const r of roots) {
-    const start = r === bId ? doc.boxes[bId]?.parent : r;
-    for (let p = start ? doc.boxes[start] : undefined; p; p = p.parent ? doc.boxes[p.parent] : undefined) {
-      // 上で同じ狙いを ☑ した手より上は、その手の低ティアの箱が受ける。代表に A が付いている箱より上も見ない (A を持つ道、レビュワー 1 の 26)
-      if (p.id !== r && (pickedOf(doc, p).some((x) => sameAim(data, x, a)) || !!held?.(p.id, a))) break;
-      if (lowAt(data, doc, p.id, a, false)) return true;
-    }
-  }
-  return false;
-}
-
-/**
- * 箱 bId の手の外れ側の結果の箱 (当たり・狙いが消えた・塞がったを除く) の下 (outs を辿る、↩ は辿らない) に、同じ狙い a を ☑ する手があるか (S-33g ⑧、11-16 オーナー「1A」)。
- * 無ければ低ティアの人は外れの箱とまとめてよい (以後 A を付けに行く手が無いので、A が付かない事で行き先が変わらない)。
- * 辿る途中で、外れの箱の見本でその手が A の側に足した外れ MOD が見本から全部消えた箱 (消す手・入れ替える手・サフィを消すエッセンスの後) より下は見ない:
- * 低ティアの人の A もそこで同じく消え、以後は外れの人と同じ品になる (⑧「次の手が消去など消す手」。11-15 y5msCmTe の偽の未設定、ブラック 118 経由)
- */
-export function reaimedBelow(data: PatchData, doc: TreeDoc, bId: string, a: Aim): boolean {
-  const b = doc.boxes[bId];
-  const side = data.mods.get(a.modId)?.type;
-  for (const o of b?.outs ?? []) {
-    const c = doc.boxes[o];
-    if (!c || c.out === "hit" || c.out === "lost" || c.out === "blocked") continue;
-    const junk = addedJunk(data, doc, bId, o, side);
-    const walk = (id: string): boolean => {
-      const x = doc.boxes[id];
-      if (!x) return false;
-      if (id !== o && junk.size && !stillHolds(data, doc, id, junk)) return false;
-      if (x.hand && pickedOf(doc, x).some((y) => sameAim(data, y, a))) return true;
-      return x.outs.some(walk);
-    };
-    if (walk(o)) return true;
-  }
-  return false;
-}
-
-/** 見本 (代表の品、種 1) の MOD の modId。見本が出せない箱は null (分からない = 辿りを止めない) */
-function sampleMods(data: PatchData, doc: TreeDoc, id: string): StageItem["prefixes"] | null {
-  const s = sampleOf(data, doc, id, 1);
-  if (s.note === "none" || s.note?.startsWith("cant:")) return null;
-  return [...s.item.prefixes, ...s.item.suffixes];
-}
-/** MOD の系統 (E-11a、エンジンの familiesOf。同じ系統は品に 1 つだけ = 系統で「同じ外れが残っているか」を見る) */
-const famsOfMod = (data: PatchData, m: StageItem["prefixes"][number]): readonly string[] => { const md = data.mods.get(m.modId); return md ? familiesOf(md) : []; };
-/** 箱 pId の手で外れの箱 oId の見本に、側 side に新しく付いた MOD の系統 (低ティアの人はこの外れの代わりに低い段の A を持つ) */
-function addedJunk(data: PatchData, doc: TreeDoc, pId: string, oId: string, side: string | undefined): ReadonlySet<string> {
-  const before = sampleMods(data, doc, pId), after = sampleMods(data, doc, oId);
-  if (!before || !after || !side) return new Set();
-  const had = new Set(before.flatMap((m) => famsOfMod(data, m)));
-  return new Set(after.filter((m) => m.side === side).flatMap((m) => famsOfMod(data, m)).filter((f) => !had.has(f)));
-}
-/** 箱 id の見本がまだ外れの系統 junk のどれかを持つか (見本が出せない時は持つと見る) */
-function stillHolds(data: PatchData, doc: TreeDoc, id: string, junk: ReadonlySet<string>): boolean {
-  const ms = sampleMods(data, doc, id);
-  return !ms || ms.some((m) => famsOfMod(data, m).some((f) => junk.has(f)));
-}
-
-/**
- * 箱 b の手の結果 oc を、低ティアの箱へ振り直す (回す・見本・精査・配置で同じ。boxOutcomeOf から)。当たり・狙いが消えた・塞がったはそのまま。
- * 手の後の品 after が箱の狙いを段の足りない形で持てば、その狙いの低ティアの箱へ (その箱がある時だけ)
- */
-export function lowTierOutcome<T extends { out: OutKind; hits: Aim[]; junkKey?: string }>(data: PatchData, doc: TreeDoc, b: TreeBox, oc: T, after: StageItem): T {
-  if (!flag("lowTierBox") || oc.out === "hit" || oc.out === "lost" || oc.out === "blocked") return oc;
-  for (const id of b.outs) {
-    const c = doc.boxes[id], k = c?.out === "blocked" && lowTierModOf(c.junkKey) ? c.junkKey : null;
-    const a = k ? pickedOf(doc, b).find((x) => lowTierKey(x) === k) : undefined; // 箱の鍵から狙いを引く (MOD の当たりの比べではない)
-    if (a && holdsLowTier(data, after, a)) return { ...oc, out: "blocked", hits: [], junkKey: c!.junkKey };
-  }
-  return oc;
+export function lowTierStopOf(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKind }, after: StageItem): { why: string } | null {
+  if (!flag("lowTierBox") || !b.hand || effectOf(b.hand.currency) === "essence" || oc.out === "hit" || oc.out === "lost" || oc.out === "blocked") return null;
+  const a = pickedOf(doc, b).find((x) => !x.anyEle && holdsLowTier(data, after, x));
+  return a ? { why: tr("☑ した狙いの MOD が低いティアで付いた (以後この狙いは付かない。予期せぬ狙い MOD)", "The checked target mod was added at a low tier (it can no longer be added; unexpected target mod)") } : null;
 }

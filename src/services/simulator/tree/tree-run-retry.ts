@@ -26,22 +26,36 @@ export const GOAL_RETRY_MAX = 3;
 /** やり直しで足し合わせる 1 人分の結果の形 (tree-run の Person のうち使う所) */
 export interface RetryPart {
   end: string; cost: number; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>;
-  goalAt?: string; essAt?: string;
+  goalAt?: string; essAt?: string; ltAt?: string;
   /** やり直す前に予期せぬ狙い MOD で止まった所 (古い順。結果のまとめの「予期せぬ狙い MOD で止まった」の数えに残す) */
-  retried?: Array<{ goalAt?: string; essAt?: string }>;
+  retried?: Array<{ goalAt?: string; essAt?: string; ltAt?: string }>;
 }
 
-/** 予期せぬ狙い MOD (S-33g ②・S-33e ⑧) で止まり、まだやり直せる人か */
-export const retryable = (p: RetryPart): boolean => flag("goalRetry") && p.end === "stuck" && !!(p.goalAt || p.essAt) && (p.retried?.length ?? 0) < GOAL_RETRY_MAX;
+/** 予期せぬ狙い MOD (S-33g ②・S-33e ⑧・低いティア S-33g) で止まり、まだやり直せる人か */
+export const retryable = (p: RetryPart): boolean => flag("goalRetry") && p.end === "stuck" && !!(p.goalAt || p.essAt || p.ltAt) && (p.retried?.length ?? 0) < GOAL_RETRY_MAX;
 
 /** 止まった前の挑戦 prev とやり直した挑戦 next を 1 人分に足す (費用・使った物・通った道は足し、止まった所は retried に残す) */
 export function mergeRetry<P extends RetryPart>(prev: P, next: P): P {
   const uses = { ...prev.uses };
   for (const [k, n] of Object.entries(next.uses)) uses[k] = (uses[k] ?? 0) + n;
-  const stop = { ...(prev.goalAt ? { goalAt: prev.goalAt } : {}), ...(prev.essAt ? { essAt: prev.essAt } : {}) };
+  const stop = { ...(prev.goalAt ? { goalAt: prev.goalAt } : {}), ...(prev.essAt ? { essAt: prev.essAt } : {}), ...(prev.ltAt ? { ltAt: prev.ltAt } : {}) };
   return {
     ...next, cost: prev.cost + next.cost, uses, restarts: prev.restarts + next.restarts + 1, odd: new Set([...prev.odd, ...next.odd]),
     visits: [...prev.visits, ...next.visits.map((v) => ({ ...v, cost: v.cost + prev.cost }))],
     retried: [...(prev.retried ?? []), stop, ...(next.retried ?? [])],
   };
+}
+
+/**
+ * 予期せぬ狙い MOD の止まりの数え (S-33g ②・S-33e ⑧・低いティア)。goal / ess / low = 止めた手の箱ごとの回数 (やり直した分も入れる)、
+ * stuckOdd = 止まりで終わった人のうち予期せぬ狙い MOD で止まった人の、止まった箱ごとの人数 (止まりの欄で「予期せぬ」と「木の不具合」を分ける)
+ */
+export function stopCounts(people: readonly (RetryPart & { at: string })[]): { goalStop: Record<string, number>; essStop: Record<string, number>; lowStop: Record<string, number>; stuckOdd: Record<string, number> } {
+  const goalStop: Record<string, number> = {}, essStop: Record<string, number> = {}, lowStop: Record<string, number> = {}, stuckOdd: Record<string, number> = {};
+  const add = (m: Record<string, number>, k: string): void => { m[k] = (m[k] ?? 0) + 1; };
+  for (const p of people) {
+    for (const s of [...(p.retried ?? []), ...(p.end === "stuck" ? [p] : [])]) { if (s.goalAt) add(goalStop, s.goalAt); if (s.essAt) add(essStop, s.essAt); if (s.ltAt) add(lowStop, s.ltAt); }
+    if (p.end === "stuck" && (p.goalAt || p.essAt || p.ltAt)) add(stuckOdd, p.at);
+  }
+  return { goalStop, essStop, lowStop, stuckOdd };
 }

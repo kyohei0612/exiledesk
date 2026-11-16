@@ -16,7 +16,6 @@ import { midAims, placedAims } from "../../../services/simulator/tree/tree-veil"
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
-import { SAME_HI } from "../../../services/simulator/tree/tree-outcome";
 import { flag } from "../../../web/release-flags"; import { lowTierKey, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier"; import { aimFams } from "../../../services/simulator/tree/tree-junk-frame";
 import { useTree } from "./use-tree";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
@@ -123,9 +122,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 完成の狙い (完成形の MOD) も狙いに数える (10-27 夕モンキー 1: エッセンスで付いた完成形の MOD が「外れ MOD」と出た)
   // 外れの箱 (外れ・狙いが消えた・外れが消えた・打った後) は、その箱まで来た道で付いている狙いだけを狙いに数える。☑ の無い MOD はそのカレンシーでは外れ扱いなので、
   // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
-  // 「エッセンスと同じ MOD」の箱も同じ見方 (スイッチ goalMetTag。前は完成形の狙い全部を名前にし、☑ の無い木でライフが急に名前で出た、11-16 オーナー「Aで」)
-  const met = flag("goalMetTag");
-  const missBox = !!box?.id && !!box.out && box.out !== "start" && (MISS_OUTS.includes(box.out) || (met && box.out === "blocked"));
+  const met = flag("goalMetTag"); // ☑ の無いまま完成形の狙いを段以上で満たす MOD は名前だけ (下の goalAll)
+  const missBox = !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
   // 箱の中身 (S-60) と同じく、見本の ☑ で付いた狙い (tree-judge の sampleAimed、見本の打ち方の順) だけを狙い。道の当たりの組では数えない (大本 1)
   const am = missBox ? aimedOfCard(d, doc, box!.id!, it) : null;
   const held = am ? (doc.memoAims ?? []).filter((g) => am.has(g.modId)).map((g) => ({ modId: g.modId, tier: g.tier })) : missBox ? heldOfSets(d, heldSets(doc, box!.id!)) : [];
@@ -171,7 +169,5 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
 /** 「エッセンスと同じ MOD」の箱 id の品で、兄弟の箱のエッセンス / 合金を塞ぐ系統 (エンジンの E-56) */
 function sameModFamilies(d: PatchData, doc: TreeDoc, id: string, it: StageItem): string[] {
   const p = doc.boxes[doc.boxes[id]?.parent ?? ""];
-  // エッセンスの箱の下の同格以上 (S-33e ⑦) は親の箱自身の手のエッセンスも (スイッチ sameHiSample。前は兄弟の手だけ見て、雷耐性が外れ MOD と出た)
-  const own = flag("sameHiSample") && doc.boxes[id]?.junkKey === SAME_HI && p?.hand ? [p.hand] : [];
-  return [...own, ...(p?.outs ?? []).map((o) => doc.boxes[o]?.hand)].flatMap((h) => { if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" || v?.verdict === "skip" ? v.families : []; });
+  return (p?.outs ?? []).map((o) => doc.boxes[o]?.hand).flatMap((h) => { if (!h || effectOf(h.currency) !== "essence") return []; const v = essenceTierVerdict(d, it, h.currency); return v?.verdict === "blocked" || v?.verdict === "skip" ? v.families : []; });
 }
