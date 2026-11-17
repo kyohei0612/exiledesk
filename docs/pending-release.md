@@ -7,6 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | fracPlainMark (S-10g、シミュ 89、オーナー 11-18「これは明確にバグ」、見た目 OK = オーナー 11-18「おｋ」(sim89-frac の前後)) | この commit | シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、木が終わったように見えていたのを直しました | Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished |
+| whittleFloor・whittleNoSame (S-65c6・S-190d2、シミュ 87・88・89、オーナー 11-18「直しておｋ」「あと同じと高いは未設定でおｋよデフォ」、レビュワー 1 通し) | この commit | シミュ: 削減の枝で、付きえない「同じ」の帯が出ていた・割合がずれていたのと、1 つの帯に置いた削減がほかの帯にも勝手に入っていたのを直しました | Simulator: Whittling branches no longer show an impossible "same level" band or skewed rates, and a Whittling placed on one band no longer copies to the others |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)

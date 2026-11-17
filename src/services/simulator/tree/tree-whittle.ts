@@ -9,7 +9,8 @@
  * 結果の箱は、打つ前からあって残った外れの順位 (欲しい MOD に対して) を鍵に持つ (④、TreeBox.junkKey の `w:` の部分、側の鍵 `s:` とは `;` で並べる)。
  * 次の削減は鍵の順位に合う外れを差し替えない (見本の MOD レベルがその順位の代わり)
  */
-import { candidates, makeStageMod, OMEN_KEY, omenSideOf, sideOfMod, whittleLevel, type PatchData, type StageItem, type StageMod, type StageSide } from "../../craft-stage/engine";
+import { candidates, makeStageMod, OMEN_KEY, omenSideOf, orbFloor, parseKey, sideOfMod, whittleLevel, type PatchData, type StageItem, type StageMod, type StageSide } from "../../craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import { effectiveCls, without } from "../../craft-stage/stage-core";
 import { engineOmens } from "./tree-hands";
 import { isMissMod, missAims, type MissAims } from "./tree-miss";
@@ -237,11 +238,22 @@ const fKey = (m: StageMod): string => `${m.side}|${m.modId}|${m.tierIndex}`;
 const floorsOf = (it: StageItem): ReadonlyMap<string, number> | undefined => FLOORS.get(it) ?? FLOORS.get(originOf(it));
 /** 持ち回っている下限の比べの文字 (品の JSON の外にあるので、品の答えを覚える鍵に足す。tree-frame の outsOf の覚え) */
 export const floorKeyOf = (it: StageItem): string => { const f = floorsOf(it); return f?.size ? JSON.stringify([...f].sort()) : ""; };
-/** before に手を打った after へ下限を持ち回る。wanted = 削減の手の欲しい MOD (削減でなければ null): 消えた MOD の MOD レベルを、残った外れの下限に足す */
-export function carryFloors(data: PatchData, before: StageItem, after: StageItem, wanted: readonly AimLike[] | null): void {
+/** 手の段の下限 (E-11d、エンジンの orbFloor。上級の王者・高貴・カオス 35 など)。オーブでない手・下限の無い手は 0 (S-65c6、スイッチ whittleFloor) */
+const handFloorOf = (key: string | undefined): number => {
+  if (!key || !flag("whittleFloor")) return 0;
+  const k = parseKey(key);
+  return k.type === "currency" ? orbFloor(k.kind, k.strength) : 0;
+};
+/**
+ * before に手を打った after へ下限を持ち回る。wanted = 削減の手の欲しい MOD (削減でなければ null): 消えた MOD の MOD レベルを、残った外れの下限に足す。
+ * key = 打った手の鍵: その手の段の下限 (E-11d) を、この手で付いた MOD の下限にする (S-65c6。外れの差し替えで下限より低い段を数えない)
+ */
+export function carryFloors(data: PatchData, before: StageItem, after: StageItem, wanted: readonly AimLike[] | null, key?: string): void {
   const was = floorsOf(before), bm = loose(before), am = loose(after), next = new Map<string, number>();
   const kept = am.filter((m) => bm.some((b) => fKey(b) === fKey(m)));
   for (const m of kept) { const f = was?.get(fKey(m)); if (f !== undefined) next.set(fKey(m), f); }
+  const hf = handFloorOf(key);
+  if (hf > 0) for (const m of am) if (!kept.includes(m)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, hf));
   const gone = wanted ? bm.filter((b) => !am.some((m) => fKey(m) === fKey(b))) : [];
   // 外れかは rankVariants と同じ isMissMod (sameText・段も見る)
   if (gone.length) { const low = Math.min(...gone.map(lv)), miss = missAims(data, wanted!); for (const m of kept) if (isMissMod(m, miss)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, low)); }

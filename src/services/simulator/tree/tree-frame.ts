@@ -78,7 +78,7 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
       const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
       if (s === "tooMany") return s;
       // 残った外れに、消えた MOD の MOD レベルを下限として持たせる (次の削減で絞る、S-65b)
-      if (s) rs.push(...s.filter((r) => !r.void).map((r) => { carryFloors(data, v.item, r.item, wanted); return { p: v.p * r.p, item: r.item }; }));
+      if (s) rs.push(...s.filter((r) => !r.void).map((r) => { carryFloors(data, v.item, r.item, wanted, key); return { p: v.p * r.p, item: r.item }; }));
     }
   } else {
     const s = stepOutcomesOrTooMany(data, item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
@@ -88,7 +88,7 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
   }
   if (veilPick(h)) rs = rs.flatMap((r) => (unrevealedOf(r.item) ? revealOutcomes(data, r.item).map((x) => ({ p: r.p * x.p, item: x.item })) : [r]));
   // ほかの手は残った MOD の下限をそのまま持ち回る (削減の手は上で付けた)
-  if (!isWhittleHand(h)) for (const r of rs) if (r.item !== item) carryFloors(data, item, r.item, null);
+  if (!isWhittleHand(h)) for (const r of rs) if (r.item !== item) carryFloors(data, item, r.item, null, key);
   const tot = rs.reduce((n, r) => n + r.p, 0) || 1;
   return rs.map((r) => ({ item: r.item, p: r.p / tot }));
 }
@@ -256,6 +256,22 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       EXAMPLES.set(e, { start: st.item.base, item });
       return item;
     };
+    /**
+     * 保存の例を代表にする時、例の品は外れの下限を持たない (開いた時に JSON から作った品)。親の代表の下限を持ち回り、親の手の段の下限 (E-11d) を
+     * この手で付いた MOD に付ける (S-65c6、スイッチ whittleFloor。前は例の道で下限が無く、上級の手の後の削減に付きえない「同じ」の帯が出た = e0N7mhG3 の 13 段目)
+     */
+    // 比べる元 (A-r2): 親の箱の保存の例があればそれ (例の品は保存の道で 1 手ずつ続く。親の代表が差し替えの品の時に、例に前からある外れを「この手で付いた」と取り違えない)。
+    // 親の例が下限を持たなければ、親の代表から同じ MOD の下限だけ写す (分からない MOD は下限 0 = 付きうる枠を取りこぼさない側)。
+    // 親の手が削減なら、消えた MOD の MOD レベルを残った外れの下限に (S-65b、A-r1)。欲しい MOD は枝を作る時 (splitRaw) と同じ whittleCompare
+    const exFloored = (o: string, ex: StageItem, from: Pick<Frame, "item" | "aimed">): StageItem => {
+      const pid = doc.boxes[o]?.parent ?? "", ph = doc.boxes[pid]?.hand;
+      if (!flag("whittleFloor") || !ph || floorKeyOf(ex)) return ex;
+      const pex = exOf(pid), before = pex ?? from.item;
+      if (pex && pex !== from.item && !floorKeyOf(pex)) carryFloors(data, from.item, pex, null);
+      const wanted = isWhittleHand(ph) ? whittleCompare(data, doc, ph, from.aimed, before).wanted : null;
+      carryFloors(data, before, ex, wanted, ph.currency);
+      return ex;
+    };
     const sf: Frame = { item: st.item, aimed: sa, key: frameKeyOf(contentOf(data, doc, st.item, sa)), p: 1, note: st.note }, se = exOf("start");
     const sea = se ? startAimed(data, doc, se) : null;
     frames.set("start", se && sea && frameKeyOf(contentOf(data, doc, se, sea)) === sf.key ? { ...sf, item: se, aimed: sea } : sf);
@@ -315,7 +331,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
         const fr = pick(r), mk = blockMarkOf(data, doc, fr.item, fr.aimed);
         if (!marks.has(mk)) { marks.add(mk); marked.push(fr); }
       }
-      const ex = exOf(o), fe = ex ? pick({ item: ex, p: sum }) : null, saved = !!fe && all.some((fr) => fr.key === fe.key);
+      const ex0 = exOf(o), ex = ex0 && exFloored(o, ex0, from), fe = ex ? pick({ item: ex, p: sum }) : null, saved = !!fe && all.some((fr) => fr.key === fe.key);
       // 外れは枠だけ (S-200 ③、スイッチ junkFrameOnly): 代表は 0) 保存の例 1) 外れが木の狙いの族を取らない枝 2) 段を満たす物だけの枝 3) 段の足りない外れをほかの枝の外れと差し替えた品 の順 (保存の例も同じ順で見る)
       const clean = (fr: Frame): boolean => !gf || junkClean(data, c, from.item, fr.item, gf);
       const ok = (fr: Frame): boolean => !gf || !junkTaking(data, c, from.item, fr.item, gf).length;
@@ -407,7 +423,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
         if (!v) continue;
         // 保存の例のアイテム (S-200 ⑦) がこの枠の組・兄弟の枠と同じ中身なら、差し替えた品の代わりに例を代表にする = 開き直しても組んだ時と同じ見本 (スイッチ treeLaneExample。見本の見た目だけ、割合 p は差し替えの物のまま)
         // 保存の例の外れが木の狙いの族を段の足りない形で取っていれば使わない (スイッチ junkFrameOnly、レビュワー 1 の 10)
-        const ex0 = flag("treeLaneExample") ? exOf(o) : null, ex = ex0 && !itemTaking(data, ex0, gf) ? ex0 : null;
+        const ex0 = flag("treeLaneExample") ? exOf(o) : null, ex = ex0 && !itemTaking(data, ex0, gf) ? exFloored(o, ex0, f) : null;
         let rep: Pick<Frame, "item" | "aimed" | "key"> = { item: v.item, aimed: sib.aimed, key: sib.key };
         if (ex) { const am = nextAimed(data, doc, f.aimed, o, ex, f.item), key = frameKeyOf(contentOf(data, doc, ex, am)), w = whittleCompare(data, doc, wh, am, ex); if (key === sib.key && lvClassOf(ex, w.miss, w.side) === want) rep = { item: ex, aimed: am, key }; }
         return { ...sib, ...rep, p: sib.p * v.p, alts: undefined };

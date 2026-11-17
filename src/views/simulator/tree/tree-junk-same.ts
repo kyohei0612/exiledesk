@@ -16,21 +16,24 @@ import { craftStage } from "../../../state/craft-stage";
 import { applyPick, holdLinks, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
+import { lvPart } from "../../../services/simulator/tree/tree-whittle";
 
 /** 同じ外れに数える結果の種類 (当たり・完成への道・塞がった箱は入れない) */
 const KINDS = new Set(["junk", "junkGone", "lost", "any"]);
 /** フラクチャーで固定された箱 (フラクチャーの手の当たり = 「〜が固定された」)。兄弟枠に入れる (S-190d、11-16 オーナー「フラクチャー後の消去も兄弟判定になってない」→「おｋ」) */
 const fracHit = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; const h = b?.parent ? d.boxes[b.parent]?.hand : null; return !!b && b.out === "hit" && !!h && effectOf(h.currency) === "fracture"; };
 /** 兄弟枠に入る・写す元になれる箱 = 手・↩・完成 / 失敗が無く、人が手を消した箱 (sameOff) でもない (11-16 オーナー「自動で置いたやつを編集したり消したりするときはその枠だけで良さそうやね」) */
-const open = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && (KINDS.has(b.out) || fracHit(d, id)) && !b.hand && !b.back && !b.done && !b.sameOff; };
+const open = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && (KINDS.has(b.out) || fracHit(d, id)) && !b.hand && !b.back && !b.done && !b.sameOff && !lvFrame(b); };
+/** 削減の手前の枠 (S-65c、鍵 l:) は兄弟枠に入れない = 写す先にも写す元にもしない (S-190d2、スイッチ whittleNoSame。11-18 オーナー「あと同じと高いは未設定でおｋよデフォ」) */
+const lvFrame = (b: TreeBox): boolean => flag("whittleNoSame") && !!lvPart(b.junkKey);
 
 /** id の箱と同じ外れの種類のほかの箱 (決めの有無は見ない、木の並びの順)。同じ手の親の同じ種類の結果。フラクチャーで固定された箱どうしは固定された狙いも同じ物だけ */
 export function frameMates(d: TreeDoc, id: string): TreeBox[] {
   const b = d.boxes[id];
   const ph = b?.parent ? d.boxes[b.parent]?.hand : null;
-  if (!b || !ph || !(KINDS.has(b.out) || fracHit(d, id))) return [];
+  if (!b || !ph || !(KINDS.has(b.out) || fracHit(d, id)) || lvFrame(b)) return [];
   const aim = b.aim?.modId ?? null;
-  const all = Object.values(d.boxes).filter((o) => o.id !== id && o.out === b.out && (b.out !== "hit" || (o.aim?.modId ?? null) === aim) && (KINDS.has(o.out) || fracHit(d, o.id)) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })());
+  const all = Object.values(d.boxes).filter((o) => o.id !== id && !lvFrame(o) &&o.out === b.out && (b.out !== "hit" || (o.aim?.modId ?? null) === aim) && (KINDS.has(o.out) || fracHit(d, o.id)) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })());
   // 残っている MOD の数が同じ箱だけ (スイッチ sameModCount、11-16 オーナー「2と3はそれでおｋ」)
   const data = craftStage.data.value;
   if (!flag("sameModCount") || !data || !all.length) return all;
