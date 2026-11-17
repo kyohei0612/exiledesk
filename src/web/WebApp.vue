@@ -56,7 +56,7 @@ const DailyGoingPill = flag("daily") && goingFile ? defineAsyncComponent(goingFi
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/tutorial/craft-lesson";
 import { isPhoneWidth } from "../utils/use-phone";
-import { setDailyPcView } from "../utils/daily-pc-view";
+import { pcWanted, setDailyPcView } from "../utils/daily-pc-view";
 import { preventMenu } from "../utils/no-context-menu"; // 右クリックで離す。文字の欄・選んだ文字の上はメニューを残す (U-38)
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
@@ -164,9 +164,12 @@ window.addEventListener("resize", fitZoom);
 // 向きを変えた時・幅が変わったのに resize が来ない時もある (2026-10-13 確かめで外枠が 1024px のまま残った)
 window.addEventListener("orientationchange", fitZoom);
 window.visualViewport?.addEventListener("resize", fitZoom);
-// スマホの端末はデイリーの欄を出している間だけ PC の画面を縮めて出す (D-70c、スイッチ dailyPcView)。替えた後に幅を測り直す
+// スマホで「PC 版を表示して挑戦」を押した後、デイリーの挑戦のページ (daily-start) を出している間だけ PC の画面を縮めて出す (D-70c、スイッチ dailyPcView)。
+// 挑戦のページを離れたら印を下ろして元のスマホの画面へ。替えた後に幅を測り直す
 if (flag("dailyPcView")) {
-  watch(() => !!dailyPage.value && !feedbackPage.value && !recipesPage.value && !treePage.value, (on) => { setDailyPcView(on); fitZoom(); }, { immediate: true });
+  const playShown = computed(() => dailyPage.value?.view === "start" && !feedbackPage.value && !recipesPage.value && !treePage.value);
+  watch(playShown, (on) => { if (!on) pcWanted.value = false; });
+  watch(() => playShown.value && pcWanted.value, (on) => { setDailyPcView(on); fitZoom(); }, { immediate: true });
 }
 </script>
 
