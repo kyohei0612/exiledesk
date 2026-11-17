@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| どの幅でもはみ出さず押せる: MOD 一覧の目次の札を幅 1280 未満でも 1 行の横送りにせず折り返して全部見せる (エミュのスマホ・シミュ 768 の MOD 一覧で右の札が隠れていた。目次より長い札は字を折る) (U-53c、スイッチ `fitWidth`、見た目 OK (11-17「見た目OK」、ブラック 127)) | 07a05cb50 | MOD 一覧: 狭い画面やスマホでも、上の種類の切り替え (一般・冒涜専用・エッセンスなど) が折り返して全部見えるようにしました | Mod list: the category tabs at the top (General, Desecrated, Essence, etc.) now wrap so all of them are visible on narrow screens and phones |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
