@@ -7,7 +7,7 @@ import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { DAILY_SKIN_KEY } from "./skin/skin";
 import { tr } from "../../i18n/lang";
 import { baseArt } from "../../components/art/base-art";
-import { usePhone } from "../../utils/use-phone";
+import { usePhone, useViewOnlyWidth } from "../../utils/use-phone";
 import { goDaily } from "./daily-open";
 import { canStartAt, getTry, leftMs, myNick, recheckTry, SLOT_NAMES, syncTodayTry, TRIED_CARD, type DailyTopic } from "./daily-api";
 import { devBackState, devBackTry, devTreeUrl } from "./daily-dev-states";
@@ -19,7 +19,8 @@ import { flag } from "../../web/release-flags";
 import { dailyShare, sendDailyShare, type DailyShare } from "./daily-share";
 
 const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>();
-const phone = usePhone();
+/** 挑戦できない幅 (D-70 = 1280 未満。スイッチ dailyFit で D-70b = シミュの木と同じ 768 未満) */
+const phone = flag("dailyFit") ? useViewOnlyWidth() : usePhone();
 const art = computed(() => baseArt(props.topic.base));
 const name = computed(() => tr(props.topic.baseJa, props.topic.base));
 const slot = computed(() => SLOT_NAMES[props.topic.slot] ?? null);

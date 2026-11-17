@@ -74,3 +74,15 @@
 /* 右の欄を閉じた時は木の枠の右上の「完成形」(top 8px・高さ 24px) の下に浮かせる */
 [data-daily-play] [data-tree-frame] > [data-daily-acts-shut] { position: absolute; top: 40px; right: 8px; z-index: 20; margin: 0; padding: 6px 6px 6px 10px; border-radius: 6px; background: rgb(21 17 12 / 0.92); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1); }
 [data-daily-play] [data-tree-frame] > [data-daily-acts-shut] [data-daily-submit] { height: 34px; }
+
+/* 768〜1279 で挑戦する時の帯 (D-70b・U-53c、スイッチ dailyFit)。スマホの形の帯 (daily-skin.css の 1279 以下) と挑戦の帯 (上) が混ざって
+   名前が「サ…」に切れ・ボタンが時間に重なった。2 段にする: 1 段目 = お題の名前 + ボタン (入らなければ名前の下へ折り返す) | 残り時間、2 段目 = 費用・完成率 (右寄せ) */
+@media (max-width: 1279px) {
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-band { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; min-height: 0; padding: 8px 14px 10px; }
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-band-topic { flex-wrap: wrap; gap: 4px 10px; padding: 0; }
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-band-title { flex: 1 1 auto; overflow: visible; white-space: normal; }
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-band-name { overflow: visible; text-overflow: clip; }
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-time { padding: 0; }
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-time b { font-size: 34px; }
+  :root[data-flag-dailyfit] .daily-root[data-daily-page] [data-daily-play] .daily-band-score { grid-column: 1 / -1; justify-content: flex-end; padding: 0; }
+}

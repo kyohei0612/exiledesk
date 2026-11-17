@@ -10,7 +10,7 @@ import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
 import { treeStep } from "../../web/page";
 import { goDaily } from "./daily-open";
-import { usePhone } from "../../utils/use-phone";
+import { usePhone, useViewOnlyWidth } from "../../utils/use-phone";
 import SimTreePage from "../simulator/tree/SimTreePage.vue";
 import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
@@ -98,7 +98,8 @@ function devOpen(): void {
   }, 300));
 }
 /** スマホの幅では挑戦しない (D-70)。URL を開いても始めず (時計を動かさない)、一覧へ戻る口だけ出す。幅が広がれば始める */
-const phone = usePhone();
+/** 挑戦できない幅 (D-70 = 1280 未満。スイッチ dailyFit で D-70b = シミュの木と同じ 768 未満) */
+const phone = flag("dailyFit") ? useViewOnlyWidth() : usePhone();
 watch([() => s.data.value, phone], () => { if (!phone.value) void begin(); }, { immediate: true });
 
 /** 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j、DailyFracPick)。諦めた後は選ばない */
