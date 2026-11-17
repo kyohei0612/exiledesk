@@ -46,6 +46,9 @@ process.stdin.on("end", () => {
     const own = desk.get(sid);
     if (own && /控え/.test(own.title) && /"command":"[^"]*\bgit\b[^"]*\bcommit\b/.test(readTail(tp, 3_000_000)))
       process.stdout.write(`【名前】題がまだ「${own.title}」(控え) のまま commit している = もう入っている。set_session_title "self" で役の名前 (例「シミュ部長」「ブラック」) に直す (G-37 ②)。\n`);
+    // 画面の確かめは画面全体 (G-53 ①、オーナー 11-17「てか開発版めちゃくちゃやんUI」): 画面のファイルを触ったセッションに毎番
+    if (/"file_path":"[^"]*[\\/]src[\\/][^"]*\.(vue|css)"/.test(readTail(tp, 3_000_000)))
+      process.stdout.write(`【画面】画面の直しの確かめ・見せる絵は、直した所だけでなく画面全体を 1920・1440・1280x720 で撮り、1 枚ずつ Read で見て崩れ (重なり・切れ・送り棒・小さすぎる字) 0 を書いてから返す (G-53)。\n`);
     if (black && ownerTurn) {
       const longs = longSessions(tp, desk);
       if (n >= SPARE && !handedOver(desk.get(sid), desk)) longs.unshift(`ブラック自身 (${n} 件)`);

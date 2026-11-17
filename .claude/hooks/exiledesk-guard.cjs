@@ -303,6 +303,17 @@ process.stdin.on("end", () => {
         block(`RELEASED への書き足し (本番で開ける) は、オーナーの「出して」の後にブラックが置く印 (${MARK}) が要る (G-08・R-02)`);
     }
   }
+  // 送る絵は先に見る (G-53 ②、オーナー 11-17「てか開発版めちゃくちゃやんUI」): SendUserFile の絵のどれかを、このセッションで Read した跡 (同じファイル名) が無ければ止める
+  if (tool === "SendUserFile") {
+    const pics = (Array.isArray(ti.files) ? ti.files : []).map((f) => String(f).replace(/\\/g, "/").split("/").pop()).filter((b) => /\.(png|jpe?g|webp|gif)$/i.test(b));
+    if (pics.length) {
+      let log = "";
+      try { log = fs.readFileSync(String(input.transcript_path || ""), "utf8").replace(/\\+/g, "/"); } catch { log = null; }
+      const seen = (b) => log === null || new RegExp(`"file_path":"[^"]*/${b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`).test(log);
+      const unseen = pics.filter((b) => !seen(b));
+      if (unseen.length) block(`送る前に絵を Read で開いて、画面全体に崩れ (重なり・切れ・送り棒・小さすぎる字) が無いかを見る (G-53): ${unseen.slice(0, 4).join("・")}`);
+    }
+  }
   if (notes.length)
     process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", additionalContext: `[ExileDesk の見張り] 知らせ (止めていない): ${notes.join(" / ")}` } }));
   process.exit(0);
