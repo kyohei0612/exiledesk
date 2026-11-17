@@ -229,6 +229,11 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.750 シミュの「エミュで試す」でソケット・ルーンと完成形の札のとおりの品を載せる (S-211b・S-211c・E-29b)・右の列の頭を 1 行に (S-94hy)・右の列の幅を 1/1.3 に (S-78f2)。オーナー 11-18「だしって」、ブラック 132
+  "simToEmuRunes",
+  "simToEmuAll",
+  "sideHeadLine",
+  "sideSlim",
   // 0.1.749 シミュの木の上の帯を詰める (S-94m、案 A)・失敗の箱へ入る比べでルーンの組を見ない (S-60g)・その箱の見本はルーン付きの人を先に (S-60g2、案 B)。オーナー 11-17「出して」、ブラック 132
   "barSlim",
   "failRuneFree",

@@ -1,4 +1,10 @@
 {
+  "0.1.750": [
+    "Simulator: \"Close\" and the granted-skill picker now share one row in the side panel",
+    "Simulator: the side panel is a little narrower, leaving more room for the tree",
+    "Simulator: \"Try in Emulator\" now opens targets as-is, including essence and desecrated mods and rune-added sockets",
+    "Simulator: \"Try in Emulator\" now carries over sockets and runes, so targets with rune-granted mods open correctly"
+  ],
   "0.1.749": [
     "Simulator: failed items that differ only by socketed runes now share one box, so trees branch less",
     "Simulator: the button bar above the tree is slimmer, leaving more room for the tree",

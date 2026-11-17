@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.750",
+  "date": "2026-11-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 右の欄の「閉じる」と「付与スキル」を 1 行にまとめました",
+    "en": "Simulator: \"Close\" and the granted-skill picker now share one row in the side panel"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 右の欄を少し細くして、ツリーを広く見られるようにしました",
+    "en": "Simulator: the side panel is a little narrower, leaving more room for the tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「エミュで試す」で、エッセンスや冒涜の MOD・ルーンで増えたソケットなどがある完成形もそのまま開けるようにしました",
+    "en": "Simulator: \"Try in Emulator\" now opens targets as-is, including essence and desecrated mods and rune-added sockets"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ルーンで付く MOD のある完成形も「エミュで試す」でそのまま開けるようにしました",
+    "en": "Simulator: \"Try in Emulator\" now carries over sockets and runes, so targets with rune-granted mods open correctly"
+   }
+  ]
+ },
+ {
   "v": "0.1.749",
   "date": "2026-11-17",
   "items": [
@@ -1145,42 +1175,6 @@
     "area": "",
     "text": "デイリー: 挑戦の画面 (PC) で、木を組む所が細く押し込まれていたのを直しました",
     "en": "Daily: fixed the tree area on the challenge screen (PC) being squeezed into a narrow column"
-   }
-  ]
- },
- {
-  "v": "0.1.710",
-  "date": "2026-11-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の前の MOD レベルの枠 (低い・同じ・高い) を、1 つの箱とその下の帯で見せるようにしました。帯を押すとその枠の手を決められます",
-    "en": "Simulator: the mod level frames before a whittle (lower, same, higher) now show as one box with bands under it. Click a band to choose the move for that frame"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ヒネコラで持つ削減は、MOD レベルの枠ごとに打つ / 打たないを選べるようにしました。外れ MOD が残したい MOD より高い枠は、最初から「打たない」です",
-    "en": "Simulator: when you hold a whittle with Hinekora's Lock, you can now choose use / don't use for each mod level frame. Frames where the miss mod is higher than the mod you keep start as “don't use”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 最終チェックで人を回さず、全部の枠を 2 周して未設定や止まりを見るだけにしたので、すぐ終わります",
-    "en": "Simulator: Final Check no longer runs people. It goes over every frame twice to find unset frames and dead ends, so it finishes right away"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 線の見え方を直しました。同じ枠へまとめた箱も親の真下に出し、別の線を横切る所には橋を掛けて、つながっていない線が合流して見えないようにしました。同じレシピを開き直した時に箱と線が重なることがあったのも直しました",
-    "en": "Simulator: cleaner lines. Boxes merged into the same frame now also show right under each parent, and a line crossing another line gets a small bridge, so unconnected lines no longer look joined. Also fixed boxes and lines overlapping when you reopened the same recipe"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 外れ MOD が 3 つ以上の時に削減の枠が「低い」だけになる・錬金で狙いが消える枝が出ない・骨やエッセンスの後の箱で止まるなど、枝の分かれ方を直しました。上の行を 1 行にまとめ、シミュの枠を画面の下まで広げました",
-    "en": "Simulator: fixed how branches split, such as whittle frames showing only “lower” with 3 or more miss mods, no branch for losing an aim mod to an Orb of Alchemy, and dead ends after bones or essences. The top row now fits in one line and the simulator frame reaches the bottom of the screen"
    }
   ]
  }
