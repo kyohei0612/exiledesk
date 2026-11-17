@@ -272,6 +272,25 @@ function cardOf(v: unknown): BoxCard | null {
   return { n, a: typeof c.a === "string" && /^[A-Za-z0-9_]{1,80}$/.test(c.a) ? c.a : null, h: (Array.isArray(c.h) ? c.h : []).slice(0, 8).map((x) => str(x, 60)).filter(Boolean), r, l: c.l === "en" ? "en" : "ja" };
 }
 
+/** 狙いの MOD が何個重なれば同じような品とするか (D-20d) */
+const SAME_MODS = 3;
+/**
+ * 同じような品が箱に既にあるか (D-20d): 箱の品 (wait・ok・used) で、同じベースで狙いの MOD の id が SAME_MODS 個以上同じ物。
+ * 段・値・並べ順・アイテムレベル・投稿した人は見ない
+ */
+async function sameInBox(db: D1Database, base: string, aims: unknown[]): Promise<boolean> {
+  const ids = new Set(aims.map((a) => (a as { modId?: unknown } | null)?.modId).filter((x): x is string => typeof x === "string"));
+  if (ids.size < SAME_MODS) return false;
+  const { results } = await db.prepare("SELECT json_extract(item, '$.aims') AS aims FROM daily_box WHERE status IN ('wait', 'ok', 'used') AND json_extract(item, '$.base') = ?").bind(base).all<{ aims: string | null }>();
+  return results.some((r) => {
+    let old: unknown;
+    try { old = JSON.parse(r.aims ?? "[]"); } catch { return false; }
+    if (!Array.isArray(old)) return false;
+    const seen = new Set(old.map((a) => (a as { modId?: unknown } | null)?.modId).filter((x): x is string => typeof x === "string" && ids.has(x)));
+    return seen.size >= SAME_MODS;
+  });
+}
+
 /** POST /daily/box: 投稿は待ち (wait) で受け、機械の確かめ (D-20、エンジン) は 16:00 の台本が ok / no にする。名前を決めていなくても投稿できる */
 export async function dailyBox(db: D1Database, b: Body, ip: string, now: number): Promise<{ error: string } | (BoxPost & { /** 投稿した人の名前 (Discord の通知だけに使う、画面には返さない。routes.ts が外す) */ by: string | null; /** 絵の元 (Discord の知らせの絵だけに使う、画面には返さない。routes.ts が外す) */ card: BoxCard | null })> {
   const nick = b.nickId ? await authNick(db, b.nickId, b.code) : null;
@@ -288,6 +307,8 @@ export async function dailyBox(db: D1Database, b: Body, ip: string, now: number)
   const ih = await ipHash(ip);
   const n = await db.prepare("SELECT count(*) AS n FROM daily_box WHERE ip_hash = ? AND created > ?").bind(ih, now - 3600_000).first<{ n: number }>();
   if ((n?.n ?? 0) >= BOX_PER_HOUR) return { error: "busy" };
+  // 同じベースで狙いの MOD が 3 つ以上同じ品が箱にあれば、誰の投稿でも受けない (D-20d)。入れる前に断るので知らせも流れない
+  if (await sameInBox(db, b.base, aims)) return { error: "same" };
   // 悪口は受けた時に落とす (エンジンが要らない所だけ先に)
   const bad = hasBadWord(note) || (nick ? hasBadWord(nick.name) : false);
   const id = `p${now.toString(36)}${crypto.randomUUID().slice(0, 4)}`;

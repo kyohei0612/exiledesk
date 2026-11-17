@@ -91,6 +91,7 @@ async function send(): Promise<void> {
 }
 const failText = (e: BoxError): string =>
   e === "busy" ? tr("投稿は 1 時間に 5 件まで。少し待って投稿し直す。", "Up to 5 posts per hour. Wait a bit and post again.")
+  : e === "same" ? tr("箱にもう、同じベースで MOD が 3 つ以上同じ品がある。ちがう品で投稿する。", "The craft box already has an item on this base with 3 or more of the same mods. Post a different item.") // D-20d
   : e === "net" ? tr("サーバーにつながらない。少し待って投稿し直す。", "Couldn't reach the server. Try again in a moment.")
   : tr("この形では送れない。選び直す。", "This item can't be sent. Choose again.");
 </script>

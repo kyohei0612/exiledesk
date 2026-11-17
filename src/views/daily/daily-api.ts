@@ -393,8 +393,8 @@ export const restoreNick = (name: string, code: string): Promise<DailyNick | Nic
 
 // --- 投稿 (D-11〜D-15・D-20) ---
 
-/** 投稿の断りの訳。item・large = 形が悪い、busy = 1 時間 5 件を越えた、net = つながらない */
-export type BoxError = "item" | "large" | "busy" | "net";
+/** 投稿の断りの訳。item・large = 形が悪い、busy = 1 時間 5 件を越えた、same = 同じベースで狙いの MOD が 3 つ以上同じ品が箱にある (D-20d)、net = つながらない */
+export type BoxError = "item" | "large" | "busy" | "same" | "net";
 /**
  * POST /daily/box。段の下限は D-04 (全部 T2 以上) に揃え、先にこの端末で機械の確かめ (D-20) をする。
  * 落ちた物は送らずに訳を付けて残し、通った物は送る (サーバーは wait で受け、16:00 の台本がもう一度確かめて ok / no にする)
