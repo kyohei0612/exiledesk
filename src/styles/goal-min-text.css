@@ -1,0 +1,17 @@
+/*
+ * 完成形の札の小さい字に下限 (sim-tree.md S-78g、スイッチ goalCardMinText = <html data-flag-goalcardmintext>、2026-11-17)。
+ * 札の中のカード (StageItemCard) は列の幅に合わせた倍率 (zoom) で描くので、列 360 + 頁の倍率 0.86 では ×0.69 になり、
+ * 12px の行 (種類・アイテムレベル・品質) が 8px、10px の印 (暗黙・P1 / S1・エッセンス・フラクチャー・(4)) が 7px まで縮んだ (UI の洗い直し ⑥)。
+ * カードの中で 12px → 14px、10px → 13px に上げる。MOD の行 (16px) は変えない。シミュの右の列・デイリーの挑戦の札とも [data-tree-goal]。
+ */
+:root[data-flag-goalcardmintext] [data-tree-goal] [data-stage-card] .text-\[12px\],
+:root[data-flag-goalcardmintext] [data-tree-goal] [data-stage-card] .text-\[12px\] * {
+  font-size: 14px !important;
+}
+:root[data-flag-goalcardmintext] [data-tree-goal] [data-stage-card] .text-\[10px\] {
+  font-size: 13px !important;
+}
+/* 左の段の印の列 (暗黙・P1 / S1) は折り返さない (13px にすると「暗 / 黙」と 2 行に折れた) */
+:root[data-flag-goalcardmintext] [data-tree-goal] [data-stage-card] .text-left.text-\[10px\] {
+  white-space: nowrap;
+}
