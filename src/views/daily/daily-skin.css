@@ -307,7 +307,7 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 [data-daily-play] [data-tree-goal-side] { pointer-events: none; }
 /* 完成形の頭の段 (畳む口) はシミュの札のままの時 (D-37m2、スイッチ dailySimCard) だけ出す。押せない (上の pointer-events) */
 :root:not([data-flag-dailysimcard]) [data-daily-play] [data-tree-goal-fold] { display: none; }
-[data-daily-play] [data-tree-page] { padding: 0; }
+:root:not([data-flag-dailytreeassim]) [data-daily-play] [data-tree-page] { padding: 0; }
 [data-daily-play] [data-tree-frame] { background: var(--skin-bg); }
 [data-daily-play] .g-panel { background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box; }
 
