@@ -9,6 +9,7 @@ import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tre
 import { tr } from "../../../i18n/lang";
 import { toCss } from "../../../utils/zoom";
 import { gesture } from "./use-gesture";
+import { flag } from "../../../web/release-flags";
 
 /** view = 今見ている所 (ツリーの座標。Vue Flow の viewport から use-tree-flow.ts で出す) */
 const props = defineProps<{ boxes: TreeBox[]; view: { x: number; y: number; w: number; h: number }; zoom: number }>();
@@ -19,8 +20,10 @@ const view = computed(() => props.view);
  * ミニマップは既定で開き、道具のボタンで出し入れ。閉じたかはこのブラウザに覚える (S-147g、11-08 オーナー「ミニマップデフォでONでいいよあそこなんかさみしいし」。前は 10-26 夜の既定で閉じ)。
  * 鍵は新しい名前 (前の鍵 minimap2 に残った「閉じた」を引き継がず、誰でも一度は開いた形から。11-08 オーナー「ミニマップデフォで表示して」)
  */
-const MAP_KEY = "exiledesk.tree.minimap3";
-const showMap = ref((() => { try { return localStorage.getItem(MAP_KEY) !== "0"; } catch { return true; } })());
+/** S-78f (スイッチ sideLikeDaily): 最初は閉じる。覚える名前を替えて、誰でも閉じた形から (11-17 オーナー「最初からとじてていいきがするわ」) */
+const MAP_SHUT = flag("sideLikeDaily");
+const MAP_KEY = MAP_SHUT ? "exiledesk.tree.minimap4" : "exiledesk.tree.minimap3";
+const showMap = ref((() => { try { const v = localStorage.getItem(MAP_KEY); return MAP_SHUT ? v === "1" : v !== "0"; } catch { return !MAP_SHUT; } })());
 watch(showMap, (v) => { try { localStorage.setItem(MAP_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 
 /**
