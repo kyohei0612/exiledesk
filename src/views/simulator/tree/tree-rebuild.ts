@@ -10,12 +10,12 @@ import { clearHand, migrateStart, setBack, subtree, TREE_SCHEMA_N, type Aim, typ
 import { readEleAny } from "../../../services/simulator/tree/tree-ele-any";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
-import { autoTarget, foldToTrunks, graftDecided, idleLoop, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, foldToTrunks, graftDecided, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan"; import { linkAllSameHi } from "./tree-same-mod-sync";
 import { extendAnnul, holdAnnul, trimAnnul } from "./tree-annul-chain";
 import { junkPath } from "../../../services/simulator/tree/tree-junk-tidy";
-import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
+import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isFixedHand } from "../../../services/simulator/tree/tree-hands";
 import { foldMisses } from "../../../services/simulator/tree/tree-foresee";
@@ -361,26 +361,16 @@ function mergeIntoBacked(data: PatchData, d: TreeDoc): void {
   }
 }
 /**
- * 組み直した後も決めも ↩ も無い箱は、見本の中身が全部同じ 1 つの箱 (手か完成 / 失敗のある箱、浅い段から) の中身に入るならその箱へ自動の ↩ (S-107 ②)。
- * 前の木に無かった結果の箱 (今の決まりで増えた結果) に着く人は、前の版では回すと「同じ状態の箱へ」移って進んでいた (10-29 共有の木 ibMlQuAV の b22・b24)
+ * 組み直した後も決めも ↩ も無い箱は、自動の ↩ (S-50e の箱どうし、autoTarget) の候補がある時だけそこへ自動の ↩ (S-107 ②)。
+ * 候補が無い箱は未設定のまま (11-17、S-194: 開く時の別の基準 = 中身の鍵が入る手の箱を探してつなぐ後ろの道はやめた。
+ * そこはカタリストを挟んだ上の箱 (S-51d)・完成への道の上の段 (S-50g)・打てるか (S-60f) を見ず、打ち直しの輪を作った、係 g の #2・#3)
  */
 function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const j = judgeMemo(data, d);
-  // 並びは木の並び (S-50e の足し、tree-order)
-  const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort(treeOrder(d));
   for (const b of Object.values(d.boxes)) {
     if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue; // 外れの道も (11-06、tree-judge-link の linkByContent と同じ)
-    // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
     const same = autoTarget(d, b.id, j);
-    if (same) { b.back = same; b.autoBack = true; continue; }
-    const cs = j.contents(b.id);
-    if (!cs?.size) continue;
-    // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
-    // ルーンの後の箱が ↩ ルーンの箱になり、同じルーンは通り抜けるので回り続けた、10-29 pass-armor、S-31e)
-    const loop = (t: string): boolean => idleLoop(d, b.id, t, j);
-    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k) && !needsDesecrated(d, t) && !needsCrafted(d, t)) ?? null));
-    const to = tos.size === 1 ? [...tos][0] : null;
-    if (to) { b.back = to; b.autoBack = true; }
+    if (same) { b.back = same; b.autoBack = true; }
   }
 }
 
