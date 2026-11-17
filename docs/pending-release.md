@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| スマホはデイリーの間だけ PC の画面を全体表示で出す (D-70c、スイッチ `dailyPcView`、デザイン部長 12。見た目の OK 待ち) | 4ac485a38 | スマホでもデイリーの挑戦ができるように: デイリーを開いている間は PC と同じ画面を全体表示で出し、指で拡大・縮小して遊べる | Daily challenges now work on phones: while on the Daily pages, the full PC layout is shown zoomed out, and you can pinch to zoom |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
