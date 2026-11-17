@@ -458,6 +458,9 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
 .tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: var(--exile-color-btn-on-text); }
 @media (max-width: 767px) { .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } }
 @media (min-width: 768px) and (max-width: 1279px) { :root[data-flag-twoshapes] .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } } /* U-53 */
+/* 目次はどの幅でも折り返して全部見せる (横送りで右の札が隠れない、U-53c・スイッチ fitWidth) */
+:root[data-flag-fitwidth] [data-mod-toc] { flex-wrap: wrap; overflow-x: visible; }
+:root[data-flag-fitwidth] [data-mod-toc] > button { flex-shrink: 1; min-width: 0; max-width: 100%; white-space: normal; text-align: left; } /* 目次より長い札 (320 の「創生の樹など (カレンシーでは付かない)」) は字を折る */
 </style>
 
 <style scoped>
