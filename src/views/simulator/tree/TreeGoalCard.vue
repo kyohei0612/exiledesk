@@ -28,6 +28,8 @@ import TreeOrbAsk from "./TreeOrbAsk.vue";
 const TIER_DOWN = flag("tierDown");
 /** 狙いのある間は MOD の札を出さずティア調整 1 つ (スイッチ goalTierOnly) */
 const GOAL_TIER_ONLY = flag("goalTierOnly");
+/** 札の下の「◇ ルーン (自動)」の行を出さない (S-31g2、11-17 オーナー「OK 消していいよ完成品の下」) */
+const NO_AUTO_RUNE = flag("goalNoAutoRune");
 const tierOpen = ref(false);
 /** 段を下げた MOD (オーブをどうしますかの注意書きの対象、× で閉じる) */
 const orbAsk = ref<string[]>([]);
@@ -107,8 +109,8 @@ onBeforeUnmount(() => ro?.disconnect());
         <!-- 狙いのある間は MOD を出さずティア調整 1 つ (スイッチ goalTierOnly、11-13 オーナー「ここのMODってボタンをティア調整にかえてほしいっていみだった」。選び直しは上の段の「2 完成の MOD」) -->
         <button v-if="!(GOAL_TIER_ONLY && TIER_DOWN && n)" type="button" data-tree-goal-open="mods" :class="PILL" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
       </div>
-      <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」) -->
-      <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
+      <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」)。スイッチ goalNoAutoRune (S-31g2) の下では出さない = 札の中のソケットの絵で見える、11-17 オーナー「OK 消していいよ完成品の下」 -->
+      <p v-if="!NO_AUTO_RUNE && t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80 text-[13px]" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
       <!-- カードの枠に乗らない狙い (TreeGoalPage と同じ。どれかが付けば当たり) -->
     </div>
     <!-- 完成形をエミュで試す (S-211、畳んだ時も出す) -->
