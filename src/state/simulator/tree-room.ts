@@ -20,6 +20,17 @@ export function withRoom(then: () => void): void {
   if (!roomFull()) { then(); return; }
   roomAsk.value = then;
 }
+/**
+ * 離れる時の「保存して進む」で保存が窓の待ちになった時、進むのも窓の後にする (S-101b ①)。待ちがあれば true (go は預かる)。
+ * 1 つ消すと保存してから go、「保存をやめる」は保存も進むのもやめてその場に残る。
+ * 先に進むと、窓を持つ画面 (木・レシピ) から移った時に窓ごと消え、待ちだけ残って後で 1 つ消した時に続きが走っていた
+ */
+export function holdLeave(go: () => void): boolean {
+  const f = roomAsk.value;
+  if (!f) return false;
+  roomAsk.value = () => { f(); go(); };
+  return true;
+}
 /** 窓を閉じる (待たせた保存はやめる) */
 export const dropRoomAsk = (): void => { roomAsk.value = null; };
 

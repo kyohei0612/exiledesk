@@ -121,7 +121,7 @@ export function resumeTree(): boolean {
 /**
  * 今の木を保存する。返すのは保存先のレシピと、上書きか (画面の一言用)。
  * 新しく保存する時にレシピが 15 個あれば、保存を待たせて一覧の窓を出す = r が null (離れる時の「保存して進む」、S-101b ①)。
- * 進むのはそのまま進み、窓で 1 つ消すと離れる前の木を保存する (その時に開いている木の保存先は替えない)
+ * 進むのは窓の後 (page.ts の answerLeave が tree-room の holdLeave で預ける)。窓で 1 つ消すと離れる前の木を保存してから進む (進んだ先で開く木の保存先は替えない)
  */
 export function quickSave(): { r: TreeRecipe | null; over: boolean } {
   const d = useTree().doc.value, cur = currentTreeRecipe.value;
