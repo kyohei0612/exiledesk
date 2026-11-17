@@ -1,0 +1,39 @@
+/*
+ * 完成形の札にベースの札を出さず、ティア調整は札の頭の右 (sim-tree.md S-78e、スイッチ goalTierTop = <html data-flag-goaltiertop>、2026-11-17)。
+ * オーナー 11-17「んまぁ完成形にそもそもベースとかはいらんだろな。ややこしいし。ティア調整だけ今の枠上の適正レベルのところにおこうか
+ *   カード内にあるしほんでそこ。消してティア調整入れてあげて　ベースボタン削除」。
+ * 札の頭 ([data-tree-goal-fold]) は畳むボタンそのもので、中にボタンを入れられない (ボタンの入れ子) ので、TreeGoalCard の札の並び
+ * (MOD の区切り線の右に浮かせる div.absolute = ティア調整 / MOD) を札の枠 ([data-tree-goal]) の右上、頭の「▾」の左に重ねる。
+ * 頭の右の「Lv 75 適正」の字 (span.ml-auto) は出さず、▾ を右へ寄せる。ベースの札 ([data-tree-goal-open="base"]) は出さない。
+ * goalCardFull (goal-card-full.css) の「札をカードの下の 1 行へ」より強く書く。
+ */
+:root[data-flag-goaltiertop] [data-tree-goal] {
+  position: relative;
+}
+:root[data-flag-goaltiertop] [data-tree-goal] [data-tree-goal-open="base"] {
+  display: none !important;
+}
+:root[data-flag-goaltiertop] [data-tree-goal] > [data-tree-goal-fold] > span.ml-auto {
+  display: none;
+}
+:root[data-flag-goaltiertop] [data-tree-goal] > [data-tree-goal-fold] > span:last-child {
+  margin-left: auto;
+}
+/* 札の枠の内側の余白 (p-1.5 = 6px) + 頭の高さ 28px の真ん中、▾ の幅 (字 10px + 余白) の左 */
+:root[data-flag-goaltiertop] [data-tree-goal] > div.relative > div.absolute,
+:root[data-flag-goaltiertop][data-flag-goalcardfull] [data-tree-goal] > div.relative > div.absolute {
+  position: absolute !important;
+  top: 6px !important;
+  right: 24px !important;
+  height: 28px;
+  margin-top: 0 !important;
+  display: flex;
+  align-items: center;
+  transform: none !important;
+  translate: none !important;
+  z-index: 11;
+}
+/* 札の並びの div は札の枠 ([data-tree-goal]) を基準にする (中の wrap = div.relative を基準にしない) */
+:root[data-flag-goaltiertop] [data-tree-goal] > div.relative {
+  position: static !important;
+}
