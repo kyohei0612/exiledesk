@@ -8,6 +8,7 @@
 |---|---|---|---|
 | デイリーの挑戦を幅 768 から始められ、768〜1279 の挑戦の帯を 2 段 (上 = 名前とボタン・残り時間、下 = 費用・完成率) に整える。1280 未満で「挑戦は PC で」と止めない (D-70b・U-53c、スイッチ `dailyFit`、見た目の OK はオーナーの返事待ち (絵 progress/owner-snaps/d11-dailyfit-after2-*)、オーナー 11-17「選べる系はやだな自動調整で」) | 79363a92e | デイリー: 幅の狭い PC やタブレット (幅 768 以上) でも挑戦できるようにし、上の帯を画面の幅に合わせて並べ替えるようにしました | Daily: you can now take the challenge on narrower PCs and tablets (768px and wider), and the top bar rearranges itself to fit the screen width |
 | どの幅でもはみ出さず押せる: MOD 一覧の目次の札を幅 1280 未満でも 1 行の横送りにせず折り返して全部見せる (エミュのスマホ・シミュ 768 の MOD 一覧で右の札が隠れていた。目次より長い札は字を折る) (U-53c、スイッチ `fitWidth`、見た目 OK (11-17「見た目OK」、ブラック 127)) | 07a05cb50 | MOD 一覧: 狭い画面やスマホでも、上の種類の切り替え (一般・冒涜専用・エッセンスなど) が折り返して全部見えるようにしました | Mod list: the category tabs at the top (General, Desecrated, Essence, etc.) now wrap so all of them are visible on narrow screens and phones |
+| シミュの木の箱から開く MOD 一覧で、見本がたまたま持つ外れ MOD (単体の最大ライフ・知性など) や 2 つ組の MOD の片方の系統が「付いている」と出ていた = 箱の品を当たりの MOD を選ぶ窓と同じ見本にそろえ、付いている完成の狙いの行だけ「付いている」に (S-145h・U-12e、スイッチ無し。共通の窓の口 d0f33c3cc はデザイン部長 11。11-17 オーナー「狙いMODのが正しい表示」、ブラック 128) | 5d63b8f30・d0f33c3cc | シミュレーター: 箱から開く MOD 一覧で、狙いでない MOD まで「付いている」と表示されていたのを直しました | Simulator: the mod list opened from a box no longer marks non-target mods as "On item" |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
