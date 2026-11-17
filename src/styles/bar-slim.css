@@ -1,0 +1,30 @@
+/*
+ * 木の上の帯の 2 行目を詰める (sim-tree.md S-94m、スイッチ barSlim = <html data-flag-barslim>、2026-11-17)。
+ * オーナー 11-17「OKおすすめで」(案 A)。元はオーナー「この枠もめちゃくちゃ太いし　なんこれまじで」。
+ * S-94k の 2 行目のボタンは SimTreePage の Tailwind (!min-h-[26px] など) で背を持つので、html body から書いて強くする。外の枠は残す。
+ */
+html:root[data-flag-barslim] body [data-tree-head] {
+  row-gap: 6px !important;
+}
+html:root[data-flag-barslim] body [data-tree-head] [data-tree-flow] {
+  row-gap: 2px !important;
+}
+html:root[data-flag-barslim] body [data-tree-head] [data-tree-flow-step] {
+  min-height: 24px !important;
+  height: 24px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-size: 12px !important;
+}
+html:root[data-flag-barslim] body [data-tree-bar-two] button,
+html:root[data-flag-barslim] body [data-tree-bar-two] .g-btn {
+  min-height: 24px !important;
+  height: 24px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 22px !important;
+  font-size: 12px !important;
+}
+html:root[data-flag-barslim] body [data-tree-bar-two] [data-tree-top-tools] {
+  padding: 0 !important;
+}
