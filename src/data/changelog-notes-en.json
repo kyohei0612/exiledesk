@@ -1,4 +1,12 @@
 {
+  "0.1.747": [
+    "Daily: you can now take the challenge on narrower PCs and tablets (768px and wider), and the top bar rearranges itself to fit the screen width",
+    "Mod list: the category tabs at the top (General, Desecrated, Essence, etc.) now wrap so all of them are visible on narrow screens and phones",
+    "Simulator: the mod list opened from a box no longer marks non-target mods as \"On item\"",
+    "Simulator: boxes with the same contents created further down an annul chain are now merged into one instead of being left as two",
+    "Simulator: results on the ideal path now also merge into an earlier box with the same contents, and unset boxes with the same contents merge too, so you no longer place the same craft repeatedly",
+    "Simulator: placing, changing, or removing a craft in large trees, and opening recipes, is now faster"
+  ],
   "0.1.746": [
     "Simulator: steps that can't be used on a box (e.g. no free mod slot) are no longer copied into matching miss boxes |",
     "Simulator: steps are now copied only between miss boxes with the same number of remaining mods |",

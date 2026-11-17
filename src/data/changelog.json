@@ -1,5 +1,47 @@
 [
  {
+  "v": "0.1.747",
+  "date": "2026-11-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 幅の狭い PC やタブレット (幅 768 以上) でも挑戦できるようにし、上の帯を画面の幅に合わせて並べ替えるようにしました",
+    "en": "Daily: you can now take the challenge on narrower PCs and tablets (768px and wider), and the top bar rearranges itself to fit the screen width"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧: 狭い画面やスマホでも、上の種類の切り替え (一般・冒涜専用・エッセンスなど) が折り返して全部見えるようにしました",
+    "en": "Mod list: the category tabs at the top (General, Desecrated, Essence, etc.) now wrap so all of them are visible on narrow screens and phones"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 箱から開く MOD 一覧で、狙いでない MOD まで「付いている」と表示されていたのを直しました",
+    "en": "Simulator: the mod list opened from a box no longer marks non-target mods as \"On item\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去を続けた先で同じ形の箱が 2 つに分かれて残ることがあったのを、1 つにまとめるように直しました",
+    "en": "Simulator: boxes with the same contents created further down an annul chain are now merged into one instead of being left as two"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ中身の箱が上の段にあれば、狙い通りの結果からもそこへまとめるようにしました。手を置いていない同じ形の箱どうしもまとまり、同じ手を何度も置かずに済みます",
+    "en": "Simulator: results on the ideal path now also merge into an earlier box with the same contents, and unset boxes with the same contents merge too, so you no longer place the same craft repeatedly"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 大きいツリーで手を置く・替える・消す時と、レシピを開く時の待ちを短くしました",
+    "en": "Simulator: placing, changing, or removing a craft in large trees, and opening recipes, is now faster"
+   }
+  ]
+ },
+ {
   "v": "0.1.746",
   "date": "2026-11-17",
   "items": [
@@ -1019,24 +1061,6 @@
     "area": "",
     "text": "要望への返事がポップアップで届くようになり、そのまま「返事を書く」で文や画像を付けて返せるようにしました。",
     "en": "Replies to your feedback now arrive as a popup, and you can answer right away with text and images using \"Write a reply\"."
-   }
-  ]
- },
- {
-  "v": "0.1.707",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 保存して開き直した木で、同じ中身の箱をまとめた所から先へ進めず止まることがあったのを直しました",
-    "en": "Simulator: fixed runs getting stuck after a merged box when you saved and reopened a tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 同じ中身の箱をまとめる時、どちらの箱を残すかが開き直すたびに変わらないようにしました",
-    "en": "Simulator: when two boxes with the same contents are merged, the one that stays no longer changes each time you reopen the tree"
    }
   ]
  }
