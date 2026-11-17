@@ -197,6 +197,10 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.746 シミュの木の兄弟枠: 残っている MOD の数が同じ箱だけで組む・後からできた箱にも写す (S-190d)、上の帯を 2 行に (S-94k) (オーナー 11-16 見た目 OK「後触ってみるから準備しておｋ」「おｋ全部準備でおｋ」→ 11-17「さき修正分今の奴以外だそうか」、ブラック 126・127)。fitWidth・fracture3 などほかは入れない
+  "sameModCount",
+  "sameLater",
+  "barTwoRows",
   // シミュの木のタブ: タブごとにレシピと保存の控えを持つ・替えても木を作り直さない・描く 1 回で控えの鍵を 1 回 (オーナー 11-14「出来てるやん。これ次出してね」→「1だして」、ブラック 105・106)。並べ方の実験 (hitsSide・newerHome・handSplit・buildHitsFirst・kidsUnderOwn・foldEnds) は入れない
   "tabRecipe",
   "tabKeep",

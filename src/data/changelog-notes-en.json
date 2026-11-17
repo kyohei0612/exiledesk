@@ -1,4 +1,21 @@
 {
+  "0.1.746": [
+    "Simulator: steps that can't be used on a box (e.g. no free mod slot) are no longer copied into matching miss boxes |",
+    "Simulator: steps are now copied only between miss boxes with the same number of remaining mods |",
+    "Simulator: when a new box appears for the same miss, it now automatically gets the step its matching boxes already have |",
+    "Simulator: when running 100 crafts, the tree no longer shrinks so far that the top rows go off screen. It now fits the whole tree while running and returns to your previous zoom when done |",
+    "Simulator: each press of \"Run 100\" now uses a new random seed (the daily challenge still uses the same seed) |",
+    "Simulator: in the \"Add a target mod\" window, opening a mod now shows the tiers you can pick right away (they were all hidden under \"Show more\") |",
+    "Simulator: typing the same item level that Fit is showing now locks that level too (before, Fit stayed on and the level changed when you added targets) |",
+    "Simulator: When crafts are copied to matching junk boxes or boxes are auto-linked to the same frame, crafts the craft panel wouldn’t allow (e.g. a guaranteed Fracture on an item that doesn’t have the chosen mod yet, or a second Fracture on an already fractured item) are no longer applied |",
+    "Simulator: the top toolbar is now split into two rows, so no buttons get cut off on the right after running 100 crafts |",
+    "Simulator: Boxes whose link was removed automatically (because the craft couldn’t be used there) were treated as if you had removed it with ×, so they no longer auto-linked to matching frames later. Fixed |",
+    "Daily: The 100-run check used for the daily results now tidies the tree the same way the screen does before running, so its numbers match what you see |",
+    "Simulator: Fixed the tree sometimes jumping sideways on the first move when you dragged it after placing a craft |",
+    "Simulator: When crafts are copied to matching junk boxes, they’re no longer copied if the mods to keep, the target mods or the Divine Orb targets don’t fit that box’s item (the box stays empty). The “Fail” mark now applies only to the box you mark and is no longer copied to matching junk boxes |",
+    "Simulator: When opening a saved recipe, boxes with no matching destination are no longer auto-linked back to an earlier box by a different rule; they now stay unset (this could create a loop that re-applied a catalyst) |",
+    "Simulator: When you place the same craft on the shallower of two identical boxes, the crafts and Done/Fail marks you set below the deeper box are now moved to the shallower box instead of being lost |"
+  ],
   "0.1.745": [
     "Simulator: when you press Done or Final check, the path to the finished item now lines up in the column you built it in (the finished box used to appear left of its branch)",
     "Simulator: boxes locked by a Fracturing Orb now get the same craft at once when you set it on one of them (boxes with the same locked mod)",

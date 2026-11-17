@@ -1,5 +1,101 @@
 [
  {
+  "v": "0.1.746",
+  "date": "2026-11-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ外れの箱へ手を自動で入れる時、その箱では打てない手 (足す枠が無い等) は入れないようにしました",
+    "en": "Simulator: steps that can't be used on a box (e.g. no free mod slot) are no longer copied into matching miss boxes |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手を自動で入れる同じ外れの箱は、残っている MOD の数が同じ箱だけにしました",
+    "en": "Simulator: steps are now copied only between miss boxes with the same number of remaining mods |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ外れの箱にもう手を決めてあれば、後から出てきた同じ外れの箱にも同じ手が自動で入るようにしました",
+    "en": "Simulator: when a new box appears for the same miss, it now automatically gets the step its matching boxes already have |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 100 人回す時に木が小さくなりすぎて上の段が隠れていたのを直し、木全体がちょうど入る大きさで回すようにしました。回し終わると元の大きさに戻ります",
+    "en": "Simulator: when running 100 crafts, the tree no longer shrinks so far that the top rows go off screen. It now fits the whole tree while running and returns to your previous zoom when done |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「100 人回す」を押すたびに違う乱数で回すようにしました (デイリーは今までどおり同じ乱数です)",
+    "en": "Simulator: each press of \"Run 100\" now uses a new random seed (the daily challenge still uses the same seed) |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「狙いの MOD を足す」の窓で MOD を開いた時、付く段が「もっと見る」の中に全部隠れて押せる段が無く見えていたのを直しました",
+    "en": "Simulator: in the \"Add a target mod\" window, opening a mod now shows the tiers you can pick right away (they were all hidden under \"Show more\") |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: アイテムレベルの欄に今出ている数と同じ数を打った時も、その数で決まるようにしました (前は「適正」のままで、狙いを足すと別のレベルに変わっていました)",
+    "en": "Simulator: typing the same item level that Fit is showing now locks that level too (before, Fit stayed on and the level changed when you added targets) |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ外れの箱へ手を自動で入れる時や、同じ枠へ自動でつなぐ時に、手の窓では選べない手 (確定フラクチャーで選んだ MOD がまだ付いていない品へのフラクチャー、フラクチャー済みの品への 2 回目のフラクチャーなど) を入れないようにしました",
+    "en": "Simulator: When crafts are copied to matching junk boxes or boxes are auto-linked to the same frame, crafts the craft panel wouldn’t allow (e.g. a guaranteed Fracture on an item that doesn’t have the chosen mod yet, or a second Fracture on an already fractured item) are no longer applied |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 上のボタンの帯を 2 行に分け、100 人回した後もボタンが右で切れずに全部見えるようにしました",
+    "en": "Simulator: the top toolbar is now split into two rows, so no buttons get cut off on the right after running 100 crafts |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 打てない手のつながりを自動で外した箱が、人が × で外した箱と同じ扱いになり、後で同じ枠へ自動でつながらなくなっていたのを直しました",
+    "en": "Simulator: Boxes whose link was removed automatically (because the craft couldn’t be used there) were treated as if you had removed it with ×, so they no longer auto-linked to matching frames later. Fixed |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 集計の時の 100 人回しが、画面で回した時と同じ木の整理をしてから回すようにしました (画面と集計で数が食い違うことがあったのを直しました)",
+    "en": "Daily: The 100-run check used for the daily results now tidies the tree the same way the screen does before running, so its numbers match what you see |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手を置いた後に木を掴んで動かすと、1 歩目で木が横へ飛ぶことがあったのを直しました",
+    "en": "Simulator: Fixed the tree sometimes jumping sideways on the first move when you dragged it after placing a craft |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ外れの箱へ手を自動で入れる時、残したい MOD・狙いの MOD・神のオーブの目標がその箱の品に合わない時は入れず空のままにしました。「失敗」の印は押した箱だけに付け、同じ外れの箱へは自動で付けないようにしました",
+    "en": "Simulator: When crafts are copied to matching junk boxes, they’re no longer copied if the mods to keep, the target mods or the Divine Orb targets don’t fit that box’s item (the box stays empty). The “Fail” mark now applies only to the box you mark and is no longer copied to matching junk boxes |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存したレシピを開いた時、行き先の決まらない箱を別の基準で前の箱へ自動でつなぐのをやめ、未設定のままにしました (カタリストを打ち直す輪になることがありました)",
+    "en": "Simulator: When opening a saved recipe, boxes with no matching destination are no longer auto-linked back to an earlier box by a different rule; they now stay unset (this could create a loop that re-applied a catalyst) |"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ状態の箱が 2 つある時に浅い方へ同じ手を置くと、深い方の先で決めていた手や完成・失敗の印が消えていたのを、浅い方の先へ移すようにしました",
+    "en": "Simulator: When you place the same craft on the shallower of two identical boxes, the crafts and Done/Fail marks you set below the deeper box are now moved to the shallower box instead of being lost |"
+   }
+  ]
+ },
+ {
   "v": "0.1.745",
   "date": "2026-11-16",
   "items": [
@@ -941,36 +1037,6 @@
     "area": "",
     "text": "シミュレーター: 同じ中身の箱をまとめる時、どちらの箱を残すかが開き直すたびに変わらないようにしました",
     "en": "Simulator: when two boxes with the same contents are merged, the one that stays no longer changes each time you reopen the tree"
-   }
-  ]
- },
- {
-  "v": "0.1.706",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 保存して開き直した時に、自動で戻る先 (↩) やまとめ先が入れ替わることがあったのを直しました",
-    "en": "Simulator: fixed the automatic return (↩) and merge targets sometimes swapping after you saved and reopened a tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "サイト: 日替わりの見た目の切り替わりを、デイリーと同じ 16:00 にしました",
-    "en": "Site: the daily look now switches at 16:00, the same time as the Daily"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 英語の画面での名前を Daily Craft に揃えました",
-    "en": "Daily: the English name is now Daily Craft everywhere"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望: 送る窓の説明に「デイリーの名前は入ります」と書くようにしました",
-    "en": "Feedback: the send window now says that your Daily name is included"
    }
   ]
  }

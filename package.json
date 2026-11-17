@@ -1,7 +1,7 @@
 {
   "name": "exiledesk",
   "private": true,
-  "version": "0.1.745",
+  "version": "0.1.746",
   "type": "module",
   "scripts": {
     "subs": "node scripts/yt-subs.mjs",
