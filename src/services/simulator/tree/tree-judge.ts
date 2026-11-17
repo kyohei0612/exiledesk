@@ -25,6 +25,7 @@ import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
 import { holdsLowTier, isLowTierBox, lowTierAimOf } from "./tree-low-tier";
+import { heldGoal } from "./tree-frac-dual";
 import { handBlockOn } from "./tree-hand-block";
 import { flag } from "../../../web/release-flags";
 import { modText, tr } from "../../../i18n/lang";
@@ -52,7 +53,8 @@ const keptOfTree = (data: PatchData, doc: TreeDoc): Aim[] => {
   return out;
 };
 /** アイテムに付いている名前の印になりうる MOD (完成形の狙い (段は完成形以上)・置き石・残したい MOD・木の手のエッセンス / 合金)。回す時の印の絞りも同じ物 (tree-run) */
-export const goalsOn =(data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
+// ✦ の印の狙い (2 つ持ち) は当たりの札と同じ段で見る (S-10g、heldGoal = 品に ✦ があれば普通側の段)
+export const goalsOn =(data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, heldGoal(a, it), { sameText: true })).map((a) => a.modId));
 /** 始まりの ☑ (始まりの MOD の完成形の狙いと ✦ の印) */
 export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): ReadonlySet<string> {
   const on = goalsOn(data, doc, it);
@@ -115,7 +117,7 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
 function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>, eleJunk = false): { keys: Set<string>; miss: MissAims; body: string } {
   const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
   const keys = new Set<string>();
-  for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => !a.anyEle && isAimMod(m, targetsOf(data, [a]), opts)); if (g) keys.add(g.modId); }
+  for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => !a.anyEle && isAimMod(m, targetsOf(data, [heldGoal(a, it)]), opts)); if (g) keys.add(g.modId); }
   // いずれかの元素耐性の n 番は、当たる元素耐性が n 個ある時だけ (S-10h ②。MOD ごとに 1 番目の札へ寄せると 2 番が鍵に入らなかった)
   for (const a of goals) if (a.anyEle && aimHeldOn(data, it, a, { sameText: true })) keys.add(a.modId);
   return { keys, miss, body: bodyOf(data, doc, it, eleJunk ? missAims(data, goals.filter((a) => !a.anyEle)) : miss) };

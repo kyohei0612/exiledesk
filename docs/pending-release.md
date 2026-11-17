@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| fracPlainMark (S-10g、シミュ 89、オーナー 11-18「これは明確にバグ」) | この commit | シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、木が終わったように見えていたのを直しました | Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)

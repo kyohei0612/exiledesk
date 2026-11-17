@@ -25,3 +25,9 @@ export function phaseAim(a: Aim, goal: Aim | undefined, it: StageItem): Aim {
   if (!goal || !dual(goal)) return a;
   return { modId: a.modId, tier: hasFixed(it) ? goal.plainTier : goal.tier };
 }
+/**
+ * 完成形の狙いが品に付いているかを見る時の段 (スイッチ fracPlainMark): 当たりの札 (phaseAim) と同じく、品に ✦ があれば普通側・無ければ ✦ 側。
+ * 名前の印 (tree-judge の goalsOn = 箱の中身の比べ・100 人回しの印) に使う。前は ✦ 側の段だけで見て、✦ が付いた後のカオスで普通側の段
+ * (T3) の狙いが付いた当たりの箱が、名前の印を落として親のカオスの箱と同じ中身になり、まとめられて消えた (11-18 オーナー「これは明確にバグ」r/7M2JJAoj)
+ */
+export const heldGoal = <A extends Aim>(goal: A, it: StageItem): A => (flag("fracPlainMark") && dual(goal) && hasFixed(it) ? { ...goal, tier: goal.plainTier } : goal);
