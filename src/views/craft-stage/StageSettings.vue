@@ -115,7 +115,7 @@ function armReset(): void {
     </span>
     <template v-if="s.mode.value === 'hand' && !handNoBase">
     <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
-    <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
+    <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length && !s.startPlaced.value" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
     <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
     <!-- 今のベースとアイテムレベルで白紙のクラフトの道 (ツリー) へ (開発版だけ、10-22 オーナー「全部のベースで使える」案 1) -->
     <button v-if="TO_SIM_ON && !EMU_TO_SIM && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="void openTreeWith(s.item.value.base, curIlvl ?? 82)">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>

@@ -196,7 +196,7 @@ const replayApi = stageReplay({
   priceOf, priceKeysAll, freshSeed, reset: (): void => craftStage.reset(),
 });
 export const craftStage = {
-  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, aims, aimPicker, modJump, modOverlay,
+  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, startPlaced, mode, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),

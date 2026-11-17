@@ -56,7 +56,10 @@ export async function openEmuWithGoals(base: string, itemLevel: number, goals: R
     // (スイッチ simToEmuAll、S-211c) 札の品を付きうるかを問わず札のとおりに置く (エンジンの startSpecOf → startFrom)。枠に入らない狙いは白に戻さず一言
     // (11-17 オーナー「このレシピ以外にもエミュにうつして成功したことないんだよね」「完成形につく奴全部エミュに対応したらいい」)
     if (flag("simToEmuAll")) {
-      const why = s.startWithSpec(base, itemLevel, startSpecOf(g.item));
+      // 完成形の品質 (TreeGoalQuality の「品質も狙う」の値・種類) も載せる。札の品 (goalItem) は品質を持たないので木の設定から足す (S-211c ④)
+      const td = useTree().doc.value;
+      const q = td.goalQualityOn && td.goalQuality ? { quality: td.goalQuality, ...(td.goalQualityTag ? { qualityTag: td.goalQualityTag } : {}) } : {};
+      const why = s.startWithSpec(base, itemLevel, { ...startSpecOf(g.item), ...q });
       if (why) { s.reset(); simEmuNote.value = tr(`この完成形はそのままでは載せられないため (${why})、エミュレーターで初めから作り直してください`, `This build can't be loaded as is (${why}), so craft it from scratch in the emulator`); return; }
       const names = [...new Set(g.left.map((a) => useTree().aimShort(a)))];
       simEmuNote.value = names.length ? tr(`枠に入らない狙い ${names.length} 個は載せていません: ${names.join("・")}`, `${names.length} target(s) that don't fit the affix slots were left off: ${names.join(", ")}`) : null;
