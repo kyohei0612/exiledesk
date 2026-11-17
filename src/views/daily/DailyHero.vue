@@ -6,6 +6,7 @@
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { DAILY_SKIN_KEY } from "./skin/skin";
 import { tr } from "../../i18n/lang";
+import PcPlayButton from "../../components/for-share/PcPlayButton.vue";
 import { baseArt } from "../../components/art/base-art";
 import { usePhone, useViewOnlyWidth } from "../../utils/use-phone";
 import { goDaily } from "./daily-open";
@@ -83,6 +84,8 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
       <DailyAimCard v-if="cardAims" data-daily-aims ess-note :day="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" :quality="cardQuality" />
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
+        <!-- スマホの端末は PC の挑戦ボタンと同じ働きの「PC 版を表示して挑戦」(D-70c、スイッチ dailyPcView)。出せない時は今の字 -->
+        <PcPlayButton v-else-if="action && !over" :resume="!!t" @go="start"><p data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p></PcPlayButton>
         <p v-else data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面 (PC) で", "Open on a wider screen (PC) to take the challenge") }}</p>
         <!-- スマホも提出の記録の行のすぐ下にシェア (PC と同じ並び、11-11 オーナー「シェアはやっぱこの画面だな」) -->
         <p v-if="t?.submitted && t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`提出済み: 完成 1 個あたり ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Submitted: ${t.best.cost} div per finished item (${t.best.rate}% finished)`) }}</p>

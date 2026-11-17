@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { tr } from "../../i18n/lang";
+import PcPlayButton from "../../components/for-share/PcPlayButton.vue";
 import { baseArt } from "../../components/art/base-art";
 import { craftStage as s } from "../../state/craft-stage";
 import { treeStep } from "../../web/page";
@@ -302,6 +303,8 @@ const REFUSED: Record<StartError, () => string> = {
 <template>
   <div v-if="phone" data-daily-play data-daily-pc-only class="daily-note">
     <p>{{ tr("挑戦は幅の広い画面 (PC) で。始めた挑戦の時間は止まらない。", "Open on a wider screen (PC) to take the challenge. A started challenge keeps its clock running.") }}</p>
+    <!-- スマホの端末は「PC 版を表示して挑戦」で、このページのまま PC の画面にして始める (D-70c、スイッチ dailyPcView) -->
+    <div class="mt-2"><PcPlayButton /></div>
     <button type="button" class="g-btn sm mt-2" data-daily-leave @click="goDaily({ view: 'list' })">{{ tr("一覧へ戻る", "Back to the list") }}</button>
   </div>
   <div v-else data-daily-play :data-daily-heat="heat || undefined" :data-daily-tree="treeOn || undefined">
