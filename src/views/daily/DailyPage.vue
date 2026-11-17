@@ -77,8 +77,11 @@ const slots = computed(() => week.value.map((d) => ({ ...d, label: `${tr(...WD[d
 /** 1 ページ目は PC で窓の高さいっぱいの 1 枚 (スクロールさせない)。足りない窓ではページが伸びる */
 const board = ref<HTMLElement | null>(null);
 const boardH = ref(0);
+/** 頁の倍率 (1280〜1440 で 0.85)。小さい字を見た目 12px より下げない CSS の --daily-z (D-50j、スイッチ dailyWrap) */
+const pageZ = ref(1);
 function fitBoard(): void {
   const el = board.value;
+  pageZ.value = pageZoom();
   if (!el || isPhoneWidth()) { boardH.value = 0; return; }
   const z = pageZoom();
   boardH.value = Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - 20);
@@ -97,7 +100,7 @@ provide(DAILY_SKIN_KEY, computed(() => skin.value.id));
 </script>
 
 <template>
-  <section data-daily-page :data-skinned="postEmu ? null : ''" :data-daily-skin="postEmu ? null : skin.id" :data-daily-view="post ? 'post' : skins ? 'skins' : view" class="daily-root min-w-0 flex-1" :style="postEmu ? undefined : skinVars(skin)">
+  <section data-daily-page :data-skinned="postEmu ? null : ''" :data-daily-skin="postEmu ? null : skin.id" :data-daily-view="post ? 'post' : skins ? 'skins' : view" class="daily-root min-w-0 flex-1" :style="postEmu ? undefined : { ...skinVars(skin), '--daily-z': String(pageZ) }">
     <DailyPlay v-if="view === 'start' && topic" :key="topic.id" :topic="topic" />
     <template v-else>
       <ModeTabs class="mb-3" :active="null" @pick="closeDailyPage" />

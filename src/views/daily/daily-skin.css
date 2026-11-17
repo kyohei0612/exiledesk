@@ -31,6 +31,11 @@
 :root[data-flag-dailynumline] :is(.daily-num, .daily-points, .daily-cols > span, .daily-submit-nums b, .daily-turnout b, .daily-band-score b, .daily-place) { white-space: nowrap; }
 :root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols, .daily-out-row) > .flex-1 { min-width: 0; }
 :root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-10 { width: auto; min-width: 2.75rem; }
+/* D-50j (スイッチ dailyWrap): 一覧の小さい字は頁の倍率 (--daily-z、DailyPage が入れる) で割り戻し、見た目 12px を下回らない (倍率 1 以上なら今の大きさのまま)・長音や小さいかなの前で折らず語の切れ目で折る・短い文は行の長さを揃え、最後の 1〜2 字だけの行を作らない。幅ごとの分けは無し */
+:root[data-flag-dailywrap] .daily-root[data-daily-page] { line-break: strict; word-break: auto-phrase; overflow-wrap: break-word; }
+:root[data-flag-dailywrap] .daily-root[data-daily-view="list"] :is(.daily-rank-what, .g-sec-sub, .daily-ytopic small, .daily-week-note, .daily-tile, .daily-tile small) { font-size: max(12px, calc(12px / var(--daily-z, 1))); }
+:root[data-flag-dailywrap] .daily-root[data-daily-view="list"] :is(.daily-sub, .text-\[13px\], .daily-post-entry .g-btn) { font-size: max(13px, calc(12px / var(--daily-z, 1))); }
+:root[data-flag-dailywrap] .daily-root[data-daily-page] :is(.daily-tile-name, .daily-tile small, .daily-how, .daily-meta, .daily-sub, .daily-rank-what, .daily-week-note, .text-\[13px\]) { text-wrap-style: balance; }
 :root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-12 { width: auto; min-width: 3.25rem; }
 :root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-14 { width: auto; min-width: 3.75rem; }
 :root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-16 { width: auto; min-width: 5.25rem; }
