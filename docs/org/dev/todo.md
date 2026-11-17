@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_37d2fc4e-6221-45af-9228-75b0ce8fd501 (132 代目、Opus 5.5、11-17 20 時台に入れ替え。131 = local_0aac6a7b が 2,44x 件で交代。進み = 共有 local_41371db6…/progress/black132.md・引き継ぎ = black131.md の一番上と ExileDesk/progress/black131-run.log、オーナーの決め待ち = owner-pending-1117-night.md) | 司令塔・振り分け・順番 |
+| ブラック | local_4b92b7e8-9caf-4fd5-83a2-9f2e86d1217b (133 代目、Opus 5.5、11-18 0 時台に控えから入った。132 = local_37d2fc4e が 2,504 件で交代。進み = 共有 local_41371db6…/progress/black133.md・引き継ぎ = black132.md の一番上と ExileDesk/progress/black132-run.log) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_0000f825-9a8f-4870-aac0-cc932f11fcc6 (32、Opus 5.5、11-17 20 時台にブラック 131 が控えから入れた。31 = local_502c4f5d が 2,540 件で交代。頼み = 共有 local_41371db6…/progress/daily-lead32-brief.md、進み = 同 daily-lead32.md、記録 = progress/daily-lead32-run.log) | 今: 上の帯より下をシミュの設定のまま (D-37m3、スイッチ dailyTreeAsSim) の見た目の OK 待ち。dailySimCard (D-37m2)・dailyNumLine (D-50i) は見た目 OK・出し待ち。クラフト箱の重なりの断り (D-20d) はサーバーの出し待ち (オーナーの「出して」の後)。お題が決まった時に #日報 へ「今日のお題」を 1 通 |
 | 最終チェック長 | local_8ebfe4ab-22a1-4aa2-9eea-af8164670930 (27、11-17 にブラック 132 が控えで立て、26 が 0.1.749 を出して止まった後に 132 の合図で入った。頼み = 共有 local_41371db6…/progress/release-next27-brief.md、進み = 同 release-next27.md) | 今: 0.1.749 を本番に出した (Web 2d329ecd、26)。出し待ちの表は空。次の出しの合図待ち |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_bb605aab-91ca-4b9a-93a4-808935585660 (87、Opus 5.5、11-17 23 時台に 86 = local_339d3668 が 2,3xx 件で止まり控えから入った。頼み = 共有 local_41371db6…/progress/sim-lead87-brief.md、進み = 同 sim-lead87.md、記録 = progress/sim-lead87-run.log、86 の引き継ぎ = sim-lead86.md の一番上) | 今: エミュで試す (S-211c、スイッチ simToEmuAll) の残りの確かめ = 載せた後の 1 手打つ・1 手戻す・戻るの写し・共有の再生、品質・暗黙・フラクチャー 2 つ以上・デイリーの挑戦から。崩れがあれば直しの案をブラックへ |
-| デザイン部長 | local_85ba6d0f-9b6f-4b07-bfdf-cc0f838f78aa (17、Opus 5.5、11-18 0 時台に控えから入った。16 = local_71450d17 が 2,5xx 件で止まった。頼み = 共有 local_41371db6…/progress/design-lead17-brief.md、16 の引き継ぎ = design-lead16.md の一番上) | 今: sideHeadLine・sideSlim (S-94hy・S-78f2) はシミュ・デイリーとも 3 幅の前後で崩れ 0、見た目の返事待ち |
+| デザイン部長 | local_a5cb3450-95fb-421d-be01-f71eb02c6dbb (17、Opus 5.5、11-18 0 時台に控えから入った。16 = local_71450d17 が 2,5xx 件で止まった。頼み = 共有 local_41371db6…/progress/design-lead17-brief.md、16 の引き継ぎ = design-lead16.md の一番上) | 今: sideHeadLine・sideSlim (S-94hy・S-78f2) はシミュ・デイリーとも 3 幅の前後で崩れ 0、見た目の返事待ち |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | 分析の係 (11-14 にブラック 108 が立てた。この session) | 今: 要望の受け口 = 添付の上限 192 KB・Discord の本文に送った画面 (U-05e、デザイン部長 8 の差分)。本番のサーバーの出しは最終チェック長 |
