@@ -17,7 +17,7 @@ import { useHeldShares } from "./use-held-shares";
 import { ORBS, bonesFor, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { provideShelf } from "../../../state/for-share/shelf-context";
 import { craftStage as s } from "../../../state/craft-stage";
-import { omenBlock, toggleOmen as toggleHeld, useReason, type StageItem } from "../../../services/craft-stage/engine";
+import { omenBlock, toggleOmen as toggleHeld, useReason, type ListRow, type StageItem } from "../../../services/craft-stage/engine";
 import { baseNameOf, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -27,7 +27,7 @@ import { flag } from "../../../web/release-flags";
  * hidden = 帯に出さない物 (シミュの木の棚と同じ物を渡す)
  * startBox = 開いた時に箱の品から始める (箱の側のボタンから開く時、S-145h。渡さなければ今までどおり素の品から)
  */
-const props = defineProps<{ open: boolean; blank: StageItem | null; boxItem?: StageItem | null; startBox?: boolean; hidden?: (key: string, item: StageItem | null) => boolean }>();
+const props = defineProps<{ open: boolean; blank: StageItem | null; boxItem?: StageItem | null; startBox?: boolean; hidden?: (key: string, item: StageItem | null) => boolean; /** 箱の品の時の「付いている」の見方 (渡さなければ表の既定 = 品に同じ id、S-145h) */ boxOnOf?: (r: ListRow) => boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const onBox = ref(false);
 const item = computed(() => (onBox.value && props.boxItem ? props.boxItem : props.blank));
@@ -109,6 +109,7 @@ const MOD_HIDE = flag("modHide");
           :share="sh.shareOf" :tier-share="sh.tierShareOf" :row-dim="sh.rowDim" :tier-dim="sh.tierDim" :hide-dim="MOD_HIDE && !!sh.heldCands.value"
           :row-title="sh.rowTitle" :tier-title="sh.tierTitle" :share-title="sh.shareTitle"
           :share-head="sh.shareHead.value" :tone="sh.heldCands.value ? 'sky' : 'amber'" :section-late="sh.sectionLate"
+          :on-of="onBox && boxItem ? boxOnOf : undefined"
         />
       </div>
     </div>

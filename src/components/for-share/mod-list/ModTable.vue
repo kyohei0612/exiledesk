@@ -66,6 +66,8 @@ const props = withDefaults(defineProps<{
   groups?: readonly ModGroup[];
   /** 選んでいる行に印を付ける (次の手で狙うの窓) */
   rowOn?: (r: ListRow) => boolean;
+  /** 行の「付いている」の札を呼ぶ側の見方で出す (シミュの箱の品 = 狙いの窓と同じ判定、S-145h)。渡さなければ r.on */
+  onOf?: (r: ListRow) => boolean;
   /** 選んでいる段 (狙い・付ける)。T4 以下なら段の表を最初から全部開く (U-34) */
   tierOn?: (r: ListRow, t: ListTier) => boolean;
   /** 段の行をスマホ・狭い列でも 1 行のまま (差し込みが小さいボタン 1 つの時。文だけ折る) */
@@ -389,7 +391,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                   <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod" :class="nameCls" :title="ONE ? r.text : undefined"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
                   <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                   <span v-if="essName(r, props.item)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r, props.item) }}</span>
-                  <span v-if="r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
+                  <span v-if="props.onOf ? props.onOf(r) : r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
                   <slot name="row-tag" :row="r" />
                 </span>
                 <span class="flex shrink-0 items-center gap-1 tabular-nums">
