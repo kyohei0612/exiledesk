@@ -10,7 +10,7 @@ import { holdDocSig, possibleOutsOf } from "../../../services/simulator/tree/tre
 import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
-import { autoTarget, linkByContent, pruneByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, foldAround, linkByContent, pruneByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, setHand, subtree, type Hand, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { PatchData } from "../../../services/craft-stage/engine";
@@ -74,7 +74,10 @@ export function extendAnnul(data: PatchData, d: TreeDoc, roots?: readonly string
       d.boxes[p.id]!.autoAnnul = true;
     }
     made += plans.length;
-    front = plans.map((p) => p.id);
+    // 同じ回で足した続きの箱どうしも、中身が同じなら木に 1 箱 (S-51d、浅い方が幹)。足す前のつなぎ (linkByContent) は手の無い箱どうしなので効かず、
+    // 段の違う同じ中身が両方とも自動の消去を持って残った (11-17 オーナーの木の b31 (6 段)・b152 (12 段)、兄弟枠で 5 箱に一緒に置いた消去の続き)
+    for (const p of plans) if (d.boxes[p.id]?.hand) foldAround(d, p.id, () => judgeMemo(data, d));
+    front = plans.map((p) => p.id).filter((id) => !!d.boxes[id]?.hand);
   }
   if (made) pruneByContent(d, judgeMemo(data, d));
   return made;
