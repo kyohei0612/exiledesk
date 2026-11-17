@@ -11,6 +11,7 @@ import { subtree } from "../../../services/simulator/tree/tree-model";
 import Icon from "../../../components/ui/Icon.vue";
 import { mergedAway, mergedInto } from "../../../services/simulator/tree/tree-merge-open";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
+import { runeArt } from "../../../components/art/rune-art";
 import { craftStage as s } from "../../../state/craft-stage";
 import { boxCardOf } from "./box-card";
 import { previewUse } from "../../../services/craft-stage/engine";
@@ -269,7 +270,15 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <div v-if="cardItem" data-tree-box-card :class="[box.out === 'start' ? 'mt-0.5' : 'mt-3', box.out === 'start' && !quiet ? 'nodrag cursor-pointer rounded-md hover:brightness-110' : 'pointer-events-none']" :title="box.out === 'start' ? startTitle : undefined" @click.stop="box.out === 'start' && !quiet && emit('aim')">
       <div :style="{ width: `${CARD_W}px` }"><StageItemCard :row-group="null" :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
-    <p v-if="cardItem && runeNames" data-tree-box-rune class="mt-0.5 break-words text-[12px] leading-4 text-stage-rune" :style="{ width: `${CARD_W}px` }">◇ {{ tr("ルーン", "Rune") }}: {{ runeNames }}</p>
+    <!-- (スイッチ boxRuneLine、S-81b) 刺さったルーンは完成形のカードと同じソケットの丸にルーンの絵 (空きは丸だけ)、横に名前。11-17 オーナー「だからルーンの絵がねぇっつうのばか」 -->
+    <div v-if="cardItem && runeNames" data-tree-box-rune class="mt-1 flex items-center gap-1.5" :style="{ width: `${CARD_W}px` }">
+      <span class="flex shrink-0 items-center gap-1">
+        <span v-for="i in cardItem.sockets ?? 0" :key="'s' + i" :data-tree-box-socket="i" class="grid place-items-center rounded-full border-2 border-stage-socket-rim bg-bg-elevated shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="cardItem.augments?.[i - 1] ? 'h-8 w-8' : 'h-4 w-4'" :title="cardItem.augments?.[i - 1] ? tr(`${i} 番目: ${cardItem.augments[i - 1]!.ja}`, `Socket ${i}: ${cardItem.augments[i - 1]!.en}`) : tr(`${i} 番目: 空き`, `Socket ${i}: empty`)">
+          <img v-if="cardItem.augments?.[i - 1] && runeArt(cardItem.augments[i - 1]!.en)" :src="runeArt(cardItem.augments[i - 1]!.en)!" alt="" class="h-7 w-7 object-contain" draggable="false" />
+        </span>
+      </span>
+      <span class="min-w-0 break-words text-[12px] leading-4 text-stage-rune">{{ runeNames }}</span>
+    </div>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
     <!-- 読むだけ (スマホの全体図・道、縮めて見ている時) はボタンを出さない (11-07 ux-review 19) -->
     <div v-if="box.out === 'start'" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1.5" :style="{ minHeight: `${24 * k}px` }">
