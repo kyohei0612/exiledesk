@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickSameJunk, sameFailOf, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
@@ -255,7 +255,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
 }
 function onDone(b: Box): void { const on = !b.done; t.edit((d) => setDone(d, b.id, b.done ? null : "main")); if (on && doc.value.boxes[b.id]?.done === "main") tidyNow(); } // 完成を押した時は見やすい木へ (S-142k)
 /** 失敗 (ここで終わり) の印を付ける・外す  */
-function onFail(b: Box): void { const same = b.done === "fail" ? [] : sameFailOf(doc.value, b.id); t.edit((d) => { setDone(d, b.id, b.done === "fail" ? null : "fail"); for (const o of same) setDone(d, o, "fail"); }); } // 付ける時は同じ外れのまだ決めていない箱にも (S-190d)
+function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); } // 押した箱だけ (兄弟枠へは写さない、S-190d ②)
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value && !t.loading.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)

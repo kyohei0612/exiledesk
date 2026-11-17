@@ -22,7 +22,7 @@ import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { aimedOfCard, judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { aimedList } from "../../../services/simulator/tree/tree-miss";
 import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
-import { depthOf, shallow, foldAround, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { depthOf, shallow, foldAround, graftDecided, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type DivineTarget, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -286,10 +286,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // 比べは判定の「箱どうし」だけ (S-50b)。同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す)。選んだ手は handBack に残す (保存の v1 はこれを打ち方として持ち、開いた時にまた同じ手で戻る、S-105)
   const j0 = data ? judgeMemo(data, d) : null;
   const found = j0 ? sameHandByContent(d, id, h, j0) : null;
-  // 同じ枠・同じ手の箱が 2 つになる時は浅い方が幹 (S-51c、オーナー 11-04「浅い方でおk」): 相手が自分より深い段なら、自分に手を置き、相手の下を消して相手を ↩ 自分にする
+  // 同じ枠・同じ手の箱が 2 つになる時は浅い方が幹 (S-51c、オーナー 11-04「浅い方でおk」): 相手が自分より深い段なら、自分に手を置いてから相手の下の決めを自分の下の同じ道へ移し (S-50f の graftDecided、自分の下の決めは上書きしない、11-17 係 g #1)、相手を ↩ 自分にする
   const trunk = found && depthOf(d, found) > depthOf(d, id) ? found : null;
   const to = trunk ? null : found;
-  if (trunk) { clearHand(d, trunk); setBack(d, trunk, id); d.boxes[trunk]!.autoBack = true; d.boxes[trunk]!.handBack = { ...h }; }
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; afterHandSet(data, d, id, to, h, pre); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
@@ -300,6 +299,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (data && syncBeforeHand(data, d, at, h) && only) { const ab = d.boxes[at]!, was = ab.hand; ab.hand = h; only = onlyOf(data, d, at, h, null, aims); ab.hand = was; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (data) fillMissOuts(data, d, at);
+  if (trunk) { graftDecided(d, trunk, id); clearHand(d, trunk); setBack(d, trunk, id); d.boxes[trunk]!.autoBack = true; d.boxes[trunk]!.handBack = { ...h }; }
   joinSameShape(d, id);
   // ヒネコラで持った手は、当たり以外を先にハズレ箱へまとめてからつなぐ (後でまとめると、ハズレの箱をふつうの箱として中身作り・つなぎにかけてから捨てていた、S-39・S-71b)
   foldMisses(d, id);

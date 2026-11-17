@@ -47,11 +47,6 @@ export function sameJunkOf(d: TreeDoc, id: string): string[] {
   if (!flag("junkSameHand") || !open(d, id)) return [];
   return frameMates(d, id).filter((o) => open(d, o.id)).map((o) => o.id);
 }
-/** 失敗の印を写す先 (S-190d ②)。「打った後」「狙いが消えた」の兄弟枠には理想の道の箱と外れの箱が一緒に入りうるので写さない (係 f #2) */
-export function sameFailOf(d: TreeDoc, id: string): string[] {
-  const k = d.boxes[id]?.out;
-  return k === "any" || k === "lost" ? [] : sameJunkOf(d, id);
-}
 
 /** その箱でこの手を打てるか = 手の窓・棚の灰色・箱の印と同じ 1 本の判定 (tree-copy-block の handBlockAt。見本が作れない箱は写さない)。打てない手は写さない (S-190d ①・③) */
 const playable = (data: PatchData, d: TreeDoc, id: string, h: Hand, pre: string | null): boolean => !handBlockAt(data, d, id, h, pre);
