@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_9fe6244a-9745-4a1f-8e28-5230369df27d (127 代目、Opus 5.5、11-17 0 時台に入れ替え。126 = local_6a07b33e が 2,39x 件・調子が悪く交代。控えは無し、進み = 共有 local_41371db6…/progress/black127.md・引き継ぎ = black126.md の一番上と ExileDesk/progress/black126-run.log) | 司令塔・振り分け・順番 |
+| ブラック | local_953eabd5-e706-4824-8ed8-a963255c67ca (128 代目、Opus 5.5、11-17 10 時台に入れ替え。127 = local_9fe6244a が 2,4xx 件で交代。控え 129 = local_fcd66af1、進み = 共有 local_41371db6…/progress/black128.md・引き継ぎ = black127.md の一番上と ExileDesk/progress/black127-run.log) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_3dc532a3-f59c-4ab6-85fb-9529ad6ab3fc (29、11-16 夜にブラック 125 が立てた。28 = local_384664fe はアーカイブ。頼み = 共有 local_41371db6…/progress/daily-lead29-brief.md、進み = 同 daily-lead29.md、記録 = progress/daily-lead29-run.log) | 今: 挑戦中のぼかし・押した箱だけ完成 (76837c02f、開発版)、ごめんねの木の数え直し (書くのはオーナーの OK の後)。お題が決まった時に #日報 へ「今日のお題」を 1 通 |
 | 最終チェック長 | local_da7636ae-f94e-4ed3-9899-2150def0a955 (25、11-16 夜にブラック 126 が立てた。頼み = 共有 local_41371db6…/progress/release-next25-brief.md、進み = 同 release-next25.md) | 今: 0.1.746 の作業場 C:/Users/kyohei/rel746 で印待ち。フラクチャーの件の答えまで出しは止め。本番は 0.1.745 |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_663b2c7c (77、11-17 3 時台に 76 = local_5c69198d から交代、76 は 2,600 件超えで止まった。頼み = 共有 local_41371db6…/progress/sim-lead77-brief.md・sim-lead77-go.md、進み = 同 sim-lead77.md、記録 = progress/sim-lead77-run.log、引き継ぎ = sim-lead76.md の一番上) | 今: 兄弟枠の写しで写した先に合わない設定は写さず空 (係 f の #2・#7・#8・#9)。次 = 76 の残り (出し待ちの表の行・検算の 1 本・× の印の画面の前後) |
-| デザイン部長 | local_2e3f3349-fde6-4091-a80d-5d016e011e26 (11、Opus 5.5、11-17 朝にブラック 127 が立てた。10 = local_3ed491bd から交代。頼み = 共有 local_41371db6…/progress/design-lead11-brief.md、進み = 同 design-lead11.md。記録 = progress/design-lead11-run.log) | 今: どの幅でもはみ出さず押せる UI (PC 768〜2560・スマホ 320〜767)。始めは 768 のシミュの道具の帯 |
+| デザイン部長 | local_37909448-8833-4359-8c81-a726b7195787 (11、Opus 5.5、11-17 朝にブラック 127 が立てた。10 = local_3ed491bd から交代。頼み = 共有 local_41371db6…/progress/design-lead11-brief.md、進み = 同 design-lead11.md。記録 = progress/design-lead11-run.log) | 今: どの幅でもはみ出さず押せる UI (PC 768〜2560・スマホ 320〜767)。始めは 768 のシミュの道具の帯 |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | 分析の係 (11-14 にブラック 108 が立てた。この session) | 今: 要望の受け口 = 添付の上限 192 KB・Discord の本文に送った画面 (U-05e、デザイン部長 8 の差分)。本番のサーバーの出しは最終チェック長 |
