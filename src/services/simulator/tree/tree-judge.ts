@@ -36,6 +36,8 @@ import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
  * 「エッセンスが消えて外れが残った」と「外れが消えてエッセンスが残った」が同じ枠で合流した (11-08 オーナー「エッセンスかも扱い　残す方の挙動かなこれ」)
  */
 const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => (flag("aimsOnce") ? onceHeld(AIMS, doc, () => contentRaw(data, doc)) : contentRaw(data, doc));
+/** 中身の狙いの組の鍵 (配置の覚え S-196j の木全体の鍵に入れる) */
+export const contentAimsKey = (data: PatchData, doc: TreeDoc): string => JSON.stringify(contentAims(data, doc));
 const contentRaw = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc), ...keptOfTree(data, doc), ...midAims(data, doc)];
 /**
  * (スイッチ aimsOnce) 狙いの組・木の族は木が変わらない間 (holdDocSig の 1 回の中) は 1 回だけ作る。どれも箱を全部なめるので、配置を作る間に箱ごとに作ると

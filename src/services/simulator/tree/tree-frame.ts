@@ -16,7 +16,7 @@ import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
 import { aimsOf, docHeld, holdDocSig, playHand, putCapped, startItemOf } from "./tree-sample";
-import { blockMarkOf, contentOf, keyForBox, nextAimed, startAimed, treeFamilies } from "./tree-judge";
+import { blockMarkOf, contentAimsKey, contentOf, keyForBox, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
 import { carryFloors, floorKeyOf, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants } from "./tree-whittle";
@@ -24,6 +24,7 @@ import { frameGroupKey, frameHandOf, whittleCompare } from "./tree-whittle-scene
 import type { MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
 import { setFlowShown } from "./tree-flow-once";
+import { reuseOf, stepSig } from "./tree-frame-reuse";
 import { holdsAt } from "./tree-foresee";
 import { sureFracOn, sureFracture } from "./tree-sure-frac";
 import { divineBranches, isDivineAim } from "./tree-divine";
@@ -259,6 +260,9 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
      */
     const extra: Array<{ at: string; f: Frame; from: string }> = [];
     const cant: FrameCant[] = [], fams = treeFamilies(data, doc), gf = flag("junkFrameOnly") ? goalFamilies(data, doc, aims) : null;
+    // (S-196j) 木全体の鍵 = 箱の外の木 (と完成形の狙い・置き石)・中身の狙いの組・木の族・保存の例の札。始まりの代表は中身が同じなら前の物そのもの (下の段の覚えを使うため)
+    const reuse = flag("frameReuse") ? reuseOf(data, [part, contentAimsKey(data, doc), [...fams].sort().join(","), doc.examples ? Object.keys(doc.examples).sort().join(",") : ""].join("\n")) : null;
+    if (reuse) { const s0 = frames.get("start")!, r0 = reuse.start; if (r0 && r0.key === s0.key && r0.note === s0.note && [...r0.aimed].sort().join() === [...s0.aimed].sort().join() && itemKeyOf(r0.item) === itemKeyOf(s0.item)) frames.set("start", r0); else reuse.start = s0; }
     /** 木の族を塞ぎうる MOD の組 (狙いも入る粗い分け。印の違う枝を探すだけ) */
     const famSig = (it: StageItem): string => (fams.size ? [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed && famOf(data, m.modId).some((x) => fams.has(x))).map((m) => m.modId).sort().join(",") : "");
     /** 枝 brs (元の箱の代表 from に手を当てた物) から、箱 o の代表を選ぶ。箱の配置に合う枝 = その箱の手で行き先の無い結果が一番少ない枝 (手の無い箱・枝 1 つは重い方) */
@@ -313,18 +317,28 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       const alts = [...all, ...marked].filter((fr) => fr !== best).map((fr) => fr.item);
       return alts.length ? { ...best, alts } : best;
     };
+    // (S-196j、スイッチ frameReuse) 段の鍵と親の代表が前と同じ段は前の答えをそのまま使う (tree-frame-reuse)
     const walk = (q: string[]): void => { while (q.length) {
       const id = q.shift()!, b = doc.boxes[id], f = frames.get(id);
       if (!b || !f) continue;
       const kids = b.outs.filter((o) => doc.boxes[o]);
       q.push(...kids);
+      if (!reuse) { step(id, b, f, kids); continue; }
+      const sig = stepSig(doc, b, kids), had = reuse.steps.get(id);
+      if (had && had.f === f && had.sig === sig) { for (const [o, fr] of had.kids) frames.set(o, fr); extra.push(...had.extra); miss.push(...had.miss); cant.push(...had.cant); for (const x of had.mixed) mixed.add(x); continue; }
+      const e0 = extra.length, m0 = miss.length, c0 = cant.length, x0 = mixed.size;
+      step(id, b, f, kids);
+      reuse.steps.set(id, { f, sig, kids: kids.flatMap((o) => { const fr = frames.get(o); return fr ? [[o, fr] as [string, Frame]] : []; }), extra: extra.slice(e0), miss: miss.slice(m0), cant: cant.slice(c0), mixed: [...mixed].slice(x0) });
+    } };
+    /** 配置の 1 段: 箱 id (代表 f) の手から子の箱の代表を決める */
+    const step = (id: string, b: TreeBox, f: Frame, kids: readonly string[]): void => {
       // 手の無い箱の下 (分かれ目の行・ヒネコラのハズレ) は親の代表のまま
       const same = (o: string, note: string | null): void => { frames.set(o, { ...f, note }); };
       // 代表を出せない箱 (枝の多すぎる手の下・分かれ目の下) の下も全部出せない = 見本の打ち直しのまま (S-200。前は 1 段下だけで、錬金術 → 骨の箱を白の品で数え、ノーマル・MOD なしの見本になった)
-      if (f.note === "tooMany" || f.note === "split") { for (const o of kids) same(o, f.note); continue; }
-      if (!b.hand) { for (const o of kids) same(o, b.split ? "split" : null); continue; }
+      if (f.note === "tooMany" || f.note === "split") { for (const o of kids) same(o, f.note); return; }
+      if (!b.hand) { for (const o of kids) same(o, b.split ? "split" : null); return; }
       const s = splitOf(data, doc, b, f, aims, part);
-      if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); continue; }
+      if (s === "tooMany") { for (const o of kids) same(o, "tooMany"); return; }
       for (const [out, x] of s.lost) miss.push({ box: id, out, p: x.p, oc: x.oc });
       if (s.noHit) cant.push({ box: id, from: id, why: "noHit" });
       // ヒネコラの結果の箱 (予見の箱、S-39) は MOD の変わらない同じ予見済みの品。当たり / ハズレは持った手の結果の分けなので、枝の無い箱もヒネコラの枝を持つ
@@ -337,7 +351,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
         if (!brs?.length) { const lf = lvFrameOf(o, kids, s.to, f); frames.set(o, lf ?? { ...f, aimed: nextAimed(data, doc, f.aimed, o, f.item, f.item), note: "nobranch" }); continue; }
         frames.set(o, bestOf(o, brs, f));
       }
-    } };
+    };
     /**
      * 削減の手前の枠 (S-65c) で代表の道からは枝の来ない組の箱: 兄弟の枠 (同じ種類・側の鍵) の代表の外れを、データでその組になる段へ差し替えた品を代表にする
      * (代表の道では残したい MOD と MOD レベルがぴったり同じ外れが出なくても、ほかの道の人は着く。代表が無いとその枠の削減の結果が外れの無い品で作られた)
