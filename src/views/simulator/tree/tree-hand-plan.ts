@@ -36,6 +36,7 @@ import { extendAnnul, isAnnulHand, trimAnnul } from "./tree-annul-chain";
 import { DIVINE_LT, isDivineAim } from "../../../services/simulator/tree/tree-divine";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { keepablesOf } from "./tree-row-tags"; import { syncLowTier } from "./tree-low-tier-sync";
+import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep"; import { pruneGradeBelow } from "./tree-grade-prune";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
@@ -297,6 +298,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // 数え直す間はこの箱に手を置いた形で (枠の代表の品は枠の削減の手 = frameHandOf で作る。手を置く前だと枠の見本が作れず一覧が空 = 手の種類の既定になり、
   // 未発現 + 左側の抹消 + 削減の狙い無しが「打った後」1 箱、既定は札の無い当たりの箱になった = 11-11 枝のフルチェック)
   if (data && syncBeforeHand(data, d, at, h) && only) { const ab = d.boxes[at]!, was = ab.hand; ab.hand = h; only = onlyOf(data, d, at, h, null, aims); ab.hand = was; }
+  // 格だけ替えた (S-57d・S-57d2) か = 下の手を残す替え。残した下は最後に新しい下限で数え直す (スイッチ gradeKeepAll)
+  const graded = flag("gradeKeepAll") && !!d.boxes[at]?.hand && gradeOnly(d, d.boxes[at]!, h, aims);
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (data) fillMissOuts(data, d, at);
   if (trunk) { graftDecided(d, trunk, id); clearHand(d, trunk); setBack(d, trunk, id); d.boxes[trunk]!.autoBack = true; d.boxes[trunk]!.handBack = { ...h }; }
@@ -312,6 +315,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (data) syncSameHiUnder(data, d, at); // エッセンスの箱の下の「同格以上」(S-33e ⑦)
   if (data) { syncSameMod(data, d, d.boxes[at]?.parent ?? null); syncWhittlePre(data, d, d.boxes[at]?.parent ?? null, at); syncLowTier(data, d, at); } // 削減の手前の枠 (S-65c)・低ティアの箱 (S-33g)
   linkAllSameHi(d);
+  if (data && graded) pruneGradeBelow(data, d, at, onlyOf);
   return at;
 }
 

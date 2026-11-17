@@ -10,6 +10,7 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { sameHand, type Aim, type Hand, type HandKind, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handPickOf } from "../../../services/simulator/tree/tree-recipe-v1";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { frameOfDoc } from "../../../services/simulator/tree/tree-frame";
 import { handBlockAt } from "../../../services/simulator/tree/tree-copy-block";
 import { fitsAt } from "./tree-copy-fit";
 import { craftStage } from "../../../state/craft-stage";
@@ -36,9 +37,19 @@ export function frameMates(d: TreeDoc, id: string): TreeBox[] {
   const all = Object.values(d.boxes).filter((o) => o.id !== id && !lvFrame(o) &&o.out === b.out && (b.out !== "hit" || (o.aim?.modId ?? null) === aim) && (KINDS.has(o.out) || fracHit(d, o.id)) && !!o.parent && (() => { const h = d.boxes[o.parent!]?.hand; return !!h && sameHand(h, ph); })());
   // 残っている MOD の数が同じ箱だけ (スイッチ sameModCount、11-16 オーナー「2と3はそれでおｋ」)
   const data = craftStage.data.value;
-  if (!flag("sameModCount") || !data || !all.length) return all;
-  const n = modCountOf(data, d, id);
-  return all.filter((o) => modCountOf(data, d, o.id) === n);
+  if (!data || !all.length) return all;
+  const n = flag("sameModCount") ? modCountOf(data, d, id) : null;
+  const byCount = n === null ? all : all.filter((o) => modCountOf(data, d, o.id) === n);
+  // 名前の組 (カードに名前で出る MOD = ☑ の狙い・置き石・残した MOD・✦ で固定された MOD) も同じ箱だけ (S-190d、スイッチ sameNames、11-18 オーナー
+  // 「理想MODの手が兄弟枠になぜか設定されるのおかしいね」「フラクチャーの中身が違うぞ」)。代表の品 (配置) から取る (レビュワー 1 の B-r1)。取れない箱は括らない (B-n1)
+  if (!flag("sameNames") || !byCount.length) return byCount;
+  const frames = frameOfDoc(data, d).frames, nameOf = (x: string): string | null => {
+    const f = frames.get(x);
+    return f ? JSON.stringify([[...f.aimed].sort(), [...f.item.prefixes, ...f.item.suffixes].filter((m) => m.fractured).map((m) => m.modId).sort()]) : null;
+  };
+  const mine = nameOf(id);
+  // 名前の組が取れない箱は括らない (写さない、レビュワー 1 の B-n1。前は取れない箱を前のまま括り、中身の違う箱へ写りうる)
+  return mine === null ? [] : byCount.filter((o) => nameOf(o.id) === mine);
 }
 /** 箱の見本の品に残っている MOD の数 (見本が作れなければ -1 = どの箱とも別扱いにしない) */
 function modCountOf(data: PatchData, d: TreeDoc, id: string): number {

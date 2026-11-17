@@ -121,3 +121,15 @@ onBeforeUnmount(() => ro?.disconnect());
     <TreeTierBulk v-if="tierOpen" @close="tierOpen = false" @lowered="(ids) => (orbAsk = [...new Set([...orbAsk, ...ids])])" />
   </div>
 </template>
+
+<style>
+/* 段の札 (P1・S1・P3 以上・P·S✦・暗黙) をカードの左の枠ぎりぎりに寄せ、札と MOD の文の間を空けて文の欄を横に広くする (S-78h、スイッチ goalTierEdge =
+   <html data-flag-goaltieredge>。シミュの右の列・デイリーの挑戦の札とも)。MOD の文の寄せは今どおり真ん中。
+   11-18 オーナー「完成形のスナップ左詰めってMOD文字じゃなくてP1とS1とかを文字と近すぎるから枠ぎりぎりに表示してMODの横広く見せたいって意味ね」。
+   札の列 (w-6 / w-9) は札の長さまで広げる (「S3 以上」は w-9 より長く、真ん中寄せの文の下に隠れていた)。カードの名前・種類の行は変えない */
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .space-y-1.px-4 { padding-left: 3px; }
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .space-y-1.px-4 .flex.items-center.px-2 { padding-left: 0; }
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .text-left.font-bold.w-9,
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .text-left.font-bold.w-6,
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .text-left.leading-tight { width: auto; white-space: nowrap; }
+</style>

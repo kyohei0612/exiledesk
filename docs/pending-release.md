@@ -8,6 +8,11 @@
 |---|---|---|---|
 | fracPlainMark (S-10g、シミュ 89、オーナー 11-18「これは明確にバグ」、見た目 OK = オーナー 11-18「おｋ」(sim89-frac の前後)) | この commit | シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、木が終わったように見えていたのを直しました | Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished |
 | whittleFloor・whittleNoSame (S-65c6・S-190d2、シミュ 87・88・89、オーナー 11-18「直しておｋ」「あと同じと高いは未設定でおｋよデフォ」、レビュワー 1 通し) | この commit | シミュ: 削減の枝で、付きえない「同じ」の帯が出ていた・割合がずれていたのと、1 つの帯に置いた削減がほかの帯にも勝手に入っていたのを直しました | Simulator: Whittling branches no longer show an impossible "same level" band or skewed rates, and a Whittling placed on one band no longer copies to the others |
+| whittleFloor の続き (S-65c6、シミュ 91、手の段の下限はエンジンの「届く段が無い系統は一番上の段」に任せる、レビュワー 1 通し) | この commit | シミュ: 削減の枝の割合を、上級・完全のオーブの後でもゲームと同じに直しました | Simulator: Whittling branch rates now match the game after Greater/Perfect orbs |
+| sameNames (S-190d、シミュ 89・90・91、オーナー 11-18「おｋ」、レビュワー 1 通し) | この commit | シミュ: 兄弟枠で、狙いやフラクチャーで固定された MOD が違う箱にまで手が写っていたのを直しました | Simulator: sibling boxes no longer copy a step into boxes with different target or fractured mods |
+| gradeKeepAll (S-57d2、シミュ 90・91、オーナー 11-18「おｋ」、レビュワー 1 通し) | この commit | シミュ: 高貴・変成・増強の等級や骨を保存 ↔ 古代に替えても、下の手を残して数え直すようにしました | Simulator: changing the tier of Exalted/Transmutation/Augmentation or Preserved ↔ Ancient bones now keeps the steps below and recounts |
+| goalTierEdge (S-78h、シミュ 90、オーナー 11-18「P1とS1とかを…枠ぎりぎりに表示してMODの横広く」) | この commit | シミュ: 完成形の札の段の札を左の枠に寄せ、MOD の文の欄を広くしました | Simulator: tier labels on the goal card sit at the left edge so mod text has more room |
+| linkHiddenSkip (S-142n2、シミュ 91、オーナー 11-18「おｋ」、レビュワー 1 の案 1) | この commit | シミュ: 行き先が隠れた箱だと手の札ごと線が消えていたのを直しました (カオスの札が出ない) | Simulator: steps whose merged target is hidden no longer lose their chip and lines |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)

@@ -125,6 +125,9 @@ function targetsOf(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, k: "link" 
     if (!c?.parent || !c.back || !d.boxes[c.back]) continue;
     // 辿った時は緑 (同じ段か先) / 青 (前の段) を辿った先の箱で決め直す
     const t = drawnTarget(d, c.back, hidden), far = t !== c.back;
+    // (S-142j4、スイッチ linkHiddenSkip) 辿りが描かない箱 (完成まで隠す外れの箱 S-142n など、↩ を持たない) で止まったら線を引かない。
+    // 前は描かない行き先が残り、画面の線の絞り (shownEdges) が手の札ごと落とした (r/PueJct9M の 5 段目のカオス、11-18)
+    if (flag("linkHiddenSkip") && hidden.has(t)) continue;
     if ((far ? (t !== "start" && depthOf(d, t) >= depthOf(d, id) ? "link" : "back") : f.link ? "link" : "back") !== k) continue;
     // (S-22g、スイッチ pathLeftCol) 行き先の箱をこの親の下に描く時は線を引かず、本物の親から線を引く
     if (!far && homes.get(c.back)?.via === id) { add(d.boxes[c.back]!.parent!, c.back); continue; }

@@ -38,8 +38,9 @@ const idle = (d: TreeDoc, id: string): boolean => { const c = d.boxes[id]; retur
 /**
  * 箱 a の手の結果の箱を、削減の手前の枠にそろえる。足した箱の id。
  * changed = 手を置いた箱: 枠を畳む (削減の手が無くなった組) のはその箱の組だけ (開いた時の組み直しで、まだ決めを打ち直していない枠を兄弟の手で畳まない)
+ * force = 付きえない組の枠は人の決め (手・↩・完成 / 失敗) があっても下ごと消す (格の替えで残した下の数え直し、S-57d2)
  */
-export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, changed?: string): string[] {
+export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, changed?: string, force = false): string[] {
   const p = a ? d.boxes[a] : undefined;
   if (!p?.hand) return [];
   const groups = new Map<string, string[]>();
@@ -83,8 +84,8 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
     const first = d.boxes[ids[0]!]!;
     for (const x of LV_ORDER) if (cls.has(x) && !taken.has(x)) made.push(addLike(d, p.id, first, withLv(first.junkKey, x)));
     // 付きえない組の枠 (前の手を替えた・データで出ない) は人の決めが無ければ消す
-    const gone = ids.filter((id) => { const c = lvPart(d.boxes[id]!.junkKey); return !!c && !cls!.has(c) && idle(d, id); });
-    if (gone.length) { drop(d, gone); p.outs = p.outs.filter((o) => !gone.includes(o)); }
+    const gone = ids.filter((id) => { const c = lvPart(d.boxes[id]!.junkKey); return !!c && !cls!.has(c) && (force || idle(d, id)); });
+    if (gone.length) { drop(d, force ? gone.flatMap((g) => subtree(d, g)) : gone); p.outs = p.outs.filter((o) => !gone.includes(o)); }
   }
   return made;
 }
