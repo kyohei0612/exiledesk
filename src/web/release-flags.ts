@@ -225,6 +225,28 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.748 出し待ちの表で見た目 OK の物 (オーナー 11-17「出す準備 完了時」「んまぁおすすめで」、ブラック 129〜132): デイリーの木をシミュの設定のまま・数を 1 行・完成形の札をシミュのまま・文の折り方、完成形の札を送り棒なしで全部・ティア調整・字の大きさ・自動ルーンの行を出さない、右の列を上まで・幅・色のプルダウンを出さない、結果の箱のルーン・偶然付いた狙いの箱、スマホの URL の案内・横持ちの PC の画面、木を描く・配置を 1 回だけ作る、古いレシピの書き直し・保存 15 個と共有で聞く、手の札のアイコンを縦に。barSlim・failRuneSample・failRuneFree は入れない
+  "dailyTreeAsSim",
+  "dailyNumLine",
+  "dailySimCard",
+  "goalCardFull",
+  "sideTop",
+  "goalTierTop",
+  "sideLikeDaily",
+  "skinHide",
+  "goalCardMinText",
+  "boxRuneLine",
+  "goalNoAutoRune",
+  "oddShapes",
+  "dailyWrap",
+  "phoneUrlShort",
+  "phonePcView",
+  "drawOnce",
+  "builtRefresh",
+  "saveCap15",
+  "shareSaveAsk",
+  "chipIconRows",
+  "frameReuse",
   // 0.1.747 どの幅でも: MOD 一覧の目次の札を折り返す (U-53c、オーナー 11-17「見た目OK」)・デイリーの挑戦を 768 から (D-70b、11-17「デイリーおけ」)、シミュの木で理想の道の結果も同じ中身へまとめる (S-50g をやめる・S-51d を広げる)・箱の中身の狙いの組を配置の 1 回に 1 度だけ作る (S-196h、11-17「速度周りだから先出していいよ」、ブラック 129)
   "fitWidth",
   "dailyFit",

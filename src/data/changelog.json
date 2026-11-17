@@ -1,5 +1,137 @@
 [
  {
+  "v": "0.1.748",
+  "date": "2026-11-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦の画面の木と右の列を、シミュレーターと同じ並び・幅にそろえました",
+    "en": "Daily: The challenge tree and its side column now use the same layout and widths as the Simulator"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 順位の表で「1347.1 神」のような長い費用が 2 行に折れていたのを、1 行で出すようにしました",
+    "en": "Daily: Long costs such as \"1347.1 div\" no longer wrap onto two lines in the rankings"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 挑戦中の完成形を、シミュレーターと同じ大きさ・形で表示するようにし、「これで提出」「諦める」を上の帯へ移していつも見えるようにしました (画面の高さが低い時に小さくなりすぎていたのを直しました)",
+    "en": "Daily: The target item during a challenge now shows at the same size and layout as in the Simulator, and \"Submit this\" / \"Give up\" moved to the top bar so they are always visible (it no longer shrinks too small on short screens)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "完成形の見本 (シミュレーターの右の欄・デイリーの挑戦) を、送り棒なしで全体が見えるようにしました。MOD の行は字を縮めずに折り返します",
+    "en": "The target item card (Simulator side panel and Daily challenge) now shows in full without scrollbars. Mod lines wrap instead of shrinking"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 右の列を上まで伸ばして完成形の見本を高い所から見られるようにし、倍率のボタンをミニマップの中に入れました",
+    "en": "Simulator: the side panel now runs to the top so the target item shows higher up, and the zoom buttons sit inside the minimap"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の見本からベースのボタンを外し、ティア調整のボタンを見本の頭に移しました",
+    "en": "Simulator: the target item panel no longer has a Base button, and the Tiers button now sits in the panel header"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 右の欄をデイリーと同じ広さにして完成形の見本を大きく見せ、ミニマップは最初は閉じて地図のボタンで開くようにしました。デイリーでも地図のボタンでミニマップが開くようになりました",
+    "en": "Simulator: the side panel is now as wide as the daily one so the target item shows larger, and the minimap starts closed (open it with the map button). The map button now opens the minimap in the daily challenge too"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "色の切り替えをなくし、その分の行を詰めました",
+    "en": "Removed the site colour picker and tightened the space it used"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の見本の小さい字 (アイテムレベル・段の印など) を読みやすい大きさにしました",
+    "en": "Simulator: small text in the target item panel (item level, tier marks and so on) is now easier to read"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 結果の箱でルーンが刺さっている時、カードの中のソケットにルーンの絵を出すようにしました",
+    "en": "Simulator: result boxes now show socketed runes as icons in the card's sockets"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の見本の下のルーンの 1 行を外しました (ルーンは見本のソケットの絵で見えます)",
+    "en": "Simulator: removed the rune line under the target item panel (runes show in its sockets)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 狙っていない手で狙いの MOD が偶然付いた時に、回す人がそこで止まらないようにしました",
+    "en": "Simulator: runs no longer get stuck when a target mod lands by chance from an untargeted craft"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 一覧の小さい字を読みやすい大きさにし、「シミュレーター」などの言葉が途中で折れないようにしました",
+    "en": "Daily: small text on the daily page is easier to read, and words no longer break in odd places"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: シミュの入口の URL の欄の案内が切れないよう短くしました",
+    "en": "Mobile: shortened the URL box hint on the Simulator start screen so it no longer cuts off"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: クラフト箱に、同じベースで MOD が 3 つ以上同じ品が重ねて入らないようにしました",
+    "en": "Daily: The craft box no longer takes an item on the same base with 3 or more of the same mods as one already in it"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホでもシミュの木を組めて、デイリーの挑戦もできるように: スマホを横にすると PC と同じ画面で出る (指で拡大・縮小)。向きのロックを外さなくても「横向きで表示」で横の画面にできる。デイリーは「PC 版を表示して挑戦」から",
+    "en": "Phones can now build simulator trees and take Daily challenges: turn your phone sideways to get the full PC layout (pinch to zoom). With rotation lock on, \"Show sideways\" turns the screen for you. On Daily, start with \"Play in PC view\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 大きいツリーで手を置く・替える・消した後の描き直しを軽くしました",
+    "en": "Simulator: redrawing large trees after placing, changing, or removing a craft is now lighter"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 前の版で保存したレシピは、一度編集すると次からすぐ開けるようになりました",
+    "en": "Simulator: recipes saved in an older version now open quickly again after you edit them once"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: レシピは 15 個まで保存できるようになりました (いっぱいの時は 1 つ消してから保存)。保存していないレシピを共有する時は、先に保存するかを聞きます。たくさん保存すると保存が残らないことがあったのを直しました",
+    "en": "Simulator: you can keep up to 15 recipes (when full, delete one before saving). Sharing a tree you haven't saved now asks whether to save it first. Fixed saves sometimes not being kept when many recipes were stored"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手の札でカレンシーとお告げを 2 つ以上使う時、アイコンを名前の行ごとに縦に並べて、どのアイコンがどの手か分かるようにしました",
+    "en": "Simulator: when a craft card uses two or more items, each icon now sits in front of its own name row so you can tell which icon is which"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 大きいツリーのレシピを開く時と手を置く時の待ちをさらに短くしました",
+    "en": "Simulator: opening large recipes and placing crafts in big trees is faster again"
+   }
+  ]
+ },
+ {
   "v": "0.1.747",
   "date": "2026-11-17",
   "items": [
@@ -1043,24 +1175,6 @@
     "area": "",
     "text": "シミュレーター: 削減の木を保存して開き直した時に、手を置いていない枠へ別の枠の削減が写ることがあったのを直しました。ヒネコラなど MOD を変えない手の後で、決まった枠がまた低い・同じ・高いに割れることがあったのも直しました",
     "en": "Simulator: fixed a whittling step being copied into frames you hadn't set when you saved and reopened a tree, and fixed frames that were already decided splitting again into lower / same / higher after a hand that doesn't change mods, such as Hinekora's Lock"
-   }
-  ]
- },
- {
-  "v": "0.1.708",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "新しい版を出した時に「新しい版があります」のお知らせを出し、押すと更新できるようにしました。更新しても、作っていた木やアイテム・打った手はそのまま戻ります。ヘッダーの版の横にも「更新」ボタンを付けました。",
-    "en": "When a new version is out, you now see a notice and can update with one tap. Your trees, items and crafted steps come back as they were. There is also an Update button next to the version in the header."
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望への返事がポップアップで届くようになり、そのまま「返事を書く」で文や画像を付けて返せるようにしました。",
-    "en": "Replies to your feedback now arrive as a popup, and you can answer right away with text and images using \"Write a reply\"."
    }
   ]
  }

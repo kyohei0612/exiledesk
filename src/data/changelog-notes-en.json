@@ -1,4 +1,27 @@
 {
+  "0.1.748": [
+    "Daily: The challenge tree and its side column now use the same layout and widths as the Simulator",
+    "Daily: Long costs such as \"1347.1 div\" no longer wrap onto two lines in the rankings",
+    "Daily: The target item during a challenge now shows at the same size and layout as in the Simulator, and \"Submit this\" / \"Give up\" moved to the top bar so they are always visible (it no longer shrinks too small on short screens)",
+    "The target item card (Simulator side panel and Daily challenge) now shows in full without scrollbars. Mod lines wrap instead of shrinking",
+    "Simulator: the side panel now runs to the top so the target item shows higher up, and the zoom buttons sit inside the minimap",
+    "Simulator: the target item panel no longer has a Base button, and the Tiers button now sits in the panel header",
+    "Simulator: the side panel is now as wide as the daily one so the target item shows larger, and the minimap starts closed (open it with the map button). The map button now opens the minimap in the daily challenge too",
+    "Removed the site colour picker and tightened the space it used",
+    "Simulator: small text in the target item panel (item level, tier marks and so on) is now easier to read",
+    "Simulator: result boxes now show socketed runes as icons in the card's sockets",
+    "Simulator: removed the rune line under the target item panel (runes show in its sockets)",
+    "Simulator: runs no longer get stuck when a target mod lands by chance from an untargeted craft",
+    "Daily: small text on the daily page is easier to read, and words no longer break in odd places",
+    "Mobile: shortened the URL box hint on the Simulator start screen so it no longer cuts off",
+    "Daily: The craft box no longer takes an item on the same base with 3 or more of the same mods as one already in it",
+    "Phones can now build simulator trees and take Daily challenges: turn your phone sideways to get the full PC layout (pinch to zoom). With rotation lock on, \"Show sideways\" turns the screen for you. On Daily, start with \"Play in PC view\"",
+    "Simulator: redrawing large trees after placing, changing, or removing a craft is now lighter",
+    "Simulator: recipes saved in an older version now open quickly again after you edit them once",
+    "Simulator: you can keep up to 15 recipes (when full, delete one before saving). Sharing a tree you haven't saved now asks whether to save it first. Fixed saves sometimes not being kept when many recipes were stored",
+    "Simulator: when a craft card uses two or more items, each icon now sits in front of its own name row so you can tell which icon is which",
+    "Simulator: opening large recipes and placing crafts in big trees is faster again"
+  ],
   "0.1.747": [
     "Daily: you can now take the challenge on narrower PCs and tablets (768px and wider), and the top bar rearranges itself to fit the screen width",
     "Mod list: the category tabs at the top (General, Desecrated, Essence, etc.) now wrap so all of them are visible on narrow screens and phones",
