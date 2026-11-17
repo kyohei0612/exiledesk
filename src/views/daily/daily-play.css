@@ -60,9 +60,17 @@
 :root:not([data-flag-dailysimcard]) [data-daily-play] [data-tree-goal] { zoom: var(--daily-card-z); width: calc(var(--daily-side-w) / var(--daily-card-z) - 6px) !important; }
 /* 完成形はシミュの札のまま (D-37m2、スイッチ dailySimCard): 等倍・頭の段と枠を出す・入らなければ札の中を縦に送る (シミュの max-h 60%)。欄の高さに合わせる縮め (daily-side-fit.ts) は使わない */
 :root[data-flag-dailysimcard] [data-daily-play] { --daily-card-zmax: 1; --daily-card-z: 1; }
-/* 札の入れ物 (欄の 60% まで) は中をホイール・指で送れるように押せる側へ。札そのものと中のボタンは今までどおり押せない (D-40)。注意書きとの間を空け、切れ目が被さって見えないように */
-:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] { pointer-events: auto; margin-bottom: 8px; overscroll-behavior: contain; scrollbar-width: thin; }
-:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] [data-tree-goal] { pointer-events: none; }
+/* 札は欄の幅いっぱい・全体を見せる (D-37m2、11-17 オーナー「右枠ぎりぎりまで伸ばして」「このバーなくて全体写す感じで」)。札の入れ物では送らず (60% の上限を外す)、
+   欄に入らない時は右の欄ごと縦に送る。ミニマップと倍率の道具は潰れて切れないよう最低の高さを持ち、入らなければ送った先に出る。札の中の作りはシミュの札の部品 (TreeGoalCard) の側 */
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] { overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] { max-height: none; overflow: visible; margin-bottom: 8px; }
+/* 札の幅は TreeGoalCard がシミュの列の 298px で描く (カード 420 を 0.676 倍)。デイリーの欄 (440 / 360) では欄いっぱいにし、中のカードの倍率を欄の幅から決める
+   = (欄の幅 − 札の枠と余白 15 − 送り棒 12) / 420。欄の幅の段 (440 / 360) は上の --daily-side-w と同じ所で替わる (新しい幅の分けは足さない) */
+:root[data-flag-dailysimcard] [data-daily-play] { --daily-goal-z: calc(413 / 420); }
+@media (max-width: 1699px) { :root[data-flag-dailysimcard] [data-daily-play] { --daily-goal-z: calc(333 / 420); } }
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] [data-tree-goal] { width: 100% !important; max-width: 100%; box-sizing: border-box; }
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-goal] div[style*="zoom"] { zoom: var(--daily-goal-z) !important; }
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > div:has(> [data-tree-tools]) { flex: 1 0 auto; min-height: 200px; }
 /* 「閉じる」は欄の内側の右上 = カードの上の段 (11-10 オーナー「それそれ　直して」= 前は右上に浮かせて欄の枠の上の縁に乗り出した)。どの幅でも枠から 2px 以上内側 */
 [data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { order: -3; align-self: flex-end; margin: 4px 4px 0 0; }
 
