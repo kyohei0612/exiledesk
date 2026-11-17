@@ -6,7 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| スマホは「PC 版を表示して挑戦」で PC の画面を縮めて挑戦 (D-70c、スイッチ `dailyPcView`、デザイン部長 12。デイリーの 2 ファイルの差し込み待ち・見た目の OK 待ち) | 4ac485a38・5f527adf1・f45c7a233・(横持ちの直し) | スマホでもデイリーの挑戦ができるように: 「PC 版を表示して挑戦」を押すと、スマホを横にして PC と同じ画面で挑戦できる (指で拡大・縮小)。一覧へ戻るとスマホの画面に戻る | Daily challenges now work on phones: tap "Play in PC view" and turn your phone sideways to take the challenge on the full PC layout (pinch to zoom). Going back to the list returns to the phone layout |
+| スマホで木を組む画面 (シミュの木・デイリーの挑戦) は横持ちの PC の画面、縦は「横にしてください」と「横向きで表示」 (U-53d・S-94l・D-70c、スイッチ `phonePcView`、デザイン部長 12。見た目の OK 待ち) | 4ac485a38・5f527adf1・f45c7a233・d8ed1e579・(決め直し) | スマホでもシミュの木を組めて、デイリーの挑戦もできるように: スマホを横にすると PC と同じ画面で出る (指で拡大・縮小)。向きのロックを外さなくても「横向きで表示」で横の画面にできる。デイリーは「PC 版を表示して挑戦」から | Phones can now build simulator trees and take Daily challenges: turn your phone sideways to get the full PC layout (pinch to zoom). With rotation lock on, "Show sideways" turns the screen for you. On Daily, start with "Play in PC view" |
 | シミュの木: 描く 1 回の中で畳み・隠す箱・深さを 1 回だけ作る (S-196i、スイッチ `drawOnce`・開発版だけ、オーナー 11-17、ブラック 128・129。オーナーの木 171 箱で手を置く 11 手の固まりの合計 4,509 → 3,252ms・真ん中 248 → 183ms。見た目・箱の中身は同じ) | f43949708 | シミュレーター: 大きいツリーで手を置く・替える・消した後の描き直しを軽くしました | Simulator: redrawing large trees after placing, changing, or removing a craft is now lighter |
 | シミュの木: 見本の配置は前と同じ段の答えを使い、手を置いた箱の下だけ作り直す (S-196j、スイッチ `frameReuse`・開発版だけ、オーナー 11-17、ブラック 129。共有 URL を開くまで オーナーの木 171 箱 3.9 → 3.1 秒・猫ごたつ 102 箱 2.1 → 1.7 秒、手を置く最大 680 → 610ms。見た目・箱の中身は同じ) | a182dc361 | シミュレーター: 大きいツリーのレシピを開く時と手を置く時の待ちをさらに短くしました | Simulator: opening large recipes and placing crafts in big trees is faster again |
 
