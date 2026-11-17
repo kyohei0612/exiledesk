@@ -34,12 +34,13 @@ export const simEmuNote = ref<string | null>(null);
  */
 export async function openEmuWithGoals(base: string, itemLevel: number, goals: ReadonlyArray<{ modId: string; tier: number }>): Promise<void> {
   if (!flag("simToEmu") || !goals.length) return;
-  const [{ craftStage: s }, { forcesOf }, { useStageBase }, { useTree }, { tr }] = await Promise.all([
+  const [{ craftStage: s }, { forcesOf }, { useStageBase }, { useTree }, { tr }, { startSpecOf }] = await Promise.all([
     import("../craft-stage"),
     import("../../services/emulator/emu-engine"),
     import("../../views/craft-stage/use-stage-base"),
     import("../../views/simulator/tree/use-tree"),
     import("../../i18n/lang"),
+    import("../../services/craft-stage/engine"),
   ]);
   // エミュをまだ開いていない時も載せた後に init (写しの戻し・白) で上書きされないよう、先にデータを読む (済みなら何もしない)
   await s.init();
@@ -52,6 +53,15 @@ export async function openEmuWithGoals(base: string, itemLevel: number, goals: R
     sb.pickSimBase(base); // ベースを選んだ印・白に戻す (s.reset)
     s.itemLevel.value = itemLevel;
     if (!g) { s.reset(); simEmuNote.value = null; return; }
+    // (スイッチ simToEmuAll、S-211c) 札の品を付きうるかを問わず札のとおりに置く (エンジンの startSpecOf → startFrom)。枠に入らない狙いは白に戻さず一言
+    // (11-17 オーナー「このレシピ以外にもエミュにうつして成功したことないんだよね」「完成形につく奴全部エミュに対応したらいい」)
+    if (flag("simToEmuAll")) {
+      const why = s.startWithSpec(base, itemLevel, startSpecOf(g.item));
+      if (why) { s.reset(); simEmuNote.value = tr(`この完成形はそのままでは載せられないため (${why})、エミュレーターで初めから作り直してください`, `This build can't be loaded as is (${why}), so craft it from scratch in the emulator`); return; }
+      const names = [...new Set(g.left.map((a) => useTree().aimShort(a)))];
+      simEmuNote.value = names.length ? tr(`枠に入らない狙い ${names.length} 個は載せていません: ${names.join("・")}`, `${names.length} target(s) that don't fit the affix slots were left off: ${names.join(", ")}`) : null;
+      return;
+    }
     const over = g.left.length > 0;
     // ソケットとルーンも載せる (ルーンの池の MOD = ウートレドの星読みのクロノマンシーなどは、ルーンを差してからでないと付かない。11-17 オーナー「シミュからエミュへいけない」)
     const runes = flag("simToEmuRunes") ? (g.item.augments ?? []).map((a) => a.en) : [];

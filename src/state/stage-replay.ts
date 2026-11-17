@@ -24,6 +24,8 @@ export interface StageReplayCtx {
   itemLevel: Ref<number>;
   seed: Ref<number>;
   startMods: Ref<Force[]>;
+  /** 札のとおりに置いた始めの状態 (S-211c)。ある時は手順の start にそのまま書く */
+  startPlaced: Ref<StartSpec | null>;
   omens: Ref<string[]>;
   held: Ref<string | null>;
   rollSeed: Ref<number>;
@@ -48,7 +50,7 @@ export function stageReplay(c: StageReplayCtx) {
         // 始めの状態: MOD (要望 ⑱-2) と、手で打つ画面が始めに開けているソケット (規格外。書かないと再生でルーンが打てない、2026-10-10 点検)
         ...(() => {
           const sockets = c.data.value ? fullSockets(freshItem(c.data.value, c.base.value, c.itemLevel.value)).sockets ?? 0 : 0;
-          const start: StartSpec = { ...(c.startMods.value.length ? { mods: c.startMods.value } : {}), ...(sockets ? { sockets } : {}) };
+          const start: StartSpec = c.startPlaced.value ?? { ...(c.startMods.value.length ? { mods: c.startMods.value } : {}), ...(sockets ? { sockets } : {}) };
           return Object.keys(start).length ? ({ start } as object) : {};
         })(),
         seed: c.seed.value,
@@ -75,7 +77,9 @@ export function stageReplay(c: StageReplayCtx) {
     continueFromReplay(): void {
       const r = c.replay.value;
       if (!r) return;
-      c.startMods.value = (r.plan as { start?: StartSpec }).start?.mods ?? [];
+      const st = (r.plan as { start?: StartSpec }).start;
+      c.startMods.value = st?.placed ? [] : st?.mods ?? [];
+      c.startPlaced.value = st?.placed ? st : null;
       c.omens.value = [];
       c.held.value = null;
       c.rollSeed.value = c.freshSeed();

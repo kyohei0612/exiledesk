@@ -9,6 +9,7 @@
 import { ref } from "vue";
 import { craftStage as s } from "./craft-stage";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
+import type { StartSpec } from "../services/craft-stage/run-plan";
 import { flag } from "../web/release-flags";
 import { cameBack } from "../web/page-memo";
 
@@ -42,6 +43,8 @@ interface Snapshot {
   itemLevel: number;
   /** 工程があれば手順 JSON、無ければ null (ベースだけ選んだ所) */
   plan: CraftStagePlan | null;
+  /** 工程が無く、札のとおりに置いた始めの状態だけある時 (S-211c、シミュの「エミュで試す」の直後) */
+  start?: StartSpec;
 }
 
 /** 写しから戻した (ベース選びを開かない印。use-stage-base.ts が見る) */
@@ -54,6 +57,7 @@ function save(): void {
     const snap: Snapshot = {
       v: 1, mode: s.mode.value, base: s.base.value, itemLevel: s.itemLevel.value,
       plan: hasSteps ? s.plan() : null,
+      ...(!hasSteps && s.startPlaced.value ? { start: s.startPlaced.value } : {}),
     };
     sessionStorage.setItem(KEY, JSON.stringify(snap));
   } catch { /* 写せなくても動く (次は初めからになるだけ) */ }
@@ -73,7 +77,7 @@ export function restoreStageSession(): boolean {
       s.loadReplay(snap.plan, 9999);
       if (!s.replay.value) return false; // 手順が読めなかった
       s.continueFromReplay();
-    } else s.reset();
+    } else if (snap.start) { if (s.startWithSpec(snap.base, snap.itemLevel, snap.start)) s.reset(); } else s.reset();
     restoredFromSession.value = true;
     return true;
   } catch {

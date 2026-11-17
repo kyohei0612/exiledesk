@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュの「エミュで試す」で、完成形の札の品を付きうるかを問わず札のとおりに載せる (エッセンス・合金・ルーン・冒涜の MOD、フラクチャーの印、規格外のソケット、品質・暗黙の値)。枠に入らない狙いは白に戻さず上に一言。1 手戻す・再生・共有も同じ品から (S-211c・E-29b、スイッチ `simToEmuAll`・開発版だけ、シミュ部長 86・ジン toemu。11-17 オーナー「完成形につく奴全部エミュに対応したらいい」、ブラック 132。37 本で全部載る (前 14 本)。見た目の OK 待ち) | 4b0938914・(この行の commit) | シミュレーター: 「エミュで試す」で、エッセンスや冒涜の MOD・ルーンで増えたソケットなどがある完成形もそのまま開けるようにしました | Simulator: "Try in Emulator" now opens targets as-is, including essence and desecrated mods and rune-added sockets |
 | シミュの「エミュで試す」で、完成形の品のソケットの数と差したルーンも始めの状態に入れる。ルーンの池の MOD (ウートレドの星読みなど) のある完成形が白で開き「そのままでは載せられない」と出ていた (エミュで試すを作った時から) のを直す (S-211b、スイッチ `simToEmuRunes`・開発版だけ、シミュ部長 86、craft-stage・sim-links はブラックが当てた。11-17 オーナー「シミュからエミュへいけない」、ブラック 132。見た目の OK 待ち) | (この行の commit) | シミュレーター: ルーンで付く MOD のある完成形も「エミュで試す」でそのまま開けるようにしました | Simulator: "Try in Emulator" now carries over sockets and runes, so targets with rune-granted mods open correctly |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。

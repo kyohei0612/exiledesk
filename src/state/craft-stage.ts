@@ -38,7 +38,7 @@ export const URL_BASE: string | null = (() => { try { return new URLSearchParams
 import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { omensFor, useReason } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
-import { freshItem, playStep, startFrom, type PlayedStep } from "../services/craft-stage/run-plan";
+import { freshItem, playStep, startFrom, type PlayedStep, type StartSpec } from "../services/craft-stage/run-plan";
 import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
 import { logRecord } from "../utils/log-record";
@@ -129,6 +129,11 @@ const pob = shallowRef<PobBlock | null>(null);
  */
 const startMods = dual(() => ref<Force[]>([]));
 /**
+ * 札のとおりに置いた始めの状態 (シミュの「エミュで試す」、S-211c・スイッチ simToEmuAll)。付きうるかを問わず置いた MOD (placed)・ソケット・ルーン・品質・暗黙の種を丸ごと持つ。
+ * ある間は始めの MOD を足す・外すはしない (置いた物は 1 つずつ外せない)。手順 JSON の start にそのまま書く (再生・共有・1 手戻すも同じ品から)
+ */
+const startPlaced = dual(() => shallowRef<StartSpec | null>(null));
+/**
  * シミュレーションのタブ (2026-10-05、実験): 画面の切り替えと、狙いの MOD (MOD の一覧の段の表の「狙う」で足す)。
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
  */
@@ -187,7 +192,7 @@ const redoList: PlayedStep[] = [];
 let redoAt: StageItem | null = null;
 let redoLog: PlayedStep[] | null = null;
 const replayApi = stageReplay({
-  data, item, log, dropped, replay, base, itemLevel, seed, startMods, omens, held, rollSeed, error,
+  data, item, log, dropped, replay, base, itemLevel, seed, startMods, startPlaced, omens, held, rollSeed, error,
   priceOf, priceKeysAll, freshSeed, reset: (): void => craftStage.reset(),
 });
 export const craftStage = {
@@ -265,6 +270,7 @@ export const craftStage = {
    */
   addStartMod(f: Force): void {
     if (!data.value || log.value.length || replay.value) return;
+    if (startPlaced.value) { miss.value = { n: (miss.value?.n ?? 0) + 1, reason: tr("完成形から載せた品には始めの MOD を足せません (白に戻してから)", "Starting mods can't be added to an item loaded from a build (reset first)") }; return; }
     // 50 手より前に消した手 (dropped) が残っている時は、工程を全部戻しても「打つ前」ではない。始めの MOD を足すと、手順 (始めの MOD + 消した手) と
     // 今のアイテム (始めの MOD だけ) が食い違う (2026-10-16 要望 0ce15a82 の調べで見つけた)
     if (dropped.value.length) { miss.value = { n: (miss.value?.n ?? 0) + 1, reason: tr("50 手より前の手が残っているので、始めの MOD は足せません (白に戻してから)", "Earlier steps (before the last 50) remain, so starting mods can't be added (reset first)") }; return; }
@@ -286,7 +292,25 @@ export const craftStage = {
       const sd = newSeed();
       // extra = 始めに差すソケットとルーン (シミュの「エミュで試す」の完成形。ルーンの池の MOD はルーンを差してからでないと付かない、S-211)
       const it = fullSockets(startFrom(data.value, b, lv, { mods, ...extra }, sd - 1));
-      base.value = b; itemLevel.value = lv; startMods.value = [...mods];
+      base.value = b; itemLevel.value = lv; startMods.value = [...mods]; startPlaced.value = null;
+      log.value = []; dropped.value = []; omens.value = []; held.value = null;
+      seed.value = sd; item.value = it; error.value = null;
+      return null;
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
+  },
+  /**
+   * 札のとおりの始めの状態 (エンジンの startSpecOf の結果) から、工程なしの品で始める (シミュの「エミュで試す」、S-211c・スイッチ simToEmuAll)。
+   * 付きうるかを問わず置くので、エッセンス・合金・ルーン・冒涜の MOD、規格外のソケット、品質・暗黙の値も札のまま。ソケットは開け足さない (札の数のまま)。
+   * 置けなければエンジンの訳を返し、今の品は変えない。載せたら null
+   */
+  startWithSpec(b: string, lv: number, spec: StartSpec): string | null {
+    if (!data.value || replay.value) return tr("読み込み中…", "Loading…");
+    try {
+      const sd = newSeed();
+      const it = startFrom(data.value, b, lv, spec, sd - 1);
+      base.value = b; itemLevel.value = lv; startMods.value = []; startPlaced.value = spec;
       log.value = []; dropped.value = []; omens.value = []; held.value = null;
       seed.value = sd; item.value = it; error.value = null;
       return null;
@@ -299,6 +323,7 @@ export const craftStage = {
     if (!data.value) return;
     try {
       startMods.value = [];
+      startPlaced.value = null;
       log.value = [];
       dropped.value = [];
       omens.value = [];
@@ -359,6 +384,7 @@ export const craftStage = {
     // まだ打っていない時は、始めの MOD を 1 つ外す。50 手より前に消した手 (dropped) が残っている時は打った後なので外さない
     // (外すとアイテムは白 + 始めの MOD に戻るのに、手順には消した手が残り、再生すると別物になった。2026-10-16 要望 0ce15a82 の調べ)
     if (!l.length && dropped.value.length) return;
+    if (!l.length && startPlaced.value) return; // 札のとおりに置いた始めの状態は 1 つずつ外さない (S-211c。白に戻すは「白に戻す」)
     if (!l.length && startMods.value.length && data.value && !replay.value) {
       startMods.value = startMods.value.slice(0, -1);
       // ソケットも付ける時と同じに (外すと規格外のソケットが消えていた。2026-10-08 使い倒しテスト)
