@@ -1,0 +1,27 @@
+/*
+ * 右の列の頭: 「▸ 閉じる」と「付与スキル [どれでも ▾]」を 1 行に (sim-tree.md S-94hy、スイッチ sideHeadLine = <html data-flag-sideheadline>、2026-11-17)。
+ * オーナー 11-17「付与スキルの左側に閉じるボタンにして1行にしようかここ」。
+ * 閉じる (SimTreePage の data-tree-side-toggle) は列の頭、付与スキル (TreeGoalCard の GrantedSkillPick) は完成形の札の上で、親が違うので
+ * 付与スキルが出ている時だけ閉じるを列の左上に浮かせ、付与スキルの行を右に寄せて同じ高さに並べる。付与スキルが無いベースは今どおり。
+ * デイリーの挑戦の右の欄も同じ列 (data-tree-side) なので一緒に並ぶ。
+ */
+html:root[data-flag-sideheadline] body [data-tree-side]:has(> [data-tree-goal-side] [data-granted-skill]) {
+  position: relative;
+}
+html:root[data-flag-sideheadline] body [data-tree-side]:has(> [data-tree-goal-side] [data-granted-skill]) > [data-tree-side-toggle] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+/* 付与スキルの行は閉じるの背 (24px) にそろえ、閉じるの幅を空けて右に寄せる。狭い時は選びの方を縮める */
+html:root[data-flag-sideheadline] body [data-tree-side] > [data-tree-goal-side] [data-granted-skill] {
+  min-height: 24px;
+  justify-content: flex-end;
+  padding-left: 76px;
+  min-width: 0;
+}
+html:root[data-flag-sideheadline] body [data-tree-side] > [data-tree-goal-side] [data-granted-skill] select {
+  min-width: 0;
+  flex: 0 1 auto;
+}

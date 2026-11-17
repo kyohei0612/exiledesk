@@ -1,0 +1,17 @@
+/*
+ * 右の列を 1.3 分の 1 の幅に (sim-tree.md S-78f2、スイッチ sideSlim = <html data-flag-sideslim>、2026-11-17)。
+ * オーナー 11-17「ちょっとでかいな。横幅1.3倍ちいさくしようか」。
+ * side-like-daily.css (S-78f) の列の幅と札のカードの倍率の変数だけを上書きする (シミュの木・デイリーの挑戦の右の欄とも、幅の替わり目も同じ)。
+ * 1700 以上: 440 → 340px、カードも同じ割合で縮める ((340 − 27) / 420)。
+ * それより狭い時: 360 → 277px、カードの倍率は S-78f のまま (333 / 420) で字を今より小さくせず、入らない MOD の行は折り返す (goal-card-full.css)。
+ */
+:root[data-flag-sidelikedaily][data-flag-sideslim] {
+  --side-like-w: 340px;
+  --side-like-z: calc(313 / 420);
+}
+@media (max-width: 1699px) {
+  :root[data-flag-sidelikedaily][data-flag-sideslim] {
+    --side-like-w: 277px;
+    --side-like-z: calc(333 / 420);
+  }
+}

@@ -6,6 +6,8 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュの木の右の列の頭で「› 閉じる」と「付与スキル」を 1 行に (付与スキルが無いベースは閉じるだけ)。デイリーの挑戦の右の欄も (S-94hy、スイッチ `sideHeadLine`・開発版だけ、デザイン部長 16。オーナー 11-17「付与スキルの左側に閉じるボタンにして1行にしようかここ」、ブラック 132。見た目の OK 待ち) | (この行の commit) | シミュレーター: 右の欄の「閉じる」と「付与スキル」を 1 行にまとめました | Simulator: "Close" and the granted-skill picker now share one row in the side panel |
+| シミュの木の右の列 (デイリーの挑戦の右の欄も) の幅を 1/1.3 に (1700 以上 440 → 340px、狭い時 360 → 277px)。字は小さくせず MOD の行を折る (S-78f2、スイッチ `sideSlim`・開発版だけ、デザイン部長 16。オーナー 11-17「ちょっとでかいな。横幅1.3倍ちいさくしようか」、ブラック 132。見た目の OK 待ち) | (この行の commit) | シミュレーター: 右の欄を少し細くして、ツリーを広く見られるようにしました | Simulator: the side panel is a little narrower, leaving more room for the tree |
 | シミュの「エミュで試す」で、完成形の札の品を付きうるかを問わず札のとおりに載せる (エッセンス・合金・ルーン・冒涜の MOD、フラクチャーの印、規格外のソケット、品質・暗黙の値)。枠に入らない狙いは白に戻さず上に一言。1 手戻す・再生・共有も同じ品から (S-211c・E-29b、スイッチ `simToEmuAll`・開発版だけ、シミュ部長 86・ジン toemu。11-17 オーナー「完成形につく奴全部エミュに対応したらいい」、ブラック 132。37 本で全部載る (前 14 本)。見た目 OK = オーナー 11-17「おｋ」(sim86-toemu-all-okPcmPyY の前後)) | 4b0938914・(この行の commit) | シミュレーター: 「エミュで試す」で、エッセンスや冒涜の MOD・ルーンで増えたソケットなどがある完成形もそのまま開けるようにしました | Simulator: "Try in Emulator" now opens targets as-is, including essence and desecrated mods and rune-added sockets |
 | シミュの「エミュで試す」で、完成形の品のソケットの数と差したルーンも始めの状態に入れる。ルーンの池の MOD (ウートレドの星読みなど) のある完成形が白で開き「そのままでは載せられない」と出ていた (エミュで試すを作った時から) のを直す (S-211b、スイッチ `simToEmuRunes`・開発版だけ、シミュ部長 86、craft-stage・sim-links はブラックが当てた。11-17 オーナー「シミュからエミュへいけない」、ブラック 132。見た目 OK = オーナー 11-17「おｋ」(エミュで試すの前後、simToEmuAll と一緒に)) | (この行の commit) | シミュレーター: ルーンで付く MOD のある完成形も「エミュで試す」でそのまま開けるようにしました | Simulator: "Try in Emulator" now carries over sockets and runes, so targets with rune-granted mods open correctly |
 
