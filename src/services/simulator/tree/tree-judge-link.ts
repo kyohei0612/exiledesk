@@ -79,8 +79,11 @@ export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
 function idealNoUp(doc: TreeDoc, id: string): number {
   const out = doc.boxes[id]?.out;
   // 「外れが消えた」は入れない (実験 junkGoneHit は 11-16 にやめた = S-50g)
-  return flag("idealNoBack") && (out === "hit" || out === "any") ? depthOf(doc, id) : 0;
+  // スイッチ idealJoin (開発版だけ、11-17 オーナー): S-50g をやめ、完成への道の結果も上の段の同じ中身へまとめる
+  return flag("idealNoBack") && !flag("idealJoin") && (out === "hit" || out === "any") ? depthOf(doc, id) : 0;
 }
+/** 手の無い (未設定の) 箱で、ほかの同じ枠の箱の戻り先になれる物 (S-51d を広げる、スイッチ idealJoin) */
+const openTrunk = (t: TreeBox): boolean => !t.hand && !t.back && !t.done && !t.split && !t.merged && !t.noAutoBack && t.out !== "start" && t.out !== "pass" && t.out !== "branch";
 /** 自動の ↩ の候補 (親 → 浅い段・先に作った箱の順) */
 export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
   const below = new Set(subtree(doc, id)), p = doc.boxes[id]?.parent ?? null;
@@ -89,7 +92,9 @@ export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
   // 品質はどこでも見ない (S-60b・S-60c、11-08 オーナー「いやだから品質みないっての」): カタリストの n % に届くかで候補を外さない
   // スイッチ idealNoBack (S-50g): 完成への道の手の結果 (当たり・狙い無しの結果) は上の段へ戻さない。同じ段・下の段への合流は今のまま
   const up = idealNoUp(doc, id);
-  const ts = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
+  // (スイッチ idealJoin) 手の無い同じ枠の箱も、木の並びで自分より前なら候補 (後ろから前へだけ = 輪にならない)
+  const join = flag("idealJoin");
+  const ts = Object.values(doc.boxes).filter((t) => (!!t.hand || (join && t.id !== id && openTrunk(t) && cmp(t.id, id) < 0)) && !below.has(t.id) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
   // 結果が 1 通りの手 (カタリストなど) で上の候補から続くだけの候補は、上の 1 つと数える (S-52b、11-08 オーナーの木の 13 段目 → 10 段目。11 段目はカタリストを打った後)
   return ts.filter((t) => !ts.some((u) => u !== t && straightUp(doc, t, u))).sort((x, y) => rank(x) - rank(y) || cmp(x, y));
 }
