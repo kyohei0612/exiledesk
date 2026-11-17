@@ -15,6 +15,7 @@ import { parseRuneKey } from "../../../services/craft-stage/engine";
 import { isWhittleHand, type LvClass } from "../../../services/simulator/tree/tree-whittle";
 import { lvLook } from "./tree-whittle-marks";
 import { CHIP_K } from "../../../services/simulator/tree/tree-row-tops";
+import { flag } from "../../../web/release-flags";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
@@ -45,6 +46,8 @@ const hold = computed(() => !!props.hand && holdsAt(sd.doc.value, props.id));
 const maxW = computed(() => `${Math.round(props.room / (props.inv * CHIP_K))}px`);
 /** 札の名前 (カレンシー・お告げ)。2 つ以上は 1 つずつ行に分け頭に「・」、行の中は折らず札は横に太くなってよい (S-142m、11-16 オーナー「・で区切って3行にしてくれ」) */
 const names = computed(() => (props.hand ? [props.hand.currency, ...props.hand.omens].map((k) => handName(k)) : []));
+/** (スイッチ chipIconRows、S-142m) 2 つ以上の札はアイコンを横に並べず、名前の行ごとに頭へ縦に積む (11-17 オーナー「横じゃなく縦に重ねてくれ 全部ね手の札」)。アイコンの無い物は同じ幅を空ける */
+const rows = computed(() => (props.hand && flag("chipIconRows") && names.value.length > 1 ? [props.hand.currency, ...props.hand.omens].map((k) => ({ k, icon: iconOf(k), name: handName(k) })) : null));
 /** 札の倍率 (画面の倍率の戻し × 札の大きさ、スイッチ hitsSide で 1.5 倍) */
 const sc = computed(() => String(props.inv * CHIP_K));
 /**
@@ -75,10 +78,13 @@ const whittleNoAim = computed(() => {
     </span>
     <span v-if="lane && laneRgb" data-tree-hand-lane class="shrink-0 rounded-sm px-1 text-[10px] font-bold text-black" :style="{ background: `rgb(${laneRgb})` }">{{ tr(LANE[lane][0], LANE[lane][1]) }}</span>
     <span v-if="hold" data-tree-hand-hold class="shrink-0 rounded-sm bg-violet-400/25 px-1 text-[10px] text-violet-100" :title="tr('予見の枠: まだ使わずに持って結果を見る', 'Foresight: held, not used yet')">{{ tr("持つ", "Hold") }}</span>
-    <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
+    <span v-if="rows" data-tree-hand-name data-tree-hand-rows class="flex min-w-0 flex-col items-start">
+      <span v-for="(r, i) in rows" :key="i" data-tree-hand-row class="flex h-[18px] items-center gap-1 whitespace-nowrap leading-[18px]"><img v-if="r.icon" :src="r.icon" alt="" class="size-[18px] shrink-0 object-contain" /><span v-else class="size-[18px] shrink-0" />・{{ r.name }}</span>
+    </span>
+    <span v-if="!rows" class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->
-    <span v-if="names.length > 1" data-tree-hand-name class="flex min-w-0 flex-col items-start leading-tight"><span v-for="(n, i) in names" :key="i" class="whitespace-nowrap">・{{ n }}</span></span>
-    <span v-else data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ names[0] }}</span>
+    <span v-if="!rows && names.length > 1" data-tree-hand-name class="flex min-w-0 flex-col items-start leading-tight"><span v-for="(n, i) in names" :key="i" class="whitespace-nowrap">・{{ n }}</span></span>
+    <span v-else-if="!rows" data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ names[0] }}</span>
     <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
     <!-- 骨は 3 択 (S-37、11-07): 未発現のままは「未発現」、発現させて狙い無しは「発現・狙い無し」 -->
