@@ -15,7 +15,7 @@ import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { isOldRecipe } from "../../../services/simulator/tree/tree-built";
-import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
+import { currentTreeRecipeId, refreshBuilt, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check"; import { tidyEleAny } from "../../../services/simulator/tree/tree-ele-any"; // デイリーのお題の木は印 eleAny を付けて開く = 読み替えない (S-10h ④、daily-open・daily-cost)。web/page は読まない (検算の束ねに入り history で落ちた、11-16)
 
@@ -255,7 +255,7 @@ function open(tree: TreeDoc, stepped = false): void {
   putTree(f.doc);
 }
 /** 古いレシピ (S-104e) を写しを使わず打ち方から今の決まりで組み直す (開くのと同じ覆い。1 つ戻すで古い木へ戻れる)。組んだ木 (捨てた・データがまだの時は null) */
-const renewOld = (): Promise<TreeDoc | null> => (s.data.value && !loading.value ? openStepped(s.data.value, doc.value, doc, () => { needBase.value = false; opened.value++; }, putTree, true) : Promise.resolve(null));
+const renewOld = (): Promise<TreeDoc | null> => (s.data.value && !loading.value ? openStepped(s.data.value, doc.value, doc, () => { needBase.value = false; opened.value++; }, putTree, true).then((d) => { const id = currentTreeRecipeId.value; if (d && id) refreshBuilt(id, d); return d; }) : Promise.resolve(null)); // 保存したレシピの写しを今の版へ (S-104f)
 /**
  * 白紙に戻す = 木を最初からやり直す: スタートの箱 (ベース・Lv・スタートの MOD) と完成形の設定は残し、スタートから下の箱・手だけを消す
  * (10-26 夜オーナー「スタート以外を消す意味。だけど MOD ごと消してるから直してくれ」。前は newTree で全部作り直し、狙いとスタートの MOD まで消えた)

@@ -105,6 +105,18 @@ export function saveTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
 export function overwriteTreeRecipe(id: string, tree: TreeDoc): void {
   put(treeRecipes.value.map((r) => (r.id === id ? { ...r, tree: stored(tree), updatedAt: Date.now() } : r)));
 }
+/**
+ * (S-104f、スイッチ builtRefresh) 古いレシピを今の決まりで組み直した木 tree の写しで、保存したレシピ id の写しを書き直す。
+ * 打ち方が保存と同じ時だけ。名前・更新の時刻は変えない (一覧の並びは動かない)。書き直したら true
+ */
+export function refreshBuilt(id: string, tree: TreeDoc): boolean {
+  const r = treeRecipes.value.find((x) => x.id === id);
+  if (!flag("builtRefresh") || !r || !sameTree(r.tree, tree)) return false;
+  const next = stored(tree);
+  if (!next.built) return false;
+  put(treeRecipes.value.map((x) => (x.id === id ? { ...x, tree: next } : x)));
+  return true;
+}
 export function renameTreeRecipe(id: string, name: string): void {
   const n = name.trim();
   if (n) put(treeRecipes.value.map((r) => (r.id === id ? { ...r, name: n } : r)));

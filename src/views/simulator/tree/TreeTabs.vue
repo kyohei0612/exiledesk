@@ -17,8 +17,8 @@ import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { askLeave, openTreePage, treeStep } from "../../../web/page";
 import { autoName, quickSave, unsaved } from "./tree-save";
-import { saveTreeRecipe } from "../../../state/simulator/tree-recipes";
-import { roomFull } from "../../../state/simulator/tree-room";
+import { currentTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { withRoom } from "../../../state/simulator/tree-room";
 
 const emit = defineEmits<{ switched: [] }>();
 /** compact = 木の枠の上の 1 行の帯の中 (SimTreePage、10-26 夜オーナー「1 行で」): 新しいツリー・コピーを道具の列と同じ平たいボタンにし、名前は帯が広い時だけ */
@@ -46,7 +46,8 @@ function close(i: number): void {
   const go = (): void => { t.closeTab(i); syncStep(); emit("switched"); };
   const active = i === t.active.value, d = active ? t.doc.value : t.tabDocs.value[i];
   if (!d || !unsaved(d, active)) { go(); return; }
-  askLeave(go, () => { if (active) quickSave(); else if (!roomFull()) saveTreeRecipe(autoName(d), d); }); // 15 個ある時は新しく保存しない (S-101b ②)
+  // 15 個ある時は一覧の窓で 1 つ消してから保存 (今開いている木の保存先は替えない、S-101b ①)
+  askLeave(go, () => { if (active) quickSave(); else withRoom(() => { const now = currentTreeRecipe.value?.id ?? null; saveTreeRecipe(autoName(d), d); if (flag("saveCap15")) setCurrentTreeRecipe(now); }); });
 }
 /** 名前を変えているタブ (null = 変えていない) */
 const editing = ref<number | null>(null);

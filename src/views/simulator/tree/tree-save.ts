@@ -17,7 +17,7 @@ import { track } from "../../../utils/track";
 import { useTree } from "./use-tree";
 import { blankTree, draftCode, openDraftTree } from "./tree-draft-open";
 import { openedMark } from "./tree-tab-recipe";
-import { roomFull } from "../../../state/simulator/tree-room";
+import { roomFull, withRoom } from "../../../state/simulator/tree-room";
 
 /**
  * 作りかけ (失うと困る物がある) か。開いているレシピがあればそれと違う時、無ければ完成の狙いか手 (箱 2 つ以上) がある時。
@@ -118,11 +118,19 @@ export function resumeTree(): boolean {
   t.goalPage.value = 0;
   return true;
 }
-/** 今の木を保存する。返すのは保存先のレシピと、上書きか (画面の一言用)。新しく保存する時にレシピが 15 個あれば保存しない = r が null (離れる時の「保存して進む」、S-101b ②) */
+/**
+ * 今の木を保存する。返すのは保存先のレシピと、上書きか (画面の一言用)。
+ * 新しく保存する時にレシピが 15 個あれば、保存を待たせて一覧の窓を出す = r が null (離れる時の「保存して進む」、S-101b ①)。
+ * 進むのはそのまま進み、窓で 1 つ消すと離れる前の木を保存する (その時に開いている木の保存先は替えない)
+ */
 export function quickSave(): { r: TreeRecipe | null; over: boolean } {
   const d = useTree().doc.value, cur = currentTreeRecipe.value;
   if (cur) { overwriteTreeRecipe(cur.id, d); track("tree-recipe:overwrite"); return { r: cur, over: true }; }
-  if (roomFull()) return { r: null, over: false };
+  if (roomFull()) {
+    const name = autoName(d);
+    withRoom(() => { const now = currentTreeRecipe.value?.id ?? null; saveTreeRecipe(name, d); setCurrentTreeRecipe(now); track("tree-recipe:save"); });
+    return { r: null, over: false };
+  }
   const r = saveTreeRecipe(autoName(d), d);
   track("tree-recipe:save");
   return { r, over: false };
