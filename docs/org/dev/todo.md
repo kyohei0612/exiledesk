@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_bb605aab-91ca-4b9a-93a4-808935585660 (87、Opus 5.5、11-17 23 時台に 86 = local_339d3668 が 2,3xx 件で止まり控えから入った。頼み = 共有 local_41371db6…/progress/sim-lead87-brief.md、進み = 同 sim-lead87.md、記録 = progress/sim-lead87-run.log、86 の引き継ぎ = sim-lead86.md の一番上) | 今: エミュで試す (S-211c、スイッチ simToEmuAll) の残りの確かめ = 載せた後の 1 手打つ・1 手戻す・戻るの写し・共有の再生、品質・暗黙・フラクチャー 2 つ以上・デイリーの挑戦から。崩れがあれば直しの案をブラックへ |
-| デザイン部長 | local_5e6646be-7400-43c3-af36-a6e41ec61131 (16、Opus 5.5、11-17 21 時台にブラック 132 が控えから入れた。15 = local_d9367122 が 2,519 件で交代。頼み = 共有 local_41371db6…/progress/design-lead16-brief.md、15 の引き継ぎ = design-lead15.md の一番上) | 今: 手持ち無し。帯 A (barSlim、S-94m) は d076df083 で入り見た目の返事待ち |
+| デザイン部長 | local_85ba6d0f-9b6f-4b07-bfdf-cc0f838f78aa (17、Opus 5.5、11-18 0 時台に控えから入った。16 = local_71450d17 が 2,5xx 件で止まった。頼み = 共有 local_41371db6…/progress/design-lead17-brief.md、16 の引き継ぎ = design-lead16.md の一番上) | 今: sideHeadLine・sideSlim (S-94hy・S-78f2) はシミュ・デイリーとも 3 幅の前後で崩れ 0、見た目の返事待ち |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | 分析の係 (11-14 にブラック 108 が立てた。この session) | 今: 要望の受け口 = 添付の上限 192 KB・Discord の本文に送った画面 (U-05e、デザイン部長 8 の差分)。本番のサーバーの出しは最終チェック長 |
