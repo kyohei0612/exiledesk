@@ -53,7 +53,9 @@ export async function openEmuWithGoals(base: string, itemLevel: number, goals: R
     s.itemLevel.value = itemLevel;
     if (!g) { s.reset(); simEmuNote.value = null; return; }
     const over = g.left.length > 0;
-    const why = over ? null : s.startWith(base, itemLevel, forcesOf(g.item));
+    // ソケットとルーンも載せる (ルーンの池の MOD = ウートレドの星読みのクロノマンシーなどは、ルーンを差してからでないと付かない。11-17 オーナー「シミュからエミュへいけない」)
+    const runes = flag("simToEmuRunes") ? (g.item.augments ?? []).map((a) => a.en) : [];
+    const why = over ? null : s.startWith(base, itemLevel, forcesOf(g.item), runes.length ? { sockets: g.item.sockets, runes } : {});
     if (over || why) {
       s.reset();
       simEmuNote.value = over

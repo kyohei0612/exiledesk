@@ -280,11 +280,12 @@ export const craftStage = {
    * ベース・アイテムレベル・始めの MOD をまとめて入れ、工程なしの品から始める (投稿の確かめの品を投稿の中のエミュに載せる、M-06c)。
    * 付かない組ならエンジンの訳を返し、今の品は変えない。載せたら null
    */
-  startWith(b: string, lv: number, mods: Force[]): string | null {
+  startWith(b: string, lv: number, mods: Force[], extra: { sockets?: number; runes?: string[] } = {}): string | null {
     if (!data.value || replay.value) return tr("読み込み中…", "Loading…");
     try {
       const sd = newSeed();
-      const it = fullSockets(startFrom(data.value, b, lv, { mods }, sd - 1));
+      // extra = 始めに差すソケットとルーン (シミュの「エミュで試す」の完成形。ルーンの池の MOD はルーンを差してからでないと付かない、S-211)
+      const it = fullSockets(startFrom(data.value, b, lv, { mods, ...extra }, sd - 1));
       base.value = b; itemLevel.value = lv; startMods.value = [...mods];
       log.value = []; dropped.value = []; omens.value = []; held.value = null;
       seed.value = sd; item.value = it; error.value = null;

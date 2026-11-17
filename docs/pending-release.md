@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュの「エミュで試す」で、完成形の品のソケットの数と差したルーンも始めの状態に入れる。ルーンの池の MOD (ウートレドの星読みなど) のある完成形が白で開き「そのままでは載せられない」と出ていた (エミュで試すを作った時から) のを直す (S-211b、スイッチ `simToEmuRunes`・開発版だけ、シミュ部長 86、craft-stage・sim-links はブラックが当てた。11-17 オーナー「シミュからエミュへいけない」、ブラック 132。見た目の OK 待ち) | (この行の commit) | シミュレーター: ルーンで付く MOD のある完成形も「エミュで試す」でそのまま開けるようにしました | Simulator: "Try in Emulator" now carries over sockets and runes, so targets with rune-granted mods open correctly |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
