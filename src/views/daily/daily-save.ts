@@ -8,6 +8,7 @@ import { tr } from "../../i18n/lang";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { currentTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
+import { withRoom } from "../../state/simulator/tree-room";
 import { track } from "../../utils/track";
 import { packJson } from "../../services/craft-stage/share";
 import { BUILT_Z_MAX, DAILY_BUILT, getTry, updateTry, type DailyTopic } from "./daily-api";
@@ -25,13 +26,16 @@ export const dailySavedNow = ref<string | null>(null);
 
 /** 写しを 1 つ足す。もう一度押せばもう 1 つ (前の写しは上書きしない) */
 export function saveDailyCopy(topic: DailyTopic, name: string, d: TreeDoc): void {
-  const keep = currentTreeRecipe.value?.id ?? null;
-  saveTreeRecipe(name.trim() || dailyRecipeName(topic), d);
-  setCurrentTreeRecipe(keep);
-  const v1 = v1Of(d);
-  updateTry(topic.id, { saved: v1 });
-  dailySavedNow.value = v1;
-  track("daily:save-recipe");
+  // レシピが 15 個ある時は一覧の窓で 1 つ消してから続ける (D-36d・S-101b ①、スイッチ saveCap15。切れている・15 個未満はすぐ)
+  withRoom(() => {
+    const keep = currentTreeRecipe.value?.id ?? null;
+    saveTreeRecipe(name.trim() || dailyRecipeName(topic), d);
+    setCurrentTreeRecipe(keep);
+    const v1 = v1Of(d);
+    updateTry(topic.id, { saved: v1 });
+    dailySavedNow.value = v1;
+    track("daily:save-recipe");
+  });
 }
 
 /** レシピに保存していない変更があるか。保存したことが無ければ手を 1 つ以上置いた木、保存した後はその時の打ち方と違う木 */
