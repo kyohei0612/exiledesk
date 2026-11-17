@@ -19,6 +19,7 @@ import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
+import { ODD_OUTS, oddOf } from "./tree-odd";
 import { essenceModOf, midAims, onceHeld, placedAims } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
@@ -83,6 +84,8 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   if (b.out === "hit") for (const id of bothOf(b.junkKey)) base.add(id);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
   if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
+  // 偶然付いた狙いの箱 (鍵 o:、S-21b) も付いた狙いを ☑
+  if (ODD_OUTS.has(b.out)) for (const id of oddOf(b.junkKey)) base.add(id);
   // 木の手のエッセンス / 合金で付けた完成形に無い MOD は、付いた時に名前の印 (カードで名前のまま、S-33c)。外れるのは後の残したい MOD の窓で選ばれなかった時だけ (上の keep)。
   // 11-08 オーナー「エッセンスと合金 一度付けた奴で名前がハズレＭＯＤになるのは残すを選択しなかった場合とかどうかね」
   const e = essenceModOf(b.parent ? doc.boxes[b.parent]?.hand?.currency : undefined);

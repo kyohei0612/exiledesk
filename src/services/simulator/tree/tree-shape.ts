@@ -12,6 +12,8 @@ import { effectOf } from "./tree-hands";
 import { essenceBoxFits } from "./tree-sample";
 import { judgeMemo } from "./tree-judge";
 import { pruneByContent } from "./tree-judge-link";
+import { ODD_OUTS, oddFits, oddOf, withoutOdd } from "./tree-odd";
+import { flag } from "../../../web/release-flags";
 import { aimKey, bothOf, keepCut, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
 /**
@@ -150,6 +152,13 @@ export function outBoxOf(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: O
   return outBoxOfRaw(data, doc, b, oc, after);
 }
 function outBoxOfRaw(data: PatchData, doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
+  // (スイッチ oddShapes、S-21b) 偶然付いた狙いの箱 (鍵 o:): 鍵 o: の結果は鍵の合う箱へだけ (無ければ行き先が無い = 配置が未設定で足す)。
+  // ほかの人は、付いた狙いを全部持っていれば同じ種類・同じ側の鍵の o: の箱へ (付いた狙いを持たない人は今までどおり)
+  if (ODD_OUTS.has(oc.out) && flag("oddShapes")) {
+    if (oddOf(oc.junkKey).length) return b.outs.find((id) => doc.boxes[id]?.out === oc.out && doc.boxes[id]?.junkKey === oc.junkKey);
+    const k = after ? b.outs.find((id) => { const c = doc.boxes[id]; return !!c && c.out === oc.out && withoutOdd(c.junkKey) === oc.junkKey && oddFits(data, c.junkKey, after); }) : undefined;
+    if (k) return k;
+  }
   // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)。
   // 鍵の合う箱が無ければ (前の版の 1 箱の外れ、見本で出なかった側) 今までどおり種類の合う箱
   // 狙いが消えたの箱も側の鍵を持つので (S-71g)、外れの人を同じ鍵の狙いが消えたの箱へ入れない

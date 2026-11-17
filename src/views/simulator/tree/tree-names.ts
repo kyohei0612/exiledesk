@@ -14,7 +14,7 @@ import { useTree } from "./use-tree";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
-import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { lowTierAimOf, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
+import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { oddOf } from "../../../services/simulator/tree/tree-odd"; import { lowTierAimOf, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
 import { tr } from "../../../i18n/lang"; import { OUT_WORDS } from "../../../services/simulator/tree/tree-out-words"; import { flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
@@ -145,7 +145,9 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : junkSideHead(b, k) ?? outsName(b);
   // 木の手で付けたエッセンス / 合金の MOD が消えた枝 (鍵 n:、S-65b): MOD の名前は出さず「エッセンスの MOD が消えた」とだけ付ける (S-33c の MOD 名の題は作らないまま)
   // 合金で付けた MOD なら「合金の MOD が消えた」(11-11 オーナー「おけ」)。種類は親の見本にあってこの箱の見本に無いクラフト MOD をエンジンの craftedKindOf で
-  const base = namedGoneOf(k) ? (goneAlloy(b) ? tr(`${base0} (合金の MOD が消えた)`, `${base0} (alloy mod removed)`) : tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`)) : base0;
+  const base1 = namedGoneOf(k) ? (goneAlloy(b) ? tr(`${base0} (合金の MOD が消えた)`, `${base0} (alloy mod removed)`) : tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`)) : base0;
+  // 偶然付いた狙いの箱 (S-21b、鍵 o:): 「<種類> · 狙いが付いた」(狙いの名前は長く題の札で切れたので出さない。どの狙いかはカードの狙いの行で分かる)
+  const base = oddOf(k).length ? tr(`${base1} · 狙いが付いた`, `${base1} · target added`) : base1;
   // 削減の手で外れの順位で分けた箱 (S-65b): 順位の鍵があればいつも付ける
   // 削減の手前の枠 (S-65c): 外れの MOD レベルの組はいつも付ける
   const lk = lvPart(k), rk = k && b.parent ? (lk ? lvLabel(lk) : null) ?? rankLabel(k) ?? swl : null;
