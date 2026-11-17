@@ -11,6 +11,7 @@ import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import { recipeOf } from "../../services/simulator/tree/tree-frame";
 import { craftStage } from "../craft-stage";
 import { clone, newId, parseList } from "./recipe-store-util";
+import { flag } from "../../web/release-flags";
 
 const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
 /** 直前の一覧の控え (本体が読めなかった時はここから) */
@@ -49,10 +50,27 @@ function read(): TreeRecipe[] {
     return ok;
   } catch { return []; }
 }
+/**
+ * 控えの 1 つ (スイッチ saveCap15 の間は打ち方だけ = 組み上がった木の写し built と例のアイテム examples を外す、S-101b ④。
+ * 開いた木の保存は 1 つ約 24 万字で大半が例のアイテム。控えにも同じ量を入れると 12 個で localStorage の枠に当たった。控えから戻した木は開く時に組み直す)
+ */
+const bakOf = (x: unknown): unknown => {
+  const r = x as { tree?: unknown } | null;
+  if (!r || typeof r !== "object" || !r.tree || typeof r.tree !== "object") return x;
+  const { built: _b, examples: _e, ...tree } = r.tree as { built?: unknown; examples?: unknown };
+  return { ...r, tree };
+};
+/** (スイッチ saveCap15) 本体を先に書き、入らなければ控えを空けて書き直す。控えはその後 (前は控えが枠に当たると本体も書かれず、黙って保存が消えていた) */
+function writeFirst(v: TreeRecipe[]): void {
+  const prev = localStorage.getItem(TREE_RECIPES_KEY), pl = parseList(prev), s = JSON.stringify(v);
+  try { localStorage.setItem(TREE_RECIPES_KEY, s); } catch { try { localStorage.removeItem(BAK); localStorage.setItem(TREE_RECIPES_KEY, s); } catch { return; } }
+  if (pl) try { localStorage.setItem(BAK, JSON.stringify(pl.map(bakOf))); } catch { /* 控えが入らなくても本体は残る */ }
+}
 function write(v: TreeRecipe[]): void {
+  if (flag("saveCap15")) { try { writeFirst(v); } catch { /* 覚えられなくても動く */ } return; }
   try {
-    const prev = localStorage.getItem(TREE_RECIPES_KEY);
-    if (parseList(prev)) localStorage.setItem(BAK, prev!);
+    const prev = localStorage.getItem(TREE_RECIPES_KEY), pl = parseList(prev);
+    if (pl) localStorage.setItem(BAK, prev!);
     localStorage.setItem(TREE_RECIPES_KEY, JSON.stringify(v));
   } catch { /* 覚えられなくても動く */ }
 }

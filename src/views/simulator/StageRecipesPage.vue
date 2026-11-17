@@ -24,6 +24,8 @@ import { track } from "../../utils/track";
 import { simAct, simOp } from "../../web/track";
 import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
+import { withRoom } from "../../state/simulator/tree-room";
+import TreeRoomModal from "./tree/TreeRoomModal.vue";
 
 const t = useTree();
 /** シミュの見るだけの幅 (S-94d): できるのは 開く・URL をコピー・URL を貼って開く・消すだけ */
@@ -80,13 +82,12 @@ function overwrite(r: TreeRecipe): void {
 }
 function saveNow(): void {
   simAct("save");
-  saveTreeRecipe(`${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`, t.doc.value);
-  track("tree-recipe:save");
+  const d = t.doc.value, name = `${tr(jaTypeName(d.base), d.base)} ${fmtDate(Date.now())}`;
+  withRoom(() => { saveTreeRecipe(name, d); track("tree-recipe:save"); }); // 15 個ある時は 1 つ消してから (S-101b ①)
   // 名前の欄には入らない (名前は決めなくてよい、後で ✎ で。10-26 オーナー「サクッと保存できるように」)
 }
 function duplicate(r: TreeRecipe): void {
-  const x = duplicateTreeRecipe(r.id, tr(" のコピー", " (copy)"));
-  if (x) track("tree-recipe:duplicate");
+  withRoom(() => { const x = duplicateTreeRecipe(r.id, tr(" のコピー", " (copy)")); if (x) track("tree-recipe:duplicate"); }); // 15 個ある時は 1 つ消してから (S-101b ①)
 }
 function remove(r: TreeRecipe): void {
   if (!arm.arm(`del:${r.id}`)) return;
@@ -221,5 +222,7 @@ onBeforeUnmount(() => { clearTimeout(noteT); const y = before; requestAnimationF
         </li>
       </ul>
     </div>
+    <!-- 15 個ある時に新しく保存しようとした時の一覧の窓 (S-101b ①) -->
+    <TreeRoomModal />
   </section>
 </template>

@@ -10,6 +10,7 @@ import TreeBoxModList from "./TreeBoxModList.vue";
 import TreeLaneAsk from "./TreeLaneAsk.vue";
 import TreeWhittleQuit from "./TreeWhittleQuit.vue";
 import TreeFracStop from "./TreeFracStop.vue";
+import TreeRoomModal from "./TreeRoomModal.vue";
 import { useTree } from "./use-tree";
 import { usePasteAnywhere } from "./tree-paste";
 
@@ -28,4 +29,6 @@ usePasteAnywhere();
   <TreeWhittleQuit />
   <!-- 確定フラクチャーが置けない時のポップアップ (S-43a、選んだ MOD が冒涜で付いた / 品に無い) -->
   <TreeFracStop />
+  <!-- レシピが 15 個ある時に新しく保存しようとした時の一覧の窓 (S-101b ①) -->
+  <TreeRoomModal />
 </template>

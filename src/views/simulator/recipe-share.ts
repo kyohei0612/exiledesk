@@ -24,6 +24,7 @@ import { setMapFold } from "./phone/map-fold";
 import { tr } from "../../i18n/lang";
 import { simAct } from "../../web/track";
 import { RECIPE_UNREADABLE, recipeOpenFailed } from "../../state/for-share/sim-links";
+import { roomFull } from "../../state/simulator/tree-room";
 
 /** URL の # の頭 */
 const RECIPE_SHARE_PREFIX = "#recipe=";
@@ -171,6 +172,14 @@ async function openRecipeCode(code: string): Promise<boolean> {
       const t = migrateTreeDoc((p as PackedTree).t)?.doc;
       if (!t) return false;
       sharedNewer.value = newerHands(t);
+      // (S-101b ②) レシピが 15 個ある時は一覧へ足さずに開く (同じ中身があればそれ)。開いた木は「保存していない」のまま = 離れる時は今どおり聞く
+      if (roomFull() && !treeRecipes.value.some((r) => sameTree(r.tree, t))) {
+        setCurrentTreeRecipe(null);
+        useTree().open(t, true);
+        openTreePage();
+        logRecord("tree_recipe_shared", t.picks ? { picks: t.picks.length } : { boxes: Object.keys(t.boxes).length });
+        return true;
+      }
       const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
       setCurrentTreeRecipe(tr2.id);
       useTree().open(tr2.tree, true);

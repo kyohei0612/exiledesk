@@ -22,6 +22,8 @@ import { track } from "../../../utils/track";
 import { simAct, simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
 import { toCss } from "../../../utils/zoom";
+import { withRoom } from "../../../state/simulator/tree-room";
+import { flag } from "../../../web/release-flags";
 
 const t = useTree();
 /** opened = 別の木を開いた (ツリーの側で全体に合わせる) */
@@ -84,7 +86,7 @@ function endRename(v: string): void {
   renaming.value = false;
   if (!v.trim()) return;
   if (currentTreeRecipe.value) renameTreeRecipe(currentTreeRecipe.value.id, v);
-  else { saveTreeRecipe(v, t.doc.value); track("tree-recipe:save"); }
+  else { const d = t.doc.value; withRoom(() => { saveTreeRecipe(v, d); track("tree-recipe:save"); }); } // 15 個ある時は 1 つ消してから (S-101b ①)
 }
 /**
  * 保存: 開いているレシピがあれば上書き (名前は聞かない)。まだ名前が無ければ名前の窓 (欄には最初からベースの名前と日時、そのまま「保存」でその名前。
@@ -104,18 +106,31 @@ function saveNamed(): void {
   const v = saveName.value.trim() || defaultName();
   naming.value = false;
   simAct("save");
-  saveTreeRecipe(v, t.doc.value);
-  track("tree-recipe:save");
-  void nextTick(() => { savedNow.value = true; });
+  const d = t.doc.value;
+  withRoom(() => { saveTreeRecipe(v, d); track("tree-recipe:save"); void nextTick(() => { savedNow.value = true; }); }); // 15 個ある時は 1 つ消してから (S-101b ①)
 }
 /** 名前の押し口: 保存したレシピなら名前を変える、まだなら名前の窓 */
 function onName(): void { if (currentTreeRecipe.value) startRename(); else save(); }
 function saveAs(): void {
   simAct("save");
-  saveTreeRecipe(currentTreeRecipe.value ? `${currentTreeRecipe.value.name}${tr(" のコピー", " (copy)")}` : defaultName(), t.doc.value);
-  track("tree-recipe:save-as");
+  const name = currentTreeRecipe.value ? `${currentTreeRecipe.value.name}${tr(" のコピー", " (copy)")}` : defaultName(), d = t.doc.value;
   pop.value = false;
-  startRename();
+  withRoom(() => { saveTreeRecipe(name, d); track("tree-recipe:save-as"); startRename(); }); // 15 個ある時は 1 つ消してから (S-101b ①)
+}
+/**
+ * (S-101b ③、スイッチ shareSaveAsk) 一度も保存していない木のシェアは、先に「保存して共有しますか？」。保存した後に変えた木は聞かない。
+ * 保存して共有 = 名前は自動 (15 個なら 1 つ消してから) → シェアの小窓のボタンへ。保存せずに共有 = 今どおり
+ */
+const askShare = ref(false);
+function openShare(): void {
+  share.value = !share.value; pop.value = false; naming.value = false;
+  askShare.value = share.value && flag("shareSaveAsk") && !currentTreeRecipe.value && !props.view;
+}
+function saveThenShare(): void {
+  simAct("save");
+  const name = defaultName(), d = t.doc.value;
+  share.value = false; askShare.value = false;
+  withRoom(() => { saveTreeRecipe(name, d); track("tree-recipe:save-share"); savedNow.value = true; share.value = true; });
 }
 
 // 「レシピ ▾」の窓
@@ -195,7 +210,7 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
     <span class="flex max-w-full shrink-0 flex-wrap items-center justify-center gap-1">
       <button v-if="!bare && !view" type="button" data-tree-recipe-save :class="btn" :aria-expanded="naming" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('名前を付けて保存 (Ctrl+S)', 'Save with a name (Ctrl+S)')" @click="save"><Icon v-if="flat" name="save" class="size-4" />{{ tr("保存", "Save") }}</button>
       <button type="button" data-tree-recipe-menu :class="menuOnly ? 'g-btn sm inline-flex shrink-0 items-center gap-1' : btn" :aria-expanded="pop" @click="pop = !pop; naming = false; share = false"><Icon v-if="flat" name="book" class="size-4" />{{ tr("レシピ", "Recipes") }} ▾</button>
-      <button v-if="!bare" type="button" data-tree-recipe-share :class="btn" :aria-expanded="share" :title="tr('この木を人に見せる (短い URL をコピー・X に出す)', 'Share this tree (copy a short URL or post to X)')" @click="share = !share; pop = false; naming = false"><Icon v-if="flat" name="share" class="size-4" />{{ tr("シェア", "Share") }}</button>
+      <button v-if="!bare" type="button" data-tree-recipe-share :class="btn" :aria-expanded="share" :title="tr('この木を人に見せる (短い URL をコピー・X に出す)', 'Share this tree (copy a short URL or post to X)')" @click="openShare"><Icon v-if="flat" name="share" class="size-4" />{{ tr("シェア", "Share") }}</button>
       <slot name="after" />
     </span>
     <!-- 開いたレシピにこの版に無い手 (本番で開くとそこから先を組めない。× で閉じる、S-103b) -->
@@ -216,8 +231,15 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
     </div>
     <!-- シェア: 短い URL をコピー・X に出す (窓の中の「URL をコピー」はここへ寄せた) -->
     <div v-if="share" data-tree-recipe-share-pop :class="popPlace" :style="{ maxHeight: `${popV.max}px` }" class="absolute z-40 flex flex-col gap-1.5 overflow-y-auto rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
-      <p class="opacity-70">{{ tr("開いた人はこの木で始まる", "Whoever opens it starts with this tree") }}</p>
-      <span class="flex flex-wrap gap-1.5">
+      <template v-if="askShare">
+        <p data-tree-share-ask class="break-words text-[13px]">{{ tr("保存して共有しますか？", "Save before sharing?") }}</p>
+        <span class="flex flex-wrap justify-end gap-1.5">
+          <button type="button" data-tree-share-nosave :class="SMALL" @click="askShare = false">{{ tr("保存せずに共有", "Share without saving") }}</button>
+          <button type="button" data-tree-share-save class="g-btn sm" @click="saveThenShare">{{ tr("保存して共有", "Save and share") }}</button>
+        </span>
+      </template>
+      <p v-if="!askShare" class="opacity-70">{{ tr("開いた人はこの木で始まる", "Whoever opens it starts with this tree") }}</p>
+      <span v-if="!askShare" class="flex flex-wrap gap-1.5">
         <button type="button" data-tree-recipe-copy-url class="g-btn sm inline-flex items-center gap-1" @click="copyUrl"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>
         <button type="button" data-tree-recipe-x class="g-btn sm" @click="shareX">{{ tr("X に出す", "Post to X") }}</button>
       </span>
