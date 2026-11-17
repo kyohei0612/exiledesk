@@ -30,6 +30,7 @@ import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
 import { backNav, remember } from "./page-memo";
+import { holdLeave } from "../state/simulator/tree-room";
 
 /** コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、views/skins/SkinsPage.vue はスキン部長。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
 export const skinsPage = ref(false);
@@ -138,7 +139,11 @@ export function answerLeave(ok: boolean | "save"): void {
   const save = askSave ?? layerGuard?.save ?? leaveSave;
   askSave = null;
   askCanSave.value = false;
-  if (ok === "save") save?.();
+  if (ok === "save") {
+    save?.();
+    // レシピが 15 個で保存が一覧の窓の待ちになったら、進むのは窓で 1 つ消して保存した後 (S-101b ①。先に進むと窓が画面ごと消えていた)
+    if (go && holdLeave(go)) return;
+  }
   if (ok) go?.();
 }
 /** 戻る / 進むで聞いて「保存せずに終了」になった時の 1 回は聞かずに通す。popBack = 聞くために元の位置へ戻した 1 回は何もしない */
