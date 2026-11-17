@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_ebdbc3f1-e67c-4d68-a99e-e80b9ed5c072 (83、Opus 5.5、11-17 夕にブラック 130 が控えから入れた。82 = local_baf556cf から交代。頼み = 共有 local_41371db6…/progress/sim-lead83-brief.md、進み = 同 sim-lead83.md、記録 = progress/sim-lead83-run.log、82 の引き継ぎ = sim-lead82.md の一番上) | 今: 保存を軽くして大きい木でも 15 個入る (S-101b ④ の続き、saveCap15、案を先に) → 失敗した後の同じ枠でルーン・カタリストの有り無しをまとめる (読みを先に)。後で = 横向きの直後に木の箱が画面の外・applyPick が craftStage.data を直に読む件 |
-| デザイン部長 | local_8cd17f09-35d0-423c-afd2-0e77e00d3c62 (13、Opus 5.5、11-17 夕にブラック 129 が入れた。12 = local_cbf0f520 から交代。頼み = 共有 local_41371db6…/progress/design-lead13-brief.md、進み = 同 design-lead13.md。記録 = progress/design-lead13-run.log) | 今: スマホで木を組む画面 (シミュの木・デイリーの挑戦) は横持ちだけ PC の画面、縦は案内 (U-53d・D-70c) の画面の確かめ。続き = どの幅でもはみ出さず押せる UI (U-53c) |
+| デザイン部長 | local_58ed4ac0-1723-44fd-af88-8e262b7b9c1b (14、Opus 5.5、11-17 夜にブラック 130 が入れた。13 = local_8cd17f09 から交代。頼み = 共有 local_41371db6…/progress/design-lead14-brief.md、進み = 同 design-lead14.md。記録 = progress/design-lead14-run.log) | 今: 完成形の札を送り棒なしで全部見せる (goalCardFull、S-78c) のデイリーの挑戦の確かめ。続き = 開発版の UI の崩れの洗い直し・シミュの上の帯を詰める案 |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | 分析の係 (11-14 にブラック 108 が立てた。この session) | 今: 要望の受け口 = 添付の上限 192 KB・Discord の本文に送った画面 (U-05e、デザイン部長 8 の差分)。本番のサーバーの出しは最終チェック長 |
