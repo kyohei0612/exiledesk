@@ -23,6 +23,7 @@ import { carryFloors, floorKeyOf, handWhittleSide, isWhittleHand, lvClassOf, lvP
 import { frameGroupKey, frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import type { MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
+import { setFlowShown } from "./tree-flow-once";
 import { holdsAt } from "./tree-foresee";
 import { sureFracOn, sureFracture } from "./tree-sure-frac";
 import { divineBranches, isDivineAim } from "./tree-divine";
@@ -167,7 +168,7 @@ const sigFull = (doc: TreeDoc): string => JSON.stringify(doc, (k, v: unknown) =>
  */
 let sigNow = new WeakMap<TreeDoc, string>(), sigClear = false, sigShown: TreeDoc | null = null;
 /** 画面に出ている木を知らせる (use-row-settle が木を替えるたびに呼ぶ) */
-export const setSigShown = (d: TreeDoc): void => { sigShown = d; };
+export const setSigShown = (d: TreeDoc): void => { sigShown = d; setFlowShown(d); };
 const sigOf = (doc: TreeDoc): string => {
   if (!flag("frameSigOnce") || doc !== sigShown) return sigFull(doc);
   let s = sigNow.get(doc);

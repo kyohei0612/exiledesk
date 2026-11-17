@@ -9,6 +9,7 @@
  */
 import type { TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
+import { flowOnce } from "./tree-flow-once";
 
 /** 隠す結果の種類 (狙いを持って打って狙い通りにいかなかった結果) */
 const HIDE_OUT: ReadonlySet<string> = new Set(["junk", "lost", "blocked"]);
@@ -18,6 +19,9 @@ const memo = new WeakMap<TreeDoc, { key: string; v: ReadonlySet<string> }>();
 /** 今隠す箱 (スイッチが閉じている・完成の印がある木は空) */
 export function idealHidden(d: TreeDoc): ReadonlySet<string> {
   if (!flag("idealHide")) return NONE;
+  return flowOnce("ideal", d, null, () => hiddenRaw(d)); // 画面の木は同じ流れで 1 回 (S-196i、スイッチ drawOnce)
+}
+function hiddenRaw(d: TreeDoc): ReadonlySet<string> {
   const bs = Object.values(d.boxes);
   if (bs.some((b) => b.done === "main")) return NONE;
   const key = bs.map((b) => `${b.id}:${b.out}:${b.hand ? 1 : 0}${b.split?.length ? 1 : 0}${b.back ? (b.autoBack ? "a" : "b") : ""}${b.done ?? ""}`).join("|");

@@ -9,6 +9,7 @@
 import { BOX_W, type TreeBox, type TreeDoc } from "./tree-model";
 import { foldOuts, stopToHead, stripFolds, stripHidden } from "./tree-strip-fold";
 import { flag } from "../../../web/release-flags";
+import { flowDepth } from "./tree-flow-once";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
 export const LINE_Y = 48;
@@ -22,7 +23,7 @@ export const LINK_Y = LINE_Y * 3 + CHIP_Y;
 export const EST_H = 230;
 
 /** 描かない箱 (ヒネコラのハズレの先頭へまとめた兄弟、tree-merge-open の mergedAway と同じ判定) */
-const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+const depthOf = (d: TreeDoc, id: string): number => flowDepth(d, id);
 const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back) && !!d.boxes[c.back]!.seen;
 /** 描く子 (まとめた箱はまとめ先へ線が行くので数えない。畳んだ消去の続きは札から止まった箱へ、S-28g) */
 export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => foldOuts(d, b).filter((o) => d.boxes[o] && !away(d, d.boxes[o]));

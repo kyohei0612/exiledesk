@@ -13,6 +13,7 @@ import { flag } from "../../../web/release-flags";
 import { idealHidden } from "./tree-ideal-hide";
 import { frontOf } from "./tree-front-path";
 import { treeOrder } from "./tree-order";
+import { flowDepth, flowOnce } from "./tree-flow-once";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -55,7 +56,8 @@ const through = (d: TreeDoc, b: TreeBox | undefined): boolean => inner(b) && (on
 const oneBranch = (): boolean => flag("treeNoAnnulAuto");
 
 /** 畳める続きを全部 (開いた物も)。head → 畳み */
-export function stripChains(d: TreeDoc): Map<string, StripFold> {
+export const stripChains = (d: TreeDoc): Map<string, StripFold> => flowOnce("chains", d, null, () => chainsRaw(d)); // 画面の木は同じ流れで 1 回 (S-196i)。返す物は書き換えない
+function chainsRaw(d: TreeDoc): Map<string, StripFold> {
   const out = new Map<string, StripFold>();
   for (const h of Object.values(d.boxes)) {
     // head = 止まらずに続く箱の並びの一番上 (親は続くだけの箱でない)。続くだけの箱が 2 段以上の時だけ畳む (S-28g ③)
@@ -98,7 +100,7 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
  * 自分の下に続きを持つ当たりは畳まない (11-14 オーナー「これもたたむし」)
  */
 const backOnly = (c: TreeBox | undefined): boolean => !!c && !!c.back && !c.done && !c.hand && !c.outs.length && c.out !== "pass";
-const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+const depthOf = (d: TreeDoc, id: string): number => flowDepth(d, id);
 /** 行き先が同じ段か先の箱 (→ 同じ枠へ・→ 同じ中身の箱の続きへ。tree-fail の isForward と同じ見方、↩ は前の段) */
 const ahead = (d: TreeDoc, id: string): boolean => { const c = d.boxes[id], t = d.boxes[c?.back ?? ""]; return !!t && t.id !== "start" && depthOf(d, t.id) >= depthOf(d, id); };
 /** (S-142j ③) 札を描かず直に線を引く畳み: 親の箱 → 行き先の箱 (重なりは 1 つ) */
@@ -182,12 +184,18 @@ export function drawnUp(d: TreeDoc): (id: string) => string | null {
 const unset = (c: TreeBox | undefined): boolean => !!c && !c.hand && !c.back && !c.done && c.out !== "pass" && !c.outs.length;
 /** 今畳んでいる続き (開いた物を除く) */
 export const stripFolds = (d: TreeDoc): Map<string, StripFold> => {
-  const all = stripChains(d), open = stripOpen.value;
-  for (const k of [...all.keys()]) if (open.has(k)) all.delete(k);
-  return all;
+  const open = stripOpen.value; // 開いた印は覚えの外 (読んでおくと描きの computed が開け閉めで掛け直る)
+  return flowOnce("folds", d, open, () => {
+    const all = flag("drawOnce") ? new Map(stripChains(d)) : stripChains(d);
+    for (const k of [...all.keys()]) if (open.has(k)) all.delete(k);
+    return all;
+  });
 };
-/** 描かない箱 (畳んだ続きの head 以外の自動の消去の箱) */
+/** 描かない箱 (畳んだ続きの head 以外の自動の消去の箱)。画面の木は同じ畳みなら同じ流れで 1 回 (S-196i) */
 export function stripHidden(d: TreeDoc, folds: ReadonlyMap<string, StripFold> = stripFolds(d)): Set<string> {
+  return flowOnce("hidden", d, folds, () => hiddenRaw(d, folds));
+}
+function hiddenRaw(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Set<string> {
   const s = new Set<string>();
   for (const f of folds.values()) for (const id of f.mids) if (id !== f.head || f.link || f.back) s.add(id); // 直に線・↩ の畳みは札も描かない
   // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
