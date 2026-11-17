@@ -279,7 +279,7 @@ watch(treeOn, (on) => {
     look();
     sideObs = new MutationObserver(look);
     sideObs.observe(side, { attributes: true, attributeFilter: ["style"] });
-    sideFit = fitDailySide(side); // 欄の高さに収める (カードの倍率・ミニマップ、D-37m)
+    if (!document.documentElement.hasAttribute("data-flag-dailysimcard")) sideFit = fitDailySide(side); // 欄の高さに収める (カードの倍率・ミニマップ、D-37m)。シミュの札のままの時 (D-37m2、スイッチ dailySimCard の印) は使わない
   });
 }, { immediate: true, flush: "post" });
 onBeforeUnmount(() => { sideObs?.disconnect(); sideFit?.(); });

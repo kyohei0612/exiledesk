@@ -55,7 +55,7 @@
 .daily-root[data-daily-page] [data-tree-canvas] { box-shadow: none; }
 
 /* 完成形の窓: 細い金の丸い線を外す (中のカードの枠はそのまま) */
-.daily-root[data-daily-page] [data-tree-goal] { position: relative; border-color: transparent !important; border-radius: 0; background: none; box-shadow: none; }
+:root:not([data-flag-dailysimcard]) .daily-root[data-daily-page] [data-tree-goal] { position: relative; border-color: transparent !important; border-radius: 0; background: none; box-shadow: none; }
 
 /* ---------- 枠の中の枠を外し、帯を 1 本に ---------- */
 .daily-root[data-daily-page] [data-tree-page] > .g-panel { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0; padding: 0 0 6px; }
