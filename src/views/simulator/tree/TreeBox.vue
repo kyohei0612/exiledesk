@@ -98,6 +98,8 @@ const sample = computed(() => sampled.value?.sample ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => sampled.value?.item ?? null);
+/** (スイッチ boxRuneLine、S-81b) 結果の箱の見本に刺さっているルーンの名前 (刺さっていなければ空 = 行を出さない) */
+const runeNames = computed(() => (flag("boxRuneLine") && props.box.out !== "start" ? (cardItem.value?.augments ?? []).map((a) => tr(a.ja, a.en)).join(" · ") : ""));
 /** ヒネコラで持っている所は枠を紫に (S-39、開発版だけ。11-05 オーナー「枠を紫にしようかヒネコラで持ってる挙動」): hold = ヒネコラの結果の箱 (手は「持つ」)、seenOut = そこに持った手の結果の箱 */
 const hold = computed(() => holdsAt(sd.doc.value, props.box.id));
 const seenOut = computed(() => foreseenAt(sd.doc.value, props.box.id));
@@ -267,6 +269,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <div v-if="cardItem" data-tree-box-card :class="[box.out === 'start' ? 'mt-0.5' : 'mt-3', box.out === 'start' && !quiet ? 'nodrag cursor-pointer rounded-md hover:brightness-110' : 'pointer-events-none']" :title="box.out === 'start' ? startTitle : undefined" @click.stop="box.out === 'start' && !quiet && emit('aim')">
       <div :style="{ width: `${CARD_W}px` }"><StageItemCard :row-group="null" :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
+    <p v-if="cardItem && runeNames" data-tree-box-rune class="mt-0.5 break-words text-[12px] leading-4 text-stage-rune" :style="{ width: `${CARD_W}px` }">◇ {{ tr("ルーン", "Rune") }}: {{ runeNames }}</p>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
     <!-- 読むだけ (スマホの全体図・道、縮めて見ている時) はボタンを出さない (11-07 ux-review 19) -->
     <div v-if="box.out === 'start'" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1.5" :style="{ minHeight: `${24 * k}px` }">
