@@ -7,7 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | シミュの木の上の帯 (2 行) の 2 行目のボタンの背と余白を詰める (1920 で 81 → 69px、外の枠は残す) (S-94m、スイッチ `barSlim`・開発版だけ、デザイン部長 15。オーナー 11-17「OKおすすめで」= 案 A、ブラック 132。3 幅で崩れ 0。見た目の OK 待ち) | (この行の commit) | シミュレーター: ツリーの上のボタンの帯を細くして、ツリーを広く見られるようにしました | Simulator: the button bar above the tree is slimmer, leaving more room for the tree |
-| シミュの木: ルーンを見ずにまとめた失敗の箱の見本は、↩ で入るルーン付きの人を先に (S-60g2、スイッチ `failRuneSample`・開発版だけ、シミュ部長 84〜86。オーナー 11-17「まぁどっちでもええなおすすめで」→ ブラック 132 の決めで B。見た目の OK 待ち) | (この行の commit) | シミュレーター: まとめた失敗の箱で、ルーンの付いた人がいればその見本を出すようにしました | Simulator: merged failure boxes now show a rune-socketed example when one leads there |
+| シミュの木: ルーンを見ずにまとめた失敗の箱の見本は、↩ で入るルーン付きの人を先に (S-60g2、スイッチ `failRuneSample`・開発版だけ、シミュ部長 84〜86。オーナー 11-17「まぁどっちでもええなおすすめで」→ ブラック 132 の決めで B。見た目 OK = オーナー 11-17「おｋ」(sim86-rune-x7/y7 の前後)。土台の failRuneFree (S-60g) は表に行が無く本番で閉じたまま、出す時は一緒に開ける) | (この行の commit) | シミュレーター: まとめた失敗の箱で、ルーンの付いた人がいればその見本を出すようにしました | Simulator: merged failure boxes now show a rune-socketed example when one leads there |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
