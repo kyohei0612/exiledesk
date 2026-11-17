@@ -11,7 +11,6 @@ import { subtree } from "../../../services/simulator/tree/tree-model";
 import Icon from "../../../components/ui/Icon.vue";
 import { mergedAway, mergedInto } from "../../../services/simulator/tree/tree-merge-open";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
-import { runeArt } from "../../../components/art/rune-art";
 import { craftStage as s } from "../../../state/craft-stage";
 import { boxCardOf } from "./box-card";
 import { previewUse } from "../../../services/craft-stage/engine";
@@ -99,7 +98,7 @@ const sample = computed(() => sampled.value?.sample ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => sampled.value?.item ?? null);
-/** (スイッチ boxRuneLine、S-81b) 結果の箱の見本に刺さっているルーンの名前 (刺さっていなければ空 = 行を出さない) */
+/** (スイッチ boxRuneLine、S-81b) 結果の箱の見本に刺さっているルーンの名前 (刺さっていなければ空 = カードの中のソケットの行を出さない) */
 const runeNames = computed(() => (flag("boxRuneLine") && props.box.out !== "start" ? (cardItem.value?.augments ?? []).map((a) => tr(a.ja, a.en)).join(" · ") : ""));
 /** ヒネコラで持っている所は枠を紫に (S-39、開発版だけ。11-05 オーナー「枠を紫にしようかヒネコラで持ってる挙動」): hold = ヒネコラの結果の箱 (手は「持つ」)、seenOut = そこに持った手の結果の箱 */
 const hold = computed(() => holdsAt(sd.doc.value, props.box.id));
@@ -268,16 +267,7 @@ const keepFlow = computed((): Record<string, string> => (k.value > 1 ? { zoom: S
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
     <div v-if="cardItem" data-tree-box-card :class="[box.out === 'start' ? 'mt-0.5' : 'mt-3', box.out === 'start' && !quiet ? 'nodrag cursor-pointer rounded-md hover:brightness-110' : 'pointer-events-none']" :title="box.out === 'start' ? startTitle : undefined" @click.stop="box.out === 'start' && !quiet && emit('aim')">
-      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :row-group="null" :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
-    </div>
-    <!-- (スイッチ boxRuneLine、S-81b) 刺さったルーンは完成形のカードと同じソケットの丸にルーンの絵 (空きは丸だけ)、横に名前。11-17 オーナー「だからルーンの絵がねぇっつうのばか」 -->
-    <div v-if="cardItem && runeNames" data-tree-box-rune class="mt-1 flex items-center gap-1.5" :style="{ width: `${CARD_W}px` }">
-      <span class="flex shrink-0 items-center gap-1">
-        <span v-for="i in cardItem.sockets ?? 0" :key="'s' + i" :data-tree-box-socket="i" class="grid place-items-center rounded-full border-2 border-stage-socket-rim bg-bg-elevated shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="cardItem.augments?.[i - 1] ? 'h-8 w-8' : 'h-4 w-4'" :title="cardItem.augments?.[i - 1] ? tr(`${i} 番目: ${cardItem.augments[i - 1]!.ja}`, `Socket ${i}: ${cardItem.augments[i - 1]!.en}`) : tr(`${i} 番目: 空き`, `Socket ${i}: empty`)">
-          <img v-if="cardItem.augments?.[i - 1] && runeArt(cardItem.augments[i - 1]!.en)" :src="runeArt(cardItem.augments[i - 1]!.en)!" alt="" class="h-7 w-7 object-contain" draggable="false" />
-        </span>
-      </span>
-      <span class="min-w-0 break-words text-[12px] leading-4 text-stage-rune">{{ runeNames }}</span>
+      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :row-group="null" :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" :socket-row="!!runeNames" /></div>
     </div>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
     <!-- 読むだけ (スマホの全体図・道、縮めて見ている時) はボタンを出さない (11-07 ux-review 19) -->
