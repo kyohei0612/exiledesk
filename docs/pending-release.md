@@ -8,6 +8,7 @@
 |---|---|---|---|
 | スマホは「PC 版を表示して挑戦」で PC の画面を縮めて挑戦 (D-70c、スイッチ `dailyPcView`、デザイン部長 12。デイリーの 2 ファイルの差し込み待ち・見た目の OK 待ち) | 4ac485a38・(この直し) | スマホでもデイリーの挑戦ができるように: 「PC 版を表示して挑戦」を押すと、PC と同じ画面を全体表示で出して挑戦できる (指で拡大・縮小)。一覧へ戻るとスマホの画面に戻る | Daily challenges now work on phones: tap "Play in PC view" to take the challenge on the full PC layout, zoomed out (pinch to zoom). Going back to the list returns to the phone layout |
 | シミュの木: 描く 1 回の中で畳み・隠す箱・深さを 1 回だけ作る (S-196i、スイッチ `drawOnce`・開発版だけ、オーナー 11-17、ブラック 128・129。オーナーの木 171 箱で手を置く 11 手の固まりの合計 4,509 → 3,252ms・真ん中 248 → 183ms。見た目・箱の中身は同じ) | f43949708 | シミュレーター: 大きいツリーで手を置く・替える・消した後の描き直しを軽くしました | Simulator: redrawing large trees after placing, changing, or removing a craft is now lighter |
+| シミュの木: 見本の配置は前と同じ段の答えを使い、手を置いた箱の下だけ作り直す (S-196j、スイッチ `frameReuse`・開発版だけ、オーナー 11-17、ブラック 129。共有 URL を開くまで オーナーの木 171 箱 3.9 → 3.1 秒・猫ごたつ 102 箱 2.1 → 1.7 秒、手を置く最大 680 → 610ms。見た目・箱の中身は同じ) | a182dc361 | シミュレーター: 大きいツリーのレシピを開く時と手を置く時の待ちをさらに短くしました | Simulator: opening large recipes and placing crafts in big trees is faster again |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
