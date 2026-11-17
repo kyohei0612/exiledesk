@@ -21,6 +21,41 @@
   max-height: none;
   overflow: visible;
 }
+/* 札は右の列の幅いっぱいで、列を超えない (札の幅は TreeGoalCard が px で決め打ちしていて、列ごと縦に送る時の送り棒の分だけ
+   右が切れた = 1280x720 で「Lv」「ティア調整」とカードの右の端が欠けた、11-17 夜)。中のカードも入れ物の幅を超えず、超える分は折り返す */
+:root[data-flag-goalcardfull] [data-tree-side] [data-tree-goal] {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+:root[data-flag-goalcardfull] [data-tree-goal] [data-stage-card] {
+  max-width: 100%;
+}
+/* ベース・ティア調整 (MOD) の札はカードの字に重ねず、カードのすぐ下の右寄せの 1 行に並べる (11-17 ブラック 130「札が字に被っている」。
+   前は種類の行・区切り線の右に浮かせていて、アイテムレベル・品質・暗黙の行に掛かった)。TreeGoalCard の位置の計算 (top) と区切り線の上下の空きは使わない */
+:root[data-flag-goalcardfull] [data-tree-goal] > div.relative {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+:root[data-flag-goalcardfull] [data-tree-goal] > div.relative > :not([data-tree-goal-open]):not(.absolute) {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+:root[data-flag-goalcardfull] [data-tree-goal] > div.relative > [data-tree-goal-open],
+:root[data-flag-goalcardfull] [data-tree-goal] > div.relative > div.absolute {
+  position: static !important;
+  transform: none !important;
+  translate: none !important; /* Tailwind v4 の -translate-y-1/2 は translate の性質 */
+  top: auto !important;
+  margin-top: 2px;
+}
+:root[data-flag-goalcardfull] [data-tree-goal] [data-stage-card] .st-sep {
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
+}
 /* 縮めずに折る行は語の切れ目で (「-1個」の数と単位の間で割らない。fit-text が折る時と同じ) */
 :root[data-flag-goalcardfull] [data-tree-goal] [data-stage-card] [data-fit-off="1"] {
   word-break: keep-all;
