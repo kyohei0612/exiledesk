@@ -22,6 +22,8 @@ import { dailyShare, sendDailyShare, type DailyShare } from "./daily-share";
 const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>();
 /** 挑戦できない幅 (D-70 = 1280 未満。スイッチ dailyFit で D-70b = シミュの木と同じ 768 未満) */
 const phone = flag("dailyFit") ? useViewOnlyWidth() : usePhone();
+/** ラベルと数を離さない空き (D-50j、スイッチ dailyWrap。閉じている間は普通の空き) */
+const sp = flag("dailyWrap") ? " " : " ";
 const art = computed(() => baseArt(props.topic.base));
 const name = computed(() => tr(props.topic.baseJa, props.topic.base));
 const slot = computed(() => SLOT_NAMES[props.topic.slot] ?? null);
@@ -76,7 +78,7 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
         <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t || closed ? 'open' : ''" /></span>
         <div class="min-w-0">
           <div class="daily-plate"><p class="daily-veil-name">{{ name }}</p></div>
-          <p class="daily-meta">{{ tr(`狙う MOD ${topic.modCount} つ、アイテムレベル ${topic.ilvl}`, `${topic.modCount} target mods, item level ${topic.ilvl}`) }}<template v-if="slot">{{ tr(`、${slot.ja}の日`, `, ${slot.en} day`) }}</template></p>
+          <p class="daily-meta">{{ tr(`狙う MOD${sp}${topic.modCount}${sp}つ、アイテムレベル${sp}${topic.ilvl}`, `${topic.modCount} target mods, item level${sp}${topic.ilvl}`) }}<template v-if="slot">{{ tr(`、${slot.ja}の日`, `, ${slot.en} day`) }}</template></p>
           <p v-if="topic.fromBox" class="daily-meta">{{ tr("クラフトボックスの投稿から", "From the craft box") }}</p>
         </div>
       </div>
