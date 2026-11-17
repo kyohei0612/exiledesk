@@ -6,7 +6,7 @@
 | 誰 | session id | 今 |
 |---|---|---|
 | ブラック | local_fcd66af1-889f-43a4-8bf1-de5b66cfd0ce (129 代目、Opus 5.5、11-17 15 時台に入れ替え。128 = local_953eabd5 が 2,39x 件で交代。進み = 共有 local_41371db6…/progress/black129.md・引き継ぎ = black128.md の一番上と ExileDesk/progress/black128-run.log) | 司令塔・振り分け・順番 |
-| デイリー部長 | local_3dc532a3-f59c-4ab6-85fb-9529ad6ab3fc (29、11-16 夜にブラック 125 が立てた。28 = local_384664fe はアーカイブ。頼み = 共有 local_41371db6…/progress/daily-lead29-brief.md、進み = 同 daily-lead29.md、記録 = progress/daily-lead29-run.log) | 今: 挑戦中のぼかし・押した箱だけ完成 (76837c02f、開発版)、ごめんねの木の数え直し (書くのはオーナーの OK の後)。お題が決まった時に #日報 へ「今日のお題」を 1 通 |
+| デイリー部長 | local_ca92eb9e-c9fd-4bcb-acac-e8c0fbe75685 (30、Opus 5.5、11-17 夕にブラック 129 が立てた。29 = local_3dc532a3 から交代。頼み = 共有 local_41371db6…/progress/daily-lead30-brief.md、進み = 同 daily-lead30.md、記録 = progress/daily-lead30-run.log) | 今: クラフト箱に同じベースで狙いの MOD が 3 つ以上同じ品を重ねて入れない (サーバー、出しはオーナーの「出して」の後)。お題が決まった時に #日報 へ「今日のお題」を 1 通 |
 | 最終チェック長 | local_f1177c1e-6910-4b0b-a6d4-cb5c90ae7881 (26、11-17 にブラック 128 が控えで立て、ブラック 129 の合図で入った。頼み = 共有 local_41371db6…/progress/release-next26-brief.md、進み = 同 release-next26.md) | 今: 0.1.747 を本番に出した (Web 2db3695d)。次の出しの合図待ち |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
 | 解析君 | — (analyst1 local_819bb9cb は 11-14 0 時台に ui_tally を済ませてアーカイブ。一覧は本番に出て 1 週溜めてから) | 待機 |
