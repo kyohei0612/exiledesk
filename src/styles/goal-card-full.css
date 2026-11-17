@@ -1,0 +1,32 @@
+/*
+ * 完成形の札は送り棒を出さず全部見せる (sim-tree.md S-78c、スイッチ goalCardFull = <html data-flag-goalcardfull>、2026-11-17)。
+ * オーナー 11-17「完成形の見本このバーなくて全体写す感じでやってくれ。」
+ * 前は札の入れ物 (列の 60% まで) と札の中のカード (画面の高さ − 14rem まで) の 2 重に縦へ送り、縦の送り棒が幅を食って横の送り棒も出た。
+ * 札は中身なりの高さにし、入らない時は右の列 (シミュの木・デイリーの挑戦とも [data-tree-side]) ごと縦に送る。
+ * MOD の行を縮めず折り返すのは StageItemCard (tightTier の時だけ fit-text を止める)。
+ */
+:root[data-flag-goalcardfull] [data-tree-side] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+/* 札の入れ物 (SimTreePage の max-h-[60%] overflow-y-auto・デイリーの D-37m2 の上書きも) は送らない */
+:root[data-flag-goalcardfull] [data-tree-side] > [data-tree-goal-side] {
+  max-height: none !important;
+  overflow: visible !important;
+}
+/* 札の中のカードの入れ物 (TreeGoalCard の wrap) も送らない */
+:root[data-flag-goalcardfull] [data-tree-goal] > div.relative {
+  max-height: none;
+  overflow: visible;
+}
+/* 縮めずに折る行は語の切れ目で (「-1個」の数と単位の間で割らない。fit-text が折る時と同じ) */
+:root[data-flag-goalcardfull] [data-tree-goal] [data-stage-card] [data-fit-off="1"] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* 列ごと送る時もミニマップと倍率の道具は潰さない */
+:root[data-flag-goalcardfull] [data-tree-side] > div.flex-1 {
+  min-height: 200px;
+}

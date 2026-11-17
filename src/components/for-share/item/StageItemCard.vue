@@ -44,6 +44,8 @@ import { isPhoneWidth } from "../../../utils/use-phone";
 const props = defineProps<{ qualityRow?: boolean; item: StageItem; /** カードの下の案内の代わりに出す 1 行 (聖別の見本、M-55) */ note?: string; /** 品質の行と暗黙の間の小さな見出し (シミュの完成形のカードの「完成形の MOD」、S-31d) */ modsHead?: string; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; clickFracture?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean; /** 段を「S2 以上」(英語 S2+) と出す。狙いの段 (シミュの完成形、2026-10-24 オーナー「S2 なら S2 以上って書かんと」)。一番上の段 (1) には付けない */ tierAtLeast?: boolean; /** MOD の行だけ (題の帯・種類・アイテムレベル・品質・ベースの値・ソケット・ルーン・エンチャント・暗黙を出さない。シミュのツリーの箱の中の小さなカード、2026-10-26 オーナー「枠は現状のアイテムの枠」) */ modsOnly?: boolean; /** 左の段の札 (P1・S2 以上・暗黙) の列と右の空きを半分ほどに・字を 10px に、空いた分 MOD の文を 16px に (シミュの細い右の列の完成形、10-26 夜オーナー「ティアの表示は小さくていいから、その分文字大きく」) */ tightTier?: boolean; /** modsOnly でも題の帯 (ベース名) だけは出す (シミュのツリーの箱、10-26 夜オーナー「『不在のアミュレット』っていう感じで枠作ってほしい」) */ withTitle?: boolean; /** MOD の行の札の後ろに押せる札 (modId → 文字・押された状態。押すと toggle)。渡さなければ出ない (シミュの完成形の「途中で消える」、オーナー 10-27 夜) */ rowToggles?: ReadonlyMap<string, RowToggle> | null; /** MOD の行の束 (modId → 束の番号)。渡すと (束が無くて null でも) 並びは全部プレ → 全部サフィ、各側の中は ふつう → エッセンス・合金 (束の番号の順)、冒涜だけ一番下。渡さなければ並びは今のまま (シミュの完成形、S-30b・U-10) */ rowGroup?: ReadonlyMap<string, number> | null}>();
 /** 行の押せる札 (rowToggles)。スイッチ rowToggle が切れている間は渡されても出さない */
 const ROW_TOGGLE = flag("rowToggle");
+/** 完成形の札 (tightTier = シミュの右の列だけ) は MOD の行を縮めず折り返す (S-78c、スイッチ goalCardFull) */
+const fitOn = computed(() => !(flag("goalCardFull") && props.tightTier));
 const toggleOf = (m: StageMod): RowToggle | null => (ROW_TOGGLE && !m.unrevealed ? props.rowToggles?.get(m.modId) ?? null : null);
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
@@ -336,7 +338,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <!-- 下に値の幅 (トレードサイトの「[6–9 から 11–15]」と同じ。暗黙はティアが無いので下限・上限が分かるように。2026-10-12 オーナー) -->
           <span class="shrink-0 text-left leading-tight text-white/45" :class="[tightTier ? 'text-[10px]' : 'text-[11px]', t.ranges.length ? (tightTier ? 'min-w-6' : 'min-w-7') : tightTier ? 'w-6' : 'w-7']">{{ tr("暗黙", "Impl.") }}<span v-if="t.ranges.length" class="block whitespace-nowrap text-[10px] tabular-nums text-white/40">[{{ rangeLabel(t.ranges) }}]</span></span>
           <!-- 入らなければ字を縮めて 1 行、10px でも入らなければ語の切れ目で折る (fit-text.ts、10-26 夜オーナー) -->
-          <span v-fit-text class="min-w-0 flex-1 text-center text-rarity-magic">
+          <span v-fit-text="fitOn" class="min-w-0 flex-1 text-center text-rarity-magic">
             <span v-if="BASE_VALUES_ON && t.boosted" :title="tr('素の値 (品質で盛る前)。小さい文は品質で盛った値', 'Base value (before quality). The small text is the boosted value')">{{ t.baseText }}<span data-boosted-value class="ml-1 text-[10px] text-stage-boost">({{ t.text }})</span></span>
             <span v-else :class="t.boosted ? 'text-stage-boost' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
@@ -363,18 +365,18 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <template v-if="fracSplit">
             <p data-fracture-head class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
               <span class="shrink-0 whitespace-nowrap text-left font-bold" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]']">{{ fracSplit.head.tag }}</span>
-              <span v-fit-text class="min-w-0 flex-1 text-center">{{ fracSplit.head.text }}</span>
+              <span v-fit-text="fitOn" class="min-w-0 flex-1 text-center">{{ fracSplit.head.text }}</span>
               <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
             </p>
             <p v-for="i in FRAC_ONE_ROW ? 0 : fracSplit.rest.n" :key="`fr-rest-${i}`" data-fracture-rest class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-rarity-magic hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
               <span class="shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', fracSplit.rest.cls]">{{ fracSplit.rest.tag }}</span>
-              <span v-fit-text class="min-w-0 flex-1 text-center">{{ fracSplit.rest.text }}</span>
+              <span v-fit-text="fitOn" class="min-w-0 flex-1 text-center">{{ fracSplit.rest.text }}</span>
               <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
             </p>
           </template>
           <p v-else class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
             <span class="shrink-0 text-left font-bold" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]']">{{ [...new Set(fracRows.map((r) => (r.side === "プレフィックス" ? "P" : "S")))].join("·") }}</span>
-            <span v-fit-text class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
+            <span v-fit-text="fitOn" class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
             <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
           </p>
           <div data-fracture-pop class="space-y-0.5 rounded border border-stage-frame-rare bg-stage-pop-bg/95 px-2 py-1.5 text-[12px]" :class="FRAC_ONE_ROW && fracSplit ? ['mx-1 mt-0.5', fracOpen ? 'block' : 'hidden group-hover/fg:block'] : ['absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 shadow-[0_6px_20px_rgba(0,0,0,0.7)]', fracOpen ? 'visible' : 'invisible group-hover/fg:visible']">
@@ -404,7 +406,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
           <span class="shrink-0 text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', r.side === 'プレフィックス' ? 'text-stage-prefix' : 'text-stage-suffix']">{{ sideTier(r) }}</span>
           <!-- 札は文の続き: 入らなければまず字を縮めて 1 行 (v-fit-text)、10px でも入らない時だけ折れる。modsOnly (箱の中) は縮めずに次の行へ折り、その行の間を詰める (10-26 夜オーナー「折る感じで」) (st-mo-mid。行の余白も詰めて入る幅を広げる。10-26 夜オーナー「フラクチャーと MOD の行間も狭く」「入りそうなら入れていい、臨機応変に」) -->
-          <span v-fit-text="!modsOnly" class="min-w-0 flex-1 text-center" :class="modsOnly ? 'st-mo-mid' : ''">
+          <span v-fit-text="!modsOnly && fitOn" class="min-w-0 flex-1 text-center" :class="modsOnly ? 'st-mo-mid' : ''">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
             <!-- 札で名前を替えた行 (外れ MOD など) も、消える候補ならオレンジ (10-27 シミュの手の窓で消去を持った時に外れの行だけ色が付かなかった) -->
