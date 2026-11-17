@@ -35,7 +35,7 @@ export const veilPick = (h: Pick<Hand, "currency" | "veil"> | null | undefined):
  * (11-06 sim-speed: ワンド 34 箱の 100 人回しの 4 割強)。外では毎回作る (木を書き換える途中で呼ばれる)
  */
 const PLACED = new WeakMap<TreeDoc, [number, Aim[]]>(), MID = new WeakMap<TreeDoc, [number, Aim[]]>();
-const onceHeld = (m: WeakMap<TreeDoc, [number, Aim[]]>, doc: TreeDoc, make: () => Aim[]): Aim[] => {
+export const onceHeld = <T>(m: WeakMap<TreeDoc, [number, T]>, doc: TreeDoc, make: () => T): T => {
   const n = docHeld(doc);
   if (!n) return make();
   const had = m.get(doc);

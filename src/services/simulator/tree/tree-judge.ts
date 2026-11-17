@@ -19,7 +19,7 @@ import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
-import { essenceModOf, midAims, placedAims } from "./tree-veil";
+import { essenceModOf, midAims, onceHeld, placedAims } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
@@ -35,7 +35,13 @@ import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
  * ☑ した完成形に無いエッセンスは、その後の箱でも ☑ の印のある人には狙い (消えたら「狙いが消えた」)。前は完成形の札だけで絞り、☑ しても外れに戻って
  * 「エッセンスが消えて外れが残った」と「外れが消えてエッセンスが残った」が同じ枠で合流した (11-08 オーナー「エッセンスかも扱い　残す方の挙動かなこれ」)
  */
-const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc), ...keptOfTree(data, doc), ...midAims(data, doc)];
+const contentAims = (data: PatchData, doc: TreeDoc): Aim[] => (flag("aimsOnce") ? onceHeld(AIMS, doc, () => contentRaw(data, doc)) : contentRaw(data, doc));
+const contentRaw = (data: PatchData, doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(data, doc), ...keptOfTree(data, doc), ...midAims(data, doc)];
+/**
+ * (スイッチ aimsOnce) 狙いの組・木の族は木が変わらない間 (holdDocSig の 1 回の中) は 1 回だけ作る。どれも箱を全部なめるので、配置を作る間に箱ごとに作ると
+ * 箱の数の 2 乗になった (171 箱の木で手を置く時の CPU の 6 割、11-17 オーナー「またつける時フリーズする」)。外 (木を書き換える途中) では毎回作る = 結果は同じ
+ */
+const AIMS = new WeakMap<TreeDoc, [number, Aim[]]>(), FAMS_HELD = new WeakMap<TreeDoc, [number, ReadonlySet<string>]>();
 /** 木の手の残したい MOD (☑) のうち完成形に無い物 (同じ MOD かはエンジンの当て方 sameAimMod) */
 const keptOfTree = (data: PatchData, doc: TreeDoc): Aim[] => {
   const out: Aim[] = [];
@@ -147,6 +153,9 @@ export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
 /** 木の族 = 完成形の狙いと、木の手で付けるエッセンスの MOD の系統 (E-11a)。外れの印 (S-200 ② の (g)) で見る */
 const FAMS = new WeakMap<PatchData, Map<string, ReadonlySet<string>>>();
 export function treeFamilies(data: PatchData, doc: TreeDoc): ReadonlySet<string> {
+  return flag("aimsOnce") ? onceHeld(FAMS_HELD, doc, () => familiesRaw(data, doc)) : familiesRaw(data, doc);
+}
+function familiesRaw(data: PatchData, doc: TreeDoc): ReadonlySet<string> {
   const ids = [...new Set([...(doc.memoAims ?? []).map((a) => a.modId), ...Object.values(doc.boxes).flatMap((b) => essenceModOf(b.hand?.currency) ?? [])])].sort();
   let m = FAMS.get(data);
   if (!m) FAMS.set(data, (m = new Map()));

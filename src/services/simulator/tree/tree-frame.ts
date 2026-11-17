@@ -15,7 +15,7 @@ import { goalFamilies, itemTaking, junkClean, junkTaking, swapJunk } from "./tre
 import { outBoxOf } from "./tree-shape";
 import { engineOmens, isCatalyst } from "./tree-hands";
 import { applyHand } from "./tree-hand-core";
-import { aimsOf, docHeld, playHand, putCapped, startItemOf } from "./tree-sample";
+import { aimsOf, docHeld, holdDocSig, playHand, putCapped, startItemOf } from "./tree-sample";
 import { blockMarkOf, contentOf, keyForBox, nextAimed, startAimed, treeFamilies } from "./tree-judge";
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
@@ -230,7 +230,11 @@ export function recipeOf(data: PatchData | null | undefined, d: TreeDoc, withBui
 /** 例のアイテムから組んだ品の覚え (組み直しの 1 手ごとに配置を出し直すので、毎回作ると重い。品は同じ物を使い回す = 品の鍵の覚えも効く) */
 const EXAMPLES = new WeakMap<RecipeExample, { start: string; item: StageItem }>();
 
+/** (スイッチ aimsOnce) 配置を作る間は木を書き換えないので、1 回の囲み (holdDocSig、鍵は要る時だけ) の中で作る = 狙いの組・置き石・木の族を箱ごとに作り直さない */
 export function frameTree(data: PatchData, doc: TreeDoc): FrameTree {
+  return flag("aimsOnce") ? holdDocSig(doc, () => frameTreeIn(data, doc), true) : frameTreeIn(data, doc);
+}
+function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
   return withTreeTune(doc, () => {
     const frames = new Map<string, Frame>(), miss: FrameMiss[] = [], mixed = new Set<string>(), aims = aimsOf(data, doc), part = docPartOf(data, doc);
     const st = startItemOf(data, doc, mulberry32(1)), sa = startAimed(data, doc, st.item);
