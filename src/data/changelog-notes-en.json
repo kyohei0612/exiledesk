@@ -1,4 +1,9 @@
 {
+  "0.1.749": [
+    "Simulator: failed items that differ only by socketed runes now share one box, so trees branch less",
+    "Simulator: the button bar above the tree is slimmer, leaving more room for the tree",
+    "Simulator: merged failure boxes now show a rune-socketed example when one leads there"
+  ],
   "0.1.748": [
     "Daily: The challenge tree and its side column now use the same layout and widths as the Simulator",
     "Daily: Long costs such as \"1347.1 div\" no longer wrap onto two lines in the rankings",

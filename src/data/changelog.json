@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.749",
+  "date": "2026-11-17",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ルーンだけが違う失敗の品を同じ箱にまとめ、ツリーが分かれすぎないようにしました",
+    "en": "Simulator: failed items that differ only by socketed runes now share one box, so trees branch less"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの上のボタンの帯を細くして、ツリーを広く見られるようにしました",
+    "en": "Simulator: the button bar above the tree is slimmer, leaving more room for the tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: まとめた失敗の箱で、ルーンの付いた人がいればその見本を出すようにしました",
+    "en": "Simulator: merged failure boxes now show a rune-socketed example when one leads there"
+   }
+  ]
+ },
+ {
   "v": "0.1.748",
   "date": "2026-11-17",
   "items": [
@@ -1157,24 +1181,6 @@
     "area": "",
     "text": "シミュレーター: 外れ MOD が 3 つ以上の時に削減の枠が「低い」だけになる・錬金で狙いが消える枝が出ない・骨やエッセンスの後の箱で止まるなど、枝の分かれ方を直しました。上の行を 1 行にまとめ、シミュの枠を画面の下まで広げました",
     "en": "Simulator: fixed how branches split, such as whittle frames showing only “lower” with 3 or more miss mods, no branch for losing an aim mod to an Orb of Alchemy, and dead ends after bones or essences. The top row now fits in one line and the simulator frame reaches the bottom of the screen"
-   }
-  ]
- },
- {
-  "v": "0.1.709",
-  "date": "2026-11-10",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "初めて来た時に表示する言語 (日本語 / English) を選べるようにしました。あとから上の帯でいつでも変えられます",
-    "en": "On your first visit you can now choose the display language (日本語 / English). You can change it anytime from the top bar."
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の木を保存して開き直した時に、手を置いていない枠へ別の枠の削減が写ることがあったのを直しました。ヒネコラなど MOD を変えない手の後で、決まった枠がまた低い・同じ・高いに割れることがあったのも直しました",
-    "en": "Simulator: fixed a whittling step being copied into frames you hadn't set when you saved and reopened a tree, and fixed frames that were already decided splitting again into lower / same / higher after a hand that doesn't change mods, such as Hinekora's Lock"
    }
   ]
  }
