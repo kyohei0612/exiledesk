@@ -62,7 +62,7 @@
 :root[data-flag-dailysimcard] [data-daily-play] { --daily-card-zmax: 1; --daily-card-z: 1; }
 /* 札は欄の幅いっぱい・全体を見せる (D-37m2、11-17 オーナー「右枠ぎりぎりまで伸ばして」「このバーなくて全体写す感じで」)。札の入れ物では送らず (60% の上限を外す)、
    欄に入らない時は右の欄ごと縦に送る。ミニマップと倍率の道具は潰れて切れないよう最低の高さを持ち、入らなければ送った先に出る。札の中の作りはシミュの札の部品 (TreeGoalCard) の側 */
-:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] { overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] { overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-bottom: 0; }
 :root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] { max-height: none; overflow: visible; margin-bottom: 8px; }
 /* 札の幅は TreeGoalCard がシミュの列の 298px で描く (カード 420 を 0.676 倍)。デイリーの欄 (440 / 360) では欄いっぱいにし、中のカードの倍率を欄の幅から決める
    = (欄の幅 − 札の枠と余白 15 − 送り棒 12) / 420。欄の幅の段 (440 / 360) は上の --daily-side-w と同じ所で替わる (新しい幅の分けは足さない) */
@@ -71,10 +71,8 @@
 :root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] [data-tree-goal] { width: 100% !important; max-width: 100%; box-sizing: border-box; }
 :root[data-flag-dailysimcard] [data-daily-play] [data-tree-goal] div[style*="zoom"] { zoom: var(--daily-goal-z) !important; }
 :root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > div:has(> [data-tree-tools]) { flex: 1 0 auto; min-height: 200px; }
-/* 「これで提出」「諦める」は上の帯の右の札、費用・完成率の左 (11-17 オーナー「んまぁここにおいてもいいけどな」、DailyPlay.vue の ACTS_TOP)。数と同じ高さの 1 列、縮めない */
-.daily-root[data-daily-page] [data-daily-play] .daily-band-score > .daily-acts-top { flex-direction: row; align-items: center; gap: 10px; margin: 0 auto 0 0; flex: none; }
-.daily-root[data-daily-page] [data-daily-play] .daily-acts-top [data-daily-submit] { flex: none; height: 34px; padding: 0 18px; white-space: nowrap; }
-.daily-root[data-daily-page] [data-daily-play] .daily-acts-top .daily-acts-giveup { height: 34px; white-space: nowrap; }
+/* 「これで提出」「諦める」は欄の下に貼り付けていつも見せる (11-17 オーナー「A」)。並びは一番下・欄を送っても動かない。下地で塞ぎ、後ろを送られる札・ミニマップと重ねない */
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-daily-acts] { order: 10; position: sticky; bottom: 0; z-index: 3; flex: none; margin: 0; padding: 8px 12.5px 8px 7px; background: var(--skin-bg); box-shadow: 0 -8px 10px -8px rgb(0 0 0 / 0.8); }
 /* 「閉じる」は欄の内側の右上 = カードの上の段 (11-10 オーナー「それそれ　直して」= 前は右上に浮かせて欄の枠の上の縁に乗り出した)。どの幅でも枠から 2px 以上内側 */
 [data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { order: -3; align-self: flex-end; margin: 4px 4px 0 0; }
 
