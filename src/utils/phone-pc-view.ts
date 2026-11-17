@@ -27,7 +27,11 @@ if (typeof matchMedia === "function") {
   mq.addEventListener("change", () => { portrait.value = mq.matches; });
 }
 /** 縦持ちの案内を出す時 (スマホの端末で木を組む画面、縦持ち、回していない)。turned は turn-page.ts から渡す */
-export const guideOn = (turned: boolean): boolean => treeShown.value && phoneDevice() && portrait.value && !turned;
+// 反応する値 (treeShown・portrait) を先に読む。phoneDevice() は反応しないので、先に偽で切れると向きの変わりを見張らなくなる (向きで screen.width が 1280 をまたぐ端末で縦に戻しても案内が出ない、d13 11-17)
+export const guideOn = (turned: boolean): boolean => {
+  const shown = treeShown.value, tall = portrait.value;
+  return shown && tall && !turned && phoneDevice();
+};
 
 /** 今 PC の画面にしている */
 export const pcViewOn = ref(false);

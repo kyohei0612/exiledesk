@@ -43,7 +43,8 @@ function back(): void {
       <button type="button" class="g-btn turn-sideways-btn" data-turn-sideways-back @click="back">{{ tr("← 戻る", "← Back") }}</button>
       <button type="button" class="g-btn-red turn-sideways-btn" data-turn-sideways-rotate @click="setTurned(true)">{{ tr("横向きで表示", "Show sideways") }}</button>
     </div>
-    <p class="turn-sideways-note">{{ tr("ロックを外さずに遊ぶ時に。押したらスマホを左へ倒して持つ。挑戦の時間は止まりません。", "To play without turning off the lock. After tapping, hold the phone turned to the left. The challenge clock keeps running.") }}</p>
+    <!-- 時間の一文はデイリーの挑戦の時だけ (シミュの木に時間は無い、d13 11-17) -->
+    <p class="turn-sideways-note">{{ tr("ロックを外さずに遊ぶ時に。押したらスマホを左へ倒して持つ。", "To play without turning off the lock. After tapping, hold the phone turned to the left.") }}<template v-if="dailyPage?.view === 'start'">{{ tr("挑戦の時間は止まりません。", " The challenge clock keeps running.") }}</template></p>
   </div>
 </template>
 
