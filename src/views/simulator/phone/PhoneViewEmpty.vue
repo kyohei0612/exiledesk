@@ -12,6 +12,7 @@ import { openRecipesPage, openTreePage } from "../../../web/page";
 import { track } from "../../../utils/track";
 import { simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 const t = useTree();
 const list = computed(() => [...treeRecipes.value].sort((a, b) => touchedAtTree(b) - touchedAtTree(a)).slice(0, 8));
@@ -36,7 +37,7 @@ onMounted(() => void seedDevRecipes());
       </span>
     </button>
     <span class="flex items-center gap-1.5">
-      <input v-model="url" data-phone-view-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-11 min-w-0 flex-1 rounded border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60" :placeholder="tr('共有されたレシピの URL を貼る', 'Paste a shared recipe URL')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
+      <input v-model="url" data-phone-view-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-11 min-w-0 flex-1 rounded border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60" :placeholder="flag('phoneUrlShort') ? tr('共有 URL を貼る', 'Paste shared URL') : tr('共有されたレシピの URL を貼る', 'Paste a shared recipe URL')" :title="flag('phoneUrlShort') ? tr('共有されたレシピの URL を貼る (貼ると開く)', 'Paste a shared recipe URL (opens on paste)') : undefined" @paste="onPaste" @keydown.enter.prevent="openUrl" />
       <button type="button" class="g-btn sm !min-h-11" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
     </span>
     <p v-if="urlNote" class="text-amber-200">{{ urlNote }}</p>
