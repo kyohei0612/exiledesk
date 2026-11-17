@@ -10,14 +10,16 @@
 
 // 形 (型)
 export type { StageItem, StageMod, StageSide, StageApply } from "./types";
-export type { PlayedStep } from "./run-plan";
+export type { PlayedStep, StartSpec } from "./run-plan";
+export type { PlacedMod } from "./start-place";
 export type { CraftStagePlan } from "./contract";
 export type { PatchData, Mod } from "../../vendor/poe2htc/engine/types";
 export type { Force } from "./stage-core";
 export type { PobBlock } from "./stage-pob";
 
 // アイテムを作る・打つ
-export { freshItem, startFrom, playPlan, splitOmens } from "./run-plan";
+export { freshItem, startFrom, startSpecOf, playPlan, splitOmens } from "./run-plan";
+export { placedOf } from "./start-place";
 // omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
 // useReason = その手が今打てない理由 (打てるなら null。乱数で決まる物は打てる扱い。クラフト台とシミュの棚の同じ判定)
 export { applyCurrency, kindOf, omensFor, omensAllowedFor, qualityCapOf, useReason } from "./apply-currency";

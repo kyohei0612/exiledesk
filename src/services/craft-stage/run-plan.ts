@@ -31,6 +31,7 @@ import { parseSpam, spamName } from "./apply-spam";
 import { applyRune, isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
 import { tuneForStep, withStepTune, type StepTune } from "./stage-tuning";
+import { placedOf, placeStartMods, type PlacedMod } from "./start-place";
 
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
 const GEM_START_SOCKETS = 2;
@@ -278,14 +279,40 @@ interface RunMeta {
  *   MOD は 1 つずつ付きうる物だけ (付く MOD の指名 pick と同じ決まり。強さの下限は無し)。付けられなければエラーで止める
  */
 /** runes = 始めから差しておくルーン (英語名、シミュレーションでコルの狩りなどの MOD を狙う時。MOD より先に差す) */
-export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number; runes?: string[] }
+export interface StartSpec {
+  rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number; runes?: string[];
+  /** 置く MOD (E-29b): 付きうるかを問わず段・値・印のまま置く (完成形の品を写す)。ある時はソケットを規格外の数で止めない */
+  placed?: PlacedMod[];
+  /** 品質の種類・カタリストの品質 (StageItem と同じ) */
+  qualityTag?: string | null; catalystQuality?: number;
+  /** 暗黙の値 (振りの種・振り直した回数・手で決めた値)。rollSeed を書けば手順の seed の代わり */
+  implicit?: { rollSeed?: number; implicitRoll?: number; implicitFixed?: Record<number, number[]> };
+}
+/**
+ * 品から始めの状態を全部作る (E-29b): レアリティ・置く MOD・ソケット・差したルーン (差した順)・品質・暗黙の値。
+ * startFrom(data, it.base, it.itemLevel, startSpecOf(it), seed) で同じ品 (MOD・値・印・ソケット・ルーン・品質・暗黙) になる
+ */
+export function startSpecOf(it: StageItem): StartSpec {
+  const runes = (it.augments ?? []).map((a) => a.en);
+  return {
+    rarity: it.rarity,
+    placed: placedOf(it),
+    ...(it.sockets != null ? { sockets: it.sockets } : {}),
+    ...(runes.length ? { runes } : {}),
+    ...(it.quality ? { quality: it.quality } : {}),
+    ...(it.qualityTag != null ? { qualityTag: it.qualityTag } : {}),
+    ...(it.catalystQuality != null ? { catalystQuality: it.catalystQuality } : {}),
+    // rollSeed が無い品は 0 と同じ (roll-text)。手順の seed で振り直さないよう 0 を書く
+    implicit: { rollSeed: it.rollSeed ?? 0, ...(it.implicitRoll != null ? { implicitRoll: it.implicitRoll } : {}), ...(it.implicitFixed ? { implicitFixed: it.implicitFixed } : {}) },
+  };
+}
 export function startFrom(data: PatchData, base: string, itemLevel: number, s: StartSpec, seed: number): StageItem {
   // フラクチャー・冒涜の MOD はレアにしか無い (マジックではフラクチャーも冒涜もできない。2026-10-06 オーナー「ノーマルの奴ならそこで付けたらレアに」)
   // 同じ側に 2 つ目を付けたらレア (マジックは側 1 つずつなので、プレ 2 つは王者を打たないと組めず 1 つずつ止まっていた。2026-10-08 オーナー
   // 「MOD 2 つ以上とかプレフィックス付けだしたらレアにしていいよ」)
   const sideOfKey = (k: string): string => [...data.mods.values()].find((m) => m.id === k || m.id.endsWith(`/${k}`) || m.family === k)?.type ?? "prefix";
   const sameSide = !!s.mods && s.mods.length >= 2 && new Set(s.mods.map((f) => sideOfKey(f.mod))).size < s.mods.length;
-  let rarity = s.rarity ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) || sameSide ? "rare" : s.mods?.length ? "magic" : "normal");
+  let rarity = s.rarity ?? (s.placed?.length ? "rare" : undefined) ?? (s.mods?.some((f) => f.fractured || f.desecrated) || (s.mods && s.mods.length > 2) || sameSide ? "rare" : s.mods?.length ? "magic" : "normal");
   // マジックの枠が足りないベース (不在のアミュレットはマジックでプレ 0・サフィ 0、黄昏の指輪はサフィ 0) は、付けられるレアまで上げる
   // (2026-10-18 オーナー「マジックに MOD 付かないような奴に MOD 付けたら反応しないのカス過ぎる、付けれるとこまでレアリティあげて」)
   if (!s.rarity && rarity === "magic") {
@@ -297,7 +324,8 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   if (s.sockets != null) {
     const most = baseSocketsOf(item.base, item.cls.category);
-    if (s.sockets > most) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${most}) を超える`);
+    // 置く品 (完成形の写し) はルーンで増えた規格外の数のまま (E-29b)
+    if (s.sockets > most && !s.placed) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${most}) を超える`);
     item = { ...item, sockets: s.sockets };
   }
   for (const en of s.runes ?? []) {
@@ -305,8 +333,15 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     if (!r.applied) throw new Error(`始めの状態のルーン ${en}: ${r.reason ?? "差せない"}`);
     item = r.item;
   }
+  if (s.placed?.length) item = placeStartMods(data, item, s.placed, mulberry32(seed));
   item = addStartMods(data, item, s.mods ?? [], mulberry32(seed));
   if (s.quality != null) item = { ...item, quality: s.quality };
+  if (s.qualityTag != null) item = { ...item, qualityTag: s.qualityTag };
+  if (s.catalystQuality != null) item = { ...item, catalystQuality: s.catalystQuality };
+  if (s.implicit) {
+    const im = s.implicit;
+    item = { ...item, ...(im.rollSeed != null ? { rollSeed: im.rollSeed } : {}), ...(im.implicitRoll != null ? { implicitRoll: im.implicitRoll } : {}), ...(im.implicitFixed ? { implicitFixed: im.implicitFixed } : {}) };
+  }
   return item;
 }
 
