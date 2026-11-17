@@ -26,6 +26,14 @@
 /* 右端の列「閲覧」(D-50e、スイッチ dailyViews): 3 桁まで入る幅。欄が狭い時 (スマホ・一覧の 3 列) は時間の列と同じく畳んで名前を潰さない */
 .daily-rank-views { width: 40px; flex: none; text-align: right; }
 @container (max-width: 440px) { .daily-rank-views { display: none; } }
+/* 数と単位は折り返さず 1 行 (D-50i、スイッチ dailyNumLine、11-17 オーナー「絶対1行」。前は「1 個あたり」が 64px の決まった幅で「1347.1 / 神」と 2 行に折れた)。
+   順位の表の数の欄は決まった幅をやめて最低の幅 (見出しと行で同じ px) を持ち、中身に合わせて伸びる。足りない分は名前・ひと言の欄 (flex-1) が縮む */
+:root[data-flag-dailynumline] :is(.daily-num, .daily-points, .daily-cols > span, .daily-submit-nums b, .daily-turnout b, .daily-band-score b, .daily-place) { white-space: nowrap; }
+:root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols, .daily-out-row) > .flex-1 { min-width: 0; }
+:root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-10 { width: auto; min-width: 2.75rem; }
+:root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-12 { width: auto; min-width: 3.25rem; }
+:root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-14 { width: auto; min-width: 3.75rem; }
+:root[data-flag-dailynumline] :is(.daily-rank-in, .daily-cols) > .w-16 { width: auto; min-width: 5.25rem; }
 
 /* お題の顔。面の格子へ溶ける */
 .daily-hero { display: contents; }
