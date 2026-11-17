@@ -49,6 +49,8 @@ function fromUrl(): SiteSkinChoice | null {
 function read(): SiteSkinChoice {
   const u = fromUrl();
   if (u) return u;
+  // 色の選びを出さない間は既定 (覚えた答えは消さない、U-49c)
+  if (flag("skinHide")) return "default";
   try { return localStorage.getItem(SITE_SKIN_KEY) ?? "default"; } catch { return "default"; }
 }
 export const siteSkin = ref<SiteSkinChoice>(read());

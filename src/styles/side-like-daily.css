@@ -1,0 +1,47 @@
+/*
+ * 右の列はデイリーの欄と同じ幅・ミニマップは最初は閉じる (sim-tree.md S-78f、スイッチ sideLikeDaily = <html data-flag-sidelikedaily>、2026-11-17)。
+ * オーナー 11-17「ミニマップも逆輸入で画面デイリーと同じにしようか横幅とかもこれぐらいひろくていいわ。マネは横幅とミニマップの表示のUI
+ *   デイリーはこれボタン押しても出ないけど最初からとじてていいきがするわ」。
+ * 幅はデイリーの欄 (daily-play.css の --daily-side-w = 440px、画面 1699px 以下は 360px) と同じ物を使う (新しい幅の分けは足さない)。
+ * ミニマップを最初は閉じるのは TreeCanvasTools (覚える名前を替える)。
+ */
+:root[data-flag-sidelikedaily] {
+  --side-like-w: 440px;
+  --side-like-z: calc(413 / 420);
+}
+@media (max-width: 1699px) {
+  :root[data-flag-sidelikedaily] {
+    --side-like-w: 360px;
+    --side-like-z: calc(333 / 420);
+  }
+}
+/* 札の中のカード (TreeGoalCard は 298px の列に合わせた倍率で描く) を列の幅いっぱいに。デイリー (daily-play.css の --daily-goal-z) と同じ式
+   = (列の幅 − 札の枠と余白 15 − 送り棒 12) / 420 */
+:root[data-flag-sidelikedaily] [data-tree-page] [data-tree-side] [data-tree-goal] {
+  width: 100% !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+:root[data-flag-sidelikedaily] [data-tree-page] [data-tree-side] [data-tree-goal] div[style*="zoom"] {
+  zoom: var(--side-like-z) !important;
+}
+/* 右の列を上まで通さない形 (sideTop を閉じた時) の列の幅 */
+:root[data-flag-sidelikedaily] [data-tree-page] [data-tree-side] {
+  width: var(--side-like-w) !important;
+}
+/* 右の列を上まで通す形 (side-top.css) の列の幅と、板の中の物の右の空き */
+:root[data-flag-sidelikedaily][data-flag-sidetop] .g-panel:has(> [data-tree-head]):has([data-tree-side]:not([style*="display: none"])) {
+  --st-w: var(--side-like-w);
+}
+/* ミニマップを閉じている間は、ミニマップの欄の下限 (200px、goal-card-full.css・daily-play.css) を持たない。
+   倍率の道具の 1 行だけの高さで、空きがあれば列の下に寄る (下限が残ると欄の下で道具が切れた、11-17 d15) */
+:root[data-flag-sidelikedaily] [data-tree-side] > div:has(> [data-tree-tools]):not(:has(svg[data-tree-minimap])),
+:root[data-flag-sidelikedaily] [data-tree-side] > div.flex-1:not(:has(svg[data-tree-minimap])) {
+  min-height: 0 !important;
+  flex: 1 0 auto !important;
+}
+/* デイリーで欄の高さが足りない時もミニマップを隠さない (前は daily-play.css が隠していて、地図のボタンを押しても出なかった)。
+   開いた時は右の欄ごと縦に送る (S-78c・D-37m2) */
+:root[data-flag-sidelikedaily] [data-daily-play] [data-tree-side][data-daily-side-tight] [data-tree-tools] > div:not([role="toolbar"]) {
+  display: block;
+}

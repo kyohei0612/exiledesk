@@ -1,0 +1,12 @@
+/*
+ * 色の選びを画面に出さない (shared-ui.md U-49c、スイッチ skinHide = <html data-flag-skinhide>、2026-11-17)。
+ * オーナー 11-17「あとこの色のせいで損してるわ詰めれるのに。この色どうしようかな。非表示でいいわ。色はどうせ規定から変わらんやろうし」。
+ * 色をいつも既定にするのは state/site-skin.ts。ここはプルダウン (SiteSkinPicker) と、プルダウンだけになる行を出さない。
+ */
+:root[data-flag-skinhide] [data-site-skin-picker] {
+  display: none !important;
+}
+/* デイリーの挑戦の木は、タブの行のタブを隠している (daily-skin.css) ので、行に残るのは色だけ = 行ごと出さない */
+:root[data-flag-skinhide] [data-daily-play] [data-tree-page] div:has(> [data-site-skin-picker]) {
+  display: none !important;
+}
