@@ -12,6 +12,7 @@ import { recipeOf } from "../../services/simulator/tree/tree-frame";
 import { craftStage } from "../craft-stage";
 import { clone, newId, parseList } from "./recipe-store-util";
 import { flag } from "../../web/release-flags";
+import { readZ, writeZ, Z_AT, Z_KEY } from "./tree-recipe-z";
 
 const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
 /** 直前の一覧の控え (本体が読めなかった時はここから) */
@@ -41,33 +42,38 @@ function keepUnread(xs: unknown[]): void {
     localStorage.setItem(UNREAD, JSON.stringify([...cur, ...xs.filter((x) => !seen.has(JSON.stringify(x)))]));
   } catch { /* 無くてよい */ }
 }
+/**
+ * (スイッチ saveCap15) 詰めた一覧 Z があれば Z を読み、今の鍵に移した後の物 (古い版のタブがその後に保存・上書きした物 = 更新が移した時刻より後) を id で足す。
+ * Z が無ければ今の鍵を読む (その後 moveToZ が Z へ移す)。Z はスイッチを切っても読む (切った間の保存は今の鍵へ = 次に入れた時に足す)
+ */
+function readList(): unknown[] {
+  const z = readZ();
+  const old = parseList(localStorage.getItem(TREE_RECIPES_KEY)) ?? parseList(localStorage.getItem(BAK));
+  if (!z) return old ?? [];
+  if (!old?.length) return z;
+  const at = Number(localStorage.getItem(Z_AT)) || 0, ids = new Map(z.map((x, i) => [(x as { id?: unknown })?.id, i]));
+  const out = [...z];
+  for (const x of old) {
+    const r = x as { id?: unknown; updatedAt?: unknown } | null;
+    if (!r || typeof r.updatedAt !== "number" || r.updatedAt <= at) continue;
+    const i = ids.get(r.id);
+    if (i === undefined) out.unshift(x);
+    else if (r.updatedAt > ((out[i] as { updatedAt?: number })?.updatedAt ?? 0)) out[i] = x;
+  }
+  return out;
+}
 function read(): TreeRecipe[] {
   try {
-    const list = parseList(localStorage.getItem(TREE_RECIPES_KEY)) ?? parseList(localStorage.getItem(BAK)) ?? [];
+    const list = readList();
     const ok: TreeRecipe[] = [], bad: unknown[] = [];
     for (const x of list) { const r = normalizeTreeRecipe(x); if (r) ok.push(r); else bad.push(x); }
     keepUnread(bad);
     return ok;
   } catch { return []; }
 }
-/**
- * 控えの 1 つ (スイッチ saveCap15 の間は打ち方だけ = 組み上がった木の写し built と例のアイテム examples を外す、S-101b ④。
- * 開いた木の保存は 1 つ約 24 万字で大半が例のアイテム。控えにも同じ量を入れると 12 個で localStorage の枠に当たった。控えから戻した木は開く時に組み直す)
- */
-const bakOf = (x: unknown): unknown => {
-  const r = x as { tree?: unknown } | null;
-  if (!r || typeof r !== "object" || !r.tree || typeof r.tree !== "object") return x;
-  const { built: _b, examples: _e, ...tree } = r.tree as { built?: unknown; examples?: unknown };
-  return { ...r, tree };
-};
-/** (スイッチ saveCap15) 本体を先に書き、入らなければ控えを空けて書き直す。控えはその後 (前は控えが枠に当たると本体も書かれず、黙って保存が消えていた) */
-function writeFirst(v: TreeRecipe[]): void {
-  const prev = localStorage.getItem(TREE_RECIPES_KEY), pl = parseList(prev), s = JSON.stringify(v);
-  try { localStorage.setItem(TREE_RECIPES_KEY, s); } catch { try { localStorage.removeItem(BAK); localStorage.setItem(TREE_RECIPES_KEY, s); } catch { return; } }
-  if (pl) try { localStorage.setItem(BAK, JSON.stringify(pl.map(bakOf))); } catch { /* 控えが入らなくても本体は残る */ }
-}
+/** 書く (スイッチ saveCap15 の間は詰めた一覧 Z へ = tree-recipe-z。本体は先に書き、入らなければ控えを空ける) */
 function write(v: TreeRecipe[]): void {
-  if (flag("saveCap15")) { try { writeFirst(v); } catch { /* 覚えられなくても動く */ } return; }
+  if (flag("saveCap15")) { try { writeZ(v); } catch { /* 覚えられなくても動く */ } return; }
   try {
     const prev = localStorage.getItem(TREE_RECIPES_KEY), pl = parseList(prev);
     if (pl) localStorage.setItem(BAK, prev!);
@@ -76,8 +82,20 @@ function write(v: TreeRecipe[]): void {
 }
 
 export const treeRecipes = ref<TreeRecipe[]>(read());
+/** (スイッチ saveCap15) 今の鍵の一覧を Z へ移し、今の鍵と控えを消して保存の枠を空ける (移した時刻を残す)。古い版のタブは自分の持つ一覧を今の鍵へ書き直せる */
+function moveToZ(): void {
+  if (!flag("saveCap15")) return;
+  try {
+    if (localStorage.getItem(TREE_RECIPES_KEY) == null && localStorage.getItem(Z_KEY) != null) return;
+    writeZ(treeRecipes.value);
+    localStorage.setItem(Z_AT, String(Date.now()));
+    localStorage.removeItem(TREE_RECIPES_KEY);
+    localStorage.removeItem(BAK);
+  } catch { /* 移せなくても今の鍵のまま動く */ }
+}
+moveToZ();
 function reloadTreeRecipes(): void { treeRecipes.value = read(); }
-try { window.addEventListener("storage", (e) => { if (e.key === TREE_RECIPES_KEY) reloadTreeRecipes(); }); } catch { /* 無くてよい */ }
+try { window.addEventListener("storage", (e) => { if (e.key === TREE_RECIPES_KEY || e.key === Z_KEY) reloadTreeRecipes(); }); } catch { /* 無くてよい */ }
 function put(v: TreeRecipe[]): void { treeRecipes.value = v; write(v); }
 
 const readCurrent = (): string | null => { try { return localStorage.getItem(CURRENT); } catch { return null; } };
