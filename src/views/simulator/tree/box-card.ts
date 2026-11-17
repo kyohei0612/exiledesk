@@ -13,6 +13,8 @@ import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sampl
 import { fixedValues } from "./tree-fixed-values";
 import { sameModShown } from "../../../services/simulator/tree/tree-outcome";
 import { routeRowTags, treeRowTags } from "./tree-row-tags";
+import { runeFreeAt } from "../../../services/simulator/tree/tree-judge";
+import { flag } from "../../../web/release-flags";
 
 export interface CardOpts {
   /** 札を引く箱 (無ければ doc.boxes[boxId]。PC の箱は自分の props.box を渡す) */
@@ -36,6 +38,16 @@ export function cardFor(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem
 /** 箱 boxId のカード (見本は箱の形に合う見本)。箱が無ければ null */
 export function boxCardOf(d: PatchData, doc: TreeDoc, boxId: string, opts: CardOpts = {}): BoxCard | null {
   if (!opts.box && !doc.boxes[boxId]) return null;
-  const s = shapeSampleWithNote(d, doc, boxId);
+  const s = runeFirst(d, doc, boxId, shapeSampleWithNote(d, doc, boxId));
   return { ...cardFor(d, doc, boxId, s.item, opts), sample: s.item, note: s.note };
+}
+/** (S-60g2、スイッチ failRuneSample。11-17 見本 A/B はブラック 132 の決めで B) ルーンを見ずにまとめた失敗の箱で、見本にルーンが無く ↩ で入る人にルーン付きがいれば、その人を見本に (S-60g の続き) */
+function runeFirst(d: PatchData, doc: TreeDoc, boxId: string, s: { item: StageItem; note: string | null }): { item: StageItem; note: string | null } {
+  if (!flag("failRuneSample") || !runeFreeAt(doc, boxId) || s.item.augments?.length) return s;
+  for (const y of Object.values(doc.boxes)) {
+    if (y.back !== boxId) continue;
+    const ys = shapeSampleWithNote(d, doc, y.id);
+    if (!ys.note && ys.item.augments?.length) return { item: ys.item, note: null };
+  }
+  return s;
 }
