@@ -17,6 +17,7 @@ import LeaveConfirm from "./LeaveConfirm.vue";
 import PressPopups from "./PressPopups.vue";
 import { FORCE_ON, forceReady, forceReload } from "./force-update";
 import ToTop from "./ToTop.vue";
+import TurnSideways from "../components/for-share/TurnSideways.vue";
 import Icon from "../components/ui/Icon.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
@@ -166,7 +167,8 @@ window.addEventListener("orientationchange", fitZoom);
 window.visualViewport?.addEventListener("resize", fitZoom);
 // スマホで「PC 版を表示して挑戦」を押した後、デイリーの挑戦のページ (daily-start) を出している間だけ PC の画面を縮めて出す (D-70c、スイッチ dailyPcView)。
 // 挑戦のページを離れたら印を下ろして元のスマホの画面へ。替えた後に幅を測り直す
-if (flag("dailyPcView")) {
+const PC_PLAY = flag("dailyPcView");
+if (PC_PLAY) {
   const playShown = computed(() => dailyPage.value?.view === "start" && !feedbackPage.value && !recipesPage.value && !treePage.value);
   watch(playShown, (on) => { if (!on) pcWanted.value = false; });
   watch(() => playShown.value && pcWanted.value, (on) => { setDailyPcView(on); fitZoom(); }, { immediate: true });
@@ -235,6 +237,7 @@ if (flag("dailyPcView")) {
     <PressPopups /><!-- 次に押した時に出すポップアップ: 強制更新 (U-35)・要望への返事 (U-36)。web/force-update.ts -->
     <LeaveConfirm /><!-- ツリーの作りかけで外へ移る前の確かめ (web/page.ts の setLeaveGuard) -->
     <ToTop /><!-- スマホの「上へ戻る」(全部の画面の右下) -->
+    <TurnSideways v-if="PC_PLAY" /><!-- PC 版で挑戦中に縦持ちなら「スマホを横にしてください」(D-70c) -->
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
     <div v-if="phone && textPage" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
     <component :is="DailyGoingPill" v-if="DailyGoingPill" />

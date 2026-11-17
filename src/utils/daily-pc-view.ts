@@ -26,7 +26,12 @@ export function setDailyPcView(on: boolean): void {
   if (on && phoneDevice()) {
     if (base === null) base = meta.content;
     if (meta.content !== PC_VIEW) meta.content = PC_VIEW;
-  } else if (base !== null && meta.content !== base) {
-    meta.content = base;
+    pcViewOn.value = true;
+  } else {
+    if (base !== null && meta.content !== base) meta.content = base;
+    pcViewOn.value = false;
   }
 }
+
+/** 今 PC の画面にしている (縦持ちの時の「横にしてください」の被せ = for-share/TurnSideways.vue が見る) */
+export const pcViewOn = ref(false);
