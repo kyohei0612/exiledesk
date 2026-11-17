@@ -14,7 +14,7 @@
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
 | シミュ部長 | local_339d3668-a6c5-4ae9-a86a-6b029c79c153 (86、Opus 5.5、11-17 20 時台に 85 = local_606f09ea が 2,524 件で止まり控えから入った。頼み = 共有 local_41371db6…/progress/sim-lead86-brief.md、進み = 同 sim-lead86.md、記録 = progress/sim-lead86-run.log、85 の引き継ぎ = sim-lead85.md の一番上) | 今: バナナ 5 段目の止まりの直し A (偶然付いた狙いの人の箱、S-21b・スイッチ oddShapes) の絵を見て commit。オーナーの返事待ち = 失敗の箱の見本 A/B (返事はブラック 131 から)。後で = 新しい木の倍率 50%・スマホの URL の案内が切れる・木の枠が 200px に潰れる件 |
-| デザイン部長 | local_d9367122-4702-41d3-8519-d730bc3c5c99 (15、控え d16 = local_5e6646be-7400-43c3-af36-a6e41ec61131、Opus 5.5、11-17 夜にブラック 131 が入れた。14 = local_58ed4ac0 から交代。頼み = 共有 local_41371db6…/progress/design-lead15-brief.md、進み = 同 design-lead15.md。記録 = progress/design-lead15-run.log) | 今: 完成形の札のベースを消し頭にティア調整 (goalTierTop、S-78e)。続き = シミュの上の帯を詰める案・開発版の UI の崩れの洗い直し |
+| デザイン部長 | local_5e6646be-7400-43c3-af36-a6e41ec61131 (16、Opus 5.5、11-17 21 時台にブラック 132 が控えから入れた。15 = local_d9367122 が 2,519 件で交代。頼み = 共有 local_41371db6…/progress/design-lead16-brief.md、15 の引き継ぎ = design-lead15.md の一番上) | 今: 手持ち無し。帯 A (barSlim、S-94m) は d076df083 で入り見た目の返事待ち |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |
 | サーバー管理人 | 分析の係 (11-14 にブラック 108 が立てた。この session) | 今: 要望の受け口 = 添付の上限 192 KB・Discord の本文に送った画面 (U-05e、デザイン部長 8 の差分)。本番のサーバーの出しは最終チェック長 |
