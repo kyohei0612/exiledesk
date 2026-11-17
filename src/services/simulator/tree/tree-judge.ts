@@ -216,7 +216,16 @@ function junkOne(body: string): string {
 export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+#c\d+\.\d+#a\d+$/, "");
 /** d = 冒涜の発現済みの数を残す、c = クラフト MOD (エッセンス) の数を残す */
 /** 箱 to の手で比べる中身の鍵 (judgeMemo の keyFor と同じ。最終チェックの「中身の違う形の人が着く」も同じ比べ、S-201c) */
-export const keyForBox = (doc: TreeDoc, to: string, k: string): string => keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to));
+export const keyForBox = (doc: TreeDoc, to: string, k: string): string => runesAt(doc, to, keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to)));
+/**
+ * (スイッチ failRuneFree、S-60e) 失敗の箱 (外れ・狙いが消えた・外れが消えた) へ入る比べでは刺さったルーンの組を見ない (ソケットの数は見る)。
+ * ルーンは失敗で外れないので、失敗の道でルーン付きと無しの同じ形を別の箱にすると、ルーンの手をもう 1 回置かせることになる。当たり・打った後・完成の判定は今どおり見る
+ */
+const FAIL_OUTS: ReadonlySet<string> = new Set(["junk", "lost", "junkGone"]);
+export const runeFreeAt = (doc: TreeDoc, to: string): boolean => flag("failRuneFree") && FAIL_OUTS.has(doc.boxes[to]?.out ?? "");
+/** 中身の鍵の枠の ~r<ルーンの組>.<ソケット数> からルーンの組を外す */
+const noRunes = (k: string): string => k.replace(/~r([^~#]*)\.(\d+)(?=~|#|$)/, "~r.$2");
+const runesAt = (doc: TreeDoc, to: string, k: string): string => (runeFreeAt(doc, to) ? noRunes(k) : k);
 const keyAt = (k: string, d: boolean, c: boolean, a = false): string => k.replace(/#d(\d+\.\d+)#c(\d+\.\d+)#a(\d+)$/, (_, xd: string, xc: string, xa: string) => `${d ? `#d${xd}` : ""}${c ? `#c${xc}` : ""}${a ? `#a${xa}` : ""}`);
 /**
  * 冒涜の発現済みの外れの数も合わせる箱か: 光のお告げ (冒涜の MOD しか消さない) を含む手 (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) と、
@@ -334,12 +343,12 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     return out;
   };
   /** to と比べる中身 (to が光のお告げの手のある箱なら冒涜の発現済みの数も) */
-  const keyFor = (to: string, k: string): string => keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to));
+  const keyFor = (to: string, k: string): string => runesAt(doc, to, keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to)));
   const setFor = (to: string, id: string): ReadonlySet<string> | null => {
-    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to), a = needsBoneFree(doc, to);
-    if (!d && !c) return contents(id);
+    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to), a = needsBoneFree(doc, to), r = runeFreeAt(doc, to);
+    if (!d && !c) { const s = contents(id); return s && r ? new Set([...s].map(noRunes)) : s; }
     const f = full(id);
-    return f ? new Set([...f].map((k) => keyAt(k, d, c, a))) : null;
+    return f ? new Set([...f].map((k) => runesAt(doc, to, keyAt(k, d, c, a)))) : null;
   };
   /** 箱の中身 (代表の品の枠 1 つ)。stop を渡すと、その中身で stop が真なら REJECTED を返す (覚えない、S-71b ⑲) */
   const fullUntil = (id: string, stop?: (k: string) => boolean): ReadonlySet<string> | null | typeof REJECTED => {
@@ -383,10 +392,12 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
         if (!f || (!lvFits(f.item, f.aimed, to) && !isWhittleHand(doc.boxes[to]!.hand))) return false;
       }
       // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
-      const b = contents(to);
+      // (スイッチ failRuneFree) 失敗の箱へは刺さったルーンの組を見ずに比べる
+      const rf = runeFreeAt(doc, to), strip = (s: ReadonlySet<string> | null): ReadonlySet<string> | null => (s && rf ? new Set([...s].map(noRunes)) : s);
+      const b = strip(contents(to));
       if (!b) return false;
-      if (fullUntil(from, (k) => !b.has(looseKey(k))) === REJECTED) return false;
-      const a = contents(from);
+      if (fullUntil(from, (k) => !b.has(rf ? noRunes(looseKey(k)) : looseKey(k))) === REJECTED) return false;
+      const a = strip(contents(from));
       return !!a && a.size === b.size && [...a].every((k) => b.has(k));
     },
     fracOnly(from, to) {
