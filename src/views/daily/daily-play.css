@@ -60,6 +60,9 @@
 :root:not([data-flag-dailysimcard]) [data-daily-play] [data-tree-goal] { zoom: var(--daily-card-z); width: calc(var(--daily-side-w) / var(--daily-card-z) - 6px) !important; }
 /* 完成形はシミュの札のまま (D-37m2、スイッチ dailySimCard): 等倍・頭の段と枠を出す・入らなければ札の中を縦に送る (シミュの max-h 60%)。欄の高さに合わせる縮め (daily-side-fit.ts) は使わない */
 :root[data-flag-dailysimcard] [data-daily-play] { --daily-card-zmax: 1; --daily-card-z: 1; }
+/* 札の入れ物 (欄の 60% まで) は中をホイール・指で送れるように押せる側へ。札そのものと中のボタンは今までどおり押せない (D-40)。注意書きとの間を空け、切れ目が被さって見えないように */
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] { pointer-events: auto; margin-bottom: 8px; overscroll-behavior: contain; scrollbar-width: thin; }
+:root[data-flag-dailysimcard] [data-daily-play] [data-tree-side] > [data-tree-goal-side] [data-tree-goal] { pointer-events: none; }
 /* 「閉じる」は欄の内側の右上 = カードの上の段 (11-10 オーナー「それそれ　直して」= 前は右上に浮かせて欄の枠の上の縁に乗り出した)。どの幅でも枠から 2px 以上内側 */
 [data-daily-play] [data-tree-side-toggle][aria-expanded="true"] { order: -3; align-self: flex-end; margin: 4px 4px 0 0; }
 
