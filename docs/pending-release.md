@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| デイリーの挑戦を幅 768 から始められ、768〜1279 の挑戦の帯を 2 段 (名前とボタン | 残り時間、下に費用・完成率) に整える。1280 未満で「挑戦は PC で」と止めない (D-70b・U-53c、スイッチ `dailyFit`、見た目の OK はオーナーの返事待ち (絵 progress/owner-snaps/d11-dailyfit-after2-*)、オーナー 11-17「選べる系はやだな自動調整で」) | 79363a92e | デイリー: 幅の狭い PC やタブレット (幅 768 以上) でも挑戦できるようにし、上の帯を画面の幅に合わせて並べ替えるようにしました | Daily: you can now take the challenge on narrower PCs and tablets (768px and wider), and the top bar rearranges itself to fit the screen width |
 | どの幅でもはみ出さず押せる: MOD 一覧の目次の札を幅 1280 未満でも 1 行の横送りにせず折り返して全部見せる (エミュのスマホ・シミュ 768 の MOD 一覧で右の札が隠れていた。目次より長い札は字を折る) (U-53c、スイッチ `fitWidth`、見た目 OK (11-17「見た目OK」、ブラック 127)) | 07a05cb50 | MOD 一覧: 狭い画面やスマホでも、上の種類の切り替え (一般・冒涜専用・エッセンスなど) が折り返して全部見えるようにしました | Mod list: the category tabs at the top (General, Desecrated, Essence, etc.) now wrap so all of them are visible on narrow screens and phones |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
