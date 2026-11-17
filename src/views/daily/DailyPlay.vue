@@ -284,6 +284,9 @@ watch(treeOn, (on) => {
 }, { immediate: true, flush: "post" });
 onBeforeUnmount(() => { sideObs?.disconnect(); sideFit?.(); });
 const actsTo = computed(() => (sideShut.value ? "[data-daily-play] [data-tree-frame]" : "[data-daily-play] [data-tree-side]"));
+/** 提出・諦めるを上の帯の右の札 (費用・完成率の左) に置く (D-37m2、スイッチ dailySimCard。11-17 オーナー「んまぁここにおいてもいいけどな」)。右の欄には出さない */
+const ACTS_TOP = flag("dailySimCard");
+const submitTitle = computed(() => (over.value ? tr("時間切れ", "Time is up") : unmet.value.length ? tr("狙いを満たさない完成の箱がある", "A finished box misses a target") : !run.value ? tr("100 人回すと提出できる", "Run 100 crafters to submit") : ""));
 /** 上の切り替えタブ (D-37g、11-09)。エミュは木のページを閉じた後にデイリーのページも閉じる。シミュ β・デイリーはタブが自分で移る (どれも離れる時の窓 D-36c を通る) */
 function onTab(m: "hand" | "sim"): void { if (m === "hand") closeDailyPage(); }
 /** 提出して終わった挑戦の一言 (今の記録は端末の控え = サーバーの返り) */
@@ -325,6 +328,10 @@ const REFUSED: Record<StartError, () => string> = {
       </div>
       <div class="daily-time" data-daily-time><small>{{ tr("残り時間", "Time left") }}</small><b v-if="tryOf?.ended" data-daily-time-ended>{{ tr("終了", "Over") }}</b><b v-else role="timer" :aria-label="tr(`残り ${clock}`, `${clock} left`)">{{ clock }}</b></div>
       <div class="daily-band-score">
+        <div v-if="ACTS_TOP && treeOn && !picking" class="daily-acts daily-acts-top" data-daily-acts>
+          <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="submitTitle" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
+          <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
+        </div>
         <div><b data-daily-cost>{{ run && run.cost != null ? `${run.cost} ${tr("神", "div")}` : "—" }}</b><small>{{ tr("完成 1 個あたりの費用", "Cost per finished item") }}</small></div>
         <div><b data-daily-rate>{{ run ? `${run.rate}%` : "—" }}</b><small>{{ tr("完成率", "Finished") }}</small></div>
       </div>
@@ -347,8 +354,8 @@ const REFUSED: Record<StartError, () => string> = {
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
     <Teleport v-if="treeOn && !picking" defer :to="actsTo">
       <DailyEssNote v-if="!sideShut" :day="topic.id" :quality="tryOf?.quality" />
-      <div class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
-        <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="over ? tr('時間切れ', 'Time is up') : unmet.length ? tr('狙いを満たさない完成の箱がある', 'A finished box misses a target') : !run ? tr('100 人回すと提出できる', 'Run 100 crafters to submit') : ''" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
+      <div v-if="!ACTS_TOP" class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
+        <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="submitTitle" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
         <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>
       </div>
     </Teleport>
