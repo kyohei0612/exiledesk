@@ -1,0 +1,47 @@
+/*
+ * 右の列は木の板の上まで・倍率の道具はミニマップの中 (sim-tree.md S-78d、スイッチ sideTop = <html data-flag-sidetop>、2026-11-17)。
+ * オーナー 11-17「ここミニマップ内に入れちゃっていい気がする縮小、あと上まで突っ切っていいんじゃね？もったいないからな」。
+ * 前は右の列 (aside[data-tree-side]) が木の枠と同じ段にあり、上の帯 (手順・ボタンの 2 行) の右が空いていた。
+ * 列を木の板 (.g-panel) の右上から下まで絶対位置で置き、帯・木の枠など板の中の物は列の幅 + 8px だけ右を空ける。
+ * 木の高さ (SimTreePage の rowH) は段の位置で測るので、段の並びは変えない (display: contents にすると測れない)。
+ * 右の列を閉じている時 (v-show の display: none) は今のまま。シミュの木もデイリーの挑戦の木 (DailyPlay の中の SimTreePage) も同じ。
+ * 板の内側の余白は板ごとに違う (シミュ = SimTreePage の pt-2・px-3・pb-0.5、デイリー = daily の CSS で 0・0・6px) ので、列の位置は変数で持つ。
+ * --st-r は板の右の余白と同じにする (板の中の物の右の空き = 列の幅 + 8px で、列の左の線から 8px 離れる)。
+ */
+:root[data-flag-sidetop] .g-panel:has(> [data-tree-head]):has([data-tree-side]:not([style*="display: none"])) {
+  --st-w: 298px;
+  --st-t: 8px;
+  --st-r: 12px;
+  --st-b: 2px;
+  position: relative;
+}
+:root[data-flag-sidetop] [data-daily-play] .g-panel:has(> [data-tree-head]):has([data-tree-side]:not([style*="display: none"])) {
+  --st-w: var(--daily-side-w, 298px);
+  --st-t: 0px;
+  --st-r: 0px;
+  --st-b: 6px;
+}
+/* 板の中の物 (古いレシピ・デイリーの過去の札・帯・木の段) は列の分だけ右を空ける */
+:root[data-flag-sidetop] .g-panel:has(> [data-tree-head]):has([data-tree-side]:not([style*="display: none"])) > * {
+  padding-right: calc(var(--st-w) + 8px);
+}
+/* 列は板の上の余白から下の余白まで、右の余白の内側 */
+:root[data-flag-sidetop] .g-panel:has(> [data-tree-head]) [data-tree-side] {
+  position: absolute !important;
+  top: var(--st-t, 8px);
+  right: var(--st-r, 12px);
+  bottom: var(--st-b, 2px);
+  width: var(--st-w, 298px) !important;
+  padding-top: 0 !important;
+}
+/* 倍率の道具はミニマップを開いている間はミニマップの枠の右下に重ねる (下の段を無くす)。閉じている時・デイリーで隠す時は今のまま */
+:root[data-flag-sidetop] [data-tree-tools]:has(svg[data-tree-minimap]) {
+  position: relative;
+}
+:root[data-flag-sidetop] [data-tree-tools]:has(svg[data-tree-minimap]) > [role="toolbar"] {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 2;
+  padding: 2px;
+}
