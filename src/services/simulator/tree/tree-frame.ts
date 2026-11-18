@@ -284,6 +284,8 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
     const extra: Array<{ at: string; f: Frame; from: string; /** 偶然付いた狙いの枝 (S-21b) */ odd?: true; /** 元にした箱とその時の代表 (スイッチ oddStale: 代表が替わった後は当てない) */ src?: Src }> = [];
     /** 今 bestOf が枝を作っている元 (step の箱の代表、ほかの形の枝はその枝の元) */
     let src: Src | undefined;
+    /** ほかの形の枝で見本を埋めた箱 → その枝の元 (スイッチ oddStale: 元が替わったら埋め直してよい) */
+    const setBy = new Map<string, Src>();
     const stale = (s: Src | undefined): boolean => !!s && flag("oddStale") && frames.get(s[0]) !== s[1];
     const cant: FrameCant[] = [], fams = treeFamilies(data, doc), gf = flag("junkFrameOnly") ? goalFamilies(data, doc, aims) : null;
     // (S-196j) 木全体の鍵 = 箱の外の木 (と完成形の狙い・置き石)・中身の狙いの組・木の族・保存の例の札。始まりの代表は中身が同じなら前の物そのもの (下の段の覚えを使うため)
@@ -392,6 +394,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
     /** 配置の 1 段: 箱 id (代表 f) の手から子の箱の代表を決める */
     const step = (id: string, b: TreeBox, f: Frame, kids: readonly string[]): void => {
       src = [id, f];
+      for (const o of kids) setBy.delete(o); // 代表から決め直す子は、ほかの形の枝で埋めた印を外す
       // 手の無い箱の下 (分かれ目の行・ヒネコラのハズレ) は親の代表のまま
       const same = (o: string, note: string | null): void => { frames.set(o, { ...f, note }); };
       // 代表を出せない箱 (枝の多すぎる手の下・分かれ目の下) の下も全部出せない = 見本の打ち直しのまま (S-200。前は 1 段下だけで、錬金術 → 骨の箱を白の品で数え、ノーマル・MOD なしの見本になった)
@@ -483,8 +486,10 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
         if (odd) oddMiss(at, x, fa, from, s.to);
         for (const o of x.outs) {
           const brs = s.to.get(o);
-          if (!brs?.length || frames.get(o)?.note !== "nobranch") continue;
+          // (スイッチ oddStale) 古い枝で埋めた見本 (元の箱の代表が後で替わった) は今の枝で埋め直す (前は ↩ で着く人の「狙いが付いた」の箱が 5 MOD、eEn6Yd8f の 3 段目の骨)
+          if (!brs?.length || (frames.get(o)?.note !== "nobranch" && !stale(setBy.get(o)))) continue;
           frames.set(o, bestOf(o, brs, fa));
+          if (s0) setBy.set(o, s0); else setBy.delete(o);
           again.push(o);
         }
       }

@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュのツリー: 組み直した木で ↩ で戻る骨の下の「狙いが付いた」の箱の見本が 1 手で MOD が増えて見えた件 (S-21b、本番のスイッチ oddStale の中の直し、新しいスイッチ無し。シミュ 95、オーナー 11-18「本番へは修正後だしておｋ」) | (この行の commit) | シミュレーターのツリーで、組み直した後の骨の下の箱の見本が、1 回打っただけで MOD が 2 つ増えて見える時がある不具合を直しました | Fixed an issue in the Simulator tree where, after a rebuild, sample items under a Bone step could show two new mods after a single use |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
