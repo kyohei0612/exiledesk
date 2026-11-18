@@ -73,7 +73,12 @@ function mergeInto(base: unknown[], add: unknown[], at: number): unknown[] {
     if (!r || typeof r.updatedAt !== "number" || r.updatedAt <= at) continue;
     const i = ids.get(r.id);
     if (i === undefined) fresh.push(x);
-    else if (r.updatedAt > ((out[i] as { updatedAt?: number })?.updatedAt ?? 0)) out[i] = x;
+    else if (flag("recipeFrozen")) {
+      // (S-100b ④) 同じ id でも置き換えない。中身 (木) が違えば別のレシピとして足す。同じ木がもうあれば足さない (読むたびに増えないように)
+      const tree = JSON.stringify((x as { tree?: unknown }).tree);
+      const id2 = `${String(r.id)}-b`, all = [...out, ...fresh];
+      if (!ids.has(id2) && !all.some((y) => JSON.stringify((y as { tree?: unknown })?.tree) === tree)) fresh.push({ ...(x as object), id: id2 });
+    } else if (r.updatedAt > ((out[i] as { updatedAt?: number })?.updatedAt ?? 0)) out[i] = x;
   }
   // 前は 1 つずつ頭へ足していて並びが逆になった (recipeRoom の前の形)
   return flag("recipeRoom") ? [...fresh, ...out] : [...fresh.reverse(), ...out];
@@ -144,7 +149,36 @@ function moveToZ(): void {
 moveToZ();
 function reloadTreeRecipes(): void { treeRecipes.value = read(); }
 try { window.addEventListener("storage", (e) => { if (e.key === TREE_RECIPES_KEY || e.key === Z_KEY) reloadTreeRecipes(); }); } catch { /* 無くてよい */ }
-function put(v: TreeRecipe[]): void { treeRecipes.value = v; write(v); }
+function put(v: TreeRecipe[]): void {
+  const next = flag("recipeFrozen") ? mergeDisk(v) : v;
+  treeRecipes.value = next;
+  write(next);
+}
+/**
+ * (スイッチ recipeFrozen、S-100b ⑤) 書く前に置き場を読み直し、このページが変えた物 (足す・消す・中身を替える) だけを差し替える。
+ * 別のタブが足した・変えた・消したレシピは置き場の物のまま (このページの古い一覧で丸ごと上書きしない)。読めない時は v のまま
+ */
+function mergeDisk(v: TreeRecipe[]): TreeRecipe[] {
+  let disk: unknown[];
+  try { disk = readList(); } catch { return v; }
+  const prev = new Map(treeRecipes.value.map((r) => [r.id, toRaw(r)]));
+  const mine = new Map(v.map((r) => [r.id, toRaw(r)]));
+  const out: TreeRecipe[] = [], seen = new Set<unknown>();
+  for (const x of disk) {
+    const id = (x as { id?: unknown } | null)?.id;
+    seen.add(id);
+    const p = typeof id === "string" ? prev.get(id) : undefined, m = typeof id === "string" ? mine.get(id) : undefined;
+    if (p && !m) continue; // このページが消した
+    if (m && m !== p) { out.push(m); continue; } // このページが変えた
+    const d = x as { updatedAt?: unknown; name?: unknown };
+    if (m && d.updatedAt === m.updatedAt && d.name === m.name) { out.push(m); continue; } // 置き場もこのページの物と同じ
+    const r = normalizeTreeRecipe(x); // 別のタブの物 (置き場のまま)
+    if (r) { if (id === r.id) rawOf.set(r, x); out.push(r); }
+  }
+  // このページが足した物 (置き場に無い) は v の並びの位置へ。別のタブが消した物は、このページが変えた時だけ残す
+  v.forEach((r, i) => { const m = toRaw(r); if (!seen.has(m.id) && (!prev.has(m.id) || prev.get(m.id) !== m)) out.splice(Math.min(i, out.length), 0, m); });
+  return out;
+}
 
 const readCurrent = (): string | null => { try { return localStorage.getItem(CURRENT); } catch { return null; } };
 export const currentTreeRecipeId = ref<string | null>(readCurrent());
