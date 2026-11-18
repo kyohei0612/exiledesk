@@ -2,7 +2,8 @@
 // 決まりの正は設計図 docs/spec/README.md ⑥
 // Stop (G-36・G-45 ③): 返事を終える時に、このセッションが残したスクリーンショット・確認の Chrome・自分で立てた dev サーバー・止め残りの子プロセス・
 //   「済み」で終わらず伸びていない回しの記録を知らせる (1 回だけ止めて片付けさせる)
-// UserPromptSubmit (G-37・G-54 ①): セッションの会話が長くなったら (25 万トークンで控えを立て、35 万で引き継ぎを書いて交代する) よう差し込む (メモ feedback-request-rules の 4)
+// UserPromptSubmit (G-30・G-48 は始まりと compact の後に 1 回、G-53 ① は画面を直した後に 1 回、【控え】【終わり】は並びが変わった時だけ = 11-18 の整理)
+// (G-37・G-54 ①): セッションの会話が長くなったら (25 万トークンで控えを立て、35 万で引き継ぎを書いて交代する) よう差し込む (メモ feedback-request-rules の 4)
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -26,17 +27,24 @@ process.stdin.on("end", () => {
   const tp = String(input.transcript_path || "");
 
   if (ev === "UserPromptSubmit") {
-    // 始まりの 1 行: フックが入っている事と版 (この行が出ない PC はフックが入っていない)
-    if (firstTime(sid, "hooks-on")) {
+    const n = ctxTokens(tp);
+    // 差し込みは同じ中身を毎番出さない (11-18 フックの整理): 覚えは os.tmpdir()/exiledesk-notices/<sid>.json。
+    // 会話が縮んだ (まとめ直し = compact で読み込みが前の 6 割より下) 時は覚えを消して、始まりの差し込みをもう一度出す
+    const st = loadState(sid);
+    if (st.n > 100000 && n > 0 && n < st.n * 0.6) for (const k of Object.keys(st)) delete st[k];
+    st.n = n;
+    // 始まりの差し込み (G-30・G-48): フックが入っている事と版 (この行が出ない PC はフックが入っていない) と、何度も破った 5 つの決まり
+    if (!st.start) {
+      st.start = 1;
       let ver = "";
       try { ver = execSync('git log -1 --format=%h_%cd --date=short -- .claude/hooks scripts/check-spec-tidy.mjs', { cwd: REPO, encoding: "utf8", windowsHide: true, timeout: 4000, stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch {}
-      process.stdout.write(`【フック】ExileDesk の見張りが入っている (.claude/hooks/、版 ${ver || "不明"})。\n`);
+      process.stdout.write(`【フック】ExileDesk の見張りが入っている (.claude/hooks/、版 ${ver || "不明"})。\n${RULES}\n`);
     }
-    const n = ctxTokens(tp);
     // 控えはオーナーが話した番に立てる (ほかの番では立たずに許可のカードになる。オーナー 11-06「2500上限で2000超えたら立ち上げる」「他部長も2000超えたら報告してくるからそこはどうするの」)
     // 部長は報告だけ、ブラックはオーナーの番に自分と部長の分をまとめて立てる。部長の数はブラックの番にこのフックが数えて出す
-    const desk = desktopSessions();
-    const black = isBlack(tp, desk.get(sid));
+    // デスクトップのセッションの紙 (1,000 枚ほど) を全部読むのはブラックのオーナーの番だけ。ほかは自分の 1 枚だけ読む
+    const ownInfo = ownSession(sid);
+    const black = isBlack(tp, ownInfo);
     const prompt = String(input.prompt || "");
     // 部長の報告・自動チェックの番は、頭に system-reminder などが付くので文の中のどこかで見る (11-07 オーナーの番だけに出す)
     const ownerTurn = !/<cross-session-message|<side-sessions-event|<task-notification|【自動チェック|Another Claude session sent a message/.test(prompt);
@@ -45,22 +53,32 @@ process.stdin.on("end", () => {
     else if (n >= SPARE && !black && firstTime(sid, SPARE))
       process.stdout.write(`【長さ】このセッションの会話は ${man(n)} (${man(SPARE)} を超えた、上限は ${man(LONG)})。ブラックに「${man(SPARE)} 超え」と 1 行だけ報告して仕事は続ける。控えはブラックがオーナーの番に立てる。\n`);
     // 控えが入ったら題から「控え」を外す (G-37 ②、オーナー 11-16「控えのままじゃん名前」): 題に「控え」が残ったまま commit したら毎番出す
-    const own = desk.get(sid);
-    if (own && /控え/.test(own.title) && /"command":"[^"]*\bgit\b[^"]*\bcommit\b/.test(readTail(tp, 3_000_000)))
-      process.stdout.write(`【名前】題がまだ「${own.title}」(控え) のまま commit している = もう入っている。set_session_title "self" で役の名前 (例「シミュ部長」「ブラック」) に直す (G-37 ②)。\n`);
-    // 画面の確かめは画面全体 (G-53 ①、オーナー 11-17「てか開発版めちゃくちゃやんUI」): 画面のファイルを触ったセッションに毎番
-    if (/"file_path":"[^"]*[\\/]src[\\/][^"]*\.(vue|css)"/.test(readTail(tp, 3_000_000)))
+    const tail = readTail(tp, 3_000_000);
+    if (ownInfo && /控え/.test(ownInfo.title) && /"command":"[^"]*\bgit\b[^"]*\bcommit\b/.test(tail))
+      process.stdout.write(`【名前】題がまだ「${ownInfo.title}」(控え) のまま commit している = もう入っている。set_session_title "self" で役の名前 (例「シミュ部長」「ブラック」) に直す (G-37 ②)。\n`);
+    // 画面の確かめは画面全体 (G-53 ①、オーナー 11-17「てか開発版めちゃくちゃやんUI」): 画面のファイル (src の .vue・CSS) を Edit / Write した後の番に 1 回
+    // (11-18 から毎番でなく、前に出した後に新しく直した時だけ。読んだだけでは出さない)
+    const ui = lastUiEdit(tail);
+    if (ui && ui !== st.ui) {
+      st.ui = ui;
       process.stdout.write(`【画面】画面の直しの確かめ・見せる絵は、直した所だけでなく画面全体を 1920・1440・1280x720 で撮り、1 枚ずつ Read で見て崩れ (重なり・切れ・送り棒・小さすぎる字) 0 を書いてから返す (G-53)。\n`);
+    }
     if (black && ownerTurn) {
+      const desk = desktopSessions();
       const longs = longSessions(tp, desk);
       if (n >= SPARE && !handedOver(desk.get(sid), desk)) longs.unshift(`ブラック自身 (${man(n)})`);
-      if (longs.length)
+      // 【控え】【終わり】は並びが前に出した時と変わった時だけ出す (11-18。同じ一覧を毎番出さない。数の万の違いでは出し直さない)
+      const key = (a) => a.map((s) => s.replace(/\s*\(\d+ 万\)$/, "")).join("・");
+      if (longs.length && key(longs) !== st.longs)
         process.stdout.write(`【控え】会話が ${man(SPARE)} を超えたセッション: ${longs.join("・")}。オーナーが話したこの番のうちに控えを立てて読ませて待たせる (上限 ${man(LONG)}、G-54 ①)。もう控えがあれば立てない。\n`);
+      st.longs = key(longs);
       // 終わり (G-37 ①、オーナー 11-16「てか終わりにするんでしょ上限の奴」): 上限を超えた・交代した前の物はアーカイブする
       const ends = endedSessions(tp, desk);
-      if (ends.length)
+      if (ends.length && key(ends) !== st.ends)
         process.stdout.write(`【終わり】会話が ${man(LONG)} を超えた / 交代した前のセッション: ${ends.join("・")}。引き継ぎが済んでいればアーカイブする (立てた係は先に detach。サーバー係は 1440 が止まるので見てから)。まだ引き継いでいなければ引き継がせてから (G-37 ①)。\n`);
+      st.ends = key(ends);
     }
+    saveState(sid, st);
     process.exit(0);
   }
 
@@ -80,16 +98,18 @@ process.stdin.on("end", () => {
 
   // 2. 確認の Chrome と、このセッションが立てた dev サーバー (1440 はブラックの確かめ用なので数えない)
   const text = readTail(tp, 3_000_000);
-  const listen = listeningPorts();
-  const mine = [];
-  for (const p of [1441, 1442, 1443, 1444, 1445, 1460, 1461, 9222, 9372, 9381, 9382])
-    // 自分が打ったコマンド (tool_use の command) の中に番号がある時だけ数える (読んだ引き継ぎの文に出てくる番号は数えない)
-    if (listen.has(p) && new RegExp(`"command":"[^"]*(port[ =]?|:)${p}\\b`).test(text)) mine.push(p);
+  // 自分が打ったコマンド (tool_use の command) の中に番号がある時だけ数える (読んだ引き継ぎの文に出てくる番号は数えない)。
+  // netstat は、そういう番号を打った跡がある時だけ回す (11-18、毎回の返事の終わりで回さない)
+  const used = [1441, 1442, 1443, 1444, 1445, 1460, 1461, 9222, 9372, 9381, 9382].filter((p) => new RegExp(`"command":"[^"]*(port[ =]?|:)${p}\\b`).test(text));
+  const listen = used.length ? listeningPorts() : new Set();
+  const mine = used.filter((p) => listen.has(p));
   if (mine.length) todo.push(`このセッションが立てたらしいサーバー・確認の Chrome がまだ動いている (port ${mine.join("・")})。使い終わったなら止める (Chrome は chrome-devtools-mcp を含む chrome.exe だけ。G-36・CLAUDE.md「いつも」)。まだ使う・ほかのセッションの物なら、そのままでよい`);
 
   // 3. 止め残り (G-26、11-03): 裏の Bash を TaskStop で止めても、Windows では中の台本と子 (vitest など) が親なしで回り続ける。
   //    親の死んだ bash / node / python のうち、コマンドにこのセッションの置き場 (sid) か worktree が入る物を知らせる
-  const orphans = orphanProcs(sid, String(input.cwd || ""));
+  //    プロセス一覧 (Get-CimInstance、1 秒ほど) は、このセッションが裏で回した・止めた・見張った跡がある時か worktree の時だけ引く (11-18)
+  const spawned = /"run_in_background":true|"name":"(TaskStop|Monitor|KillShell)"/.test(text) || /worktrees/i.test(String(input.cwd || ""));
+  const orphans = spawned ? orphanProcs(sid, String(input.cwd || "")) : [];
   // 回し中 (このセッションの -run.log が 1 分以内に伸びて「済み」で終わっていない) なら、親の死んだ台本は今の回しの本体なので知らせない (G-45)
   if (orphans.length && !liveRunLog(text)) todo.push(`止め残りの子プロセスが回っている (G-26。TaskStop では子が残る): ${orphans.slice(0, 3).map((p) => `PID ${p.ProcessId} ${String(p.CommandLine).slice(0, 80)}`).join(" , ")}。台本の bash から taskkill /T /F /PID <PID> で木ごと止め、残り 0 を見る`);
 
@@ -110,8 +130,52 @@ function ctxTokens(p) {
   const m = all.pop();
   return m ? Number(m[1]) + Number(m[2]) + Number(m[3]) : 0;
 }
-function countLines(p) {
-  try { const s = fs.readFileSync(p, "utf8"); let n = 0; for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) === 10) n++; return n; } catch { return 0; }
+// 何度も破った 5 つの決まり (G-30、10-17 オーナー「先に読ませる」)。11-18 まで ~/.claude/hooks/ja-reminder.js が毎番差し込んでいた物を、始まりと compact の後の 1 回にした
+const RULES = [
+  "【決まり】",
+  "1. 書く文はすべて日本語: 最後の報告・ツールの合間の一言 (「〜を見ます」「〜を直します」)・進捗・説明・考えの説明まで。英語のままでよいのはコード・コマンド・ファイル名・エラーの引用だけ。",
+  "2. 確認はスクリプトで回す。見せる時は Chrome の 1 タブだけで、終わったらすぐ閉じる。アプリ内の画面 (browser pane) は使わない。",
+  "3. リリース: 本番の出しはオーナーの「出して」の後 (R-03・G-38)、UI は見た目の OK の後。更新内容は日本語 (changelog-notes.json) と英語 (changelog-notes-en.json) の両方。",
+  "4. 決着済みを蒸し返さない。「裏付けが無い・確かめていない」と言う前に、決めた物のメモ・チェックリストを見る。",
+  "5. 自分で作ったテストが通っただけで「確かめた」と言わない。確かめた物 (見張り / 外の正解 / 画面) を分けて書く。",
+].join("\n");
+const stateFile = (sid) => path.join(os.tmpdir(), "exiledesk-notices", `${sid || "nosid"}.json`);
+function loadState(sid) { try { return JSON.parse(fs.readFileSync(stateFile(sid), "utf8")) || {}; } catch { return {}; } }
+function saveState(sid, st) { try { fs.mkdirSync(path.dirname(stateFile(sid)), { recursive: true }); fs.writeFileSync(stateFile(sid), JSON.stringify(st)); } catch {} }
+// 一番新しい画面のファイル (src の .vue・CSS) の Edit / Write / MultiEdit の tool_use の id。無ければ ""
+function lastUiEdit(text) {
+  let id = "";
+  const re = /"type":"tool_use","id":"([^"]+)","name":"(?:Edit|Write|MultiEdit)","input":\{"file_path":"[^"]*[\\/]src[\\/][^"]*\.(?:vue|css)"/g;
+  for (const m of text.matchAll(re)) id = m[1];
+  return id;
+}
+// 自分のセッションの紙 (題・アーカイブ済みか)。紙の場所は一度探したら覚える (題は変わるので中身は毎回読む)
+function ownSession(sid) {
+  if (!sid) return undefined;
+  const cache = path.join(os.tmpdir(), "exiledesk-notices", "session-files.json");
+  let seen = {};
+  try { seen = JSON.parse(fs.readFileSync(cache, "utf8")); } catch {}
+  const read = (p) => { try { const j = JSON.parse(fs.readFileSync(p, "utf8")); return j.cliSessionId === sid ? { title: String(j.title || ""), archived: !!j.isArchived } : undefined; } catch { return undefined; } };
+  // 紙の無いセッション (デスクトップの外など) は 10 分探し直さない
+  if (/^none:\d+$/.test(seen[sid] || "")) { if (Date.now() - Number(seen[sid].slice(5)) < 600_000) return undefined; }
+  else if (seen[sid]) { const i = read(seen[sid]); if (i) return i; }
+  let found;
+  const walkJson = (d, depth) => {
+    let ents = [];
+    try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of ents) {
+      if (found) return;
+      const p = path.join(d, e.name);
+      if (e.isDirectory() && depth < 2) walkJson(p, depth + 1);
+      else if (e.isFile() && e.name.startsWith("local_") && e.name.endsWith(".json")) {
+        try { if (fs.readFileSync(p, "utf8").includes(sid) && read(p)) found = p; } catch {}
+      }
+    }
+  };
+  walkJson(path.join(process.env.APPDATA || "", "Claude", "claude-code-sessions"), 0);
+  seen[sid] = found || `none:${Date.now()}`;
+  try { fs.mkdirSync(path.dirname(cache), { recursive: true }); fs.writeFileSync(cache, JSON.stringify(seen)); } catch {}
+  return found ? read(found) : undefined;
 }
 function readHead(p, max) {
   try { const fd = fs.openSync(p, "r"); const buf = Buffer.alloc(max); const len = fs.readSync(fd, buf, 0, max, 0); fs.closeSync(fd); return buf.toString("utf8", 0, len); } catch { return ""; }

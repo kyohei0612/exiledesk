@@ -9,7 +9,7 @@ const os = require("os");
 const path = require("path");
 
 const MARK = path.join(os.homedir(), ".claude", "exiledesk-release-ok");
-// repo の中の物 (.claude/hooks/、入口 run.js が main の作業場の物を読む)。道はこのファイルの置き場から引く
+// repo の中の物 (.claude/hooks/、入口 run.cjs が main の作業場の物を読む)。道はこのファイルの置き場から引く
 const REPO = path.resolve(__dirname, "../..").replace(/\\/g, "/");
 // フックと登録 (.claude/hooks/・.claude/settings.json) の書き換えは、出しの印とは別の印が要る (オーナーの OK の後にブラックが置き、済んだら消す)
 const HOOKS_MARK = path.join(os.homedir(), ".claude", "exiledesk-hooks-ok");
@@ -302,8 +302,13 @@ process.stdin.on("end", () => {
     // UI はデザインのプラグインを使う (G-43、オーナー 11-03「UI系は折角だしプラグイン使う事フックに入れといて」):
     // 本体か worktree の画面のファイル (src の .vue・CSS) を触る前に、このセッションで frontend-design の skill を読んだ跡が要る
     if (/\/ExileDesk\/(\.claude\/worktrees\/[^/]+\/)?src\/.*\.(vue|css)$/i.test(fp)) {
-      let used = false;
-      try { used = fs.readFileSync(String(input.transcript_path || ""), "utf8").includes('"skill":"frontend-design'); } catch { used = true; }
+      // 読んだ跡は一度見つけたら印を置き、次からは記録 (100 MB を超える物もある) を読まない (11-18)
+      const seenMark = path.join(os.tmpdir(), "exiledesk-notices", `${input.session_id || "nosid"}-frontend`);
+      let used = fs.existsSync(seenMark);
+      if (!used) {
+        try { used = fs.readFileSync(String(input.transcript_path || ""), "utf8").includes('"skill":"frontend-design'); } catch { used = true; }
+        if (used && input.session_id) try { fs.mkdirSync(path.dirname(seenMark), { recursive: true }); fs.writeFileSync(seenMark, ""); } catch {}
+      }
       if (!used) block("UI のファイルを触る前に、Skill ツールで frontend-design:frontend-design を読む (G-43)。読んだら同じ直しをもう一度");
     }
     if (/src\/web\/release-flags\.ts$/.test(fp)) {
