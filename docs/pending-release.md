@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| catBack (S-51d B'、r/83ddRWvV。触る道の台本 `node scripts/sim-watch/catback-4.mjs` (既定 1461、`--off` で前の形)、4 か所とも入り = 自動の ↩・切り = 未設定) | c2fa767cf・47dfaf4a0 | シミュレーター: カタリストを挟んだ先でも、品質がもう満杯の時や触媒の高貴で使い切った後は、前の同じ形の箱へ自動で戻るように (同じ手を置き直さなくてよい) | Simulator: boxes after a catalyst now auto-return to the earlier box with the same shape when the quality is already full or was used up by Omen of Catalysing Exaltation, so you no longer have to place the same craft again |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
