@@ -241,6 +241,7 @@ export const FLAGS = {
   dailySaveSplit: "デイリーの挑戦の帯の「レシピに保存」を「保存」(デイリーの中だけ、名前の窓なし・押した後 ✓ 保存済み) にし、レシピに保存は右の欄の完成形のカードの下へ。離れる時の窓は出さない (D-36e 案 A)。閉じている間は今のまま",
   veilStone: "シミュの木: 冒涜・発現の手の窓で選んだ MOD は、完成形に同じ MOD があっても選んだ段のまま別の狙い (置き石) にする。冒涜で付いた間は完成形の数え・「狙いが消えた」に入れない (S-33h)",
   catBack: "シミュの木: 前の同じ形の箱との間にカタリストを挟んでも、品の品質がそのカタリストでもう上限か、触媒の高貴などで使い切った (0) 後なら自動の ↩ を付ける (S-51d の例外を狭める。ルーンは今のまま)",
+  recipeRoom: "シミュの木のレシピをこの端末に保存できない時 (ブラウザーの保存の枠が一杯) に黙らない: 古い置き場の控えを空けて書き直し、それでも入らない時は印を立てる (画面の知らせはオーナーの見た目の OK の後)。0.1.748 の詰めた置き場への移しが一杯で止まった人は、古い置き場の並びのまま読み (逆さにしない)、控えを空けて移しを終える (S-101c)。オーナー 11-18「それで」(案 A、ブラック 139 経由)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
@@ -255,20 +256,11 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   // 0.1.754 偶然付いた狙いは予期せぬで止めて作り直す (S-21b2 oddStop)。オーナー 11-18「だしって」
   "oddStop",
   // 0.1.752 見本の配置で古い枝を当てない (S-21b oddStale)・組み直しで保存の手を同じ道の箱へ付け直す (S-21b oddCarry)。オーナー 11-18「だして、直してからだすで」「骨至急だな」、ブラック 135
-  "oddStale",
-  "oddCarry",
+  "oddStale", "oddCarry",
   // 0.1.751 格の持ち替えで下を残す・お告げの引き継ぎ (S-57d2)・いずれかの元素耐性の結び (S-10h2)・完成形の冒涜 (E-60c)・止まりの 1 行 (S-72f)・当たりを側ごとの箱に (S-65e)・フラクチャー後のカオス (S-10g)・削減の枝 (S-65c6・S-190d2)・兄弟枠 (S-190d)・完成見本の段の札 (S-78h)・隠れた行き先の手の札 (S-142n2)。オーナー 11-18「だして」、ブラック 135
-  "gradeKeepAll",
-  "eleBind",
-  "goalDesecrate",
-  "stuckOneLine",
-  "hitSide",
-  "fracPlainMark",
-  "whittleFloor",
-  "whittleNoSame",
-  "sameNames",
-  "goalTierEdge",
-  "linkHiddenSkip",
+  "gradeKeepAll", "eleBind", "goalDesecrate", "stuckOneLine",
+  "hitSide", "fracPlainMark", "whittleFloor", "whittleNoSame",
+  "sameNames", "goalTierEdge", "linkHiddenSkip",
   // 0.1.750 シミュの「エミュで試す」でソケット・ルーンと完成形の札のとおりの品を載せる (S-211b・S-211c・E-29b)・右の列の頭を 1 行に (S-94hy)・右の列の幅を 1/1.3 に (S-78f2)。オーナー 11-18「だしって」、ブラック 132
   "simToEmuRunes",
   "simToEmuAll",

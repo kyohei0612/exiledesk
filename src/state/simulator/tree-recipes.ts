@@ -51,16 +51,24 @@ function readList(): unknown[] {
   const old = parseList(localStorage.getItem(TREE_RECIPES_KEY)) ?? parseList(localStorage.getItem(BAK));
   if (!z) return old ?? [];
   if (!old?.length) return z;
-  const at = Number(localStorage.getItem(Z_AT)) || 0, ids = new Map(z.map((x, i) => [(x as { id?: unknown })?.id, i]));
-  const out = [...z];
-  for (const x of old) {
+  const atRaw = localStorage.getItem(Z_AT);
+  // (スイッチ recipeRoom、S-101c) 移した時刻が無い = 移しが途中で止まった (置き場が一杯で書けなかった)。今の鍵の一覧を元の並びのまま正とし、Z にしか無い物だけ前に足す
+  if (atRaw == null && flag("recipeRoom")) return mergeInto(old, z, 0);
+  return mergeInto(z, old, Number(atRaw) || 0);
+}
+/** base に、add のうち更新が at より後の物を id で足す (無い物は add の並びのまま頭へ、ある物は更新の新しい方) */
+function mergeInto(base: unknown[], add: unknown[], at: number): unknown[] {
+  const ids = new Map(base.map((x, i) => [(x as { id?: unknown })?.id, i]));
+  const out = [...base], fresh: unknown[] = [];
+  for (const x of add) {
     const r = x as { id?: unknown; updatedAt?: unknown } | null;
     if (!r || typeof r.updatedAt !== "number" || r.updatedAt <= at) continue;
     const i = ids.get(r.id);
-    if (i === undefined) out.unshift(x);
+    if (i === undefined) fresh.push(x);
     else if (r.updatedAt > ((out[i] as { updatedAt?: number })?.updatedAt ?? 0)) out[i] = x;
   }
-  return out;
+  // 前は 1 つずつ頭へ足していて並びが逆になった (recipeRoom の前の形)
+  return flag("recipeRoom") ? [...fresh, ...out] : [...fresh.reverse(), ...out];
 }
 function read(): TreeRecipe[] {
   try {
@@ -73,12 +81,36 @@ function read(): TreeRecipe[] {
 }
 /** 書く (スイッチ saveCap15 の間は詰めた一覧 Z へ = tree-recipe-z。本体は先に書き、入らなければ控えを空ける) */
 function write(v: TreeRecipe[]): void {
-  if (flag("saveCap15")) { try { writeZ(v); } catch { /* 覚えられなくても動く */ } return; }
+  if (flag("saveCap15")) {
+    try { writeZ(v); recipeWriteFailed.value = false; return; } catch { /* 下で空けて書き直す */ }
+    if (flag("recipeRoom") && freeOldBak()) try { writeZ(v); recipeWriteFailed.value = false; return; } catch { /* 下で知らせる */ }
+    failed();
+    return;
+  }
   try {
     const prev = localStorage.getItem(TREE_RECIPES_KEY), pl = parseList(prev);
     if (pl) localStorage.setItem(BAK, prev!);
     localStorage.setItem(TREE_RECIPES_KEY, JSON.stringify(v));
-  } catch { /* 覚えられなくても動く */ }
+    recipeWriteFailed.value = false;
+  } catch { failed(); }
+}
+/**
+ * (スイッチ recipeRoom、S-101c) 書けなかった印 (置き場が一杯)。前は黙って捨て、画面の中だけ保存・消したように見えて、読み直すと前の一覧へ戻った
+ * (11-18 オーナーの端末: 本番の置き場の残り 114 字で 11-15 から 1 つも書けていなかった)。画面の知らせはこの印を見る
+ */
+export const recipeWriteFailed = ref(false);
+function failed(): void {
+  if (!flag("recipeRoom")) return;
+  recipeWriteFailed.value = true;
+  try { console.warn("[ExileDesk] レシピをこの端末に保存できませんでした (ブラウザーの保存の枠が一杯)"); } catch { /* 無くてよい */ }
+}
+/** 古い鍵の控え (BAK) を空ける。本体の古い鍵が読める時だけ (控えは本体の 1 つ前の写し = ほぼ同じ物)。空けたら true */
+function freeOldBak(): boolean {
+  try {
+    if (localStorage.getItem(BAK) == null || !parseList(localStorage.getItem(TREE_RECIPES_KEY))) return false;
+    localStorage.removeItem(BAK);
+    return true;
+  } catch { return false; }
 }
 
 export const treeRecipes = ref<TreeRecipe[]>(read());
@@ -87,11 +119,12 @@ function moveToZ(): void {
   if (!flag("saveCap15")) return;
   try {
     if (localStorage.getItem(TREE_RECIPES_KEY) == null && localStorage.getItem(Z_KEY) != null) return;
-    writeZ(treeRecipes.value);
+    // (recipeRoom) 入らなければ古い鍵の控えを空けて書き直す。Z に書けて移した時刻を残せてから古い鍵を消す (順は前と同じ)
+    try { writeZ(treeRecipes.value); } catch (e) { if (!flag("recipeRoom") || !freeOldBak()) throw e; writeZ(treeRecipes.value); }
     localStorage.setItem(Z_AT, String(Date.now()));
     localStorage.removeItem(TREE_RECIPES_KEY);
     localStorage.removeItem(BAK);
-  } catch { /* 移せなくても今の鍵のまま動く */ }
+  } catch { failed(); /* 移せなくても今の鍵のまま動く */ }
 }
 moveToZ();
 function reloadTreeRecipes(): void { treeRecipes.value = read(); }
