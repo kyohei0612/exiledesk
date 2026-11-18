@@ -8,15 +8,29 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
-import { stuckDetail, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
+import { boxWord, stuckDetail, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { useSurfaceDoc } from "./tree-surface";
 import type { MergeLine } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
+import { reportTreeBug } from "./TreeBugReport.vue";
 const sd = useSurfaceDoc(); // この描き面の木 (S-09c。面の外では今のタブの木)
 /** 通った道の線と線の回数 (「n 回」「↩ n 回」) を出さない (S-199b、スイッチ runNoLines。オーナー 11-13「線消していいよ100人後の通った線」)。箱の「n 人」・止まり・別の箱へは出す */
 const noLines = flag("runNoLines");
 /** 止まりの札に乗せた時、その人の MOD と来た道 (S-72) */
+/** 止まりの札の小窓は 1 行 (S-72f、スイッチ stuckOneLine。11-18 オーナー「止まりの説明絶対誰も理解できんし俺もできない。1行で」)。
+ *  木の途中で行き先が無い止まり (印 bug) はサイトの不具合として要望へ促し、押すと木を付けた要望の窓を開く (「ツリー途中だからこれこそ関係なく要望へ送るボタンでしょ」) */
+const ONE_LINE = flag("stuckOneLine");
+/** 不具合の 1 行 (文 B、11-18 オーナー「Ｂ　そのまま送れるように」): 「n 段目「…」の後の行き先がありません (サイトの不具合)」 */
+const noWay = (id: string): string => { const b = boxWord(sd.doc.value, id); return tr(`${b}の後の行き先がありません (サイトの不具合)`, `No next box after ${b} (site bug)`); };
+const bugLine = (id: string): string => tr(`${noWay(id)}。押すと要望・バグを送れます`, `${noWay(id)}. Click to send feedback`);
+const oneLine = (id: string): string => { const w = props.result?.stuckWhy[id]; return !w ? "" : w.bug ? bugLine(id) : (w.short ?? w.reason); };
+function onStuck(id: string): void {
+  // 要望の窓を先に開く (寄る方で結果の層が描き直される前に印を読む)。欄には何が起きたかを先に入れ、そのまま送れるように (S-72f)
+  const w = props.result?.stuckWhy[id], n = props.result?.stuckAt[id] ?? 0, all = props.result?.n ?? 0;
+  if (ONE_LINE && w?.bug) reportTreeBug(sd.doc.value, tr(`${all} 人回すと ${n} 人が止まった: ${noWay(id)}。止まり方: ${w.short ?? w.reason}`, `${n} of ${all} runs stopped: ${noWay(id)}. How: ${w.short ?? w.reason}`));
+  emit("go", id);
+}
 
 /** 止まりの札をカードに被せない  */
 
@@ -120,13 +134,14 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <!-- 止まった人: 理由を箱の上に文で重ねる (前は赤い札の title だけ、10-26 失敗時の挙動の案 2)。押すとその箱へ寄る -->
     <!-- 止まりの札はカードに被せない (10-27 夜オーナー「カードに被ったまま消えない」= バグ): 箱のすぐ下に「止まり n 人」だけを常に出し、理由は乗せた時・押した時だけ広げる -->
     <button v-if="m.stuck" type="button" data-tree-run-stuck data-tree-run-stuck-pill :data-box-id="m.b.id" class="nodrag nopan group pointer-events-auto absolute z-20 whitespace-nowrap rounded-full border border-rose-400/70 bg-[#2a0d12]/95 px-2 text-left text-[11px] font-bold tabular-nums text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)] hover:z-30 focus:z-30"
-      :style="{ left: `${m.x + 6}px`, top: `${m.y + m.h + 4}px` }" @click="emit('go', m.b.id)">
+      :style="{ left: `${m.x + 6}px`, top: `${m.y + m.h + 4}px` }" @click="onStuck(m.b.id)">
       {{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}
-      <span class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block"><b v-if="result?.stuckWhy[m.b.id]?.short" class="block">{{ result.stuckWhy[m.b.id]!.short }}</b>{{ result?.stuckWhy[m.b.id]?.reason }}<template v-if="result?.stuckWhy[m.b.id]?.item"><br />{{ stuckDetail(sd.doc.value, result.stuckWhy[m.b.id]!) }}</template></span>
+      <span v-if="ONE_LINE" data-tree-run-stuck-line :data-bug="result?.stuckWhy[m.b.id]?.bug ? '' : undefined" class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block">{{ oneLine(m.b.id) }}</span>
+      <span v-else class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block"><b v-if="result?.stuckWhy[m.b.id]?.short" class="block">{{ result.stuckWhy[m.b.id]!.short }}</b>{{ result?.stuckWhy[m.b.id]?.reason }}<template v-if="result?.stuckWhy[m.b.id]?.item"><br />{{ stuckDetail(sd.doc.value, result.stuckWhy[m.b.id]!) }}</template></span>
     </button>
     <button v-else-if="m.stuck" type="button" data-tree-run-stuck :data-box-id="m.b.id" class="nodrag nopan pointer-events-auto absolute z-20 flex flex-col overflow-y-auto rounded-lg border border-rose-400/70 bg-[#2a0d12]/95 px-2 py-1 text-left text-[11px] leading-snug text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-      :style="{ left: `${m.x + 4}px`, top: `${m.y + 26}px`, width: `${BOX_W - 8}px`, height: `${BOX_H - 30}px` }" :title="result?.stuckWhy[m.b.id]?.reason" @click="emit('go', m.b.id)">
-      <b class="tabular-nums">{{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}</b><span class="break-words">{{ result?.stuckWhy[m.b.id]?.short ?? result?.stuckWhy[m.b.id]?.reason }}</span>
+      :style="{ left: `${m.x + 4}px`, top: `${m.y + 26}px`, width: `${BOX_W - 8}px`, height: `${BOX_H - 30}px` }" :title="ONE_LINE ? oneLine(m.b.id) : result?.stuckWhy[m.b.id]?.reason" @click="onStuck(m.b.id)">
+      <b class="tabular-nums">{{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}</b><span class="break-words">{{ ONE_LINE ? oneLine(m.b.id) : result?.stuckWhy[m.b.id]?.short ?? result?.stuckWhy[m.b.id]?.reason }}</span>
     </button>
     <!-- 着いてから形の合う別の箱へ移った人 (tree-run の settle。矢印の先と実際に進む箱が違う時) -->
     <span v-if="m.moved" data-tree-run-moved class="pointer-events-auto absolute z-20 -translate-y-1/2 whitespace-nowrap rounded-full border border-cyan-300/50 bg-[#0d1a1c]/95 px-2 text-[11px] tabular-nums text-cyan-100"

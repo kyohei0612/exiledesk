@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| stuckOneLine (S-72f、シミュ 92、オーナー 11-18「止まりの説明絶対誰も理解できんし俺もできない。1行で」「Ｂ　そのまま送れるように」、見た目 OK = オーナー 11-18「おｋスナップ」(st92-B2c の絵)) | この commit | シミュ: 100 人回した後の「止まり n 人」の説明を 1 行にしました。ツリーの途中で行き先が無い止まりはサイトの不具合として、押すと何が起きたかが入った要望の窓が開き、そのまま送れます | Simulator: the "n stuck" note after a 100-player run is now one line. When the tree has no next box (a site bug), clicking it opens the feedback window with the details filled in, ready to send |
 | hitSide (S-65e、シミュ手伝い 93、オーナー 11-18「８－９すすめて」= レビュワー 1 の案 1 (側で分ける)、見た目 OK = オーナー 11-18「おｋスナップの見た目おｋ」(p93d の前後)) | この commit | シミュ: カオスなどで狙いが付いた時、消えた MOD の側で形が違う結果を 1 つの箱にまとめていたのを、形ごとの箱に分けました | Simulator: hits from Chaos Orb and similar steps are now split into separate boxes when the removed mod's side leaves a different prefix/suffix layout |
 | 「木」→「ツリー」の言い替え (U-62、スイッチ無し、オーナー 11-18「あとついでに木って書いてあるところソートしてツリーに全部変えといてディスコの要望きてる」、デザイン部長、見た目 OK = オーナー 11-18「おｋ完了でおｋそのすなっぷたち」(ki-after の絵)。画面の日本語 72 か所、曜日の「木」とゲームの和訳は残す) | この commit | 画面の「木」という言い方を「ツリー」にそろえました (シミュ・デイリー・チュートリアル・要望の窓) | Japanese UI: "木" is now written as "ツリー" (tree) everywhere on screen |
 | fracPlainMark (S-10g、シミュ 89、オーナー 11-18「これは明確にバグ」、見た目 OK = オーナー 11-18「おｋ」(sim89-frac の前後)) | この commit | シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、ツリーが終わったように見えていたのを直しました | Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished |
