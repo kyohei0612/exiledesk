@@ -1,5 +1,89 @@
 [
  {
+  "v": "0.1.751",
+  "date": "2026-11-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 手を同じ系の格に持ち替えてもお告げ (アビスの反響・削減・右側/左側など) と残したい MOD を引き継ぎ、途中で別の手を通っても最後に置いた手で比べて下のツリーを残すようにしました。保存したツリーを開いただけで「保存していない」の印が付くのも直しました",
+    "en": "Simulator: switching a step to another tier of the same currency now keeps its omens and kept mods, and the tree below is kept based on the final step you place. Opening a saved tree no longer marks it as unsaved"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 「いずれかの元素耐性」の当たりを付いたその元素に結び、狙っていない手で余分に付いた元素耐性は外れとして数えるようにしました (r/67UqHyvN の止まりが無くなります)。2 本目からは単品の元素に選び直せず、カードの行は元素を出さず「いずれかの元素耐性」と出します",
+    "en": "Simulator: \"any Elemental Resistance\" hits now bind to the element that rolled; extra elemental resistances from steps that did not aim for them count as unwanted mods (fixes the stuck players in r/67UqHyvN). From the 2nd one on you cannot switch to a single element, and box cards show \"any Elemental Resistance\" instead of the element"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 完成形の MOD 選びで、冒涜専用の MOD が「冒涜」で付けられるようにしました (前は全部灰色だった)。完成形の品にも冒涜の MOD が入ります",
+    "en": "Simulator goal: desecrated-only mods can now be added via \"Desecrate\" in the goal mod picker (they were all greyed out). The goal item now includes the desecrated mod"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 100 人回した後の「止まり n 人」の説明を 1 行にしました。ツリーの途中で行き先が無い止まりはサイトの不具合として、押すと何が起きたかが入った要望の窓が開き、そのまま送れます",
+    "en": "Simulator: the \"n stuck\" note after a 100-player run is now one line. When the tree has no next box (a site bug), clicking it opens the feedback window with the details filled in, ready to send"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: カオスなどで狙いが付いた時、消えた MOD の側で形が違う結果を 1 つの箱にまとめていたのを、形ごとの箱に分けました",
+    "en": "Simulator: hits from Chaos Orb and similar steps are now split into separate boxes when the removed mod's side leaves a different prefix/suffix layout"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "画面の「木」という言い方を「ツリー」にそろえました (シミュ・デイリー・チュートリアル・要望の窓)",
+    "en": "Japanese UI: \"木\" is now written as \"ツリー\" (tree) everywhere on screen"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、ツリーが終わったように見えていたのを直しました",
+    "en": "Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 削減の枝で、付きえない「同じ」の帯が出ていた・割合がずれていたのと、1 つの帯に置いた削減がほかの帯にも勝手に入っていたのを直しました",
+    "en": "Simulator: Whittling branches no longer show an impossible \"same level\" band or skewed rates, and a Whittling placed on one band no longer copies to the others"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 削減の枝の割合を、上級・完全のオーブの後でもゲームと同じに直しました",
+    "en": "Simulator: Whittling branch rates now match the game after Greater/Perfect orbs"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 兄弟枠で、狙いやフラクチャーで固定された MOD が違う箱にまで手が写っていたのを直しました",
+    "en": "Simulator: sibling boxes no longer copy a step into boxes with different target or fractured mods"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 高貴・変成・増強の等級や骨を保存 ↔ 古代に替えても、下の手を残して数え直すようにしました",
+    "en": "Simulator: changing the tier of Exalted/Transmutation/Augmentation or Preserved ↔ Ancient bones now keeps the steps below and recounts"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 完成形の札の段の札を左の枠に寄せ、MOD の文の欄を広く・真ん中にそろえ、カードを枠の幅いっぱいにしました",
+    "en": "Simulator: tier labels on the goal card sit at the left edge so mod text has more room"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 行き先が隠れた箱だと手の札ごと線が消えていたのを直しました (カオスの札が出ない)",
+    "en": "Simulator: steps whose merged target is hidden no longer lose their chip and lines"
+   }
+  ]
+ },
+ {
   "v": "0.1.750",
   "date": "2026-11-18",
   "items": [
@@ -1163,18 +1247,6 @@
     "area": "",
     "text": "シミュレーター: ベースを選んだ後に木の欄が潰れていたのを直しました",
     "en": "Simulator: fixed the tree area being squashed after you chose a base"
-   }
-  ]
- },
- {
-  "v": "0.1.711",
-  "date": "2026-11-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 挑戦の画面 (PC) で、木を組む所が細く押し込まれていたのを直しました",
-    "en": "Daily: fixed the tree area on the challenge screen (PC) being squeezed into a narrow column"
    }
   ]
  }

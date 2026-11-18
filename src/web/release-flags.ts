@@ -240,6 +240,18 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.751 格の持ち替えで下を残す・お告げの引き継ぎ (S-57d2)・いずれかの元素耐性の結び (S-10h2)・完成形の冒涜 (E-60c)・止まりの 1 行 (S-72f)・当たりを側ごとの箱に (S-65e)・フラクチャー後のカオス (S-10g)・削減の枝 (S-65c6・S-190d2)・兄弟枠 (S-190d)・完成見本の段の札 (S-78h)・隠れた行き先の手の札 (S-142n2)。オーナー 11-18「だして」、ブラック 135
+  "gradeKeepAll",
+  "eleBind",
+  "goalDesecrate",
+  "stuckOneLine",
+  "hitSide",
+  "fracPlainMark",
+  "whittleFloor",
+  "whittleNoSame",
+  "sameNames",
+  "goalTierEdge",
+  "linkHiddenSkip",
   // 0.1.750 シミュの「エミュで試す」でソケット・ルーンと完成形の札のとおりの品を載せる (S-211b・S-211c・E-29b)・右の列の頭を 1 行に (S-94hy)・右の列の幅を 1/1.3 に (S-78f2)。オーナー 11-18「だしって」、ブラック 132
   "simToEmuRunes",
   "simToEmuAll",

@@ -1,4 +1,19 @@
 {
+  "0.1.751": [
+    "Simulator: switching a step to another tier of the same currency now keeps its omens and kept mods, and the tree below is kept based on the final step you place. Opening a saved tree no longer marks it as unsaved",
+    "Simulator: \"any Elemental Resistance\" hits now bind to the element that rolled; extra elemental resistances from steps that did not aim for them count as unwanted mods (fixes the stuck players in r/67UqHyvN). From the 2nd one on you cannot switch to a single element, and box cards show \"any Elemental Resistance\" instead of the element",
+    "Simulator goal: desecrated-only mods can now be added via \"Desecrate\" in the goal mod picker (they were all greyed out). The goal item now includes the desecrated mod",
+    "Simulator: the \"n stuck\" note after a 100-player run is now one line. When the tree has no next box (a site bug), clicking it opens the feedback window with the details filled in, ready to send",
+    "Simulator: hits from Chaos Orb and similar steps are now split into separate boxes when the removed mod's side leaves a different prefix/suffix layout",
+    "Japanese UI: \"木\" is now written as \"ツリー\" (tree) everywhere on screen",
+    "Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished",
+    "Simulator: Whittling branches no longer show an impossible \"same level\" band or skewed rates, and a Whittling placed on one band no longer copies to the others",
+    "Simulator: Whittling branch rates now match the game after Greater/Perfect orbs",
+    "Simulator: sibling boxes no longer copy a step into boxes with different target or fractured mods",
+    "Simulator: changing the tier of Exalted/Transmutation/Augmentation or Preserved ↔ Ancient bones now keeps the steps below and recounts",
+    "Simulator: tier labels on the goal card sit at the left edge so mod text has more room",
+    "Simulator: steps whose merged target is hidden no longer lose their chip and lines"
+  ],
   "0.1.750": [
     "Simulator: \"Close\" and the granted-skill picker now share one row in the side panel",
     "Simulator: the side panel is a little narrower, leaving more room for the tree",
