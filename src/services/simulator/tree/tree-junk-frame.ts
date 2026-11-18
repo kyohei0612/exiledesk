@@ -40,7 +40,7 @@ function freshOf(data: PatchData, before: StageItem, after: StageItem): StageMod
 export function junkTaking(data: PatchData, box: TreeBox, before: StageItem, after: StageItem, g: JunkGoal): StageMod[] {
   if (!g.fams.size || box.out === "blocked") return [];
   const mine = new Set(box.out === "hit" ? boxAims(box).flatMap((a) => aimFams(data, a)) : []);
-  return freshOf(data, before, after).filter((m) => famsOf(data, m).some((f) => g.fams.has(f) && !mine.has(f)) && isMissMod(m, g.miss));
+  return freshOf(data, before, after).filter((m) => famsOf(data, m).some((f) => g.fams.has(f) && !mine.has(f)) && isMissMod(m, g.miss, after));
 }
 /** 代表の外れが木の狙いの族を全く取らないか (段を満たす物も無い)。代表は先にこれを選ぶ = たまたま完成形を満たした品を代表にしない (王者の窓から抜けた、11-16 の絵) */
 export function junkClean(data: PatchData, box: TreeBox, before: StageItem, after: StageItem, g: JunkGoal): boolean {
@@ -51,7 +51,7 @@ export function junkClean(data: PatchData, box: TreeBox, before: StageItem, afte
 /** 品 item に付いている普通の MOD のうち、木の狙いの族を段の足りない形で取った物があるか (↩・ほかの形で埋める代表・保存の例を後回しにする) */
 export function itemTaking(data: PatchData, item: StageItem, g: JunkGoal | null): boolean {
   if (!g?.fams.size) return false;
-  return freshOf(data, { ...item, prefixes: [], suffixes: [] }, item).some((m) => famsOf(data, m).some((f) => g.fams.has(f)) && isMissMod(m, g.miss));
+  return freshOf(data, { ...item, prefixes: [], suffixes: [] }, item).some((m) => famsOf(data, m).some((f) => g.fams.has(f)) && isMissMod(m, g.miss, item));
 }
 /**
  * 代表 item の外れ bad を、同じ手のほかの枝 (pool) に新しく付いた同じ側の外れのうち、木の狙いの族を取らず品に無い系統の物と差し替えた品 (重い枝の順に選ぶ)。

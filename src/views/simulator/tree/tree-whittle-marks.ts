@@ -36,7 +36,7 @@ export function lvRowTags(data: PatchData, doc: TreeDoc, id: string, item: Stage
   const f = frameOfDoc(data, doc).frames.get(id), aimed = f && !f.note ? f.aimed : sampleAimed(data, doc, id, 1), { miss, side } = whittleCompare(data, doc, frameHandOf(doc, id), aimed, item);
   const loose = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && (!side || m.side === side));
   const low = (l: StageMod[]): StageMod | undefined => l.reduce<StageMod | undefined>((a, m) => (!a || whittleLevel(m) < whittleLevel(a) ? m : a), undefined);
-  const junk = low(loose.filter((m) => isMissMod(m, miss))), want = low(loose.filter((m) => !isMissMod(m, miss)));
+  const junk = low(loose.filter((m) => isMissMod(m, miss, item))), want = low(loose.filter((m) => !isMissMod(m, miss, item)));
   if (!junk || !want) return tags;
   const out = new Map(tags), L = LOOK[c];
   const jt = out.get(junk.modId) ?? { text: tr("外れ MOD", "Miss mod"), tone: "bad" as const, replace: true };

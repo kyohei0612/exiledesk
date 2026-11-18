@@ -12,7 +12,8 @@
  * 品にもう付いている元素と、元素を決めた完成形の狙いの元素 (数えない系統) は出さない
  */
 import { computed, ref, type Ref } from "vue";
-import { ELE_FAMILIES, eleAnyOn, eleIdsOf, eleLaterOf } from "../../../services/simulator/tree/tree-ele-any";
+import { ELE_FAMILIES, eleAnyOn, eleIdsOf, eleLaterOf, isEleMod } from "../../../services/simulator/tree/tree-ele-any";
+import { eleBindOn } from "../../../services/simulator/tree/tree-miss";
 import { aimKey, bothOf, type Aim } from "../../../services/simulator/tree/tree-model";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -43,12 +44,18 @@ export function useEleSecond(choices: Ref<readonly Aim[]>) {
 }
 
 // ② 火・冷気・雷の単体の ☑ (S-10h ⑩)
-export interface EleSingle { fam: string; aim: Aim }
+/** locked = 2 本目からで「いずれか」に含まれる形のまま押せない (S-10h2 ②、スイッチ eleBind) */
+export interface EleSingle { fam: string; aim: Aim; locked?: boolean }
 
 /** init = 前に決めた手の当たりの狙い (単体の札 eleOne から ☑ を戻す) */
 export function useEleSingles(choices: Ref<readonly Aim[]>, item: Ref<StageItem | null | undefined>, init: readonly Aim[] = []) {
   /** 単体で ☑ した物 (modId|段) */
   const picked = ref<string[]>(init.filter((a) => a.eleOne).map(aimKey));
+  /**
+   * 2 本目から (品に一般の火・冷気・雷耐性がもう付いていて、2 番からの「いずれか」の行) は単体を灰色で押せなくし、☑ は親の「いずれか」の ☑ に合わせる (親が ☑ なら ☑ 入り、空なら空。レビュワー 2 の R2-b)。単体へ選び直せない (S-10h2 ②、スイッチ eleBind)。
+   * 当たりを付いた元素に結ぶので、2 本目を元素で分けると 1 本目の結びと食い違う
+   */
+  const locked = computed((): boolean => { const d = s.data.value, it = item.value; return eleBindOn() && !!d && !!it && [...it.prefixes, ...it.suffixes].some((m) => !m.unrevealed && isEleMod(d, m.modId)); });
   /** 「いずれか」の鍵 → 出す単体 (元素の系統と、その元素の同じ段の札) */
   const singles = computed((): Record<string, EleSingle[]> => {
     const d = s.data.value, it = item.value, out: Record<string, EleSingle[]> = {};
@@ -56,17 +63,17 @@ export function useEleSingles(choices: Ref<readonly Aim[]>, item: Ref<StageItem 
     const on = new Set([...it.prefixes, ...it.suffixes].map((m) => m.family));
     for (const a of choices.value) {
       if (!a.anyEle) continue;
-      const list = eleIdsOf(d, a.modId).flatMap((id) => { const fam = d.mods.get(id)?.family ?? ""; return ELE_FAMILIES.includes(fam) && !on.has(fam) && !a.eleSkip?.includes(fam) ? [{ fam, aim: { modId: id, tier: a.tier, eleOne: true } }] : []; });
+      const list = eleIdsOf(d, a.modId).flatMap((id) => { const fam = d.mods.get(id)?.family ?? ""; return ELE_FAMILIES.includes(fam) && !on.has(fam) && !a.eleSkip?.includes(fam) ? [{ fam, aim: { modId: id, tier: a.tier, eleOne: true }, ...(locked.value && (a.anyEle ?? 0) >= 2 ? { locked: true } : {}) }] : []; });
       if (list.length) out[aimKey(a)] = list;
     }
     return out;
   });
-  const isPicked = (x: EleSingle): boolean => picked.value.includes(aimKey(x.aim));
-  /** 単体の ☑ を押す (「いずれか」が ☑ の間は含まれているので何もしない) */
+  const isPicked = (x: EleSingle): boolean => !x.locked && picked.value.includes(aimKey(x.aim));
+  /** 単体の ☑ を押す (「いずれか」が ☑ の間・2 本目からは含まれているので何もしない) */
   function toggle(a: Aim, fam: string, anyOn: boolean): void {
     if (anyOn) return;
     const x = singles.value[aimKey(a)]?.find((y) => y.fam === fam);
-    if (!x) return;
+    if (!x || x.locked) return;
     const k = aimKey(x.aim);
     picked.value = picked.value.includes(k) ? picked.value.filter((y) => y !== k) : [...picked.value, k];
   }
@@ -82,5 +89,5 @@ export function useEleSingles(choices: Ref<readonly Aim[]>, item: Ref<StageItem 
   const shown = (a: Aim, fam: string, anyOn: boolean): boolean => anyOn || !!singles.value[aimKey(a)]?.some((x) => x.fam === fam && isPicked(x));
   /** 単体の ☑ を全部落とす (狙い無しを押した時) */
   const clear = (): void => { if (picked.value.length) picked.value = []; };
-  return { singles, toggle, reset, apply, shown, clear };
+  return { singles, toggle, reset, apply, shown, clear, locked };
 }

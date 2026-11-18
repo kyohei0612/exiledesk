@@ -42,7 +42,7 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
   if (m.has(key)) return m.get(key)!;
   const mods = [...item.prefixes, ...item.suffixes], ids = new Set(mods.map((x) => x.modId)), miss = missAims(data, wanted);
   // 外れか = 外れの式 (tree-miss の isMissMod、当たり方はエンジンの aimHits の sameText)
-  const junkOn = (side: string): string[] => mods.filter((x) => x.side === side && !x.fractured && isMissMod(x, miss)).map((x) => x.modId);
+  const junkOn = (side: string): string[] => mods.filter((x) => x.side === side && !x.fractured && isMissMod(x, miss, item)).map((x) => x.modId);
   // お告げは品を渡して効かない状態の物を落とす (omensFor の第 3 引数)
   const outs = (whittle ? rankVariants(data, item, wanted, undefined, undefined, handWhittleSide({ omens })).map((v) => v.item) : [item]).flatMap((it) => stepOutcomes(data, it, currency, engineOmens({ omens: omensFor(currency, [...omens], it) }))?.filter((o) => !o.void) ?? []);
   const out = outs.length ? new Set(outs.flatMap((o) => o.removed.flatMap((x) => (ids.has(x.modId) ? [x.modId] : junkOn(x.side))))) : null;

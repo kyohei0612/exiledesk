@@ -251,7 +251,7 @@ export function installSimMonkey(): () => void {
       // ☑ の無いまま完成形の狙いを段以上で満たす行 (名前だけ、スイッチ goalMetTag) も外れ MOD でない行に数える
       // 札は × 要らない が先なので、要らないの印の MOD は数えない (レビュワー 1 の (c))
       const goal = flag("goalMetTag") ? missAims(d, t.doc.value.memoAims ?? []) : null, un = new Set(t.doc.value.boxes[id]?.unwanted ?? []);
-      return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && (f.aimed.has(m.modId) || (!!goal && !un.has(m.modId) && !isMissMod(m, goal)))).length;
+      return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && (f.aimed.has(m.modId) || (!!goal && !un.has(m.modId) && !isMissMod(m, goal, it)))).length;
     },
     /** 上限に届いた人の最後の道とアイテム (沼った訳を見る台本用、S-72) */
     tails(n = RUN_N, seed = 1, k = 3) {

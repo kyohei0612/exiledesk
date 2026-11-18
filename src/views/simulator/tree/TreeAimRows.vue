@@ -85,8 +85,8 @@ const head = "mt-1.5 text-[11px] font-bold text-amber-200/80 first:mt-0";
       <span v-else class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
     </label>
     <label v-for="x in singles?.[aimKey(a)] ?? []" :key="x.fam" data-tree-hand-aim-single :data-fam="x.fam"
-      :class="[big ? 'ml-6 flex min-h-11 min-w-0 items-center gap-3 px-3' : 'ml-[26px] flex min-h-6 min-w-0 items-center gap-2 text-[12px]', noMod ? 'cursor-not-allowed opacity-40' : on(a) ? 'cursor-default opacity-60' : 'cursor-pointer']" :title="on(a) ? tr('「いずれか」に含まれる (単体で狙う時は「いずれか」を外す)', 'Included in any (untick any to aim for this one alone)') : undefined">
-      <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" :disabled="noMod || on(a)" :checked="!!shownOf?.(a, x.fam)" @change="($event.target as HTMLInputElement).checked = !!shownOf?.(a, x.fam); emit('single', a, x.fam)" />
+      :class="[big ? 'ml-6 flex min-h-11 min-w-0 items-center gap-3 px-3' : 'ml-[26px] flex min-h-6 min-w-0 items-center gap-2 text-[12px]', noMod ? 'cursor-not-allowed opacity-40' : on(a) || x.locked ? 'cursor-default opacity-60' : 'cursor-pointer']" :title="x.locked ? tr('2 つ目からは「いずれか」で狙う (単体では選べない)', 'From the 2nd one, aim with any (single elements are locked)') : on(a) ? tr('「いずれか」に含まれる (単体で狙う時は「いずれか」を外す)', 'Included in any (untick any to aim for this one alone)') : undefined">
+      <input type="checkbox" :class="big ? 'size-5 shrink-0' : ''" :disabled="noMod || on(a) || x.locked" :checked="!!shownOf?.(a, x.fam)" @change="($event.target as HTMLInputElement).checked = !!shownOf?.(a, x.fam); emit('single', a, x.fam)" />
       <span class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words" :title="t.aimLabel(x.aim)">{{ t.aimLabel(x.aim) }}</span>
     </label>
     <label v-if="seconds?.[aimKey(a)]" data-tree-hand-aim-second :data-aim="aimKey(seconds[aimKey(a)]!)"

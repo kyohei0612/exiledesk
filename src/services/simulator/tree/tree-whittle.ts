@@ -55,7 +55,7 @@ type AimLike = Pick<Aim, "modId" | "tier">;
  */
 export const aimedAims = <T extends AimLike>(aims: readonly T[], aimed: ReadonlySet<string> | null | undefined): readonly T[] => (aimed ? aims.filter((a) => aimed.has(a.modId)) : aims);
 /** 欲しい MOD の MOD レベル (低い順)。欲しい MOD か = 外れの式 (tree-miss の isMissMod、当たり方はエンジンの aimHits の sameText) */
-const wantedLevels = (it: StageItem, miss: MissAims, side?: StageSide | null): number[] => loose(it, side).filter((m) => !isMissMod(m, miss)).map(lv).sort((a, b) => a - b);
+const wantedLevels = (it: StageItem, miss: MissAims, side?: StageSide | null): number[] => loose(it, side).filter((m) => !isMissMod(m, miss, it)).map(lv).sort((a, b) => a - b);
 /** 順位 = 欲しい MOD のうち MOD レベルがそれより低い物の数。同じ MOD レベルの物があれば「=」(E-33 どおりどちらも等しく消える) */
 export function rankCode(wanted: readonly number[], x: number): string {
   const below = wanted.filter((w) => w < x).length;
@@ -102,7 +102,7 @@ function rankVariantsAll(data: PatchData, item: StageItem, aims: readonly AimLik
   const w = wantedLevels(item, miss, side);
   if (!w.length) return [{ p: 1, item }];
   // 前の削減で順位の決まった箱 (④): 見本の一番低い外れの順位が鍵と同じなら、見本の MOD レベルがその順位の代わり (差し替えない)
-  const junk = loose(item, side).filter((m) => isMissMod(m, miss));
+  const junk = loose(item, side).filter((m) => isMissMod(m, miss, item));
   const code = codesOf(boxKey)[0];
   if (code !== undefined && junk.length && rankCode(w, Math.min(...junk.map(lv))) === code) return [{ p: 1, item }];
   const free = junk.filter((m) => !m.crafted && !m.unrevealed);
@@ -189,7 +189,7 @@ function minJunkStates(data: PatchData, item: StageItem, free: readonly StageMod
 }
 /** 狙いの MOD (✦・エッセンス・未発現以外) を、完成形の段以上で付きうる段に差し替えた品 (MOD レベルの組ごとに 1 つ、割合 = 重み)。差し替えが無ければ品のまま 1 つ */
 function aimVariants(data: PatchData, item: StageItem, miss: MissAims, side?: StageSide | null): Array<{ p: number; item: StageItem }> {
-  const aimsOn = loose(item, side).filter((m) => !isMissMod(m, miss) && !m.crafted && !m.unrevealed && !m.desecrated);
+  const aimsOn = loose(item, side).filter((m) => !isMissMod(m, miss, item) && !m.crafted && !m.unrevealed && !m.desecrated);
   let states: Array<{ p: number; item: StageItem }> = [{ p: 1, item }];
   const fl0 = floorsOf(item);
   for (const a of aimsOn) {
@@ -225,7 +225,7 @@ function mergeBySignature(vs: ReadonlyArray<{ p: number; item: StageItem }>, mis
   const out = new Map<string, { p: number; item: StageItem; top: number }>();
   for (const v of vs) {
     const l = loose(v.item, side), lo = Math.min(...l.map(lv));
-    const key = `${lvClassOf(v.item, miss, side) ?? "-"}|${l.filter((m) => lv(m) === lo).map((m) => `${m.side}:${isMissMod(m, miss) ? "x" : m.modId}`).sort().join(",")}`, e = out.get(key);
+    const key = `${lvClassOf(v.item, miss, side) ?? "-"}|${l.filter((m) => lv(m) === lo).map((m) => `${m.side}:${isMissMod(m, miss, v.item) ? "x" : m.modId}`).sort().join(",")}`, e = out.get(key);
     if (!e) out.set(key, { p: v.p, item: v.item, top: v.p });
     else { e.p += v.p; if (v.p > e.top) { e.top = v.p; e.item = v.item; } }
   }
@@ -268,7 +268,7 @@ export function carryFloors(data: PatchData, before: StageItem, after: StageItem
   if (hf > 0) for (const m of am) if (!had.includes(m)) next.set(oKey(m), Math.max(next.get(oKey(m)) ?? 0, hf));
   const gone = wanted ? bm.filter((b) => !am.some((m) => fKey(m) === fKey(b))) : [];
   // 外れかは rankVariants と同じ isMissMod (sameText・段も見る)
-  if (gone.length) { const low = Math.min(...gone.map(lv)), miss = missAims(data, wanted!); for (const m of kept) if (isMissMod(m, miss)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, low)); }
+  if (gone.length) { const low = Math.min(...gone.map(lv)), miss = missAims(data, wanted!); for (const m of kept) if (isMissMod(m, miss, after)) next.set(fKey(m), Math.max(next.get(fKey(m)) ?? 0, low)); }
   if (next.size) FLOORS.set(after, next);
 }
 /** 外れを差し替えたアイテム (元の外れと同じ並びの位置へ) */
@@ -293,13 +293,13 @@ export const stripLv = (k: string | undefined): string | undefined => k?.split("
 export const withLv = (k: string | undefined, c: LvClass): string => joinKeys(stripLv(k), `l:${c}`)!;
 /** 品の組: 外れのうち一番低い MOD レベルと、残したい MOD の一番低い MOD レベルの比べ (外れか残したい MOD が無ければ null) */
 export function lvClassOf(item: StageItem, miss: MissAims, side?: StageSide | null): LvClass | null {
-  const l = loose(item, side), j = l.filter((m) => isMissMod(m, miss)).map(lv), w = l.filter((m) => !isMissMod(m, miss)).map(lv);
+  const l = loose(item, side), j = l.filter((m) => isMissMod(m, miss, item)).map(lv), w = l.filter((m) => !isMissMod(m, miss, item)).map(lv);
   if (!j.length || !w.length) return null;
   const a = Math.min(...j), b = Math.min(...w);
   return a < b ? "lo" : a === b ? "eq" : "hi";
 }
 /** MOD レベルが乱数の外れがあるか (エッセンス・未発現だけなら MOD レベルは決まっている) */
-const hasFreeJunk = (item: StageItem, miss: MissAims, side?: StageSide | null): boolean => loose(item, side).some((m) => isMissMod(m, miss) && !m.crafted && !m.unrevealed);
+const hasFreeJunk = (item: StageItem, miss: MissAims, side?: StageSide | null): boolean => loose(item, side).some((m) => isMissMod(m, miss, item) && !m.crafted && !m.unrevealed);
 /** データで付きうる組 (wanted = 残したい MOD の札、side = お告げで消える側)。乱数の外れが無い・残したい MOD が無ければ null (枠を分けない) */
 export function lvClassesOf(data: PatchData, item: StageItem, wanted: readonly AimLike[], side?: StageSide | null): Set<LvClass> | null {
   const miss = missAims(data, wanted);

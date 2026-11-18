@@ -194,7 +194,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       try { item = sampleOf(data, doc, b.id, 1).item; } catch { continue; }
       const rare = { ...item, rarity: "rare" as const };
       for (const side of SIDES) {
-        const fixed = (side === "prefix" ? item.prefixes : item.suffixes).filter((m) => m.fractured && isMissMod(m, miss));
+        const fixed = (side === "prefix" ? item.prefixes : item.suffixes).filter((m) => m.fractured && isMissMod(m, miss, item));
         const want = aims.filter((a) => sideOfMod(data, a.modId) === side).length;
         if (!fixed.length || limitOf(rare, side) - fixed.length >= want) continue;
         stuckFix.add(b.id);

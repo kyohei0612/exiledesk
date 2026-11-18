@@ -27,7 +27,7 @@ export function holdsLowTier(data: PatchData, item: StageItem, a: Aim): boolean 
   const fams = new Set(aimFams(data, a));
   if (!fams.size) return false;
   const x = missAims(data, [a]), mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.unrevealed);
-  if (mods.some((m) => !isMissMod(m, x))) return false;
+  if (mods.some((m) => !isMissMod(m, x, item))) return false;
   return mods.some((m) => { const md = data.mods.get(m.modId); return !!md && familiesOf(md).some((f) => fams.has(f)); });
 }
 

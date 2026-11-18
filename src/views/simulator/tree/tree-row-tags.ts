@@ -7,7 +7,7 @@
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { essenceTierVerdict } from "../../../services/craft-stage/apply-essence";
 import { aimHeldOn, isAimMod } from "../../../services/simulator/tree/tree-aim";
-import { aimedMiss, isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
+import { aimedMiss, eleBindOn, eleClaimOf, isMissMod, missAims } from "../../../services/simulator/tree/tree-miss";
 import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
@@ -33,7 +33,7 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
     // 完成形に無いエッセンスの MOD は札が無い (S-33c) ので、ここでは外れと同じ赤の名前に拾う
     const tag = out.get(m.modId) ?? (mid.has(m.modId) ? missTag(d, doc, m, modText(m), { evenChosen: true }) ?? undefined : undefined);
     if (!tag?.replace || tag.tone !== "bad" || m.fractured || !(m.crafted || craftedKindOf(d, m))) continue;
-    if (!isMissMod(m, goalMiss)) out.delete(m.modId);
+    if (!isMissMod(m, goalMiss, it)) out.delete(m.modId);
     else out.set(m.modId, { ...tag, text: modText(m) });
   }
   return out;
@@ -126,7 +126,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const missBox = !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
   // 箱の中身 (S-60) と同じく、見本の ☑ で付いた狙い (tree-judge の sampleAimed、見本の打ち方の順) だけを狙い。道の当たりの組では数えない (大本 1)
   const am = missBox ? aimedOfCard(d, doc, box!.id!, it) : null;
-  const held = am ? (doc.memoAims ?? []).filter((g) => am.has(g.modId)).map((g) => ({ modId: g.modId, tier: g.tier })) : missBox ? heldOfSets(d, heldSets(doc, box!.id!)) : [];
+  const held: Aim[] = am ? (doc.memoAims ?? []).filter((g) => am.has(g.modId)).map((g) => ({ modId: g.modId, tier: g.tier, ...(eleBindOn() && g.anyEle ? { anyEle: g.anyEle, ...(g.eleSkip ? { eleSkip: g.eleSkip } : {}), ...(g.eleTiers ? { eleTiers: g.eleTiers } : {}) } : {}) })) : missBox ? heldOfSets(d, heldSets(doc, box!.id!)) : [];
   // 始まりから付いている完成の狙いも狙い (道の当たりの札には無い。外れが固定された箱で始まりの ES が「外れ MOD」と出た、10-28。スイッチ boxShape)
   // 段は完成の狙いの段 (どの段でも狙いにすると、狙いの段に届かない低い段まで札が付かなかった、10-28 見張り bone3 b4)
   if (missBox && !am) for (const m of doc.start?.mods ?? []) { const g = (doc.memoAims ?? []).find((x) => x.modId === m.modId); if (g && !held.some((h) => h.modId === m.modId)) held.push({ modId: g.modId, tier: g.tier }); }
@@ -139,20 +139,25 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 以降の箱でも見本に付いている置き石は狙い (S-33)。ルーンの手の後の箱も ☑ はその箱の見本で引く (markId。親の id で引くと遺産のルーンの後のソケット効果が「外れ MOD」と出た、11-06 ワンド b12)
   const placed = box?.id ? placedAims(d, doc).filter((a) => aimedOfCard(d, doc, markId ?? box.id!, it)?.has(a.modId)) : [];
   // 外れ MOD の札は外れの式 1 本 (tree-miss の isMissMod): ここで決めた当たりに数える札 (☑ の狙い・置き石・この箱の当たりの札) に当たらない MOD
-  const miss = missAims(d, [...(missBox ? held : hitHeld ?? [...aimsOf(d, doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  const missList: Aim[] = [...(missBox ? held : hitHeld ?? [...aimsOf(d, doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])];
+  const miss = missAims(d, missList), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalMiss = aimedMiss(d, doc), goalAll = met ? missAims(d, doc.memoAims ?? []) : null;
   for (const m of [...it.prefixes, ...it.suffixes]) {
     // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま 
     // 固定された外れ (✦ の外れ) も「外れ MOD」だけ (値を出さない、S-82 仮。見本ごとに違う MOD が箱の名前に見えた、10-28 モンキー 7。スイッチ boxShape)
     // 比べるのは完成の狙い全部 (✦ で始まった狙いは道の当たりに無いので、道の狙いで見るとスペル +3 ✦ まで外れになった、10-28 見張り)
-    if (m.fractured && isMissMod(m, goalMiss)) { putMiss(d, out, doc, m, tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`), { evenChosen: true }); continue; }
+    if (m.fractured && isMissMod(m, goalMiss, it)) { putMiss(d, out, doc, m, tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`), { evenChosen: true }); continue; }
     if (m.fractured || m.unrevealed) continue;
+    // 「いずれか」が取った行は完成形と同じ「いずれかの元素耐性 (段の幅)」だけ。元素と値は出さない (見本は 1 人分の品で、元素はその人の乱数、S-10h2 ④、スイッチ eleBind)。
+    // 取られなかった元素耐性は下の外れ MOD
+    const claim = eleBindOn() ? eleClaimOf(it, miss).get(m) : undefined, cg = claim ? missList[miss.targets.indexOf(claim)] : undefined;
+    if (cg) { const text = useTree().aimShort({ ...cg, anyEle: 1 }); out.set(m.modId, { text, tone: "info", replace: true, title: text }); continue; }
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
     // ☑ の無いまま完成形の狙いを段以上で満たす MOD は名前だけ (「外れ MOD」にしない。当たりの扱いにはしない、箱も分けない。スイッチ goalMetTag、11-16 オーナー「Aで」)。
     // 小さい「予期せぬ狙い MOD」の札は付けない (11-16 オーナー「予期せぬ狙いMODってカードには書かなくておkだねそもそも」、止まりの欄と詳細は残す)
-    else if (goalAll && isMissMod(m, miss) && !isMissMod(m, goalAll)) continue;
-    else if (isMissMod(m, miss)) {
+    else if (goalAll && isMissMod(m, miss, it) && !isMissMod(m, goalAll, it)) continue;
+    else if (isMissMod(m, miss, it)) {
       putMiss(d, out, doc, m, tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`), { cut });
       // 完成形の狙いの系統で段の足りない MOD は「外れ MOD (低ティア)」(低ティアの箱を作らず外れの箱とまとめた人、S-33g ⑧ 1A)
       const t = out.get(m.modId);

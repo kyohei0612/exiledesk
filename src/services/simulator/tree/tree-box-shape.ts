@@ -25,7 +25,7 @@ export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, aims?: MissAi
   const all = aimedMiss(data, d), miss = aims ?? all;
   const side = (ms: readonly StageMod[]): string => {
     let n = 0, c = 0, x = 0, u = 0;
-    for (const m of ms) { if (m.fractured || !isMissMod(m, miss)) continue; if (m.unrevealed) u++; else if (m.desecrated) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
+    for (const m of ms) { if (m.fractured || !isMissMod(m, miss, it)) continue; if (m.unrevealed) u++; else if (m.desecrated) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
     return `${n}.${c}.${x}.${u}`;
   };
   // ✦ は完成形の狙い全部で見る (☑ は見ない、前から)。
@@ -33,7 +33,7 @@ export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, aims?: MissAi
   // (S-11b、11-13 オーナー「イだろうねフラクチャー枠違うわけだし」。前は数だけで、F:冷気・雷は普通の人と F:雷・冷気は普通の人が同じ箱へ合流した = r/G9O1UdeA の b50 → b20)
   const split = flag("fracSplit");
   const gIds = (f: readonly StageMod[]): string => [...new Set(f.flatMap((m) => all.targets.filter((t) => aimHits(m, t, all.opts)).map((t) => t.modId)))].sort().join("+");
-  const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const gf = f.filter((m) => !isMissMod(m, all)), g = gf.length; return `g${split && g ? `[${gIds(gf)}]` : g}j${f.length - g}`; };
+  const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const gf = f.filter((m) => !isMissMod(m, all, it)), g = gf.length; return `g${split && g ? `[${gIds(gf)}]` : g}j${f.length - g}`; };
   return `${side(it.prefixes)}|${side(it.suffixes)}|✦${fr(it.prefixes)}.${fr(it.suffixes)}|${it.rarity}`;
 }
 /** 中身の鍵の ✦ の「どの狙いが固定か」(g[modId+modId]、スイッチ fracSplit) を数に戻す = 固定された MOD の違いだけを見ない鍵 (S-11b の写し) */

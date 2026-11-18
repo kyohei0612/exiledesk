@@ -46,7 +46,7 @@ export const isAimMod = (m: StageMod, ts: readonly AimTarget[], o?: AimHitOpts):
  * ツリーの junkCount・分かれ目の数え・形の鍵・満杯の文が同じ数え方)
  */
 export function junkOf(item: StageItem, x: MissAims): { prefix: StageMod[]; suffix: StageMod[] } {
-  const junk = (ms: readonly StageMod[]): StageMod[] => ms.filter((m) => !m.fractured && isMissMod(m, x));
+  const junk = (ms: readonly StageMod[]): StageMod[] => ms.filter((m) => !m.fractured && isMissMod(m, x, item));
   return { prefix: junk(item.prefixes), suffix: junk(item.suffixes) };
 }
 /**

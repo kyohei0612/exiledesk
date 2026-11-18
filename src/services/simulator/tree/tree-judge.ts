@@ -13,7 +13,8 @@ import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
 import { bodyOf, fracCountKey } from "./tree-box-shape";
-import { aimedList, isMissMod, missAims, type MissAims } from "./tree-miss";
+import { aimedList, eleBindOn, isMissMod, missAims, type MissAims } from "./tree-miss";
+import { eleAnyText } from "./tree-ele-any";
 import { aimOpts, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { isWhittleHand, lvClassOf, lvPart } from "./tree-whittle";
 import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
@@ -108,7 +109,7 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
 export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>, eleJunk = false): string {
   const c = contentParts(data, doc, it, aimed, eleJunk);
   // 狙いとして発現した冒涜の MOD の数 (#a。骨の手のある箱と比べる時だけ見る = 冒涜の MOD は 1 品 1 つ E-60。外れの冒涜は #d)
-  const da = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed && !m.fractured && !isMissMod(m, c.miss)).length;
+  const da = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed && !m.fractured && !isMissMod(m, c.miss, it)).length;
   return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}#a${da}`;
 }
 /** 中身の鍵の部分 (keys = 印の札、miss = 印の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
@@ -130,13 +131,13 @@ export function contentDiff(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   const f = frameOfDoc(data, doc).frames.get(to);
   if (!f || f.note) return [];
   const a = contentParts(data, doc, it, aimed), b = contentParts(data, doc, f.item, f.aimed), opts = aimOpts(data), out: string[] = [];
-  const aimText = (x: StageItem, id: string): string => { const g = contentAims(data, doc).find((y) => y.modId === id), m = g && [...x.prefixes, ...x.suffixes].find((y) => isAimMod(y, targetsOf(data, [g]), opts)); return m ? modText(m) : id; };
+  const aimText = (x: StageItem, id: string): string => { const g = contentAims(data, doc).find((y) => y.modId === id), m = g && [...x.prefixes, ...x.suffixes].find((y) => isAimMod(y, targetsOf(data, [g]), opts)); return m ? (g.anyEle && eleBindOn() ? eleAnyText(modText(m)) : modText(m)) : id; }; // 「いずれか」は元素を出さない (S-10h2 ④)
   for (const id of [...a.keys].sort()) if (!b.keys.has(id)) out.push(tr(`狙い「${aimText(it, id)}」が付いている`, `has the target "${aimText(it, id)}"`));
   for (const id of [...b.keys].sort()) if (!a.keys.has(id)) out.push(tr(`狙い「${aimText(f.item, id)}」が無い`, `lacks the target "${aimText(f.item, id)}"`));
   // 体 (bodyOf の `n.c.x.u|n.c.x.u|✦…|レアリティ`): 外れの数 (種類は見ない = junkOne)・未発現、光のお告げ・骨 / エッセンスの手の箱へは冒涜 / クラフトの外れの数も (keyFor と同じ)
   const pa = a.body.split("|"), pb = b.body.split("|");
   // 名前を出す外れは体と同じ外れの式 (前は modId で見る写しで、同じ文の別 modId の狙いを外れの名前に出しえた)
-  const isJunk = (m: StageMod): boolean => !m.fractured && !m.unrevealed && isMissMod(m, a.miss);
+  const isJunk = (m: StageMod): boolean => !m.fractured && !m.unrevealed && isMissMod(m, a.miss, it);
   (["prefix", "suffix"] as const).forEach((side, i) => {
     const [n = 0, c = 0, x = 0, u = 0] = (pa[i] ?? "").split(".").map(Number), [n2 = 0, c2 = 0, x2 = 0, u2 = 0] = (pb[i] ?? "").split(".").map(Number);
     const ja = side === "prefix" ? "プレ" : "サフィ";
@@ -189,7 +190,7 @@ export function blockMarkOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed:
   const mk = [...fams].sort().join(",") + "|" + [...aimed].sort().join(","), had = memo.get(mk);
   if (had !== undefined) return had;
   const miss = missAims(data, contentAims(data, doc).filter((a) => aimed.has(a.modId))), out = new Set<string>();
-  for (const m of near) if (isMissMod(m, miss)) for (const f of famsOf(m)) out.add(f);
+  for (const m of near) if (isMissMod(m, miss, it)) for (const f of famsOf(m)) out.add(f);
   const r = [...out].sort().join("+");
   memo.set(mk, r);
   return r;
@@ -435,7 +436,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     aimedOf: (id) => samples(id).map(() => aimedAt(id)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)
     // 当たるかは外れの式 1 本 (☑ の完成形の狙いに当たる = 外れでない。同じ文の別 modId も持っている狙い。前は modId で見た)
-    holdsAim: (id) => { const am = aimedAt(id), miss = missAims(data, (doc.memoAims ?? []).filter((g) => am.has(g.modId))); return samples(id).some((s) => [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !isMissMod(m, miss))); },
+    holdsAim: (id) => { const am = aimedAt(id), miss = missAims(data, (doc.memoAims ?? []).filter((g) => am.has(g.modId))); return samples(id).some((s) => [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !isMissMod(m, miss, s.item))); },
     holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every(() => { const am = aimedAt(id); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };

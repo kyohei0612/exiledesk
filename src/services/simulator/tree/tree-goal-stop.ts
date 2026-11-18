@@ -33,10 +33,10 @@ function goalOnly(data: PatchData, doc: TreeDoc, at: string, before: StageItem, 
   const hits = hitAimsOf(doc, at);
   if (hits.length) {
     const t = missAims(data, hits);
-    return marks.filter((g) => held(after, g.modId)).map((g) => { const m = held(before, g.modId); return !g.aimed && m && !isMissMod(m, t) ? { ...g, aimed: true } : g; });
+    return marks.filter((g) => held(after, g.modId)).map((g) => { const m = held(before, g.modId); return !g.aimed && m && !isMissMod(m, t, before) ? { ...g, aimed: true } : g; });
   }
   const out = marks.filter((g) => held(after, g.modId)), goal = missAims(data, doc.memoAims);
-  for (const m of modsOf(after)) if (!held(before, m.modId) && !m.fractured && !m.unrevealed && !isMissMod(m, goal)) out.push({ box: at, modId: m.modId, aimed: false });
+  for (const m of modsOf(after)) if (!held(before, m.modId) && !m.fractured && !m.unrevealed && !isMissMod(m, goal, after)) out.push({ box: at, modId: m.modId, aimed: false });
   return out;
 }
 

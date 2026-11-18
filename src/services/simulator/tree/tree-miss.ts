@@ -5,7 +5,8 @@
  * 外れは枠として 1 種類 (11-07 深夜オーナー「ハズレMODは全部ハズレMODだよ。枠として」): 何の MOD でも・どこから付いても同じ。完成形に無いエッセンスの MOD も
  * 付いた時から外れ (札だけは MOD の文のまま = tree-row-tags の missTag)。✦ (フラクチャー) を外れの数に入れるかは呼ぶ側 (体では ✦ は別の欄)
  */
-import { aimHits, type AimHitOpts, type AimTarget, type PatchData, type StageMod } from "../../craft-stage/engine";
+import { aimHits, type AimHitOpts, type AimTarget, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import type { Aim, TreeDoc } from "./tree-model";
 import { placedAims } from "./tree-veil";
 import { looseTierOf } from "./tree-frac-dual";
@@ -30,10 +31,41 @@ export function aimedList(data: PatchData, doc: TreeDoc, aimed?: ReadonlySet<str
   if (!aimed) return [...goals];
   return [...goals, ...(o.stones === false ? [] : placedAims(data, doc))].filter((a) => aimed.has(a.modId));
 }
-/** 外れ = 当たりに数える札のどれにも当たらない MOD */
-export const isMissMod = (m: StageMod, x: MissAims): boolean => {
-  if (x.targets.some((t) => aimHits(m, t, x.opts))) return false;
-  // エッセンスの火・冷気・雷耐性は値で一般の段に読み替えても見る (S-10h ⑨、スイッチ essEleHit)
+/** MOD が札 t に当たるか (エッセンスの火・冷気・雷耐性は値で一般の段に読み替えても見る = S-10h ⑨、スイッチ essEleHit) */
+const hitsOne = (m: StageMod, t: AimTarget, x: MissAims): boolean => {
+  if (aimHits(m, t, x.opts)) return true;
   const n = essEleOn() ? essEleAsNormal(x.opts.data, m) : null;
-  return !n || !x.targets.some((t) => aimHits(n, t, x.opts));
+  return !!n && aimHits(n, t, x.opts);
+};
+/**
+ * 「いずれか」の結び (S-10h2 ①、スイッチ eleBind): 品 item の中で「いずれか」の札は 1 本ずつ、品に先に付いた元素耐性 (並びの前の方) から当たりを取る
+ * (段の厳しい本から順に、まだ取られていない一番前の当たる MOD)。取られなかった元素耐性は「いずれか」の当たりにならない = ほかの札に当たらなければ外れ。
+ * エンジンの当たり (aimHits) は MOD 1 つずつで火・冷気・雷のどれにも何本でも当たるので、どの MOD を当たりにするかだけを木の側で決める
+ */
+const bindMemo = new WeakMap<StageItem, WeakMap<MissAims, ReadonlyMap<StageMod, AimTarget>>>();
+/** 品 item の中で「いずれか」の札が取った MOD → 取った札 (S-10h2 ①)。カードの札 (tree-row-tags) が行の名前に使う */
+export function eleClaimOf(item: StageItem, x: MissAims): ReadonlyMap<StageMod, AimTarget> {
+  let byX = bindMemo.get(item);
+  const hit = byX?.get(x);
+  if (hit) return hit;
+  const any = x.targets.filter((t) => t.anyEle).sort((a, b) => a.anyEle! - b.anyEle!), all = [...item.prefixes, ...item.suffixes], out = new Map<StageMod, AimTarget>();
+  // 発現した冒涜の MOD は隠れた枠の場所に入る (並びの位置が付いた順にならない) ので、取る順の後ろに回す (レビュワー 2 の R2-a: 骨 → 高貴で火を狙う → 発現で冷気、の冷気が先に取っていた)
+  const mods = [...all.filter((m) => !m.desecrated), ...all.filter((m) => m.desecrated)];
+  const seen = new Set<number>(); // 同じ番号の札が 2 つ並んでも (完成形と置き石の重なりなど) 取るのは 1 本
+  for (const t of any) { if (seen.has(t.anyEle!)) continue; seen.add(t.anyEle!); const m = mods.find((y) => !out.has(y) && !y.unrevealed && hitsOne(y, t, x)); if (m) out.set(m, t); }
+  if (!byX) { byX = new WeakMap(); bindMemo.set(item, byX); }
+  byX.set(x, out);
+  return out;
+}
+export const eleBindOn = (): boolean => flag("eleBind");
+/**
+ * 外れ = 当たりに数える札のどれにも当たらない MOD。item (m の付いている品) を渡すと「いずれか」の札は結び (eleClaimOf) で見る (スイッチ eleBind)。
+ * 渡さなければ前のまま (「いずれか」は段に届く元素耐性なら何本でも当たり)
+ */
+export const isMissMod = (m: StageMod, x: MissAims, item?: StageItem | null): boolean => {
+  if (item && eleBindOn() && x.targets.some((t) => t.anyEle)) {
+    if (x.targets.some((t) => !t.anyEle && hitsOne(m, t, x))) return false;
+    return !eleClaimOf(item, x).has(m);
+  }
+  return !x.targets.some((t) => hitsOne(m, t, x));
 };
