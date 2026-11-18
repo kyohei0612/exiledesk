@@ -1,4 +1,8 @@
 {
+  "0.1.759": [
+    "Simulator: fixed recipes silently failing to save or delete when browser storage was full (deleted recipes came back and new ones vanished after updates). Duplicate backups are now cleared and the list order is restored.",
+    "Daily: finished days' challenge records are now kept small, fixing cases where the browser storage filled up and Simulator recipes could no longer be saved"
+  ],
   "0.1.758": [
     "Simulator: boxes after a catalyst now auto-return to the earlier box with the same shape when the quality is already full or was used up by Omen of Catalysing Exaltation, so you no longer have to place the same craft again"
   ],
