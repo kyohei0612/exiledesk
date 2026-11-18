@@ -21,7 +21,7 @@ import { livePost } from "./daily-api";
 const SEND_MS = 15_000;
 const BATCH = 200;
 /** 動作に残す track の印 (回す・穴チェック・貼り付け・レシピへの保存) */
-const EVENTS = new Set(["sim:run", "sim:run-view", "sim:test", "sim:paste", "daily:save-recipe"]);
+const EVENTS = new Set(["sim:run", "sim:run-view", "sim:test", "sim:paste", "daily:save-recipe", "daily:keep"]);
 
 type Act = { t: number; k: string } & Record<string, unknown>;
 type BoxSig = { hand: string; done: string };

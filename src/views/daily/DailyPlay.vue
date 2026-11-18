@@ -26,6 +26,7 @@ import { qualityWords } from "./daily-quality-words";
 import { tierRankLabel, type StageItem } from "../../services/craft-stage/engine";
 import { treeRunRig } from "../simulator/tree/use-tree-run";
 import DailyPlayBar from "./DailyPlayBar.vue";
+import DailySaveRecipe from "./DailySaveRecipe.vue";
 import DailyFracPick from "./DailyFracPick.vue";
 import DailySubmitAsk from "./DailySubmitAsk.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
@@ -95,7 +96,7 @@ function devOpen(): void {
     if (dev === "done") { doneShown.value = { ...DEV_RUN }; asking.value = { ...DEV_RUN }; }
     if (dev === "submit0") asking.value = { ...DEV_RUN0 };
     if (dev === "done0") { doneShown.value = { ...DEV_RUN0 }; asking.value = { ...DEV_RUN0 }; }
-    if (dev === "leave") askLeave(() => goDaily({ view: "list" }), () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value));
+    if (dev === "leave" && !flag("dailySaveSplit")) askLeave(() => goDaily({ view: "list" }), () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value));
   }, 300));
 }
 /** スマホの幅では挑戦しない (D-70)。URL を開いても始めず (時計を動かさない)、一覧へ戻る口だけ出す。幅が広がれば始める */
@@ -225,7 +226,9 @@ window.addEventListener("paste", noPaste, true);
 // 離れる時にレシピへの保存をすすめる (D-36c)。聞くのは時間内で諦めていない間に、レシピに保存していない変更がある時だけ。自分のページへの移り (読み込み直し) は聞かない。
 // 置き場は web/page.ts の外の層の確かめ (一覧へ戻る・ブラウザの戻る / 進む・上のタブ・閉じる / 読み直す、U-28)。置くのは mount の時 (作り直しの時、古い画面が外した後に置く)
 const here = `page=daily-start&q=${props.topic.id}`;
-onMounted(() => setLayerLeaveGuard({
+// スイッチ dailySaveSplit では窓を出さない (D-36e ③ 案 A: 木はいつも端末に残り「続きから始める」で戻れる)
+const SAVE_SPLIT = flag("dailySaveSplit");
+onMounted(() => SAVE_SPLIT || setLayerLeaveGuard({
   ask: (to) => to !== here && treeOn.value && left.value > 0 && !getTry(props.topic.id)?.ended && dailyUnsaved(props.topic.id, t.doc.value),
   save: () => saveDailyCopy(props.topic, dailyRecipeName(props.topic), t.doc.value),
 }));
@@ -354,6 +357,8 @@ const REFUSED: Record<StartError, () => string> = {
     <!-- 提出 (主) と諦める (控えめ) は完成形のカードの下。右の欄を閉じた時は木の枠の右上の「完成形」の下 (D-37m) -->
     <Teleport v-if="treeOn && !picking" defer :to="actsTo">
       <DailyEssNote v-if="!sideShut" :day="topic.id" :quality="tryOf?.quality" />
+      <!-- レシピに保存はシミュと同じく完成形のカードの下 (D-36e ②、スイッチ dailySaveSplit)。右の欄を閉じた時は出さない (帯の保存だけ、④) -->
+      <div v-if="SAVE_SPLIT && !sideShut" class="daily-save-recipe" data-daily-save-under><DailySaveRecipe :topic="topic" /></div>
       <div v-if="!ACTS_TOP" class="daily-acts" data-daily-acts :data-daily-acts-shut="sideShut || undefined">
         <button type="button" class="g-btn-red" data-daily-submit :disabled="!run || over || !!unmet.length" :title="submitTitle" @click="submit">{{ tr("これで提出", "Submit this") }}</button>
         <button v-if="!over" type="button" class="daily-acts-giveup" data-daily-giveup @click="giving = true">{{ tr("諦める", "Give up") }}</button>

@@ -38,6 +38,17 @@ export function saveDailyCopy(topic: DailyTopic, name: string, d: TreeDoc): void
   });
 }
 
+/** 帯の「保存」を押した時の打ち方 (D-36e ①、スイッチ dailySaveSplit)。次に木を変えるまで「✓ 保存済み」 */
+export const dailyKeptNow = ref<string | null>(null);
+
+/** 帯の「保存」(D-36e ①): 今の木をデイリーの中だけ (端末の控え = 読み直しで続きから開く物、D-32) に今すぐ書く。名前の窓もレシピ一覧も無し。開発の見本 (dev) は書かず印だけ */
+export function keepDailyNow(topicId: string, d: TreeDoc, dev: boolean): void {
+  const v1 = v1Of(d);
+  if (!dev) { updateTry(topicId, { tree: v1 }); void keepDailyBuilt(topicId, d); }
+  dailyKeptNow.value = v1;
+  track("daily:keep");
+}
+
 /** レシピに保存していない変更があるか。保存したことが無ければ手を 1 つ以上置いた木、保存した後はその時の打ち方と違う木 */
 export function dailyUnsaved(topicId: string, d: TreeDoc): boolean {
   const saved = getTry(topicId)?.saved;

@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| スイッチ dailySaveSplit (D-36e) | feat(daily): D-36e | デイリーの挑戦の「保存」はデイリーの中だけに。シミュのレシピへの保存は完成形の下の「レシピに保存」から | In the daily challenge, "Save" now keeps the tree inside the daily. To save it as a Simulator recipe, use "Save as recipe" under the final item |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)

@@ -1,5 +1,5 @@
 <!--
-  DailyPlayBar.vue — 挑戦の帯のボタン (D-37・D-37i、11-09 にお題の名前の右へ移した)。レシピに保存 (木を開いた後)・MOD 一覧・諦める・一覧へ戻る。
+  DailyPlayBar.vue — 挑戦の帯のボタン (D-37・D-37i、11-09 にお題の名前の右へ移した)。レシピに保存 (木を開いた後。スイッチ dailySaveSplit ではデイリーの中だけの「保存」、D-36e)・MOD 一覧・諦める・一覧へ戻る。
   MOD 一覧は共通の表 (ModTable) をお題のベース・アイテムレベルの何も付いていない品で開く (D-37d)。諦めるは確かめの窓から (D-37b)
 -->
 <script setup lang="ts">
@@ -18,6 +18,8 @@ import { goDaily } from "./daily-open";
 import type { DailyAim } from "./daily-api";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailySaveRecipe from "./DailySaveRecipe.vue";
+import DailyKeepHere from "./DailyKeepHere.vue";
+const SAVE_SPLIT = flag("dailySaveSplit");
 import type { DailyTopic } from "./daily-api";
 
 /** tree = 木を開いた後 (「レシピに保存」を出す、D-36b) */
@@ -32,7 +34,9 @@ const blank = computed(() => { const d = s.data.value; try { return d ? freshIte
   <div class="daily-band2" data-daily-band2>
     <!-- 狙いの文の札は出さない (始め方・フラクチャーの画面の完成形のカードで見える、D-37l) -->
     <div class="daily-band2-btns">
-      <DailySaveRecipe v-if="tree && topic" :topic="topic" />
+      <!-- スイッチ dailySaveSplit: 帯は「保存」= デイリーの中だけ (D-36e ①)。レシピに保存は完成形のカードの下 (DailyPlay) -->
+      <DailyKeepHere v-if="tree && SAVE_SPLIT" :id="id" :dev="dev" />
+      <DailySaveRecipe v-else-if="tree && topic" :topic="topic" />
       <button type="button" class="g-btn sm" data-daily-modlist @click="listOpen = true">{{ tr("MOD 一覧", "Mod list") }}</button>
       <!-- 木を開いた後の「諦める」は完成形のカードの下 (DailyPlay、D-37m 11-10)。帯に残すのはフラクチャーを選ぶ画面だけ (右の欄が無い) -->
       <button v-if="!ended && !tree" type="button" class="g-btn sm" data-daily-giveup @click="asking = true">{{ tr("諦める", "Give up") }}</button>
