@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.754",
+  "date": "2026-11-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターのツリーで、狙い無しの手で偶然狙いの MOD が付いた人のための箱を作らず、「予期せぬ狙い MOD」で止めて作り直すようにしました (未設定の箱が減ります)",
+    "en": "In the Simulator tree, items that roll a target mod by chance on an untargeted step no longer get their own boxes; they now stop as \"unexpected target mod\" and restart (fewer unset boxes)"
+   }
+  ]
+ },
+ {
   "v": "0.1.753",
   "date": "2026-11-18",
   "items": [
@@ -1242,18 +1254,6 @@
     "area": "",
     "text": "シミュレーター: 木を回す時の 1 人あたりの費用の上限を、鏡 2 個分 (今の相場) にしました。相場が取れない時は 2,000 神です",
     "en": "Simulator: the per-crafter cost cap when running a tree is now the price of 2 Mirrors (current market). If prices can't be loaded, it is 2,000 Divine"
-   }
-  ]
- },
- {
-  "v": "0.1.714",
-  "date": "2026-11-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 今日 (11/11) のお題から、順位をスコア (完成 1 個あたりの費用 ÷ 完成率、小さいほど上) で並べるようにしました。同じスコアなら早く作った人が上です。順位の表の一番右にスコアが出ます。まだ挑戦していないお題の順位の数字はぼかして見せます",
-    "en": "Daily: starting with today's (11/11) challenge, the ranking sorts by score (cost per finished item ÷ finish rate, lower is better); ties go to the faster run. The score is shown in the rightmost column, and the numbers are blurred until you start that day's challenge"
    }
   ]
  }

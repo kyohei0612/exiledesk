@@ -243,6 +243,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.754 偶然付いた狙いは予期せぬで止めて作り直す (S-21b2 oddStop)。オーナー 11-18「だしって」
+  "oddStop",
   // 0.1.752 見本の配置で古い枝を当てない (S-21b oddStale)・組み直しで保存の手を同じ道の箱へ付け直す (S-21b oddCarry)。オーナー 11-18「だして、直してからだすで」「骨至急だな」、ブラック 135
   "oddStale",
   "oddCarry",
