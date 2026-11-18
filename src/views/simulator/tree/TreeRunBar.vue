@@ -4,7 +4,7 @@
   帯の幅が狭い時は字を短く (帯の @container、オーナー 10-26 夜「1 行で表示させてくれ」。切らない・… にしない)
 -->
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import TreeRunReport from "./TreeRunReport.vue";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { tr } from "../../../i18n/lang";
@@ -19,9 +19,27 @@ import { finalLockedWhy, finalName, finalTitle, holeBusy, holeName, holesCount, 
 const props = defineProps<{ /** ハズレ整理のボタンの状態 (S-192) */ tidy?: { on: boolean; step: string; unset: number; guide: boolean; busy: boolean; empty?: boolean; finalLit: boolean }; result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
 const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: []; /** ハズレ整理 (S-192) */ tidy: []; /** 完成の後の案内から組む所へ戻る (S-198) */ tidyBack: [] }>();
 /** 穴チェックに合格していないので「100 人回す」を止める (回している間は別の理由) */
-const locked = computed(() => !props.test.passed || old.value);
+const locked = computed(() => (frozenOld.value ? false : !props.test.passed || old.value));
 /** 古いレシピ (S-104e): 印の間は 100 人回す・最終チェック (穴チェック) を押せない */
 const old = computed(() => isOldRecipe(useTree().doc.value));
+/** (スイッチ recipeFrozen、S-104g ②) 古いレシピでも押せる。押すと今の決まりで組み直し、穴チェックが済んでから回す (古い箱のままでは回さない) */
+const frozenOld = computed(() => old.value && flag("recipeFrozen"));
+const renewing = ref(false);
+async function renewThen(run: boolean): Promise<void> {
+  if (renewing.value) return;
+  renewing.value = true;
+  try {
+    const d = await useTree().renewOld();
+    if (!d || !run) return;
+    // 組み直すと穴チェックが自動で回る (S-70)。済むまで待ち、合格なら回す・穴があれば穴の一覧
+    const ok = await new Promise<boolean>((done) => {
+      const t0 = setTimeout(() => { stop(); done(false); }, 60_000);
+      const stop = watch(() => `${props.test.busy}|${props.test.passed}`, () => { if (props.test.busy) return; clearTimeout(t0); queueMicrotask(() => stop()); done(props.test.passed); });
+    });
+    if (ok) emit("run"); else emit("holesOn");
+  } finally { renewing.value = false; }
+}
+const onRun = (): void => { if (frozenOld.value) void renewThen(true); else if (props.test.passed) emit("run"); else emit("holesOn"); };
 /**
  * 押せない訳 (乗せた時だけ帯の下に 1 行、S-70b)。前はボタンの title (ブラウザの吹き出し) と TreeRunSum の「100 人: まだ回していない」が 2 つ同時に出た
  * (オーナー 11-14「100人回すホバーで2種出るな」「回していないを今の合格すると回せる文言に変えるか」)。押せない間は title を付けず、押せる時は title だけ
@@ -41,7 +59,7 @@ watch(() => props.running, (on, was) => {
   <!-- 未設定の間の灰色の「未設定 n つ」は出さない (赤い「未設定 n つ ▾」と同じ数が 2 つ並んでいた。11-11 オーナー「おすすめ」= 上の行を 1 行にする案 A) -->
   <button v-if="tidy && tidy.step !== 'check' && tidy.step !== 'unset'" type="button" data-tree-tidy :data-step="tidy.step" class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy.guide && tidy.step === 'tidy' ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="tidy.busy || running || tidy.empty || tidy.step === 'unset'" :title="tidy.empty ? tr('手を足すと押せる', 'Add a craft first') : tidy.step === 'unset' ? tr('光る箱を決めると最終チェックへ進める', 'Decide the lit boxes to reach the final check') : tr('同じ枠へ自動でつなぎ、残りを未設定として洗い出す', 'Link outcomes to matching boxes and list what is left')" @click="emit('tidy')">{{ tidy.busy ? tr("整理中", "Sorting") : tidy.step === "unset" ? holesCount(tidy.unset) : tr("ハズレ整理", "Sort misses") }}</button>
   <button v-if="tidy?.guide" type="button" data-tree-tidy-back class="g-btn sm shrink-0 whitespace-nowrap" :title="tr('案内を閉じて手を足せる形に戻す (決めた所はそのまま)', 'Leave the guide and go back to building (your choices stay)')" @click="emit('tidyBack')">{{ tr("組むに戻る", "Back to building") }}</button>
-  <button v-if="!tidy || tidy.step === 'check'" type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy?.finalLit ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="test.busy || running || old" :title="tidy?.on ? finalTitle() : holeTitle()" @click="emit('test')">
+  <button v-if="!tidy || tidy.step === 'check'" type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy?.finalLit ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="test.busy || running || (old && !frozenOld) || renewing" :title="tidy?.on ? finalTitle() : holeTitle()" @click="frozenOld ? void renewThen(false) : emit('test')">
     <template v-if="tidy?.busy">{{ tr("整理中", "Sorting") }}</template>
     <template v-else-if="test.busy">{{ holeBusy() }}</template>
     <template v-else-if="tidy?.on">{{ finalName() }}</template>
@@ -52,7 +70,8 @@ watch(() => props.running, (on, was) => {
        箱の ! は消さない (前の 10-25 の「押すとオフ」は撤回)。shown = 一覧を開いている。
        スイッチ unsetTopJump の間は出さない (下の「! 未設定 n つ ▸ 次へ」があるので。一覧は箱の右上の ! から。11-14 オーナー「なら上の未設定削除してええやろ」、S-89b) -->
   <button v-else-if="test.holes && !test.busy && !flag('unsetTopJump')" type="button" data-tree-test-holes data-tree-test-list :aria-expanded="test.shown" class="shrink-0 whitespace-nowrap rounded-full border border-rose-400 bg-rose-700/90 px-2 text-[12px] font-bold text-white transition-colors hover:bg-rose-600" :class="test.shown ? 'shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]' : ''" :title="test.shown ? tr('未設定の一覧を閉じる', 'Close the list of unset boxes') : holesShowTitle()" @click="emit('list')">{{ holesCount(test.holes) }} {{ test.shown ? "▴" : "▾" }}</button>
-  <button type="button" data-tree-run class="g-btn sm shrink-0 whitespace-nowrap" :disabled="running || !ready || locked" :data-run-locked="locked && !running ? '' : undefined" :title="locked && !running ? undefined : test.passed ? (flag('runNoLines') ? tr(`${RUN_N} 人をエンジンで回し、箱ごとに来た人数をツリーの上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay how many reached each box (prices: the base price from the summary + current market)`) : tr(`${RUN_N} 人をエンジンで回し、通った道と人数をツリーの上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`)) : tr('未設定を直すと回せる。押すと一覧を開く', 'Fix what is unset to run. Click to open the list')" @click="test.passed ? emit('run') : emit('holesOn')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button><span v-if="lockWhy" data-tree-run-why class="shrink-0 whitespace-nowrap text-[12px] opacity-70">{{ lockWhy }}</span>
+  <button type="button" data-tree-run class="g-btn sm shrink-0 whitespace-nowrap" :disabled="running || !ready || locked" :data-run-locked="locked && !running ? '' : undefined" :title="locked && !running ? undefined : test.passed ? (flag('runNoLines') ? tr(`${RUN_N} 人をエンジンで回し、箱ごとに来た人数をツリーの上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay how many reached each box (prices: the base price from the summary + current market)`) : tr(`${RUN_N} 人をエンジンで回し、通った道と人数をツリーの上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`)) : tr('未設定を直すと回せる。押すと一覧を開く', 'Fix what is unset to run. Click to open the list')" @click="onRun">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button><span v-if="renewing" data-tree-old-renew-note class="shrink-0 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("新しい版で組み直してから回します", "Rebuilding with current rules before running") }}</span>
+  <span v-if="lockWhy" data-tree-run-why class="shrink-0 whitespace-nowrap text-[12px] opacity-70">{{ lockWhy }}</span>
   <Teleport defer to="[data-tree-frame]"><TreeRunReport v-if="report && result && !running" :result="result" :test="drive" @close="report = false" @go="(id) => emit('go', id)" /></Teleport>
 </template>
 <style>

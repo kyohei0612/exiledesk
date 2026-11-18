@@ -9,7 +9,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useDismiss } from "../../../utils/use-dismiss";
 import Icon from "../../../components/ui/Icon.vue";
-import { currentTreeRecipe, recipeWriteFailed, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { canOverwrite, currentTreeRecipe, recipeWriteFailed, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { feedbackPage } from "../../../state/web-page";
 import { askLeave, openRecipesPage } from "../../../web/page";
 import { copyRecipeUrl, fmtDate, seedDevRecipes, closeNewer, sharedNewer, treeShortUrl, useRecipeUrl } from "../recipe-share";
@@ -99,7 +99,8 @@ const naming = ref(false);
 const saveName = ref("");
 const saveInput = ref<HTMLInputElement | null>(null);
 function save(): void {
-  if (!currentTreeRecipe.value) { saveName.value = defaultName(); naming.value = true; pop.value = false; share.value = false; void nextTick(() => saveInput.value?.select()); return; }
+  // 開いているレシピが無い・別のタブが書き換えた (S-100b ②、スイッチ recipeFrozen) 時は名前の窓 (別名で保存)
+  if (!currentTreeRecipe.value || !canOverwrite(currentTreeRecipe.value.id)) { saveName.value = defaultName(); naming.value = true; pop.value = false; share.value = false; void nextTick(() => saveInput.value?.select()); return; }
   simAct("save");
   quickSave();
   savedNow.value = true;

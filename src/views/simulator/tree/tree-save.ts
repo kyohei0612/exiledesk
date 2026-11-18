@@ -6,8 +6,9 @@
 import { nextTick, watch } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { toRecipeV1 } from "../../../services/simulator/tree/tree-recipe-v1";
+import { TREE_BUILD } from "../../../services/simulator/tree/tree-built";
 import { treeLoading } from "./use-tree-open";
-import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { canOverwrite, currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openTreePage, treeStep } from "../../../web/page";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { jaTypeName } from "../../../i18n/item-names-ja";
@@ -31,6 +32,8 @@ export function unsaved(d: TreeDoc, current = true): boolean {
   const cur = current ? currentTreeRecipe.value : null;
   if (!cur && current && challengeTree(d)) return false;
   const openedAs = openedMark.v ?? storedOpened();
+  // (スイッチ recipeFrozen、S-104g ④) 古いレシピを今の決まりで組み直した木は、保存の写し (前の版) と違うので保存していない変更 (保存し直すまで置き場は変えない)
+  if (cur && flag("recipeFrozen") && TREE_BUILD && cur.tree.built && cur.tree.built.v !== TREE_BUILD && !d.oldBuilt) return true;
   if (cur) return !(openedAs?.id === cur.id && openedAs.at === cur.updatedAt && openedAs.v1 === v1Of(d)) && !sameTree(d, cur.tree);
   return !!d.memoAims?.length || Object.keys(d.boxes).length > 1;
 }
@@ -133,7 +136,8 @@ export function resumeTree(): boolean {
  */
 export function quickSave(): { r: TreeRecipe | null; over: boolean } {
   const d = useTree().doc.value, cur = currentTreeRecipe.value;
-  if (cur) { overwriteTreeRecipe(cur.id, d); track("tree-recipe:overwrite"); return { r: cur, over: true }; }
+  // (スイッチ recipeFrozen、S-100b ②) 別のタブが書き換えたレシピには上書きせず、別のレシピとして保存する
+  if (cur && canOverwrite(cur.id)) { overwriteTreeRecipe(cur.id, d); track("tree-recipe:overwrite"); return { r: cur, over: true }; }
   if (roomFull()) {
     const name = autoName(d);
     withRoom(() => { const now = currentTreeRecipe.value?.id ?? null; saveTreeRecipe(name, d); setCurrentTreeRecipe(now); track("tree-recipe:save"); });

@@ -7,7 +7,7 @@
  */
 import { nextTick, ref } from "vue";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { currentTreeRecipe, overwriteTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { canOverwrite, currentTreeRecipe, overwriteTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { autoName } from "./tree-save";
 import { roomFull } from "../../../state/simulator/tree-room";
 import type { useTree } from "./use-tree";
@@ -52,7 +52,8 @@ export function useEditReset(t: ReturnType<typeof useTree>) {
     }
     if (kind === "save") {
       const cur = currentTreeRecipe.value;
-      if (cur) overwriteTreeRecipe(cur.id, old); else if (!roomFull()) saveTreeRecipe(autoName(old), old); // 15 個ある時は新しく保存しない (S-101b ②)
+      // 別のタブが書き換えたレシピには上書きしない (S-100b ②)
+      if (cur && canOverwrite(cur.id)) overwriteTreeRecipe(cur.id, old); else if (!roomFull()) saveTreeRecipe(autoName(old), old); // 15 個ある時は新しく保存しない (S-101b ②)
     }
     // 変えた後は名前なしの新しい木 (開いていたレシピへ次の保存で上書きしない、ベースを替える時と同じ)
     setCurrentTreeRecipe(null);

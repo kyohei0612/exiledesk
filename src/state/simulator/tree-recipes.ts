@@ -4,7 +4,7 @@
  * 木の版の読み替え・読めない箱の要確認は tree-migrate.ts。読めないレシピも捨てずに unread へ取っておく
  * 中身は TreeDoc をそのまま (名前・id・保存時刻で包む)。前の工程式のレシピ (exiledesk.craftStageSim.*) は読み込んだ時に消す (10-25)
  */
-import { computed, ref } from "vue";
+import { computed, ref, toRaw } from "vue";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
@@ -82,23 +82,29 @@ function read(): TreeRecipe[] {
   try {
     const list = readList();
     const ok: TreeRecipe[] = [], bad: unknown[] = [];
-    for (const x of list) { const r = normalizeTreeRecipe(x); if (r) ok.push(r); else bad.push(x); }
+    for (const x of list) { const r = normalizeTreeRecipe(x); if (r) { ok.push(r); if ((x as { id?: unknown }).id === r.id) rawOf.set(r, x); } else bad.push(x); }
     keepUnread(bad);
     return ok;
   } catch { return []; }
 }
+/**
+ * (スイッチ recipeFrozen、S-100b ③) 読んだ時の生の形 (読み替える前)。触っていないレシピ (読んだ時の物のまま) は書く時にこの形で戻す
+ * = 読み替え (normalizeTreeRecipe → migrateTreeDoc) は開く時と表示だけで、別のレシピを保存しても置き場の中身は変わらない
+ */
+const rawOf = new WeakMap<TreeRecipe, unknown>();
+const asStored = (v: TreeRecipe[]): TreeRecipe[] => (flag("recipeFrozen") ? v.map((r) => (rawOf.get(toRaw(r)) as TreeRecipe | undefined) ?? r) : v);
 /** 書く (スイッチ saveCap15 の間は詰めた一覧 Z へ = tree-recipe-z。本体は先に書き、入らなければ控えを空ける) */
 function write(v: TreeRecipe[]): void {
   if (flag("saveCap15")) {
-    try { writeZ(v); recipeWriteFailed.value = false; return; } catch { /* 下で空けて書き直す */ }
-    if (flag("recipeRoom") && freeOldBak()) try { writeZ(v); recipeWriteFailed.value = false; return; } catch { /* 下で知らせる */ }
+    try { writeZ(asStored(v)); recipeWriteFailed.value = false; return; } catch { /* 下で空けて書き直す */ }
+    if (flag("recipeRoom") && freeOldBak()) try { writeZ(asStored(v)); recipeWriteFailed.value = false; return; } catch { /* 下で知らせる */ }
     failed();
     return;
   }
   try {
     const prev = localStorage.getItem(TREE_RECIPES_KEY), pl = parseList(prev);
     if (pl) localStorage.setItem(BAK, prev!);
-    localStorage.setItem(TREE_RECIPES_KEY, JSON.stringify(v));
+    localStorage.setItem(TREE_RECIPES_KEY, JSON.stringify(asStored(v)));
     recipeWriteFailed.value = false;
   } catch { failed(); }
 }
@@ -129,7 +135,7 @@ function moveToZ(): void {
   try {
     if (localStorage.getItem(TREE_RECIPES_KEY) == null && localStorage.getItem(Z_KEY) != null) return;
     // (recipeRoom) 入らなければ古い鍵の控えを空けて書き直す。Z に書けて移した時刻を残せてから古い鍵を消す (順は前と同じ)
-    try { writeZ(treeRecipes.value); } catch (e) { if (!flag("recipeRoom") || !freeOldBak()) throw e; writeZ(treeRecipes.value); }
+    try { writeZ(asStored(treeRecipes.value)); } catch (e) { if (!flag("recipeRoom") || !freeOldBak()) throw e; writeZ(asStored(treeRecipes.value)); }
     localStorage.setItem(Z_AT, String(Date.now()));
     localStorage.removeItem(TREE_RECIPES_KEY);
     localStorage.removeItem(BAK);
@@ -142,11 +148,23 @@ function put(v: TreeRecipe[]): void { treeRecipes.value = v; write(v); }
 
 const readCurrent = (): string | null => { try { return localStorage.getItem(CURRENT); } catch { return null; } };
 export const currentTreeRecipeId = ref<string | null>(readCurrent());
+const atOf = (id: string | null): number | null => treeRecipes.value.find((r) => r.id === id)?.updatedAt ?? null;
+/** (スイッチ recipeFrozen、S-100b ②) 開いているレシピをこのページが開いた・書いた時の更新の時刻。別のタブが書き換えると置き場の時刻とずれる */
+let currentAt: number | null = atOf(currentTreeRecipeId.value);
 export function setCurrentTreeRecipe(id: string | null): void {
   currentTreeRecipeId.value = id;
+  currentAt = atOf(id);
   try { if (id) localStorage.setItem(CURRENT, id); else localStorage.removeItem(CURRENT); } catch { /* 無くてよい */ }
 }
 export const currentTreeRecipe = computed(() => treeRecipes.value.find((r) => r.id === currentTreeRecipeId.value) ?? null);
+/**
+ * (スイッチ recipeFrozen、S-100b ②) 開いているレシピ id へ上書きしてよいか。このページが開いた・書いた後に別のタブがそのレシピを書き換えていたら false
+ * (呼ぶ側は上書きせず別のレシピとして保存する)。スイッチが切れている時はいつも true
+ */
+export function canOverwrite(id: string): boolean {
+  if (!flag("recipeFrozen")) return true;
+  return id === currentTreeRecipeId.value && currentAt !== null && currentAt === atOf(id);
+}
 /** 一覧の並び・「更新」に出す時刻 */
 export const touchedAtTree = (r: TreeRecipe): number => r.updatedAt;
 /** 中身が同じか (保存していない変更があるか)。箱の位置も木の一部として比べる */
@@ -163,7 +181,9 @@ export function saveTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   return r;
 }
 export function overwriteTreeRecipe(id: string, tree: TreeDoc): void {
-  put(treeRecipes.value.map((r) => (r.id === id ? { ...r, tree: stored(tree), updatedAt: Date.now() } : r)));
+  const now = Date.now();
+  put(treeRecipes.value.map((r) => (r.id === id ? { ...r, tree: stored(tree), updatedAt: now } : r)));
+  if (id === currentTreeRecipeId.value) currentAt = now;
 }
 /**
  * (S-104f、スイッチ builtRefresh) 古いレシピを今の決まりで組み直した木 tree の写しで、保存したレシピ id の写しを書き直す。
@@ -171,7 +191,8 @@ export function overwriteTreeRecipe(id: string, tree: TreeDoc): void {
  */
 export function refreshBuilt(id: string, tree: TreeDoc): boolean {
   const r = treeRecipes.value.find((x) => x.id === id);
-  if (!flag("builtRefresh") || !r || !sameTree(r.tree, tree)) return false;
+  // (スイッチ recipeFrozen、S-100b ①) 保存したレシピは人が保存し直すまで変えない = 組み直しで写しを書き直さない
+  if (!flag("builtRefresh") || flag("recipeFrozen") || !r || !sameTree(r.tree, tree)) return false;
   const next = stored(tree);
   if (!next.built) return false;
   put(treeRecipes.value.map((x) => (x.id === id ? { ...x, tree: next } : x)));
