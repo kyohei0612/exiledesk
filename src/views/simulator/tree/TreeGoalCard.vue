@@ -78,6 +78,19 @@ function place(): void {
   const bh = modBtn.value?.offsetHeight ?? 0; // 札の並び (ティア調整・MOD) の高さ
   if (spaced && bh) spaced.style.marginTop = spaced.style.marginBottom = `${Math.ceil(((bh + 4) / ZOOM - 8) / 2)}px`;
   modTop.value = mid(sep);
+  if (TIER_EDGE) balanceRows(card);
+}
+/** 段の札を枠ぎりぎりに寄せた時 (S-78h、スイッチ goalTierEdge)、MOD の行の右の空きの幅をその行の左の札と同じにして、MOD の文をカードの真ん中にそろえる
+ *  (11-18 オーナー「MOD名の真ん中ちょっとずれてる？」。札の幅は行ごとに違う = P1 と「S3 以上」で文が左右に揺れていた) */
+const TIER_EDGE = flag("goalTierEdge");
+function balanceRows(card: HTMLElement): void {
+  for (const p of card.querySelectorAll<HTMLElement>(".space-y-1.px-4 p.flex")) {
+    const kids = [...p.children].filter((e): e is HTMLElement => e.tagName === "SPAN");
+    const lab = kids[0], txt = kids.find((e) => e.classList.contains("flex-1")), right = kids[kids.length - 1];
+    if (!lab || !txt || !right || right === txt || right === lab) continue;
+    const w = `${lab.offsetWidth}px`;
+    if (right.style.width !== w) right.style.width = right.style.minWidth = w;
+  }
 }
 const modBtn = ref<HTMLElement | null>(null);
 let spaced: HTMLElement | null = null;
@@ -127,8 +140,11 @@ onBeforeUnmount(() => ro?.disconnect());
    <html data-flag-goaltieredge>。シミュの右の列・デイリーの挑戦の札とも)。MOD の文の寄せは今どおり真ん中。
    11-18 オーナー「完成形のスナップ左詰めってMOD文字じゃなくてP1とS1とかを文字と近すぎるから枠ぎりぎりに表示してMODの横広く見せたいって意味ね」。
    札の列 (w-6 / w-9) は札の長さまで広げる (「S3 以上」は w-9 より長く、真ん中寄せの文の下に隠れていた)。カードの名前・種類の行は変えない */
-:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .space-y-1.px-4 { padding-left: 3px; }
-:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .space-y-1.px-4 .flex.items-center.px-2 { padding-left: 0; }
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .space-y-1.px-4 { padding-left: 3px; padding-right: 3px; }
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .space-y-1.px-4 .flex.items-center.px-2 { padding-left: 0; padding-right: 0; }
+/* カードは札の枠の幅いっぱい (11-18 オーナー「完成見本カードの横幅が左はぎりぎりだけど右があいてる」: 右の列が広い 1920 でカードが幅 420 のまま左に寄り、右が空いていた)。
+   右の列の幅は sideLikeDaily などで変わるので、決めた幅でなく枠に合わせる。MOD の行の右の空きは札と同じ幅 (balanceRows) */
+:root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] { width: 100% !important; }
 :root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .text-left.font-bold.w-9,
 :root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .text-left.font-bold.w-6,
 :root[data-flag-goaltieredge] [data-tree-goal] [data-stage-card] .text-left.leading-tight { width: auto; white-space: nowrap; }
