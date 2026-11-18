@@ -3,7 +3,7 @@
   終えられたら done、つながらない時は窓の中に一言
 -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 import { tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { giveUpTry } from "./daily-api";
@@ -15,7 +15,12 @@ const failed = ref(false);
 async function giveUp(): Promise<void> {
   failed.value = false;
   if (!props.dev) await liveFlush(); // 終える前に最後の手と離れた印を控えへ (D-57b)
-  if (props.dev || (await giveUpTry(props.id))) emit("done"); else failed.value = true;
+  if (!(props.dev || (await giveUpTry(props.id)))) { failed.value = true; return; }
+  // 窓を閉じ切ってから次のページへ (done で一覧へ移る)。同じ時に閉じて移ると、スマホの「横向きで表示」(turn-page.ts) が先に外れて
+  // ページの止め (overflow) を戻した後で、窓が開いた時に覚えた「止めた」をかけ直し、一覧が送れず固まった (11-18 オーナー「諦めるボタン押して次のページフリーズする」)
+  emit("close");
+  await nextTick();
+  emit("done");
 }
 </script>
 
