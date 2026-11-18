@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.756",
+  "date": "2026-11-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーの挑戦の「保存」はデイリーの中だけに。シミュのレシピへの保存は完成形の下の「レシピに保存」から",
+    "en": "In the daily challenge, \"Save\" now keeps the tree inside the daily. To save it as a Simulator recipe, use \"Save as recipe\" under the final item"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーの挑戦中にページを読み直すと、端末の保存場所が一杯の時にツリーが最初からになる不具合を直しました",
+    "en": "Fixed an issue in the daily challenge where reloading the page reset the tree to the start when the browser's storage was full"
+   }
+  ]
+ },
+ {
   "v": "0.1.755",
   "date": "2026-11-18",
   "items": [
@@ -1224,18 +1242,6 @@
     "area": "",
     "text": "デイリー: 11/12 のお題から、始め方は白から確定フラクチャーに加えて「フラクチャー無しで始める」を選べるようにしました (その木ではフラクチャーのオーブは打てません)。シミュレーター: 木の並べで親の間を無駄に広げないようにし、高貴・カオスの格だけ替えた時は下の木を残すようにしました",
     "en": "Daily: from the 11/12 challenge, besides starting from a white base with a guaranteed fracture, you can choose “Start without fracture” (Fracturing Orbs can't be used in that tree). Simulator: tree layout no longer spreads parents apart unnecessarily, and changing only the tier of an Exalted or Chaos move now keeps the tree below"
-   }
-  ]
- },
- {
-  "v": "0.1.716",
-  "date": "2026-11-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: パーフェクトエッセンスやカオスのように MOD を入れ替える手の当たりで、外れが消えた場合と未発現が消えた場合を別の箱に分けるようにしました。同じ箱に入って、片方の形の人が先で止まっていたのを直しました",
-    "en": "Simulator: for moves that swap a mod (such as Perfect Essences and Chaos), a hit that removed a non-aim mod and a hit that removed an unrevealed mod now go to separate boxes. Previously they shared one box and one of the two cases got stuck further down"
    }
   ]
  }

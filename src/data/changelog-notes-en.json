@@ -1,4 +1,8 @@
 {
+  "0.1.756": [
+    "In the daily challenge, \"Save\" now keeps the tree inside the daily. To save it as a Simulator recipe, use \"Save as recipe\" under the final item",
+    "Fixed an issue in the daily challenge where reloading the page reset the tree to the start when the browser's storage was full"
+  ],
   "0.1.755": [
     "Fixed an issue in the Simulator tree where items that stopped at an unset box were counted as \"unexpected target mod\""
   ],
