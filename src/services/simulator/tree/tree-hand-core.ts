@@ -2,7 +2,7 @@
  * tree-hand-core.ts — 木の打ち方の組み合わせ (1 回分の手・打てるか・始めの形・打つ前後の比べ)。中身はエンジンの核の関数を呼ぶだけ
  * (2026-10-23 エンジンの for-sim から戻した。11-07 tree-sample.ts から分けた、1 ファイル 500 行まで)
  */
-import { applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, omenBlock, revealKey, sameAimTarget, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, baseSocketsOf, forceKey, freshItem, isCraftedSource, mulberry32, omenBlock, revealKey, revealOffers, sameAimTarget, unrevealedOf, useReason, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { heldOn, junkOf, type AimDiffOpts, type TierAim } from "./tree-aim";
 import { missAims } from "./tree-miss";
 import { ECHO as ABYSSAL_ECHO_OMEN, splitOmens } from "./tree-hands";
@@ -69,6 +69,8 @@ interface HandSpec {
   omens?: readonly string[];
   /** 未発現が付いた時、そのまま発現まで打つ */
   reveal?: boolean;
+  /** 発現で選ぶ手 (S-35) の ☑ に当たる MOD か。候補にあればそれを選ぶ (無ければ 1 つ目) */
+  want?: (m: StageMod) => boolean;
 }
 interface HandResult extends StageApply {
   /** 手そのもので使ったお告げ (発現の前。発現の物は omensUsed) */
@@ -78,11 +80,20 @@ interface HandResult extends StageApply {
 }
 
 /**
- * 発現 (魂の井戸) を打つ。候補は選ばない = 1 つ目 (候補を選ぶのは画面の箱で組む、11-05 オーナー「UIでその動きを再現できるように」)。
- * echo = アビスの反響を掛けた手は引き直した 3 つの 1 つ目 (エンジンの reveal:1:reroll)。発現できなければ r のまま
+ * 発現 (魂の井戸) を打つ。want (発現で選ぶ手の ☑、S-35「☑ の物が選べたら当たり」) があれば、エンジンの候補 3 つ (revealOffers) に ☑ の MOD が出ればそれを選び、
+ * 出なければ反響を掛けた手は引き直した 3 つから選ぶ (エンジンの reveal:N / reveal:N:reroll。窓の % = heldOdds の候補に出る確率と同じ数え)。どれにも無ければ 1 つ目。
+ * want が無い手 (狙い無しの発現) は 1 つ目 (反響を掛けた手は引き直しの 1 つ目)。発現できなければ r のまま
  */
-function revealFirst(data: PatchData, r: StageApply, rng: () => number, echo: boolean): StageApply {
-  const x = echo ? applyCurrency(data, r.item, revealKey(1, true), rng, [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, revealKey(1), rng);
+function revealFirst(data: PatchData, r: StageApply, rng: () => number, echo: boolean, want?: (m: StageMod) => boolean): StageApply {
+  let n = 0, re = echo;
+  // 候補は同じ種から引くので、見た候補と reveal:N の結果が一致する (エンジンの revealOffers の約束)
+  const seed = Math.floor(rng() * 2 ** 31), at = (): (() => number) => mulberry32(seed);
+  if (want) {
+    const off = revealOffers(data, r.item, at());
+    const i = off.first.findIndex(want), k = i < 0 && echo ? off.reroll.findIndex(want) : -1;
+    if (i >= 0) { n = i; re = false; } else if (k >= 0) n = k;
+  }
+  const x = re ? applyCurrency(data, r.item, revealKey(n + 1, true), at(), [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, revealKey(n + 1), at());
   return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
 }
 /** 発現が打てない理由 (エンジンの useReason。打てるなら null) */
@@ -96,13 +107,13 @@ export function applyHand(data: PatchData, item: StageItem, key: string, rng: ()
   if (isRevealHand(key)) {
     const echo = now.includes(ABYSSAL_ECHO_OMEN), why = revealReason(data, item, echo);
     if (why) return { applied: false, item, added: [], removed: [], reason: why, handOmensUsed: [], echoUsed: false };
-    return { ...revealFirst(data, { applied: true, item, added: [], removed: [] }, rng, echo), handOmensUsed: [], echoUsed: echo };
+    return { ...revealFirst(data, { applied: true, item, added: [], removed: [] }, rng, echo, spec.want), handOmensUsed: [], echoUsed: echo };
   }
   const r = applyCurrency(data, item, key, rng, now);
   const base = { handOmensUsed: r.omensUsed ?? [] };
   if (!r.applied || !unrevealedOf(r.item) || !spec.reveal) return { ...r, ...base, echoUsed: false };
   const echo = reveal.includes(ABYSSAL_ECHO_OMEN);
-  return { ...revealFirst(data, r, rng, echo), ...base, echoUsed: echo };
+  return { ...revealFirst(data, r, rng, echo, spec.want), ...base, echoUsed: echo };
 }
 
 interface StartMod { modId: string; tier: number; fractured?: boolean }

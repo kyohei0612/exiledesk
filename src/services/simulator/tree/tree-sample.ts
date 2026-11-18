@@ -22,7 +22,7 @@ import { splitTo } from "./tree-shape";
 import { boxOutcomeOf } from "./tree-outcome";
 import { aimedAims, carryFloors, handWhittleSide, isWhittleHand, rankVariants } from "./tree-whittle";
 import { sampleAimed } from "./tree-judge";
-import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
+import { isRevealHand, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
 import { clearRolls, handOut, rollAt, type Roll } from "./tree-rolls";
@@ -179,7 +179,9 @@ export function* playHandSteps(data: PatchData, item: StageItem, h: Hand, rng: (
   }
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま
   const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
-  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, reveal: !keepVeil });
+  // 発現で選ぶ手は ☑ (aims = handAims の当たりの箱の札) が候補に出たらそれを選ぶ (S-35)
+  const want = veilPick(h) && aims.length ? (m: StageMod) => !!revealHitOf(data, m, aims) : undefined;
+  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, reveal: !keepVeil, want });
   if (use && r.applied) {
     use(h.currency);
     for (const o of r.handOmensUsed) use(o);
