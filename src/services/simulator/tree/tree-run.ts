@@ -101,7 +101,7 @@ export interface TreeRunResult {
   /** 完成の箱に着いたが doneOk が false を返した人の箱ごとの数 (failed・failAt にも入っている。doneOk を渡さない時は空) */
   unmetAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; /** 止まり方の 1 行の要約 (10 種、11-08。詳しい文は reason) */ short?: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 人が組んだ木の途中で行き先が無い止まり = サイトの不具合 (S-72f、札は要望へ促す 1 行) */ bug?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
+  stuckWhy: Record<string, { reason: string; /** 止まり方の 1 行の要約 (10 種、11-08。詳しい文は reason) */ short?: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 未設定の箱 (手も戻りも無い) で止まった (oddStop の予期せぬに数えない) */ open?: boolean; /** 人が組んだ木の途中で行き先が無い止まり = サイトの不具合 (S-72f、札は要望へ促す 1 行) */ bug?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。穴チェックの走行の「どこでループしたか」、10-27 オーナー) */
   loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
@@ -132,7 +132,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; /** 確定フラクチャーで足した始まりの品の数 (S-43a) */ redo?: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** ☑ した狙いが低いティアで付いた手の箱 (S-33g) */ ltAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; bug?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; /** 確定フラクチャーで足した始まりの品の数 (S-43a) */ redo?: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** ☑ した狙いが低いティアで付いた手の箱 (S-33g) */ ltAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; open?: boolean; bug?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -171,7 +171,8 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     const p: Person = redo ? { ...p0, redo } : p0;
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
-    const goalAt = p.end === "stuck" && !p.essAt && !p.ltAt ? goalStopAt(marks, p.why?.item ?? item, !!p.why?.noBox) : undefined;
+    // 未設定の箱 (手も戻りも無い) で止まった人は木の不具合のまま (oddStop の予期せぬに数えない、S-21b2。11-18 前は数えて作り直させ、未設定の止まりが隠れた)
+    const goalAt = p.end === "stuck" && !p.essAt && !p.ltAt ? goalStopAt(marks, p.why?.item ?? item, !!p.why?.noBox && !p.why?.open) : undefined;
     return blame && p.end === "stuck" ? { ...p, blame, goalAt } : goalAt ? { ...p, goalAt } : p;
   };
   /** 付いている名前の印になりうる MOD (箱の中身の鍵と同じ口 goalsOn。前は完成形の狙いだけで、行き先探しの前にエッセンス / 合金の印が落ちた) */
@@ -232,7 +233,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     if (!b.hand) {
       // 決めていない箱で止まった人の原因はその箱 (決めれば進む。前に移った箱を原因にしない、S-72)
       blame = null;
-      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), short: STOP.open(), item, noBox: true } });
+      return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), short: STOP.open(), item, noBox: true, open: true } });
     }
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
     if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } });
