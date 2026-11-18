@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.762",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターのツリーで、アビサルの紋章の後にルーンを刺した箱などの戻り先が輪になり、最終チェックで行き止まりが出ていたのを直しました",
+    "en": "Fixed a loop in simulator trees where boxes such as \"rune socketed after the Abyssal mark\" returned in a circle and showed dead ends in the final check"
+   }
+  ]
+ },
+ {
   "v": "0.1.761",
   "date": "2026-11-19",
   "items": [
@@ -1150,48 +1162,6 @@
     "area": "",
     "text": "シミュレーター: 保存した木を開き直した時、削減の手で分かれた枠の見本の品が、組んだ時と同じ絵で出るようにしました (あり得ない値の見本が出る事がありました)",
     "en": "Simulator: when a saved tree is reopened, the sample item shown for each lane split by a Whittling step now matches what you saw while building (it could show impossible values before)"
-   }
-  ]
- },
- {
-  "v": "0.1.722",
-  "date": "2026-11-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 順位の表に「閲覧」の列を足しました。そのレシピを開いた人の数が出ます (自分で開いた分は数えません。誰が開いたかは画面に出しません)",
-    "en": "Daily: added a Views column to the ranking table. It shows how many people opened that recipe (opening your own is not counted, and who opened it is never shown on screen)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: シェアの文と絵の「○ 位 / N 人」の N を、順位の表に載った人数にしました (前は途中の人・諦めた人も入った数でした)",
-    "en": "Daily: the N in \"rank / N players\" in the share text and image is now the number of players listed in the ranking table (previously it also counted players still in progress or who gave up)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 「ベースから」の木で、選んだ MOD がまだ付いていない品にはフラクチャーを置けないようにしました (未発現だけの品でも固定された事になっていたのを直しました)",
-    "en": "Daily: in a \"from base\" tree, a Fracturing Orb can no longer be placed on an item that does not yet have the chosen mod (fixed items with only a desecrated placeholder being treated as fractured)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "無限のエッセンスで筋力・知性が付いた品の MOD の行を、付いた 1 つだけの文にしました (「知性 +27」など。前は「筋力、器用さまたは知性 +27」と出ていました)",
-    "en": "Japanese only: the mod line for Strength or Intelligence added by an Essence of the Infinite now shows just the attribute that was added (English was already correct)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "棚の無限のエッセンスの札の下に、付きうる能力値を全部並べるようにしました (筋力・器用さ・知性。もう付いている物は出しません)",
-    "en": "The Essence of the Infinite tile on the shelf now lists every attribute it can add (Strength, Dexterity, Intelligence; ones already on the item are left out)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 箱の題の横の鉛筆 (メモを書く) のボタンを無くしました",
-    "en": "Simulator: removed the pencil (note) button next to a box's title"
    }
   ]
  }

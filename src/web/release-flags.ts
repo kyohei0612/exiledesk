@@ -253,6 +253,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.762 手の無い箱への自動の ↩ が鎖になったら選び直す S-50h (r/VK1opGjg)。オーナー 11-19「完了時出してておｋ」「おわったらそのままだして」、ブラック 140
+  "joinChainFix",
   // 0.1.760 勢力の札 U-12k・保存できない時の赤い帯 S-101c ②・保存したレシピを変えない S-100b・S-104g・ルーンの比べ S-60g3・冒涜の見本の段の下限 S-200 ③。オーナー 11-19「だして」、ブラック 140
   "factionChips", "recipeFullNotice", "recipeFrozen", "runeFreeAll", "aimFloorVeil",
   // 0.1.759 レシピの保存の枠が一杯の時に黙らない・止まった移しを終える・並びを逆にしない S-101c (デイリーの記録を今日の 1 枠に D-32c と同じ版)。オーナー 11-18 夜「おｋ　出して」、ブラック 139
@@ -272,10 +274,7 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "hitSide", "fracPlainMark", "whittleFloor", "whittleNoSame",
   "sameNames", "goalTierEdge", "linkHiddenSkip",
   // 0.1.750 シミュの「エミュで試す」でソケット・ルーンと完成形の札のとおりの品を載せる (S-211b・S-211c・E-29b)・右の列の頭を 1 行に (S-94hy)・右の列の幅を 1/1.3 に (S-78f2)。オーナー 11-18「だしって」、ブラック 132
-  "simToEmuRunes",
-  "simToEmuAll",
-  "sideHeadLine",
-  "sideSlim",
+  "simToEmuRunes", "simToEmuAll", "sideHeadLine", "sideSlim",
   // 0.1.749 シミュの木の上の帯を詰める (S-94m、案 A)・失敗の箱へ入る比べでルーンの組を見ない (S-60g)・その箱の見本はルーン付きの人を先に (S-60g2、案 B)。オーナー 11-17「出して」、ブラック 132
   "barSlim",
   "failRuneFree",

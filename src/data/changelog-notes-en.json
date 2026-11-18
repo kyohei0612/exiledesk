@@ -1,4 +1,7 @@
 {
+  "0.1.762": [
+    "Fixed a loop in simulator trees where boxes such as \"rune socketed after the Abyssal mark\" returned in a circle and showed dead ends in the final check"
+  ],
   "0.1.761": [
     "Simulator: recipes saved in an earlier version no longer show the \"Old recipe\" notice when rebuilding with current rules would not change them"
   ],
