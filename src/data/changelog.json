@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.757",
+  "date": "2026-11-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 冒涜の発現の窓で選んだ MOD が、完成形に同じ MOD があると低い段の狙いに替わり、光のお告げの消去で「狙いが消えた」と戻っていたのを直す (選んだ段のまま別の狙いに)",
+    "en": "Simulator: a mod picked in the Desecrated reveal window no longer turns into a lower-tier target when the finished item has the same mod, and Omen of Light no longer reports \"target removed\" for it (it stays a separate target at the chosen tier)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 発現で狙う手で、候補 3 つ (反響のお告げなら引き直しの 3 つも) に狙いの MOD が出ても 1 つ目しか選んでいなかったのを直す (確率が窓の % どおりに)",
+    "en": "Simulator: when revealing for a target, the run now picks the target mod if it appears anywhere among the 3 candidates (and the reroll with Omen of Abyssal Echoes), not only the first one, so the odds match the window %"
+   }
+  ]
+ },
+ {
   "v": "0.1.756",
   "date": "2026-11-18",
   "items": [
@@ -1232,17 +1250,5 @@
    }
   ],
   "pop": true
- },
- {
-  "v": "0.1.717",
-  "date": "2026-11-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 11/12 のお題から、始め方は白から確定フラクチャーに加えて「フラクチャー無しで始める」を選べるようにしました (その木ではフラクチャーのオーブは打てません)。シミュレーター: 木の並べで親の間を無駄に広げないようにし、高貴・カオスの格だけ替えた時は下の木を残すようにしました",
-    "en": "Daily: from the 11/12 challenge, besides starting from a white base with a guaranteed fracture, you can choose “Start without fracture” (Fracturing Orbs can't be used in that tree). Simulator: tree layout no longer spreads parents apart unnecessarily, and changing only the tier of an Exalted or Chaos move now keeps the tree below"
-   }
-  ]
  }
 ]

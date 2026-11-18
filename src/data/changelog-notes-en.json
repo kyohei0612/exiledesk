@@ -1,4 +1,8 @@
 {
+  "0.1.757": [
+    "Simulator: a mod picked in the Desecrated reveal window no longer turns into a lower-tier target when the finished item has the same mod, and Omen of Light no longer reports \"target removed\" for it (it stays a separate target at the chosen tier)",
+    "Simulator: when revealing for a target, the run now picks the target mod if it appears anywhere among the 3 candidates (and the reroll with Omen of Abyssal Echoes), not only the first one, so the odds match the window %"
+  ],
   "0.1.756": [
     "In the daily challenge, \"Save\" now keeps the tree inside the daily. To save it as a Simulator recipe, use \"Save as recipe\" under the final item",
     "Fixed an issue in the daily challenge where reloading the page reset the tree to the start when the browser's storage was full"
