@@ -1,4 +1,7 @@
 {
+  "0.1.758": [
+    "Simulator: boxes after a catalyst now auto-return to the earlier box with the same shape when the quality is already full or was used up by Omen of Catalysing Exaltation, so you no longer have to place the same craft again"
+  ],
   "0.1.757": [
     "Simulator: a mod picked in the Desecrated reveal window no longer turns into a lower-tier target when the finished item has the same mod, and Omen of Light no longer reports \"target removed\" for it (it stays a separate target at the chosen tier)",
     "Simulator: when revealing for a target, the run now picks the target mod if it appears anywhere among the 3 candidates (and the reroll with Omen of Abyssal Echoes), not only the first one, so the odds match the window %"

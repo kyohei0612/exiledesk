@@ -246,6 +246,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.758 カタリストを挟んでも品質が上限か使い切った後なら自動の ↩ S-51d B'
+  "catBack",
   // 0.1.757 冒涜・発現の窓で選んだ MOD は置き石 S-33h
   "veilStone",
   // 0.1.756 デイリーの保存の分け方 D-36e
