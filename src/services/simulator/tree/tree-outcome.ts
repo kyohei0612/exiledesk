@@ -92,10 +92,23 @@ function plainOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: Stage
   const own = ownOf(doc, b);
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
-  const oc = handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
+  const oc0 = handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
+  // 当たりの側の鍵 (S-65e、スイッチ hitSide) も、同じ鍵の当たりの箱がある時だけ (無ければ今どおり狙いの合う当たりの箱へ = 前の木・1 通りの当たりは変わらない)
+  const hs = hitSideOf(oc0, before, after), oc = hs !== oc0 && b.outs.some((id) => doc.boxes[id]?.out === "hit" && doc.boxes[id]?.junkKey === hs.junkKey) ? hs : oc0;
   // 名前の印の MOD が消えた鍵 (n:) は、同じ鍵の結果の箱がある時だけ (S-65b2。無い = その形では 1 通りなので鍵を外した箱へ)
   return namedGoneOf(oc.junkKey) && !b.outs.some((id) => doc.boxes[id]?.junkKey === oc.junkKey) ? withoutNamed(oc) : oc;
 }
+/**
+ * 当たりの側の鍵 (S-65e、スイッチ hitSide、11-18 r/PueJct9M): ほかの鍵の無い当たりに、打った後の側の形の鍵 (S-65 の s:) を付ける。
+ * 消える MOD のある手 (カオス) は、付いた狙いの側が同じでも消えた MOD の側でプレ・サフィの数が 2 通りになり、1 箱にまとめると片方の形の人が下の手に合わず止まった。
+ * 付けるのは候補だけ: 洗い出し (possibleOutsOf) は同じ狙いで 2 通り以上の時だけ残し、回す時 (plainOutcomeOf) は同じ鍵の当たりの箱がある時だけ使う
+ */
+function hitSideOf<T extends { out: OutKind; hits: readonly Aim[]; junkKey?: string }>(oc: T, before: StageItem, after: StageItem): T {
+  // スイッチの行 (release-flags.ts の FLAGS) はブラックが足す。足すまでは名前だけ通す (開発版は名前の無いスイッチも開く)
+  return flag("hitSide" as Parameters<typeof flag>[0]) && oc.out === "hit" && oc.hits.length && !oc.junkKey ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
+}
+/** 側の鍵だけの鍵 (S-65 の s:、ほかの鍵が並ばない) */
+const PURE_SIDE = /^s:-?\d+\|-?\d+$/;
 /** 鍵から名前の印の MOD が消えた部品 (n:) を外す */
 function withoutNamed<T extends { junkKey?: string }>(oc: T): T {
   if (!namedGoneOf(oc.junkKey)) return oc;
@@ -454,7 +467,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       }
       // 結果の分けは回す時と同じ handOutcome (当たりの札・付いた狙いの札 = 棚の当たりの候補 extra)
       for (const o of outs) {
-        const oc = handOutcome(data, doc, h, extra, extra, it, o.item, aims, aimed);
+        const oc = hitSideOf(handOutcome(data, doc, h, extra, extra, it, o.item, aims, aimed), it, o.item);
         // ☑ の狙いが 2 つ以上同時に付く結果も箱にする (「2 つとも付いた」、鍵 a:、S-22d。前は null で手の種類の箱に戻り、2 つとも付いた箱が出なかった)
         const e = boxOutOf(oc, freeSide);
         found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}:${e.junkKey ?? ""}`, e);
@@ -475,7 +488,11 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 箱が無く行き先無しになっていた = 枝の外れ探しの rowFracStar b9、11-06。S-200 ①)
   // 名前の印の MOD が消えた鍵 (n:) は、同じ種類・同じ残りの鍵で消えなかった結果も並ぶ時だけ残す (1 通りなら外して今の箱のまま = 保存した木の決めを崩さない、S-65b2)
   const bare = (e: BoxOut): string => `${e.out}:${e.aim?.modId ?? ""}:${withoutNamed(e).junkKey ?? ""}`;
-  const list0 = [...found.values()];
+  // 当たりの側の鍵 (S-65e) は、同じ狙い (MOD と段) で 2 通り以上の時だけ残す (1 通り = 付く側で形が決まる手は今の箱・保存の札のまま)
+  const hitTag = (e: BoxOut): string => `${e.aim?.modId ?? ""}/${e.aim?.tier ?? ""}`;
+  const hitSides = new Map<string, Set<string>>();
+  for (const e of found.values()) if (e.out === "hit" && PURE_SIDE.test(e.junkKey ?? "")) hitSides.set(hitTag(e), (hitSides.get(hitTag(e)) ?? new Set()).add(e.junkKey!));
+  const list0 = [...found.values()].map((e): BoxOut => { if (e.out !== "hit" || !PURE_SIDE.test(e.junkKey ?? "") || (hitSides.get(hitTag(e))?.size ?? 0) > 1) return e; const { junkKey: _k, ...rest } = e; return rest; });
   const list = list0.map((e) => (namedGoneOf(e.junkKey) && !list0.some((x) => !namedGoneOf(x.junkKey) && bare(x) === bare(e)) ? withoutNamed(e) : e)).filter((e, i, l) => l.findIndex((x) => bare(x) === bare(e) && x.junkKey === e.junkKey) === i);
   // 枝に分けられない手で狙いが消えうる: 手の種類の既定の箱 (当たり + 外れ / 狙い無しは打った後) に「狙いが消えた」を足す (S-21a。側の鍵は付けない = 1 箱ずつ)
   if (!list.length && rawLost) return [...(freeSide ? [{ out: "any" as OutKind, aim: null }] : [...extra.filter(unheldAim).map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk" as OutKind, aim: null }]), { out: "lost", aim: null }];
