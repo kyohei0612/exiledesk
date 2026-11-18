@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.761",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 前の版で保存したレシピでも、今の版で組み直して中身が変わらない時は「古いレシピ」の表示を出さないようにしました",
+    "en": "Simulator: recipes saved in an earlier version no longer show the \"Old recipe\" notice when rebuilding with current rules would not change them"
+   }
+  ]
+ },
+ {
   "v": "0.1.760",
   "date": "2026-11-19",
   "items": [
@@ -1180,30 +1192,6 @@
     "area": "",
     "text": "シミュレーター: 箱の題の横の鉛筆 (メモを書く) のボタンを無くしました",
     "en": "Simulator: removed the pencil (note) button next to a box's title"
-   }
-  ]
- },
- {
-  "v": "0.1.721",
-  "date": "2026-11-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木の並べ方を変えました。新しい箱は右へだけ並び、親の箱は一番左の子の真上に来ます。手を置いて箱が増えても、手を置いた箱とその左側の枝は動きません",
-    "en": "Simulator: changed how the tree is laid out. New boxes are only added to the right, and a parent box sits directly above its leftmost child. When placing a move adds boxes, the box you placed it on and the branches to its left no longer move"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木を縮めて見ている時も、削減の手で分かれた枠 (低い・同じ・高い) を押して次に打つ手を選べるようにしました。箱を押した時の大きい窓にも同じ枠を出します (縮めたままだと未設定の枠に手を置けなかったのを直しました)",
-    "en": "Simulator: in a zoomed-out tree you can now click the frames split by a whittle move (lower, same, higher) to choose the next move for them. The enlarged box shown when you click a box also shows those frames (fixed being unable to set an unset frame while zoomed out)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 11/13 のお題から、お題のティアを T3 以上にしました (前は T2 以上)",
-    "en": "Daily: from the 11/13 challenge, challenge tiers are T3 or higher (previously T2 or higher)"
    }
   ]
  }

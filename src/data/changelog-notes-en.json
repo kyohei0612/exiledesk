@@ -1,4 +1,7 @@
 {
+  "0.1.761": [
+    "Simulator: recipes saved in an earlier version no longer show the \"Old recipe\" notice when rebuilding with current rules would not change them"
+  ],
   "0.1.760": [
     "Mod list: desecrated mod groups that mix factions now show every faction's label, and each tier row shows its own mod's faction. Faction labels now sit after the mod name so the name stays visible",
     "Simulator: a red notice now appears when a recipe couldn't be saved because the browser's storage is full",
