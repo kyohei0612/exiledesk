@@ -304,6 +304,13 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + unlv(tail), at + unlv(unrank(tail)), newVeil || (noBoth && BOTH_KEY.test(tail)) ? "\0" : at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : []), ...(lj ? [at + lj] : []), ...lvSibs];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 6 || !exact.has(k) || lvSibs.includes(k)));
   if (hit) return hit;
+  // (スイッチ oddCarry) 偶然付いた狙いの鍵 (`o:`、S-21b) は組み直しで付く段がずれる (消去の続きの 1 段目 / 2 段目)。道の全部の段から o: を外して同じ札の決めとして読む
+  // (11-18 オーナー eEn6Yd8f「直してからだすで」: 版が変わって組み直すと、2 段目の o: の箱の下に置いた偉大な高貴・骨・フラクチャー・消去が付かずに消えた)
+  if (flag("oddCarry")) {
+    const unodd = (k: string): string => k.replace(/;o:[^\];]*/g, "").replace(/\[o:[^\];]*;?/g, "[").replace(/\[\]/g, "");
+    // o: の無い兄弟と同じ札になってもよい (中身は兄弟と同じ形 + 付いた狙い。兄弟の下に決めが無ければ o: の箱の決めとして読むだけ)
+    const want = unodd(at + tail), odd = [...onPath].find((k) => k !== at + tail && unodd(k) === want);
+    if (odd) return odd;  }
   // 消去の結果の中身の鍵 (`c:<プレ>|<サフィ>~<中身の印>`) は、枠の比べが変わると印だけ変わる (11-04 に品質を枠へ入れた、S-60b)。側の数の同じ札の決めとして読む
   const gone = /^(.*\[c:[^~\]]*)~[0-9a-z]+(\](?:~\d+)?)$/.exec(tail);
   const loose = gone ? [...onPath].find((k) => k.startsWith(at + gone[1] + "~") && k.endsWith(gone[2]!) && !exact.has(k)) : undefined;
