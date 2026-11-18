@@ -81,7 +81,8 @@
     "text": "シミュ: 行き先が隠れた箱だと手の札ごと線が消えていたのを直しました (カオスの札が出ない)",
     "en": "Simulator: steps whose merged target is hidden no longer lose their chip and lines"
    }
-  ]
+  ],
+  "pop": true
  },
  {
   "v": "0.1.750",
