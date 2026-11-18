@@ -9,7 +9,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useDismiss } from "../../../utils/use-dismiss";
 import Icon from "../../../components/ui/Icon.vue";
-import { currentTreeRecipe, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { currentTreeRecipe, recipeWriteFailed, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { feedbackPage } from "../../../state/web-page";
 import { askLeave, openRecipesPage } from "../../../web/page";
 import { copyRecipeUrl, fmtDate, seedDevRecipes, closeNewer, sharedNewer, treeShortUrl, useRecipeUrl } from "../recipe-share";
@@ -24,6 +24,9 @@ import { tr } from "../../../i18n/lang";
 import { toCss } from "../../../utils/zoom";
 import { withRoom } from "../../../state/simulator/tree-room";
 import { flag } from "../../../web/release-flags";
+/** (スイッチ recipeFullNotice、S-101c ②) この端末に保存できなかった時の赤い 1 行。× で閉じる (次に書けなかった時にまた出る)、次に書けたら消える */
+const fullNotice = computed(() => flag("recipeFullNotice") && recipeWriteFailed.value);
+const closeFull = (): void => { recipeWriteFailed.value = false; };
 
 const t = useTree();
 /** opened = 別の木を開いた (ツリーの側で全体に合わせる) */
@@ -215,6 +218,7 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey, true); clea
     </span>
     <!-- 開いたレシピにこの版に無い手 (本番で開くとそこから先を組めない。× で閉じる、S-103b) -->
     <span v-if="!bare && sharedNewer.length" data-tree-recipe-newer class="flex min-w-0 max-w-full items-start gap-1 break-words rounded bg-rose-950/90 px-2 py-0.5 text-[12px] text-rose-100">{{ tr(`このレシピにはまだこの版に無い手 (${sharedNewer.join("・")}) があり、そこから先は組めない (次の版で開ける)`, `This recipe uses a craft this version doesn't have yet (${sharedNewer.join(", ")}); the tree stops there (opens in a later version)`) }}<button type="button" data-tree-recipe-newer-close class="shrink-0 px-1 opacity-80 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="closeNewer">×</button></span>
+    <span v-if="!menuOnly && fullNotice" data-tree-recipe-full class="flex min-w-0 max-w-full items-start gap-1 break-words rounded bg-rose-950/90 px-2 py-0.5 text-[12px] text-rose-100">⚠ {{ tr("この端末に保存できませんでした (ブラウザーの保存の枠が一杯です)。今のレシピは開いている間だけ残ります。閉じる前に「共有」で URL をコピーしてください。", "Couldn't save on this device (the browser's storage is full). This recipe only lasts while the page is open. Before closing, use Share to copy its URL.") }}<button type="button" data-tree-recipe-full-close class="shrink-0 px-1 opacity-80 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="closeFull">×</button></span>
     <!-- 開いた時に外した前の版の決め (今の木に札の箱が無い物、S-107b。× で閉じる) -->
     <span v-if="!bare && t.doc.value.droppedOld" data-tree-recipe-dropped class="flex min-w-0 max-w-full items-start gap-1 break-words rounded bg-amber-950/90 px-2 py-0.5 text-[12px] text-amber-100">{{ tr(`前の版の決め ${t.doc.value.droppedOld} つは今のツリーに無いので外した`, `Removed ${t.doc.value.droppedOld} decision(s) from an older version that this tree no longer has`) }}<button type="button" data-tree-recipe-dropped-close class="shrink-0 px-1 opacity-80 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.edit((d) => { delete d.droppedOld; })">×</button></span>
     <span v-if="note" data-tree-recipe-note class="pointer-events-none min-w-0 max-w-full break-words rounded bg-emerald-900/90 px-2 py-0.5 text-[12px] text-emerald-100">{{ note }}</span>
