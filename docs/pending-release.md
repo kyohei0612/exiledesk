@@ -6,11 +6,11 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| シミュのツリー: 狙い無しの手で偶然狙いが付いた人は「狙いが付いた」の箱を足さず予期せぬ狙い MOD で止めて作り直す (S-21b2、スイッチ oddStop。シミュ 95・96、オーナー 11-18「それは予期せぬでしょりするんじゃなかったの」→ 案 D「おｋ」。古いレシピは写しのまま = S-104e) | (この行の commit) | シミュレーターのツリーで、狙い無しの手で偶然狙いの MOD が付いた人のための箱を作らず、「予期せぬ狙い MOD」で止めて作り直すようにしました (未設定の箱が減ります) | In the Simulator tree, items that roll a target mod by chance on an untargeted step no longer get their own boxes; they now stop as "unexpected target mod" and restart (fewer unset boxes) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
 
+済み (2026-11-18、v0.1.754、最終チェック長 28、オーナー 11-18「だしって」、ブラック 136): origin/main 565e22a3f までを出した = 表の 1 行 (狙い無しの手で偶然付いた狙いは「狙いが付いた」の箱を足さず予期せぬ狙い MOD で止めて作り直す、S-21b2、oddStop、commit 565e22a3f)。RELEASED に oddStop の 1 個、出さない = fracture3。Web 版 e5b5229b、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。猿 6 × 20 JS エラー 0 (progress/monkey754)。r/1htPISD2 は組み直すと未設定 3 で 100 人回せず、止まりの欄の予期せぬの行の文は画面で見ていない (67UqHyvN は合格・完成 100%・止まり 0)。
 済み (2026-11-18、v0.1.753、最終チェック長 27、至急 R-04、オーナー 11-18「本番へは修正後だしておｋ」、ブラック 136): origin/main d05220d57 までを出した = 表の 1 行 (組み直した木で ↩ で戻る骨の下の「狙いが付いた」の箱の見本の埋め直し、S-21b、本番のスイッチ oddStale の中の直し、commit d05220d57)。RELEASED の足し無し、出さない = fracture3。Web 版 39265890、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。猿は至急なので省いた (R-04、ブラック 136)。1460 は版の字 0.1.753・JS 例外 0。
 済み (2026-11-18、v0.1.752、最終チェック長 27、至急 R-04、オーナー 11-18「だして、直してからだすで」「骨至急だな」、ブラック 135): origin/main de08be323 までを出した = 表の 5 行 (ツリーの部品の読み込みの整理 0566dc544・デイリーの諦める 6a73a1e21・スマホのツリーの指 4136b6cf2・oddStale S-21b bd5a50313・oddCarry S-21b de08be323)。RELEASED に 2 個、出さない = fracture3。Web 版 ed16032b、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 5 行ずつ。猿は至急なので省いた (R-04、ブラック 135)。1460 は版の字 0.1.752・JS 例外 0。
 済み (2026-11-18、v0.1.751、最終チェック長 27、オーナー「だして」、ブラック 135): origin/main 3e15c13ca (直しは dd9ec3e5a) までを出した = 表の 13 行 (gradeKeepAll とその続き S-57d2・eleBind S-10h2・goalDesecrate E-60c・stuckOneLine S-72f・hitSide S-65e・「木」→「ツリー」U-62・fracPlainMark S-10g・whittleFloor/whittleNoSame S-65c6/S-190d2 とその続き・sameNames S-190d・goalTierEdge S-78h・linkHiddenSkip S-142n2)。RELEASED に 11 個、出さない = fracture3。Web 版 8c61a884、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 13 行ずつ。猿は出し待ちの準備で 2 回 (dev 1440、?off=fracture3,gradeKeepAll と ?off=fracture3) 6 × 20 ずつ、JS エラー 0 (前からの warn = 390 で横向きで表示の後 1280 のはみ出し)。直した所は共有から開いた木で画面から押した (報告 = 共有 local_41371db6…/progress/monkey751-report.md・monkey752-report.md)。1460 は版の字 0.1.751・JS 例外 0。
