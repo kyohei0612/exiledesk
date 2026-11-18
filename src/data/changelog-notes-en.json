@@ -1,4 +1,11 @@
 {
+  "0.1.752": [
+    "Internal cleanup in the Simulator (no visible changes)",
+    "Fixed an issue where the Daily page could freeze on phones after pressing \"Give up\"",
+    "Fixed touch controls for the Simulator tree on phones (wrong drag direction in rotated view, zoom bar out of reach)",
+    "Fixed an issue in the Simulator tree where \"aim hit by chance\" boxes could show mods that weren't on the item before the craft",
+    "Fixed an issue where crafts placed under \"aim hit by chance\" boxes could disappear when reopening a saved tree after an update"
+  ],
   "0.1.751": [
     "Simulator: switching a step to another tier of the same currency now keeps its omens and kept mods, and the tree below is kept based on the final step you place. Opening a saved tree no longer marks it as unsaved",
     "Simulator: \"any Elemental Resistance\" hits now bind to the element that rolled; extra elemental resistances from steps that did not aim for them count as unwanted mods (fixes the stuck players in r/67UqHyvN). From the 2nd one on you cannot switch to a single element, and box cards show \"any Elemental Resistance\" instead of the element",

@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.752",
+  "date": "2026-11-18",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの内部の整理 (画面の変わりはありません)",
+    "en": "Internal cleanup in the Simulator (no visible changes)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリーで「諦める」を押した後、スマホで画面が動かなくなることがあった問題を直しました",
+    "en": "Fixed an issue where the Daily page could freeze on phones after pressing \"Give up\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホでシミュレーターのツリーを指で動かした時の挙動を直しました (「横向きで表示」の時の向きのずれ・拡大縮小の帯に届かない問題)",
+    "en": "Fixed touch controls for the Simulator tree on phones (wrong drag direction in rotated view, zoom bar out of reach)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターのツリーで、骨などを打った後の「狙いが付いた」箱の見本に、打つ前に無い MOD が付いて見えることがあった問題を直しました",
+    "en": "Fixed an issue in the Simulator tree where \"aim hit by chance\" boxes could show mods that weren't on the item before the craft"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "版が変わった後に保存したツリーを開くと、「狙いが付いた」箱の下に置いた手が消えることがあった問題を直しました",
+    "en": "Fixed an issue where crafts placed under \"aim hit by chance\" boxes could disappear when reopening a saved tree after an update"
+   }
+  ]
+ },
+ {
   "v": "0.1.751",
   "date": "2026-11-18",
   "items": [
@@ -1236,18 +1272,6 @@
     "area": "",
     "text": "デイリー: 今日の順位の表で自分の行を押すと、自分のレシピをシミュレーターで開けるようにしました",
     "en": "Daily: you can now click your own row in today’s ranking to open your recipe in the Simulator"
-   }
-  ]
- },
- {
-  "v": "0.1.712",
-  "date": "2026-11-11",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ベースを選んだ後に木の欄が潰れていたのを直しました",
-    "en": "Simulator: fixed the tree area being squashed after you chose a base"
    }
   ]
  }
