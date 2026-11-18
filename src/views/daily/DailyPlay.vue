@@ -36,6 +36,7 @@ import { dailyRecipeName, dailyUnsaved, keepDailyBuilt, saveDailyCopy } from "./
 import { askLeave, closeDailyPage, setLayerLeaveGuard } from "../../web/page";
 import { DEV_RUN, DEV_RUN0, devState, devTry } from "./daily-dev-states";
 import { DEV_BUILD, flag } from "../../web/release-flags";
+import { setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
 /** 新しい始め方 (白から確定フラクチャー + フラクチャー無し、D-03) を出す日か。開発版は今日のお題でも出す (11-11 オーナー「開発版で触って挙動確認するわ。今日のデイリー出してくれ開発に」)、本番は FOUR_ONLY_FROM から */
 const fourOnlyHere = (id: string): boolean => DEV_BUILD || fourOnlyOn(id);
 import "./daily-play.css";
@@ -113,6 +114,7 @@ function openTree(): void {
   if (!x?.fractured) return;
   treeStep.value = "tree";
   justOpened = true; doneSeen = new Set(); doneNote.value = null;
+  if (flag("recipeFrozen")) setCurrentTreeRecipe(null); // シミュで開いていたレシピの印を残さない = シミュに戻って上書きしてもデイリーの木が入らない (D-36f・S-100b ②)
   const saved = x.tree ? (JSON.parse(x.tree) as TreeDoc) : null;
   if (saved) { setGoalQuality(saved, x.quality); t.open(saved); } // 完成形の品質はお題から (D-03d)
   else { t.startTreeWith(props.topic.base, props.topic.ilvl); t.edit((d) => fillTopicDoc(d, x.aims, x.fractured!, x.from, x.quality)); } // 完成形の品質 (D-03d)
