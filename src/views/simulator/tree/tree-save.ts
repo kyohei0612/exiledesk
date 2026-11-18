@@ -16,7 +16,7 @@ import { fmtDate } from "../recipe-share";
 import { track } from "../../../utils/track";
 import { useTree } from "./use-tree";
 import { blankTree, draftCode, openDraftTree } from "./tree-draft-open";
-import { openedMark, type OpenedAs } from "./tree-tab-recipe"; import { flag } from "../../../web/release-flags";
+import { openedHook, openedMark, type OpenedAs } from "./tree-tab-recipe"; import { flag } from "../../../web/release-flags";
 import { roomFull, withRoom } from "../../../state/simulator/tree-room";
 
 /**
@@ -63,6 +63,7 @@ export function markOpened(id: string): void {
     void nextTick(() => { const cur = currentTreeRecipe.value; if (cur?.id === id) { openedMark.v = { id, at: cur.updatedAt, v1: v1Of(useTree().doc.value) }; storeOpened(openedMark.v); } });
   }, { immediate: true });
 }
+openedHook.mark = markOpened;
 /**
  * (S-65e ⑥、スイッチ hitSide) 開いたままの形をこのブラウザのタブの間 (sessionStorage) も覚える。ページを読み直すと作りかけの下書き (tree-draft-open) として開き直し、
  * 今の決まりで箱が分かれた木は保存と打ち方の形がずれて「保存していない」になった。読み直した後も、開いたままの形と同じなら作りかけに数えない

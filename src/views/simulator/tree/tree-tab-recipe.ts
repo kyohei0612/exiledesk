@@ -11,6 +11,8 @@ import { clearTabKeys, dropTabKey, tabKeyAt } from "./tree-tab-keys";
 /** 開いたレシピを読み込み終えた時の打ち方の形 (S-03c。tree-save の unsaved・markOpened が読み書きする) */
 export type OpenedAs = { id: string; at: number; v1: string } | null;
 export const openedMark: { v: OpenedAs } = { v: null };
+/** 開いたレシピに「組み直しただけ」の印を付ける口 (tree-save が読み込まれた時に markOpened を入れる)。use-tree は tree-save を読まずにこれを呼ぶ (use-tree → tree-save のつなぎがあると、デイリーの台本の束ねが tree-save から画面の .vue まで連れてきて落ちた、11-18) */
+export const openedHook: { mark?: (id: string) => void } = {};
 
 type Mark = { id: string | null; opened: OpenedAs };
 /** タブの並びと同じ順。今のタブの分は印そのものが持つので、ここは替えた時にしまった物 */
