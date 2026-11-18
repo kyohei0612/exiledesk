@@ -6,12 +6,11 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| veilStone (S-33h、見た目 OK = オーナー 11-18「おｋ準備」) | 18204f43e・a5800b6bd | シミュレーター: 冒涜の発現の窓で選んだ MOD が、完成形に同じ MOD があると低い段の狙いに替わり、光のお告げの消去で「狙いが消えた」と戻っていたのを直す (選んだ段のまま別の狙いに) | Simulator: a mod picked in the Desecrated reveal window no longer turns into a lower-tier target when the finished item has the same mod, and Omen of Light no longer reports "target removed" for it (it stays a separate target at the chosen tier) |
-| スイッチ無しの直し (S-35、r/OzKt4u0g) | ad7e0de00 | シミュレーター: 発現で狙う手で、候補 3 つ (反響のお告げなら引き直しの 3 つも) に狙いの MOD が出ても 1 つ目しか選んでいなかったのを直す (確率が窓の % どおりに) | Simulator: when revealing for a target, the run now picks the target mod if it appears anywhere among the 3 candidates (and the reroll with Omen of Abyssal Echoes), not only the first one, so the odds match the window % |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
 
+済み (2026-11-18、v0.1.757、最終チェック長 30、オーナー 11-18「おｋ準備」「たてて出してくれ」、ブラック 138): origin/main 71ca6b406 までを出した = 表の 2 行 (冒涜・発現の窓で選んだ MOD は完成形に同じ MOD があっても選んだ段のまま別の狙い = 置き石・光の消去で「狙いが消えた」にしない、S-33h、スイッチ veilStone、18204f43e + a5800b6bd) + スイッチ無しの直し (回す人・見本の発現は候補 3 つ・反響なら 6 つから ☑ の MOD を選ぶ、S-35、ad7e0de00)。RELEASED に veilStone。Web 版 1a00d662、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 2 行ずつ。直した所の手: 開発版は 2 つとも最後まで (S-33h 窓で選んだ段のまま・光の消去は外れが消えた / S-35 光のお告げ 1 人約 6.7 個)・1461 は冒涜の手が途中で届かず・JS エラー 0 (progress/monkey757)。型 0・golden 通る・1460 JS 例外 0。
 済み (2026-11-18、v0.1.756、最終チェック長 29、オーナー 11-18「おｋ出して」、ブラック 137): origin/main 2ae1ef9fe までを出した = 表の 1 行 (デイリーの帯の保存はデイリーの中だけ・レシピに保存は完成形の下・離れる時の窓なし、D-36e、スイッチ dailySaveSplit、dc276cde3 + 2ae1ef9fe) + スイッチ無しの直し (置き場が一杯の端末で挑戦中に読み直すと木が最初から、D-32、b739fc0d7)。RELEASED に dailySaveSplit。Web 版 9e42e935、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 2 行ずつ。直した所の手 (帯の保存・完成形の下のレシピに保存・置き場一杯で読み直し、1920・1440) 全部 ○・猿 6 × 20 JS エラー 0・型 0・golden 通る・1460 JS 例外 0。
 済み (2026-11-18、v0.1.755、最終チェック長 28、オーナー 11-18「出して」、ブラック 136): origin/main 5588a150f (直しは d55fb79fb) までを出した = 表の 1 行 (未設定の箱で止まった人を予期せぬ狙い MOD に数えない、S-21b2、本番のスイッチ oddStop の中の数え違い、commit d55fb79fb)。RELEASED の足し無し、猿は省いた (バグの直し)、出さない = fracture3。Web 版 540fc812、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。型 0・golden 通る・1460 JS 例外 0。
 済み (2026-11-18、v0.1.754、最終チェック長 28、オーナー 11-18「だしって」、ブラック 136): origin/main 565e22a3f までを出した = 表の 1 行 (狙い無しの手で偶然付いた狙いは「狙いが付いた」の箱を足さず予期せぬ狙い MOD で止めて作り直す、S-21b2、oddStop、commit 565e22a3f)。RELEASED に oddStop の 1 個、出さない = fracture3。Web 版 e5b5229b、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。猿 6 × 20 JS エラー 0 (progress/monkey754)。r/1htPISD2 は組み直すと未設定 3 で 100 人回せず、止まりの欄の予期せぬの行の文は画面で見ていない (67UqHyvN は合格・完成 100%・止まり 0)。
