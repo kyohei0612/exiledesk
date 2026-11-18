@@ -5,7 +5,7 @@
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |
 |---|---|---|
-| ブラック | local_6e211a8c-7bc1-4959-a66d-44d6a17518ab (139 代目、Opus 5.5、11-18 夜に控えから入った。138 = local_685320e5 が会話 30 万で交代。進み = 共有 local_41371db6…/progress/black139.md・引き継ぎ = black138.md の一番上「139 への引き継ぎ」と ExileDesk/progress/black138-run.log) | 司令塔・振り分け・順番 |
+| ブラック | local_d13855a1-7d3d-4254-b61d-b36784170402 (140 代目、Opus 5.5、11-19 0:30 頃に控えから入った。139 = local_6e211a8c が会話 32 万で交代。進み = 共有 local_41371db6…/progress/black140.md・引き継ぎ = black139.md の一番上「140 への引き継ぎ」と ExileDesk/progress/black139-run.log) | 司令塔・振り分け・順番 |
 | デイリー部長 | local_0000f825-9a8f-4870-aac0-cc932f11fcc6 (32、Opus 5.5、11-17 20 時台にブラック 131 が控えから入れた。31 = local_502c4f5d が 2,540 件で交代。頼み = 共有 local_41371db6…/progress/daily-lead32-brief.md、進み = 同 daily-lead32.md、記録 = progress/daily-lead32-run.log) | 今: 上の帯より下をシミュの設定のまま (D-37m3、スイッチ dailyTreeAsSim) の見た目の OK 待ち。dailySimCard (D-37m2)・dailyNumLine (D-50i) は見た目 OK・出し待ち。クラフト箱の重なりの断り (D-20d) はサーバーの出し待ち (オーナーの「出して」の後)。お題が決まった時に #日報 へ「今日のお題」を 1 通 |
 | 最終チェック長 | local_41371db6… の係 33 (11-18 夜にブラック 139 が立てた。頼み = 共有 local_41371db6…/progress/release-next33-brief.md、進み = 同 release-next33.md) | 今: 0.1.759 を本番に出した (Web a733869f、recipeRoom と daily-slim を同じ版で)。出し待ちの表は空。次の出しの合図待ち |
 | サーバー係 | local_c4fa7cdc-b847-4671-b7fa-bdba82e7556f (5 代目 server-keeper5、11-15 16:46 に 1440 を立て直して持ち主に。4 代目 local_f6d61d7a は 2,5xx 件でアーカイブ) | 開発版 1440 を持つ。ブラックの「1440 を立て直して」で立て直し、結果は ExileDesk/progress/server-keeper.md に 1 行 (返事は送らない、止まった時だけ) |
