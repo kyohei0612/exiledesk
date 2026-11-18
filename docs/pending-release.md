@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| 組み直しても中身が変わらない古いレシピには「古いレシピ」の 1 行を出さない (S-104g ⑥、スイッチ recipeFrozen = 0.1.760 で本番なので出せばそのまま入る。オーナー 11-19「やっておｋ」「完了時出しておk」= 見た目の確かめも済んだ扱い、ブラック 140) | df30d6671 | 前の版で保存したレシピでも、今の版で組み直して中身が変わらない時は「古いレシピ」の表示を出さないようにしました | Recipes saved in an earlier version no longer show the "Old recipe" notice when rebuilding with current rules would not change them |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
