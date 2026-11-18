@@ -12,6 +12,7 @@ import { recipeOf } from "../../services/simulator/tree/tree-frame";
 import { craftStage } from "../craft-stage";
 import { clone, newId, parseList } from "./recipe-store-util";
 import { flag } from "../../web/release-flags";
+import { track } from "../../utils/track";
 import { readZ, writeZ, Z_AT, Z_KEY } from "./tree-recipe-z";
 
 const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
@@ -19,6 +20,10 @@ const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
 const BAK = "exiledesk.tree.recipes.bak";
 /** 読めなかった物 (捨てずにここへ) */
 const UNREAD = "exiledesk.tree.recipes.unread";
+/** 読めなかった物の置き場の上限 (字数、S-101c ⑤) */
+const UNREAD_MAX = 200_000;
+/** ブラウザーの保存の枠 (Chrome は鍵と値の字数の合計で 5,242,880 字。読み込みの途中の移しの失敗でも数えるので頭に置く) */
+const ROOM_CHARS = 5 * 1024 * 1024;
 /** 今ツリーで開いているレシピ (読み込み直しても続く) */
 const CURRENT = "exiledesk.tree.recipes.current";
 /** レシピの包みの版 (名前・時刻などの包みを変えたら上げて normalize で読み替える。木の中身の版は tree-migrate の schema の番号)。版の無い物 (10-25 までの開発版) も捨てずに読む */
@@ -39,7 +44,10 @@ function keepUnread(xs: unknown[]): void {
   try {
     const cur = parseList(localStorage.getItem(UNREAD)) ?? [];
     const seen = new Set(cur.map((x) => JSON.stringify(x)));
-    localStorage.setItem(UNREAD, JSON.stringify([...cur, ...xs.filter((x) => !seen.has(JSON.stringify(x)))]));
+    const all = [...cur, ...xs.filter((x) => !seen.has(JSON.stringify(x)))];
+    // (recipeRoom、S-101c ⑤) 合わせて 20 万字まで。超えたら古い物 (頭) から捨てる
+    if (flag("recipeRoom")) while (all.length > 1 && JSON.stringify(all).length > UNREAD_MAX) all.shift();
+    localStorage.setItem(UNREAD, JSON.stringify(all));
   } catch { /* 無くてよい */ }
 }
 /**
@@ -101,6 +109,7 @@ function write(v: TreeRecipe[]): void {
 export const recipeWriteFailed = ref(false);
 function failed(): void {
   if (!flag("recipeRoom")) return;
+  if (!recipeWriteFailed.value) track("recipe:write-failed", roomNote());
   recipeWriteFailed.value = true;
   try { console.warn("[ExileDesk] レシピをこの端末に保存できませんでした (ブラウザーの保存の枠が一杯)"); } catch { /* 無くてよい */ }
 }
@@ -239,3 +248,26 @@ export function importTreeRecipes(text: string): { added: number; same: number; 
 // 前の工程式のレシピ・控え (exiledesk.craftStageSim.*) は木に読み替えられないので、読み込んだ時にこのブラウザから消す
 // (前は残して一覧に件数を出していた。10-25 オーナー「古いレシピ全て削除で OK」)
 try { for (const k of Object.keys(localStorage)) if (k.startsWith("exiledesk.craftStageSim")) localStorage.removeItem(k); } catch { /* 無くてよい */ }
+
+/** 置き場の今の使い方 = 「合計の割合% 大きい鍵:字数」(記録に添える 1 行。鍵の名前と字数だけで中身は入れない) */
+function roomNote(): string {
+  try {
+    let sum = 0, top = "", topN = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) ?? "", n = k.length + (localStorage.getItem(k)?.length ?? 0);
+      sum += n;
+      if (n > topN) { top = k; topN = n; }
+    }
+    return `${Math.round((sum / ROOM_CHARS) * 100)}% ${top}:${topN}`;
+  } catch { return "?"; }
+}
+if (flag("recipeRoom")) {
+  // (S-101c ⑥) 使っていない古い鍵を消す (全体図の前の覚え。今は minimap3・minimap4)
+  try { localStorage.removeItem("exiledesk.tree.minimap2"); } catch { /* 無くてよい */ }
+  // (S-101c ⑦) 開いた時に置き場が枠の 8 割を超えていたら記録に 1 行 (記録しない印の人は送らない = track の中)
+  try {
+    let sum = 0;
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i) ?? ""; sum += k.length + (localStorage.getItem(k)?.length ?? 0); }
+    if (sum > ROOM_CHARS * 0.8) track("storage:near-full", roomNote());
+  } catch { /* 数えられなくてよい */ }
+}
