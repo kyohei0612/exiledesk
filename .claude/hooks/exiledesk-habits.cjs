@@ -2,7 +2,7 @@
 // 決まりの正は設計図 docs/spec/README.md ⑥
 // Stop (G-36・G-45 ③): 返事を終える時に、このセッションが残したスクリーンショット・確認の Chrome・自分で立てた dev サーバー・止め残りの子プロセス・
 //   「済み」で終わらず伸びていない回しの記録を知らせる (1 回だけ止めて片付けさせる)
-// UserPromptSubmit (G-37): セッションが長くなったら (2,000 件で控えを立て、2,500 件前後で引き継ぎを書いて交代する) よう差し込む (メモ feedback-request-rules の 4)
+// UserPromptSubmit (G-37・G-54 ①): セッションの会話が長くなったら (25 万トークンで控えを立て、35 万で引き継ぎを書いて交代する) よう差し込む (メモ feedback-request-rules の 4)
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -11,8 +11,10 @@ const { execSync } = require("child_process");
 // repo の中の物 (.claude/hooks/)。道はこのファイルの置き場から引く (セッションの置き場の名前 = 道の : / \ を - に替えた物)
 const REPO = path.resolve(__dirname, "../..");
 const PROJ = REPO.replace(/[:\\/]/g, "-");
-const LONG = 2500;
-const SPARE = 2000;
+// G-54 ① (11-18): 数えるのは件数でなく会話の量 (最後の返事の読み込みトークン)。1 手ごとに全部読み直すので、長い会話ほど枠を食う
+const LONG = 350000;
+const SPARE = 250000;
+const man = (n) => `${Math.round(n / 10000)} 万`;
 
 let raw = "";
 process.stdin.on("data", (c) => (raw += c));
@@ -30,7 +32,7 @@ process.stdin.on("end", () => {
       try { ver = execSync('git log -1 --format=%h_%cd --date=short -- .claude/hooks scripts/check-spec-tidy.mjs', { cwd: REPO, encoding: "utf8", windowsHide: true, timeout: 4000, stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch {}
       process.stdout.write(`【フック】ExileDesk の見張りが入っている (.claude/hooks/、版 ${ver || "不明"})。\n`);
     }
-    const n = countLines(tp);
+    const n = ctxTokens(tp);
     // 控えはオーナーが話した番に立てる (ほかの番では立たずに許可のカードになる。オーナー 11-06「2500上限で2000超えたら立ち上げる」「他部長も2000超えたら報告してくるからそこはどうするの」)
     // 部長は報告だけ、ブラックはオーナーの番に自分と部長の分をまとめて立てる。部長の数はブラックの番にこのフックが数えて出す
     const desk = desktopSessions();
@@ -39,9 +41,9 @@ process.stdin.on("end", () => {
     // 部長の報告・自動チェックの番は、頭に system-reminder などが付くので文の中のどこかで見る (11-07 オーナーの番だけに出す)
     const ownerTurn = !/<cross-session-message|<side-sessions-event|<task-notification|【自動チェック|Another Claude session sent a message/.test(prompt);
     if (n >= LONG)
-      process.stdout.write(`【長さ】このセッションは ${n} 件になった (${LONG} 前後で交代の決まり、メモ feedback-request-rules)。今の頼みの区切りで引き継ぎを書いて止まり、控えに交代する (ブラックならオーナーに交代を言う)。\n`);
+      process.stdout.write(`【長さ】このセッションの会話は ${man(n)} になった (${man(LONG)} で交代の決まり、G-37・G-54 ①)。今の頼みの区切りで引き継ぎを書いて止まり、控えに交代する (ブラックならオーナーに交代を言う)。\n`);
     else if (n >= SPARE && !black && firstTime(sid, SPARE))
-      process.stdout.write(`【長さ】このセッションは ${n} 件 (${SPARE} を超えた、上限は ${LONG})。ブラックに「${SPARE} 超え」と 1 行だけ報告して仕事は続ける。控えはブラックがオーナーの番に立てる。\n`);
+      process.stdout.write(`【長さ】このセッションの会話は ${man(n)} (${man(SPARE)} を超えた、上限は ${man(LONG)})。ブラックに「${man(SPARE)} 超え」と 1 行だけ報告して仕事は続ける。控えはブラックがオーナーの番に立てる。\n`);
     // 控えが入ったら題から「控え」を外す (G-37 ②、オーナー 11-16「控えのままじゃん名前」): 題に「控え」が残ったまま commit したら毎番出す
     const own = desk.get(sid);
     if (own && /控え/.test(own.title) && /"command":"[^"]*\bgit\b[^"]*\bcommit\b/.test(readTail(tp, 3_000_000)))
@@ -51,13 +53,13 @@ process.stdin.on("end", () => {
       process.stdout.write(`【画面】画面の直しの確かめ・見せる絵は、直した所だけでなく画面全体を 1920・1440・1280x720 で撮り、1 枚ずつ Read で見て崩れ (重なり・切れ・送り棒・小さすぎる字) 0 を書いてから返す (G-53)。\n`);
     if (black && ownerTurn) {
       const longs = longSessions(tp, desk);
-      if (n >= SPARE && !handedOver(desk.get(sid), desk)) longs.unshift(`ブラック自身 (${n} 件)`);
+      if (n >= SPARE && !handedOver(desk.get(sid), desk)) longs.unshift(`ブラック自身 (${man(n)})`);
       if (longs.length)
-        process.stdout.write(`【控え】${SPARE} 件を超えたセッション: ${longs.join("・")}。オーナーが話したこの番のうちに控えを立てて読ませて待たせる (上限 ${LONG}、メモ feedback-ask-before-spawn)。もう控えがあれば立てない。\n`);
+        process.stdout.write(`【控え】会話が ${man(SPARE)} を超えたセッション: ${longs.join("・")}。オーナーが話したこの番のうちに控えを立てて読ませて待たせる (上限 ${man(LONG)}、G-54 ①)。もう控えがあれば立てない。\n`);
       // 終わり (G-37 ①、オーナー 11-16「てか終わりにするんでしょ上限の奴」): 上限を超えた・交代した前の物はアーカイブする
       const ends = endedSessions(tp, desk);
       if (ends.length)
-        process.stdout.write(`【終わり】上限 ${LONG} を超えた / 交代した前のセッション: ${ends.join("・")}。引き継ぎが済んでいればアーカイブする (立てた係は先に detach。サーバー係は 1440 が止まるので見てから)。まだ引き継いでいなければ引き継がせてから (G-37 ①)。\n`);
+        process.stdout.write(`【終わり】会話が ${man(LONG)} を超えた / 交代した前のセッション: ${ends.join("・")}。引き継ぎが済んでいればアーカイブする (立てた係は先に detach。サーバー係は 1440 が止まるので見てから)。まだ引き継いでいなければ引き継がせてから (G-37 ①)。\n`);
     }
     process.exit(0);
   }
@@ -101,6 +103,13 @@ process.stdin.on("end", () => {
   process.exit(0);
 });
 
+// 会話の量 = 記録の一番新しい usage の読み込み (input + cache_read + cache_creation)。読めなければ 0
+function ctxTokens(p) {
+  const t = readTail(p, 400000);
+  const all = [...t.matchAll(/"usage":\{"input_tokens":(\d+),"cache_creation_input_tokens":(\d+),"cache_read_input_tokens":(\d+)/g)];
+  const m = all.pop();
+  return m ? Number(m[1]) + Number(m[2]) + Number(m[3]) : 0;
+}
 function countLines(p) {
   try { const s = fs.readFileSync(p, "utf8"); let n = 0; for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) === 10) n++; return n; } catch { return 0; }
 }
@@ -163,10 +172,10 @@ function longSessions(self, desk) {
       const info = desk.get(f.replace(/\.jsonl$/, ""));
       // 交代した前の物 (題に「(前」) は控えでなく【終わり】の方に出す (G-37 ①)
       if (info && (info.archived || handedOver(info, desk) || /[(（]前/.test(info.title))) continue;
-      const n = countLines(p);
+      const n = ctxTokens(p);
       if (n < SPARE) continue;
       const m = readHead(p, 60000).match(/あなたは([^\s。、,(（\\"]{2,30})/);
-      out.push(`${info && info.title ? info.title.split(/[：:]/)[0].trim() : m ? m[1] : f.slice(0, 8)} (${n} 件)`);
+      out.push(`${info && info.title ? info.title.split(/[：:]/)[0].trim() : m ? m[1] : f.slice(0, 8)} (${man(n)})`);
     }
   }
   return out;
@@ -183,8 +192,8 @@ function endedSessions(self, desk) {
       const p = path.join(root, d, `${cli}.jsonl`);
       if (path.resolve(p) === path.resolve(self) || !fs.existsSync(p)) continue;
       const before = /[(（]前/.test(info.title);
-      const n = countLines(p);
-      if (before || n >= LONG) out.push(`${info.title || cli.slice(0, 8)} (${n} 件)`);
+      const n = ctxTokens(p);
+      if (before || n >= LONG) out.push(`${info.title || cli.slice(0, 8)} (${man(n)})`);
     }
   }
   return out;

@@ -166,6 +166,17 @@ process.stdin.on("end", () => {
       if (!/cross-session-message|"name":"SendMessage"|"name":"mcp__ccd_session__start_session"/.test(after))
         block("前の監視は新しい行 0 のまま期限が来た。何も動いていない時は立て直さない (G-52)。係に頼みを出したか係から知らせが来てから立てる");
     }
+    // G-54 ② (オーナー 11-18「トークンの減りがぐろい」): 回しの記録を見る見張りは、済み・中止・エラーなどの行だけ通す (1 行ごとに起こすと毎回会話を全部読み直す)
+    const mc = String(ti.command || "");
+    if (/-run\.log/.test(mc) && !(/grep\b[^\n]*済み/.test(mc) && /grep\b[^\n]*中止/.test(mc)))
+      block("回しの記録の見張りは、1 行ごとに起こさない (G-54 ②)。grep --line-buffered -E \"済み|中止|エラー|止ま|詰ま\" で、その行だけ通す形にしてもう一度。進みは記録のファイルで見る");
+  }
+
+  // G-54 ③ (オーナー 11-18「フックでお勧め」「フェーブルは週間上限も使うよ」): 係を立てる時はモデルを書く。サーバー係は Sonnet
+  if (tool === "mcp__ccd_session__start_session" && !ti.proposal_id && ti.initiation !== "offer" && ti.context !== "fork" && !ti.target) {
+    const m = String(ti.model || "");
+    if (!m) block("係を立てる時は model を書く (G-54 ③)。考えの要る役 (ブラック・その控え・部長) は今のモデル (claude-opus-5-5)、サーバー係のような手順だけの役は claude-sonnet-5-5");
+    if (/サーバー係/.test(String(ti.title || "")) && /opus|fable/i.test(m)) block("サーバー係は Sonnet (claude-sonnet-5-5) で立てる (G-54 ③)");
   }
 
   // 回し物の見張り (G-45、オーナー 11-06「さっきの見張りルールフックしといて」「1分毎に結果をそのセッションに出すとブラックやセッション見た奴が中止するか否か即わかる」)
@@ -186,7 +197,7 @@ process.stdin.on("end", () => {
     // 2. 裏で回す物は回しの記録 (-run.log) に書く。dev サーバー (vite・dev:web・preview) は除く
     // (「preview」は pnpm / npm の台本の名前の時だけ。ExileDesk-preview のパスの台本は除かない)
     if (ti.run_in_background && !/-run\.log/.test(cmd) && !/\b(vite|dev:web|preview:prod|serve)\b|\b(pnpm|npm)(\s+-\S+)*\s+(run\s+)?preview\b/.test(cmd))
-      block("裏で回す物は回しの記録が要る (G-45): 台本の出力を progress\\<名前>-run.log へ区切りごとに 1 行 (時刻・何通り目 / 全部・今の所・止まりと理由・JS エラーの数、最後に「済み」) 書き足す形にし、立てた後すぐ Monitor でその run.log を見張る (1 行増えるたびにこのセッションに出る)。進んでいない・同じ所の繰り返しならすぐ止める (G-26)");
+      block("裏で回す物は回しの記録が要る (G-45): 台本の出力を progress\\<名前>-run.log へ区切りごとに 1 行 (時刻・何通り目 / 全部・今の所・止まりと理由・JS エラーの数、最後に「済み」) 書き足す形にし、立てた後すぐ Monitor でその run.log を見張る (grep で済み・中止・エラー・止ま・詰まの行だけ通す、G-54 ②)。進んでいない・同じ所の繰り返しならすぐ止める (G-26)");
     // 作業場 ExileDesk-preview* での checkout / reset は出す・見張りの段取りなので通す
     const inPreview = /git\s+-C\s+["']?[^"'\s]*ExileDesk-preview/i.test(cmd);
 
