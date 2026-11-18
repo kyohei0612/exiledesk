@@ -252,6 +252,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.760 勢力の札 U-12k・保存できない時の赤い帯 S-101c ②・保存したレシピを変えない S-100b・S-104g・ルーンの比べ S-60g3・冒涜の見本の段の下限 S-200 ③。オーナー 11-19「だして」、ブラック 140
+  "factionChips", "recipeFullNotice", "recipeFrozen", "runeFreeAll", "aimFloorVeil",
   // 0.1.759 レシピの保存の枠が一杯の時に黙らない・止まった移しを終える・並びを逆にしない S-101c (デイリーの記録を今日の 1 枠に D-32c と同じ版)。オーナー 11-18 夜「おｋ　出して」、ブラック 139
   "recipeRoom",
   // 0.1.758 カタリストを挟んでも品質が上限か使い切った後なら自動の ↩ S-51d B'

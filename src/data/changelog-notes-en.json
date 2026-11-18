@@ -1,4 +1,11 @@
 {
+  "0.1.760": [
+    "Mod list: desecrated mod groups that mix factions now show every faction's label, and each tier row shows its own mod's faction. Faction labels now sit after the mod name so the name stays visible",
+    "Simulator: a red notice now appears when a recipe couldn't be saved because the browser's storage is full",
+    "Simulator: saved recipes no longer change on their own after updates or rebuilds. Recipes from earlier versions open as saved, and \"Rebuild with current rules\" rebuilds them",
+    "Simulator: items that fail after a rune is socketed now return to the same path as items without the rune, so you no longer need to build the same branch twice and runs no longer get stuck there",
+    "Simulator: in the tree, desecrated mods are now shown at the lowest tier you are aiming for, and mods placed through the reveal window show the tier you chose (display only; 100-player runs are unchanged)"
+  ],
   "0.1.759": [
     "Simulator: fixed recipes silently failing to save or delete when browser storage was full (deleted recipes came back and new ones vanished after updates). Duplicate backups are now cleared and the list order is restored.",
     "Daily: finished days' challenge records are now kept small, fixing cases where the browser storage filled up and Simulator recipes could no longer be saved"

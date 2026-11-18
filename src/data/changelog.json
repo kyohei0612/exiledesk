@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.760",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧: 勢力の違う冒涜の MOD がまとまった行に、混ざる勢力の札を全部出すようにしました。行を開くと MOD ごとの勢力も出ます。勢力の札は MOD 名の後ろに並べ、名前が隠れないようにしました",
+    "en": "Mod list: desecrated mod groups that mix factions now show every faction's label, and each tier row shows its own mod's faction. Faction labels now sit after the mod name so the name stays visible"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: レシピが保存できなかった時 (ブラウザーの保存の枠が一杯) に、赤い 1 行で知らせるようにしました",
+    "en": "Simulator: a red notice now appears when a recipe couldn't be saved because the browser's storage is full"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存したレシピが、版の更新や組み直しで勝手に変わらないようにしました。前の版のレシピは保存した時のまま開き、「新しい版で組み直す」で今の決まりに組み直せます",
+    "en": "Simulator: saved recipes no longer change on their own after updates or rebuilds. Recipes from earlier versions open as saved, and \"Rebuild with current rules\" rebuilds them"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ルーンを付けた後に失敗しても、ルーン無しと同じ道に戻るようにしました (同じ手の箱をもう一度組む必要がなく、100 人回しで止まらなくなりました)",
+    "en": "Simulator: items that fail after a rune is socketed now return to the same path as items without the rune, so you no longer need to build the same branch twice and runs no longer get stuck there"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーで、冒涜で付いた MOD も狙いの段の一番下で表示するようにしました。発現で段を選んだ MOD は、選んだ段で表示されます (見た目だけで、100 人回しの結果は変わりません)",
+    "en": "Simulator: in the tree, desecrated mods are now shown at the lowest tier you are aiming for, and mods placed through the reveal window show the tier you chose (display only; 100-player runs are unchanged)"
+   }
+  ]
+ },
+ {
   "v": "0.1.759",
   "date": "2026-11-18",
   "items": [
@@ -1168,36 +1204,6 @@
     "area": "",
     "text": "デイリー: 11/13 のお題から、お題のティアを T3 以上にしました (前は T2 以上)",
     "en": "Daily: from the 11/13 challenge, challenge tiers are T3 or higher (previously T2 or higher)"
-   }
-  ]
- },
- {
-  "v": "0.1.720",
-  "date": "2026-11-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木を組んでいる間 (手を置く・替える・1 つ戻す・やり直す)、もう並んでいる箱の横の順が入れ替わらないようにしました。並べ直すのは木を開いた時だけです",
-    "en": "Simulator: while you build a tree (placing or changing a move, undo, redo), boxes that are already laid out no longer swap their left-to-right order. The tree is only re-sorted when it is opened"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 1 つ戻す・やり直す・手を消すで木の並びが動いても、見ていた箱が画面の同じ場所に残るようにしました (木がどこかへ行ってしまうのを直しました)",
-    "en": "Simulator: when undo, redo or removing a move shifts the layout, the box you were looking at now stays in the same place on screen (fixed the tree drifting away)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木を縮めて箱を押した時の大きい窓で「完成」「失敗」を押すと、窓が閉じるようにしました。統合の札の言葉を「→ 同じ中身の箱の続きへ」に替えました",
-    "en": "Simulator: in the enlarged box shown when you click a box in a zoomed-out tree, pressing “Done” or “Fail” now closes it. The merge tag now reads “→ continues at the box with the same contents”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 次に打つ手の窓と、縮めて見ている時の箱の大きい窓に「MOD 一覧」のボタンを足しました。押すと、その箱の品で MOD 一覧が開きます",
-    "en": "Simulator: added a “Mod list” button to the next-move window and to the enlarged box in a zoomed-out tree. It opens the mod list for that box's item"
    }
   ]
  }
