@@ -7,7 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | シミュのレシピをこの端末に保存できなかった時 (ブラウザーの保存の枠が一杯) に、レシピの帯へ赤い 1 行で知らせる (S-101c ②、スイッチ recipeFullNotice、見た目 OK オーナー 11-19「おｋ」) | 9a2f4e8be・5d50f9605 | シミュレーターのレシピが保存できなかった時 (ブラウザーの保存の枠が一杯) に、赤い 1 行で知らせるようにしました | The simulator now shows a red notice when a recipe couldn't be saved because the browser's storage is full |
-| 保存したレシピは人が保存し直すまで変わらない: 古いレシピは保存したまま開き「新しい版で組み直す」を選べる、100 人回すは組み直してから回す、組み直しや別のタブ・別のレシピの保存で中身を書き換えない (S-100b ①〜③・S-104g、スイッチ recipeFrozen、見た目 OK オーナー 11-19「おｋ」。デイリーの側の 1 行は daily-opentree) | 59db84e05 | 保存したレシピが、版の更新や組み直しで勝手に変わらないようにしました。前の版のレシピは保存した時のまま開き、「新しい版で組み直す」で今の決まりに組み直せます | Saved recipes no longer change on their own after updates or rebuilds. Recipes from earlier versions open as saved, and "Rebuild with current rules" rebuilds them |
+| 保存したレシピは人が保存し直すまで変わらない: 古いレシピは保存したまま開き「新しい版で組み直す」を選べる、100 人回すは組み直してから回す、組み直しや別のタブ・別のレシピの保存で中身を書き換えない (S-100b ①〜③・S-104g、スイッチ recipeFrozen、見た目 OK オーナー 11-19「おｋ」。デイリーの側の 1 行は daily-opentree) | 59db84e05・d986219c5 | 保存したレシピが、版の更新や組み直しで勝手に変わらないようにしました。前の版のレシピは保存した時のまま開き、「新しい版で組み直す」で今の決まりに組み直せます | Saved recipes no longer change on their own after updates or rebuilds. Recipes from earlier versions open as saved, and "Rebuild with current rules" rebuilds them |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
