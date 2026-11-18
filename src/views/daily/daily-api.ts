@@ -16,6 +16,7 @@ import type { TopicQuality } from "./daily-quality";
 import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles";
 import { byScore, rankCmp } from "./daily-score";
 import { DEV_BUILD, flag } from "../../web/release-flags";
+import { keepTabTree, tabTreeOf } from "./daily-tree-keep";
 
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
 /** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
@@ -36,7 +37,7 @@ export type DailyTopic = { id: string; day: string; dayNo: number; base: string;
   out?: { ms: number; timeout?: true }[] };
 export type DailyRecord = { cost: number; rate: number; ms: number; at: number };
 /** startedAt = スタートを押した時刻 (サーバーの時計、D-32)。seed・prices はお題に固定した種と相場の写し (D-34)。fractured・from・tree はこの端末だけ */
-export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 完成形の品質 (D-03d、始めた時にサーバーが返す。品質の無いお題は無し) */ quality?: TopicQuality;/** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** 画面の組み上がった木の写し (縮めた文字、提出で tree に足して送る。D-50h、スイッチ dailyBuilt) */ builtZ?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
+export type DailyTry = { topicId: string; startedAt: number; aims: DailyAim[]; /** 完成形の品質 (D-03d、始めた時にサーバーが返す。品質の無いお題は無し) */ quality?: TopicQuality;/** 終わった = 諦めた (D-37b) か提出した (D-35c)。木は見るだけ、提出できない */ ended?: boolean; /** 提出して終わった (D-35c) */ submitted?: boolean; seed?: number; prices?: unknown; fractured?: string; /** 始め方 (D-37j)。無ければ (a) フラクチャー済みから */ from?: StartFrom; tree?: string; /** 木を書いた時刻 (この端末。タブの写しと新しい方を開く、D-32・daily-tree-keep) */ treeAt?: number; /** 画面の組み上がった木の写し (縮めた文字、提出で tree に足して送る。D-50h、スイッチ dailyBuilt) */ builtZ?: string; /** レシピに写しで保存した時の打ち方 (D-36b・D-36c、この端末だけ) */ saved?: string; best?: DailyRecord; last?: DailyRecord; /** 提出の一言 (D-35e、この端末の控え。空 = 後から消した) */ note?: string; /** 後から一言を置いた時刻 (D-35e、少しの間だけ順位の自分の行に重ねる) */ noteAt?: number };
 /** views = そのレシピを開いた人の数 (D-50e、1 人も開いていない行には無い) */
 export type DailyRankRow = { name: string; cost: number; rate: number; ms: number; me?: boolean; views?: number; /** 提出の一言 (D-35e、無い人は無し) */ note?: string };
 /** 提出の一言の字数の上限 (D-35e、サーバーの SUBMIT_NOTE_MAX と同じ) */
@@ -73,7 +74,13 @@ function save(): void {
       else if (cur.startedAt === s.startedAt && s.ended && !cur.ended) raw.tries[id] = { ...cur, ...s, ...(cur.tree && !s.tree ? { tree: cur.tree } : {}) };
     }
     for (const b of st?.box ?? []) if (!raw.box.some((x) => x.id === b.id)) raw.box.push(b);
-    localStorage.setItem(KEY, JSON.stringify(raw));
+    try { localStorage.setItem(KEY, JSON.stringify(raw)); } catch {
+      // 置き場が一杯 (シミュのレシピの写しで埋まった端末、11-18): 今日の挑戦より前の日の木の写しを外して書き直す (画面の控えは触らない)。
+      // それでも書けない時も、今日の木はタブの写し (daily-tree-keep) から続きを開ける
+      const slim = JSON.parse(JSON.stringify(raw)) as Local, today = todayId();
+      for (const [id, x] of Object.entries(slim.tries)) if (id !== today) { delete x.tree; delete x.builtZ; delete x.saved; }
+      localStorage.setItem(KEY, JSON.stringify(slim));
+    }
   } catch { /* 覚えられなくてもその場は動く */ }
 }
 
@@ -166,7 +173,10 @@ export async function startTry(id: string): Promise<DailyTry | StartError> {
   if (r.error !== undefined) return r.error === "closed" ? "closed" : "notToday";
   // 木を引き継ぐのは同じ挑戦 (始めた時刻が同じ) の時だけ
   const had = daily.local.tries[id], same = had?.startedAt === (r as DailyTry).startedAt;
-  daily.local.tries[id] = { ...(r as DailyTry), ...(same && had?.fractured ? { fractured: had.fractured } : {}), ...(same && had?.from ? { from: had.from } : {}), ...(same && had?.tree ? { tree: had.tree } : {}), ...(same && had?.saved ? { saved: had.saved } : {}) };
+  daily.local.tries[id] = { ...(r as DailyTry), ...(same && had?.fractured ? { fractured: had.fractured } : {}), ...(same && had?.from ? { from: had.from } : {}), ...(same && had?.tree ? { tree: had.tree, ...(had.treeAt ? { treeAt: had.treeAt } : {}) } : {}), ...(same && had?.saved ? { saved: had.saved } : {}) };
+  // 端末の控えに木が無い (置き場が一杯で書けなかった) 時は、このタブの写しから続きを開く (D-32、11-18)
+  const now = daily.local.tries[id]!, tab = tabTreeOf(id, now.startedAt);
+  if (tab && (!now.tree || tab.at > (now.treeAt ?? 0))) { now.tree = tab.tree; now.treeAt = tab.at; if (tab.builtZ) now.builtZ = tab.builtZ; }
   save();
   return daily.local.tries[id]!;
 }
@@ -201,7 +211,11 @@ export async function syncTodayTry(id: string): Promise<void> {
 }
 export function updateTry(id: string, patch: Partial<Pick<DailyTry, "fractured" | "from" | "tree" | "saved" | "builtZ">>): void {
   const t = daily.local.tries[id];
-  if (t) { Object.assign(t, patch); save(); }
+  if (!t) return;
+  Object.assign(t, patch);
+  if ("tree" in patch) t.treeAt = Date.now();
+  save();
+  if ("tree" in patch || "builtZ" in patch) keepTabTree(id, t.startedAt, t.tree, t.builtZ, t.treeAt ?? Date.now());
 }
 /** POST /daily/giveup (D-37b)。提出なしで終える。始め直しはできない (D-33)。始めていない時も諦めの印を置く (今日の順位のレシピを見る前、D-50c)。終えられたら true */
 export async function giveUpTry(id: string): Promise<boolean> {
