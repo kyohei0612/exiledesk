@@ -15,7 +15,7 @@ import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
 import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { isOldRecipe } from "../../../services/simulator/tree/tree-built";
-import { currentTreeRecipeId, refreshBuilt, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
+import { currentTreeRecipe, currentTreeRecipeId, refreshBuilt, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check"; import { tidyEleAny } from "../../../services/simulator/tree/tree-ele-any"; // デイリーのお題の木は印 eleAny を付けて開く = 読み替えない (S-10h ④、daily-open・daily-cost)。web/page は読まない (検算の束ねに入り history で落ちた、11-16)
 
@@ -247,6 +247,11 @@ const opened = ref(0);
 const putTree = (t: TreeDoc): void => { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(t))); migrateStart(d); }, true); };
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
 function open(tree: TreeDoc, stepped = false): void {
+  // (S-65e ⑥、スイッチ hitSide) 保存したレシピを開いて組み直しただけなら「保存していない」にしない (共有 URL と同じ markOpened。今の決まりで箱が分かれて打ち方の形がずれても、触るまでは作りかけでない)。
+  // tree-save は use-tree を import するので、輪にならないよう開く時に読む
+  // 開く木がそのレシピの保存そのものの時だけ (作りかけの下書き tree-draft-open は保存と違うので印を付けない)
+  const rec = currentTreeRecipe.value;
+  if (stepped && rec && rec.tree === tree && flag("hitSide")) void import("./tree-save").then((m) => m.markOpened(rec.id));
   if (stepped && s.data.value) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
   // (S-196f、スイッチ sharedOpenWait) データがまだの時は読み込み中のまま待ち、来たら組む方で開く (前は待つ間に白紙の木が見えてベース選びへ移った)
   if (stepped && flag("sharedOpenWait")) { loading.value = true; const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree, stepped); } }); return; }

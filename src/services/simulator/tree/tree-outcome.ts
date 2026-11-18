@@ -104,8 +104,7 @@ function plainOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: Stage
  * 付けるのは候補だけ: 洗い出し (possibleOutsOf) は同じ狙いで 2 通り以上の時だけ残し、回す時 (plainOutcomeOf) は同じ鍵の当たりの箱がある時だけ使う
  */
 function hitSideOf<T extends { out: OutKind; hits: readonly Aim[]; junkKey?: string }>(oc: T, before: StageItem, after: StageItem): T {
-  // スイッチの行 (release-flags.ts の FLAGS) はブラックが足す。足すまでは名前だけ通す (開発版は名前の無いスイッチも開く)
-  return flag("hitSide" as Parameters<typeof flag>[0]) && oc.out === "hit" && oc.hits.length && !oc.junkKey ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
+  return flag("hitSide") && oc.out === "hit" && oc.hits.length && !oc.junkKey ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
 }
 /** 側の鍵だけの鍵 (S-65 の s:、ほかの鍵が並ばない) */
 const PURE_SIDE = /^s:-?\d+\|-?\d+$/;

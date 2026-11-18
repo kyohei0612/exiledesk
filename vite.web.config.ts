@@ -104,7 +104,9 @@ export default defineConfig({
     port: 1440,
     strictPort: true,
     // 起動しても普段の Chrome にタブを開かない (2026-10-18 オーナー「タブで開いたり同時に 2 個立ち上がるのやめーや」。開くのは http://localhost:1440/web.html)
-    watch: { ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**", "**/video/**", "**/.dev-logs/**"] },
+    // 画面に入らない所 (進み具合・設計図・テスト・サーバー・撮った絵・md・回しの出力) は見張らない: ほかのセッションの書き込みで開いているページが丸ごと読み直され、
+    // 共有 URL を開く途中なら #recipe= が落ちてベース選びへ移っていた (11-18 シミュ手伝い 93、ブラック 134 の案 A。本番の作りは変わらない)
+    watch: { ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**", "**/video/**", "**/.dev-logs/**", "**/progress/**", "**/docs/**", "**/tests/**", "**/server/**", "**/shots/**", "**/dist/**", "**/dist-web/**", "**/*.md", "**/*.log", "**/*.out"] },
     proxy: {
       "/api/poe2scout": { target: "https://api.poe2scout.com", changeOrigin: true, rewrite: (path) => path.replace(/^\/api\/poe2scout/, "") },
     },

@@ -19,6 +19,7 @@ import { useTree } from "./use-tree";
 import { modText } from "../../../i18n/lang";
 import { keepablesOf } from "./tree-row-tags";
 import { aimedList } from "../../../services/simulator/tree/tree-miss";
+import { flag } from "../../../web/release-flags"; import { gradeKindOf } from "../../../services/simulator/tree/tree-grade-keep";
 
 const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
 export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem }) {
@@ -69,7 +70,8 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const checked = ref<string[]>((o.current?.keep ?? []).map(aimKey));
   /** 自分で触ったか (持ち替えると既定に戻る)。前の手で残したい MOD を決めていればそれ */
   let touched = !!o.current?.keep;
-  watch(o.held, () => { touched = false; });
+  // (S-57d2、スイッチ gradeKeepAll) 元の手と同じ格の系に持ち替えたら、元の手の残したい MOD を引き継ぐ (お告げと同じ。既定に戻すと元の手と違うと見て下を作り直した)
+  watch(o.held, (h) => { const k = o.current?.keep; touched = !!(flag("gradeKeepAll") && k && h && gradeKindOf(h) === gradeKindOf(o.current!.currency)); if (touched) checked.value = k!.map(aimKey); });
   watch(choices, () => { if (!touched) checked.value = defaults(); }, { immediate: true });
   /**
    * 手に残す MOD (Hand.keep) = ☑ した候補 + この手で消えない狙い (☑ 固定の行 fixed。窓が「自動で ☑」と見せる物)。

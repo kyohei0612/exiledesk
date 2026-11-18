@@ -30,7 +30,7 @@ import { aimKey, fractureMarks, sameHand, setHand, type Aim, type DivineTarget, 
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome"; import { flag } from "../../../web/release-flags"; import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core"; import { fracStopNote, stopSureFrac } from "./tree-frac-stop";
-import { gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
+import { gradeKindOf, gradeOnly } from "../../../services/simulator/tree/tree-grade-keep";
 import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan"; import { laneNoteOf } from "./tree-lane-ask"; import { armQuitAll, quitChoiceOf } from "./tree-whittle-quit";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
@@ -251,9 +251,15 @@ function toggleFree(e: Event): void { const vWas = veilOn.value, om = [...omens.
 }
 /** 確かめの窓 (S-57): 持つ・☑ を替えるでは何も出さず、下の箱が消える手をカードに打った瞬間に出す。続けるとそのまま打つ */
 const warnOpen = ref(false);
-watch(held, (k, old) => {
-  // 持ち替えたら前の物のお告げは外す (エミュの M-13。元の手に持ち直したら元のお告げ)
-  if (k && old) omens.value = k === props.current?.currency ? [...props.current.omens] : [];
+// 持ち替えたら前の物のお告げは外す (エミュの M-13。元の手に持ち直したら元のお告げ)。スイッチ gradeKeepAll の間は下の覚えで決める
+watch(held, (k, old) => { if (k && old && !flag("gradeKeepAll")) omens.value = k === props.current?.currency ? [...props.current.omens] : []; });
+/** (S-57d2、gradeKeepAll) 格の系ごとに最後のお告げを覚え、持ち替えたらその系のお告げに (同じ系の格の替えは引き継ぎ、別の系から戻ったら・離して持ち直したら戻る。初めは箱の手。掛けられない物は外す) */
+const omenMemo = new Map<string, string[]>(props.current ? [[gradeKindOf(props.current.currency), [...props.current.omens]]] : []);
+watch([held, omens], ([k, om], [was]) => {
+  if (!flag("gradeKeepAll") || !k) return;
+  if (k === was) { omenMemo.set(gradeKindOf(k), [...om]); return; }
+  const ok = new Set<string>(omensAllowedFor(k)), next = (omenMemo.get(gradeKindOf(k)) ?? []).filter((o) => ok.has(o) || (o === ECHO && isBone(k)));
+  if (next.join() !== om.join()) omens.value = next;
 });
 /** 残したい MOD (消去 S-27 と の消える手 S-27d。use-hand-keep) */
 const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf });

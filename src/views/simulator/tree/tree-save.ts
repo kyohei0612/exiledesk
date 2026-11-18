@@ -16,7 +16,7 @@ import { fmtDate } from "../recipe-share";
 import { track } from "../../../utils/track";
 import { useTree } from "./use-tree";
 import { blankTree, draftCode, openDraftTree } from "./tree-draft-open";
-import { openedMark } from "./tree-tab-recipe";
+import { openedMark, type OpenedAs } from "./tree-tab-recipe"; import { flag } from "../../../web/release-flags";
 import { roomFull, withRoom } from "../../../state/simulator/tree-room";
 
 /**
@@ -30,7 +30,7 @@ export function unsaved(d: TreeDoc, current = true): boolean {
   if (pristine && pristine === JSON.stringify(d)) return false;
   const cur = current ? currentTreeRecipe.value : null;
   if (!cur && current && challengeTree(d)) return false;
-  const openedAs = openedMark.v;
+  const openedAs = openedMark.v ?? storedOpened();
   if (cur) return !(openedAs?.id === cur.id && openedAs.at === cur.updatedAt && openedAs.v1 === v1Of(d)) && !sameTree(d, cur.tree);
   return !!d.memoAims?.length || Object.keys(d.boxes).length > 1;
 }
@@ -60,9 +60,16 @@ export function markOpened(id: string): void {
   const stop = watch(() => !treeLoading.value && !!s.data.value, (ready) => {
     if (!ready) return;
     queueMicrotask(() => stop());
-    void nextTick(() => { const cur = currentTreeRecipe.value; if (cur?.id === id) openedMark.v = { id, at: cur.updatedAt, v1: v1Of(useTree().doc.value) }; });
+    void nextTick(() => { const cur = currentTreeRecipe.value; if (cur?.id === id) { openedMark.v = { id, at: cur.updatedAt, v1: v1Of(useTree().doc.value) }; storeOpened(openedMark.v); } });
   }, { immediate: true });
 }
+/**
+ * (S-65e ⑥、スイッチ hitSide) 開いたままの形をこのブラウザのタブの間 (sessionStorage) も覚える。ページを読み直すと作りかけの下書き (tree-draft-open) として開き直し、
+ * 今の決まりで箱が分かれた木は保存と打ち方の形がずれて「保存していない」になった。読み直した後も、開いたままの形と同じなら作りかけに数えない
+ */
+const OPENED_KEY = "exiledesk.treeOpenedAs";
+function storeOpened(m: OpenedAs): void { if (flag("hitSide")) try { sessionStorage.setItem(OPENED_KEY, JSON.stringify(m)); } catch { /* 覚えられなくてもよい */ } }
+function storedOpened(): OpenedAs { if (!flag("hitSide")) return null; try { return JSON.parse(sessionStorage.getItem(OPENED_KEY) ?? "null") as OpenedAs; } catch { return null; } }
 /** エミュから入れた直後の木 (JSON)。そのままなら作りかけに数えない。tree-paste.ts の requestEmuItem が入れる */
 let pristine: string | null = null;
 export function markPristine(d: TreeDoc | null): void { pristine = d ? JSON.stringify(d) : null; }
