@@ -82,8 +82,8 @@ export function phoneNow(c: TutCtx): TutNow {
   }
   if (st.kind === "done") return { key: k("main"), target: null, draft: say(`狙いが全部そろった「${c.boxName(st.box)}」は自動で完成になった (答え直せる)。札の「次へ」で進む`, `"${c.boxName(st.box, true)}" has every target, so it was marked done automatically (you can change it). Tap "Next" on the note`) };
   if (st.kind === "unset") {
-    if (shown("[data-phone-overview]")) return { key: k("close"), target: "[data-phone-overview-close]", draft: say("全体図で木の形を見たら閉じる", "Look over the tree, then close it") };
-    return { key: k("main"), target: "[data-phone-map-unfold]", draft: say("「完成形と全体図」を開いて、組んだ木を見る", "Open \"Final item & overview\" to see the whole tree") };
+    if (shown("[data-phone-overview]")) return { key: k("close"), target: "[data-phone-overview-close]", draft: say("全体図でツリーの形を見たら閉じる", "Look over the tree, then close it") };
+    return { key: k("main"), target: "[data-phone-map-unfold]", draft: say("「完成形と全体図」を開いて、組んだツリーを見る", "Open \"Final item & overview\" to see the whole tree") };
   }
   if (st.kind === "test") return testScene(c, k, "[data-phone-test]");
   if (st.kind === "run") {

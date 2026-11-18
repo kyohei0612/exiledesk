@@ -292,8 +292,8 @@ function onTab(m: "hand" | "sim"): void { if (m === "hand") closeDailyPage(); }
 /** 提出して終わった挑戦の一言 (今の記録は端末の控え = サーバーの返り) */
 function submittedNote(): string {
   const r = tryOf.value?.last;
-  if (!r) return tr("提出した挑戦。木は見るだけ。", "Submitted. You can view the tree.");
-  return r.rate >= SOLVE_RATE ? tr(`提出した: 完成 1 個あたり ${r.cost} 神 (完成率 ${r.rate}%)。今日の挑戦は終わり、木は見るだけ。`, `Submitted: ${r.cost} div per finished item (${r.rate}% finished). Today's challenge is over; the tree is view-only.`) : tr(`提出した: 完成 0 で順位に載らない記録。今日の挑戦は終わり、木は見るだけ。`, `Submitted: nothing finished, so not ranked. Today's challenge is over; the tree is view-only.`);
+  if (!r) return tr("提出した挑戦。ツリーは見るだけ。", "Submitted. You can view the tree.");
+  return r.rate >= SOLVE_RATE ? tr(`提出した: 完成 1 個あたり ${r.cost} 神 (完成率 ${r.rate}%)。今日の挑戦は終わり、ツリーは見るだけ。`, `Submitted: ${r.cost} div per finished item (${r.rate}% finished). Today's challenge is over; the tree is view-only.`) : tr(`提出した: 完成 0 で順位に載らない記録。今日の挑戦は終わり、ツリーは見るだけ。`, `Submitted: nothing finished, so not ranked. Today's challenge is over; the tree is view-only.`);
 }
 const REFUSED: Record<StartError, () => string> = {
   closed: () => tr("今日のスタートは 14:50 で締めた。次のお題は 16:00。", "Today's start closed at 14:50. The next challenge opens at 16:00."),
@@ -339,7 +339,7 @@ const REFUSED: Record<StartError, () => string> = {
     </header>
 
     <p v-if="refused" data-daily-refused class="daily-note">{{ REFUSED[refused]() }}</p>
-    <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.submitted ? submittedNote() : tryOf?.ended ? tr("諦めた挑戦。木は見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。木は見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
+    <p v-else-if="over" data-daily-over class="daily-note">{{ tryOf?.submitted ? submittedNote() : tryOf?.ended ? tr("諦めた挑戦。ツリーは見られるが、提出はできない。", "You gave up. You can still view the tree, but not submit.") : tr("時間切れ。ツリーは見られるが、提出はできない。", "Time is up. You can still view the tree, but not submit.") }}</p>
     <p v-else-if="unmet.length" data-daily-unmet class="daily-note">{{ tr(`「完成」の箱のうち ${unmet.length} つがお題の狙いを全部は持っていない。デイリーでは狙いを全部満たした箱だけを完成にでき、このままでは提出できない。`, `${unmet.length} finished box(es) don't have every target. In the daily challenge only boxes with all targets count as finished, so you can't submit yet.`) }}</p>
     <!-- 回した時に完成の箱へ着いた人の一部が完成形に足りない (D-35b ④)。提出は止めない (数はもう足りない人を除いた物) -->
     <p v-if="runUnmetN && treeOn && !over" data-daily-run-unmet class="daily-note daily-done-note" role="status"><span aria-hidden="true">⚠</span><span>{{ tryOf?.quality ? tr(`「完成」の箱 ${runUnmetN} つに、完成形の MOD か品質 (${qualityWords(tryOf.quality)}) が足りない人が着いています。その人は完成に数えていません (費用には入ります)。`, `${runUnmetN} finished box(es) received items missing target mods or quality (${qualityWords(tryOf.quality)}). Those runs are not counted as finished (their cost still counts).`) : tr(`「完成」の箱 ${runUnmetN} つに、完成形の MOD が足りない人が着いています。その人は完成に数えていません (費用には入ります)。`, `${runUnmetN} finished box(es) received items that are missing target mods. Those runs are not counted as finished (their cost still counts).`) }}</span></p>

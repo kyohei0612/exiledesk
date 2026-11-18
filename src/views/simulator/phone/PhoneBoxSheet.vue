@@ -99,7 +99,7 @@ watch(id, () => { peek.value = null; });
             </li>
           </ul>
         </template>
-        <p class="mt-2 text-[11px] text-sim-dim">{{ tr("木の中の位置", "Where it is in the tree") }}<span> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></span></p>
+        <p class="mt-2 text-[11px] text-sim-dim">{{ tr("ツリーの中の位置", "Where it is in the tree") }}<span> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></span></p>
         <PhoneMap :mini="id" peek @peek="(x) => (peek = x)" />
       </div>
     <PhoneBoxPeek v-if="peek" :id="peek" @close="peek = null" />

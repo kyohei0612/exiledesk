@@ -30,7 +30,7 @@ const noDoneYet = computed(() => (check.issues.value ?? []).some((x) => x.kind =
 // 下の帯の「100 人回す」が読む (合格まで止める、S-70)
 /** 箱ごとにまとめた行 (数 = 箱の数、PC の未設定と同じ数え、11-08)。同じ箱の同じ文は 1 行 */
 const groups = computed(() => issueGroups(issues.value, t.doc.value).map((g) => ({ ...g, rows: g.rows.filter((x, i) => g.rows.findIndex((y) => y.text === x.text) === i) })));
-const head = (id: string): string => (id ? tr(`${stepOf(t.doc.value, id)} 段目・${q.boxTitle(id)}`, `Step ${stepOf(t.doc.value, id)}: ${q.boxTitle(id)}`) : tr("木の全体", "Whole tree"));
+const head = (id: string): string => (id ? tr(`${stepOf(t.doc.value, id)} 段目・${q.boxTitle(id)}`, `Step ${stepOf(t.doc.value, id)}: ${q.boxTitle(id)}`) : tr("ツリーの全体", "Whole tree"));
 watchEffect(() => { phoneCheck.value = { busy: checking.value, passed: check.passed.value, holes: groups.value.length }; });
 /** 穴チェックを押した後 (木の形がその時のまま) だけ結果を出す */
 const tested = computed(() => testedKey.value === routeKeyOf(t.doc.value));

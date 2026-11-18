@@ -186,7 +186,7 @@ const step = computed(() => tut.step.value);
 const text = computed(() => tut.text.value);
 const boxId = computed(() => { const st = step.value; return st && (st.kind === "hand" || st.kind === "done" || st.kind === "fail") ? tut.roles.value[st.box] : undefined; });
 /** 最初から: 進み (始め方を決めた・手を足した) がある時は確かめる (前は確かめなしで木の進みが消えた、モンキー 7 の 2) */
-function restart(): void { if (tutHasProgress() && !window.confirm(tr("今の木の進みを消して、最初からやり直しますか? (1 つ戻すで戻せます)", "Clear the current progress and start over? (Undo brings it back)"))) return; startTutorial(); }
+function restart(): void { if (tutHasProgress() && !window.confirm(tr("今のツリーの進みを消して、最初からやり直しますか? (1 つ戻すで戻せます)", "Clear the current progress and start over? (Undo brings it back)"))) return; startTutorial(); }
 function quit(): void { if (tutDirty.value && !window.confirm("保存していない文がある。やめても画面の中には残る (保存はまだ)")) return; stopTutorial(); }
 </script>
 
@@ -213,8 +213,8 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
         <button type="button" data-tut-stop class="tut-btn" @click="quit">{{ tr("やめる", "Quit") }}</button>
       </header>
       <template v-if="off">
-        <p data-tut-off class="break-words font-bold text-rose-800">{{ tr("チュートリアルの木から離れました (ベースか完成形が変わった)", "You left the tutorial tree (the base or final item changed)") }}</p>
-        <p class="text-[12px] opacity-75">{{ tr("「最初から」で不在のアミュレットの木を開き直す", "Restart opens the tutorial tree again") }}</p>
+        <p data-tut-off class="break-words font-bold text-rose-800">{{ tr("チュートリアルのツリーから離れました (ベースか完成形が変わった)", "You left the tutorial tree (the base or final item changed)") }}</p>
+        <p class="text-[12px] opacity-75">{{ tr("「最初から」で不在のアミュレットのツリーを開き直す", "Restart opens the tutorial tree again") }}</p>
       </template>
       <template v-else>
         <p data-tut-say class="whitespace-pre-line break-words text-[14px] font-bold" :class="tut.now.value?.wrong ? 'text-rose-800' : ''">{{ tr(...text.say) }}</p>

@@ -6,7 +6,8 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| fracPlainMark (S-10g、シミュ 89、オーナー 11-18「これは明確にバグ」、見た目 OK = オーナー 11-18「おｋ」(sim89-frac の前後)) | この commit | シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、木が終わったように見えていたのを直しました | Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished |
+| 「木」→「ツリー」の言い替え (U-62、スイッチ無し、オーナー 11-18「あとついでに木って書いてあるところソートしてツリーに全部変えといてディスコの要望きてる」、デザイン部長。画面の日本語 72 か所、曜日の「木」とゲームの和訳は残す) | この commit | 画面の「木」という言い方を「ツリー」にそろえました (シミュ・デイリー・チュートリアル・要望の窓) | Japanese UI: "木" is now written as "ツリー" (tree) everywhere on screen |
+| fracPlainMark (S-10g、シミュ 89、オーナー 11-18「これは明確にバグ」、見た目 OK = オーナー 11-18「おｋ」(sim89-frac の前後)) | この commit | シミュ: フラクチャーの後のカオスで、普通側の段の狙いが付いた当たりの箱がカオスの箱にまとめられて消え、ツリーが終わったように見えていたのを直しました | Simulator: fixed hits after a fracture + Chaos Orb being merged into the Chaos box, which made the tree look finished |
 | whittleFloor・whittleNoSame (S-65c6・S-190d2、シミュ 87・88・89、オーナー 11-18「直しておｋ」「あと同じと高いは未設定でおｋよデフォ」、レビュワー 1 通し) | この commit | シミュ: 削減の枝で、付きえない「同じ」の帯が出ていた・割合がずれていたのと、1 つの帯に置いた削減がほかの帯にも勝手に入っていたのを直しました | Simulator: Whittling branches no longer show an impossible "same level" band or skewed rates, and a Whittling placed on one band no longer copies to the others |
 | whittleFloor の続き (S-65c6、シミュ 91、手の段の下限はエンジンの「届く段が無い系統は一番上の段」に任せる、レビュワー 1 通し) | この commit | シミュ: 削減の枝の割合を、上級・完全のオーブの後でもゲームと同じに直しました | Simulator: Whittling branch rates now match the game after Greater/Perfect orbs |
 | sameNames (S-190d、シミュ 89・90・91、オーナー 11-18「おｋ」、レビュワー 1 通し) | この commit | シミュ: 兄弟枠で、狙いやフラクチャーで固定された MOD が違う箱にまで手が写っていたのを直しました | Simulator: sibling boxes no longer copy a step into boxes with different target or fractured mods |

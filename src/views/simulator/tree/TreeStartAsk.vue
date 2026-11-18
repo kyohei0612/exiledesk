@@ -43,8 +43,8 @@ const FROMS = computed(() => startFromWords(1));
 const setting = flag("fracSetting");
 const NOTE_CLS = "break-words rounded border border-amber-400/50 bg-amber-950/40 px-2.5 py-1.5 text-[12px] font-semibold leading-relaxed text-amber-200";
 const noteText = computed(() => multiWhite.value
-  ? tr("⚠ ✦ が 2 つ以上なので、白 (ノーマル) のベースから始め、フラクチャーは木の中で打つ (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら ✦ を 1 つにする", "⚠ With 2 or more ✦ you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦")
-  : tr("⚠ ✦ が 1 つならフラクチャー済みからも始められる。2 つ以上なら白 (ノーマル) のベースから始め、フラクチャーは木の中で打つ (どの ✦ が固定されても当たり)", "⚠ With one ✦ you can also start from a fractured item. With 2 or more you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed)"));
+  ? tr("⚠ ✦ が 2 つ以上なので、白 (ノーマル) のベースから始め、フラクチャーはツリーの中で打つ (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら ✦ を 1 つにする", "⚠ With 2 or more ✦ you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦")
+  : tr("⚠ ✦ が 1 つならフラクチャー済みからも始められる。2 つ以上なら白 (ノーマル) のベースから始め、フラクチャーはツリーの中で打つ (どの ✦ が固定されても当たり)", "⚠ With one ✦ you can also start from a fractured item. With 2 or more you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed)"));
 /* ✦ を複数 (10-28 オーナー「✦ を複数設定してよい」「フラクチャーせずに開始にするなよとは思う」): MOD は ☑ で選び、既定は印のある MOD
  * (無ければ完成の MOD 全部 = ✦ 付きで始めるのを勧める)。☑ を全部外すと白ベースから (フラクチャー無し、一番下)
  */
@@ -70,7 +70,7 @@ function decide(): void {
           <input v-model="onePicks" type="checkbox" :value="aimKey(a)" class="mt-1 shrink-0" />
           <span class="min-w-0 break-words" :class="onePicks.includes(aimKey(a)) ? 'text-mod-fractured' : 'text-[#c8c8ff]'">{{ onePicks.includes(aimKey(a)) ? "✦ " : "" }}{{ t.aimLabel(a) }}</span>
         </label>
-        <p v-if="multiWhite && !setting" data-tree-start-ask-multi-white class="break-words text-[12px] text-amber-200/90">{{ tr("✦ が 2 つ以上なので、白 (ノーマル) のベースから始め、フラクチャーは木の中で打つ (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら ✦ を 1 つにする", "With 2 or more ✦ marks you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦") }}</p>
+        <p v-if="multiWhite && !setting" data-tree-start-ask-multi-white class="break-words text-[12px] text-amber-200/90">{{ tr("✦ が 2 つ以上なので、白 (ノーマル) のベースから始め、フラクチャーはツリーの中で打つ (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら ✦ を 1 つにする", "With 2 or more ✦ marks you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦") }}</p>
       </section>
       <!-- (a) / (b): MOD が決まっている時だけ -->
       <div v-if="pickedGoal && !multiWhite" data-tree-start-ask-from class="flex flex-col gap-1.5 pl-4">

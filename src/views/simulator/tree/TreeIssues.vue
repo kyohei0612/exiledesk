@@ -19,7 +19,7 @@ const emit = defineEmits<{ go: [id: string]; close: []; /** 木の側の不具�
 
 // 同じ箱の同じ文は 1 行 (要確認は 1 つの箱に何件でも同じ文)
 const groups = computed(() => issueGroups(props.issues, props.doc).map((g) => ({ ...g, rows: g.rows.filter((x, i) => g.rows.findIndex((y) => y.text === x.text) === i) })));
-const head = (id: string): string => (id ? tr(`${stepOf(props.doc, id)} 段目・${props.boxName(id)}`, `Step ${stepOf(props.doc, id)}: ${props.boxName(id)}`) : tr("木の全体", "Whole tree"));
+const head = (id: string): string => (id ? tr(`${stepOf(props.doc, id)} 段目・${props.boxName(id)}`, `Step ${stepOf(props.doc, id)}: ${props.boxName(id)}`) : tr("ツリーの全体", "Whole tree"));
 // 出しっぱなし: 行を押してもその箱へ移るだけで閉じない。閉じるのは未設定の札をもう一度押す・「閉じる」だけ
 // (11-08 オーナー「その一覧押したら勝手に閉じちゃうけど出しっぱなしでおk。そこ未設定もっかい押したら閉じるで」。前の枠の外・Esc で閉じる 10-26 は撤回)
 function go(id: string): void { if (id) emit("go", id); }

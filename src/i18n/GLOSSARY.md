@@ -61,7 +61,9 @@
 
 | 日本語 | English |
 |---|---|
-| クラフトの道 (ツリー) / 木 | Craft route tree / tree |
+| クラフトの道 (ツリー) / ツリー | Craft route tree / tree |
+
+画面の日本語は「木」と書かず「ツリー」(今の木 → 今のツリー、木に戻る → ツリーに戻る)。設計図・コメント・変数名の「木」は中の言葉でそのまま。曜日の「木」とゲームの和訳 (フレーバー・ユニークの名前など) は別の言葉なので替えない (オーナー 11-18、Discord の要望、U-62)。
 | 箱 / 結果の箱 / 始まり | Box / Result boxes / Start |
 | 手 (打つ手) / 手の札 / 右の棚 | Craft / craft chip / shelf on the right |
 | 当たり / 外れ | Hit / Miss |

@@ -16,6 +16,6 @@ function open(): void { openBoxMods(props.boxId); emit("opened"); }
 
 <template>
   <button v-if="ON" type="button" data-tree-box-modlist class="g-btn sm shrink-0 whitespace-nowrap"
-    :title="tr('この箱のアイテムに次の手で付く MOD と確率を見る (見るだけ、木は変わらない)', 'See which mods the next craft can roll on this box’s item, with odds (view only; the tree does not change)')"
+    :title="tr('この箱のアイテムに次の手で付く MOD と確率を見る (見るだけ、ツリーは変わらない)', 'See which mods the next craft can roll on this box’s item, with odds (view only; the tree does not change)')"
     @click.stop="open">{{ tr("MOD 一覧", "Mod list") }}</button>
 </template>

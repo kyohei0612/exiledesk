@@ -12,7 +12,7 @@ import { forceAsk, forceGoing, forceLater, forceReload } from "./force-update";
 
 <template>
   <ModalShell :open="forceAsk" :title="tr('新しい版があります', 'A new version is available')" :closable="false" layer="confirm" width="w-full max-w-md" body-class="px-4 py-3" rec="force-update">
-    <p class="text-[13px] leading-relaxed text-[var(--exile-color-text-secondary)]">{{ tr("新しい版にします。今やっている所 (木・アイテム・打った手・開いている窓) はそのまま戻ります。", "Switch to the new version. What you are working on (trees, items, crafted steps, open windows) comes back as it is.") }}</p>
+    <p class="text-[13px] leading-relaxed text-[var(--exile-color-text-secondary)]">{{ tr("新しい版にします。今やっている所 (ツリー・アイテム・打った手・開いている窓) はそのまま戻ります。", "Switch to the new version. What you are working on (trees, items, crafted steps, open windows) comes back as it is.") }}</p>
     <template #footer>
       <button type="button" data-force-later class="g-btn sm ml-auto" @click="forceLater">{{ tr("後で更新する", "Update later") }}</button>
       <button type="button" data-force-go class="g-btn sm" autofocus @click="forceReload"><Icon name="rotate" class="size-3.5" />{{ tr("更新する", "Update now") }}</button>

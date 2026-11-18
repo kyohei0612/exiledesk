@@ -91,7 +91,7 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, tru
       <input v-if="editing === i" ref="input" data-tree-tab-name-input :value="t.tabLabel(i)" class="h-[30px] w-40 rounded border border-amber-400/60 bg-black/50 px-2 text-[13px] outline-none"
         @keydown.enter.prevent="endRename(($event.target as HTMLInputElement).value)" @keydown.esc.stop.prevent="endRename(null)" @blur="endRename(($event.target as HTMLInputElement).value)" />
       <button v-else type="button" data-tree-tab :data-tab-i="i" class="g-tab !min-h-[30px] min-w-0 max-w-[320px] !px-3 !text-[13px] max-[48rem]:max-w-full max-[48rem]:whitespace-normal" :class="i === t.active.value ? 'on' : ''" :title="tr(`${t.tabLabel(i)} (ダブルクリックで名前を変える)`, `${t.tabLabel(i)} (double-click to rename)`)" @click="go(i)" @dblclick="startRename(i)"><span class="block min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ t.tabLabel(i) }}</span></button>
-      <button v-if="t.tabDocs.value.length > 1" type="button" data-tree-tab-close class="-ml-1 flex size-6 shrink-0 items-center justify-center rounded opacity-50 hover:bg-white/10 hover:opacity-100" :title="tr('このタブの木を閉じる', 'Close this tab’s tree')" @click="close(i)"><Icon name="x" class="size-3.5" /></button>
+      <button v-if="t.tabDocs.value.length > 1" type="button" data-tree-tab-close class="-ml-1 flex size-6 shrink-0 items-center justify-center rounded opacity-50 hover:bg-white/10 hover:opacity-100" :title="tr('このタブのツリーを閉じる', 'Close this tab’s tree')" @click="close(i)"><Icon name="x" class="size-3.5" /></button>
     </span>
     </span>
     <template v-if="compact">

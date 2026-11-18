@@ -68,7 +68,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
     <header class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
       <b class="text-[14px] text-amber-200">{{ test ? driveHead(result.n) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
       <DataNote v-if="!test" small :text="tr('目安', 'Estimate')" :hint="ODDS_NOTE(result.n)" />
-      <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("木に戻る", "Back to tree") }}</button>
+      <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("ツリーに戻る", "Back to tree") }}</button>
     </header>
     <p v-if="note" data-tree-run-report-note class="border-b border-white/10 px-3 py-1 text-[12px] text-amber-100/80">{{ note }}</p>
     <div class="flex min-h-0 flex-col gap-3 overflow-y-auto px-3 py-3">
@@ -83,7 +83,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
         </div>
         <p v-if="!result.stuck && !result.capped" class="text-emerald-300">{{ tr("止まった人・ループした人はいない", "No run got stuck or looped") }}</p>
         <div v-if="stuck.length || oddN" class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
-          <h4 v-if="bugStuck.length" class="mb-1 text-[12px] text-rose-200">{{ tr("木の不具合 (直すと先へ進む)", "Tree problems (fix these to continue)") }}</h4>
+          <h4 v-if="bugStuck.length" class="mb-1 text-[12px] text-rose-200">{{ tr("ツリーの不具合 (直すと先へ進む)", "Tree problems (fix these to continue)") }}</h4>
           <!-- 1 行の要約 + 人数、詳しい文は開いた時だけ (11-08、止まりの訳 10 種) -->
           <div v-for="[id, n] in bugStuck" :key="id" class="py-0.5">
             <button type="button" data-tree-test-drive-stuck class="block w-full break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="shortOf(id)" class="block text-[11px] text-rose-200/85">→ {{ shortOf(id) }}</span></button>
@@ -124,7 +124,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
       <!-- 止まり・沼った場所 -->
       <div v-if="result.stuck || result.capped || oddN" data-tree-run-report-stuck class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
         <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 沼った場所 ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} swamped`) }}</div>
-        <h4 v-if="bugStuck.length" class="mt-1 text-[12px] text-rose-200">{{ tr("木の不具合 (直すと先へ進む)", "Tree problems (fix these to continue)") }}</h4>
+        <h4 v-if="bugStuck.length" class="mt-1 text-[12px] text-rose-200">{{ tr("ツリーの不具合 (直すと先へ進む)", "Tree problems (fix these to continue)") }}</h4>
         <button v-for="[id, n] in bugStuck" :key="id" type="button" data-tree-run-report-bug class="block w-full break-words py-0.5 text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="shortOf(id)" class="block text-[11px] text-rose-200/85">→ {{ shortOf(id) }}</span></button>
         <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
         <TreeGoalStop :goal-stop="result.goalStop" :ess-stop="result.essStop" :low-stop="result.lowStop" @go="emit('go', $event)" />

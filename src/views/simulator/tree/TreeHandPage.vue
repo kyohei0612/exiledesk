@@ -44,7 +44,7 @@ function pick(hand: Hand, kind: HandKind, aims: Aim[], pre: string | null, only:
       <!-- カオススパムまでスキップは MOD 一覧の下、カレンシーを持ったら消える (S-22f、11-16 オーナー「スパムスキップはモッド一覧の下に表示。カレンシーもったら消えるでおk」) -->
       <template #below-mod>
     <div v-if="skipOk" class="flex flex-col items-start gap-1 text-[13px]" data-tree-chaos-skip>
-      <button type="button" class="g-btn sm" :title="tr('変成 → 増強 → 王者を狙い無しで置き、消去 (全部消えてよい) の結果の箱まで木を組む (1 つ戻すで戻せる)', 'Place Transmutation → Augmentation → Regal with no target, then Annulment (any mod may go), and build the tree up to its result boxes (undo restores it)')" @click="emit('skip')">{{ tr("カオススパムまでスキップ", "Skip to chaos spam") }}</button>
+      <button type="button" class="g-btn sm" :title="tr('変成 → 増強 → 王者を狙い無しで置き、消去 (全部消えてよい) の結果の箱までツリーを組む (1 つ戻すで戻せる)', 'Place Transmutation → Augmentation → Regal with no target, then Annulment (any mod may go), and build the tree up to its result boxes (undo restores it)')" @click="emit('skip')">{{ tr("カオススパムまでスキップ", "Skip to chaos spam") }}</button>
       <span class="text-[12px] text-[var(--c-muted,#a99)]">{{ tr("変成 → 増強 → 王者 → 消去 まで自動で組む", "Builds Transmutation → Augmentation → Regal → Annulment for you") }}</span>
     </div>
       </template>

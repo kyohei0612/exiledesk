@@ -118,12 +118,12 @@ export async function sceneNow(): Promise<{ scene: Scene; summaryJa: string[] }>
     out.push(`作っている物: ${t.base ?? "?"}${t.itemLevel ? ` · アイテムレベル ${t.itemLevel}` : ""}`);
     const aims = t.memoAims ?? [];
     out.push(aims.length ? `完成形:\n${aims.map((a) => `　${aimJa(a)}`).join("\n")}` : "完成形: まだ決めていない");
-    out.push(`木: 手を置いた箱 ${tree.picks} · 完成 ${tree.main} · 失敗 ${tree.fail}${ageSec > 120 ? ` (${Math.round(ageSec / 60)} 分前の木)` : ""}`);
+    out.push(`ツリー: 手を置いた箱 ${tree.picks} · 完成 ${tree.main} · 失敗 ${tree.fail}${ageSec > 120 ? ` (${Math.round(ageSec / 60)} 分前のツリー)` : ""}`);
     // 最後に置いた手 = 人が最後に手を置いた時刻 (touched) の一番新しい決め。無ければ並びの最後
     const withHand = picks.filter((p) => p.hand);
     const last = withHand.reduce<RecipePick | null>((a, p) => (!a || (p.touched ?? 0) >= (a.touched ?? 0) ? p : a), null);
     if (last?.hand) out.push(`最後に置いた手: ${handJa(last.hand)}`);
-  } else out.push("木: 端末に作りかけの木が無い");
+  } else out.push("ツリー: 端末に作りかけのツリーが無い");
   const openIssues = openHealth ? { midUnset: openHealth.midUnset, agoSec: Math.round((Date.now() - openHealth.at) / 1000) } : null;
   if (openIssues) out.push(`開いた時: 途中の未設定 ${openIssues.midUnset} (サイトの不具合の印、${openIssues.agoSec >= 60 ? `${Math.round(openIssues.agoSec / 60)} 分前に開いた` : `${openIssues.agoSec} 秒前に開いた`})`);
   return { scene: { page, ...(daily ? { daily } : {}), tree, openIssues }, summaryJa: out };

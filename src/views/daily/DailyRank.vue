@@ -81,7 +81,7 @@ function peeked(): void {
         </li>
       </ol>
       <p v-if="noteEditable" class="daily-rank-note-edit"><button type="button" class="g-btn" data-daily-note-open @click="noteOpen = true">{{ myNote ? tr("ひとことを直す", "Edit your note") : tr("ひとことを書く", "Add a note") }}</button></p>
-      <p v-if="failed" data-daily-rank-fail class="mt-1 text-[13px] text-[var(--exile-color-signal-down)]">{{ tr(`${failed} のレシピを開けなかった (木が残っていない)`, `Couldn't open ${failed}'s recipe (no tree saved)`) }}</p>
+      <p v-if="failed" data-daily-rank-fail class="mt-1 text-[13px] text-[var(--exile-color-signal-down)]">{{ tr(`${failed} のレシピを開けなかった (ツリーが残っていない)`, `Couldn't open ${failed}'s recipe (no tree saved)`) }}</p>
       <p class="mt-2 text-[13px] opacity-70">{{ closed ? tr("行を押すと、その人のレシピをシミュレーターで開く (写しなので元は変わらない)", "Click a row to open that recipe in the Simulator (a copy; the original stays)") : tr("行を押すとその人のレシピを開く。今日まだ挑戦できる時は、見ると今日の挑戦は諦めた扱いになる", "Click a row to open that recipe. If you can still take today's challenge, viewing it counts as giving up") }}</p>
     </template>
     <p v-else class="text-[14px] opacity-70">{{ closed ? tr("この日は順位に載った人がいない。", "No one was ranked this day.") : tr("まだ誰も提出していない。最初の 1 人になれる。", "No one has submitted yet. You can be the first.") }}</p>

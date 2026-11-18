@@ -175,9 +175,9 @@ function pcNow(c: TutCtx): TutNow {
     // 木が大きくなって一望 (75% 未満) まで縮むと、箱のボタン (「完成にする」) は描かれない (＋ だけ遠くでも出る)。まず右下の ＋ で広げる (1280×800・1440×900 の通し、11-16)
     // 広げた後、箱が木の枠の外 (帯の裏) なら、木はホイールで拡大縮小なので、つかんで動かして出すよう案内する
     const btn = r[st.box] ? doneButton(r[st.box]!) : null;
-    if (r[st.box] && !btn && shown("[data-tree-zoom-in]")) return { key: k("zoom"), target: "[data-tree-zoom-in]", draft: say("木が小さくて箱のボタンが出ていない。右下の ＋ で 75% 以上に広げる", "The tree is too small to show box buttons. Zoom in to 75% or more with + at the bottom right") };
+    if (r[st.box] && !btn && shown("[data-tree-zoom-in]")) return { key: k("zoom"), target: "[data-tree-zoom-in]", draft: say("ツリーが小さくて箱のボタンが出ていない。右下の ＋ で 75% 以上に広げる", "The tree is too small to show box buttons. Zoom in to 75% or more with + at the bottom right") };
     // 光らせるのは木の枠ごと (箱は枠の外で見えず、幕が木を覆うとつかめない)
-    if (btn && !inFrame(btn)) return { key: k("drag"), target: "[data-tree-frame]", draft: say(`木をつかんで上へ動かし、「${c.boxName(st.box)}」の箱の「完成にする」を出す`, `Drag the tree up to show "Mark done" on the "${c.boxName(st.box, true)}" box`) };
+    if (btn && !inFrame(btn)) return { key: k("drag"), target: "[data-tree-frame]", draft: say(`ツリーをつかんで上へ動かし、「${c.boxName(st.box)}」の箱の「完成にする」を出す`, `Drag the tree up to show "Mark done" on the "${c.boxName(st.box, true)}" box`) };
     return { key: k("main"), target: r[st.box] ? `done:${r[st.box]}` : null, draft: say(`「${c.boxName(st.box)}」の箱の「完成」を押す`, `Click "Done" on the "${c.boxName(st.box, true)}" box`) };
   }
   if (st.kind === "fail") {

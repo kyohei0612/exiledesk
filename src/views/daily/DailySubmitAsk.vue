@@ -69,9 +69,9 @@ function close(): void {
       <p class="daily-submit-nums"><b>{{ costText(sent!.cost) }}</b> <small>{{ tr("完成 1 個あたりの費用", "per finished item") }}</small> <b>{{ sent!.rate }}%</b> <small>{{ tr("完成率", "finished") }}</small></p>
       <p v-if="solved">{{ place ? tr(`今の順位は ${place} 位。`, `You're #${place} right now.`) : tr("順位は少し後に出ます。", "Your place shows up shortly.") }}</p>
       <p v-else>{{ tr("完成 0 の記録。順位には載りません。", "Nothing finished, so this isn't ranked.") }}</p>
-      <p class="text-[13px] opacity-80">{{ tr("今日の挑戦はこれで終わり。木は見るだけで開けます。", "Today's challenge is over. You can still view the tree.") }}</p>
+      <p class="text-[13px] opacity-80">{{ tr("今日の挑戦はこれで終わり。ツリーは見るだけで開けます。", "Today's challenge is over. You can still view the tree.") }}</p>
       <div class="flex justify-end gap-2">
-        <button type="button" class="g-btn" data-daily-submit-close @click="close">{{ tr("木を見る", "View the tree") }}</button>
+        <button type="button" class="g-btn" data-daily-submit-close @click="close">{{ tr("ツリーを見る", "View the tree") }}</button>
         <button type="button" class="g-btn-red" data-daily-submit-rank @click="close(); goDaily({ view: 'detail', q: id })">{{ tr("順位を見る", "See the ranking") }}</button>
       </div>
     </div>

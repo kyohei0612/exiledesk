@@ -30,11 +30,11 @@ function save(): void {
 </script>
 
 <template>
-  <button type="button" class="g-btn sm" data-daily-save-recipe :title="tr('シミュのレシピ一覧に写しを保存する (挑戦の木とはつながらない)', 'Save a copy to your Simulator recipes (not linked to this challenge)')" @click="ask"><span v-if="savedNow" data-daily-saved class="text-emerald-300">✓ {{ tr("保存済み", "Saved") }}</span><template v-else>{{ tr("レシピに保存", "Save as recipe") }}</template></button>
+  <button type="button" class="g-btn sm" data-daily-save-recipe :title="tr('シミュのレシピ一覧に写しを保存する (挑戦のツリーとはつながらない)', 'Save a copy to your Simulator recipes (not linked to this challenge)')" @click="ask"><span v-if="savedNow" data-daily-saved class="text-emerald-300">✓ {{ tr("保存済み", "Saved") }}</span><template v-else>{{ tr("レシピに保存", "Save as recipe") }}</template></button>
   <ModalShell :open="open" :title="tr('レシピに保存', 'Save as recipe')" layer="confirm" width="w-full max-w-md" body-class="px-4 py-3" @close="open = false">
     <label class="block text-[13px] text-[var(--exile-color-text-secondary)]" for="daily-save-name">{{ tr("レシピの名前", "Recipe name") }}</label>
     <input id="daily-save-name" ref="box" v-model="name" data-daily-save-name type="text" maxlength="80" spellcheck="false" autocomplete="off" class="daily-input mt-1 w-full" @keydown.enter.prevent="save" />
-    <p class="mt-2 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">{{ tr("シミュのレシピ一覧に写しを足す。保存した後は、挑戦の木とレシピのどちらを触っても、もう片方は変わらない。", "Adds a copy to your Simulator recipes. After saving, changing the challenge tree or the recipe won't change the other.") }}</p>
+    <p class="mt-2 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">{{ tr("シミュのレシピ一覧に写しを足す。保存した後は、挑戦のツリーとレシピのどちらを触っても、もう片方は変わらない。", "Adds a copy to your Simulator recipes. After saving, changing the challenge tree or the recipe won't change the other.") }}</p>
     <template #footer>
       <button type="button" class="g-btn sm ml-auto" data-daily-save-cancel @click="open = false">{{ tr("やめる", "Cancel") }}</button>
       <button type="button" class="g-btn sm" data-daily-save-ok @click="save">{{ tr("保存", "Save") }}</button>

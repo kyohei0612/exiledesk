@@ -293,7 +293,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67) -->
       <div v-if="edits.ask.value && RESET_DIM" data-tree-edit-reset-dim aria-hidden="true" class="fixed inset-0 z-[59] bg-black/70" @pointerdown.prevent.stop @click.prevent.stop />
       <div v-if="edits.ask.value" ref="resetAskEl" data-tree-edit-reset-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]" :class="RESET_DIM ? 'z-[60] shadow-[0_0_0_2px_rgba(251,113,133,0.5),0_8px_30px_rgba(0,0,0,0.8)]' : 'z-10'">
-        <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
+        <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今のツリー (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
         <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
         <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>
         <button type="button" data-tree-edit-reset-cancel class="g-btn sm" @click="edits.answer('cancel')">{{ tr("やめる (変更を戻す)", "Cancel (undo the change)") }}</button>
@@ -301,7 +301,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <TreePasteNote v-if="step === 2" />
       <!-- 外した狙いを使う当たりの箱が木に残っている (箱は消さない。木で × か、1 つ戻す。10-26 モンキー 7 の 5) -->
       <p v-if="step === 2 && orphans.length" data-tree-goal-orphans class="flex min-w-0 flex-wrap items-center gap-2 px-3 pb-2 text-[12px] text-rose-200/90">
-        <span class="min-w-0 flex-1 break-words">{{ tr(`完成の狙いに無い当たりの箱が木に ${orphans.length} 個残っている: ${orphanNames}`, `${boxesEn(orphans.length, "hit ")} in the tree use a target that is no longer final: ${orphanNames}`) }}</span>
+        <span class="min-w-0 flex-1 break-words">{{ tr(`完成の狙いに無い当たりの箱がツリーに ${orphans.length} 個残っている: ${orphanNames}`, `${boxesEn(orphans.length, "hit ")} in the tree use a target that is no longer final: ${orphanNames}`) }}</span>
         <button type="button" data-tree-goal-undo class="g-btn sm shrink-0" :disabled="!t.canUndo.value" @click="t.undo">{{ tr("1 つ戻す", "Undo") }}</button>
       </p>
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
@@ -319,7 +319,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- 帯の間はほかを暗くして押せなくする (S-67b と同じ膜、11-16 オーナー「2修正」。前は別のベースを押すと帯の名前が替わった) -->
       <div v-if="asking && RESET_DIM" data-tree-base-ask-dim aria-hidden="true" class="fixed inset-0 z-[59] bg-black/70" @pointerdown.prevent.stop @click.prevent.stop />
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]" :class="RESET_DIM ? 'z-[60] shadow-[0_0_0_2px_rgba(251,113,133,0.5),0_8px_30px_rgba(0,0,0,0.8)]' : 'z-10'">
-        <p class="min-w-0 flex-1 max-[48rem]:basis-full">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
+        <p class="min-w-0 flex-1 max-[48rem]:basis-full">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今のツリー (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
         <!-- 保存は名前を聞かずその場で (開いていたレシピなら上書き、tree-save.ts。10-26 オーナー「保存しますかって聞かれたら保存でおｋ」) -->
         <button type="button" data-tree-base-save class="g-btn sm" @click="changeBase(true)">{{ tr("保存して替える", "Save and change") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="changeBase(false)">{{ tr("保存せず替える", "Change without saving") }}</button>

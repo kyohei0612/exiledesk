@@ -220,7 +220,7 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 /** 木ではフラクチャーは 1 回だけ (S-22e、オーナー 11-15): 固定がある品にはフラクチャーのオーブを置けない。エミュはエンジンの上限 (E-40) のまま。棚の灰色 (TreeHandShelf) も同じ訳 */
 export function fracOnceBlock(item: StageItem, key: string): string | null {
   if (key !== "fracture" || ![...item.prefixes, ...item.suffixes].some((m) => m.fractured)) return null;
-  return tr("木ではフラクチャーは 1 回だけ (この品はもう固定がある)", "Trees allow one Fracture only (this item already has a fractured mod)");
+  return tr("ツリーではフラクチャーは 1 回だけ (この品はもう固定がある)", "Trees allow one Fracture only (this item already has a fractured mod)");
 }
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */

@@ -26,6 +26,6 @@ import { tr } from "../../../i18n/lang";
   <template v-if="bug">
     <FeedbackDialog open @close="bug = null" />
     <!-- 窓の上の 1 行 (要望の窓より上の段) -->
-    <p data-tree-bug-note role="status" class="fixed inset-x-0 top-3 z-[400] mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-md border border-amber-300/50 bg-[#1c1610] px-3 py-1.5 text-center text-[13px] text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">{{ tr("木は要望と一緒に届きます。何が起きたかを書いて送ってください", "The tree is sent with your feedback. Write what happened and send") }}</p>
+    <p data-tree-bug-note role="status" class="fixed inset-x-0 top-3 z-[400] mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-md border border-amber-300/50 bg-[#1c1610] px-3 py-1.5 text-center text-[13px] text-amber-100 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">{{ tr("ツリーは要望と一緒に届きます。何が起きたかを書いて送ってください", "The tree is sent with your feedback. Write what happened and send") }}</p>
   </template>
 </template>

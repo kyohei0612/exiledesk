@@ -18,7 +18,7 @@ import { tr } from "../../../i18n/lang";
 /** 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 オーナー) */
 const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
 /** フラクチャー無しで始めた木 (印 noFracOrb、デイリー) ではフラクチャーのオーブを打たせない (S-13b) */
-const noFracBlock = (doc: TreeDoc, k: string): string | null => (k === "fracture" && doc.start?.noFracOrb ? tr("フラクチャー無しで始めた木では使えない", "Not usable in a tree started without a fracture") : null);
+const noFracBlock = (doc: TreeDoc, k: string): string | null => (k === "fracture" && doc.start?.noFracOrb ? tr("フラクチャー無しで始めたツリーでは使えない", "Not usable in a tree started without a fracture") : null);
 
 /**
  * 棚の灰色の訳 (手の棚 TreeHandShelf と同じ)。id = 手を置く (打つ) 箱、named = その箱で名前の付く狙い (フラックスの見方)。打てるなら null

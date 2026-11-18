@@ -322,7 +322,7 @@ function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string,
   const diff = contentDiff(data, doc, item, aimed, to);
   const s = diff.length ? null : sampleOf(data, doc, to, 1), ja = (it: StageItem): string => `プレ ${it.prefixes.length}・サフィ ${it.suffixes.length}`, en = (it: StageItem): string => `${it.prefixes.length} prefix, ${it.suffixes.length} suffix`;
   const whyJa = s ? `見本 ${ja(s.item)}・この人 ${ja(item)}` : `違う所: ${diff.join("・")}`, whyEn = s ? `example ${en(s.item)}, this run ${en(item)}` : `differs: ${diff.join(", ")}`;
-  const reason = tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本と形の違う人がいる (${whyJa})。この形の箱が木に無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
+  const reason = tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本と形の違う人がいる (${whyJa})。この形の箱がツリーに無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
     `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${whyEn}). No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
   return { reason, short: STOP.shape(diff[0] ?? (s ? tr(`見本 ${ja(s.item)}・この人 ${ja(item)}`, `example ${en(s.item)}, this run ${en(item)}`) : "")) };
 }

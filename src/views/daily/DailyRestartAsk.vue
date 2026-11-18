@@ -13,7 +13,7 @@ const emit = defineEmits<{ close: []; yes: [] }>();
 <template>
   <ModalShell :open="open" :title="tr('スタートからやり直しますか?', 'Start over?')" width="w-[440px] max-w-[94vw]" @close="emit('close')">
     <div data-daily-restart-ask class="flex flex-col gap-3 p-4 text-[14px]">
-      <p>{{ tr("今の木はリセットされ、始め方とフラクチャーする MOD を選び直します。", "Your current tree will be reset, and you'll choose how to start and which mod to fracture again.") }}</p>
+      <p>{{ tr("今のツリーはリセットされ、始め方とフラクチャーする MOD を選び直します。", "Your current tree will be reset, and you'll choose how to start and which mod to fracture again.") }}</p>
       <p class="text-[13px] opacity-80">{{ tr("残り時間は止まらずに進みます。", "The clock keeps running.") }}</p>
       <div class="flex justify-end gap-2">
         <button type="button" class="g-btn" data-daily-restart-no @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>

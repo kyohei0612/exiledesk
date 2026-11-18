@@ -154,7 +154,7 @@ function apply(): void {
         <ul class="mt-1 list-disc space-y-0.5 pl-5">
           <li>{{ tr("選べるのは今の段と、それより下だけ", "Only the current tier or lower") }}</li>
           <li>{{ tr("% = 100 人回した後、その行だけ下げた時の完成率", "% = completion rate if only that row is lowered (after running 100)") }}</li>
-          <li>{{ tr("決めると木の当たりの箱の段も下がる (1 つ戻すで戻せる)", "Applying also lowers the hit boxes in the tree (Undo restores)") }}</li>
+          <li>{{ tr("決めるとツリーの当たりの箱の段も下がる (1 つ戻すで戻せる)", "Applying also lowers the hit boxes in the tree (Undo restores)") }}</li>
           <li>{{ tr("今のオーブでその段が出ない手は、決めた後に替えるかを聞く", "If an orb can't roll the new tier, you'll be asked whether to switch it") }}</li>
           <li v-if="t.goals.value.some((a) => a.fractured)">{{ tr("フラクチャーの候補 (✦) も選べる。決めた段が付けたい MOD の下限", "Fracture candidates (✦) can be set too; the tier is their minimum") }}</li>
           <li v-if="dualOn">{{ tr("✦ の MOD は 2 行: フラクチャー時 = 固定される段 (固定の前に狙う段)・フラクチャーしない時 = 固定されずに残った時に要る段", "✦ mods have two rows: if fractured = tier to fix (aimed before fracturing); if not fractured = tier needed if it stays unfixed") }}</li>
