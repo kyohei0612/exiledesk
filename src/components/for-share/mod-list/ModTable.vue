@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { isEssenceGroup, modListFor, tagLabel, type ListRow, type ListTier, type ModGroup, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
-import { factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
+import { FACTION_TAGS, factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { fmtPct } from "../../../utils/format-pct";
 import { tr } from "../../../i18n/lang";
 import { keepPlace, revealOpened, scrollSectionTop, scrollToTop } from "../../../utils/keep-place";
@@ -272,6 +272,20 @@ function tierRowShape(): string[] {
   return [one ? "max-md:items-center max-md:[&>[data-tier-text]~td:not([data-tier-end])]:order-last" : "max-md:flex-wrap max-md:[&>[data-tier-text]~td:not([data-tier-end])]:order-last max-md:[&>[data-tier-text]~td:not([data-tier-end])]:basis-full",
     NARROW && !one ? "@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-text]~td:not([data-tier-end])]:order-last @max-lg/tcol:[&>[data-tier-text]~td:not([data-tier-end])]:basis-full" : ""];
 }
+/**
+ * U-12k (スイッチ factionChips、オーナー 11-18「クルガルなのにMOD一覧に勢力が出てないからアマナムつければいいと誤解しちゃう」→ 案 A):
+ * 勢力の混ざる冒涜の系統は見出しに混ざる勢力の札を全部 (アマナム → クルガル → ウラマン の順)、段の行の頭にその段の MOD の勢力の札。勢力が 1 つの系統は今のまま
+ */
+const FACTIONS = flag("factionChips");
+const factionsOf = (tags: readonly string[]): string[] => FACTION_TAGS.filter((f) => tags.includes(f));
+const rowFactions = (r: ListRow): string[] => { if (!FACTIONS) { const f = factionOf(r.tags); return f ? [f] : []; } return factionsOf(r.tags); };
+/** 勢力の混ざる行: 札が増えて名前の入る所が無くなる時は、タグを 2 行目へ回して名前を残す (名前は最低 6 字分、入る時は今どおり 1 行) */
+const mixedRow = (r: ListRow): boolean => FACTIONS && factionsOf(r.tags).length > 1;
+const tierFaction = (r: ListRow, t: ListTier): string | null => {
+  if (!mixedRow(r) || !t.modId) return null;
+  const m = props.data?.mods.get(t.modId);
+  return m ? factionOf([...(m.displayTags ?? []), ...m.tags]) : null;
+};
 const tierTags = (r: ListRow, t: ListTier): string[] => { if (!t.modId || t.modId === r.id && r.tiers.every((u) => u.modId === t.modId)) return []; const m = props.data?.mods.get(t.modId); return m ? shownTags(m.displayTags ?? m.tags) : []; };
 
 /**
@@ -386,9 +400,10 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
               <!-- タグは MOD 名の横に細く、右は poe2db と同じく % ・ 段の数 (緑) ・ 一番上の段のレベル (灰) を数字だけ (2026-10-04 オーナー) -->
               <span class="relative flex items-center gap-2">
                 <!-- タグはアイテムの札と同じ色の札。入らなければ次の行へ折り返して全部見せる (2026-10-19 オーナー) -->
-                <span class="flex min-w-0 flex-1 items-center gap-x-1 gap-y-0.5 leading-tight" :class="wrapCls">
+                <span class="flex min-w-0 flex-1 items-center gap-x-1 gap-y-0.5 leading-tight" :class="mixedRow(r) ? 'flex-wrap' : wrapCls">
                   <!-- 勢力 (アマナム・クルガル・ウラマン) は文の頭に札で (2026-10-16 オーナー) -->
-                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod" :class="nameCls" :title="ONE ? r.text : undefined"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
+                  <span v-if="mixedRow(r)" class="flex shrink-0 items-center"><span v-for="f in rowFactions(r)" :key="f" data-faction class="mr-1 inline-block rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[f]?.cls">{{ tagLabel(f) }}</span></span>
+                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod" :class="[nameCls, mixedRow(r) ? 'md:grow md:basis-[6em]' : '']" :title="ONE ? r.text : undefined"><span v-for="f in mixedRow(r) ? [] : rowFactions(r)" :key="f" data-faction class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[f]?.cls">{{ tagLabel(f) }}</span>{{ r.text }}</span>
                   <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                   <span v-if="essName(r, props.item)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r, props.item) }}</span>
                   <span v-if="props.onOf ? props.onOf(r) : r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
@@ -410,7 +425,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                   <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[...tierRowShape(), tierDimOf(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td v-if="!ONE" class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
-                    <td data-tier-text class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="[NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : '', ONE ? 'pl-2' : '']">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
+                    <td data-tier-text class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="[NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : '', ONE ? 'pl-2' : '']"><span v-if="tierFaction(r, t)" data-tier-faction class="mr-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[tierFaction(r, t)!]?.cls">{{ tagLabel(tierFaction(r, t)!) }}</span>{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナー) -->
                     <template v-if="ESS_CHIP && t.essence" />
                     <td v-else-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" :class="NARROW ? '@max-2xl/tcol:hidden' : ''" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
