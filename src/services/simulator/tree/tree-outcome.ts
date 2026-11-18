@@ -93,8 +93,9 @@ function plainOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: Stage
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
   const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
   const oc0 = handOutcome(data, doc, b.hand, own, got, before, after, aims0, aimed);
-  // 当たりの側の鍵 (S-65e、スイッチ hitSide) も、同じ鍵の当たりの箱がある時だけ (無ければ今どおり狙いの合う当たりの箱へ = 前の木・1 通りの当たりは変わらない)
-  const hs = hitSideOf(oc0, before, after), oc = hs !== oc0 && b.outs.some((id) => doc.boxes[id]?.out === "hit" && doc.boxes[id]?.junkKey === hs.junkKey) ? hs : oc0;
+  // 当たりの側の鍵 (S-65e、スイッチ hitSide) も、同じ鍵の当たりの箱がある時だけ (無ければ今どおり狙いの合う当たりの箱へ = 前の木・1 通りの当たりは変わらない)。
+  // 箱の鍵は削減の手前の枠 (l:) を外して比べる (側の箱の下に枠ができると鍵が「s:0|1;l:lo」になり、完全一致では見つからず s: を外していた。レビュワー 2 の H-1)
+  const hs = hitSideOf(oc0, before, after), oc = hs !== oc0 && b.outs.some((id) => doc.boxes[id]?.out === "hit" && stripLv(doc.boxes[id]?.junkKey) === hs.junkKey) ? hs : oc0;
   // 名前の印の MOD が消えた鍵 (n:) は、同じ鍵の結果の箱がある時だけ (S-65b2。無い = その形では 1 通りなので鍵を外した箱へ)
   return namedGoneOf(oc.junkKey) && !b.outs.some((id) => doc.boxes[id]?.junkKey === oc.junkKey) ? withoutNamed(oc) : oc;
 }

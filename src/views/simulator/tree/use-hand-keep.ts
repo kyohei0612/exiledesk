@@ -70,8 +70,16 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const checked = ref<string[]>((o.current?.keep ?? []).map(aimKey));
   /** 自分で触ったか (持ち替えると既定に戻る)。前の手で残したい MOD を決めていればそれ */
   let touched = !!o.current?.keep;
-  // (S-57d2、スイッチ gradeKeepAll) 元の手と同じ格の系に持ち替えたら、元の手の残したい MOD を引き継ぐ (お告げと同じ。既定に戻すと元の手と違うと見て下を作り直した)
-  watch(o.held, (h) => { const k = o.current?.keep; touched = !!(flag("gradeKeepAll") && k && h && gradeKindOf(h) === gradeKindOf(o.current!.currency)); if (touched) checked.value = k!.map(aimKey); });
+  // (S-57d2、スイッチ gradeKeepAll) 格の系ごとに最後の残したい MOD (☑ と自分で触ったか) を覚え、持ち替えたらその系の物にする (お告げの omenMemo と同じ。
+  // 初めは箱に置いてある手の物。前は同じ系へ持ち替えると箱の元の手の物に戻り、窓の中で替えた ☑ が消えた = レビュワー 2 の小 2)。覚えの無い系は既定
+  const keepMemo = new Map<string, { checked: string[]; touched: boolean }>(o.current?.keep ? [[gradeKindOf(o.current.currency), { checked: o.current.keep.map(aimKey), touched: true }]] : []);
+  watch(o.held, (h, was) => {
+    if (!flag("gradeKeepAll")) { touched = false; return; }
+    if (was) keepMemo.set(gradeKindOf(was), { checked: [...checked.value], touched });
+    const m = h ? keepMemo.get(gradeKindOf(h)) : undefined;
+    touched = !!m?.touched;
+    if (m) checked.value = [...m.checked];
+  });
   watch(choices, () => { if (!touched) checked.value = defaults(); }, { immediate: true });
   /**
    * 手に残す MOD (Hand.keep) = ☑ した候補 + この手で消えない狙い (☑ 固定の行 fixed。窓が「自動で ☑」と見せる物)。
