@@ -66,7 +66,7 @@ export function aimsOf(data: PatchData, doc: TreeDoc): Aim[] {
   const label = (b: TreeBox): boolean => {
     const h = b.parent ? doc.boxes[b.parent]?.hand : null;
     // 発現で選んだ置き石 (完成の狙いに無い MOD) は、その手の時だけ当たり。以降の手では冒涜の外れ MOD (10-27 夜オーナー)
-    if ((veilPick(h) || fracFree(doc, h)) && !goals.some((g) => sameAimMod(data, g, b.aim!))) return true;
+    if ((veilPick(h) || fracFree(doc, h)) && (b.aim!.stone || !goals.some((g) => sameAimMod(data, g, b.aim!)))) return true; // 印 stone の置き石は完成形と同じ MOD でも置き石 (S-33h)
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => sameAimMod(data, g, b.aim!));
   };
   for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b)) for (const a of boxAims(b)) if (!out.some((x) => sameAim(data, x, a))) out.push(a);

@@ -21,7 +21,7 @@ import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { ODD_OUTS, oddOf } from "./tree-odd";
-import { essenceModOf, midAims, onceHeld, placedAims } from "./tree-veil";
+import { essenceModOf, midAims, onceHeld, placedAims, stoneHeld } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
@@ -55,7 +55,8 @@ const keptOfTree = (data: PatchData, doc: TreeDoc): Aim[] => {
 };
 /** アイテムに付いている名前の印になりうる MOD (完成形の狙い (段は完成形以上)・置き石・残したい MOD・木の手のエッセンス / 合金)。回す時の印の絞りも同じ物 (tree-run) */
 // ✦ の印の狙い (2 つ持ち) は当たりの札と同じ段で見る (S-10g、heldGoal = 品に ✦ があれば普通側の段)
-export const goalsOn =(data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, heldGoal(a, it), { sameText: true })).map((a) => a.modId));
+// 完成形と同じ MOD の置き石が冒涜で付いている時は、その MOD を完成形の狙いに数えない (S-33h、stoneHeld)
+export const goalsOn =(data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(data, doc).filter((a) => aimHeldOn(data, it, heldGoal(a, it), { sameText: true }) && !stoneHeld(data, doc, a, it)).map((a) => a.modId));
 /** 始まりの ☑ (始まりの MOD の完成形の狙いと ✦ の印) */
 export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): ReadonlySet<string> {
   const on = goalsOn(data, doc, it);
@@ -110,7 +111,9 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const c = contentParts(data, doc, it, aimed, eleJunk);
   // 狙いとして発現した冒涜の MOD の数 (#a。骨の手のある箱と比べる時だけ見る = 冒涜の MOD は 1 品 1 つ E-60。外れの冒涜は #d)
   const da = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed && !m.fractured && !isMissMod(m, c.miss, it)).length;
-  return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}#a${da}`;
+  // 完成形と同じ MOD の置き石 (S-33h) は名前の印に入らないので、付いている間は #s で中身を分ける (ほかの冒涜の外れと同じ枠に畳まない = S-33 の置き石と同じ)
+  const st = (doc.memoAims ?? []).filter((g) => stoneHeld(data, doc, g, it)).map((g) => g.modId).sort().join("+");
+  return `${[...c.keys].sort().join(",")}${frameOf(it)}#${junkOne(c.body)}#a${da}${st ? `#s${st}` : ""}`;
 }
 /** 中身の鍵の部分 (keys = 印の札、miss = 印の札での外れの式の相手、body = 体)。contentOf と止まりの文 (contentDiff) が同じ物を使う */
 // eleJunk = 体の外れの数えで「いずれか」の札を使わない (一般の火・冷気・雷耐性は全部外れの数に入る。付いている本数は keys の n 番で見る)。

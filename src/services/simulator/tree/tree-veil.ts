@@ -51,6 +51,23 @@ function placedRaw(data: PatchData, doc: TreeDoc): Aim[] {
   const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || infinitePicked(doc.boxes[b.parent]?.hand?.currency) || addsRandomMod(doc.boxes[b.parent]?.hand?.currency)) && !goals.some((g) => sameAimMod(data, g, b.aim!)) ? [b.aim] : []));
   return plain;
 }
+/**
+ * (S-33h) 完成形と同じ MOD を冒涜・発現の窓で選んだ置き石 (印 stone)。placedAims には入れない (名前の印の組は MOD の種類で数えるので、入れると完成形の狙いと混ざる)。
+ * 代わりに、冒涜で付いたその MOD は完成形の狙いに数えない (goalsOn・stoneHeld) = 完成の数え・「狙いが消えた」に入らず、カードは置き石の名前 (tree-row-tags)
+ */
+const GOAL_STONES = new WeakMap<TreeDoc, [number, Aim[]]>();
+export const goalStones = (data: PatchData, doc: TreeDoc): Aim[] => onceHeld(GOAL_STONES, doc, () => {
+  const goals = doc.memoAims ?? [], out: Aim[] = [];
+  for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim?.stone && goals.some((g) => sameAimMod(data, g, b.aim!)) && !out.some((x) => sameAimMod(data, x, b.aim!))) out.push(b.aim);
+  return out;
+});
+/** 完成形の狙い g の MOD が、品 it に置き石 (冒涜で付いた、完成形と同じ MOD の置き石) として付いているか。冒涜で付ける完成形の狙い (via) は置き石にしない */
+export const stoneHeld = (data: PatchData, doc: TreeDoc, g: Aim, it: StageItem): boolean => {
+  if (g.via || g.stone) return false;
+  const st = goalStones(data, doc);
+  const mods = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed);
+  return mods.length > 0 && st.some((s) => sameAimMod(data, s, g) && mods.some((m) => aimHits(m, aimTargetOf(data, s), { data, sameText: true })));
+};
 /** 無限のエッセンスの窓で ☑ した能力値の当たりの箱か (完成形に無くても選べる = 置き石と同じ扱い、S-33d。スイッチ treeInfinitePick) */
 const infinitePicked = (key: string | undefined): boolean => !!key && flag("treeInfinitePick") && isInfiniteEssence(key);
 /** 置き石 = 発現で選んだ MOD。残したい MOD の既定に入らず、消えても「狙いが消えた」にしない (S-33) */

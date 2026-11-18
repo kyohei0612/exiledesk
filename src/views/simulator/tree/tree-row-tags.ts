@@ -12,7 +12,7 @@ import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../.
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { aimedOfCard } from "../../../services/simulator/tree/tree-judge";
-import { midAims, placedAims } from "../../../services/simulator/tree/tree-veil";
+import { goalStones, midAims, placedAims, stoneHeld } from "../../../services/simulator/tree/tree-veil";
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
@@ -138,6 +138,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const hitHeld = hitAm ? (doc.memoAims ?? []).filter((g) => hitAm.has(g.modId)) : null;
   // 以降の箱でも見本に付いている置き石は狙い (S-33)。ルーンの手の後の箱も ☑ はその箱の見本で引く (markId。親の id で引くと遺産のルーンの後のソケット効果が「外れ MOD」と出た、11-06 ワンド b12)
   const placed = box?.id ? placedAims(d, doc).filter((a) => aimedOfCard(d, doc, markId ?? box.id!, it)?.has(a.modId)) : [];
+  // 完成形と同じ MOD の置き石 (S-33h) は名前の印の組に入らないので、冒涜で付いている間は札だけ置き石の名前 (外れ MOD にしない)
+  for (const g of doc.memoAims ?? []) if (stoneHeld(d, doc, g, it)) placed.push(...goalStones(d, doc).filter((x) => sameAimMod(d, x, g)));
   // 外れ MOD の札は外れの式 1 本 (tree-miss の isMissMod): ここで決めた当たりに数える札 (☑ の狙い・置き石・この箱の当たりの札) に当たらない MOD
   const missList: Aim[] = [...(missBox ? held : hitHeld ?? [...aimsOf(d, doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])];
   const miss = missAims(d, missList), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);

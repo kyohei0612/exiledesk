@@ -30,7 +30,7 @@ export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" |
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
   /** ✦ の印の狙いの普通側の段 (固定されなかった時に要る段、S-10g・スイッチ fracDual)。無ければ tier と同じ。tier は ✦ 側 (フラクチャーの候補の段) */ plainTier?: number;
-  /** 付け方の覚え (完成の狙いだけ、S-10b)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated";
+  /** 付け方の覚え (完成の狙いだけ、S-10b)。冒涜で付ける狙い。木の判定には使わない */ via?: "desecrated"; /** 置き石の印 (S-33h): 冒涜・発現の窓で選んだ MOD。完成形に同じ MOD があっても別の狙い (段は選んだ段、完成形の数えに入れない) */ stone?: true;
   /** 前の作りで完成形の品質のために自動で足したブリーチのエッセンスの MOD の印 (読むだけ。開く時に tree-migrate が狙いから外す、S-31 の撤回 11-07) */ forQuality?: true;
   /** 貼り付けで取り込んだ素の値 (完成の狙いだけ。完成形のカードにそのまま出す、段の中央でなく。段を替えたら外す、10-25 オーナー「コピペした時数値の変更が若干ある」) */ values?: number[]; /** いずれかの元素耐性の n 番 (S-10h、tree-ele-any) と数えない系統 (元素を決めた狙いの系統)・置いた「いずれか」全部の段 (厳しい順、エンジンの割り当て anyEleTiers へ) */ anyEle?: number; eleSkip?: readonly string[]; eleTiers?: readonly number[]; /** 手の窓で「いずれか」を外して単体で選んだ火・冷気・雷 (元素を決めた手の狙い。「いずれか」の印を写さない、S-10h ⑩ use-ele-aims) */ eleOne?: boolean }
 /**
@@ -48,7 +48,7 @@ export const boxAims = (b: { aim: Aim | null; anyOf?: Aim[] }): Aim[] => (b.anyO
 /** その箱が受ける結果の種類 (まとめた種類も) */
 export const boxOuts = (b: { out: TreeBox["out"]; mergedOuts?: OutKind[] }): Array<TreeBox["out"]> => [b.out, ...(b.mergedOuts ?? [])];
 /** 札の鍵 (同じ MOD + 同じ段以上 = 同じ札) */
-export const aimKey = (a: Aim): string => `${a.modId}|${a.tier}`;
+export const aimKey = (a: Aim): string => `${a.modId}|${a.tier}${a.stone ? "|s" : ""}`;
 /** 打つ手: カレンシー + お告げ + (触媒の時) カタリストで品質を上げてから。repeat があれば当たるまで繰り返す */
 export interface Hand {
   currency: string; omens: string[];
