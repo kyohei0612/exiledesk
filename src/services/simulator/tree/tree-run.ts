@@ -171,7 +171,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     const p: Person = redo ? { ...p0, redo } : p0;
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
-    const goalAt = p.end === "stuck" && !p.essAt && !p.ltAt ? goalStopAt(marks, p.why?.item ?? item) : undefined;
+    const goalAt = p.end === "stuck" && !p.essAt && !p.ltAt ? goalStopAt(marks, p.why?.item ?? item, !!p.why?.noBox) : undefined;
     return blame && p.end === "stuck" ? { ...p, blame, goalAt } : goalAt ? { ...p, goalAt } : p;
   };
   /** 付いている名前の印になりうる MOD (箱の中身の鍵と同じ口 goalsOn。前は完成形の狙いだけで、行き先探しの前にエッセンス / 合金の印が落ちた) */

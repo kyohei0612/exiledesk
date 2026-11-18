@@ -31,6 +31,8 @@ function line(id: string, n: number, kind: Kind): string {
   const at = tr(`${stepOf(t.doc.value, id)} 段目「${hand(id)}」`, `Step ${stepOf(t.doc.value, id)} "${hand(id)}"`), cnt = tr(`${n} ${RETRY ? "回" : "人"}`, `${n} run${n === 1 ? "" : "s"}`);
   if (kind === "ess") return tr(`${at} → 後のエッセンス / 合金と同じ系統の MOD が先に付き、打てずに止まった (${cnt})`, `${at} → added a mod of the same group as a later essence / alloy, which then couldn't be used (${cnt})`);
   if (kind === "low") return tr(`${at} → ☑ した狙いの MOD が低いティアで付き、以後この狙いが付かないので止まった (${cnt})`, `${at} → the checked target mod was added at a low tier and can no longer hit (${cnt})`);
+  // スイッチ oddStop (S-21b): 偶然付いた狙いで後の手の結果に合う箱が無く止まった人もこの行 (☑ の手を通らない人もいるので文を広げる)
+  if (flag("oddStop")) return tr(`${at} → 狙い無しの手で狙いの MOD が偶然付き、後の手で止まった (${cnt})`, `${at} → an untargeted craft added the target mod by chance, and a later craft stopped (${cnt})`);
   return tr(`${at} → 狙い無しの手で狙いの MOD が先に付き、☑ した手で当たりにならず止まった (${cnt})`, `${at} → an untargeted craft added the target mod early, so the checked craft didn't count it as a hit (${cnt})`);
 }
 </script>

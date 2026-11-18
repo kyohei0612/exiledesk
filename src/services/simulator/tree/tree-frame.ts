@@ -368,7 +368,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); hit.push(fr); extra.push({ at, f: fr, from: o, src }); } } }
       // (スイッチ oddShapes、S-21b) 代表と上で手を当てた枝のほか、付いている完成形の狙いの MOD の組が違う枝 (重い枝も) にも手を当てる。
       // 枠の鍵・外れの印が代表と同じでも、偶然狙いが付いた人は次の手の後に形が分かれる (バナナの 4 段目「打った後」の受け流し)。代表・見本には使わない
-      if (at && ODD_OUTS.has(c.out) && flag("oddShapes")) {
+      if (at && ODD_OUTS.has(c.out) && flag("oddShapes") && !flag("oddStop")) { // oddStop (S-21b 11-18): 箱を足さず、その人は予期せぬ狙い MOD で止めて作り直す
         // 代表 (と上で当てた枝) に無い狙いを持つ枝だけ、まだ当てていない狙いごとに重い順の 1 本 (狙いが減った枝・同じ狙いの 2 本目は当てない = 組む時間)
         const covered = new Set(hit.flatMap((fr) => [...heldSet(fr.item)]));
         let n = 0;

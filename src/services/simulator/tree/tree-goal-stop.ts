@@ -40,8 +40,15 @@ function goalOnly(data: PatchData, doc: TreeDoc, at: string, before: StageItem, 
   return out;
 }
 
-/** 止まった人の印のうち、☑ の手を通り止まった時もまだ付いている物の狙い無しの手の箱 (無ければ undefined) */
-export const goalStopAt = (marks: readonly GoalMark[], item: StageItem): string | undefined => marks.find((g) => !g.src && g.aimed && held(item, g.modId))?.box;
+/**
+ * 止まった人の印のうち、☑ の手を通り止まった時もまだ付いている物の狙い無しの手の箱 (無ければ undefined)。
+ * noBox = 形の合う箱が無くて止まった。スイッチ oddStop (S-21b、11-18 オーナー「それは予期せぬでしょりするんじゃなかったの」) の間は、☑ の手を通らなくても
+ * 狙い無しの手で偶然付いた狙いを持ったまま形の合う箱が無く止まった人を予期せぬ狙い MOD に数える (前は「狙いが付いた」の箱を足していた)
+ */
+export const goalStopAt = (marks: readonly GoalMark[], item: StageItem, noBox = false): string | undefined => {
+  const loose = noBox && flag("oddStop");
+  return marks.find((g) => !g.src && (g.aimed || loose) && held(item, g.modId))?.box;
+};
 
 /**
  * エッセンス / 合金の手 key を品 item に打てない (前の手で同じ系統の普通の MOD が付いた = 塞がる・同格以上とも) 時の止まり (S-33e ⑧、スイッチ essSameStop)。

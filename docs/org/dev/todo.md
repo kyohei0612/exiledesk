@@ -13,7 +13,7 @@
 | ジン部長 | local_53278b2c-7cff-44c9-83eb-03b6f52772cb (jin-frac3、11-15 夜にブラック 120 が立てた。頼み = 共有 local_41371db6…/progress/jin-frac3-brief.md、進み = 同 jin-frac3.md、記録 = progress/jin-frac3-run.log。前の jin-cast local_047c4bca は首飾りのキャスピ fc277a259 を済ませてアーカイブ、引き継ぎ = 共有ノート progress/jin-wash.md・tests-triage-1112.md) | 今: フラクチャーの固定を 3 つまで (E-40、スイッチ fracture3、オーナーの言葉だけ)・冒涜で付いた元素耐性も「いずれか」の当たりに (S-10h)。開発版まで。残り = 古いテスト 10 件 → 冒涜のタグ → 外の正解の束の口 → エンジンの決まり 10 個のテスト |
 | エンジン部長 | — (10-25 夜に 1 本目を立てたが、オーナーの決め直しでエンジンはジンに戻し閉じた、引き継ぎ emulator/notes/2026-10-25-engine-lead-handover.md) | なし |
 | リサーチ長 | — (research-video は 11-05 に動画の手順を渡してアーカイブ) | 仕事が来たらブラックが立てる |
-| シミュ部長 | local_e18bd8ca-9d39-4943-bc14-653409c95d05 (95、Opus 5.5、11-18 夕にブラック 135 が控えで立て、94 = local_179e0811 から入った (94 はアーカイブ)。頼み = 共有 local_41371db6…/progress/sim-lead95-brief.md) | 今: 3 段目の骨の下の「狙いが付いた」箱の見本の直しと、本番の骨の絵 |
+| シミュ部長 | local_311683d0-b97e-48b1-a99b-d15a5bab1da3 (96、Opus 5.5、11-18 夜にブラック 136 が控えで立て、95 = local_e18bd8ca が 2,538 件で交代。頼み = 共有 local_41371db6…/progress/sim-lead96-brief.md、進み = 同 sim-lead96.md) | 今: 偶然付いた狙いは予期せぬで止める (S-21b2 oddStop) の見た目の OK 待ち |
 | デザイン部長 | local_a5cb3450-95fb-421d-be01-f71eb02c6dbb (17、Opus 5.5、11-18 0 時台に控えから入った。16 = local_71450d17 が 2,5xx 件で止まった。頼み = 共有 local_41371db6…/progress/design-lead17-brief.md、16 の引き継ぎ = design-lead16.md の一番上) | 今: sideHeadLine・sideSlim (S-94hy・S-78f2) はシミュ・デイリーとも 3 幅の前後で崩れ 0、見た目の返事待ち |
 | エミュ部長 | — (emu-lead2 local_190a727a はアーカイブ済み) | 仕事が来たらブラックが立てる |
 | 記事編集長 | — (6 本目は 11-01 にアーカイブ、引き継ぎ = 共有メモ local_360897fa…/handoff-blog.md) | 仕事が来たらブラックが立てる |

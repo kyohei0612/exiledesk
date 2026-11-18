@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュのツリー: 狙い無しの手で偶然狙いが付いた人は「狙いが付いた」の箱を足さず予期せぬ狙い MOD で止めて作り直す (S-21b2、スイッチ oddStop。シミュ 95・96、オーナー 11-18「それは予期せぬでしょりするんじゃなかったの」→ 案 D「おｋ」。古いレシピは写しのまま = S-104e) | (この行の commit) | シミュレーターのツリーで、狙い無しの手で偶然狙いの MOD が付いた人のための箱を作らず、「予期せぬ狙い MOD」で止めて作り直すようにしました (未設定の箱が減ります) | In the Simulator tree, items that roll a target mod by chance on an untargeted step no longer get their own boxes; they now stop as "unexpected target mod" and restart (fewer unset boxes) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
