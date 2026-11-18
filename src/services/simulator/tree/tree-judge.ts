@@ -232,7 +232,15 @@ export const keyForBox = (doc: TreeDoc, to: string, k: string): string => runesA
  * ルーンは失敗で外れないので、失敗の道でルーン付きと無しの同じ形を別の箱にすると、ルーンの手をもう 1 回置かせることになる。当たり・打った後・完成の判定は今どおり見る
  */
 const FAIL_OUTS: ReadonlySet<string> = new Set(["junk", "lost", "junkGone"]);
-export const runeFreeAt = (doc: TreeDoc, to: string): boolean => flag("failRuneFree") && FAIL_OUTS.has(doc.boxes[to]?.out ?? "");
+/** 失敗の箱か (S-60g の見本 = box-card の runeFirst は失敗の箱だけ) */
+export const failRuneFreeAt = (doc: TreeDoc, to: string): boolean => flag("failRuneFree") && FAIL_OUTS.has(doc.boxes[to]?.out ?? "") && !runeHandAt(doc, to);
+/** ルーンを刺す手の箱 (手の鍵 rune:<名前>[@n])。この箱へ入る比べはルーンの組を見る = 刺さった人は刺した後の箱へ移る (飛ばす) */
+const runeHandAt = (doc: TreeDoc, to: string): boolean => (flag("runeFreeAll") && !!doc.boxes[to]?.hand?.currency.startsWith(RUNE_PREFIX));
+/**
+ * (スイッチ runeFreeAll、S-60g3 11-18) 箱の種類を問わず、ルーンを刺す手の箱以外へ入る比べでは刺さったルーンの組を見ない (ソケットの数は見る)。
+ * 失敗の道でルーンの付いた人が本線の当たりの箱へ戻れず、同じ中身・同じ手の箱をルーン付きでもう 1 本組ませていた (r/ub6AAuwK の b90 → b91、300 人中 254 人が止まり)
+ */
+export const runeFreeAt = (doc: TreeDoc, to: string): boolean => flag("failRuneFree") && !!doc.boxes[to] && (flag("runeFreeAll") ? !runeHandAt(doc, to) : FAIL_OUTS.has(doc.boxes[to]!.out));
 /** 中身の鍵の枠の ~r<ルーンの組>.<ソケット数> からルーンの組を外す */
 const noRunes = (k: string): string => k.replace(/~r([^~#]*)\.(\d+)(?=~|#|$)/, "~r.$2");
 const runesAt = (doc: TreeDoc, to: string, k: string): string => (runeFreeAt(doc, to) ? noRunes(k) : k);

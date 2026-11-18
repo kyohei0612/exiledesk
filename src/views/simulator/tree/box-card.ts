@@ -13,7 +13,7 @@ import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sampl
 import { fixedValues } from "./tree-fixed-values";
 import { sameModShown } from "../../../services/simulator/tree/tree-outcome";
 import { routeRowTags, treeRowTags } from "./tree-row-tags";
-import { runeFreeAt } from "../../../services/simulator/tree/tree-judge";
+import { failRuneFreeAt } from "../../../services/simulator/tree/tree-judge";
 import { flag } from "../../../web/release-flags";
 
 export interface CardOpts {
@@ -43,7 +43,7 @@ export function boxCardOf(d: PatchData, doc: TreeDoc, boxId: string, opts: CardO
 }
 /** (S-60g2、スイッチ failRuneSample。11-17 見本 A/B はブラック 132 の決めで B) ルーンを見ずにまとめた失敗の箱で、見本にルーンが無く ↩ で入る人にルーン付きがいれば、その人を見本に (S-60g の続き) */
 function runeFirst(d: PatchData, doc: TreeDoc, boxId: string, s: { item: StageItem; note: string | null }): { item: StageItem; note: string | null } {
-  if (!flag("failRuneSample") || !runeFreeAt(doc, boxId) || s.item.augments?.length) return s;
+  if (!flag("failRuneSample") || !failRuneFreeAt(doc, boxId) || s.item.augments?.length) return s;
   for (const y of Object.values(doc.boxes)) {
     if (y.back !== boxId) continue;
     const ys = shapeSampleWithNote(d, doc, y.id);
