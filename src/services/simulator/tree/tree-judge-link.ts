@@ -42,10 +42,12 @@ export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
  * その前後は同じ中身に見えるが、人の品は品質・ルーンが違う。戻すと上の手 (カタリストなど) を打ち直す輪になり、後の箱の人の決めた手が消える
  * (11-08 夜、消去の木 ownerAnnul1: カタリストの後のカオス + 削減の結果を 2 つ上のエッセンスの箱へまとめ、38 → 16 箱・100 人が上限まで回った)
  */
-export function qualityBetween(doc: TreeDoc, id: string, t: string): boolean {
+export function qualityBetween(doc: TreeDoc, id: string, t: string, j?: Judge): boolean {
   let q = false;
+  // (スイッチ catBack、自動の ↩ だけ = j を渡す所) 挟むカタリストで id の品の品質がもう上限 (同じ種類) か使い切った (0) なら挟んでいないと見る。ルーンは今のまま (S-51d、11-18 オーナー「Bダッシュね」)
+  const skip = j?.catSkip && flag("catBack") ? j.catSkip.bind(j) : null;
   for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p; p = doc.boxes[p.parent ?? ""]) {
-    if (p.hand && (effectOf(p.hand.currency) === "quality" || isRuneHand(p.hand.currency))) q = true;
+    if (p.hand && (isRuneHand(p.hand.currency) || (effectOf(p.hand.currency) === "quality" && !skip?.(id, p.hand.currency)))) q = true;
     if (p.id === t) return q;
   }
   return false;
@@ -94,7 +96,7 @@ export function autoTargets(doc: TreeDoc, id: string, j: Judge): string[] {
   const up = idealNoUp(doc, id);
   // (スイッチ idealJoin) 手の無い同じ枠の箱も、木の並びで自分より前なら候補 (後ろから前へだけ = 輪にならない)
   const join = flag("idealJoin");
-  const ts = Object.values(doc.boxes).filter((t) => (!!t.hand || (join && t.id !== id && openTrunk(t) && cmp(t.id, id) < 0)) && !below.has(t.id) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
+  const ts = Object.values(doc.boxes).filter((t) => (!!t.hand || (join && t.id !== id && openTrunk(t) && cmp(t.id, id) < 0)) && !below.has(t.id) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id, j) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id);
   // 結果が 1 通りの手 (カタリストなど) で上の候補から続くだけの候補は、上の 1 つと数える (S-52b、11-08 オーナーの木の 13 段目 → 10 段目。11 段目はカタリストを打った後)
   return ts.filter((t) => !ts.some((u) => u !== t && straightUp(doc, t, u))).sort((x, y) => rank(x) - rank(y) || cmp(x, y));
 }
@@ -237,7 +239,7 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
     // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない。同じ枠の候補が 2 つ以上でも外さない (戻り先はいつも 1 つ、S-52b 11-08 夜)
     // 完成への道の結果から上の段への自動の ↩ は外す (S-50g、スイッチ idealNoBack。人が同じ手で戻った handBack は人の決めなので残す)
     const up = b.handBack ? 0 : idealNoUp(doc, b.id);
-    if (!(up && depthOf(doc, b.back) < up) && j.fitsBox(b.id, b.back) && (!!b.handBack || (j.playsAt(b.id, b.back) && !qualityBetween(doc, b.id, b.back))) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue; // 打てるか・カタリストを挟む上の箱も autoTargets と同じに見直す (11-17)
+    if (!(up && depthOf(doc, b.back) < up) && j.fitsBox(b.id, b.back) && (!!b.handBack || (j.playsAt(b.id, b.back) && !qualityBetween(doc, b.id, b.back, j))) && (!!b.handBack || !idleLoop(doc, b.id, b.back, j))) continue; // 打てるか・カタリストを挟む上の箱も autoTargets と同じに見直す (11-17)
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }

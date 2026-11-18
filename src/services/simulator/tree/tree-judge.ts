@@ -8,7 +8,7 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystOf, catalystRoom, kindOf, occupiedFamiliesOf, OMEN_KEY, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { effectOf, isBone } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { sameAimMod } from "./tree-hand-core";
@@ -32,6 +32,7 @@ import { flag } from "../../../web/release-flags";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
+import { catalystTagOf } from "../sim-engine/hand-effect";
 
 /**
  * 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) + 木の手で残したい MOD に ☑ した MOD (S-27b・S-33c、11-08)。
@@ -307,6 +308,8 @@ export interface Judge {
   holdsAll(id: string): boolean;
   /** 箱の見本にカタリストの品質が入っているか (品質を上げた後、S-31b) */
   afterQuality(id: string): boolean;
+  /** (S-51d、スイッチ catBack) 箱の見本が全部、カタリスト currency を打ち直しても変わらない (同じ種類で品質が上限) か品質を使い切った (0) か。挟むカタリストを自動の ↩ の邪魔にしない */
+  catSkip?(id: string, currency: string): boolean;
   /** from の代表の品に to の手が打てるか (自動の ↩ の先を選ぶ時。枠の比べ fitsBox は手を見ないまま、S-60c。11-11 骨の発現の後の外れが骨の箱へ戻って打てなかった) */
   playsAt(from: string, to: string): boolean;
   /** 箱どうし: ✦ で固定された狙いの MOD だけが違い、ほかの中身は同じ (スイッチ fracSplit で分けた合流の写し、S-11b) */
@@ -442,5 +445,6 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     holdsAim: (id) => { const am = aimedAt(id), miss = missAims(data, (doc.memoAims ?? []).filter((g) => am.has(g.modId))); return samples(id).some((s) => [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !isMissMod(m, miss, s.item))); },
     holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every(() => { const am = aimedAt(id); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
+    catSkip: (id, cur) => { const ss = samples(id); return ss.length > 0 && ss.every((s) => catalystRoom(s.item, catalystTagOf(cur)).full || catalystOf(s.item).pct <= 0); },
   };
 }
