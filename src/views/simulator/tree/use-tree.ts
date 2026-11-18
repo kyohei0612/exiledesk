@@ -14,7 +14,7 @@ import { goalRunesOf, placeWithSlots } from "./tree-slot-mods";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
-import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { isOldRecipe } from "../../../services/simulator/tree/tree-built";
+import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyJunk } from "./tree-hand-plan"; import { isOldRecipe, isOldSame } from "../../../services/simulator/tree/tree-built";
 import { currentTreeRecipe, currentTreeRecipeId, refreshBuilt, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { clearTabRecipes, dropTabRecipe, openedHook, swapTabRecipe, tabOfRecipe } from "./tree-tab-recipe";
 import { tr } from "../../../i18n/lang"; import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track"; import { dropTouchedOrphans } from "./use-tree-check"; import { tidyEleAny } from "../../../services/simulator/tree/tree-ele-any"; // デイリーのお題の木は印 eleAny を付けて開く = 読み替えない (S-10h ④、daily-open・daily-cost)。web/page は読まない (検算の束ねに入り history で落ちた、11-16)
@@ -199,12 +199,13 @@ function edit(fn: (d: TreeDoc) => void, open = false): void {
   if (!open && isOldRecipe(doc.value)) { void renewOld(); return; } // 古いレシピは触る前に今の決まりで組み直す (S-104e。この決めはもう一度押す)
   const before = JSON.stringify(doc.value);
   const d = JSON.parse(before) as TreeDoc;
+  const same0 = !open && isOldSame(d) ? (delete d.oldBuilt, JSON.stringify(d)) : before; // 差の無い古いレシピ (S-104g ⑥) は触ったら古い写しを外す (保存の写しは今の版で作り直す)
   if (s.data.value && !open) tidyEleAny(s.data.value, d); // 変える前に印 (新しい木で元素を決めて選んだ狙いを読み替えない、S-10h ④)
   fn(d); if (!open) dropTouchedOrphans(doc.value, d); if (s.data.value) tidyEleAny(s.data.value, d); // 置き直した箱の要確認は外す (11-08)・いずれかの元素耐性を揃える / 前の木の読み替え (S-10h)
   // 整理は木を変えるたびにその場で (S-201 ①、ハズレ整理のボタンは無い)。同じ組み替えの中なので 1 つ戻すで一緒に戻る
   if (d.boxes.start) tidyJunk(d, true); // 幅は見ない (S-197「同じ木は幅で変わらない」)
   const after = JSON.stringify(d);
-  if (after === before) return;
+  if (after === before || after === same0) return;
   undoStack.push(from !== undefined ? withRec(before, from) : before);
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   canUndo.value = true;

@@ -7,10 +7,11 @@ import { computed } from "vue";
 import { tr } from "../../../i18n/lang";
 import { isOldRecipe } from "../../../services/simulator/tree/tree-built";
 import { useTree } from "./use-tree";
+import { oldChecking } from "./tree-old-same";
 import { flag } from "../../../web/release-flags";
 
 const t = useTree();
-const on = computed(() => isOldRecipe(t.doc.value));
+const on = computed(() => isOldRecipe(t.doc.value) && !oldChecking.value); // 比べている間は出さない (S-104g ⑥)
 /** (スイッチ recipeFrozen、S-104g ①) 保存したまま開いている・組み直しは人が選ぶ (100 人回す・最終チェックは組み直してから回す) */
 const frozen = computed(() => flag("recipeFrozen"));
 </script>

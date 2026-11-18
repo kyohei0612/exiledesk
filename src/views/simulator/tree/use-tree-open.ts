@@ -9,6 +9,8 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { rebuildInSteps } from "./tree-rebuild";
 import { fromBuilt, fromDailyPast, markDailyPast } from "../../../services/simulator/tree/tree-built";
+import { checkOldSame } from "./tree-old-same";
+import { flag } from "../../../web/release-flags";
 
 /** 開いている間 (木は触れない。読み込み中の覆いを出す) */
 export const treeLoading = ref(false);
@@ -35,6 +37,8 @@ export async function openStepped(data: PatchData, tree0: TreeDoc, doc: ShallowR
     if (no === openNo) {
       doc.value = openFrom!; openFrom = null; treeLoading.value = false;
       if (done) put(done);
+      // (スイッチ recipeFrozen、S-104g ⑥) 古い写しのまま開いた木は、裏で 1 回組み直して差が無ければ古いレシピの印を出さない
+      if (done?.oldBuilt && !fresh && flag("recipeFrozen")) void checkOldSame(data, tree, doc);
     }
   }
   return no === openNo ? done : null;

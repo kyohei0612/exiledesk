@@ -4,6 +4,7 @@
  * 版 = 木の組み方の版 (scripts/tree-build-hash.mjs の指紋、本番の作りで __TREE_BUILD__ に埋める)。版が違う・打ち方が違う・写しが無い時は
  * 今どおり打ち方から組み直す (S-100 の「今の決まりで組み直す」はそのまま)。開発の画面 (vite dev) とテストは版が空 = 写しを作らず使わない
  */
+import { ref } from "vue";
 import type { TreeDoc } from "./tree-model";
 import { toRecipeV1 } from "./tree-recipe-v1";
 import { DEV_BUILD, flag } from "../../../web/release-flags";
@@ -83,5 +84,19 @@ export function fromBuilt(tree: TreeDoc): TreeDoc | null {
   if (old) doc.oldBuilt = JSON.parse(JSON.stringify(b)) as TreeBuilt;
   return doc;
 }
+/**
+ * (スイッチ recipeFrozen、S-104g ⑥) 今の決まりで組み直しても出す木が同じと分かった古い写しの鍵 (版・打ち方の指紋・木の字数と指紋)。
+ * このページの間だけ覚える (置き場は触らない = 保存の写しは古い版のまま。次に開いた時はまた裏で比べる)
+ */
+const sameOld = ref<ReadonlySet<string>>(new Set());
+const oldKey = (b: TreeBuilt): string => { const s = JSON.stringify(b.doc); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return `${b.v}\n${b.rec}\n${s.length}:${h}`; };
+/** 出す木の比べ (写し・例のアイテム・古い印・デイリーの数・開いた時の知らせ (前の版の決めを外した数 = 打ち方の比べにも入れない物)・箱の置き場所は入れない) */
+export const sameShown = (a: TreeDoc, b: TreeDoc): boolean => {
+  const pick = ({ built: _b, oldBuilt: _o, examples: _e, dailyPast: _p, builtZ: _z, droppedOld: _d, midDropped: _m, boxes, ...r }: TreeDoc) => stable({ ...r, boxes: Object.fromEntries(Object.entries(boxes).map(([k, { x: _x, y: _y, ...bx }]) => [k, bx])) });
+  return pick(a) === pick(b);
+};
+export const markOldSame = (b: TreeBuilt): void => { sameOld.value = new Set([...sameOld.value, oldKey(b)]); };
+/** 古い写しのまま開いたが、今の決まりで組み直しても同じ木と分かった (印も 1 行も出さない、S-104g ⑥) */
+export const isOldSame = (d: TreeDoc): boolean => !!d.oldBuilt && flag("recipeFrozen") && sameOld.value.has(oldKey(d.oldBuilt));
 /** 古いレシピ (S-104e) の印のある木か (印の間は 100 人回す・最終チェックを止め、触る前に今の決まりで組み直す) */
-export const isOldRecipe = (d: TreeDoc): boolean => !!d.oldBuilt && flag("oldRecipeView");
+export const isOldRecipe = (d: TreeDoc): boolean => !!d.oldBuilt && flag("oldRecipeView") && !isOldSame(d);
