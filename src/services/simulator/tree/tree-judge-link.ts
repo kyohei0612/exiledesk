@@ -11,8 +11,11 @@ import { DIVINE_LT, isDivineAim } from "./tree-divine";
 import { effectOf, isRuneHand } from "./tree-hands";
 import { treeOrder } from "./tree-order";
 import { outKey } from "./tree-recipe-v1";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 import { hitsOn, idealPath } from "./tree-ideal-first";
+
+/** (スイッチ joinChainFix、S-50h) 表 FLAGS の行はブラックが入れる。入るまでは名前だけ (開発版では入り、本番では RELEASED に足すまで切れる) */
+const chainFix = (): boolean => flag("joinChainFix" as Flag);
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -236,6 +239,16 @@ export function pruneByContent(doc: TreeDoc, j: Judge): boolean {
     if (b.out === "blocked" && b.junkKey === "hi") continue;
     // 低ティアの箱の隣の外れと同じ扱いの ↩ (S-33g ④、tree-low-tier-sync の fillLike) も中身で見直さない (A を名前で持つので外れの箱と中身が合わない)
     if (b.out === "blocked" && b.junkKey?.startsWith("lt:")) continue;
+    // (スイッチ joinChainFix、S-50h) 手の無い箱へ付けた自動の ↩ (idealJoin の openTrunk) は、その箱が後で自分も ↩ を持ったら選び直す。
+    // そのままだと ↩ を鎖でたどり、自分の親 (idleLoop で外れる箱) へ着いて輪になった (r/VK1opGjg: 紋章の後にルーンを刺した箱 b88 → b87 → b83 = ルーンの箱)
+    const tb = doc.boxes[b.back]!;
+    if (chainFix() && !b.handBack && !tb.hand && !!tb.back) {
+      b.back = null; delete b.autoBack; delete b.merged;
+      const to = autoTarget(doc, b.id, j);
+      if (to) { b.back = to; b.autoBack = true; }
+      changed = true;
+      continue;
+    }
     // 人が同じ手を選んで戻った箱 (S-51、handBack) は輪でも人の決めなので外さない。同じ枠の候補が 2 つ以上でも外さない (戻り先はいつも 1 つ、S-52b 11-08 夜)
     // 完成への道の結果から上の段への自動の ↩ は外す (S-50g、スイッチ idealNoBack。人が同じ手で戻った handBack は人の決めなので残す)
     const up = b.handBack ? 0 : idealNoUp(doc, b.id);
