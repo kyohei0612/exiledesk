@@ -1,4 +1,7 @@
 {
+  "0.1.753": [
+    "Fixed an issue in the Simulator tree where, after a rebuild, sample items under a Bone step could show two new mods after a single use"
+  ],
   "0.1.752": [
     "Internal cleanup in the Simulator (no visible changes)",
     "Fixed an issue where the Daily page could freeze on phones after pressing \"Give up\"",
