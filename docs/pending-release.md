@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| daily-slim (D-32c、スイッチ無し。触る道の台本 `node scripts/daily-watch/slim-store.mjs` (既定 1461)、満杯の置き場から開いて daily.v4 が縮み 20 万字が書ける・前の日の成績と合言葉が残る・今日の挑戦は木のまま) | 039af242a | デイリー: 終わった日の挑戦の記録を小さくして、端末の保存場所がいっぱいになりシミュレーターのレシピが保存できなくなる事があったのを直した | Daily: finished days' challenge records are now kept small, fixing cases where the browser storage filled up and Simulator recipes could no longer be saved |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
