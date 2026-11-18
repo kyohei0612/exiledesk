@@ -41,6 +41,8 @@ export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: strin
 /** 手の箱で、行き先の箱が無かった枝 (結果の種類ごとに確率の合計)。from = ↩ で着く人の箱 (その箱の代表の品に手を当てた枝)、oc = 結果の分け */
 export interface FrameMiss { box: string; out: string; p: number; from?: string; oc: Outcome }
 /** 代表のほか (↩ で着く人・印の違う枝) の形で、その箱の手が打てない (cant) か、当たるまでの手が当たらない (noHit)。from = その形の元の箱 */
+/** 見本の配置の枝の元 = 箱とその時の代表 (スイッチ oddStale) */
+type Src = readonly [string, Frame];
 export interface FrameCant { box: string; from: string; why: "cant" | "noHit" }
 export interface FrameTree { frames: Map<string, Frame>; miss: FrameMiss[]; cant: FrameCant[]; /** 手の結果で枠の違う品が 2 つ以上着く箱 (S-27d (ア) の見張り、11-11) */ mixed: string[] }
 
@@ -279,7 +281,10 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
      * 代表のほかに手を当てる形 (S-21 を配置で、打ち直さない): at の箱の手を f に当てた枝の、行き先の無い結果を from 付きの miss にする (開く・整理で箱を足す)。
      * ↩ で着く人 (from = ↩ 元の箱) と、1 つの箱に形の違う枝が入る時のほかの形 (狙い無しの結果を 1 箱にした any など。from = その箱、重い順に LOOK まで)
      */
-    const extra: Array<{ at: string; f: Frame; from: string; /** 偶然付いた狙いの枝 (S-21b) */ odd?: true }> = [];
+    const extra: Array<{ at: string; f: Frame; from: string; /** 偶然付いた狙いの枝 (S-21b) */ odd?: true; /** 元にした箱とその時の代表 (スイッチ oddStale: 代表が替わった後は当てない) */ src?: Src }> = [];
+    /** 今 bestOf が枝を作っている元 (step の箱の代表、ほかの形の枝はその枝の元) */
+    let src: Src | undefined;
+    const stale = (s: Src | undefined): boolean => !!s && flag("oddStale") && frames.get(s[0]) !== s[1];
     const cant: FrameCant[] = [], fams = treeFamilies(data, doc), gf = flag("junkFrameOnly") ? goalFamilies(data, doc, aims) : null;
     // (S-196j) 木全体の鍵 = 箱の外の木 (と完成形の狙い・置き石)・中身の狙いの組・木の族・保存の例の札。始まりの代表は中身が同じなら前の物そのもの (下の段の覚えを使うため)
     const reuse = flag("frameReuse") ? reuseOf(data, [part, contentAimsKey(data, doc), [...fams].sort().join(","), doc.examples ? Object.keys(doc.examples).sort().join(",") : ""].join("\n")) : null;
@@ -358,14 +363,14 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       // 枠が同じでも外れの印 (g) が違えば当てる (印は枠の比べに入れない、tree-judge の blockMarkOf)
       const markOf = (fr: Frame): string => `${fr.key}|${blockMarkOf(data, doc, fr.item, fr.aimed)}`;
       const hit: Frame[] = [best];
-      if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); hit.push(fr); extra.push({ at, f: fr, from: o }); } } }
+      if (at) { const keys = new Set([markOf(best)]); for (const fr of [...all, ...marked]) { const k = markOf(fr); if (!keys.has(k)) { keys.add(k); hit.push(fr); extra.push({ at, f: fr, from: o, src }); } } }
       // (スイッチ oddShapes、S-21b) 代表と上で手を当てた枝のほか、付いている完成形の狙いの MOD の組が違う枝 (重い枝も) にも手を当てる。
       // 枠の鍵・外れの印が代表と同じでも、偶然狙いが付いた人は次の手の後に形が分かれる (バナナの 4 段目「打った後」の受け流し)。代表・見本には使わない
       if (at && ODD_OUTS.has(c.out) && flag("oddShapes")) {
         // 代表 (と上で当てた枝) に無い狙いを持つ枝だけ、まだ当てていない狙いごとに重い順の 1 本 (狙いが減った枝・同じ狙いの 2 本目は当てない = 組む時間)
         const covered = new Set(hit.flatMap((fr) => [...heldSet(fr.item)]));
         let n = 0;
-        for (const r of sorted) { if (n >= ODD) break; if (!anyAimMod(r.item, covered)) continue; const fresh = oddIdx(r.item, best.item).map((i) => canon[i]!).filter((k) => !covered.has(k)); if (!fresh.length) continue; for (const k of fresh) covered.add(k); extra.push({ at, f: pick(r), from: o, odd: true }); n++; }
+        for (const r of sorted) { if (n >= ODD) break; if (!anyAimMod(r.item, covered)) continue; const fresh = oddIdx(r.item, best.item).map((i) => canon[i]!).filter((k) => !covered.has(k)); if (!fresh.length) continue; for (const k of fresh) covered.add(k); extra.push({ at, f: pick(r), from: o, odd: true, src }); n++; }
       }
       // 数値の両端の形 (前の rollEnds) は当てない: 木の数値は既定で段の下限、数値を決めるのは神の目標 (S-202 ②、11-06 オーナー)
       const alts = [...all, ...marked].filter((fr) => fr !== best).map((fr) => fr.item);
@@ -386,6 +391,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
     } };
     /** 配置の 1 段: 箱 id (代表 f) の手から子の箱の代表を決める */
     const step = (id: string, b: TreeBox, f: Frame, kids: readonly string[]): void => {
+      src = [id, f];
       // 手の無い箱の下 (分かれ目の行・ヒネコラのハズレ) は親の代表のまま
       const same = (o: string, note: string | null): void => { frames.set(o, { ...f, note }); };
       // 代表を出せない箱 (枝の多すぎる手の下・分かれ目の下) の下も全部出せない = 見本の打ち直しのまま (S-200。前は 1 段下だけで、錬金術 → 骨の箱を白の品で数え、ノーマル・MOD なしの見本になった)
@@ -451,7 +457,7 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       }
     };
     walk(["start"]);
-    for (const a of Object.values(doc.boxes)) { const fa = frames.get(a.id); if (a.back && a.back !== a.id && fa && !fa.note) extra.push({ at: a.back, f: fa, from: a.id }); }
+    for (const a of Object.values(doc.boxes)) { const fa = frames.get(a.id); if (a.back && a.back !== a.id && fa && !fa.note) extra.push({ at: a.back, f: fa, from: a.id, src: [a.id, fa] }); }
     // 代表では枝の無い箱はほかの形の枝を代表にし、その下を出し直す (その下にまた ↩・ほかの形があるので、変わらなくなるまで。上限 3 回)
     const done = new Set<string>();
     for (let pass = 0; pass < 3 && extra.length; pass++) {
@@ -459,9 +465,13 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       // ↩・ほかの形で作れない見本の箱を埋める時は、外れが木の狙いの族を段の足りない形で持たない形を先に (無ければ使う。スイッチ junkFrameOnly、レビュワー 1 の 9)
       const xs = extra.splice(0);
       if (gf) xs.sort((a, b) => Number(itemTaking(data, a.f.item, gf)) - Number(itemTaking(data, b.f.item, gf)));
-      for (const { at, f: fa, from, odd } of xs) {
+      for (const { at, f: fa, from, odd, src: s0 } of xs) {
+        // (スイッチ oddStale) 元の箱の代表がその後の組み直しで替わった古い枝は当てない (替わった代表の枝は組み直しの時に積み直してある)。
+        // 前は古い代表の枝が「狙いが付いた」の箱の見本を先に埋め、親に無い MOD の付いた見本になった (11-18 オーナー eEn6Yd8f の 7 段目の骨)
+        if (stale(s0)) continue;
         const x = doc.boxes[at], k = `${at}|${from}|${fa.key}|${blockMarkOf(data, doc, fa.item, fa.aimed)}${odd ? `|o${aimSig(fa.item)}` : ""}`;
         if (!x?.hand || done.has(k)) continue;
+        src = s0;
         done.add(k);
         const s = splitOf(data, doc, x, fa, aims, part);
         if (s === "tooMany") continue;
