@@ -448,7 +448,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」) -->
-        <aside v-if="!t.needBase.value" v-show="!sideClosed" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
+        <aside v-if="!t.needBase.value" v-show="!sideClosed" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-y-auto overflow-x-hidden"><!-- 列が画面より高い時 (スマホの横持ち) は列の中だけ縦に送れる = 下の倍率の道具に届く (S-94l。前は overflow-hidden で道具が列の外に切れて押せなかった) -->
           <!-- 右の列を閉じる小さなボタン (列の上の左端 = 完成形の設定のカードの左の線に揃える、11-08 夜オーナー「とじるは左端に置こうか」。閉じると木の枠の右上に「◂ 完成形」、S-94hx。11-08 オーナー「とじるボタン上にちょびっと表示でいいんじゃね」) -->
           <button type="button" data-tree-side-toggle aria-expanded="true" :class="[SIDE_BTN, 'self-start']" :title="tr('右の列を閉じてツリーを広げる', 'Hide the side column to widen the tree')" @click="sideClosed = true"><Icon name="chevron-right" class="size-3.5" />{{ tr("閉じる", "Hide") }}</button>
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard /></div>

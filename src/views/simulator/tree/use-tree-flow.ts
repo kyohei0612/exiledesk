@@ -12,6 +12,7 @@
  * そのままだと箱が 1/Z に小さく見えるので、Vue Flow の倍率は Z 倍で持つ: 画面の「100%」= Vue Flow の zoom Z。
  * (Vue Flow 1.48.2 の pointer() と getEventPosition() を読んで確かめた: 枠の BCR とマウスの clientX はどちらも拡大後のピクセル)
  */
+import { unturnRect } from "../../../utils/turn-page";
 import { computed, ref, watch, type Ref, nextTick } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -116,7 +117,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
    * 木の面の左に重ねた段の札の帯の幅 (画面の px = 木の面の px、TreeLaneTags の inside)。開いた時の寄せはこの分を左に空けて、
    * 左端の箱が「n 段目」の下に入らないように (11-11 オーナー「この点線をツリー中として」で帯を木の面の中へ移した)
    */
-  const laneW = (): number => inRoot("[data-tree-lane-band]")?.getBoundingClientRect().width ?? 0;
+  const laneW = (): number => { const e = inRoot("[data-tree-lane-band]"); return e ? unturnRect(e.getBoundingClientRect()).width : 0; }; // 横向きで表示 (頁を回す) の間は回した箱を頁の箱へ戻して測る (前は縦横が入れ替わり、開いた時に木が枠の外へ置かれた)
   /**
    * 倍率 z (Vue Flow の倍率) の時の帯の幅 (S-147k)。帯の幅は札の字の大きさ (laneSize) に比例するので、今描いている幅 × 字の大きさの比。
    * 今描いている字の大きさは札の style から読む (視点を書いた直後は描き直しの前で、帯はまだ前の倍率の幅)
@@ -316,5 +317,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>, id = FLOW_ID, root?: () => Elemen
     void put(vp.x + (w - old) / 2 - d / 2, vp.y, vp.zoom);
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, walkFit, walkBack, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, ...follow, toggleFull, centerOn, rectOf, laneShift, dispose: () => window.removeEventListener("resize", onResize) };
+  return { put, flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, walkFit, walkBack, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, ...follow, toggleFull, centerOn, rectOf, laneShift, dispose: () => window.removeEventListener("resize", onResize) };
 }

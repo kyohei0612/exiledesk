@@ -64,5 +64,25 @@ export function setTurned(on: boolean): void {
   } finally { busy = false; }
 }
 
+/**
+ * 回した画面の座標を頁の座標へ戻す口 (指の受け口・位置から大きさを決める所が使う、11-18 オーナー「ツリー内をスマホで動かすとめっちゃ挙動変」)。
+ * 頁は lay() の transform (translateX(wu) rotate(90deg) scale(s)、原点 0 0) で回すので、頁の点 (x, y) は画面の (wu − s·y, s·x)。回していない時はそのまま
+ */
+function turnMap(): { s: number; wu: number } | null {
+  if (!turned.value) return null;
+  const z = parseFloat(document.documentElement.style.zoom) || 1, W = window.innerWidth;
+  return { s: readRealH() / W, wu: W / z };
+}
+/** 画面の点 (clientX, clientY) → 頁の点 */
+export function unturnPoint(x: number, y: number): { x: number; y: number } {
+  const t = turnMap();
+  return t ? { x: y / t.s, y: (t.wu - x) / t.s } : { x, y };
+}
+/** 画面の箱 (getBoundingClientRect) → 頁の箱 (回すと縦横が入れ替わり縮むので戻す) */
+export function unturnRect(r: { left: number; top: number; right: number; width: number; height: number }): { left: number; top: number; width: number; height: number } {
+  const t = turnMap();
+  return t ? { left: r.top / t.s, top: (t.wu - r.right) / t.s, width: r.height / t.s, height: r.width / t.s } : { left: r.left, top: r.top, width: r.width, height: r.height };
+}
+
 /** 回している間にアドレス帯などで高さが変わったら、箱を引き直す */
 function onResize(): void { if (turned.value && !busy) lay(); }

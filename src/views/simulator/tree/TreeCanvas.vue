@@ -4,7 +4,8 @@
   スイッチ tabKeep の中はタブごとに 1 枚 (置き場が v-show で並べる)、外は 1 枚
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { attachTurnTouch } from "./use-turn-touch";
 import { VueFlow } from "@vue-flow/core";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeBox from "./TreeBox.vue";
@@ -39,6 +40,11 @@ type LinkTo = { link?: boolean };
 const hideLink = (o: LinkTo): boolean => !!o.link && flag("linkChipHover");
 type SpotEdge = { id: string; jx: number; jy: number; to: Array<{ id: string; link?: boolean }>; backLines?: Array<{ id: string }> };
 /** 箱の本体の高さ (下の削減の帯を入れない。弧は本体の下の辺へ着く = 帯の下で止まらない、11-16 B2) */
+// 横向きで表示 (頁を 90 度回す) の間の指は木の枠で先に受け、頁の向きに戻して動かす・つまむ (use-turn-touch、S-94l)
+const canvasEl = ref<HTMLElement | null>(null);
+let offTurn: (() => void) | null = null;
+onMounted(() => { if (canvasEl.value) offTurn = attachTurnTouch(canvasEl.value, { vp: () => v.flow.viewport.value, put: v.put, pageZ: () => pageZ.value, min: () => v.minZoom.value, max: () => v.maxZoom.value }); });
+onBeforeUnmount(() => offTurn?.());
 const bodyH = (id: string): number => root.value?.querySelector<HTMLElement>(`[data-tree-box][data-box-id="${id}"]`)?.offsetHeight || v.flow.findNode(id)?.dimensions.height || BOX_H;
 /**
  * (linkChipHover) ↩ を持つ描いた箱 (「↩ n 段目へ戻る」の枠) に乗せた時も、手の札と同じく戻り先を照らし、箱の上の辺から青い弧で引っ張る
@@ -115,7 +121,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
   <div ref="root" data-tree-surface class="contents">
   <TreeLaneTags v-if="!t.needBase.value" inside :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
   <component :is="'style'" v-if="spot">{{ spot.css }}</component>
-  <div data-tree-canvas data-overflow-ok :data-spot="spot?.key" class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
+  <div ref="canvasEl" data-tree-canvas data-overflow-ok :data-spot="spot?.key" class="absolute inset-0 touch-none" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
     <VueFlow :id="flowId" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
       :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
       :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
