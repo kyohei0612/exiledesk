@@ -1,4 +1,7 @@
 {
+  "0.1.755": [
+    "Fixed an issue in the Simulator tree where items that stopped at an unset box were counted as \"unexpected target mod\""
+  ],
   "0.1.754": [
     "In the Simulator tree, items that roll a target mod by chance on an untargeted step no longer get their own boxes; they now stop as \"unexpected target mod\" and restart (fewer unset boxes)"
   ],
