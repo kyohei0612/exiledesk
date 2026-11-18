@@ -1,0 +1,103 @@
+{
+ "applied": true,
+ "at": "20261118224312",
+ "day": "2026-11-18",
+ "rows": [
+  {
+   "topicId": "d2026-11-18",
+   "nickId": "nbd79699b49eb484c",
+   "name": "ごめんね",
+   "before": {
+    "cost": 1379.2,
+    "rate": 88
+   },
+   "old": {
+    "cost": 1339.3,
+    "rate": 85
+   },
+   "neu": {
+    "cost": 1216.9,
+    "rate": 86
+   },
+   "after": {
+    "cost": 1256.8,
+    "rate": 89
+   },
+   "why": null,
+   "usedMs": 3202898,
+   "matchOld": false
+  },
+  {
+   "topicId": "d2026-11-18",
+   "nickId": "nebea3da903fa4956",
+   "name": "バナナ",
+   "before": {
+    "cost": 939.4,
+    "rate": 97
+   },
+   "old": {
+    "cost": 827.3,
+    "rate": 100
+   },
+   "neu": {
+    "cost": 660,
+    "rate": 100
+   },
+   "after": {
+    "cost": 772.1,
+    "rate": 97
+   },
+   "why": null,
+   "usedMs": 785029,
+   "matchOld": false
+  },
+  {
+   "topicId": "d2026-11-18",
+   "nickId": "n95a32935fad64355",
+   "name": "やふやふ",
+   "before": {
+    "cost": 433.2,
+    "rate": 100
+   },
+   "old": {
+    "cost": 415.9,
+    "rate": 100
+   },
+   "neu": {
+    "cost": 284.2,
+    "rate": 100
+   },
+   "after": {
+    "cost": 301.5,
+    "rate": 100
+   },
+   "why": null,
+   "usedMs": 395817,
+   "matchOld": false
+  },
+  {
+   "topicId": "d2026-11-18",
+   "nickId": "n400bf524fb644e88",
+   "name": "ちょこ",
+   "before": {
+    "cost": 403.2,
+    "rate": 100
+   },
+   "old": {
+    "cost": 425.9,
+    "rate": 100
+   },
+   "neu": {
+    "cost": 293,
+    "rate": 100
+   },
+   "after": {
+    "cost": 270.3,
+    "rate": 100
+   },
+   "why": null,
+   "usedMs": 184599,
+   "matchOld": false
+  }
+ ]
+}
