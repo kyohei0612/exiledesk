@@ -17,6 +17,8 @@ import { awardsOf, shownAward, type Award, type DayResult } from "./daily-titles
 import { byScore, rankCmp } from "./daily-score";
 import { DEV_BUILD, flag } from "../../web/release-flags";
 import { keepTabTree, tabTreeOf } from "./daily-tree-keep";
+import { slimTries } from "./daily-slim";
+import { trackOnce } from "../../utils/track";
 
 export const TIME_LIMIT_MS = 60 * 60 * 1000;
 /** 順位に載る完成率の下限 (%、D-02)。11-09 から 1 人でも完成すれば載る (100 人回しなので 1%、前は 90) */
@@ -74,12 +76,14 @@ function save(): void {
       else if (cur.startedAt === s.startedAt && s.ended && !cur.ended) raw.tries[id] = { ...cur, ...s, ...(cur.tree && !s.tree ? { tree: cur.tree } : {}) };
     }
     for (const b of st?.box ?? []) if (!raw.box.some((x) => x.id === b.id)) raw.box.push(b);
-    try { localStorage.setItem(KEY, JSON.stringify(raw)); } catch {
-      // 置き場が一杯 (シミュのレシピの写しで埋まった端末、11-18): 今日の挑戦より前の日の木の写しを外して書き直す (画面の控えは触らない)。
-      // それでも書けない時も、今日の木はタブの写し (daily-tree-keep) から続きを開ける
-      const slim = JSON.parse(JSON.stringify(raw)) as Local, today = todayId();
-      for (const [id, x] of Object.entries(slim.tries)) if (id !== today) { delete x.tree; delete x.builtZ; delete x.saved; }
-      localStorage.setItem(KEY, JSON.stringify(slim));
+    // 大きい中身 (相場の写し・木) は続けている挑戦の 1 枠だけ。終わった前の日の挑戦は成績だけの行で書く (D-32c、daily-slim。画面の控えは触らない)
+    const text = JSON.stringify({ ...raw, tries: slimTries(raw.tries, todayId(), TIME_LIMIT_MS).tries });
+    try { localStorage.setItem(KEY, text); } catch {
+      // 置き場が一杯 (11-18): 前の控えより小さい時だけ、前の控えを消してから書く (空いた分に必ず入る。大きくなる時に消すと名前の合言葉ごと失う)。
+      // それでも書けない時も、今日の木はタブの写し (daily-tree-keep) から続きを開ける。黙らずに印と console に残す
+      const old = localStorage.getItem(KEY);
+      if (old && text.length <= old.length) { localStorage.removeItem(KEY); localStorage.setItem(KEY, text); }
+      else { console.warn(`[daily] 端末の置き場が一杯で控えを書けない (${text.length} 字)`); trackOnce("daily:store-full"); }
     }
   } catch { /* 覚えられなくてもその場は動く */ }
 }
@@ -143,6 +147,8 @@ export function untilRefresh(now: number): { next: number; close: number } {
   return { next: DAY - into, close: Math.max(0, START_CLOSE - into) };
 }
 export const todayId = (now = Date.now()): string => idOf(dayNoOf(now));
+// 読み込みの時に 1 度、終わった前の日の大きい行が控えに残っていれば縮めて書き直す (D-32c の移し。前は 1 件 ≒ 57 万字を日ごとに足していた)
+if (slimTries(daily.local.tries, todayId(), TIME_LIMIT_MS).changed) save();
 
 // --- お題と棚 (GET /daily.json) ---
 
