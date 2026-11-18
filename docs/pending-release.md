@@ -7,6 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | veilStone (S-33h、見た目 OK = オーナー 11-18「おｋ準備」) | 18204f43e・a5800b6bd | シミュレーター: 冒涜の発現の窓で選んだ MOD が、完成形に同じ MOD があると低い段の狙いに替わり、光のお告げの消去で「狙いが消えた」と戻っていたのを直す (選んだ段のまま別の狙いに) | Simulator: a mod picked in the Desecrated reveal window no longer turns into a lower-tier target when the finished item has the same mod, and Omen of Light no longer reports "target removed" for it (it stays a separate target at the chosen tier) |
+| スイッチ無しの直し (S-35、r/OzKt4u0g) | ad7e0de00 | シミュレーター: 発現で狙う手で、候補 3 つ (反響のお告げなら引き直しの 3 つも) に狙いの MOD が出ても 1 つ目しか選んでいなかったのを直す (確率が窓の % どおりに) | Simulator: when revealing for a target, the run now picks the target mod if it appears anywhere among the 3 candidates (and the reroll with Omen of Abyssal Echoes), not only the first one, so the odds match the window % |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
