@@ -250,7 +250,7 @@ function toggleFree(e: Event): void { const vWas = veilOn.value, om = [...omens.
  
 }
 /** 確かめの窓 (S-57): 持つ・☑ を替えるでは何も出さず、下の箱が消える手をカードに打った瞬間に出す。続けるとそのまま打つ */
-const warnOpen = ref(false);
+const warnOpen = ref(false); // 消える数が 0 になったら窓を閉じてそのまま置く (S-57「0 なら窓を出さない」、猿 752 で「下の 0 箱が消えます」が出た) は下の watch(goneNow)
 // 持ち替えたら前の物のお告げは外す (エミュの M-13。元の手に持ち直したら元のお告げ)。スイッチ gradeKeepAll の間は下の覚えで決める
 watch(held, (k, old) => { if (k && old && !flag("gradeKeepAll")) omens.value = k === props.current?.currency ? [...props.current.omens] : []; });
 /** (S-57d2、gradeKeepAll) 格の系ごとに最後のお告げを覚え、持ち替えたらその系のお告げに (同じ系の格の替えは引き継ぎ、別の系から戻ったら・離して持ち直したら戻る。初めは箱の手。掛けられない物は外す) */
@@ -350,8 +350,8 @@ function ok(): void {
   simOp("hand-decide");
   if (runePick.value) { socketWhy.value = RUNE_PICK(); return; }
   if (!hand.value || !kind.value || problem.value || (!!item.value && !!s.data.value && stopSureFrac(s.data.value, toRaw(t.doc.value), item.value, hand.value))) return; // 確定フラクチャーが置けない品はポップアップで断る (S-43a)
-  if (goneNow.value) warnOpen.value = true; else use();
-}
+  if (goneNow.value > 0) warnOpen.value = true; else use();
+} watch(() => goneNow.value, (n) => { if (warnOpen.value && !(n > 0)) { warnOpen.value = false; use(); } });
 </script>
 
 <template>
@@ -479,7 +479,7 @@ function ok(): void {
         </div>
       </div>
     <!-- 「この手以降は削除されます」(スマホ、別の札を持った・狙いを変えた瞬間) -->
-    <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4">
+    <div v-if="warnOpen && goneNow > 0" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4">
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
         <p class="text-[16px] font-bold text-rose-100">{{ tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->
