@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| goalDesecrate (E-60c、ジン jin-desecrate、オーナー 11-18「この画面で何故か冒涜MODがつけれない。冒涜だけはつけれるはず」、見た目 OK = オーナー 11-18「おけ」(jin-desecrate の前後 3 枚)) | この commit | シミュ: 完成形の MOD 選びで、冒涜専用の MOD が「冒涜」で付けられるようにしました (前は全部灰色だった)。完成形の品にも冒涜の MOD が入ります | Simulator goal: desecrated-only mods can now be added via "Desecrate" in the goal mod picker (they were all greyed out). The goal item now includes the desecrated mod |
 | stuckOneLine (S-72f、シミュ 92、オーナー 11-18「止まりの説明絶対誰も理解できんし俺もできない。1行で」「Ｂ　そのまま送れるように」、見た目 OK = オーナー 11-18「おｋスナップ」(st92-B2c の絵)) | この commit | シミュ: 100 人回した後の「止まり n 人」の説明を 1 行にしました。ツリーの途中で行き先が無い止まりはサイトの不具合として、押すと何が起きたかが入った要望の窓が開き、そのまま送れます | Simulator: the "n stuck" note after a 100-player run is now one line. When the tree has no next box (a site bug), clicking it opens the feedback window with the details filled in, ready to send |
 | hitSide (S-65e、シミュ手伝い 93、オーナー 11-18「８－９すすめて」= レビュワー 1 の案 1 (側で分ける)、見た目 OK = オーナー 11-18「おｋスナップの見た目おｋ」(p93d の前後)) | この commit | シミュ: カオスなどで狙いが付いた時、消えた MOD の側で形が違う結果を 1 つの箱にまとめていたのを、形ごとの箱に分けました | Simulator: hits from Chaos Orb and similar steps are now split into separate boxes when the removed mod's side leaves a different prefix/suffix layout |
 | 「木」→「ツリー」の言い替え (U-62、スイッチ無し、オーナー 11-18「あとついでに木って書いてあるところソートしてツリーに全部変えといてディスコの要望きてる」、デザイン部長、見た目 OK = オーナー 11-18「おｋ完了でおｋそのすなっぷたち」(ki-after の絵)。画面の日本語 72 か所、曜日の「木」とゲームの和訳は残す) | この commit | 画面の「木」という言い方を「ツリー」にそろえました (シミュ・デイリー・チュートリアル・要望の窓) | Japanese UI: "木" is now written as "ツリー" (tree) everywhere on screen |

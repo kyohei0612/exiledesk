@@ -15,16 +15,18 @@ import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem, StageMod } from "../../craft-stage/types";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 import { familyBlocked, occupiedKeysOf, sharesFamily } from "../../mods/mod-rules";
 
 /** 段の名前の T で言う MOD (T1 が一番上)。fractured = ✦ で付ける */
 export interface TierMod { modId: string; tier: number; fractured?: boolean }
 
-/** エッセンスの MOD はクラフト MOD の印で付ける (始まりの形と同じ) */
-const flagOf = (data: PatchData, m: TierMod): "f" | "e" | "n" => {
+/** エッセンスの MOD はクラフト MOD の印、冒涜の MOD は冒涜の印で付ける (始まりの形と同じ。冒涜は E-60c、スイッチ goalDesecrate) */
+const flagOf = (data: PatchData, m: TierMod): "f" | "e" | "d" | "n" => {
   if (m.fractured) return "f";
   const src = data.mods.get(m.modId)?.source;
-  return isCraftedSource(src) ? "e" : "n";
+  if (isCraftedSource(src)) return "e";
+  return flag("goalDesecrate") && isDesecratedSource(src) ? "d" : "n";
 };
 const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.tier}`, flagOf(data, m));
 /** クラフト MOD (エッセンス・完全エッセンス・合金で付く物、✦ で付ける物は数えない) */
