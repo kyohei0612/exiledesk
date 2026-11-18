@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュの木: 手の無い箱への自動の ↩ が鎖になったら選び直す (S-50h、スイッチ joinChainFix。FLAGS の行と RELEASED はブラック。r/VK1opGjg の紋章の後にルーンを刺した箱の輪、オーナー 11-19「完了時出してておｋ」) | 2467679c0 | シミュレーターのツリーで、アビサルの紋章の後にルーンを刺した箱などの戻り先が輪になり、最終チェックで行き止まりが出ていたのを直しました | Fixed a loop in simulator trees where boxes such as "rune socketed after the Abyssal mark" returned in a circle and showed dead ends in the final check |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
