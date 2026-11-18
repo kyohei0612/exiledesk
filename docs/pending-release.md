@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュのツリー: 未設定の箱で止まった人を予期せぬ狙い MOD に数えず、木の不具合 (未設定) の止まりのまま残す (S-21b2、本番のスイッチ oddStop の中の数え違い、新しいスイッチ無し。シミュ 96) | d55fb79fb | シミュレーターのツリーで、未設定の箱で止まった人が「予期せぬ狙い MOD」に数えられてしまう不具合を直しました | Fixed an issue in the Simulator tree where items that stopped at an unset box were counted as "unexpected target mod" |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
