@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| 精査の混ざりの比べに偶然付いた狙いの形を入れない (S-21b2、r/VK1opGjg の b90、スイッチ oddMixSkip。FLAGS の行はブラック) | 084a461b2 | シミュレーター: 狙い無しの冒涜などで狙いの MOD が偶然付いた人がいるだけで、最終チェックに「未設定」が出ていたのを直しました | Simulator: Final Check no longer flags a box as unset just because a target mod was added by chance (e.g. an untargeted Desecrate) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
