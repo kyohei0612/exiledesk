@@ -8,13 +8,13 @@ import { BOX_W } from "../../../services/simulator/tree/tree-model";
 import { FOLD_H } from "../../../services/simulator/tree/tree-strip-fold";
 import { tr } from "../../../i18n/lang";
 
-defineProps<{ head: string; /** ↩ だけの兄弟をまとめた行 (S-142j ②、スイッチ foldEnds)。あれば消去の札の代わりにこの行を出す */ ends?: string[]; n?: number; m?: number; issues?: number; stops?: number; /** 開いた続きの「≈ 畳む」(箱の左、ツリーの座標) */ fold?: { x: number; y: number; inv: number } }>();
+const p = defineProps<{ head: string; /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 / カオスの続き */ kind?: "frac" | "chaos"; label?: string; boxes?: number; bare?: boolean; /** ↩ だけの兄弟をまとめた行 (S-142j ②、スイッチ foldEnds)。あれば消去の札の代わりにこの行を出す */ ends?: string[]; n?: number; m?: number; issues?: number; stops?: number; /** 開いた続きの「≈ 畳む」(箱の左、ツリーの座標) */ fold?: { x: number; y: number; inv: number } }>();
 const emit = defineEmits<{ toggle: [] }>();
 </script>
 
 <template>
   <button v-if="fold" type="button" data-tree-strip-refold :data-box-id="head" class="nodrag nopan pointer-events-auto absolute z-[5] -translate-x-full whitespace-nowrap rounded-md border border-dashed border-sky-400/70 bg-[#101820] px-2 text-[12px] leading-7 text-sky-200 hover:bg-sky-500/20"
-    :style="{ left: `${fold.x - 10}px`, top: `${fold.y + 8}px`, scale: String(fold.inv), transformOrigin: 'right top' }" :title="tr('消去の続きを札 1 枚に畳む', 'Fold the repeated annuls into one card')" @click.stop="emit('toggle')">≈ {{ tr("畳む", "Fold") }}</button>
+    :style="{ left: `${fold.x - 10}px`, top: `${fold.y + 8}px`, scale: String(fold.inv), transformOrigin: 'right top' }" :title="p.kind === 'frac' ? tr('この ✦ の枝を札 1 枚に畳む', 'Fold this ✦ branch into one card') : p.kind === 'chaos' ? tr('カオスの続きを札 1 枚に畳む', 'Fold the repeated chaos into one card') : tr('消去の続きを札 1 枚に畳む', 'Fold the repeated annuls into one card')" @click.stop="emit('toggle')">≈ {{ tr("畳む", "Fold") }}</button>
   <div v-else-if="ends" data-tree-strip-fold data-tree-fold-ends :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-dashed border-white/25 bg-[#15120e] px-3 py-2 text-[12px] hover:border-white/45"
     :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px` }" :title="tr('押すと箱を開いて手を置ける', 'Click to show the boxes and add a craft')">
     <b v-for="(l, i) in ends" :key="i" class="break-words text-[13px] text-[#e3d6c0]">{{ l }}</b>
@@ -22,9 +22,17 @@ const emit = defineEmits<{ toggle: [] }>();
       <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>
     </span>
   </div>
-  <div v-else data-tree-strip-fold :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center rounded-xl border-[1.5px] border-dashed border-sky-400/70 bg-[#101820] px-3 text-[12px] hover:border-sky-300"
-    :style="{ width: `${BOX_W}px`, height: `${FOLD_H}px` }" :title="tr('押すと消去の続きの箱を開く', 'Click to show the repeated annul boxes')">
-    <b class="text-[14px] text-sky-200">≈ {{ tr(`消去 × ${n} 段・止まった所 ${m}`, `Annul × ${n} steps, ${m} stop points`) }}</b>
+  <div v-else-if="kind === 'frac'" data-tree-strip-fold data-tree-fold-frac :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-dashed border-amber-300/70 bg-[#1a150c] px-3 py-1.5 text-[12px] hover:border-amber-200"
+    :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px` }" :title="tr('押すとこの ✦ の枝の箱を開く', 'Click to show the boxes of this ✦ branch')">
+    <b class="break-words text-[14px] text-amber-200">✦ {{ tr(`${label ?? "?"} が固定された枝`, `Branch with ${label ?? "?"} fractured`) }}</b>
+    <span class="flex flex-wrap gap-x-2 text-[#c4b49a]">{{ bare ? tr("まだ手が無い", "No craft yet") : tr(`手 ${boxes} つ`, `${boxes} crafts`) }} · {{ tr("押すと開く", "Click to open") }}
+      <b v-if="issues" data-tree-strip-issues class="text-rose-400">! {{ issues }}</b>
+      <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>
+    </span>
+  </div>
+  <div v-else data-tree-strip-fold :data-tree-fold-chaos="kind === 'chaos' || undefined" :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center rounded-xl border-[1.5px] border-dashed border-sky-400/70 bg-[#101820] px-3 text-[12px] hover:border-sky-300"
+    :style="{ width: `${BOX_W}px`, height: `${FOLD_H}px` }" :title="kind === 'chaos' ? tr('押すとカオスの続きの箱を開く', 'Click to show the repeated chaos boxes') : tr('押すと消去の続きの箱を開く', 'Click to show the repeated annul boxes')">
+    <b class="text-[14px] text-sky-200">≈ {{ kind === "chaos" ? tr(`カオス × ${n} 段・止まった所 ${m}`, `Chaos × ${n} steps, ${m} stop points`) : tr(`消去 × ${n} 段・止まった所 ${m}`, `Annul × ${n} steps, ${m} stop points`) }}</b>
     <span class="flex flex-wrap gap-x-2 text-[#9fb4c4]">{{ tr("押すと開く", "Click to open") }}
       <b v-if="issues" data-tree-strip-issues class="text-rose-400">! {{ issues }}</b>
       <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>

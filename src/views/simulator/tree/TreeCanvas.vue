@@ -16,7 +16,7 @@ import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeLaneTags from "./TreeLaneTags.vue";
 import { LINE } from "./use-tree-edges";
 import { laneBandW } from "./tree-lane-band";
-import { BOX_H, BOX_W, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { BOX_H, BOX_W, type Aim, type TreeBox as Box, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { useTreeSurface, type PageCtx } from "./use-tree-surface";
@@ -30,6 +30,8 @@ const root = ref<HTMLElement | null>(null);
 // 置き場の手と窓 (全部の面で同じ物) と、この面の作り (テンプレートは切り出す前と同じ名前で使う。ref は上の段なので自動で外れる)
 const { t, hand, panel, jt, glowOf, tr100, issueOf, startDrag, onAim, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, startLink, goIssue, onPaneClick, onNodeClick } = props.page;
 const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, chipInv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine } = useTreeSurface(props.tabKey, props.page, root);
+/** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝の札の MOD の名前 (後ろの数の幅は外す) */
+const fracName = (a: Aim): string => t.aimShort(a).replace(/\s*\([^()]*\)\s*$/, "");
 /** (S-142j ③、スイッチ hitsSide) 乗せている手の札 (その手の ↩ の畳みの戻り先へ青い線を出す) */
 const hoverChip = ref<string | null>(null);
 /**
@@ -128,7 +130,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
       :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
       @pane-click="onPaneClick" @node-click="onNodeClick">
       <template #node-box="{ id }">
-        <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
+        <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" :label="sf.folds.value.get(id)?.kind === 'frac' && doc.boxes[id]?.aim ? fracName(doc.boxes[id]!.aim!) : undefined" />
         <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.dimOf(doc.boxes[id]!)" :gray="jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" @quit="bd.onQuit(id)" :band-on="viewOnly && !hand && !jt.dimOf(doc.boxes[id]!)" @band="(x, e) => (viewOnly ? (panel = { kind: 'hand', id: x }) : bd.onBand(x, e))"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
           @clear-back="t.edit((d: TreeDoc) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
           @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d: TreeDoc) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
@@ -155,7 +157,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         </svg>
         <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
         <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
-        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
+        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
         <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="chipInv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
         <!-- (linkChipHover) 照らしている間の行き先の箱の写し (読むだけ・押せない。箱の上の辺の真ん中を軸に大きく = 下へ伸びる) -->
         <div v-for="{ id, h, dy } in spotZoom?.items ?? []" :key="`spot-zoom-${id}`" data-tree-spot-zoom :data-spot-zoom-of="id" :data-spot-zoom-dy="Math.round(dy) || undefined" class="pointer-events-none absolute z-[6] rounded-xl"

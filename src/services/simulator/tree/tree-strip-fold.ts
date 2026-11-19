@@ -14,6 +14,7 @@ import { idealHidden } from "./tree-ideal-hide";
 import { frontOf } from "./tree-front-path";
 import { treeOrder } from "./tree-order";
 import { flowDepth, flowOnce } from "./tree-flow-once";
+import { fracChaosFolds } from "./tree-fold-frac-chaos";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -21,7 +22,8 @@ export const FOLD_H = 64;
 export interface StripFold { head: string; mids: string[]; stops: string[]; steps: number; /** 札の中の箱へまとめた箱 (S-66)。止まった箱に数えず、スイッチ treeFoldMerged の下は畳んでいる間描かない */ tucked: string[];
   /** (S-142j ③、スイッチ hitsSide) 行き先が同じ段か先 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) の畳み: 札も描かず、親の手の札から行き先の箱へ直に線 */ link?: true;
   /** (S-142j ③、スイッチ hitsSide) ↩ (前の段へ戻る) の畳み: 札も描かず、親の手の札に乗せた時だけ戻り先へ青い線 */ back?: true;
-  /** 行き先を指すだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ hitsSide)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true }
+  /** 行き先を指すだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ hitsSide)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true;
+  /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 (frac) / カオスの続き (chaos)。無ければ消去の続き */ kind?: "frac" | "chaos" }
 
 /** 開いた続き (head の id)。保存しない */
 const ownOpen = ref<ReadonlySet<string>>(new Set());
@@ -79,6 +81,8 @@ function chainsRaw(d: TreeDoc): Map<string, StripFold> {
     const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };
     out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => !tuck(id)), steps, tucked: stops.filter(tuck) });
   }
+  // (S-28h、スイッチ foldFracChaos) ✦ の枝 (開く 1 本のほか) とカオスの続きも札に畳む。消去の続きの中の箱は持たない
+  if (flag("foldFracChaos")) fracChaosFolds(d, out);
   // (S-142j ②、スイッチ hitsSide。前のスイッチ foldEnds は 11-14 にここへまとめた) 行き先を指すだけの箱は 1 つでも 1 行の札に畳む
   // (11-14 オーナー「2段以上ならまとめたるか」「もはや1段も同じ枠あるから非表示でいいだろうし」)
   if (flag("hitsSide")) for (const b of Object.values(d.boxes)) {

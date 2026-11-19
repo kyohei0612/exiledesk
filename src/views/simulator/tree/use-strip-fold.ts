@@ -26,10 +26,12 @@ export function useStripFold(doc: Ref<TreeDoc>, opened: Ref<number>, active: Ref
   /** 開いた続き (head の箱の左に「≈ 畳む」) */
   const opens = computed(() => [...stripChains(doc.value).values()].filter((f) => stripOpen.value.has(f.head)));
   /** 札に出す数: 消去の段 n・札の下に並ぶ止まった所 m (まとめて描かない箱は数えない)・中の箱の足りない所 (S-89b) と止まりの人 (S-72) */
-  const countsOf = (head: string): { n: number; m: number; issues: number; stops: number; ends?: string[] } => {
+  const countsOf = (head: string): { n: number; m: number; issues: number; stops: number; ends?: string[]; kind?: "frac" | "chaos"; boxes?: number; bare?: boolean } => {
     const f = folds.value.get(head), mids = new Set(f?.mids ?? []), st = stuckAt() ?? {}, d = doc.value;
     const m = (f?.stops ?? []).filter((id) => d.boxes[id] && !mergedAway(d, d.boxes[id]!)).length;
-    return { ends: f?.ends ? endsLines(d, f.mids) : undefined, n: f?.steps ?? 0, m, issues: issueBoxes().filter((id) => mids.has(id)).length, stops: [...mids].reduce((s, id) => s + (st[id] ?? 0), 0) };
+    // (S-28h) ✦ の枝の札は中に置いた手の数 (boxes) と、まだ手が無いか (bare)
+    const fx = f?.kind === "frac" ? { kind: f.kind, boxes: f.mids.filter((id) => !!d.boxes[id]?.hand).length, bare: !d.boxes[head]?.hand } : f?.kind ? { kind: f.kind } : {};
+    return { ...fx, ends: f?.ends ? endsLines(d, f.mids) : undefined, n: f?.steps ?? 0, m, issues: issueBoxes().filter((id) => mids.has(id)).length, stops: [...mids].reduce((s, id) => s + (st[id] ?? 0), 0) };
   };
   /** 寄る前に、その箱を隠している続きを開く (並べ直しの後まで待つ) */
   async function openFor(id: string): Promise<void> {
