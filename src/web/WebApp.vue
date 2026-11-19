@@ -60,6 +60,8 @@ import { isPhoneWidth } from "../utils/use-phone";
 import { setPcView, treeShown as pcTreeShown, wantPc } from "../utils/phone-pc-view";
 import { turned } from "../utils/turn-page";
 import { preventMenu } from "../utils/no-context-menu"; // 右クリックで離す。文字の欄・選んだ文字の上はメニューを残す (U-38)
+import TreeLoadingCover from "../views/simulator/tree/TreeLoadingCover.vue";
+import { coverFromBoot } from "../views/simulator/tree/tree-loading";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
 
@@ -238,6 +240,7 @@ if (PC_PLAY) {
     <PressPopups /><!-- 次に押した時に出すポップアップ: 強制更新 (U-35)・要望への返事 (U-36)。web/force-update.ts -->
     <LeaveConfirm /><!-- ツリーの作りかけで外へ移る前の確かめ (web/page.ts の setLeaveGuard) -->
     <ToTop /><!-- スマホの「上へ戻る」(全部の画面の右下) -->
+    <TreeLoadingCover v-if="coverFromBoot()" /><!-- 共有 URL で開いた時は頁を読み始めた時から木が入るまで「レシピ読み込み中…」(S-196f2、スイッチ sharedOpenCover) -->
     <TurnSideways v-if="PC_PLAY" /><!-- スマホで木を組む画面が縦持ちなら「画面の向きのロックを解除し、スマホを横にしてください」(U-53d) -->
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
     <div v-if="phone && textPage" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
