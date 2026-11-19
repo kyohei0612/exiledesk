@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| ルーンの手を挟んでも上へ戻す (S-60g3 ⑥、スイッチ runeBack、r/4zp4OeWO の 18 段目。runeFreeAll の時だけ) | dc79c65a0・ebb4dc5aa | シミュの木: 同じ形の前の箱との間にルーンを刺す手があっても、自動で上の箱へ戻すように | Simulator tree: boxes now link back up to the earlier matching box even when a rune-socketing step sits between them |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
