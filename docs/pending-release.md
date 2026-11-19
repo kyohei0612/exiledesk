@@ -6,6 +6,8 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| MOD の段の表: スマホで右の数が文に重なるのを直す (U-12j2、スイッチ tierNumFit。見た目の OK 待ち) | (この commit) | MOD 一覧: スマホで段の表の右の数字が MOD の文に重なっていたのを直しました | Mod list: on phones, the numbers on the right of the tier table no longer overlap the mod text |
+| MOD の表の文を言葉の切れ目で折る (U-12j3、スイッチ wordPhrase。見た目の OK 待ち) | (この commit) | MOD 一覧: MOD の文が言葉の途中で折り返さないようにしました | Mod list: Japanese mod text now wraps between words instead of mid-word |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)

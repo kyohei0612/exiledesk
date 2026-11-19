@@ -258,6 +258,8 @@ export const FLAGS = {
   barOneRow: "エミュの品の上の帯: 聖別の帯 (聖別・最小・倍率・最大) を付与スキル「どれでも」の横に並べて 2 行目を 1 列に、品質の種類の欄は字が切れない幅に (U-12h2、オーナー 11-19「聖別時はどれでもの横に置こうか1列で」。開発版だけ)",
   tierUp: "シミュの木: 狙うMODの一括ティア調整で、一度下げた段を上げ直せる (プルダウンに今の段より上も出す。上げた行は「上げると X%」、決定で当たりの箱・残す MOD の段も揃える。S-10f2、オーナー 11-19 深夜「ティア調整で一度ティアを下げてつけるとティアをあげれない。」)。閉じている間は今の段と下だけ",
   foldFracChaos: "シミュの木: ✦ が 2 つ以上でフラクチャーの結果が ✦ の枝に分かれた時、左の 1 本 (完成のある枝、無ければ木の並びの 1 本目) だけ開き、ほかの ✦ の枝は札 1 枚に畳む・カオスを 2 段以上続けた所を消去と同じく「カオス × n 段」の札 1 枚に畳む (押すと開く。S-28h、オーナー 11-19「左枠にたたんでいいかも　カオススパムとかも」)。閉じている間は全部の箱を並べる",
+  tierNumFit: "MOD の段の表: スマホ・狭い列で右の数 (出やすさ・ティア・Lv) の欄を中身の幅に。前は欄が 1px で数が左の文へ重なった (U-12j2、オーナー「修正」。開発版だけ)",
+  wordPhrase: "MOD の表: 系統の名前と段の文を言葉の切れ目で折り返す (word-break: auto-phrase、日本語だけ。前は「ダメー|ジ」のように語の途中で折れた、U-12j3、オーナー「修正」。開発版だけ)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
@@ -289,9 +291,7 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "goalTierTop",
   "sideLikeDaily",
   "skinHide",
-  "goalCardMinText",
-  "boxRuneLine",
-  "goalNoAutoRune",
+  "goalCardMinText", "boxRuneLine", "goalNoAutoRune",
   "oddShapes",
   "dailyWrap",
   "phoneUrlShort",

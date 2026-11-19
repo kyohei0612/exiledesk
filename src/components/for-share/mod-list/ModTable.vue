@@ -264,7 +264,10 @@ const ESS_CHIP = flag("essChip");
  * 段の表は数を見出しと同じ並び・位置 (出やすさ・ティア・Lv) の 1 つの td に入れ、差し込みのボタン (tier-actions) は文と数の間。スマホ・狭い列はボタンを 2 段目へ (order-last)
  */
 const ONE = flag("modOneLine");
-const nameCls = ONE ? "md:truncate" : "";
+const NUM_FIT = flag("tierNumFit");
+/** U-12j3 (スイッチ wordPhrase、オーナー「修正」): 名前と段の文は言葉の切れ目で折る (日本語だけ効く。英語は今までどおり) */
+const PHRASE = flag("wordPhrase") ? "[word-break:auto-phrase]" : "";
+const nameCls = [ONE ? "md:truncate" : "", PHRASE].join(" ");
 const wrapCls = ONE ? "flex-wrap md:flex-nowrap" : "flex-wrap";
 function tierRowShape(): string[] {
   const one = props.tierOneLine;
@@ -426,7 +429,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                   <tr v-for="t in tierView(`${sec.sid}:${r.id}`, r).shown" :key="`${t.modId ?? r.id}:${t.rank}`" class="group border-b border-white/5 max-md:flex" :class="[...tierRowShape(), tierDimOf(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle ? props.tierTitle(r, t) : t.blockedBy ? blockedTitle(t) : undefined">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td v-if="!ONE" class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
-                    <td data-tier-text class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="[NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : '', ONE ? 'pl-2' : '']">{{ t.text }}<span v-if="tierFaction(r, t)" data-tier-faction class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[tierFaction(r, t)!]?.cls">{{ tagLabel(tierFaction(r, t)!) }}</span><span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
+                    <td data-tier-text class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="[NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : '', ONE ? 'pl-2' : '', PHRASE]">{{ t.text }}<span v-if="tierFaction(r, t)" data-tier-faction class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[tierFaction(r, t)!]?.cls">{{ tagLabel(tierFaction(r, t)!) }}</span><span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナー) -->
                     <template v-if="ESS_CHIP && t.essence" />
                     <td v-else-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" :class="NARROW ? '@max-2xl/tcol:hidden' : ''" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
@@ -440,7 +443,8 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                     <!-- U-12j: ボタンは文と数の間、数は見出し (出やすさ・ティア・Lv) と同じ幅・並び・右の空き (pr-2) -->
                     <template v-else>
                     <slot name="tier-actions" :row="r" :tier="t" />
-                    <td data-tier-end class="w-px whitespace-nowrap py-0.5 pr-2 max-md:ml-auto max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:ml-auto @max-lg/tcol:shrink-0' : ''">
+                    <!-- U-12j2 (tierNumFit): 横並び (スマホ・狭い列) の時は w-px を外して中身の幅に (前は 1px の欄から数が左の文へはみ出して重なった) -->
+                    <td data-tier-end class="w-px whitespace-nowrap py-0.5 pr-2 max-md:ml-auto max-md:shrink-0" :class="[NARROW ? '@max-lg/tcol:ml-auto @max-lg/tcol:shrink-0' : '', NUM_FIT ? (NARROW ? 'max-md:w-auto @max-lg/tcol:w-auto' : 'max-md:w-auto') : '']">
                       <span class="flex items-center justify-end gap-1 tabular-nums">
                         <span class="w-14 opacity-80" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : '']" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</span>
                         <span class="font-bold text-amber-200" :class="[COL, tierW]">{{ t.rank }}</span>
