@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| 札の MOD の数を 1 つに (E-96b、スイッチ oneValue。オーナー 11-19「統一してＵＩ　んで出しておｋ」、エミュ部長・デザイン部長、ブラック 141) | 9d676e626 (デザイン)・この行の commit (工程の履歴) | クラフト台のアイテムの MOD の数値を 1 つにしました。聖別・品質を掛けた後の値をそのまま出し、括弧の小さい数値をやめました。消えた MOD の行と工程の記録も同じ数値で並びます | Item mod values on the crafting bench now show a single number: the value after Sanctification and quality, with no small number in parentheses. Removed mods and the craft history use the same values |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
