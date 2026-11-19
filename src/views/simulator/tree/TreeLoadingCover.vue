@@ -4,9 +4,9 @@
   地は透けない (S-196e、11-15 オーナー「きんの指輪がでてたね」: 前は 85% の黒で、下の白紙の木と「未設定 1 つ」が透けて見えた)
 -->
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from "vue";
+import { computed, onBeforeUnmount, watch } from "vue";
 import { tr } from "../../../i18n/lang";
-import { treeLoading } from "./use-tree-open";
+import { claimCover, treeLoading } from "./tree-loading";
 
 const KINDS = ["keydown", "keyup", "keypress", "wheel", "touchstart", "touchmove", "pointerdown", "mousedown", "click", "dblclick", "contextmenu"] as const;
 /** 読み込み中は操作を窓の手前で止める (覆いの外のキー・ホイールも) */
@@ -14,13 +14,15 @@ const stop = (e: Event): void => { if (!treeLoading.value) return; e.preventDefa
 const on = (): void => { for (const k of KINDS) window.addEventListener(k, stop, { capture: true, passive: false }); };
 const off = (): void => { for (const k of KINDS) window.removeEventListener(k, stop, { capture: true }); };
 watch(treeLoading, (v) => { off(); if (v) on(); }, { immediate: true });
-onBeforeUnmount(off);
+const cover = claimCover(); // 頁の外枠と木の頁の両方に置いた時は先に置いた 1 つだけ描く (S-196f2)
+const shown = computed(() => treeLoading.value && cover.first());
+onBeforeUnmount(() => { off(); cover.drop(); });
 </script>
 
 <template>
   <Teleport to="body">
     <div
-      v-if="treeLoading"
+      v-if="shown"
       data-tree-loading-cover
       role="status"
       aria-live="polite"

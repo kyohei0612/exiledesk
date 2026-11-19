@@ -4,7 +4,7 @@
  * スマホで描き直しだけで約 1.7 秒使っていた)。組んでいる間は「レシピ読み込み中…」で全ての操作を止める (TreeLoadingCover.vue)。
  * 途中は保存も 1 つ戻すの履歴も通さない。別の木を開いたら今の読み込みは捨てる
  */
-import { ref, type ShallowRef } from "vue";
+import type { ShallowRef } from "vue";
 import type { PatchData } from "../../../services/craft-stage/engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { rebuildInSteps } from "./tree-rebuild";
@@ -12,8 +12,9 @@ import { fromBuilt, fromDailyPast, markDailyPast } from "../../../services/simul
 import { checkOldSame } from "./tree-old-same";
 import { flag } from "../../../web/release-flags";
 
-/** 開いている間 (木は触れない。読み込み中の覆いを出す) */
-export const treeLoading = ref(false);
+/** 開いている間の印は tree-loading (頁の外枠からも読む軽い物、S-196f2) */
+import { treeLoading } from "./tree-loading";
+export { treeLoading };
 let openNo = 0, openFrom: TreeDoc | null = null;
 
 /** 1 コマ返す (読み込み中の覆いを先に描く)。隠れたタブでも止まらない */

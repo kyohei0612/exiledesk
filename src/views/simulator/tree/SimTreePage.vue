@@ -373,7 +373,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
     <!-- 768 未満は見るだけの 1 画面 (PhoneViewPage)、768 以上は PC の木で組む (S-94g。質問で進める形 PhoneTreePage は 11-08 夜に外した、オーナー「768組めそうならそれ以降はＰＣ表示でいいと思う」) -->
     <!-- チュートリアルの札と光る枠 (PC もスマホも。札は body へ出す) -->
     <SimTutorialGuide v-if="!viewPhone" />
-    <TreeLoadingCover /><!-- 開いて組み直している間の「レシピ読み込み中…」(PC・スマホ共通、S-196) -->
+    <TreeLoadingCover /><!-- 開いて組み直している間の「レシピ読み込み中…」(PC・スマホ共通、S-196。頁の外枠 WebApp にもある時はそちらだけ描く = S-196f2) -->
     <PhoneViewPage v-if="viewPhone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
