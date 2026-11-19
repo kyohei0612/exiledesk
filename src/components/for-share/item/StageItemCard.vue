@@ -21,7 +21,7 @@ import { implicitRows, propRows } from "../../../services/craft-stage/stage-prop
 import { runeArt } from "../../../components/art/rune-art";
 import { uniqueLines } from "../../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../../services/craft-stage/roll-text";
-import { BASE_VALUES_ON, augmentLineOf, modLineOf } from "./base-values";
+import { BASE_VALUES_ON, ONE_VALUE, augmentLineOf, modLineOf, shownModText } from "./base-values";
 import { fracNames } from "./frac-split";
 import { boostedMod, hasExtraCatalyst, scaledAugment } from "../../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
@@ -346,7 +346,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <!-- 入らなければ字を縮めて 1 行、10px でも入らなければ語の切れ目で折る (fit-text.ts、10-26 夜オーナー) -->
           <span v-fit-text="fitOn" class="min-w-0 flex-1 text-center text-rarity-magic">
             <span v-if="BASE_VALUES_ON && t.boosted" :title="tr('素の値 (品質で盛る前)。小さい文は品質で盛った値', 'Base value (before quality). The small text is the boosted value')">{{ t.baseText }}<span data-boosted-value class="ml-1 text-[10px] text-stage-boost">({{ t.text }})</span></span>
-            <span v-else :class="t.boosted ? 'text-stage-boost' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
+            <span v-else :class="t.boosted && !ONE_VALUE ? 'text-stage-boost' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
           </span>
           <!-- 暗黙はティアが無いので、値を範囲の中で上下するボタン (MOD の行の ↓ の位置。2026-10-12 オーナー) -->
@@ -420,7 +420,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <!-- 未発現も消える候補ならオレンジ (削減のお告げは未発現を MOD レベル 1 で数える E-33。11-06 オーナー「なら冒涜未発現もオレンジになるはず」) -->
             <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider" :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : 'text-stage-unrevealed [text-shadow:0_0_6px_rgba(140,220,80,0.75)]'" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
             <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-stage-boost">({{ r.shown }})</span></span>
-            <span v-else :class="[isDoomed(r.m) ? 'font-bold text-stage-doomed' : r.boosted ? 'text-stage-boost' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
+            <span v-else :class="[isDoomed(r.m) ? 'font-bold text-stage-doomed' : r.boosted && !ONE_VALUE ? 'text-stage-boost' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="rowTags?.get(r.m.modId)?.after" data-row-tag-after class="ml-1.5 whitespace-nowrap align-middle font-sans text-[12px] font-bold not-italic" :style="{ color: `rgb(${rowTags.get(r.m.modId)!.after!.rgb})`, textShadow: `0 0 6px rgba(${rowTags.get(r.m.modId)!.after!.rgb},0.7)` }" :title="rowTags.get(r.m.modId)!.after!.title">{{ rowTags.get(r.m.modId)!.after!.text }}</span>
             <span v-if="look(r.m).tag" class="whitespace-nowrap align-middle text-[10px] opacity-80" :class="modsOnly ? 'st-mo-tag ml-1' : 'ml-1.5'">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
@@ -453,7 +453,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <!-- ページの無いユニークは名前だけ (撮影用は注記も出さない) -->
       <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : tr("(このユニークの効果はデータに無い)", "(no data for this unique's effects)")) : tr("MOD なし", "No mods") }}</p>
       <!-- 消えた MOD (直前の手) -->
-      <p v-for="(m, i) in removed" :key="'x' + i + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ modText(m) }}</p>
+      <p v-for="(m, i) in removed" :key="'x' + i + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ ONE_VALUE ? shownModText(item, m) : modText(m) }}</p>
       <p v-if="item.corrupted" class="pt-1 font-bold text-stage-corrupt">{{ tr("コラプト", "Corrupted") }}</p>
       <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       <!-- 2026-09-29 に足したカレンシーの印 (apply-extra.ts) -->

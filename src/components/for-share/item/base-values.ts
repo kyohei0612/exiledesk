@@ -10,7 +10,9 @@ import { boostedMod, retext, scaledAugment } from "../../../services/craft-stage
 import type { StageAugment } from "../../../services/craft-stage/types";
 import { flag } from "../../../web/release-flags";
 
-export const BASE_VALUES_ON = flag("baseValues");
+/** 札の MOD の数は 1 つ (E-96b、スイッチ oneValue): 聖別・品質・効果を掛けた後の値だけを出し、素の値 + 括弧の出し方 (baseValues) を止める */
+export const ONE_VALUE = flag("oneValue");
+export const BASE_VALUES_ON = flag("baseValues") && !ONE_VALUE;
 
 /** 値を短く (2 つ以上は「a-b」) */
 const valuesText = (vs: readonly number[]): string => vs.join("-");
@@ -40,5 +42,10 @@ export function augmentLineOf(item: StageItem, a: StageAugment): { text: string;
   return { text: base, shown: scaled !== base ? scaled : null };
 }
 
-/** 工程の履歴・小さいカード・スマホの帯の MOD の文: 開発版は素の値 (聖別の前)、本番は今の文 (J11 ④) */
-export const stageModText = (m: StageMod): string => (BASE_VALUES_ON ? baseModText(m) : modText(m));
+/** 品の上で見える MOD の文 (聖別の後の値に品質・効果も掛けた値、E-96b) */
+export function shownModText(item: StageItem, m: StageMod): string {
+  return modText(boostedMod(item, m, craftStage.data.value ?? undefined) ?? m);
+}
+
+/** 工程の履歴・小さいカード・スマホの帯の MOD の文: oneValue は品 (item) の上で見える値、baseValues は素の値 (聖別の前)、ほかは今の文 (J11 ④) */
+export const stageModText = (m: StageMod, item?: StageItem): string => (ONE_VALUE && item ? shownModText(item, m) : BASE_VALUES_ON ? baseModText(m) : modText(m));
