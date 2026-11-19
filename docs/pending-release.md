@@ -6,12 +6,11 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| 100 人回しの 1 人目の道を速く光らせる (S-72d、スイッチ walkFast。1 箱約 2.6ms・長い道は 5 秒で光り切る) | 269744d27・8e53d4a6a・fc17e5eee・3047f5882 | シミュの 100 人回し: 1 人目の道を光らせる速さを上げ、長い道でも 5 秒ほどで結果の数字が出始めるように | Simulator 100-run: the first run's path now lights up much faster, so results start showing within about 5 seconds even on long paths |
-| ルーンの手を挟んでも上へ戻す (S-60g3 ⑥、スイッチ runeBack、r/4zp4OeWO の 18 段目。runeFreeAll の時だけ) | dc79c65a0・ebb4dc5aa | シミュの木: 同じ形の前の箱との間にルーンを刺す手があっても、自動で上の箱へ戻すように | Simulator tree: boxes now link back up to the earlier matching box even when a rune-socketing step sits between them |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
 
+済み (2026-11-19、v0.1.765、最終チェック長 38 (35 の係が続けて)、オーナー 11-19「修正後出しておk」、ブラック 141): origin/main 775df8368 までを出した = 表の 2 行 (100 人回しの 1 人目の道を速く光らせる S-72d walkFast 269744d27・8e53d4a6a・fc17e5eee・3047f5882、ルーンの手を挟んでも上へ戻す S-60g3 ⑥ runeBack dc79c65a0・ebb4dc5aa)。RELEASED に 2 つ (並びを詰めて release-flags.ts は 498 行)。Web 版 7cad4e9d、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 2 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.764、最終チェック長 37 (35 の係が続けて)、オーナー 11-19「出して」、ブラック 140): origin/main 2513d262e までを出した = 表の 1 行 (共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2、スイッチ sharedOpenCover、cb136d7fc・e04e899c0・88e9e8543・2513d262e・b0d80cbf1)。RELEASED に sharedOpenCover (並びを詰めて release-flags.ts は 498 行)。Web 版 e972fada、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.763、最終チェック長 36 (35 の係が続けて)、オーナー 11-19「だきて」、ブラック 140): origin/main e86ad2adc までを出した = 表の 1 行 (精査の混ざりの比べに偶然付いた狙いの形を入れない S-21b2、r/VK1opGjg の b90、スイッチ oddMixSkip、084a461b2・581d29aa9・e86ad2adc)。RELEASED に oddMixSkip (並びを詰めて release-flags.ts は 500 行)。Web 版 bf6cbb3e、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.762、最終チェック長 35、オーナー 11-19「完了時出してておｋ」「おわったらそのままだして」、ブラック 140): origin/main 0a9a7f12d までを出した = 表の 1 行 (手の無い箱への自動の ↩ が鎖になったら選び直す S-50h、r/VK1opGjg、スイッチ joinChainFix、2467679c0・7a57e8a25・0a9a7f12d)。RELEASED に joinChainFix (並びを詰めて release-flags.ts は 499 行)。Web 版 1bbb4ebf、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
