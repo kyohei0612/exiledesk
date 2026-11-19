@@ -6,6 +6,8 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| 冒涜で選んだ完成形と同じ MOD の置き石を当たりに数える (S-33h ②、スイッチ veilStoneAim) | f9c3f7bc4 | シミュレーター: 冒涜で完成形と同じ MOD を置き石に選んだ時、付いている間は外れ MOD に数えず、消去で消えた箱は「置き石が消えた」と出すようにしました | Simulator: a placed mod picked with Desecration that matches a target mod no longer counts as a miss while it is on the item, and removing it now shows "Placed mod removed" |
+| ルーンを刺す手の箱はその手のルーンだけ見る (S-60g3 ⑦、スイッチ runeHandOwn、オーナーの OK 待ち) | f9c3f7bc4 | シミュレーター: 別のルーンを刺した品も、ルーンを刺す手の箱へ戻って進めるようにしました (100 人回しで止まっていた人が完成まで進みます) | Simulator: items that already have a different rune can now return to a rune step and continue (runs that used to get stuck now finish) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
