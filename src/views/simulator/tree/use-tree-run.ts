@@ -52,6 +52,9 @@ const SLICE_MS = 30;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
 /** 1 人目の 1 箱の間の元 (ms)。1 人目は 1 箱 20ms = この 1.5 倍の速さ (S-72d) */
 const FRAME_MS = 30;
+/** (スイッチ walkFast、S-72d 11-19) 1 箱の間 (ms、1900 箱ほどの道が約 5 秒で光り切る) と長い道の歩き全体の上限 (ms)。オーナー「5秒くらいでいいかな」「1900箱の目安ね」 */
+const WALK_FAST_MS = 2.6;
+const WALK_FAST_TOTAL = 5000;
 
 /** 回す時の値段 (相場は高貴建て → 神に直す) は services の run-price 1 か所 (デイリーの検算と同じ数え方) */
 export { runPrice };
@@ -130,7 +133,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, treeStartCost: () => number, price
       const p1 = firstOf.p!;
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
       // 最初から一番速く = 1 箱 20ms、長い道は歩き全体を約 13 秒 (20 秒の 1.5 倍の速さ) に収める。輪の早送りは無し (S-72d)
-      const ms = Math.min(Math.round(FRAME_MS / 1.5), 20000 / 1.5 / Math.max(1, path.length));
+      // (スイッチ walkFast、S-72d 11-19) 1 箱約 2.6ms・歩き全体を 5 秒までに (道は最後まで光らせる)
+      const fast = flag("walkFast");
+      const ms = Math.min(fast ? WALK_FAST_MS : Math.round(FRAME_MS / 1.5), (fast ? WALK_FAST_TOTAL : 20000 / 1.5) / Math.max(1, path.length));
       // 通った箱 (足跡)。全体表示の小さい倍率で速く進んでも、どこを通ったか残る (10-22 オーナー「機能してる？」、光る枠だけでは見えなかった)
       const trail = new Set<string>();
       const w0 = performance.now();
