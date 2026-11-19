@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| 100 人回しの 1 人目の道を速く光らせる (S-72d、スイッチ walkFast。1 箱約 2.6ms・長い道は 5 秒で光り切る) | 269744d27・8e53d4a6a・fc17e5eee・3047f5882 | シミュの 100 人回し: 1 人目の道を光らせる速さを上げ、長い道でも 5 秒ほどで結果の数字が出始めるように | Simulator 100-run: the first run's path now lights up much faster, so results start showing within about 5 seconds even on long paths |
 | ルーンの手を挟んでも上へ戻す (S-60g3 ⑥、スイッチ runeBack、r/4zp4OeWO の 18 段目。runeFreeAll の時だけ) | dc79c65a0・ebb4dc5aa | シミュの木: 同じ形の前の箱との間にルーンを刺す手があっても、自動で上の箱へ戻すように | Simulator tree: boxes now link back up to the earlier matching box even when a rune-socketing step sits between them |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
