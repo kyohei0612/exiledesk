@@ -5,12 +5,12 @@
  * ☑ の MOD が完成の狙いに無い物 (置き石。例: 全耐性の前に冷気耐性で系統を埋める) は、その手の時だけ当たりで、以降は冒涜の外れ MOD (aimsOf で数えない)。
  * 付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
  */
-import { aimHits, parseKey, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, OMEN_KEY, parseKey, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { aimTargetOf } from "./tree-ele-any";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence"; import { flag } from "../../../web/release-flags";
-import { addsRandomMod, isBone } from "./tree-hands";
+import { addsRandomMod, effectOf, isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
-import { docHeld } from "./tree-sample";
+import { docHeld, sampleOf } from "./tree-sample";
 import { sameAimMod } from "./tree-hand-core";
 
 /** 後から打つ発現の手のキー (エンジンの発現は reveal:N。どれを選ぶかは tree-sample の revealBy が ☑ で決める) */
@@ -67,6 +67,25 @@ export const stoneHeld = (data: PatchData, doc: TreeDoc, g: Aim, it: StageItem):
   const st = goalStones(data, doc);
   const mods = [...it.prefixes, ...it.suffixes].filter((m) => m.desecrated && !m.unrevealed);
   return mods.length > 0 && st.some((s) => sameAimMod(data, s, g) && mods.some((m) => aimHits(m, aimTargetOf(data, s), { data, sameText: true })));
+};
+/** 品 it に冒涜で付いている、完成形と同じ MOD の置き石 (S-33h)。スイッチ veilStoneAim の下では当たりに数える札 (外れにしない) */
+export const stonesOn = (data: PatchData, doc: TreeDoc, it: StageItem): Aim[] =>
+  (doc.memoAims ?? []).filter((g) => stoneHeld(data, doc, g, it)).flatMap((g) => goalStones(data, doc).filter((x) => sameAimMod(data, x, g)));
+/**
+ * (スイッチ veilStoneAim、S-33h ②) 箱 boxId が「置き石が消えた」か = 外れが消えたの箱で、親の見本に完成形と同じ MOD の置き石が付いていて、この箱の見本には無い
+ * (光のお告げの消去などで消えた)。題だけ替える (結果の種類・人の行き先は外れが消えたのまま)
+ */
+export const stoneGoneAt = (data: PatchData, doc: TreeDoc, boxId: string): boolean => {
+  const b = doc.boxes[boxId];
+  if (!flag("veilStoneAim") || b?.out !== "junkGone" || !b.parent || !goalStones(data, doc).length) return false;
+  const was = sampleOf(data, doc, b.parent, 1).item, now = sampleOf(data, doc, boxId, 1).item;
+  return !!was && !!now && stonesOn(data, doc, was).length > 0 && stonesOn(data, doc, now).length === 0;
+};
+/** (スイッチ veilStoneAim) 箱 boxId で手 h を打つと置き石だけが消える (光のお告げの消去 = 冒涜の MOD だけ消す、冒涜は 1 品 1 つ E-60)。手の窓の「結果の箱」の文 */
+export const stoneOnlyGoneBy = (data: PatchData, doc: TreeDoc, boxId: string, h: Pick<Hand, "currency" | "omens"> | null | undefined): boolean => {
+  if (!flag("veilStoneAim") || !h || effectOf(h.currency) !== "remove" || !h.omens.includes(OMEN_KEY.light) || !goalStones(data, doc).length || !doc.boxes[boxId]) return false;
+  const it = sampleOf(data, doc, boxId, 1).item;
+  return !!it && stonesOn(data, doc, it).length > 0;
 };
 /** 無限のエッセンスの窓で ☑ した能力値の当たりの箱か (完成形に無くても選べる = 置き石と同じ扱い、S-33d。スイッチ treeInfinitePick) */
 const infinitePicked = (key: string | undefined): boolean => !!key && flag("treeInfinitePick") && isInfiniteEssence(key);

@@ -21,7 +21,7 @@ import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { bothOf, boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { goneOf, gotOf, isSwapEssence, keptAimsOf } from "./tree-keep";
 import { ODD_OUTS, oddOf } from "./tree-odd";
-import { essenceModOf, midAims, onceHeld, placedAims, stoneHeld } from "./tree-veil";
+import { essenceModOf, midAims, onceHeld, placedAims, stoneHeld, stonesOn } from "./tree-veil";
 import { fluxAimed, fluxOn } from "./tree-flux";
 import { frameKeyOf, frameOfDoc, type Frame } from "./tree-frame";
 import { treeOrder } from "./tree-order";
@@ -120,7 +120,8 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
 // eleJunk = 体の外れの数えで「いずれか」の札を使わない (一般の火・冷気・雷耐性は全部外れの数に入る。付いている本数は keys の n 番で見る)。
 // 精査の混ざり (tree-frame の bestOf) だけが使う: 狙い無しの手で 2 つ目の元素耐性が付いた人 (外れに数えない、S-10h ③) と外れが付いた人を同じ形と見る
 function contentParts(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>, eleJunk = false): { keys: Set<string>; miss: MissAims; body: string } {
-  const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, goals);
+  // (スイッチ veilStoneAim、S-33h ②) 冒涜で付いた完成形と同じ MOD の置き石は外れに数えない (完成形の狙いとは別の札 = 名前の印には入れず #s で分ける)
+  const goals = contentAims(data, doc).filter((a) => aimed.has(a.modId)), opts = aimOpts(data), miss = missAims(data, flag("veilStoneAim") ? [...goals, ...stonesOn(data, doc, it)] : goals);
   const keys = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => !a.anyEle && isAimMod(m, targetsOf(data, [heldGoal(a, it)]), opts)); if (g) keys.add(g.modId); }
   // いずれかの元素耐性の n 番は、当たる元素耐性が n 個ある時だけ (S-10h ②。MOD ごとに 1 番目の札へ寄せると 2 番が鍵に入らなかった)
@@ -243,7 +244,15 @@ const runeHandAt = (doc: TreeDoc, to: string): boolean => (flag("runeFreeAll") &
 export const runeFreeAt = (doc: TreeDoc, to: string): boolean => flag("failRuneFree") && !!doc.boxes[to] && (flag("runeFreeAll") ? !runeHandAt(doc, to) : FAIL_OUTS.has(doc.boxes[to]!.out));
 /** 中身の鍵の枠の ~r<ルーンの組>.<ソケット数> からルーンの組を外す */
 const noRunes = (k: string): string => k.replace(/~r([^~#]*)\.(\d+)(?=~|#|$)/, "~r.$2");
-const runesAt = (doc: TreeDoc, to: string, k: string): string => (runeFreeAt(doc, to) ? noRunes(k) : k);
+/**
+ * (スイッチ runeHandOwn、runeFreeAll の時だけ) ルーンを刺す手の箱へ入る比べは、その手のルーンが刺さっているかだけを見る (ほかのルーンは見ない。ソケットの数は見る)。
+ * 前はルーンの組を全部見たので、外れの道で別のルーンを刺した人が本線のルーンの手の箱にも刺した後の箱にも合わず止まった (11-19 シミュ部長 sim-veil-named の 100 人中 49 人)
+ */
+const ownRuneOf = (doc: TreeDoc, to: string): string | null => (flag("runeHandOwn") && runeHandAt(doc, to) ? doc.boxes[to]!.hand!.currency.slice(RUNE_PREFIX.length).replace(/@\d+$/, "") : null);
+const ownRunes = (k: string, r: string): string => k.replace(/~r([^~#]*)\.(\d+)(?=~|#|$)/, (_, set: string, n: string) => `~r${set.split("+").includes(r) ? r : ""}.${n}`);
+/** 箱 to へ入る比べのルーンの見方 (見ない・その手のルーンだけ・全部 = null) */
+const runeCutAt = (doc: TreeDoc, to: string): ((k: string) => string) | null => { if (runeFreeAt(doc, to)) return noRunes; const r = ownRuneOf(doc, to); return r ? (k) => ownRunes(k, r) : null; };
+const runesAt = (doc: TreeDoc, to: string, k: string): string => runeCutAt(doc, to)?.(k) ?? k;
 const keyAt = (k: string, d: boolean, c: boolean, a = false): string => k.replace(/#d(\d+\.\d+)#c(\d+\.\d+)#a(\d+)$/, (_, xd: string, xc: string, xa: string) => `${d ? `#d${xd}` : ""}${c ? `#c${xc}` : ""}${a ? `#a${xa}` : ""}`);
 /**
  * 冒涜の発現済みの外れの数も合わせる箱か: 光のお告げ (冒涜の MOD しか消さない) を含む手 (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) と、
@@ -365,8 +374,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   /** to と比べる中身 (to が光のお告げの手のある箱なら冒涜の発現済みの数も) */
   const keyFor = (to: string, k: string): string => runesAt(doc, to, keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to), needsBoneFree(doc, to)));
   const setFor = (to: string, id: string): ReadonlySet<string> | null => {
-    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to), a = needsBoneFree(doc, to), r = runeFreeAt(doc, to);
-    if (!d && !c) { const s = contents(id); return s && r ? new Set([...s].map(noRunes)) : s; }
+    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to), a = needsBoneFree(doc, to), r = runeCutAt(doc, to);
+    if (!d && !c) { const s = contents(id); return s && r ? new Set([...s].map(r)) : s; }
     const f = full(id);
     return f ? new Set([...f].map((k) => runesAt(doc, to, keyAt(k, d, c, a)))) : null;
   };
@@ -413,10 +422,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       }
       // to の中身に無い中身が from の見本に出たら、from の中身を作り切らずに違う枠 (同じ枠を探す自動の ↩ は、ほとんどの候補と最初の見本で違う。S-71b ⑲)
       // (スイッチ failRuneFree) 失敗の箱へは刺さったルーンの組を見ずに比べる
-      const rf = runeFreeAt(doc, to), strip = (s: ReadonlySet<string> | null): ReadonlySet<string> | null => (s && rf ? new Set([...s].map(noRunes)) : s);
+      const rf = runeCutAt(doc, to), strip = (s: ReadonlySet<string> | null): ReadonlySet<string> | null => (s && rf ? new Set([...s].map(rf)) : s);
       const b = strip(contents(to));
       if (!b) return false;
-      if (fullUntil(from, (k) => !b.has(rf ? noRunes(looseKey(k)) : looseKey(k))) === REJECTED) return false;
+      if (fullUntil(from, (k) => !b.has(rf ? rf(looseKey(k)) : looseKey(k))) === REJECTED) return false;
       const a = strip(contents(from));
       return !!a && a.size === b.size && [...a].every((k) => b.has(k));
     },

@@ -11,7 +11,7 @@ import { goneAlloyAt } from "../../../services/simulator/tree/tree-box-shape";
 import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import { bothOf, boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type StartFrom, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
-import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
+import { isRevealHand, stoneGoneAt, stoneOnlyGoneBy, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { oddOf } from "../../../services/simulator/tree/tree-odd"; import { lowTierAimOf, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
@@ -56,7 +56,9 @@ export function splitWhenText(w: SplitWhen): string {
 export const boxesEn = (n: number, word = ""): string => `${n} ${word}box${n === 1 ? "" : "es"}`;
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
 /** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」) */
-export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
+export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"], boxId?: string): string {
+  // 完成形と同じ MOD の置き石だけが消える手 (光のお告げの消去、S-33h ②、スイッチ veilStoneAim)
+  if (out === "junkGone" && boxId && s.data.value && stoneOnlyGoneBy(s.data.value, useTree().doc.value, boxId, h)) return tr("置き石が消えた", "Placed mod removed");
   if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   // 神の目標 (S-202): 目標に届いた / 届かなかった
   if (isDivineAim(h) && (out === "any" || out === "junk")) return out === "any" ? tr("目標以上", "Target met") : tr("目標未満", "Below target");
@@ -142,7 +144,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const k = (b as { junkKey?: string }).junkKey;
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
   // 完成形に無いエッセンスの MOD は外れなので、消えても MOD 名の題は作らない (S-33c、11-07。前の「<MOD> が消えた」は撤回)
-  const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : junkSideHead(b, k) ?? outsName(b);
+  const bid = (b as { id?: string }).id, stoneGone = !!bid && !!s.data.value && stoneGoneAt(s.data.value, useTree().doc.value, bid); // 置き石が消えた (S-33h ②、スイッチ veilStoneAim)
+  const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : stoneGone ? tr("置き石が消えた", "Placed mod removed") : junkSideHead(b, k) ?? outsName(b);
   // 木の手で付けたエッセンス / 合金の MOD が消えた枝 (鍵 n:、S-65b): MOD の名前は出さず「エッセンスの MOD が消えた」とだけ付ける (S-33c の MOD 名の題は作らないまま)
   // 合金で付けた MOD なら「合金の MOD が消えた」(11-11 オーナー「おけ」)。種類は親の見本にあってこの箱の見本に無いクラフト MOD をエンジンの craftedKindOf で
   const base1 = namedGoneOf(k) ? (goneAlloy(b) ? tr(`${base0} (合金の MOD が消えた)`, `${base0} (alloy mod removed)`) : tr(`${base0} (エッセンスの MOD が消えた)`, `${base0} (essence mod removed)`)) : base0;

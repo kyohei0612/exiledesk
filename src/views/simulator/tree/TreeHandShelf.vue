@@ -185,7 +185,7 @@ const extraOf = (a: Aim): boolean => extraAims.value.some((x) => (x.stone || a.s
 function addPicked(a: Aim): void { const st = flag("veilStone") && !addsRandomMod(held.value), g = st ? null : aimChoices.value.find((x) => x.modId === a.modId); if (g) { if (!checked.value.includes(aimKey(g))) toggleAim(g); return; } const x: Aim = st ? { ...a, stone: true } : a; if (!extraOf(x)) extraAims.value.push(x); if (!checked.value.includes(aimKey(x))) toggleAim(x); }
 function dropPicked(a: Aim): void { const d = s.data.value, g = d ? (checkedAims.value.find((x) => x.stone && sameAimMod(d, x, a)) ?? checkedAims.value.find((x) => sameAimMod(d, x, a))) : null; if (g) toggleAim(g); }
 const revealable = computed(() => !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
-const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
+const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a, props.boxId);
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);

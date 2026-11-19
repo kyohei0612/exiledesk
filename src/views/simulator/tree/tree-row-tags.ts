@@ -12,7 +12,7 @@ import { aimKey, type Aim, type Hand, type OutKind, type TreeDoc } from "../../.
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
 import { aimedOfCard } from "../../../services/simulator/tree/tree-judge";
-import { goalStones, midAims, placedAims, stoneHeld } from "../../../services/simulator/tree/tree-veil";
+import { goalStones, midAims, placedAims, stoneHeld, stonesOn } from "../../../services/simulator/tree/tree-veil";
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
@@ -75,6 +75,8 @@ export function cutEssenceOf(d: PatchData, doc: TreeDoc, boxId: string, it: Stag
 export function keepablesOf(d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): ReadonlySet<string> {
   const out = new Set<string>(aimedOfCard(d, doc, boxId, it) ?? []), mods = [...it.prefixes, ...it.suffixes];
   const cut = cutEssenceOf(d, doc, boxId, it);
+  // (スイッチ veilStoneAim、S-33h ②) 冒涜で付いた完成形と同じ MOD の置き石も残したい MOD に選べる (外れ MOD にしない)
+  if (flag("veilStoneAim")) for (const a of stonesOn(d, doc, it)) for (const m of mods) if (m.desecrated && sameAimMod(d, a, { modId: m.modId, tier: 99 })) out.add(m.modId);
   for (const a of midAims(d, doc)) {
     if (cut.has(aimKey(a))) continue;
     for (const m of mods) if (!m.fractured && sameAimMod(d, a, { modId: m.modId, tier: 99 })) out.add(m.modId);
