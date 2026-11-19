@@ -49,8 +49,10 @@ export function qualityBetween(doc: TreeDoc, id: string, t: string, j?: Judge): 
   let q = false;
   // (スイッチ catBack、自動の ↩ だけ = j を渡す所) 挟むカタリストで id の品の品質がもう上限 (同じ種類) か使い切った (0) なら挟んでいないと見る。ルーンは今のまま (S-51d、11-18 オーナー「Bダッシュね」)
   const skip = j?.catSkip && flag("catBack") ? j.catSkip.bind(j) : null;
+  // (スイッチ runeBack、runeFreeAll の時だけ) ルーンの手は挟んでいないと見る。ルーンの付いた人はルーンの手を飛ばして進むので打ち直す輪にならない (S-51d・S-60g3、r/4zp4OeWO の 18 段目)
+  const runeIn = !(flag("runeBack") && flag("runeFreeAll"));
   for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p; p = doc.boxes[p.parent ?? ""]) {
-    if (p.hand && (isRuneHand(p.hand.currency) || (effectOf(p.hand.currency) === "quality" && !skip?.(id, p.hand.currency)))) q = true;
+    if (p.hand && ((runeIn && isRuneHand(p.hand.currency)) || (effectOf(p.hand.currency) === "quality" && !skip?.(id, p.hand.currency)))) q = true;
     if (p.id === t) return q;
   }
   return false;
