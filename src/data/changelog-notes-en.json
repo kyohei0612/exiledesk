@@ -1,4 +1,8 @@
 {
+  "0.1.766": [
+    "Simulator: a placed mod picked with Desecration that matches a target mod no longer counts as a miss while it is on the item, and removing it now shows \"Placed mod removed\"",
+    "Simulator: items that already have a different rune can now return to a rune step and continue (runs that used to get stuck now finish)"
+  ],
   "0.1.765": [
     "Simulator 100-run: the first run's path now lights up much faster, so results start showing within about 5 seconds even on long paths",
     "Simulator tree: boxes now link back up to the earlier matching box even when a rune-socketing step sits between them"
