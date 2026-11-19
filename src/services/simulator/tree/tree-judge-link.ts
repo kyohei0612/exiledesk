@@ -11,11 +11,11 @@ import { DIVINE_LT, isDivineAim } from "./tree-divine";
 import { effectOf, isRuneHand } from "./tree-hands";
 import { treeOrder } from "./tree-order";
 import { outKey } from "./tree-recipe-v1";
-import { flag, type Flag } from "../../../web/release-flags";
+import { flag } from "../../../web/release-flags";
 import { hitsOn, idealPath } from "./tree-ideal-first";
 
 /** (スイッチ joinChainFix、S-50h) 表 FLAGS の行はブラックが入れる。入るまでは名前だけ (開発版では入り、本番では RELEASED に足すまで切れる) */
-const chainFix = (): boolean => flag("joinChainFix" as Flag);
+const chainFix = (): boolean => flag("joinChainFix");
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */

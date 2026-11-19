@@ -34,7 +34,7 @@ import { fullExample, isRecipeV1, pathKeysOf, RECIPE_V2, slimExample, toRecipeV1
 import type { Aim, TreeBox, TreeDoc } from "./tree-model";
 import { ODD_OUTS, oddOf, withOddKey, withoutOdd } from "./tree-odd";
 import { builtOf, type TreeBuilt } from "./tree-built";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 
 /** 箱の配置: 代表の品・☑・枠の鍵。note = 決まりで出せなかった訳 (tooMany = 枝が多すぎる手、nobranch = この箱へ行く枝が無い、split = 分かれ目の下) */
 export interface Frame { item: StageItem; aimed: ReadonlySet<string>; key: string; p: number; note: string | null; /** 代表のほかにこの箱へ着く枝の品 (重い順、見本の種 2 以降 = 「見本を幾つか見る」所が 1 品の答えにならないように) */ alts?: readonly StageItem[] }
@@ -326,9 +326,9 @@ function frameTreeIn(data: PatchData, doc: TreeDoc): FrameTree {
       const all = heavy.map(pick);
       // 1 つの箱に枠の違う品が着く (結果が 2 通り以上なのに箱が 1 つ = S-27d (ア) の外れ、11-11 ごめんね)。「どれか」の当たり・まとめた箱は人が選んだので見ない
       // 比べは箱をつなぐ時と同じ (keyForBox: この箱の手が要る時だけエッセンス・冒涜の外れの数を見る、S-201c。前は丸ごと比べ、消去の箱に偽の未設定 = r/y5msCmTe の b28)
-      // 「いずれか」の狙いがある木は、余分に付いた元素耐性 (外れに数えない、S-10h ③) と外れを同じ形と見る (eleJunk。数・行き先は fitsItem のまま)
-      const anyEle = (doc.memoAims ?? []).some((a) => a.anyEle), mixKey = (fr: Frame): string => keyForBox(doc, o, anyEle ? frameKeyOf(contentOf(data, doc, fr.item, fr.aimed, true)) : fr.key);
-      if (!c.anyOf?.length && !c.mergedOuts?.length && !c.merged && new Set(all.map(mixKey)).size > 1) mixed.add(o);
+      // 「いずれか」の狙いがある木は、余分に付いた元素耐性 (外れに数えない、S-10h ③) と外れを同じ形と見る (eleJunk。数・行き先は fitsItem のまま)。(スイッチ oddMixSkip、S-21b2) 外れ・打った後の箱では、この手で完成形の狙いが偶然付いた形 (冒涜で付いた置き石の枠 S-33h も) を比べに入れない = 回すと先へ進むか予期せぬで作り直す人 (r/VK1opGjg の b90)
+      const anyEle = (doc.memoAims ?? []).some((a) => a.anyEle), mixKey = (fr: Frame): string => keyForBox(doc, o, anyEle ? frameKeyOf(contentOf(data, doc, fr.item, fr.aimed, true)) : fr.key), plain = flag("oddMixSkip" as Flag) && ODD_OUTS.has(c.out) ? all.filter((fr) => !oddIdx(fr.item, from.item).length) : all, mixAll = plain.length ? plain : all;
+      if (!c.anyOf?.length && !c.mergedOuts?.length && !c.merged && new Set(mixAll.map(mixKey)).size > 1) mixed.add(o);
       // 重い順の LOOK に入らない枝も、木の族を塞ぐ MOD の組が違えば 1 つずつ当てる (外れの印 (g) の違う枝、代表には選ばない)
       const seenSig = new Set(heavy.map((r) => famSig(r.item))), marks = new Set(all.map((fr) => blockMarkOf(data, doc, fr.item, fr.aimed))), marked: Frame[] = [];
       for (const r of sorted.slice(LOOK)) {
