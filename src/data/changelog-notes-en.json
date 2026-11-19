@@ -1,4 +1,8 @@
 {
+  "0.1.765": [
+    "Simulator 100-run: the first run's path now lights up much faster, so results start showing within about 5 seconds even on long paths",
+    "Simulator tree: boxes now link back up to the earlier matching box even when a rune-socketing step sits between them"
+  ],
   "0.1.764": [
     "Simulator: Opening a shared recipe now shows \"Loading recipe…\" over the whole screen until it finishes, so buttons can no longer be pressed mid-load"
   ],

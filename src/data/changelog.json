@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.765",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュの 100 人回し: 1 人目の道を光らせる速さを上げ、長い道でも 5 秒ほどで結果の数字が出始めるように",
+    "en": "Simulator 100-run: the first run's path now lights up much faster, so results start showing within about 5 seconds even on long paths"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュの木: 同じ形の前の箱との間にルーンを刺す手があっても、自動で上の箱へ戻すように",
+    "en": "Simulator tree: boxes now link back up to the earlier matching box even when a rune-socketing step sits between them"
+   }
+  ]
+ },
+ {
   "v": "0.1.764",
   "date": "2026-11-19",
   "items": [
@@ -1108,48 +1126,6 @@
     "area": "",
     "text": "取引所で探す: 付与スキルを選ぶアミュレットの時、付与スキルを選んで検索に入れられるようにしました (エミュレーター・シミュレーター)",
     "en": "Trade site search: for amulets that grant a skill, you can now pick the granted skill and include it in the search (Emulator and Simulator)"
-   }
-  ]
- },
- {
-  "v": "0.1.725",
-  "date": "2026-11-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成・最終チェックを押した時に、木を見やすい形に並べ直すようにしました。木の横幅も詰めて表示します。手を置いて出た新しい箱は 当たり → 未設定 → 残り の順に並びます",
-    "en": "Simulator: pressing Done or Final check now rearranges the tree into an easier-to-read layout, and the tree is drawn narrower. New boxes from a step are ordered hit → unset → the rest"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の帯の「未設定 ＋」から手を置いた時に、木の表示が横にずれる不具合を直しました",
-    "en": "Simulator: fixed the tree view shifting sideways when placing a step from \"Unset +\" on a Whittling lane band"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 前に保存した木を開いた時、仕組みが変わった後は今の決まりで組み直すようにしました",
-    "en": "Simulator: saved trees are now rebuilt with the current rules when opened after the rules have changed"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: フラクチャーオーブで固めた MOD を、品に付いている段と値のまま表示するようにしました (前は完成形の段の値で表示していました)",
-    "en": "Simulator: mods locked with a Fracturing Orb now show the tier and value they actually have on the item (before, they showed the tier value from the finished item)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 共有・保存した木を開いた時、スタートの箱を左上に置き、50% の大きさから表示するようにしました",
-    "en": "Simulator: when opening a shared or saved tree, the Start box is now placed at the top left and the view starts at 50% zoom"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 11/13 のお題から、お題のティアを T2 以上にしました (前は T3 以上)",
-    "en": "Daily: from the 11/13 challenge, challenge tiers are T2 or higher (previously T3 or higher)"
    }
   ]
  }

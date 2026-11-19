@@ -257,12 +257,10 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
-  // 0.1.764 共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2。オーナー 11-19「出して」、ブラック 140
-  "sharedOpenCover",
-  // 0.1.763 精査の混ざりの比べに偶然付いた狙いの形を入れない S-21b2 (r/VK1opGjg の b90)。オーナー 11-19「だきて」、ブラック 140
-  "oddMixSkip",
-  // 0.1.762 手の無い箱への自動の ↩ が鎖になったら選び直す S-50h (r/VK1opGjg)。オーナー 11-19「完了時出してておｋ」「おわったらそのままだして」、ブラック 140
-  "joinChainFix",
+  // 0.1.765 100 人回しの 1 人目の道を速く光らせる S-72d (walkFast)・ルーンの手を挟んでも上へ戻す S-60g3 ⑥ (runeBack)。オーナー 11-19「修正後出しておk」、ブラック 141
+  "walkFast", "runeBack",
+  // 0.1.764 共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2 (sharedOpenCover、オーナー 11-19「出して」)・0.1.763 精査の混ざりの比べに偶然付いた狙いの形を入れない S-21b2 (oddMixSkip、r/VK1opGjg の b90、「だきて」)・0.1.762 手の無い箱への自動の ↩ が鎖になったら選び直す S-50h (joinChainFix、r/VK1opGjg、「完了時出してておｋ」)。ブラック 140
+  "sharedOpenCover", "oddMixSkip", "joinChainFix",
   // 0.1.760 勢力の札 U-12k・保存できない時の赤い帯 S-101c ②・保存したレシピを変えない S-100b・S-104g・ルーンの比べ S-60g3・冒涜の見本の段の下限 S-200 ③。オーナー 11-19「だして」、ブラック 140
   "factionChips", "recipeFullNotice", "recipeFrozen", "runeFreeAll", "aimFloorVeil",
   // 0.1.759 レシピの保存の枠が一杯の時に黙らない・止まった移しを終える・並びを逆にしない S-101c (デイリーの記録を今日の 1 枠に D-32c と同じ版)。オーナー 11-18 夜「おｋ　出して」、ブラック 139
