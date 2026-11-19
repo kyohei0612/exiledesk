@@ -8,6 +8,7 @@
 |---|---|---|---|
 | MOD の段の表: スマホで右の数が文に重なるのを直す (U-12j2、スイッチ tierNumFit。見た目の OK 待ち) | (この commit) | MOD 一覧: スマホで段の表の右の数字が MOD の文に重なっていたのを直しました | Mod list: on phones, the numbers on the right of the tier table no longer overlap the mod text |
 | MOD の表の文を言葉の切れ目で折る (U-12j3、スイッチ wordPhrase。見た目の OK 待ち) | (この commit) | MOD 一覧: MOD の文が言葉の途中で折り返さないようにしました | Mod list: Japanese mod text now wraps between words instead of mid-word |
+| ティア調整で一度下げた段を上げ直せる (S-10f2、スイッチ tierUp。**見た目の OK 待ち**、絵 = 共有 progress/sim-later-tierUp-window.png) | 5c8d7936d と続きの 1 つ・FLAGS 991f2b438 | シミュ: 狙うMODの一括ティア調整で、一度下げた段を上げ直せるようにしました | Simulator: in Adjust target mod tiers, you can now raise a tier again after lowering it |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
