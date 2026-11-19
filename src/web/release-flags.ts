@@ -255,6 +255,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // 0.1.764 共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2。オーナー 11-19「出して」、ブラック 140
+  "sharedOpenCover",
   // 0.1.763 精査の混ざりの比べに偶然付いた狙いの形を入れない S-21b2 (r/VK1opGjg の b90)。オーナー 11-19「だきて」、ブラック 140
   "oddMixSkip",
   // 0.1.762 手の無い箱への自動の ↩ が鎖になったら選び直す S-50h (r/VK1opGjg)。オーナー 11-19「完了時出してておｋ」「おわったらそのままだして」、ブラック 140
@@ -263,12 +265,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "factionChips", "recipeFullNotice", "recipeFrozen", "runeFreeAll", "aimFloorVeil",
   // 0.1.759 レシピの保存の枠が一杯の時に黙らない・止まった移しを終える・並びを逆にしない S-101c (デイリーの記録を今日の 1 枠に D-32c と同じ版)。オーナー 11-18 夜「おｋ　出して」、ブラック 139
   "recipeRoom",
-  // 0.1.758 カタリストを挟んでも品質が上限か使い切った後なら自動の ↩ S-51d B'
-  "catBack",
-  // 0.1.757 冒涜・発現の窓で選んだ MOD は置き石 S-33h
-  "veilStone",
-  // 0.1.756 デイリーの保存の分け方 D-36e
-  "dailySaveSplit",
+  // 0.1.758 カタリストを挟んでも品質が上限か使い切った後なら自動の ↩ S-51d B' (catBack)・0.1.757 冒涜・発現の窓で選んだ MOD は置き石 S-33h (veilStone)・0.1.756 デイリーの保存の分け方 D-36e (dailySaveSplit)
+  "catBack", "veilStone", "dailySaveSplit",
   // 0.1.754 偶然付いた狙いは予期せぬで止めて作り直す (S-21b2 oddStop)。オーナー 11-18「だしって」
   "oddStop",
   // 0.1.752 見本の配置で古い枝を当てない (S-21b oddStale)・組み直しで保存の手を同じ道の箱へ付け直す (S-21b oddCarry)。オーナー 11-18「だして、直してからだすで」「骨至急だな」、ブラック 135

@@ -1,4 +1,7 @@
 {
+  "0.1.764": [
+    "Simulator: Opening a shared recipe now shows \"Loading recipe…\" over the whole screen until it finishes, so buttons can no longer be pressed mid-load"
+  ],
   "0.1.763": [
     "Simulator: Final Check no longer flags a box as unset just because a target mod was added by chance (e.g. an untargeted Desecrate)"
   ],

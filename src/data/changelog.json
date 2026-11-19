@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.764",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 共有のレシピを開いた時、読み込みが終わるまで画面全体を「レシピ読み込み中…」にし、途中でボタンが押せて画面が崩れないようにしました",
+    "en": "Simulator: Opening a shared recipe now shows \"Loading recipe…\" over the whole screen until it finishes, so buttons can no longer be pressed mid-load"
+   }
+  ]
+ },
+ {
   "v": "0.1.763",
   "date": "2026-11-19",
   "items": [
@@ -1138,18 +1150,6 @@
     "area": "",
     "text": "デイリー: 11/13 のお題から、お題のティアを T2 以上にしました (前は T3 以上)",
     "en": "Daily: from the 11/13 challenge, challenge tiers are T2 or higher (previously T3 or higher)"
-   }
-  ]
- },
- {
-  "v": "0.1.724",
-  "date": "2026-11-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の手をまとめてやめられるようにしました。枠 (低い・同じ・高い) の帯の右の「削減をやめる」を押すと、確認の後に枠を 1 つの箱に戻して次に打つ手を選べます。削減の手を別の手に替える時の確認の窓にも「削減を全部やめる」を足しました (これまでは枠の数だけ同じ替えを繰り返す必要がありました)",
-    "en": "Simulator: you can now stop a Whittling step all at once. Click \"Stop Whittling\" to the right of the lane band (Lower / Same / Higher); after a confirmation the lanes go back to one box and you can choose the next step. The confirmation dialog shown when replacing a Whittling step with another step also gets a \"Stop all Whittling\" option (before, you had to repeat the same change for every lane)"
    }
   ]
  }
