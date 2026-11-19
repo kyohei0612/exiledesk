@@ -4,7 +4,8 @@
  * オーブ (高貴の上級・完全など) は自動で替えない (11-13 オーナー「今のオーブで出なかったら注意書きでオーブのおすすめ」「変更加えたオーブだけいじったらええ」):
  * 今のオーブの段の下限 (E-11d、エンジンの orbFloor) では狙いの下限の段が出ない手だけを orbMisfits で拾い、画面が「オーブをどうしますか」とおすすめを出す。
  * ✦ (フラクチャーの印) の MOD は木 (3) では下げない。2 完成の MOD の画面のティア調整 (frac) では ✦ も下げ、そこで決めた段がフラクチャーの候補の下限になる
- * (11-13 オーナー「フラクチャーMODが複数ついた場合もう最初のベース決めの次MOD選びの段階でティア調整ボタンは配置しておくべき」)。上げは無し。
+ * (11-13 オーナー「フラクチャーMODが複数ついた場合もう最初のベース決めの次MOD選びの段階でティア調整ボタンは配置しておくべき」)。
+ * 上げ直しはスイッチ tierUp の間だけ (S-10f2、引数 up)。
  */
 import { orbFloor, parseKey, type OrbStrength, type PatchData } from "../../craft-stage/engine";
 import { sameAimMod } from "./tree-hand-core";
@@ -47,8 +48,9 @@ export const canLowerGoal = (data: PatchData, doc: TreeDoc, goal: Aim): boolean 
  */
 /** 貼り付けの値を外した狙い (✦ の印などほかはそのまま) */
 const noValues = (a: Aim): Aim => { const { values: _v, ...rest } = a; return rest; };
-export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, frac = false, boxOk?: (boxId: string) => boolean): boolean {
-  if (to.tier <= from.tier || (!frac && !canLowerGoal(data, d, from))) return false;
+export function lowerGoalTier(data: PatchData, d: TreeDoc, from: Aim, to: Aim, frac = false, boxOk?: (boxId: string) => boolean, up = false): boolean {
+  // up = 上げ直しも受ける (S-10f2、スイッチ tierUp。同じ段は何もしない)
+  if ((up ? to.tier === from.tier : to.tier <= from.tier) || (!frac && !canLowerGoal(data, d, from))) return false;
   const same = (a: Aim): boolean => sameAimMod(data, a, from);
   const down = (a: Aim): Aim => (same(a) && (frac || !a.fractured) ? { ...a, modId: to.modId, tier: to.tier } : a);
   d.memoAims = (d.memoAims ?? []).map((a) => (same(a) && (frac || !a.fractured) ? { ...noValues(a), modId: to.modId, tier: to.tier } : a));
@@ -84,11 +86,13 @@ export function fixedAfter(data: PatchData, d: TreeDoc): (boxId: string) => bool
  * ✦ の印の狙いの普通側の段 (固定されなかった時に要る段) を to に下げる (S-10g、スイッチ fracDual)。
  * 完成形の狙いの plainTier と、固定の後の当たりの箱・残す MOD の段も一緒に下げる (11-13 オーナー「一括やから変えるで」)。after = 書き換える前に作った fixedAfter
  */
-export function lowerPlainTier(data: PatchData, d: TreeDoc, goal: Aim, to: number, after: (boxId: string) => boolean = fixedAfter(data, d)): boolean {
+export function lowerPlainTier(data: PatchData, d: TreeDoc, goal: Aim, to: number, after: (boxId: string) => boolean = fixedAfter(data, d), up = false): boolean {
   const now = goal.plainTier ?? goal.tier;
-  if (!goal.fractured || to <= now) return false;
+  if (!goal.fractured || (up ? to === now : to <= now)) return false;
   d.memoAims = (d.memoAims ?? []).map((a) => (a.fractured && sameAimMod(data, a, goal) ? { ...a, plainTier: to } : a));
-  const down = (a: Aim): Aim => (sameAimMod(data, a, goal) && a.tier < to ? { ...a, tier: to } : a);
+  // 下げ = to より上の段の札を to へ。上げ (S-10f2) = 今の段から to より下の札を to へ (今の段より緩く置いた札は触らない)
+  const move = (t: number): boolean => (to > now ? t < to : t > to && t <= now);
+  const down = (a: Aim): Aim => (sameAimMod(data, a, goal) && move(a.tier) ? { ...a, tier: to } : a);
   for (const b of Object.values(d.boxes)) {
     if (!after(b.id)) continue;
     if (b.aim) b.aim = down(b.aim);

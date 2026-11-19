@@ -1,7 +1,7 @@
 <!--
   TreeTierBulk.vue — 完成形のカードの「ティア調整」で開く「狙うMODの一括ティア調整」(S-10f、スイッチ tierDown)。
   11-13 オーナー「ティア調整ボタンで、狙いモッド全て表示してティアをそこで選ばせる…プルダウンで⚪︎ティア以上ってやればおけ」:
-  完成形の狙いを 1 行ずつ並べ、行ごとのプルダウンで「T○ 以上」を選ぶ (今の段と、それより下だけ。上げは無し)。✦ の行も選べる。
+  完成形の狙いを 1 行ずつ並べ、行ごとのプルダウンで「T○ 以上」を選ぶ (今の段と、それより下だけ。スイッチ tierUp の間は上の段も = S-10f2)。✦ の行も選べる。
   開くのは完成形のカードのボタンだけ (2 完成の MOD の画面の右のカードと木の右のカード)。どこから開いても同じ窓 (11-13 オーナー「完成イメージカードだけでええんやないおくの」)。
   「決める」で選んだ行を全部下げる (木の当たりの箱の段・残す MOD の段も一緒、1 つ戻すで戻せる)。今のオーブで出ない手は下げた後に TreeOrbAsk が聞く。
   100 人回した後は、行ごとに「その行だけ選んだ段まで下げた木」を同じ種・同じ値段で 100 人回した完成率を順に数えて出す
@@ -32,6 +32,7 @@ useDismiss(() => true, [box], () => emit("close"));
 interface Line { goal: Aim; head: string; locked: boolean; plain: boolean; base: number; tiers: { tier: number; text: string; ilvl: number }[] }
 /** 2 つ持ち (S-10g): ✦ の印が 2 つ以上の時、✦ の狙いを ✦ 側 / 普通側の 2 行に (どこから開いても) */
 const DUAL = flag("fracDual");
+const upOn = computed(() => flag("tierUp"));
 const dualOn = computed(() => DUAL && t.goals.value.filter((a) => a.fractured).length >= 2);
 /** 狙いごとの行 (この MOD の段だけ。今の段から下へ) */
 const lines = computed<Line[]>(() => {
@@ -46,23 +47,25 @@ const lines = computed<Line[]>(() => {
     const row = t.rows.value.find((r) => is(r.id) || r.tiers.some((x) => is(x.modId)));
     const all = (row?.tiers ?? []).filter((x) => !x.modId || is(x.modId));
     const now = all.find((x) => x.tier === goal.tier);
-    const mk = (plain: boolean): Line => { const base = plain ? goal.plainTier ?? goal.tier : goal.tier; return { goal, plain, base, head: now?.text ?? row?.text ?? t.aimLabel(goal), locked: false, tiers: all.filter((x) => x.tier >= base).sort((a, z) => a.tier - z.tier) }; };
+    const mk = (plain: boolean): Line => { const base = plain ? goal.plainTier ?? goal.tier : goal.tier; return { goal, plain, base, head: now?.text ?? row?.text ?? t.aimLabel(goal), locked: false, tiers: all.filter((x) => upOn.value || x.tier >= base).sort((a, z) => a.tier - z.tier) }; };
     return dualOn.value && goal.fractured ? [mk(false), mk(true)] : [mk(false)];
   });
 });
 /** 行ごとに選んだ段 (狙いの順。初めは今の段) */
 const picked = ref<number[]>([]);
+/** 行 i の選んだ段が今と違うか (上げは tierUp の間だけ) */
+const moved = (l: Line, i: number): boolean => { const p = picked.value[i] ?? l.base; return upOn.value ? p !== l.base : p > l.base; };
 watch(lines, (ls) => { picked.value = ls.map((l) => l.base); }, { immediate: true });
-const changed = computed(() => lines.value.filter((l, i) => !l.locked && (picked.value[i] ?? l.base) > l.base).length);
+const changed = computed(() => lines.value.filter((l, i) => !l.locked && moved(l, i)).length);
 /**
  * 1 行を木 d に当てる。置いた当たりの箱・残す MOD の段も一緒に下げる (11-13 オーナー「一括やから変えるで」)。
  * 2 つ持ちの ✦ の MOD は、✦ 側 = 固定の前の箱だけ (普通側を今の段に留めてから)・普通側 = 固定の後の箱だけ (after = 書き換える前に作った fixedAfter)
  */
 function lowerLine(data: NonNullable<typeof s.data.value>, d: TreeDoc, l: Line, tier: number, after: (boxId: string) => boolean): void {
   const dual = dualOn.value && !!l.goal.fractured;
-  if (l.plain) { lowerPlainTier(data, d, l.goal, tier, after); return; }
+  if (l.plain) { lowerPlainTier(data, d, l.goal, tier, after, upOn.value); return; }
   if (dual) pinPlainTier(data, d, l.goal);
-  lowerGoalTier(data, d, l.goal, { modId: l.goal.modId, tier }, true, dual ? (id) => !after(id) : undefined);
+  lowerGoalTier(data, d, l.goal, { modId: l.goal.modId, tier }, true, dual ? (id) => !after(id) : undefined, upOn.value);
 }
 
 /** 完成率 (鍵 = "now" か "行:段")。無い = まだ数えていない */
@@ -92,7 +95,7 @@ async function count(): Promise<void> {
   try {
     const base = t.doc.value;
     for (;;) {
-      const want = ["now", ...lines.value.flatMap((l, i) => (!l.locked && (picked.value[i] ?? 0) > l.base ? [`${i}:${picked.value[i]}`] : []))].find((k) => !(k in rates.value));
+      const want = ["now", ...lines.value.flatMap((l, i) => (!l.locked && moved(l, i) ? [`${i}:${picked.value[i]}`] : []))].find((k) => !(k in rates.value));
       if (!want || !alive || t.doc.value !== base) return;
       let d = base;
       if (want !== "now") {
@@ -112,10 +115,10 @@ const pct = (r: number | null | undefined): string => (r == null ? "…" : `${Ma
 function apply(): void {
   const data = s.data.value;
   if (!data || !changed.value) return;
-  const goals = lines.value.map((l, i) => ({ l, tier: picked.value[i] ?? l.base })).filter((x) => !x.l.locked && x.tier > x.l.base);
+  const goals = lines.value.map((l, i) => ({ l, tier: picked.value[i] ?? l.base })).filter((x) => !x.l.locked && x.tier !== x.l.base);
   // ✦ 側を先に (同じ MOD の普通側は後から plainTier を書く)
   t.edit((d) => { const after = fixedAfter(data, d); for (const x of [...goals.filter((g) => !g.l.plain), ...goals.filter((g) => g.l.plain)]) lowerLine(data, d, x.l, x.tier, after); });
-  emit("lowered", goals.filter((x) => !x.l.plain).map((x) => x.l.goal.modId));
+  emit("lowered", goals.filter((x) => !x.l.plain && x.tier > x.l.base).map((x) => x.l.goal.modId)); // オーブを聞くのは下げた行だけ
   emit("close");
 }
 </script>
@@ -140,10 +143,10 @@ function apply(): void {
               class="w-[9.5rem] shrink-0 rounded border border-[#c9a45c]/50 bg-[#0f0b06] px-1 py-0.5 text-[12px] tabular-nums text-[#f2d27a]">
               <option v-for="x in l.tiers" :key="x.tier" :value="x.tier">{{ tr(`T${x.tier} 以上`, `T${x.tier}+`) }}{{ x.tier === l.base ? tr(" (今)", " (now)") : "" }} · Lv{{ x.ilvl }}</option>
             </select>
-            <span class="w-[6.5rem] shrink-0 text-right text-[12px] tabular-nums" :class="(picked[i] ?? 0) > l.base ? 'text-emerald-300' : 'text-white/35'">
-              <template v-if="(picked[i] ?? 0) <= l.base">{{ tr("そのまま", "Unchanged") }}</template>
-              <template v-else-if="t.runReady.value">{{ tr("下げると", "Lower:") }} {{ pct(rates[`${i}:${picked[i]}`]) }}</template>
-              <template v-else>{{ tr("下げる", "Lower") }}</template>
+            <span class="w-[6.5rem] shrink-0 text-right text-[12px] tabular-nums" :class="moved(l, i) ? 'text-emerald-300' : 'text-white/35'">
+              <template v-if="!moved(l, i)">{{ tr("そのまま", "Unchanged") }}</template>
+              <template v-else-if="t.runReady.value">{{ (picked[i] ?? 0) < l.base ? tr("上げると", "Raise:") : tr("下げると", "Lower:") }} {{ pct(rates[`${i}:${picked[i]}`]) }}</template>
+              <template v-else>{{ (picked[i] ?? 0) < l.base ? tr("上げる", "Raise") : tr("下げる", "Lower") }}</template>
             </span>
           </template>
         </div>
@@ -152,7 +155,8 @@ function apply(): void {
       <details data-tree-tier-rules class="mt-2 text-[12px] leading-snug text-white/55">
         <summary class="cursor-pointer select-none text-white/70">{{ tr("詳細ルール", "Rules") }}</summary>
         <ul class="mt-1 list-disc space-y-0.5 pl-5">
-          <li>{{ tr("選べるのは今の段と、それより下だけ", "Only the current tier or lower") }}</li>
+          <li v-if="upOn">{{ tr("今の段より上にも下にも選べる", "Pick a tier above or below the current one") }}</li>
+          <li v-else>{{ tr("選べるのは今の段と、それより下だけ", "Only the current tier or lower") }}</li>
           <li>{{ tr("% = 100 人回した後、その行だけ下げた時の完成率", "% = completion rate if only that row is lowered (after running 100)") }}</li>
           <li>{{ tr("決めるとツリーの当たりの箱の段も下がる (1 つ戻すで戻せる)", "Applying also lowers the hit boxes in the tree (Undo restores)") }}</li>
           <li>{{ tr("今のオーブでその段が出ない手は、決めた後に替えるかを聞く", "If an orb can't roll the new tier, you'll be asked whether to switch it") }}</li>
