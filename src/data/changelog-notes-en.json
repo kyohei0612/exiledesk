@@ -1,4 +1,7 @@
 {
+  "0.1.768": [
+    "Emulator: on sanctified items the sanctify controls now sit next to the granted skill picker, and the quality type box no longer cuts off its text"
+  ],
   "0.1.767": [
     "Item mod values on the crafting bench now show a single number: the value after Sanctification and quality, with no small number in parentheses. Removed mods and the craft history use the same values"
   ],

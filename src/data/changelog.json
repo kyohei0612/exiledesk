@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.768",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュの品の上の帯: 聖別した品の聖別の倍率を付与スキルの横に並べて 2 行に収め、品質の種類の欄の字切れを直しました",
+    "en": "Emulator: on sanctified items the sanctify controls now sit next to the granted skill picker, and the quality type box no longer cuts off its text"
+   }
+  ]
+ },
+ {
   "v": "0.1.767",
   "date": "2026-11-19",
   "items": [
@@ -1066,18 +1078,6 @@
     "area": "",
     "text": "要望への返事: 返事が届いた時、今開いている画面にもポップアップで知らせるようにしました",
     "en": "Replies to feedback: when a reply arrives, a popup now also shows on the page you have open"
-   }
-  ]
- },
- {
-  "v": "0.1.728",
-  "date": "2026-11-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 今日のお題の絵を、始める前も明るく見せるようにしました",
-    "en": "Daily: today's challenge image is now shown bright even before you start"
    }
   ]
  }
