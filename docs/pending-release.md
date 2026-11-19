@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| エミュの品の上の帯を 2 行に整える (U-12h2、スイッチ barOneRow。見た目 OK オーナー 11-19「おｋ」) | a271d4417・a85a8705e | エミュの品の上の帯: 聖別した品の聖別の倍率を付与スキルの横に並べて 2 行に収め、品質の種類の欄の字切れを直しました | Emulator: on sanctified items the sanctify controls now sit next to the granted skill picker, and the quality type box no longer cuts off its text |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
