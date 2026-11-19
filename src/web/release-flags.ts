@@ -256,15 +256,14 @@ export const FLAGS = {
   runeHandOwn: "シミュの木: runeFreeAll の時、ルーンを刺す手の箱へ入る比べはその手のルーンが刺さっているかだけを見る (ほかのルーンは見ない)。外れの道で別のルーンを刺した人が本線へ戻れる (S-60g3 ⑦、11-19 のレシピで 100 人中 49 人が止まった。開発版だけ)",
   oneValue: "エミュの札: MOD の数は 1 つ。聖別・品質 (ルーン・暗黙の品質も) を掛けた後の値をそのまま出し、括弧の盛った値はやめる (E-96b・M-xx、11-19 オーナー「聖別は付けたらしっかり元のＭＯＤの値が上がるように…品質も…元の値にかけちゃって…統一してＵＩ」、エミュ部長 emu-spirit-over。開発版だけ)",
   barOneRow: "エミュの品の上の帯: 聖別の帯 (聖別・最小・倍率・最大) を付与スキル「どれでも」の横に並べて 2 行目を 1 列に、品質の種類の欄は字が切れない幅に (U-12h2、オーナー 11-19「聖別時はどれでもの横に置こうか1列で」。開発版だけ)",
+  tierUp: "シミュの木: 狙うMODの一括ティア調整で、一度下げた段を上げ直せる (プルダウンに今の段より上も出す。上げた行は「上げると X%」、決定で当たりの箱・残す MOD の段も揃える。S-10f2、オーナー 11-19 深夜「ティア調整で一度ティアを下げてつけるとティアをあげれない。」)。閉じている間は今の段と下だけ",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
-  // 0.1.768 エミュの品の上の帯 U-12h2 (barOneRow、オーナー 11-19「おｋ」「だして」)・0.1.767 札の MOD の数を 1 つに E-96b (oneValue、オーナー 11-19「統一してＵＩ　んで出しておｋ」)・0.1.766 冒涜で選んだ完成形と同じ MOD の置き石を当たりに数える S-33h ② (veilStoneAim)・ルーンを刺す手の箱はその手のルーンだけ見る S-60g3 ⑦ (runeHandOwn)。オーナー 11-19「だして」、ブラック 141・0.1.765 道の光らせ S-72d (walkFast)・ルーンの手を挟んでも戻す S-60g3 ⑥ (runeBack)
-  "barOneRow", "oneValue", "veilStoneAim", "runeHandOwn", "walkFast", "runeBack",
-  // 0.1.764 共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2 (sharedOpenCover、オーナー 11-19「出して」)・0.1.763 精査の混ざりの比べに偶然付いた狙いの形を入れない S-21b2 (oddMixSkip、r/VK1opGjg の b90、「だきて」)・0.1.762 手の無い箱への自動の ↩ が鎖になったら選び直す S-50h (joinChainFix、r/VK1opGjg、「完了時出してておｋ」)。ブラック 140
-  "sharedOpenCover", "oddMixSkip", "joinChainFix",
+  // 0.1.768 エミュの品の上の帯 U-12h2 (barOneRow、オーナー 11-19「おｋ」「だして」)・0.1.767 札の MOD の数を 1 つに E-96b (oneValue、オーナー 11-19「統一してＵＩ　んで出しておｋ」)・0.1.766 冒涜で選んだ完成形と同じ MOD の置き石を当たりに数える S-33h ② (veilStoneAim)・ルーンを刺す手の箱はその手のルーンだけ見る S-60g3 ⑦ (runeHandOwn)。オーナー 11-19「だして」、ブラック 141・0.1.765 道の光らせ S-72d (walkFast)・ルーンの手を挟んでも戻す S-60g3 ⑥ (runeBack)・0.1.764 (sharedOpenCover, oddMixSkip, joinChainFix)
+  "barOneRow", "oneValue", "veilStoneAim", "runeHandOwn", "walkFast", "runeBack", "sharedOpenCover", "oddMixSkip", "joinChainFix",
   // 0.1.760 勢力の札 U-12k・保存できない時の赤い帯 S-101c ②・保存したレシピを変えない S-100b・S-104g・ルーンの比べ S-60g3・冒涜の見本の段の下限 S-200 ③。オーナー 11-19「だして」、ブラック 140。0.1.759 (recipeRoom) レシピの保存の枠が一杯の時に黙らない・止まった移しを終える・並びを逆にしない S-101c (デイリーの記録を今日の 1 枠に D-32c と同じ版)。オーナー 11-18 夜「おｋ　出して」、ブラック 139
   "factionChips", "recipeFullNotice", "recipeFrozen", "runeFreeAll", "aimFloorVeil", "recipeRoom",
   // 0.1.758 カタリストを挟んでも品質が上限か使い切った後なら自動の ↩ S-51d B' (catBack)・0.1.757 冒涜・発現の窓で選んだ MOD は置き石 S-33h (veilStone)・0.1.756 デイリーの保存の分け方 D-36e (dailySaveSplit)
