@@ -19,7 +19,8 @@ const list = computed(() => grantedSkillsOf(props.base));
  */
 const SLIM = flag("qbarOneLine");
 const labelCls = SLIM ? "text-[11px] leading-none text-white/60" : "text-[12px] text-[var(--exile-color-text-secondary)]";
-const selCls = SLIM ? "h-6 max-w-[11rem] cursor-pointer rounded border bg-black/60 px-1" : "h-[30px] max-w-[11rem] cursor-pointer rounded border bg-black/60 px-1.5 max-md:h-10";
+// 聖別の帯と 1 列に並べる時 (U-12h2、スイッチ barOneRow) は 1 行目の上限の欄と同じくらいの幅に
+const selCls = SLIM ? `h-6 ${flag("barOneRow") ? "max-w-[8rem]" : "max-w-[11rem]"} cursor-pointer rounded border bg-black/60 px-1` : "h-[30px] max-w-[11rem] cursor-pointer rounded border bg-black/60 px-1.5 max-md:h-10";
 const onCls = "border-amber-300/70 text-amber-100";
 const offCls = SLIM ? "border-white/15 text-white/80" : "border-white/15 text-white/70";
 watch(list, (l) => { if (skill.value && !l.some((k) => k.en === skill.value)) skill.value = null; }, { immediate: true });

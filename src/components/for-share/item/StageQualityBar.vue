@@ -30,10 +30,13 @@ const extraCat = computed(() => hasExtraCatalyst(props.item.base));
  * 部位はエンジンの spec の対象 (targetBlock) から引く (2026-11-07 オーナー「品質の設定のとこだけどね出すのカタリスト」、前は部位の名前を画面で決めていた)。
  * 精製された物は名前で出す (種類の札だけだと指輪の物と見分けがつかない)。グラスピングメイルは下の別の欄
  */
+/** 種類の欄は「品質 (キャスターモッド)」→「キャスター」(帯に「品質」と出ているので。詰めた欄で字が切れていた。U-12h2、スイッチ barOneRow) */
+const SHORT_TYPE = flag("barOneRow");
+const shortType = (s: string) => (SHORT_TYPE ? s.replace(/^(品質|Quality)\s*[(（]\s*/, "").replace(/\s*(モッド|Modifiers)?\s*[)）]$/, "") : s);
 const choices = computed(() => (extraCat.value ? [] : CATALYST_SPECS.flatMap((s) => {
   const p = parseKey(s.stageKey);
   const c = p.type === "catalyst" && !targetBlock(s.target, props.item) ? CATALYSTS.find((x) => x.tag === p.tag) : undefined;
-  return c && p.type === "catalyst" ? [{ tag: c.tag, label: p.jewel ? nameOfKey(s.stageKey, props.item) : tr(c.label.ja, c.label.en) }] : [];
+  return c && p.type === "catalyst" ? [{ tag: c.tag, label: p.jewel ? nameOfKey(s.stageKey, props.item) : shortType(tr(c.label.ja, c.label.en)) }] : [];
 })));
 const jewel = computed(() => choices.value.length > 0);
 const catMax = computed(() => maxQualityOf(props.item));
