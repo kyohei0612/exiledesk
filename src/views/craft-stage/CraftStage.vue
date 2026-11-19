@@ -173,6 +173,7 @@ function setImplicit(line: number, values: number[]): void {
 /** 聖別の数値 (聖別の帯)。続けて変えた分は 1 手にまとめる (品質と同じ) */
 /** 聖別の帯は本番では OK まで出さない (release-flags の sanctifyBar。v0.1.589 から本番は帯の所だけ隠していた) */
 const SANCTIFY_BAR = flag("sanctifyBar");
+const BAR_ONE_ROW = flag("barOneRow");
 /** サイト全体の見た目 (U-48・U-49、題の帯を全幅にして音・表示通貨は帯の下) */
 const SITE_LOOK = flag("siteLook");
 /** 聖別の倍率を決めている間のカードの見本 (今の値 × 倍率、スイッチ sanctifyHint、M-55)。打つまでアイテムは変わらない。打てない時は null */
@@ -298,9 +299,11 @@ function pickMode(m: typeof s.mode.value): void {
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
         <!-- 2 行目: 付与スキルの選び (嘆きの / 前兆の / 不在のアミュレットだけ。取引所の検索にも効く。M-05・U-12f、スイッチ tradeSkill、オーナー 11-13「1行目品質系の設定おいて二行目に付与スキルでプルダウン」) -->
-        <div v-if="flag('tradeSkill') && !courseHidesEmulator && s.item.value && !s.replay.value" data-stage-skill-row class="-mb-6 flex w-full max-w-[480px] justify-end empty:hidden max-md:-mb-2"><GrantedSkillPick v-model="tradeSkill" :base="s.item.value.base" /></div>
+        <!-- 聖別した品は聖別の帯を付与スキルの横に並べて 1 列に・カードの枠に食い込まない (U-12h2、スイッチ barOneRow、オーナー 11-19「聖別時はどれでもの横に置こうか1列で」) -->
+        <div v-if="BAR_ONE_ROW && !courseHidesEmulator && s.item.value && !s.replay.value" data-stage-skill-row class="-mb-4 flex w-full max-w-[480px] flex-wrap items-center justify-end gap-x-3 gap-y-1 empty:hidden max-md:-mb-2"><GrantedSkillPick v-if="flag('tradeSkill')" v-model="tradeSkill" :base="s.item.value.base" /><StageSanctifyBar v-if="SANCTIFY_BAR && s.item.value.sanctified" data-rec-part="sanctify" class="w-auto!" :item="s.item.value" @set="setSanctify" /></div>
+        <div v-else-if="flag('tradeSkill') && !courseHidesEmulator && s.item.value && !s.replay.value" data-stage-skill-row class="-mb-6 flex w-full max-w-[480px] justify-end empty:hidden max-md:-mb-2"><GrantedSkillPick v-model="tradeSkill" :base="s.item.value.base" /></div>
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
-        <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px] max-md:-mb-2"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
+        <div v-if="!BAR_ONE_ROW && SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px] max-md:-mb-2"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
         <!-- スマホはカードそのものを上に貼る (下へ送っても打っている物が見える。前の文字だけの要約の帯の代わり、オーナー 11-10「今打ってるアイテムカードから固定に」) -->
         <div ref="cardEl" data-stage-well data-item-pin class="relative max-md:sticky max-md:top-[var(--stage-pin-top,0px)] max-md:z-30" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
