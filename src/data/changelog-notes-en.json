@@ -1,4 +1,7 @@
 {
+  "0.1.767": [
+    "Item mod values on the crafting bench now show a single number: the value after Sanctification and quality, with no small number in parentheses. Removed mods and the craft history use the same values"
+  ],
   "0.1.766": [
     "Simulator: a placed mod picked with Desecration that matches a target mod no longer counts as a miss while it is on the item, and removing it now shows \"Placed mod removed\"",
     "Simulator: items that already have a different rune can now return to a rune step and continue (runs that used to get stuck now finish)"
