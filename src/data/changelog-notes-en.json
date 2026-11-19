@@ -1,4 +1,7 @@
 {
+  "0.1.763": [
+    "Simulator: Final Check no longer flags a box as unset just because a target mod was added by chance (e.g. an untargeted Desecrate)"
+  ],
   "0.1.762": [
     "Fixed a loop in simulator trees where boxes such as \"rune socketed after the Abyssal mark\" returned in a circle and showed dead ends in the final check"
   ],

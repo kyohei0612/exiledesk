@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.763",
+  "date": "2026-11-19",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 狙い無しの冒涜などで狙いの MOD が偶然付いた人がいるだけで、最終チェックに「未設定」が出ていたのを直しました",
+    "en": "Simulator: Final Check no longer flags a box as unset just because a target mod was added by chance (e.g. an untargeted Desecrate)"
+   }
+  ]
+ },
+ {
   "v": "0.1.762",
   "date": "2026-11-19",
   "items": [
@@ -1138,30 +1150,6 @@
     "area": "",
     "text": "シミュレーター: 削減の手をまとめてやめられるようにしました。枠 (低い・同じ・高い) の帯の右の「削減をやめる」を押すと、確認の後に枠を 1 つの箱に戻して次に打つ手を選べます。削減の手を別の手に替える時の確認の窓にも「削減を全部やめる」を足しました (これまでは枠の数だけ同じ替えを繰り返す必要がありました)",
     "en": "Simulator: you can now stop a Whittling step all at once. Click \"Stop Whittling\" to the right of the lane band (Lower / Same / Higher); after a confirmation the lanes go back to one box and you can choose the next step. The confirmation dialog shown when replacing a Whittling step with another step also gets a \"Stop all Whittling\" option (before, you had to repeat the same change for every lane)"
-   }
-  ]
- },
- {
-  "v": "0.1.723",
-  "date": "2026-11-12",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の手で分かれた枠 (低い・同じ・高い) の下の手を、同じ手でもまとめず、枠ごとに 1 本ずつの枝で出すようにしました。枠から手の札・結果の箱までを枠の色の線でつなぎ、手の札に ▼ 低い / ＝ 同じ / ▲ 高い の印が付きます",
-    "en": "Simulator: steps under the lanes split by a Whittling step (Lower / Same / Higher) are no longer merged even when they are the same step. Each lane gets its own branch, drawn in the lane's color from the lane to the step tag and its result boxes, and the step tag is marked ▼ Lower / = Same / ▲ Higher"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 削減の手を消す・打ち直す時、ほかの枠に置いた手も一緒に消える場合は、消す前に確認の窓を出すようにしました",
-    "en": "Simulator: when deleting or redoing a Whittling step would also remove steps placed on its other lanes, a confirmation dialog now appears first"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 保存した木を開き直した時、削減の手で分かれた枠の見本の品が、組んだ時と同じ絵で出るようにしました (あり得ない値の見本が出る事がありました)",
-    "en": "Simulator: when a saved tree is reopened, the sample item shown for each lane split by a Whittling step now matches what you saw while building (it could show impossible values before)"
    }
   ]
  }
