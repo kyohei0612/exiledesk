@@ -6,11 +6,11 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| 札の MOD の数を 1 つに (E-96b、スイッチ oneValue。オーナー 11-19「統一してＵＩ　んで出しておｋ」、エミュ部長・デザイン部長、ブラック 141) | 9d676e626 (デザイン)・この行の commit (工程の履歴) | クラフト台のアイテムの MOD の数値を 1 つにしました。聖別・品質を掛けた後の値をそのまま出し、括弧の小さい数値をやめました。消えた MOD の行と工程の記録も同じ数値で並びます | Item mod values on the crafting bench now show a single number: the value after Sanctification and quality, with no small number in parentheses. Removed mods and the craft history use the same values |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
 
+済み (2026-11-19、v0.1.767、最終チェック長 40 (35 の係が続けて)、オーナー 11-19「統一してＵＩ　んで出しておｋ」「出しておｋ」、ブラック 141): origin/main 41ca25b84 までを出した = 表の 1 行 (札の MOD の数を 1 つに E-96b、スイッチ oneValue、9d676e626・41ca25b84・FLAGS c080822c1)。RELEASED に oneValue (release-flags.ts は 499 行)。Web 版 77000106、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.766、最終チェック長 39 (35 の係が続けて)、オーナー 11-19「だして」(ブラック 141 が 2 つを説明して聞いた。runeHandOwn の表の行の「オーナーの OK 待ち」もこれで済み)、ブラック 141): origin/main ff7d5be6a までを出した = 表の 2 行 (冒涜で選んだ完成形と同じ MOD の置き石を当たりに数える S-33h ② veilStoneAim・ルーンを刺す手の箱はその手のルーンだけ見る S-60g3 ⑦ runeHandOwn、f9c3f7bc4・FLAGS 2f3a1c46d)。RELEASED に 2 つ (並びを詰めて release-flags.ts は 500 行)。Web 版 7e476a88、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 2 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.765、最終チェック長 38 (35 の係が続けて)、オーナー 11-19「修正後出しておk」、ブラック 141): origin/main 775df8368 までを出した = 表の 2 行 (100 人回しの 1 人目の道を速く光らせる S-72d walkFast 269744d27・8e53d4a6a・fc17e5eee・3047f5882、ルーンの手を挟んでも上へ戻す S-60g3 ⑥ runeBack dc79c65a0・ebb4dc5aa)。RELEASED に 2 つ (並びを詰めて release-flags.ts は 498 行)。Web 版 7cad4e9d、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 2 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.764、最終チェック長 37 (35 の係が続けて)、オーナー 11-19「出して」、ブラック 140): origin/main 2513d262e までを出した = 表の 1 行 (共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2、スイッチ sharedOpenCover、cb136d7fc・e04e899c0・88e9e8543・2513d262e・b0d80cbf1)。RELEASED に sharedOpenCover (並びを詰めて release-flags.ts は 498 行)。Web 版 e972fada、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
