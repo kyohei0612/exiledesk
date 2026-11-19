@@ -6,11 +6,11 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
-| 共有 URL で開いた時は最初から木が描かれるまで画面全体を「レシピ読み込み中…」(S-196f2、スイッチ sharedOpenCover。外枠の覆いはデザイン e04e899c0) | cb136d7fc・88e9e8543 | シミュレーター: 共有のレシピを開いた時、読み込みが終わるまで画面全体を「レシピ読み込み中…」にし、途中でボタンが押せて画面が崩れないようにしました | Simulator: Opening a shared recipe now shows "Loading recipe…" over the whole screen until it finishes, so buttons can no longer be pressed mid-load |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
 数えの始まり = v0.1.711 (`pnpm check:release-tidy` が、ここから後の版に「済み」の行があるかを数える。それより前で行の無い版は git の履歴の release の commit が記録)
 
+済み (2026-11-19、v0.1.764、最終チェック長 37 (35 の係が続けて)、オーナー 11-19「出して」、ブラック 140): origin/main 2513d262e までを出した = 表の 1 行 (共有 URL で開いた時は木が描かれるまで画面全体を読み込み中で覆う S-196f2、スイッチ sharedOpenCover、cb136d7fc・e04e899c0・88e9e8543・2513d262e・b0d80cbf1)。RELEASED に sharedOpenCover (並びを詰めて release-flags.ts は 498 行)。Web 版 e972fada、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.763、最終チェック長 36 (35 の係が続けて)、オーナー 11-19「だきて」、ブラック 140): origin/main e86ad2adc までを出した = 表の 1 行 (精査の混ざりの比べに偶然付いた狙いの形を入れない S-21b2、r/VK1opGjg の b90、スイッチ oddMixSkip、084a461b2・581d29aa9・e86ad2adc)。RELEASED に oddMixSkip (並びを詰めて release-flags.ts は 500 行)。Web 版 bf6cbb3e、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.762、最終チェック長 35、オーナー 11-19「完了時出してておｋ」「おわったらそのままだして」、ブラック 140): origin/main 0a9a7f12d までを出した = 表の 1 行 (手の無い箱への自動の ↩ が鎖になったら選び直す S-50h、r/VK1opGjg、スイッチ joinChainFix、2467679c0・7a57e8a25・0a9a7f12d)。RELEASED に joinChainFix (並びを詰めて release-flags.ts は 499 行)。Web 版 1bbb4ebf、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
 済み (2026-11-19、v0.1.761、最終チェック長 35、オーナー 11-19「完了時出しておk」、ブラック 140): origin/main 97fc9f5d7 までを出した = 表の 1 行 (組み直しても中身が変わらない古いレシピには「古いレシピ」の 1 行を出さない S-104g ⑥、スイッチ recipeFrozen は 0.1.760 で本番、df30d6671)。RELEASED の足し無し。Web 版 d2fc6f38、サーバーは差が無く触らず。強制更新・ポップアップ無し。更新内容 日英 1 行ずつ。出す前に触らない (R-18)。型 0・1460 JS 例外 0。
