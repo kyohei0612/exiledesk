@@ -243,7 +243,7 @@ function toTree(after?: () => void): void {
 function onCardRemove(modId: string): void {
   const g = t.goals.value.find((a) => a.modId === modId);
   // 「いずれかの元素耐性」の 1 本は 1 回で丸ごと外す (一覧の × と同じ。前は借りた元素の MOD を普通の狙いとして外し、火・冷気・雷が 1 つずつ消えた、11-16 オーナー「UI上はそもそも1発で消えて欲しい」)
-  // カードは 1 行「× n」なので組ごと外す (S-10h ①、11-16)
+  // カードは本の数だけ行があるが、どの行の × でも組ごと外す (S-10h ①、11-16・11-20)
   if (g?.anyEle) { ef.setCount(0, g.tier); return; }
   if (g) t.toggleGoal(g.modId, g.tier);
 }

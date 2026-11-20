@@ -34,9 +34,8 @@ export function useGoalShown() {
     const over = l.filter((a) => !bundled.value.has(a.modId)), frac = new Set(over.filter((a) => a.fractured).map((a) => a.modId));
     return aimRows(d, t.doc.value, over).map((m) => (frac.has(m.modId) ? { ...m, fractured: true } : m));
   });
-  /** 「いずれかの元素耐性」の置いた本 (並びの順) と 2 本目から先 */
+  /** 「いずれかの元素耐性」の置いた本 (並びの順。カードには本の数だけ行を出し、行ごとに札) */
   const eleAll = computed(() => (t.doc.value.memoAims ?? []).filter((a) => a.anyEle));
-  const eleMore = computed(() => eleAll.value.slice(1));
   const item = computed((): StageItem | null => {
     const g = t.goalItem.value?.item, doc = t.doc.value;
     if (!g) return null;
@@ -50,16 +49,14 @@ export function useGoalShown() {
     if (!d) return it;
     const ids = new Set((doc.memoAims ?? []).filter((a) => !a.fractured && isDesecratedAim(d, a)).map((a) => a.modId));
     const mark = (ms: readonly StageMod[]): StageMod[] => ms.map((m) => (ids.has(m.modId) ? { ...m, desecrated: true } : m));
-    const out = ids.size ? { ...it, prefixes: mark(it.prefixes), suffixes: mark(it.suffixes) } : it;
-    // 「いずれかの元素耐性」の 2 本目から先はカードに出さない = 1 本目の行 1 つに「× n」(S-10h ①、11-16。見せるだけで木の判定は替えない)
-    const rest = new Set(eleMore.value.map((a) => a.modId));
-    return rest.size ? { ...out, suffixes: out.suffixes.filter((m) => !rest.has(m.modId)) } : out;
+    // 「いずれかの元素耐性」は本の数だけ行を出す (「× n」の 1 行では 1 つで完成と読めるため、11-20 オーナー。E-112・S-10h ①。見せるだけで木の判定は替えない)
+    return ids.size ? { ...it, prefixes: mark(it.prefixes), suffixes: mark(it.suffixes) } : it;
   });
   /** 束の札 (クラフト MOD「どれか n つ残る」・冒涜「どれか 1 つ」) */
   const tags = computed((): Map<string, RowTag> | null => {
-    // いずれかの元素耐性の札 (S-10h ③)。カードは 1 本目の行に「× n」(S-10h ①、11-16)
-    const b = bundle.value, ds = desecrated.value, ea = eleAll.value.slice(0, 1), n = eleAll.value.length;
-    return b || ds || ea.length ? new Map([...(b?.aims ?? []).map((a) => [a.modId, bundleTag(b!.lim)] as const), ...(ds ?? []).map((a) => [a.modId, desecratedTag()] as const), ...ea.map((a) => [a.modId, { text: n > 1 ? `${t.aimShort(a)} × ${n}` : t.aimShort(a), replace: true, tone: "info", title: n > 1 ? tr(`火・冷気・雷耐性のうち違う元素 ${n} つが段以上で当たり`, `${n} different elements among fire / cold / lightning at this tier or better`) : tr("火・冷気・雷耐性のどれか 1 つが段以上で当たり", "Any one of fire / cold / lightning at this tier or better") } as RowTag] as const)]) : null;
+    // いずれかの元素耐性の札 (S-10h ③)。カードは本ごとの行に「いずれかの元素耐性 (幅)%」(番号は付けない、E-112・S-10h ①、11-20)
+    const b = bundle.value, ds = desecrated.value, ea = eleAll.value, n = ea.length;
+    return b || ds || ea.length ? new Map([...(b?.aims ?? []).map((a) => [a.modId, bundleTag(b!.lim)] as const), ...(ds ?? []).map((a) => [a.modId, desecratedTag()] as const), ...ea.map((a) => [a.modId, { text: t.aimShort({ ...a, anyEle: 1 }), replace: true, tone: "info", title: n > 1 ? tr(`火・冷気・雷耐性のうち違う元素 ${n} つが段以上で当たり`, `${n} different elements among fire / cold / lightning at this tier or better`) : tr("火・冷気・雷耐性のどれか 1 つが段以上で当たり", "Any one of fire / cold / lightning at this tier or better") } as RowTag] as const)]) : null;
   });
   /**
    * カードの並びの束 (StageItemCard の rowGroup): エッセンス・合金の MOD (束でなくても全部) = 1 で、ふつうの MOD の下・冒涜の上に
