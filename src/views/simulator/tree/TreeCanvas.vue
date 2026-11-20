@@ -29,7 +29,7 @@ const props = defineProps<{ tabKey: number; page: PageCtx }>();
 const root = ref<HTMLElement | null>(null);
 // 置き場の手と窓 (全部の面で同じ物) と、この面の作り (テンプレートは切り出す前と同じ名前で使う。ref は上の段なので自動で外れる)
 const { t, hand, panel, jt, glowOf, tr100, issueOf, startDrag, onAim, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, startLink, goIssue, onPaneClick, onNodeClick } = props.page;
-const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, chipInv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine } = useTreeSurface(props.tabKey, props.page, root);
+const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, chipInv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine, slideCss } = useTreeSurface(props.tabKey, props.page, root);
 /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝の札の MOD の名前 (後ろの数の幅は外す) */
 const fracName = (a: Aim): string => t.aimShort(a).replace(/\s*\([^()]*\)\s*$/, "");
 /** (S-142j ③、スイッチ hitsSide) 乗せている手の札 (その手の ↩ の畳みの戻り先へ青い線を出す) */
@@ -123,6 +123,8 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
   <div ref="root" data-tree-surface class="contents">
   <TreeLaneTags v-if="!t.needBase.value" inside :style="{ zoom: 1 / pageZ }" :lanes="lanes" :ty="v.flow.viewport.value.y" :k="v.flow.viewport.value.zoom" />
   <component :is="'style'" v-if="spot">{{ spot.css }}</component>
+  <!-- (S-28h ③) 引き戸で滑っている間だけ隠す箱・線・手の札 -->
+  <component :is="'style'" v-if="slideCss">{{ slideCss }}</component>
   <div ref="canvasEl" data-tree-canvas data-overflow-ok :data-spot="spot?.key" class="absolute inset-0 touch-none" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('laneEdge') && !t.needBase.value ? { clipPath: `inset(0 0 0 ${laneBandW(lanes.map((l: Lane) => l.text), v.flow.viewport.value.zoom)}px)` } : {}) }" @wheel="v.onWheel">
     <VueFlow :id="flowId" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
       :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"

@@ -46,7 +46,13 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
   // 畳んだ消去の続き (S-28g ③): 根の線は札へ、札の線は止まった箱へ、隠した箱からは引かない
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
-  const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
+  /** (S-28h ③) 畳んだ同じ流れの列の頭 → 札。ほかの親の手の札からも札へ線を引く (並べ方では親の子にしない) */
+  const sameTo = computed(() => new Map([...fold.value.folds.values()].flatMap((f) => (f.kind === "same" ? (f.cols ?? []).filter((c) => c !== f.head).map((c) => [c, f.head] as const) : []))));
+  const outsOf = (b: TreeBox): string[] => {
+    const o = foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
+    const add = sameTo.value.size && !fold.value.hidden.has(b.id) ? b.outs.flatMap((x) => sameTo.value.get(x) ?? []) : [];
+    return add.length ? [...new Set([...o, ...add])] : o;
+  };
   /** (S-142j ③、スイッチ hitsSide) 札も描かず直に線を引く畳み: 親 → 行き先の箱 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) */
   const links = computed(() => linkTargets(doc.value, fold.value.folds));
   /** (S-142j ③、スイッチ hitsSide) ↩ の畳み: 親 → 戻り先の箱 (手の札に乗せた時だけ青い線) */

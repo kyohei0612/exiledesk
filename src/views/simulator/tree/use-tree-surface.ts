@@ -18,6 +18,7 @@ import { useStripOpen } from "../../../services/simulator/tree/tree-strip-fold";
 import { setSigShown } from "../../../services/simulator/tree/tree-frame";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { useStripFold } from "./use-strip-fold";
+import { useFoldSlide } from "./use-fold-slide";
 import { useTreeReveal } from "./use-tree-reveal";
 import { boxHeightOf, placeKept, useRowSettle } from "./use-row-settle";
 import { useTreeEdges } from "./use-tree-edges";
@@ -88,7 +89,9 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
   const posOf = (b: Box): { x: number; y: number } => (p.drag.value?.id === b.id ? { x: p.drag.value.x, y: p.drag.value.y } : { x: b.x, y: b.y });
   const boxes = computed(() => Object.values(doc.value.boxes));
   // 消去の続きを畳む (S-28g ③、use-strip-fold.ts): 隠した箱は描かず、根の最初の自動の消去の箱は札 (TreeStripFold)、止まった箱は札の下
-  const sf = useStripFold(doc, opened, p.keep ? ref(key) : t.active, p.issueBoxes, p.stuckAt);
+  // (S-28h ③) 同じ流れの列の札は引き戸で開け閉め (use-fold-slide)。ほかの札は今までどおり
+  const slide = useFoldSlide(doc, () => root.value);
+  const sf = { ...useStripFold(doc, opened, p.keep ? ref(key) : t.active, p.issueBoxes, p.stuckAt), toggle: (head: string): void => void slide.toggle(head) };
   /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
   const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !bandAway(doc.value, b) && !sf.hidden.value.has(b.id)));
   const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
@@ -134,6 +137,6 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
   const api = { key, doc, kept, v, sf, rv, bd, plus, hoverBox, cardBox, linesAll, measureBox, chipNatural, tidyOf };
   p.register(key, api);
   onBeforeUnmount(() => p.register(key, null));
-  return { ...api, flowId, pageZ, zoom, viewOnly, inv, chipInv, grid, lanes, posOf, shown, passes, shownEdges, edgeHot, chipRoom, merged, plusLine, onPlus, backLabel };
+  return { ...api, slideCss: slide.css, flowId, pageZ, zoom, viewOnly, inv, chipInv, grid, lanes, posOf, shown, passes, shownEdges, edgeHot, chipRoom, merged, plusLine, onPlus, backLabel };
 }
 export type Surface = ReturnType<typeof useTreeSurface>;

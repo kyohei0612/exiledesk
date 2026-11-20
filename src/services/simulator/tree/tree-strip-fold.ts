@@ -23,7 +23,8 @@ export interface StripFold { head: string; mids: string[]; stops: string[]; step
   /** (S-142j ③、スイッチ hitsSide) 行き先が同じ段か先 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) の畳み: 札も描かず、親の手の札から行き先の箱へ直に線 */ link?: true;
   /** (S-142j ③、スイッチ hitsSide) ↩ (前の段へ戻る) の畳み: 札も描かず、親の手の札に乗せた時だけ戻り先へ青い線 */ back?: true;
   /** 行き先を指すだけの兄弟をまとめた 1 行 (S-142j ②、スイッチ hitsSide)。mids = まとめた箱 (head = 1 つ目の場所に札)、stops は無し */ ends?: true;
-  /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 (frac) / カオスの続き (chaos)。無ければ消去の続き */ kind?: "frac" | "chaos" }
+  /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 (frac) / カオスの続き (chaos) / 同じ流れの列 (same、③)。無ければ消去の続き */ kind?: "frac" | "chaos" | "same";
+  /** (S-28h ③) 畳んだ同じ流れの列の頭 (head 込み、親は違ってよい) */ cols?: string[] }
 
 /** 開いた続き (head の id)。保存しない */
 const ownOpen = ref<ReadonlySet<string>>(new Set());

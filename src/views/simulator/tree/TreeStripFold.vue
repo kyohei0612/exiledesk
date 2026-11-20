@@ -8,17 +8,26 @@ import { BOX_W } from "../../../services/simulator/tree/tree-model";
 import { FOLD_H } from "../../../services/simulator/tree/tree-strip-fold";
 import { tr } from "../../../i18n/lang";
 
-const p = defineProps<{ head: string; /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 / カオスの続き */ kind?: "frac" | "chaos"; label?: string; boxes?: number; bare?: boolean; /** ↩ だけの兄弟をまとめた行 (S-142j ②、スイッチ foldEnds)。あれば消去の札の代わりにこの行を出す */ ends?: string[]; n?: number; m?: number; issues?: number; stops?: number; /** 開いた続きの「≈ 畳む」(箱の左、ツリーの座標) */ fold?: { x: number; y: number; inv: number } }>();
+const p = defineProps<{ head: string; /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 / カオスの続き / 同じ流れの列 (③) */ kind?: "frac" | "chaos" | "same"; label?: string; boxes?: number; bare?: boolean; /** ↩ だけの兄弟をまとめた行 (S-142j ②、スイッチ foldEnds)。あれば消去の札の代わりにこの行を出す */ ends?: string[]; n?: number; m?: number; issues?: number; stops?: number; /** 開いた続きの「≈ 畳む」(箱の左、ツリーの座標) */ fold?: { x: number; y: number; inv: number } }>();
 const emit = defineEmits<{ toggle: [] }>();
 </script>
 
 <template>
   <button v-if="fold" type="button" data-tree-strip-refold :data-box-id="head" class="nodrag nopan pointer-events-auto absolute z-[5] -translate-x-full whitespace-nowrap rounded-md border border-dashed border-sky-400/70 bg-[#101820] px-2 text-[12px] leading-7 text-sky-200 hover:bg-sky-500/20"
-    :style="{ left: `${fold.x - 10}px`, top: `${fold.y + 8}px`, scale: String(fold.inv), transformOrigin: 'right top' }" :title="p.kind === 'frac' ? tr('この ✦ の枝を札 1 枚に畳む', 'Fold this ✦ branch into one card') : p.kind === 'chaos' ? tr('カオスの続きを札 1 枚に畳む', 'Fold the repeated chaos into one card') : tr('消去の続きを札 1 枚に畳む', 'Fold the repeated annuls into one card')" @click.stop="emit('toggle')">≈ {{ tr("畳む", "Fold") }}</button>
+    :style="{ left: `${fold.x - 10}px`, top: `${fold.y + 8}px`, scale: String(fold.inv), transformOrigin: 'right top' }" :title="p.kind === 'same' ? tr('同じ流れの列を札へ滑り込ませて畳む', 'Slide the same-flow columns back into one card') : p.kind === 'frac' ? tr('この ✦ の枝を札 1 枚に畳む', 'Fold this ✦ branch into one card') : p.kind === 'chaos' ? tr('カオスの続きを札 1 枚に畳む', 'Fold the repeated chaos into one card') : tr('消去の続きを札 1 枚に畳む', 'Fold the repeated annuls into one card')" @click.stop="emit('toggle')">≈ {{ tr("畳む", "Fold") }}</button>
   <div v-else-if="ends" data-tree-strip-fold data-tree-fold-ends :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-dashed border-white/25 bg-[#15120e] px-3 py-2 text-[12px] hover:border-white/45"
     :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px` }" :title="tr('押すと箱を開いて手を置ける', 'Click to show the boxes and add a craft')">
     <b v-for="(l, i) in ends" :key="i" class="break-words text-[13px] text-[#e3d6c0]">{{ l }}</b>
     <span class="flex flex-wrap gap-x-2 text-[#9a8f80]">{{ tr("押すと開く", "Click to open") }}
+      <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>
+    </span>
+  </div>
+  <!-- (S-28h ③) 同じ流れの列: 右に畳んだ列の板が重なった引き戸 -->
+  <div v-else-if="kind === 'same'" data-tree-strip-fold data-tree-fold-same :data-box-id="head" class="relative flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-emerald-300/60 bg-[#0f1a16] px-3 py-1.5 text-[12px] hover:border-emerald-200"
+    :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px`, boxShadow: '6px 0 0 -1px #0c1512, 7px 0 0 0 rgba(110,231,183,0.35), 13px 0 0 -1px #0a110f, 14px 0 0 0 rgba(110,231,183,0.2)' }" :title="tr('押すと畳んだ列が右へ滑り出る', 'Click to slide the folded columns open')">
+    <b class="text-[14px] text-emerald-200">⇶ {{ tr(`同じ流れの枝 ${n} 本`, `${n} branches with the same flow`) }}</b>
+    <span class="flex flex-wrap gap-x-2 text-[#a8c4b8]">{{ bare ? tr("まだ手が無い", "No craft yet") : tr(`手 ${boxes} つ`, `${boxes} crafts`) }} · {{ tr("押すと開く", "Click to open") }}
+      <b v-if="issues" data-tree-strip-issues class="text-rose-400">! {{ issues }}</b>
       <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>
     </span>
   </div>

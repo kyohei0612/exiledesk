@@ -9,6 +9,7 @@
 import { canSpam, effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { treeOrder } from "./tree-order";
+import { flowDepth } from "./tree-flow-once";
 import type { StripFold } from "./tree-strip-fold";
 
 const isChaos = (b: TreeBox | undefined): boolean => !!b?.hand && canSpam(b.hand.currency) && !b.done;
@@ -52,8 +53,53 @@ function chaosFolds(d: TreeDoc, out: Map<string, StripFold>): void {
   }
 }
 
+/** 箱から下へ 1 段ずつ、置いた手の種類の組 (手の無い段で止める) */
+function handLevels(d: TreeDoc, id: string): string[] {
+  const lv: string[] = [];
+  for (let row = [id], n = 0; row.length && n < 40; n++) {
+    const hs = [...new Set(row.map((x) => d.boxes[x]?.hand?.currency).filter((c): c is string => !!c))].sort();
+    if (!hs.length) break;
+    lv.push(hs.join("+"));
+    row = row.flatMap((x) => d.boxes[x]?.outs ?? []);
+  }
+  return lv;
+}
+/** 両方に手のある段まで、手の種類の組が全部同じ */
+const sameFlow = (a: string[], b: string[]): boolean => a.slice(0, Math.min(a.length, b.length)).every((x, i) => x === b[i]);
+
+/**
+ * ③ 同じ流れの列 (11-20 オーナー「冒涜未発言つけたら5個くらい横並ぶやんあれを、畳んだら？」): 同じ段でフラクチャーを置いた箱の、下の流れが同じ形の列を
+ * 1 列 (完成のある列、無ければ木の並びの 1 本目) だけ残し、ほかを札 1 枚 (head = 畳んだ列の 1 本目、cols = 畳んだ列の頭全部、mids = その下の全部)。親が違っても畳む。
+ * ①② の畳みの中の箱は数えない
+ */
+function sameFolds(d: TreeDoc, out: Map<string, StripFold>): void {
+  const cmp = treeOrder(d), inside = new Set([...out.values()].flatMap((f) => f.mids.filter((id) => id !== f.head)));
+  const byRow = new Map<number, TreeBox[]>();
+  for (const b of Object.values(d.boxes)) {
+    if (!b.hand || effectOf(b.hand.currency) !== "fracture" || inside.has(b.id) || out.has(b.id)) continue;
+    const r = flowDepth(d, b.id);
+    byRow.set(r, [...(byRow.get(r) ?? []), b]);
+  }
+  for (const row of byRow.values()) {
+    const groups: Array<{ lv: string[]; ids: string[] }> = [];
+    for (const b of row.sort((x, y) => cmp(x.id, y.id))) {
+      const lv = handLevels(d, b.id);
+      if (lv.length < 2) continue; // フラクチャーの後に手が無い箱は入れない
+      const g = groups.find((x) => sameFlow(x.lv, lv));
+      if (g) g.ids.push(b.id); else groups.push({ lv, ids: [b.id] });
+    }
+    for (const { ids } of groups) {
+      if (ids.length < 2) continue;
+      const keep = ids.find((id) => subtree(d, id).some((x) => d.boxes[x]?.done === "main")) ?? ids[0]!;
+      const cols = ids.filter((id) => id !== keep);
+      out.set(cols[0]!, { head: cols[0]!, mids: cols.flatMap((id) => subtree(d, id)), stops: [], steps: cols.length, tucked: [], kind: "same", cols });
+    }
+  }
+}
+
 /** 足す畳み全部。✦ の枝の中のカオスの続きも畳みを持つ (✦ の札を開いた時に畳んだ形で出る。閉じている間は ✦ の札の中で描かない) */
 export function fracChaosFolds(d: TreeDoc, out: Map<string, StripFold>): void {
   fracFolds(d, out);
   chaosFolds(d, out);
+  sameFolds(d, out);
 }
