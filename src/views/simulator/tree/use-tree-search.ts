@@ -8,7 +8,8 @@
 import { computed, ref } from "vue";
 import { flag } from "../../../web/release-flags";
 import { craftStage as s } from "../../../state/craft-stage";
-import { minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine";
+import { freshItem, minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine";
+import { startRarityOf } from "../../../services/craft-stage/spec/judge";
 import { tradeFiltersFor } from "../../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../../services/trade2/query/spec";
 import { openTradeQuery } from "../../../services/pob-check/trade-links";
@@ -39,8 +40,14 @@ export function useTreeSearch() {
     const per = f.mods.map((m) => tradeFiltersFor(f.d, [m]).filters.map((x): Filter => ({ id: x.id.replace(/^explicit\./, `${kind}.`), ...(x.min != null ? { min: x.min } : {}) })));
     return per.every((fs) => fs.length) ? per : null;
   }
+  /** 白の無いベース (E-18c、スイッチ rareStartBase。創生の樹・割れた湖の 25 個) は取引所に「白」が無いので、白の札を出さない */
+  const noWhite = computed(() => {
+    const d = s.data.value, base = t.doc.value.base;
+    if (!d || !base) return false;
+    try { return startRarityOf(base, freshItem(d, base, 1).cls.category) === "rare"; } catch { return false; }
+  });
   /** 探せるか (4 MOD・フラクチャー済みは ✦ が要る) */
-  const can = (k: TreeSearchKind): boolean => k === "white" || !!fracStats(k === "four" ? "explicit" : "fractured");
+  const can = (k: TreeSearchKind): boolean => (k === "white" ? !noWhite.value : !!fracStats(k === "four" ? "explicit" : "fractured"));
   /** skill = 付与スキル (英語の名前、U-12f・スイッチ tradeSkill。null = どれでも) */
   async function search(k: TreeSearchKind, skill: string | null = flag("tradeSkill") ? grantedSkill.value : null): Promise<void> {
     const base = t.doc.value.base;

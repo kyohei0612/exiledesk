@@ -10,6 +10,7 @@ import { essenceKey, sideOfMod, type PatchData, type RouteGrade, type StageItem 
 import { spamCounts, spamCountsSteps, type SpamCounts } from "../simulator/sim-engine";
 import { addGradeFor, anyOfAddOdds } from "../simulator/sim-engine";
 import { keepCompare } from "./keep-compare";
+import { startRarityOf } from "../craft-stage/spec/judge";
 import type { SimTargetIn } from "./quiz-build";
 import type { SimStartKind, SimTargetLike } from "./sim-methods";
 
@@ -115,7 +116,9 @@ export function startCalc(o: StartCalcIn) {
   // マジックのループの変成・増強・消去の平均 (上の augmentLoop の説明)
   const fside = sideOfMod(d, m.id);
   // 増強で付く確率が 0 の MOD (金の指輪の見本の特殊な MOD など) は回して数えない (打ち止めまで打ち続け 1 回 4 秒、ツリーを開くと真っ黒、10-22。結果は前も ∞)
-  const loop = pHit > 0 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex }))) : null;
+  // 白・マジックの無いベース (E-18c、スイッチ rareStartBase) には変成・増強の道が無い (∞ = 選ばれない)
+  const noMagic = startRarityOf(it.base, it.cls.category) === "rare";
+  const loop = pHit > 0 && !noMagic ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex }))) : null;
   const lc = loop && !loop.off && loop.hitRate > 0
     ? { transmute: loop.uses[gr.tra] ?? 1, augment: (loop.uses[gr.aug] ?? 0) / loop.hitRate, annul: (loop.uses.annul ?? 0) / loop.hitRate }
     : { transmute: 1, augment: Infinity, annul: Infinity };
