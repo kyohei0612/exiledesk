@@ -264,6 +264,7 @@ export const FLAGS = {
   aimFloorWhittle: "シミュの木: 下に削減の手がある箱でも、見本の ☑ の狙い MOD を狙いの段の一番下で出し、削減の枠はその MOD レベルで比べる (S-200 ③)。オーナー 11-20『削減ルールにのっとってくれ』(r/ub6AAuwK)。開発版だけ。閉じている間は今までどおり",
   runSumWords: "シミュの木 (デイリーの挑戦の木も): 100 人回しの結果のまとめの見出しを「お金のかかった手」「カレンシー別の数」にし、確定フラクチャーの行に作り直し分の内訳 1 行と、下の欄に始まりの品 (作り直し) の行を出す (S-70d)。オーナー 11-20『フラクチャー紛らわしいねあの表示画面 調整しよう分かりやすく』。開発版だけ。閉じている間は今までどおり",
   phoneGoalSteps: "シミュ: スマホの端末 (指の端末) でも白紙からベース選びで木を作る (S-94l2)。1 ベース・2 完成の MOD はスマホの画面のまま縦で組み、3 ツリーから横持ちの PC の画面 (S-94l)。白紙で「ツリーを作るのは PC で」(S-94f) を出さずベース選びへ。エミュの「シミュレーターへ →」もスマホの端末で出す。チュートリアルは PC だけのまま。PC のブラウザの狭い窓は今のまま。オーナー 11-19「ツリー編集からパソコン仕様の横向き画面の表示がいいよな」→ 案に 11-20「おけ」。閉じている間は今のまま",
+  dailyRankWide: "デイリーの一覧: 右の「昨日の上位」を外し、PC はスコアの順位を左に広く・品を右端の 2 列にしてひとことを切らない (1 行に入らない時は名前の横で 2 行まで)。スマホは昨日の上位が消えるだけ (D-60d2、オーナー 11-20「Aやなデイリー」。CSS だけ = daily-skin.css の data-flag-dailyrankwide。開発版だけ)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
@@ -295,8 +296,7 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "goalCardMinText", "boxRuneLine", "goalNoAutoRune",
   "oddShapes",
   "dailyWrap", "phoneUrlShort",
-  "phonePcView",
-  "drawOnce",
+  "phonePcView", "drawOnce",
   "builtRefresh",
   "saveCap15",
   "shareSaveAsk",
