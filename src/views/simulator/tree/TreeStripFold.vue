@@ -22,15 +22,6 @@ const emit = defineEmits<{ toggle: [] }>();
       <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>
     </span>
   </div>
-  <!-- (S-28h ③) 同じ流れの列: 右に畳んだ列の板が重なった引き戸 -->
-  <div v-else-if="kind === 'same'" data-tree-strip-fold data-tree-fold-same :data-box-id="head" class="relative flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-emerald-300/60 bg-[#0f1a16] px-3 py-1.5 text-[12px] hover:border-emerald-200"
-    :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px`, boxShadow: '6px 0 0 -1px #0c1512, 7px 0 0 0 rgba(110,231,183,0.35), 13px 0 0 -1px #0a110f, 14px 0 0 0 rgba(110,231,183,0.2)' }" :title="tr('押すと畳んだ列が右へ滑り出る', 'Click to slide the folded columns open')">
-    <b class="text-[14px] text-emerald-200">⇶ {{ tr(`同じ流れの枝 ${n} 本`, `${n} branches with the same flow`) }}</b>
-    <span class="flex flex-wrap gap-x-2 text-[#a8c4b8]">{{ bare ? tr("まだ手が無い", "No craft yet") : tr(`手 ${boxes} つ`, `${boxes} crafts`) }} · {{ tr("押すと開く", "Click to open") }}
-      <b v-if="issues" data-tree-strip-issues class="text-rose-400">! {{ issues }}</b>
-      <b v-if="stops" data-tree-strip-stops class="text-rose-400">{{ tr(`止まり ${stops} 人`, `${stops} stuck`) }}</b>
-    </span>
-  </div>
   <div v-else-if="kind === 'frac'" data-tree-strip-fold data-tree-fold-frac :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-dashed border-amber-300/70 bg-[#1a150c] px-3 py-1.5 text-[12px] hover:border-amber-200"
     :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px` }" :title="tr('押すとこの ✦ の枝の箱を開く', 'Click to show the boxes of this ✦ branch')">
     <b class="break-words text-[14px] text-amber-200">✦ {{ tr(`${label ?? "?"} が固定された枝`, `Branch with ${label ?? "?"} fractured`) }}</b>

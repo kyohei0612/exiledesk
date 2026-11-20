@@ -75,19 +75,18 @@ function handLevels(d: TreeDoc, id: string, full = false): string[] {
 const sameFlow = (a: string[], b: string[]): boolean => a.slice(0, Math.min(a.length, b.length)).every((x, i) => x === b[i]);
 
 /**
- * ③ 同じ流れの列 (11-20 オーナー「冒涜未発言つけたら5個くらい横並ぶやんあれを、畳んだら？」): 同じ段でフラクチャーを置いた箱の、下の流れが同じ形の列を
- * 1 列 (完成のある列、無ければ木の並びの 1 本目) だけ残し、ほかを札 1 枚 (head = 畳んだ列の 1 本目、cols = 畳んだ列の頭全部、mids = その下の全部)。親が違っても畳む。
- * ①② の畳みの中の箱は数えない
+ * ④ 兄弟の枠を左の枠の後ろへ重ねる (11-20 オーナー「1A 2A 3B」)。前の ③ (フラクチャーを置いた箱だけの札「同じ流れの枝 n 本」) は ④ に置き換えて消した
+ * (11-20 オーナー「兄弟の奴最初に作ったたたみ方消さないと確認できなくね」)。フラクチャーを置いた箱は ③ と同じく親の手を問わない組 "F"。
+ * ①② の畳みの中の箱は数えない。チュートリアル中 (stackOff) は畳まない
  */
 function sameFolds(d: TreeDoc, out: Map<string, StripFold>): void {
   const cmp = treeOrder(d), inside = new Set([...out.values()].flatMap((f) => f.mids.filter((id) => id !== f.head)));
   const byRow = new Map<string, TreeBox[]>();
-  const sib = stackOn();
+  if (!stackOn()) return;
   for (const b of Object.values(d.boxes)) {
     if (!b.hand || inside.has(b.id) || out.has(b.id)) continue;
     const frac = effectOf(b.hand.currency) === "fracture";
-    // ③ はフラクチャーを置いた箱だけ。④ は兄弟の枠全部 (フラクチャーを置いた箱は ③ と同じく親の手を問わない組)
-    const k = frac ? "F" : sib ? siblingKey(d, b) : null;
+    const k = frac ? "F" : siblingKey(d, b);
     if (k === null) continue;
     const r = `${flowDepth(d, b.id)}|${k}`;
     byRow.set(r, [...(byRow.get(r) ?? []), b]);
@@ -96,21 +95,14 @@ function sameFolds(d: TreeDoc, out: Map<string, StripFold>): void {
   for (const [, row] of [...byRow].sort((a, b) => parseInt(a[0]) - parseInt(b[0]))) {
     const groups: Array<{ lv: string[]; ids: string[] }> = [];
     for (const b of row.filter((x) => !inside.has(x.id)).sort((x, y) => cmp(x.id, y.id))) {
-      const lv = handLevels(d, b.id, sib);
-      if (!sib && lv.length < 2) continue; // (③) フラクチャーの後に手が無い箱は入れない
+      const lv = handLevels(d, b.id, true);
       const g = groups.find((x) => sameFlow(x.lv, lv));
       if (g) g.ids.push(b.id); else groups.push({ lv, ids: [b.id] });
     }
     for (const { ids } of groups) {
       if (ids.length < 2) continue;
       const done = (id: string): boolean => subtree(d, id).some((x) => d.boxes[x]?.done === "main");
-      if (!sib) {
-        const keep = ids.find(done) ?? ids[0]!;
-        const cols = ids.filter((id) => id !== keep);
-        out.set(cols[0]!, { head: cols[0]!, mids: cols.flatMap((id) => subtree(d, id)), stops: [], steps: cols.length, tucked: [], kind: "same", cols });
-        continue;
-      }
-      // (④) 開くのは一番左の枠。完成の印を持つ列は畳まない (11-20 オーナー「2A」)
+      // 開くのは一番左の枠。完成の印を持つ列は畳まない (11-20 オーナー「2A」)
       const keep = ids[0]!, cols = ids.filter((id) => id !== keep && !done(id));
       if (!cols.length) continue;
       const mids = cols.flatMap((id) => subtree(d, id));
