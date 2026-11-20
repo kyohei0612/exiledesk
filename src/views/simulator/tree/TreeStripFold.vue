@@ -8,13 +8,13 @@ import { BOX_W } from "../../../services/simulator/tree/tree-model";
 import { FOLD_H } from "../../../services/simulator/tree/tree-strip-fold";
 import { tr } from "../../../i18n/lang";
 
-const p = defineProps<{ head: string; /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 / カオスの続き / 同じ流れの列 (③) */ kind?: "frac" | "chaos" | "same"; label?: string; boxes?: number; bare?: boolean; /** ↩ だけの兄弟をまとめた行 (S-142j ②、スイッチ foldEnds)。あれば消去の札の代わりにこの行を出す */ ends?: string[]; n?: number; m?: number; issues?: number; stops?: number; /** 開いた続きの「≈ 畳む」(箱の左、ツリーの座標) */ fold?: { x: number; y: number; inv: number } }>();
+const p = defineProps<{ head: string; /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 / カオスの続き / 同じ流れの列 (③) */ kind?: "frac" | "chaos" | "same"; label?: string; boxes?: number; bare?: boolean; /** ↩ だけの兄弟をまとめた行 (S-142j ②、スイッチ foldEnds)。あれば消去の札の代わりにこの行を出す */ ends?: string[]; n?: number; m?: number; issues?: number; stops?: number; /** 開いた続きの「≈ 畳む」(箱の左、ツリーの座標) */ fold?: { x: number; y: number; inv: number; right?: boolean } }>();
 const emit = defineEmits<{ toggle: [] }>();
 </script>
 
 <template>
-  <button v-if="fold" type="button" data-tree-strip-refold :data-box-id="head" class="nodrag nopan pointer-events-auto absolute z-[5] -translate-x-full whitespace-nowrap rounded-md border border-dashed border-sky-400/70 bg-[#101820] px-2 text-[12px] leading-7 text-sky-200 hover:bg-sky-500/20"
-    :style="{ left: `${fold.x - 10}px`, top: `${fold.y + 8}px`, scale: String(fold.inv), transformOrigin: 'right top' }" :title="p.kind === 'same' ? tr('同じ流れの列を札へ滑り込ませて畳む', 'Slide the same-flow columns back into one card') : p.kind === 'frac' ? tr('この ✦ の枝を札 1 枚に畳む', 'Fold this ✦ branch into one card') : p.kind === 'chaos' ? tr('カオスの続きを札 1 枚に畳む', 'Fold the repeated chaos into one card') : tr('消去の続きを札 1 枚に畳む', 'Fold the repeated annuls into one card')" @click.stop="emit('toggle')">≈ {{ tr("畳む", "Fold") }}</button>
+  <button v-if="fold" type="button" data-tree-strip-refold :data-box-id="head" class="nodrag nopan pointer-events-auto absolute z-[5] w-max -translate-x-full whitespace-nowrap rounded-md border border-dashed border-sky-400/70 bg-[#101820] px-2 text-[12px] leading-7 text-sky-200 hover:bg-sky-500/20"
+    :style="{ left: `${fold.right ? fold.x - 6 : fold.x - 10}px`, top: `${fold.right ? fold.y - 26 - 32 * fold.inv : fold.y + 8}px`, scale: String(fold.inv), transformOrigin: 'right top' }" :title="p.kind === 'same' ? tr('同じ流れの列を札へ滑り込ませて畳む', 'Slide the same-flow columns back into one card') : p.kind === 'frac' ? tr('この ✦ の枝を札 1 枚に畳む', 'Fold this ✦ branch into one card') : p.kind === 'chaos' ? tr('カオスの続きを札 1 枚に畳む', 'Fold the repeated chaos into one card') : tr('消去の続きを札 1 枚に畳む', 'Fold the repeated annuls into one card')" @click.stop="emit('toggle')">≈ {{ tr("畳む", "Fold") }}</button>
   <div v-else-if="ends" data-tree-strip-fold data-tree-fold-ends :data-box-id="head" class="flex cursor-pointer select-none flex-col justify-center gap-0.5 rounded-xl border-[1.5px] border-dashed border-white/25 bg-[#15120e] px-3 py-2 text-[12px] hover:border-white/45"
     :style="{ width: `${BOX_W}px`, minHeight: `${FOLD_H}px` }" :title="tr('押すと箱を開いて手を置ける', 'Click to show the boxes and add a craft')">
     <b v-for="(l, i) in ends" :key="i" class="break-words text-[13px] text-[#e3d6c0]">{{ l }}</b>

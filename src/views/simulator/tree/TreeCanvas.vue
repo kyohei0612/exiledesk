@@ -31,6 +31,13 @@ const root = ref<HTMLElement | null>(null);
 // 置き場の手と窓 (全部の面で同じ物) と、この面の作り (テンプレートは切り出す前と同じ名前で使う。ref は上の段なので自動で外れる)
 const { t, hand, panel, jt, glowOf, tr100, issueOf, startDrag, onAim, removeHandOf, clearBack, onDone, onFail, openIssues, goBack, startLink, goIssue, onPaneClick, onNodeClick } = props.page;
 const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, chipInv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine, slideCss } = useTreeSurface(props.tabKey, props.page, root);
+/** (S-28h ④) 開いた兄弟の「≈ 畳む」は一番右の枠の右上の角 (枠の上、右端に揃える) (11-20 オーナー「畳むは右枠に出して」)。ほかの畳みは今のまま開いた枝の左 */
+const refoldAt = (f: { kind?: string; head: string; keep?: string; cols?: string[] }): { x: number; y: number; inv: number; right?: boolean } => {
+  if (f.kind !== "same" || !f.cols?.length) return { ...posOf(doc.value.boxes[f.keep ?? f.head]!), inv: inv.value };
+  const ps = [f.keep ?? f.head, ...f.cols].filter((id) => doc.value.boxes[id]).map((id) => posOf(doc.value.boxes[id]!));
+  const r = ps.reduce((a, b) => (b.x > a.x ? b : a));
+  return { x: r.x + BOX_W, y: r.y, inv: inv.value, right: true };
+};
 /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝の札の MOD の名前 (後ろの数の幅は外す) */
 const fracName = (a: Aim): string => t.aimShort(a).replace(/\s*\([^()]*\)\s*$/, "");
 /** (S-142j ③、スイッチ hitsSide) 乗せている手の札 (その手の ↩ の畳みの戻り先へ青い線を出す) */
@@ -162,7 +169,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         </svg>
         <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
         <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
-        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="{ ...posOf(doc.boxes[f.keep ?? f.head]!), inv }" @toggle="sf.toggle(f.head)" />
+        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="refoldAt(f)" @toggle="sf.toggle(f.head)" />
         <!-- (S-28h ④) 兄弟の枠を左の枠の後ろへ重ねた形と角の ×n -->
         <TreeFoldStack v-for="f in rv.done.value ? stacks : []" :key="`stack-${f.head}`" :head="f.head" :keep="f.keep!" v-bind="posOf(doc.boxes[f.keep!]!)" :h="bodyH(f.keep!)" :n="f.cols?.length ?? 1" :issues="sf.countsOf(f.head).issues" :inv="inv" @toggle="sf.toggle(f.head)" />
         <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="chipInv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
