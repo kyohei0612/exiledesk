@@ -481,6 +481,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "foldFracChaos", "runSumWords", "whittleTwoWays", "aimFloorWhittle", "phoneGoalSteps", "dailyRankWide",
   // 0.1.772 白もマジックも無いベース 21 個はレアから・ユニーク専用 16 個は選びに出さない E-18c・E-18d (オーナー 11-20 夜「レア始まり見た目おk 出して」、ブラック 143)
   "rareStartBase",
+  // 0.1.773 デイリーの忍者産のお題の火・冷気・雷耐性を「いずれかの元素耐性」で狙う・数える D-06c (オーナー 11-20 夜「おk 出して」、ブラック 143)
+  "dailyEleAny",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

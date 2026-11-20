@@ -1,4 +1,8 @@
 {
+  "0.1.773": [
+    "Daily: Fire, Cold and Lightning Resistance challenges (not from posted boxes) are now aimed and counted as \"any Elemental Resistance\", and the challenge card lists one line per resistance",
+    "Simulator: \"any Elemental Resistance\" on the final-item card now shows one line per resistance"
+  ],
   "0.1.772": [
     "Emulator / Simulator / Daily: bases with no Normal or Magic version (21 bases from the Genesis Tree and Sunder, like Mnemonic Ring and Twilight Ring) now start as Rare items with no mods, and the 16 unique-only bases are no longer shown in base selection"
   ],
