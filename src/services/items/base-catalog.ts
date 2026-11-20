@@ -94,6 +94,15 @@ const RUNE_MADE = /^(Runeforged|Runemastered|Runefather's) /;
 const DNT_1020 = new Set(["[DNT] Cragbreaker Staff", "[DNT] Driftwood Oar", "[DNT] Venerable Defender"]);
 const REMOVED = new Set<string>(removedBases.bases.filter((b) => flag("dntBases") || !DNT_1020.has(b)));
 export const isRemovedBase = (en: string): boolean => REMOVED.has(en);
+/**
+ * ユニーク専用のベース (白・マジック・レアの品がゲームに無い。E-18d、ベースの選びから外す、スイッチ rareStartBase)。
+ * 出どころ = poe2db のベース 1 つずつのページ (中の名前がユニーク用・使うユニークが 1 つだけ・Starlit Ore などからの作り)。オーナー 11-20「ユニークはA」(ブラック 142 経由)
+ */
+const UNIQUE_ONLY = new Set([
+  "Veridical Chain", "Warding Quarterstaff", "Twisted Wand", "Runic Fork", "Aberrant Sledge", "Venerable Defender", "Heartwood Shortbow", "Perching Staff",
+  "Tethering Bands", "Primal Markings", "Ancient Mail", "Ancient Leggings", "Ancient Visor", "Ornate Ringmail", "Tenebrous Crown", "Glacial Fortress",
+]);
+export const isUniqueOnlyBase = (en: string): boolean => UNIQUE_ONLY.has(en) && flag("rareStartBase");
 
 const num = (v: number | [number, number] | undefined): string => (v === undefined ? "" : Array.isArray(v) ? `${v[0]}-${v[1]}` : String(v));
 /** 素の数値を 1 行に (範囲はそのまま) */
@@ -134,7 +143,7 @@ const shelfCls = (row: string): string => {
 /** 全ベース (extras: フラスコ・スキルジェムも) */
 export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] { // E-98
   const out: CatalogRow[] = Object.entries(htcBaseInfo()).flatMap(([en, i]): CatalogRow[] => {
-    const row = RUNE_MADE.test(en) || REMOVED.has(en) ? null : classOfBase(d, en);
+    const row = RUNE_MADE.test(en) || REMOVED.has(en) || isUniqueOnlyBase(en) ? null : classOfBase(d, en);
     return row ? [{ en, ja: i.ja, cls: shelfCls(row.id), lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => tr(x.ja, x.en || x.ja)).join(" / "), stats: baseStatLine(en) }] : [];
   });
   if (extras) {
