@@ -261,6 +261,8 @@ export const FLAGS = {
   tierNumFit: "MOD の段の表: スマホ・狭い列で右の数 (出やすさ・ティア・Lv) の欄を中身の幅に。前は欄が 1px で数が左の文へ重なった (U-12j2、オーナー「修正」。開発版だけ)",
   wordPhrase: "MOD の表: 系統の名前と段の文を言葉の切れ目で折り返す (word-break: auto-phrase、日本語だけ。前は「ダメー|ジ」のように語の途中で折れた、U-12j3、オーナー「修正」。開発版だけ)",
   missNoTier: "シミュの木の外れ MOD の行 (箱のカード・手の窓・スマホの道の画面) は左の札に段の数を出さず側の字だけ「P 外れ MOD」「S 外れ MOD」にする (未発現の冒涜の行と同じ形。S-82b、tree-row-tags の missTag・StageItemCard の sideTier)。オーナー 11-20「段はいらんね」。閉じている間は今のまま (「P1 外れ MOD」)",
+  aimFloorWhittle: "シミュの木: 下に削減の手がある箱でも、見本の ☑ の狙い MOD を狙いの段の一番下で出し、削減の枠はその MOD レベルで比べる (S-200 ③)。オーナー 11-20『削減ルールにのっとってくれ』(r/ub6AAuwK)。開発版だけ。閉じている間は今までどおり",
+  runSumWords: "シミュの木 (デイリーの挑戦の木も): 100 人回しの結果のまとめの見出しを「お金のかかった手」「カレンシー別の数」にし、確定フラクチャーの行に作り直し分の内訳 1 行と、下の欄に始まりの品 (作り直し) の行を出す (S-70d)。オーナー 11-20『フラクチャー紛らわしいねあの表示画面 調整しよう分かりやすく』。開発版だけ。閉じている間は今までどおり",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
@@ -287,10 +289,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   // 0.1.748 出し待ちの表で見た目 OK の物 (オーナー 11-17「出す準備 完了時」「んまぁおすすめで」、ブラック 129〜132): デイリーの木をシミュの設定のまま・数を 1 行・完成形の札をシミュのまま・文の折り方、完成形の札を送り棒なしで全部・ティア調整・字の大きさ・自動ルーンの行を出さない、右の列を上まで・幅・色のプルダウンを出さない、結果の箱のルーン・偶然付いた狙いの箱、スマホの URL の案内・横持ちの PC の画面、木を描く・配置を 1 回だけ作る、古いレシピの書き直し・保存 15 個と共有で聞く、手の札のアイコンを縦に。barSlim・failRuneSample・failRuneFree は入れない
   "dailyTreeAsSim", "dailyNumLine",
   "dailySimCard", "goalCardFull",
-  "sideTop",
-  "goalTierTop",
-  "sideLikeDaily",
-  "skinHide",
+  "sideTop", "goalTierTop",
+  "sideLikeDaily", "skinHide",
   "goalCardMinText", "boxRuneLine", "goalNoAutoRune",
   "oddShapes",
   "dailyWrap",
