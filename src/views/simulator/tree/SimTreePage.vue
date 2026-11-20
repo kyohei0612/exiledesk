@@ -59,11 +59,14 @@ import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
 import { backTargetsOf } from "./tree-merge";
 import { flag } from "../../../web/release-flags";
+import { phoneGoalSteps } from "../phone/phone-goal-steps";
 const t = useTree();
 const doc = t.doc;
 /** 見るだけの幅 (768 未満、S-94g) = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
 const viewWidth = useViewOnlyWidth();
-const viewPhone = computed(() => viewWidth.value);
+/** スマホの端末はベース選び・完成の MOD を組める (S-94l2、phoneGoalSteps)。見るだけはツリーの段だけ */
+const PHONE_GOAL = phoneGoalSteps();
+const viewPhone = computed(() => viewWidth.value && !(PHONE_GOAL && treeStep.value !== "tree"));
 // エンジンの設定 (触媒・聖別の倍率・MOD の重み) は開いている間この木の値 (use-tree-tune.ts)
 useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */
@@ -334,7 +337,7 @@ const escOff = (f: () => void) => (): void => { if (cur.value) { cur.value.cardB
 useDismiss(() => !!cur.value?.plus.value, [], escOff(() => { S().plus.value = null; }), { escOnly: true });
 useDismiss(() => !!full.value, [], escOff(toggleFull), { escOnly: true });
 onMounted(() => window.addEventListener("keydown", onKey));
-onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
+onMounted(() => { if (viewWidth.value && !PHONE_GOAL) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 // 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったら開いた時の見え方 (全体・上寄せ) に合わせ直す
 // 要望のページの間は隠れて大きさ 0。開く前の見え方を覚えて戻す (U-05c)
@@ -372,7 +375,7 @@ const setLines = (on: boolean): void => { for (const c of surfs.values()) c.line
   <section data-tree-page class="min-w-0 flex-1 p-4 max-[48rem]:px-2">
     <!-- 768 未満は見るだけの 1 画面 (PhoneViewPage)、768 以上は PC の木で組む (S-94g。質問で進める形 PhoneTreePage は 11-08 夜に外した、オーナー「768組めそうならそれ以降はＰＣ表示でいいと思う」) -->
     <!-- チュートリアルの札と光る枠 (PC もスマホも。札は body へ出す) -->
-    <SimTutorialGuide v-if="!viewPhone" />
+    <SimTutorialGuide v-if="!viewPhone && !PHONE_GOAL" />
     <TreeLoadingCover /><!-- 開いて組み直している間の「レシピ読み込み中…」(PC・スマホ共通、S-196。頁の外枠 WebApp にもある時はそちらだけ描く = S-196f2) -->
     <PhoneViewPage v-if="viewPhone" />
     <template v-else>

@@ -47,6 +47,7 @@ import TreeGoalRunes from "./TreeGoalRunes.vue";
 import { wayName } from "./tree-attach";
 import { simOp } from "../../../web/track";
 import { flag } from "../../../web/release-flags";
+import { phoneGoalSteps } from "../phone/phone-goal-steps";
 import TreeTierBulk from "./TreeTierBulk.vue";
 import { useEleFold } from "./use-ele-fold";
 /** 狙うMODの一括ティア調整をここにも (S-10f、スイッチ tierDown。✦ の段はここで決める、11-13 オーナー「次MOD選びの段階でティア調整ボタンは配置しておくべき」) */
@@ -67,6 +68,8 @@ const ef = useEleFold();
 /** 完成形のカード (品質・束の行) */
 const shown = useGoalShown();
 const step = computed(() => t.goalPage.value);
+/** チュートリアルは PC だけ (スマホの端末でベース選びを組む時は出さない、S-94l2) */
+const TUT_ON = !phoneGoalSteps();
 const asking = ref<string | null>(null);
 /** ベースを替えて外した狙いの文 (新しいベースに付かない物、2 の段の上に 1 行。次にベースを替える・閉じるまで) */
 const dropped = ref<string[]>([]);
@@ -276,7 +279,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button v-if="asPage && canBack" type="button" data-tree-goal-back class="g-btn sm shrink-0" @click="backToTree">{{ tr("← ツリーに戻る", "← Back to tree") }}</button>
         <TreeFlowSteps :current="step === 2 ? 2 : 1" :no-base="unpicked" @go="onFlow" />
         <!-- 上の道具の並び: チュートリアル (ベース選びの段だけ、PC だけ) とレシピ (11-03 オーナー「チュートリアルボタン１つでよさそう」) -->
-        <span class="ml-auto flex shrink-0 items-center gap-2"><SimTutorialEntry v-if="step === 1" /><TreeRecipeBar menu-only @opened="onRecipe" /></span>
+        <span class="ml-auto flex shrink-0 items-center gap-2"><SimTutorialEntry v-if="step === 1 && TUT_ON" /><TreeRecipeBar menu-only @opened="onRecipe" /></span>
       </div>
       <!-- 木が 2 つ以上ある時はタブもここに (新しいツリーのベース選びの間も前の木へ戻れる、10-24 モンキー初めての人の回 8) -->
       <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
