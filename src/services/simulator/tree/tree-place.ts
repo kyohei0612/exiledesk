@@ -12,12 +12,13 @@ import type { TreeDoc } from "./tree-model";
 import { centerMerged, drawnKids, rowLayout, stackEnds } from "./tree-row-tops";
 import { outRank } from "./tree-layout";
 import { bandsTogether } from "./tree-band";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 import { keepOrder, type KeptOrder } from "./tree-place-order";
 import { wideOrder, wideX } from "./tree-place-wide";
 import { frontOf, keptHasOrder, takeFront } from "./tree-front-path";
 import { unsetBoxes } from "./tree-junk-tidy";
 import { linkTargets } from "./tree-strip-fold";
+import { idealPath } from "./tree-ideal-first";
 
 /** 兄弟の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -58,7 +59,8 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const L = rowLayout(d, heightOf);
   // (S-142j ②、スイッチ hitsSide) 箱と箱の横の間は倍 (11-14 オーナー「枠通しの横枠だけど倍あげようか　詰めすぎてもね？」)
   const g = flag("hitsSide") ? 2 : 1;
-  const xs = wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF * g, deep: GAP_DEEP * g, reserve: !flag("hitsSide") }, (id) => [...stacked.values()].includes(id), new Set(linkTargets(d).keys()));
+  const links = linkTargets(d);
+  const xs = wideX(d, L, kidsOf, chipW, { leaf: GAP_LEAF * g, deep: GAP_DEEP * g, reserve: !flag("hitsSide") }, (id) => [...stacked.values()].includes(id), new Set(links.keys()), flag("laneBuild" as Flag) ? idealPath(d)?.path ?? null : null, links); // (S-142p、開発版だけ) 理想手のレーンを先に、残りはその右
   for (const [id, x] of xs) {
     const b = d.boxes[id]!, r = L.rows.get(id);
     b.x = Math.round(x);

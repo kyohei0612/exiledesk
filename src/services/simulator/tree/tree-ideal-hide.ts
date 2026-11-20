@@ -8,7 +8,8 @@
  * 木の中身は変えず、描かない・数えないだけ (消去の続きを畳む stripHidden と同じ口で効かせる)
  */
 import type { TreeDoc } from "./tree-model";
-import { DEV_BUILD, flag } from "../../../web/release-flags";
+import { DEV_BUILD, flag, type Flag } from "../../../web/release-flags";
+import { idealPath } from "./tree-ideal-first";
 import { flowOnce } from "./tree-flow-once";
 
 /** 隠す結果の種類 (狙いを持って打って狙い通りにいかなかった結果) */
@@ -23,7 +24,9 @@ export function idealHidden(d: TreeDoc): ReadonlySet<string> {
 }
 function hiddenRaw(d: TreeDoc): ReadonlySet<string> {
   const bs = Object.values(d.boxes);
-  if (bs.some((b) => b.done === "main")) return NONE;
+  // (S-142p、スイッチ laneBuild、開発版だけ・案) 完成を押した後も、理想手のレーン (当たりの道) に未設定が残る間は隠したまま。
+  // レーンを全部組み終えた時に未設定をまとめて出す (11-21 オーナー「完成させたツリーはグレーアウトさせずに残しておく。を繰り返したら」「そのあとに未設定が多分右側に出現する」)
+  if (bs.some((b) => b.done === "main") && !(flag("laneBuild" as Flag) && (idealPath(d)?.order?.length ?? 0) > 0)) return NONE;
   const key = bs.map((b) => `${b.id}:${b.out}:${b.hand ? 1 : 0}${b.split?.length ? 1 : 0}${b.back ? (b.autoBack ? "a" : "b") : ""}${b.done ?? ""}`).join("|");
   const m = memo.get(d);
   if (m?.key === key) return m.v;
