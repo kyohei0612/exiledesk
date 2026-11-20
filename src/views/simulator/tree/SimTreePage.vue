@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickFoldMirrors, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { foldMirrors } from "../../../services/simulator/tree/tree-fold-frac-chaos"; import { stripFolds } from "../../../services/simulator/tree/tree-strip-fold"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickFoldMirrors, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { foldMirrors } from "../../../services/simulator/tree/tree-fold-frac-chaos"; import { foldCard, stripFolds } from "../../../services/simulator/tree/tree-strip-fold"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
@@ -200,7 +200,7 @@ let dragEndedAt = 0;
 function onNodeClick(e: NodeMouseEvent): void {
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
-  if (S().sf.folds.value.has(b.id)) { S().sf.toggle(b.id); return; }
+  if (foldCard(S().sf.folds.value, b.id)) { S().sf.toggle(b.id); return; } // (S-28i) 縦の重ねの前の箱は普通の箱 (×n で開く)
   // 縮めて見ている時は、その箱の編集を等倍のポップアップで (オーナー 10-22「75% 未満の見るだけをやめる」)
   if (viewOnly.value) { pop.value = b.id; return; }
   if (panel.value) closeHand();

@@ -9,7 +9,7 @@
 import { ref, type Ref } from "vue";
 import { effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 import { idealHidden, idealOnlyHidden } from "./tree-ideal-hide";
 import { frontOf } from "./tree-front-path";
 import { treeOrder } from "./tree-order";
@@ -27,6 +27,16 @@ export interface StripFold { head: string; mids: string[]; stops: string[]; step
   /** (S-28h、スイッチ foldFracChaos) 畳んだ ✦ の枝 (frac) / カオスの続き (chaos) / 同じ流れの列 (same、③)。無ければ消去の続き */ kind?: "frac" | "chaos" | "same";
   /** (S-28h ③) 畳んだ同じ流れの列の頭 (head 込み、親は違ってよい) */ cols?: string[];
   /** (S-28h ④) 兄弟の枠を左の枠 (keep) の後ろへ重ねる畳み: 札は描かず head も隠し、keep の後ろに重ねて角に ×n */ stack?: true; keep?: string }
+
+/**
+ * (S-28i、スイッチ annulStack、開発版だけ・案) 消去とカオスの縦の続きも札をやめ、兄弟の畳み (S-28h ④) と同じ段々の重ねにする:
+ * 一番上の箱 (head) を普通の箱で描き (keep = head)、残りの箱を隠して後ろにカードと手の札を重ね、角に ×n (n = 隠した箱の数)。開くと下へ滑る (use-fold-slide)
+ */
+export const annulStackOn = (): boolean => flag("annulStack" as Flag);
+/** 札 (TreeStripFold) を描く畳みか (重ねる畳み・直に線・↩ の畳みは札を描かない) */
+export const foldCard = (folds: ReadonlyMap<string, StripFold>, id: string): boolean => { const f = folds.get(id); return !!f && !f.stack && !f.link && !f.back; };
+/** 縦に重ねる畳み (head の箱を前に描く、S-28i) */
+export const downStack = (f: StripFold | undefined): boolean => !!f?.stack && f.keep === f.head;
 
 /** 開いた続き (head の id)。保存しない */
 const ownOpen = ref<ReadonlySet<string>>(new Set());
@@ -82,7 +92,7 @@ function chainsRaw(d: TreeDoc): Map<string, StripFold> {
     // 畳んだ中の箱へまとめた箱 (同じ段のまとめ S-66) は札の中 = 止まった箱にしない。線の先に描かない箱が混ざると札の線ごと消えた (11-06 MISV6HZL、オーナー「普通に線が消えてね」)
     const inside = new Set(mids);
     const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };
-    out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => !tuck(id)), steps, tucked: stops.filter(tuck) });
+    out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => !tuck(id)), steps, tucked: stops.filter(tuck), ...(annulStackOn() ? { stack: true as const, keep: h.id } : {}) });
   }
   // (S-28h、スイッチ foldFracChaos) ✦ の枝 (開く 1 本のほか) とカオスの続きも札に畳む。消去の続きの中の箱は持たない
   if (flag("foldFracChaos")) fracChaosFolds(d, out);
@@ -210,7 +220,7 @@ export function stripHidden(d: TreeDoc, folds: ReadonlyMap<string, StripFold> = 
 }
 function hiddenRaw(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Set<string> {
   const s = new Set<string>();
-  for (const f of folds.values()) for (const id of f.mids) if (id !== f.head || f.link || f.back || f.stack) s.add(id); // 直に線・↩・左の枠へ重ねる (S-28h ④) の畳みは札も描かない
+  for (const f of folds.values()) for (const id of f.mids) if ((id !== f.head || f.link || f.back || f.stack) && id !== f.keep) s.add(id); // 直に線・↩・左の枠へ重ねる (S-28h ④) の畳みは札も描かない。縦の重ね (S-28i) は前の箱 (keep = head) を描く
   // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
   if (flag("treeFoldMerged")) for (const f of folds.values()) for (const id of f.tucked) s.add(id);
   for (const id of idealHidden(d)) s.add(id); // 完成を押すまで隠す外れの箱 (S-142n、スイッチ idealHide)

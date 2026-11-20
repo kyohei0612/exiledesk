@@ -9,7 +9,7 @@ import { nudgeLines, segsOfPts } from "./tree-lines-nudge";
 import { gridRoute, sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
-import { backTargets, FOLD_H, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { backTargets, FOLD_H, foldCard, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
 
@@ -135,14 +135,15 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 子が ↩ の畳みだけ (描く子も直に線も無い) の時は、手の札を親の下 LINE_Y に (段の決めがあればその段の札の高さ)
     const top = gk.length ? Math.min(...gk.map((k) => posOf(doc.value.boxes[k]!).y)) : p.y + (heightOf?.(b.id) || BOX_H) + 2 * LINE_Y + 2 * CHIP_HALF, multi = gk.length > 1;
     // 帯の中の枠の箱は帯の真下から (手の名前は帯の中なので札は出さない、band)
-    const px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H));
+    const card = foldCard(fold.value.folds, b.id); // (S-28i) 縦の重ねの前の箱は札でなく普通の箱の高さ
+    const px = bf?.col ?? p.x + BOX_W / 2, py = bf?.y ?? (pass ? p.y : p.y + (card ? FOLD_H : BOX_H));
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
     const Lr = layout?.() ?? null, r = Lr?.rows.get(lead);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
     // 畳んだ消去の続きの札の上下 (人の消去の箱 → 札・札 → 止まった箱) は、手の札を前の箱の下端と次の箱の上端の真ん中に (上下の線を同じ長さ。
     // 段の札の高さに揃えると、背の低い札の下の線だけ長くなった。11-07 オーナー「消去と前の枠と次のわくの間において欲しい…不細工にならないように線の長さが」)
     const mid = !pass && !multi && (fold.value.folds.has(b.id) || (!!kids[0] && fold.value.folds.has(kids[0].id)));
-    const midJy = mid ? (fold.value.folds.has(b.id) ? py : p.y + (heightOf?.(b.id) || BOX_H)) / 2 + top / 2 : null;
+    const midJy = mid ? (card ? py : p.y + (heightOf?.(b.id) || BOX_H)) / 2 + top / 2 : null;
     const jy = pass ? p.y : midJy ?? rowJy ?? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF;
     const busY0 = midJy != null ? (midJy + CHIP_HALF + top) / 2 : (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : top - (multi ? LINE_Y : LINE_Y / 2));
     // ずらしても手の札の下の縁 + 12 より上へは上げない (段の間を倍にしても札に届かない)

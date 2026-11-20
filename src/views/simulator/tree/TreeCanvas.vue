@@ -22,7 +22,7 @@ import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { useTreeSurface, type PageCtx } from "./use-tree-surface";
 import { spotArc, spotCss, spotZoomRim, type SpotArc } from "./tree-spot-arc";
-import { drawnBackOf } from "../../../services/simulator/tree/tree-strip-fold";
+import { downStack, drawnBackOf, foldCard } from "../../../services/simulator/tree/tree-strip-fold";
 
 type Lane = { text: string };
 type ChipEdge = { chip?: unknown };
@@ -33,6 +33,8 @@ const { t, hand, panel, jt, glowOf, tr100, issueOf, startDrag, onAim, removeHand
 const { flowId, pageZ, grid, lanes, v, sf, doc, plus, backLabel, viewOnly, zoom, inv, chipInv, bd, onPlus, hoverBox, shownEdges, edgeHot, rv, posOf, chipRoom, passes, merged, linesAll, shown, plusLine, slideCss } = useTreeSurface(props.tabKey, props.page, root);
 /** (S-28h ④) 開いた兄弟の「≈ 畳む」は一番右の枠の右上の角 (枠の上、右端に揃える) (11-20 オーナー「畳むは右枠に出して」)。ほかの畳みは今のまま開いた枝の左 */
 const refoldAt = (f: { kind?: string; head: string; keep?: string; cols?: string[] }): { x: number; y: number; inv: number; right?: boolean } => {
+  // (S-28i) 縦の重ねを開いた「≈ 畳む」は前の箱の右上の角 (兄弟と同じ置き方)
+  if (f.keep && f.keep === f.head) { const q = posOf(doc.value.boxes[f.head]!); return { x: q.x + BOX_W, y: q.y, inv: inv.value, right: true }; }
   if (f.kind !== "same" || !f.cols?.length) return { ...posOf(doc.value.boxes[f.keep ?? f.head]!), inv: inv.value };
   const ps = [f.keep ?? f.head, ...f.cols].filter((id) => doc.value.boxes[id]).map((id) => posOf(doc.value.boxes[id]!));
   const r = ps.reduce((a, b) => (b.x > a.x ? b : a));
@@ -57,13 +59,20 @@ onMounted(() => { if (canvasEl.value) offTurn = attachTurnTouch(canvasEl.value, 
 onBeforeUnmount(() => offTurn?.());
 /** (S-28h ④) 左の枠の後ろへ重ねている兄弟の畳み (左の枠が描かれている物だけ) */
 const stacks = computed(() => [...sf.folds.value.values()].filter((f) => f.stack && f.keep && doc.value.boxes[f.keep] && !sf.hidden.value.has(f.keep)));
+/** (S-28i) 縦の重ねの前の箱の手の札 (後ろに同じ段々で札を重ねる)。大きさは描いた札から、無ければ見込み */
+const chipOf = (id: string): { x: number; y: number; w: number; h: number; k: number } | null => {
+  const e = (shownEdges.value as Array<{ id: string; jx: number; jy: number; chip?: unknown }>).find((x) => x.id === id && x.chip);
+  if (!e) return null;
+  const el = root.value?.querySelector<HTMLElement>(`[data-tree-hand][data-hand-of="${id}"]`);
+  return { x: e.jx, y: e.jy, w: el?.offsetWidth || 150, h: el?.offsetHeight || 28, k: chipInv.value };
+};
 const bodyH = (id: string): number => root.value?.querySelector<HTMLElement>(`[data-tree-box][data-box-id="${id}"]`)?.offsetHeight || v.flow.findNode(id)?.dimensions.height || BOX_H;
 /**
  * (linkChipHover) ↩ を持つ描いた箱 (「↩ n 段目へ戻る」の枠) に乗せた時も、手の札と同じく戻り先を照らし、箱の上の辺から青い弧で引っ張る
  * (11-16 オーナー「前の段に戻るは青線で引っ張るんでしょライトアップして　手の札と枠両方実装しないとダメじゃね」)
  */
 const boxSpot = (): { key: string; arcs: SpotArc[]; css: string } | null => {
-  const b = hoverBox.value ? doc.value.boxes[hoverBox.value] : undefined, to = b && !sf.folds.value.has(b.id) ? drawnBackOf(doc.value, b.id) : null;
+  const b = hoverBox.value ? doc.value.boxes[hoverBox.value] : undefined, to = b && !foldCard(sf.folds.value, b.id) ? drawnBackOf(doc.value, b.id) : null;
   if (!b || !to || to === b.id) return null;
   const p = posOf(b), q = posOf(doc.value.boxes[to]!), up = q.y < p.y, k = inv.value;
   const arcs = [{ id: to, back: true, d: spotArc(p.x + BOX_W / 2, up ? p.y - HEAD_TAG : p.y + bodyH(b.id), q, bodyH(to)) }];
@@ -142,7 +151,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
       :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
       @pane-click="onPaneClick" @node-click="onNodeClick">
       <template #node-box="{ id }">
-        <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" :label="sf.folds.value.get(id)?.kind === 'frac' && doc.boxes[id]?.aim ? fracName(doc.boxes[id]!.aim!) : undefined" />
+        <TreeStripFold v-if="foldCard(sf.folds.value, id)" :head="id" v-bind="sf.countsOf(id)" :label="sf.folds.value.get(id)?.kind === 'frac' && doc.boxes[id]?.aim ? fracName(doc.boxes[id]!.aim!) : undefined" />
         <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent"                :selected="panel?.id === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.dimOf(doc.boxes[id]!)" :gray="jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :plus-far="viewOnly && !hand && !jt.dimOf(doc.boxes[id]!) ? 1 / zoom : undefined" :swamp="tr100.shown.value && tr100.result.value?.loopAt?.[id] ? Math.max(1, 1 / zoom) : 0" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :bands="bd.bandsFor(id)" @quit="bd.onQuit(id)" :band-on="viewOnly && !hand && !jt.dimOf(doc.boxes[id]!)" @band="(x, e) => (viewOnly ? (panel = { kind: 'hand', id: x }) : bd.onBand(x, e))"                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
           @clear-back="t.edit((d: TreeDoc) => clearBack(d, id))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
           @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d: TreeDoc) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
@@ -171,7 +180,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
         <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="refoldAt(f)" @toggle="sf.toggle(f.head)" />
         <!-- (S-28h ④) 兄弟の枠を左の枠の後ろへ重ねた形と角の ×n -->
-        <TreeFoldStack v-for="f in rv.done.value ? stacks : []" :key="`stack-${f.head}`" :head="f.head" :keep="f.keep!" v-bind="posOf(doc.boxes[f.keep!]!)" :h="bodyH(f.keep!)" :n="f.cols?.length ?? 1" :issues="sf.countsOf(f.head).issues" :inv="inv" @toggle="sf.toggle(f.head)" />
+        <TreeFoldStack v-for="f in rv.done.value ? stacks : []" :key="`stack-${f.head}`" :head="f.head" :keep="f.keep!" v-bind="posOf(doc.boxes[f.keep!]!)" :h="bodyH(f.keep!)" :n="downStack(f) ? f.mids.length - 1 : f.cols?.length ?? 1" :issues="sf.countsOf(f.head).issues" :inv="inv" :chip="downStack(f) ? chipOf(f.head) : null" :down="downStack(f)" @toggle="sf.toggle(f.head)" />
         <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="chipInv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
         <!-- (linkChipHover) 照らしている間の行き先の箱の写し (読むだけ・押せない。箱の上の辺の真ん中を軸に大きく = 下へ伸びる) -->
         <div v-for="{ id, h, dy } in spotZoom?.items ?? []" :key="`spot-zoom-${id}`" data-tree-spot-zoom :data-spot-zoom-of="id" :data-spot-zoom-dy="Math.round(dy) || undefined" class="pointer-events-none absolute z-[6] rounded-xl"
