@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.769",
+  "date": "2026-11-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: ツリーの「外れ MOD」の行に段の数 (P1 など) を出さないようにしました",
+    "en": "Simulator: miss mod rows in the tree no longer show a tier number (P1 etc.)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 狙うMODの一括ティア調整で、一度下げた段を上げ直せるようにしました",
+    "en": "Simulator: in Adjust target mod tiers, you can now raise a tier again after lowering it"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧: スマホで段の表の右の数字が MOD の文に重なっていたのを直しました",
+    "en": "Mod list: on phones, the numbers on the right of the tier table no longer overlap the mod text"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧: MOD の文が言葉の途中で折り返さないようにしました",
+    "en": "Mod list: Japanese mod text now wraps between words instead of mid-word"
+   }
+  ]
+ },
+ {
   "v": "0.1.768",
   "date": "2026-11-19",
   "items": [
@@ -1060,24 +1090,6 @@
     "area": "",
     "text": "要望への返事: 返事の文の中の URL を押すと、そのページが新しいタブで開くようにしました",
     "en": "Replies to feedback: URLs in a reply are now links that open the page in a new tab"
-   }
-  ]
- },
- {
-  "v": "0.1.729",
-  "date": "2026-11-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木の手に耐性のフラックスを足しました。狙いの耐性 MOD に打ち、打った後の箱を 1 つ下に出します (デイリーの木も同じ)",
-    "en": "Simulator: added resistance Flux orbs as tree steps. They are applied to a target resistance mod and add one result box below (also in the Daily tree)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望への返事: 返事が届いた時、今開いている画面にもポップアップで知らせるようにしました",
-    "en": "Replies to feedback: when a reply arrives, a popup now also shows on the page you have open"
    }
   ]
  }

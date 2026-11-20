@@ -1,4 +1,10 @@
 {
+  "0.1.769": [
+    "Simulator: miss mod rows in the tree no longer show a tier number (P1 etc.)",
+    "Simulator: in Adjust target mod tiers, you can now raise a tier again after lowering it",
+    "Mod list: on phones, the numbers on the right of the tier table no longer overlap the mod text",
+    "Mod list: Japanese mod text now wraps between words instead of mid-word"
+  ],
   "0.1.768": [
     "Emulator: on sanctified items the sanctify controls now sit next to the granted skill picker, and the quality type box no longer cuts off its text"
   ],

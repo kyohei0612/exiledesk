@@ -270,8 +270,8 @@ export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
-  // 0.1.768 エミュの品の上の帯 U-12h2 (barOneRow、オーナー 11-19「おｋ」「だして」)・0.1.767 札の MOD の数を 1 つに E-96b (oneValue、オーナー 11-19「統一してＵＩ　んで出しておｋ」)・0.1.766 冒涜で選んだ完成形と同じ MOD の置き石を当たりに数える S-33h ② (veilStoneAim)・ルーンを刺す手の箱はその手のルーンだけ見る S-60g3 ⑦ (runeHandOwn)。オーナー 11-19「だして」、ブラック 141・0.1.765 道の光らせ S-72d (walkFast)・ルーンの手を挟んでも戻す S-60g3 ⑥ (runeBack)・0.1.764 (sharedOpenCover, oddMixSkip, joinChainFix)
-  "barOneRow", "oneValue", "veilStoneAim", "runeHandOwn", "walkFast", "runeBack", "sharedOpenCover", "oddMixSkip", "joinChainFix",
+  // 0.1.769 外れ MOD の札に段の数を出さない S-82b (missNoTier)・ティア調整で上げ直し S-10f2 (tierUp)・スマホの段の表の数 U-12j2 (tierNumFit)・MOD の文を言葉の切れ目で折る U-12j3 (wordPhrase)。オーナー 11-20「出して」、ブラック 142・0.1.768 エミュの品の上の帯 U-12h2 (barOneRow、オーナー 11-19「おｋ」「だして」)・0.1.767 札の MOD の数を 1 つに E-96b (oneValue、オーナー 11-19「統一してＵＩ　んで出しておｋ」)・0.1.766 冒涜で選んだ完成形と同じ MOD の置き石を当たりに数える S-33h ② (veilStoneAim)・ルーンを刺す手の箱はその手のルーンだけ見る S-60g3 ⑦ (runeHandOwn)。オーナー 11-19「だして」、ブラック 141・0.1.765 道の光らせ S-72d (walkFast)・ルーンの手を挟んでも戻す S-60g3 ⑥ (runeBack)・0.1.764 (sharedOpenCover, oddMixSkip, joinChainFix)
+  "missNoTier", "tierUp", "tierNumFit", "wordPhrase", "barOneRow", "oneValue", "veilStoneAim", "runeHandOwn", "walkFast", "runeBack", "sharedOpenCover", "oddMixSkip", "joinChainFix",
   // 0.1.760 勢力の札 U-12k・保存できない時の赤い帯 S-101c ②・保存したレシピを変えない S-100b・S-104g・ルーンの比べ S-60g3・冒涜の見本の段の下限 S-200 ③。オーナー 11-19「だして」、ブラック 140。0.1.759 (recipeRoom) レシピの保存の枠が一杯の時に黙らない・止まった移しを終える・並びを逆にしない S-101c (デイリーの記録を今日の 1 枠に D-32c と同じ版)。オーナー 11-18 夜「おｋ　出して」、ブラック 139
   "factionChips", "recipeFullNotice", "recipeFrozen", "runeFreeAll", "aimFloorVeil", "recipeRoom",
   // 0.1.758 カタリストを挟んでも品質が上限か使い切った後なら自動の ↩ S-51d B' (catBack)・0.1.757 冒涜・発現の窓で選んだ MOD は置き石 S-33h (veilStone)・0.1.756 デイリーの保存の分け方 D-36e (dailySaveSplit)
