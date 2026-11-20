@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.770",
+  "date": "2026-11-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 創生の樹でしか付かない MOD があるお題は、その MOD がフラクチャー済みの品からツリーで始まるようにしました。今日のお題の挑戦はリセットしました",
+    "en": "Daily: challenges with a mod only the Genesis Tree can add now start in the tree from an item with that mod already fractured. Today's challenge attempts have been reset"
+   }
+  ]
+ },
+ {
   "v": "0.1.769",
   "date": "2026-11-20",
   "items": [
@@ -1072,24 +1084,6 @@
     "area": "",
     "text": "シミュレーター: 完成形のカードは、狙いを決めた後は MOD の札を出さず「ティア調整」だけにしました (MOD の選び直しは上の「完成の MOD」から)",
     "en": "Simulator: once targets are set, the goal card shows only the tier adjust button instead of the mod tag (change the mods from the final mods step above)"
-   }
-  ]
- },
- {
-  "v": "0.1.730",
-  "date": "2026-11-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 提出する時にひとこと (40 字まで) を書けるようにし、順位の名前の下に出すようにしました。提出の後も、その日のうちは順位の下から書く・直す・消すができます",
-    "en": "Daily: You can add a short note (up to 40 characters) when you submit, shown under your name in the ranking. You can add, edit, or remove it later that day from below the ranking"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "要望への返事: 返事の文の中の URL を押すと、そのページが新しいタブで開くようにしました",
-    "en": "Replies to feedback: URLs in a reply are now links that open the page in a new tab"
    }
   ]
  }

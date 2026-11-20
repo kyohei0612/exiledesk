@@ -1,4 +1,7 @@
 {
+  "0.1.770": [
+    "Daily: challenges with a mod only the Genesis Tree can add now start in the tree from an item with that mod already fractured. Today's challenge attempts have been reset"
+  ],
   "0.1.769": [
     "Simulator: miss mod rows in the tree no longer show a tier number (P1 etc.)",
     "Simulator: in Adjust target mod tiers, you can now raise a tier again after lowering it",
