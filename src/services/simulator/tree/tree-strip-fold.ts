@@ -9,7 +9,7 @@
 import { ref, type Ref } from "vue";
 import { effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
-import { flag, type Flag } from "../../../web/release-flags";
+import { flag } from "../../../web/release-flags";
 import { idealHidden, idealOnlyHidden } from "./tree-ideal-hide";
 import { frontOf } from "./tree-front-path";
 import { treeOrder } from "./tree-order";
@@ -52,16 +52,7 @@ const inner = (b: TreeBox | undefined): boolean => !!b?.autoAnnul && isAnnul(b);
  * 止まらずに続くだけの自動の消去の箱 (結果がどれも自動の消去かまとめの箱)。消去 1 回で止まった結果がある箱は畳まず普通に描き、
  * 止まった箱をその消去の下に出す (11-08 オーナー「消去単品で止まった枝は畳む中に置かない」)
  */
-const through = (d: TreeDoc, b: TreeBox | undefined): boolean => upAnnul(d, b) || (inner(b) && (oneBranch() || b!.outs.every((o) => inner(d.boxes[o]) || !!d.boxes[o]?.merged)));
-/**
- * (S-51f、スイッチ trunkFold、開発版だけ) 幹はいつも浅い段 (S-51e) で浅い段へ移した箱 (印 lifted) かその下にある消去の箱 (人の消去も自動の消去も)。
- * 段の数を問わず札 1 枚に畳む (11-21 オーナー「そもそもなんだけど道を表示させないのはツリーが樹海になるために決めなかったっけ？」)
- */
-const upAnnul = (d: TreeDoc, b: TreeBox | undefined): boolean => {
-  if (!b || !isAnnul(b) || !flag("trunkFold" as Flag)) return false;
-  for (let x: TreeBox | undefined = b, n = 0; x && n < 500; x = d.boxes[x.parent ?? ""], n++) if (x.lifted) return true;
-  return false;
-};
+const through = (d: TreeDoc, b: TreeBox | undefined): boolean => inner(b) && (oneBranch() || b!.outs.every((o) => inner(d.boxes[o]) || !!d.boxes[o]?.merged));
 /**
  * (S-28g ⑤、スイッチ treeNoAnnulAuto、開発版だけ) 自動の消去の続きは 1 段でも・1 回で止まった枝も札 1 枚に畳み、止まった箱だけ下に並べる
  * (11-12 オーナー「止まるところまでその際止まるところまで1枝でいいんじゃねって思うけど。」。このスイッチの下では上の 11-08 の「消去単品で止まった枝は畳まない」と「2 段以上」を変える)
@@ -86,7 +77,7 @@ function chainsRaw(d: TreeDoc): Map<string, StripFold> {
     };
     walk(h.id, 1);
     // 1 段だけの続きは畳まず箱をそのまま並べる (スイッチ annulFoldTwo、11-13 オーナー「ここまできたら省略とかいらんだろうな」。閉じている間は treeNoAnnulAuto の下で 1 段も畳む)
-    if (steps < 2 && !upAnnul(d, h) && (!oneBranch() || flag("annulFoldTwo"))) continue;
+    if (steps < 2 && (!oneBranch() || flag("annulFoldTwo"))) continue;
     // 畳んだ中の箱へまとめた箱 (同じ段のまとめ S-66) は札の中 = 止まった箱にしない。線の先に描かない箱が混ざると札の線ごと消えた (11-06 MISV6HZL、オーナー「普通に線が消えてね」)
     const inside = new Set(mids);
     const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };

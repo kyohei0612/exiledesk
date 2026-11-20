@@ -254,7 +254,6 @@ function liftInto(doc: TreeDoc, y: string, x: string): void {
   if (yb.noLost) xb.noLost = true; else delete xb.noLost;
   if (yb.autoAnnul) xb.autoAnnul = true;
   if (yb.touched) xb.touched = yb.touched;
-  xb.lifted = true; // (S-51f、スイッチ trunkFold) 浅い段へ上がった続きの印 (描く所だけが読む)
   for (const c of xb.outs) doc.boxes[c]!.parent = x;
   yb.hand = null; yb.outs = []; delete yb.autoAnnul; delete yb.noLost;
   yb.back = x; yb.autoBack = true; yb.handBack = { ...h };
