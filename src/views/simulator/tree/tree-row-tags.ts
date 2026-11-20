@@ -34,7 +34,7 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
     const tag = out.get(m.modId) ?? (mid.has(m.modId) ? missTag(d, doc, m, modText(m), { evenChosen: true }) ?? undefined : undefined);
     if (!tag?.replace || tag.tone !== "bad" || m.fractured || !(m.crafted || craftedKindOf(d, m))) continue;
     if (!isMissMod(m, goalMiss, it)) out.delete(m.modId);
-    else out.set(m.modId, { ...tag, text: modText(m) });
+    else out.set(m.modId, { ...tag, text: modText(m), noTier: undefined }); // MOD の名前で出す行は段も出す (S-82b は外れ MOD の名前の行だけ)
   }
   return out;
 }
@@ -47,7 +47,8 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
 type MissOpts = { evenChosen?: boolean; cut?: ReadonlySet<string> };
 export const missTag = (d: PatchData, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): RowTag | null => {
   const mid = opts.evenChosen ? undefined : midAims(d, doc).find((a) => a.modId === m.modId);
-  return mid && !opts.cut?.has(aimKey(mid)) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title };
+  // 外れは中身が何でも同じ箱なので段の数は出さない (スイッチ missNoTier、S-82b。オーナー 11-20「段はいらんね」)
+  return mid && !opts.cut?.has(aimKey(mid)) ? null : { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title, ...(flag("missNoTier") ? { noTier: true } : {}) };
 };
 /** 行に外れ MOD の札を置く (完成形に無いエッセンスの MOD は置かない = 文のまま) */
 export const putMiss = (d: PatchData, out: Map<string, RowTag>, doc: TreeDoc, m: StageMod, title: string, opts: MissOpts = {}): void => { const t = missTag(d, doc, m, title, opts); if (t) out.set(m.modId, t); };
