@@ -37,7 +37,7 @@ import { placedOf, placeStartMods, type PlacedMod } from "./start-place";
 const GEM_START_SOCKETS = 2;
 import type { CraftStagePlan, CraftStageResult, StageItem as OutItem, StageMod as OutMod, StageStep as OutStep } from "./contract";
 import type { StageAugment, StageItem, StageMod, StageSide } from "./types";
-import { noNormal } from "./spec/judge";
+import { liftRarity } from "./spec/judge";
 
 /** 白 (か手順の開始のレアリティ) の新品 */
 export function freshItem(data: PatchData, base: string, itemLevel: number, rarity: StageItem["rarity"] = "normal"): StageItem {
@@ -48,8 +48,8 @@ export function freshItem(data: PatchData, base: string, itemLevel: number, rari
   const baseJa = extra?.ja ?? jaTypeName(base);
   const gem = cls.category === "SkillGem";
   // スキルジェムのサポート枠の最初の数: **一次ソースなし (未確定)**。宝飾職人のオーブ (見習い) の「3 つ未満にだけ使える」から 2 と置く
-  // ノーマルの無いベース (ジュエル) の白はマジック (MOD なし) にする (E-18b、スイッチ jewelMagic)
-  return { base, baseJa, cls, itemLevel, rarity: gem ? "normal" : rarity === "normal" && noNormal(cls.category) ? "magic" : rarity, prefixes: [], suffixes: [], quality: 0, corrupted: false, ...(gem ? { gemSockets: GEM_START_SOCKETS } : {}) };
+  // 始まりのレアリティの無いベースは上げる: ジュエルの白はマジック (E-18b)、創生の樹のベースの白・マジックはレア (E-18c)。どれも MOD なし
+  return { base, baseJa, cls, itemLevel, rarity: gem ? "normal" : liftRarity(base, cls.category, rarity), prefixes: [], suffixes: [], quality: 0, corrupted: false, ...(gem ? { gemSockets: GEM_START_SOCKETS } : {}) };
 }
 
 function outMod(m: StageMod): OutMod {
@@ -320,7 +320,7 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     const over = (["prefix", "suffix"] as const).some((sd) => (s.mods ?? []).filter((f) => sideOfKey(f.mod) === sd).length > limitOf(magic, sd));
     if (over) rarity = "rare";
   }
-  if (rarity === "normal" && noNormal(freshItem(data, base, itemLevel).cls.category)) rarity = "magic"; // ジュエルに白は無い (E-18b)
+  rarity = liftRarity(base, freshItem(data, base, itemLevel).cls.category, rarity); // ジュエルに白は無い (E-18b)・創生の樹のベースはレアから (E-18c)
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
   if (s.sockets != null) {
     const most = baseSocketsOf(item.base, item.cls.category);

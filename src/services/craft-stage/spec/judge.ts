@@ -37,7 +37,8 @@ export const groupsFit = (t: Target, item: StageItem): boolean => !t.groups || i
 /** 対象の判定: 部位 → レアリティの順 */
 export function targetBlock(t: Target, item: StageItem): string | null {
   if (!groupsFit(t, item)) return t.groupsReason ? tr(t.groupsReason.ja, t.groupsReason.en) : tr("この部位には使えない", "Can't be used on this item class");
-  if (t.rarity && item.rarity === "normal" && noNormal(item.cls.category)) return tr("ジュエルにノーマル (白) は無い (マジックから)", "Jewels have no Normal rarity (they start Magic)");
+  // 打てない手で止めるのはジュエルの白だけ (E-18b)。創生の樹のベースは始まりの品をレアにするだけ (E-18c、オーナー 11-20「そこまでしっかりっ作りこむ必要ない」)
+  if (t.rarity && item.rarity === "normal" && startRarityOf(item.base, item.cls.category) === "magic") return tr("ジュエルにノーマル (白) は無い (マジックから)", "Jewels have no Normal rarity (they start Magic)");
   if (t.rarity && !t.rarity.includes(item.rarity as StageRarity)) return t.rarityReason ? tr(t.rarityReason.ja, t.rarityReason.en) : rarityReason(t.rarity);
   return null;
 }
@@ -47,11 +48,31 @@ export function targetBlock(t: Target, item: StageItem): string | null {
  * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
  */
 /**
- * ノーマル (白) の無いベース = ジュエル (E-18b。外の正解 = poe2db のベース 1 つずつの Mods.enable_rarity: ジュエル 9 種だけ magic, rare, unique、ほかの装備は normal から)。
- * 新品はマジック (MOD なし) から、白のジュエルには変成・錬金などノーマルに打つ手を打てない。スイッチ jewelMagic (11-14 オーナー「③A」)
+ * 白もマジックも無いベース = 創生の樹のベース 17 個 (E-18c)。poe2db の enable_rarity では白もあり得る扱いだが、手に入るのは創生の樹で育てたレアだけ。
+ * 外の正解 = 公式トレード (オーナー 11-20 Forbidden Rites・オフライン込みで白・マジックを検索して「全部ない」)
  */
-export const noNormal = (category: string): boolean => inGroup(category, "jewel") && flag("jewelMagic");
-export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
+export const RARE_START_BASES: ReadonlySet<string> = new Set([
+  "Biostatic Ring", "Vitalic Ring", "Mnemonic Ring", "Kinetic Ring", "Oneiric Ring", "Grasping Ring", "Breach Ring", "Refined Breach Ring",
+  "Absent Amulet", "Corona Amulet", "Lament Amulet", "Portent Amulet",
+  "Forking Belt", "Invoking Belt", "Sinew Belt", "Stalking Belt",
+  "Grasping Mail",
+]);
+
+/**
+ * ベースの始まりのレアリティ (E-18b・E-18c を 1 つの表に)。ジュエル = マジック (E-18b。外の正解 = poe2db の Mods.enable_rarity、スイッチ jewelMagic、11-14 オーナー「③A」)、
+ * 創生の樹のベース = レア (E-18c、スイッチ rareStartBase、11-20 オーナー「A」= MOD なしのレアから)、ほか = ノーマル。新品はここから、これより下の品にはレアリティを対象にする手を打てない
+ */
+export function startRarityOf(base: string, category: string): "normal" | "magic" | "rare" {
+  if (inGroup(category, "jewel") && flag("jewelMagic")) return "magic";
+  if (RARE_START_BASES.has(base) && flag("rareStartBase")) return "rare";
+  return "normal";
+}
+const RANK: Record<string, number> = { normal: 0, magic: 1, rare: 2 };
+/** 頼まれたレアリティがベースの始まりより下なら始まりに上げる (ユニークはそのまま) */
+export const liftRarity = (base: string, category: string, rarity: StageRarity): StageRarity => {
+  const s = startRarityOf(base, category);
+  return rarity in RANK && RANK[rarity] < RANK[s] ? s : rarity;
+};export const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
 
 /** mods = その手に掛かるお告げの効き目 (空きの判定はお告げの側で見る)。tag = 触媒の品質の種類。ess = エッセンスの手の鍵 (essenceFamilyFree) */
 export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string | null, ess?: { data: PatchData; key: string }): string | null { // E-21 打てるかは乱数に関係ない条件だけ
