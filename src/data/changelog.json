@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.772",
+  "date": "2026-11-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュ・シミュ・デイリー: 白もマジックも無いベース (創生の樹・割れた湖のニーモニックリング・黄昏の指輪など 21 個) は MOD なしのレアから始まるようにし、ユニーク専用のベース 16 個はベースの選びに出さないようにしました",
+    "en": "Emulator / Simulator / Daily: bases with no Normal or Magic version (21 bases from the Genesis Tree and Sunder, like Mnemonic Ring and Twilight Ring) now start as Rare items with no mods, and the 16 unique-only bases are no longer shown in base selection"
+   }
+  ]
+ },
+ {
   "v": "0.1.771",
   "date": "2026-11-20",
   "items": [
@@ -1078,24 +1090,6 @@
     "area": "",
     "text": "シミュレーターの「100 人回す」に乗せた時、説明が 2 つ重なって出ていたのを 1 つにしました",
     "en": "Hovering \"Run 100\" in the simulator no longer shows two overlapping tips"
-   }
-  ]
- },
- {
-  "v": "0.1.732",
-  "date": "2026-11-14",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーターの木の上の帯を 1 行にまとめ、全画面のボタンを外しました。「まだ回していない」は「100 人回す」にマウスを乗せた時だけ出ます",
-    "en": "The simulator tree's top bar now fits on one row without the full-screen button. \"Not run yet\" only appears when you hover \"Run 100\""
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーターの木で、左の段の札に箱や線がかぶらなくなりました",
-    "en": "In the simulator tree, boxes and lines no longer overlap the stage labels on the left"
    }
   ]
  }

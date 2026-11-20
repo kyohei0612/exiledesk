@@ -478,6 +478,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "lowTierJunk",
   // シミュの畳み・100 人回しのまとめ・削減 2 パターン・削減の下限・スマホで白紙からツリー・デイリーの並び a (オーナー 11-20 夜「出して」、ブラック 143)
   "foldFracChaos", "runSumWords", "whittleTwoWays", "aimFloorWhittle", "phoneGoalSteps", "dailyRankWide",
+  // 0.1.772 白もマジックも無いベース 21 個はレアから・ユニーク専用 16 個は選びに出さない E-18c・E-18d (オーナー 11-20 夜「レア始まり見た目おk 出して」、ブラック 143)
+  "rareStartBase",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

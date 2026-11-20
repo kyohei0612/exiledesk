@@ -1,4 +1,7 @@
 {
+  "0.1.772": [
+    "Emulator / Simulator / Daily: bases with no Normal or Magic version (21 bases from the Genesis Tree and Sunder, like Mnemonic Ring and Twilight Ring) now start as Rare items with no mods, and the 16 unique-only bases are no longer shown in base selection"
+  ],
   "0.1.771": [
     "Simulator: with several ✦ mods, only one ✦ branch after the Fracture stays open and the others fold into a card; repeated Chaos steps fold into a \"Chaos × n steps\" card, and sibling boxes from the same craft fold behind the leftmost one (click to open)",
     "Simulator: the 100-run result now shows per-run currency counts and cost near the top, including starting items used for fracture redos",
