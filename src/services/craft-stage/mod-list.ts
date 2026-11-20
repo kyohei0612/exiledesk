@@ -134,6 +134,10 @@ export function tierIdOf(data: PatchData | null | undefined, r: ListRow, t: List
   return { modId, idx: data?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1 };
 }
 
+/** 行の段のうち、その MOD (modId) の段だけ (同じ系統をまとめた行は段ごとに MOD が違う。麻痺のスタッフの「全てのスペル」と「全ての雷スペル」など)。
+ * 行のまとめ方は変えない。11-20 デイリーの段そろえ (daily-gen.ts の floorTierOf) の頼み */
+export const tiersOfMod = (r: ListRow, modId: string): ListTier[] => r.tiers.filter((t) => (t.modId ?? r.id) === modId);
+
 /** withoutAnyEle = 品に付いている一般の火・冷気・雷耐性 (aim-odds の anyEleMod) を付いていない物として数える (「いずれかの元素耐性」の行の出やすさ = 置いた後も変わらない数、E-80) */
 export interface ModListOpts { withoutAnyEle?: boolean }
 
