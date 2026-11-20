@@ -148,7 +148,7 @@ const VERIFY_TOP = 10;
  * 費用 (0.1 神) と完成率が提出と同じなら 1。木が読めない・ベースやフラクチャーが違う時も -1。
  * 値段の引き方は挑戦の画面と同じ topicPrice (daily-cost.ts)。11-10 から画面もお題の種・値段で回す。予定のタスクの締めに --verify を付けるのは、その形が本番に出た後に始まった日から
  */
-export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null; perBox?: boolean; day?: string; quality?: TopicQuality | null }): Verify {
+export function makeVerify(data: PatchData, topic: { base: string; ilvl: number; aims: GenAim[]; seed: number; prices: string | null; perBox?: boolean; day?: string; quality?: TopicQuality | null; fromBox?: boolean }): Verify {
   const price = topicPrice(data, topic);
   if (!price) return () => null;
   return (t) => {
@@ -269,7 +269,7 @@ export function roll(data: PatchData, inp: RollInput, engineVer: string, verifyO
 
   // ③ 前の日を締める (D-59 ①)
   const ct = inp.topics.find((t) => t.day === inp.closing);
-  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null, perBox: perBoxOn(ct.day), day: ct.day, quality: qualityOfSnap(ct.type_snap) }) : () => null; // quality = お題の品質 (D-03d、無ければ品質を見ない) // day = 日の門 (新しい完成の物差しが効く日か、daily-cost.ts の NEW_JUDGE_FROM)
+  const verify: Verify = verifyOn && ct?.aims ? makeVerify(data, { fromBox: !!ct.box_id, base: ct.base, ilvl: ct.ilvl ?? TOPIC_ILVL, aims: JSON.parse(ct.aims) as GenAim[], seed: ct.seed ?? 1, prices: ct.prices ?? null, perBox: perBoxOn(ct.day), day: ct.day, quality: qualityOfSnap(ct.type_snap) }) : () => null; // quality = お題の品質 (D-03d、無ければ品質を見ない) // day = 日の門 (新しい完成の物差しが効く日か、daily-cost.ts の NEW_JUDGE_FROM)
   const close = closeDay(inp, verify);
   if (close) {
     body.close = close;

@@ -20,6 +20,7 @@ import DailyEssNote from "./DailyEssNote.vue";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc, setGoalQuality } from "./daily-aims";
+import { setEleTopic } from "./daily-ele";
 import { isGenesis } from "./daily-check";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
 import { DONE_BY_PRESS, doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
@@ -46,6 +47,8 @@ import { getTry, leftMs, SOLVE_RATE, startTry, TIME_LIMIT_MS, updateTry, type Da
 const props = defineProps<{ topic: DailyTopic }>();
 // 完成の物差しの日の門 (D-35b ④⑤): 今開いているお題の日を物差しに知らせる (新しい物差しは NEW_JUDGE_FROM の日のお題から。開発版はどの日でも)
 watch(() => props.topic.id, (id) => setJudgeDay(id), { immediate: true });
+// 忍者産のお題は火・冷気・雷を「いずれかの元素耐性」で狙う・数える (D-06c、daily-ele。木の組み・完成の判定が見る)
+watch([() => props.topic.fromBox, () => s.data.value], ([b, d]) => setEleTopic(b, d), { immediate: true });
 const t = useTree();
 /** 開発版だけ: 状態ごとに開く見本 (daily-dev-states.ts)。この間はサーバーにも端末の控えにも書かない */
 const dev = devState();

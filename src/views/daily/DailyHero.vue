@@ -16,7 +16,7 @@ import DailyAimCard from "./DailyAimCard.vue";
 import DailyGiveUpAsk from "./DailyGiveUpAsk.vue";
 import DailyNick from "./DailyNick.vue";
 import DailyRank from "./DailyRank.vue";
-import { flag } from "../../web/release-flags";
+import { flag, type Flag } from "../../web/release-flags";
 import { dailyShare, sendDailyShare, type DailyShare } from "./daily-share";
 
 const props = defineProps<{ topic: DailyTopic; today?: boolean; now: number }>();
@@ -43,6 +43,8 @@ const start = (): void => { if (devT) { location.assign(devTreeUrl(props.topic.i
 /** 終わった挑戦 (提出・諦めた・時間切れ)。ボタンは「挑戦済み」で押せない (D-35c、11-09 夜オーナー「提出後は戻ってきた際は挑戦済みにしてグレーアウト」) */
 const over = computed(() => !!t.value && (!!t.value.ended || left.value <= 0));
 /** 完成形のカードに出す狙い: 締めた日はお題の狙い (D-37e)、今日のお題は挑戦済みの人だけ挑戦の控えの狙い (D-37e2)。挑戦前・挑戦中は伏せたまま (D-32b) */
+/** 忍者産のお題は火・冷気・雷を「いずれかの元素耐性」で見せる (D-06c) */
+const eleCard = computed(() => flag("dailyEleAny" as Flag) && !props.topic.fromBox);
 const cardAims = computed(() => props.topic.aims ?? (TRIED_CARD && over.value && t.value?.aims?.length ? t.value.aims : null));
 /** 完成形のカードの品質 (D-03d): 狙いと同じ出し分け */
 const cardQuality = computed(() => (props.topic.aims ? props.topic.quality : t.value?.quality) ?? null);
@@ -83,7 +85,7 @@ watch(() => [t.value?.submitted, t.value?.best?.cost, t.value?.last?.rate, props
         </div>
       </div>
       <!-- 締めた日・挑戦済みの人は狙いを完成形のカードで (D-37e・D-37e2)。挑戦前・挑戦中の今日のお題は伏せたまま (D-32b) -->
-      <DailyAimCard v-if="cardAims" data-daily-aims ess-note :day="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" :quality="cardQuality" />
+      <DailyAimCard v-if="cardAims" data-daily-aims ess-note :day="topic.id" :base="topic.base" :ilvl="topic.ilvl" :aims="cardAims" :quality="cardQuality" :ele="eleCard" />
       <template v-if="phone">
         <p v-if="closed" data-daily-closed class="daily-sub">{{ tr("この日は締めた。お題と順位は見られるが、挑戦はできない。", "This day is closed. You can see the challenge and ranking, but not take it.") }}</p>
         <!-- スマホの端末は PC の挑戦ボタンと同じ働きの「PC 版を表示して挑戦」(D-70c、スイッチ dailyPcView)。出せない時は今の字 -->

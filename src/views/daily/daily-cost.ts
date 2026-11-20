@@ -18,6 +18,7 @@ import { rebuildTree } from "../simulator/tree/tree-rebuild";
 import { tidyJunk } from "../simulator/tree/tree-hand-plan";
 import { NO_FRAC, fillTopicDoc } from "./daily-aims";
 import { lowHitOf } from "./daily-hit";
+import { eleAim, eleUnmet, setEleTopic } from "./daily-ele";
 import type { GenAim } from "./daily-gen";
 import { freshItem } from "../../services/craft-stage/engine";
 import { marketStore } from "../../state/market-store";
@@ -55,8 +56,16 @@ export function dailyHit(data: PatchData, m: StageMod, a: { modId: string; tier:
   if (!want || !got || !want.family || got.family !== want.family || got.text !== want.text) return false;
   return tierNoOf(m) <= a.tier;
 }
-const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { modId: string; tier: number }[]): boolean =>
-  aims.every((a) => mods.some((m) => dailyHit(data, m, a)));
+/**
+ * 品の MOD で埋まらないお題の狙い。忍者産のお題の火・冷気・雷耐性 (D-06c、daily-ele) は違う元素で数える割り当て、ほかは 1 つずつ dailyHit。
+ * 完成の物差しはここ 1 つ (holdsAll・missingAims)
+ */
+function unmetOf<A extends { modId: string; tier: number }>(data: PatchData, mods: readonly StageMod[], aims: readonly A[]): A[] {
+  const ele = aims.filter((a) => eleAim(data, a));
+  const miss = new Set<A>([...aims.filter((a) => !ele.includes(a) && !mods.some((m) => dailyHit(data, m, a))), ...eleUnmet(data, mods, ele, (m, a) => dailyHit(data, m, a))]);
+  return aims.filter((a) => miss.has(a));
+}
+const holdsAll = (data: PatchData, mods: readonly StageMod[], aims: readonly { modId: string; tier: number }[]): boolean => unmetOf(data, mods, aims).length === 0;
 
 /**
  * 品がお題の品質 (D-03d) に届いているか = カタリストの種類が同じで % がお題以上。品質の無いお題 (q = null) はいつも届いている (今までどおり)。
@@ -94,7 +103,7 @@ export function unmetDone(data: PatchData, doc: TreeDoc, aims: readonly { modId:
 export function missingAims<A extends { modId: string; tier: number }>(data: PatchData, doc: TreeDoc, boxId: string, aims: readonly A[]): A[] {
   let mods: StageMod[];
   try { const it = sampleOf(data, doc, boxId, 1).item; mods = [...it.prefixes, ...it.suffixes]; } catch { return [...aims]; }
-  return aims.filter((a) => !mods.some((m) => dailyHit(data, m, a)));
+  return unmetOf(data, mods, aims);
 }
 
 /**
@@ -126,8 +135,9 @@ export function markMet(data: PatchData, doc: TreeDoc, aims: readonly { modId: s
  * 狙い・段の下限・始めの値段 0 はお題から入れ直す (始め方 = フラクチャー済みから / 白から確定フラクチャーは提出の木のまま、D-37j) (提出の木の書き換えを効かせない)。
  * ベースが違う・フラクチャーが無い木・お題の狙いを満たさない完成の箱がある木 (D-35b) は null
  */
-export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string; /** お題の品質 (D-03d、無ければ品質を見ない) */ quality?: TopicQuality | null }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
+export function runCost(data: PatchData, topic: { base: string; ilvl: number; aims: readonly GenAim[]; seed: number; perBox?: boolean; /** 箱の投稿のお題か (false = 忍者産。火・冷気・雷を「いずれか」で数える D-06c。無ければ元素ごと) */ fromBox?: boolean; /** お題の日 (日の門を見る。無ければ前の物差し) */ day?: string; /** お題の品質 (D-03d、無ければ品質を見ない) */ quality?: TopicQuality | null }, recipe: string | Record<string, unknown>, price: (key: string) => number): { cost: number; rate: number } | null {
   setJudgeDay(topic.day);
+  setEleTopic(topic.fromBox, data);
   const raw = typeof recipe === "string" ? (JSON.parse(recipe) as Record<string, unknown>) : recipe;
   // シミュの「いずれかの元素耐性」(S-10h ④) に読み替えさせない印 (daily-open.ts と同じ)。お題の判定は元素ごと
   const doc = rebuildTree(data, healRecipeV1({ ...raw, eleAny: 1 }));

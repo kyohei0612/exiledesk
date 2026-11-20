@@ -13,6 +13,7 @@ import type { DailyAim } from "./daily-api";
 import { genesisOver, genesisWhy, isGenesis, isGenesisLine } from "./daily-check";
 import { logPaste, pasteAfter } from "./paste-log";
 import { cleanQuality, type TopicQuality } from "./daily-quality";
+import { eleGoals } from "./daily-ele";
 import { catalystQualityApplies, freshItem } from "../../services/craft-stage/engine";
 
 /**
@@ -125,7 +126,7 @@ export function setGoalQuality(d: TreeDoc, quality: TopicQuality | null | undefi
 export function fillTopicDoc(d: TreeDoc, aims: readonly DailyAim[], fractured: string, from: StartFrom = "fractured", quality?: TopicQuality | null): void {
   setGoalQuality(d, quality);
   const list: Aim[] = aims.map((a) => ({ modId: a.modId, tier: a.tier, ...(a.modId === fractured ? { fractured: true as const } : {}) }));
-  d.memoAims = list;
+  d.memoAims = eleGoals(list); // 忍者産のお題の火・冷気・雷は「いずれかの元素耐性」(D-06c、✦ の狙いは元素のまま。今のお題は setEleTopic が置く)
   delete d.ilvlFit; // アイテムレベルはお題のまま (適正へ下げない)
   d.fracAsked = true;
   d.baseChosen = true;
