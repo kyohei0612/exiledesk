@@ -7,7 +7,8 @@ import { guideOn, tidyOn, tidyStep, unsetBoxes } from "../../../services/simulat
 import { NOTICE_KINDS, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tidyJunk } from "./tree-hand-plan";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
+import { idealPath } from "../../../services/simulator/tree/tree-ideal-first";
 import { idealHidden } from "../../../services/simulator/tree/tree-ideal-hide";
 
 export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) => void, go: (id: string) => void, issues: Ref<CheckIssue[] | null>, passed: Ref<boolean>) {
@@ -45,6 +46,8 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
     return l.length > 0;
   }
   const settledOf = (b: TreeBox): boolean => guide.value && !!b.back && !!b.autoBack && !targets.value.has(b.id);
-  const dimOf = (b: TreeBox): boolean => (guide.value && !targets.value.has(b.id) && !settledOf(b));
+  // (S-142p ⑤、スイッチ laneBuild、開発版だけ・案) 組み終えた理想手のレーンの箱は薄くしない (11-21 オーナー「完成させたツリーはグレーアウトさせずに残しておく」)
+  const lane = computed(() => (flag("laneBuild" as Flag) ? idealPath(doc.value)?.path ?? null : null));
+  const dimOf = (b: TreeBox): boolean => (guide.value && !targets.value.has(b.id) && !settledOf(b) && !lane.value?.has(b.id));
   return { on, step, unset, guide, busy, empty, sort, shownIssues, press: (): void => { if (step.value === "tidy") void sort(); }, back: () => { paused.value = true; }, dimOf, settledOf, targetOf: (b: TreeBox) => targets.value.has(b.id), finalLit: computed(() => guide.value && raw.value === "check" && !targets.value.size) };
 }

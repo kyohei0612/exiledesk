@@ -15,6 +15,7 @@ import { frontOf } from "./tree-front-path";
 import { treeOrder } from "./tree-order";
 import { flowDepth, flowOnce } from "./tree-flow-once";
 import { fracChaosFolds } from "./tree-fold-frac-chaos";
+import { idealLineOn, lineHomes } from "./tree-ideal-line";
 
 /** 札の高さ (TreeStripFold。線は札の下の縁から下りる) */
 export const FOLD_H = 64;
@@ -168,12 +169,15 @@ function homesWith(d: TreeDoc, folds: ReadonlyMap<string, StripFold>, front: Rea
   if (!homeMoveOn()) return m;
   const hidden = stripHidden(d, folds), by = new Map<string, string[]>(), cmp = treeOrder(d);
   for (const f of folds.values()) if (f.link) for (const a of f.mids) { const t = d.boxes[a]?.back; if (t && d.boxes[t]) by.set(t, [...(by.get(t) ?? []), a]); }
+  const sameOf = (t: string, as: string[]): string[] => [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp);
+  // (S-142q 案、スイッチ idealLine、開発版だけ) 理想手の合流の箱は、まだ続きを描いていない親へ左から 1 つずつ (理想手の道が 1 本ずつ同じ列に縦に)。凍らせた道の箱は今どおり
+  const line = idealLineOn() ? lineHomes(d, new Map([...by].filter(([t]) => !!d.boxes[t]!.parent && t !== "start" && !hidden.has(t) && !front?.has(t)).map(([t, as]) => [t, sameOf(t, as)])), hidden, cmp) : null;
   for (const [t, as] of by) {
     const T = d.boxes[t]!;
     if (!T.parent || t === "start" || hidden.has(t)) continue;
-    const same = [t, ...as.filter((a) => !!d.boxes[a]?.parent && depthOf(d, a) === depthOf(d, t))].sort(cmp);
+    const same = sameOf(t, as);
     // 時刻は見ず、同じ段から指す中で木の並びの一番左の場所の親 (本物の場所が一番左なら動かさない)。凍らせた道の箱は道が通る親の場所
-    const via = front?.has(t) ? same.find((a) => front.has(d.boxes[a]!.parent!)) : same[0];
+    const via = line?.has(t) ? line.get(t) : front?.has(t) ? same.find((a) => front.has(d.boxes[a]!.parent!)) : same[0];
     if (!via || via === t) continue;
     const p = d.boxes[via]!.parent!;
     if (!p || p === T.parent || hidden.has(p) || subtree(d, t).includes(p)) continue;
