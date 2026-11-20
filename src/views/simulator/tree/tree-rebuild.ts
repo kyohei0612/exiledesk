@@ -10,7 +10,7 @@ import { clearHand, migrateStart, setBack, subtree, TREE_SCHEMA_N, type Aim, typ
 import { readEleAny } from "../../../services/simulator/tree/tree-ele-any";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { sameAimMod } from "../../../services/simulator/tree/tree-hand-core";
-import { autoTarget, foldToTrunks, graftDecided, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, foldToTrunks, graftDecided, holdLift, liftToShallow, offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan"; import { linkAllSameHi } from "./tree-same-mod-sync";
 import { extendAnnul, holdAnnul, trimAnnul } from "./tree-annul-chain";
@@ -74,7 +74,7 @@ function* rebuildSteps(data: PatchData, src0: TreeDoc, stepped = false): Generat
   // 保存の例のアイテム (v2、S-200 ⑦) は開いた木に持たせ、配置の代表に使う (tree-frame)。打ち方の比べ (toRecipeV1) には入れない
   if (src.examples) d.examples = JSON.parse(JSON.stringify(src.examples)) as NonNullable<TreeDoc["examples"]>;
   migrateStart(d);
-  holdAnnul(d, true); // 保存の手を置き直す間は、手を置くたびの消去の続きを止める (終わりの見直しで 1 段ずつ足す、S-28g ⑤ オ)
+  holdAnnul(d, true); holdLift(d, true); // 保存の手を置き直す間は、手を置くたびの消去の続きを止める (終わりの見直しで 1 段ずつ足す、S-28g ⑤ オ)
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // スイッチ treeBothNoCopy (S-106b): 保存に「2 つとも付いた」の札 (鍵 a:、S-22d) が 1 つでもあれば、決めの無いその箱に隣の「1 つだけ付いた」箱の決めを写さない
   const noBoth = flag("treeBothNoCopy") && [...picks.keys()].some((k) => BOTH_KEY.test(k));
@@ -213,6 +213,8 @@ function* rebuildSteps(data: PatchData, src0: TreeDoc, stepped = false): Generat
   // 保存の決めを置き終えたら、☑ の無い消去 (全部消えてよい) の残りの枝を止まる所まで続ける (スイッチ treeNoAnnulAuto。閉じている時は上でもう続いている)
   holdAnnul(d, false);
   if (flag("treeNoAnnulAuto") && extendAnnul(data, d)) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
+  // 幹はいつも浅い段 (S-51e、スイッチ trunkShallow): 保存の手を全部置き直した後に 1 回 (途中で移すと下の保存の手が行き先を失う)
+  holdLift(d, false); if (liftToShallow(d, () => judgeMemo(data, d))) { linkLeftovers(data, d); mergeIntoBacked(data, d); }
   fillHeldHi(d); // ヒネコラで持つ削減の「高い」の枠は既定で打たない (S-39 ②b、11-11)
   linkAllSameHi(d); // 「エッセンスと同じ MOD (同格以上)」は押していなければ既定の統合 (保存・見直しで外れていても、S-33e ⑥)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認

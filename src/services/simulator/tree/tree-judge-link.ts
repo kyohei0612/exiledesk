@@ -11,7 +11,7 @@ import { DIVINE_LT, isDivineAim } from "./tree-divine";
 import { effectOf, isRuneHand } from "./tree-hands";
 import { treeOrder } from "./tree-order";
 import { outKey } from "./tree-recipe-v1";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 import { hitsOn, idealPath } from "./tree-ideal-first";
 
 /** (スイッチ joinChainFix、S-50h) 表 FLAGS の行はブラックが入れる。入るまでは名前だけ (開発版では入り、本番では RELEASED に足すまで切れる) */
@@ -214,7 +214,7 @@ export function foldToTrunks(doc: TreeDoc, judge: () => Judge): boolean {
   for (let n = 0; n < 64; n++) {
     const j = judge(), cmp = shallow(doc);
     const hit = Object.values(doc.boxes).map((b) => b.id).sort(cmp).map((id) => [id, trunkOf(doc, id, j)] as const).find((x) => !!x[1]);
-    if (!hit) return changed;
+    if (!hit) return liftToShallow(doc, judge) || changed;
     foldInto(doc, hit[0], hit[1]!);
     changed = true;
   }
@@ -223,12 +223,56 @@ export function foldToTrunks(doc: TreeDoc, judge: () => Judge): boolean {
 /** 手を決めた箱 id のまわりだけ (S-51d を手を決めた時に、S-51c と同じ所): id に幹があれば id を、無ければ id を幹にする深い箱をまとめる */
 export function foldAround(doc: TreeDoc, id: string, judge: () => Judge): void {
   const tk = trunkOf(doc, id, judge());
-  if (tk) { foldInto(doc, id, tk); return; }
+  if (tk) { foldInto(doc, id, tk); liftToShallow(doc, judge); return; }
   for (let n = 0; n < 64; n++) {
     const j = judge(), x = Object.values(doc.boxes).find((b) => b.id !== id && trunkOf(doc, b.id, j) === id);
-    if (!x) return;
+    if (!x) break;
     foldInto(doc, x.id, id);
   }
+  liftToShallow(doc, judge);
+}
+
+/**
+ * 幹はいつも浅い段 (S-51e、スイッチ trunkShallow): 手のある箱 id より木の並びで前にある、同じ枠の手の無い箱 (浅い方)。
+ * id からその箱への ↩ が自動の ↩ の決まりで付けられる物だけ (autoTargets と同じ守り = 輪・カタリスト・S-50g)。当たりの道の箱から道の外の箱へは移さない (S-142j ⑤)
+ */
+function shallowOpenOf(doc: TreeDoc, id: string, j: Judge): string | null {
+  const b = doc.boxes[id];
+  if (!b?.hand || b.out === "start" || b.split || b.noAutoBack || b.seen) return null;
+  const below = new Set(subtree(doc, id)), cmp = shallow(doc), up = idealNoUp(doc, id);
+  const ip = hitsOn() ? idealPath(doc) : null, onPath = (x: string): boolean => !!ip?.path.has(x);
+  // ↩ は無いか id への自動の ↩ だけ (ほかの手のある箱へもう戻っている箱 = そちらが幹なので触らない。前は移しが連鎖して手の無い箱が残った)
+  const open = (t: TreeBox): boolean => !t.hand && !t.done && !t.split && !t.noAutoBack && !t.seen && !t.merged && (!t.back || (t.back === id && !!t.autoBack)) && t.out !== "start" && t.out !== "pass" && t.out !== "branch";
+  return Object.values(doc.boxes).filter((t) => t.id !== id && open(t) && !below.has(t.id) && cmp(t.id, id) < 0 && !(ip && onPath(id) && !onPath(t.id)) && !(up && depthOf(doc, t.id) < up) && !straightUp(doc, id, t.id) && !qualityBetween(doc, id, t.id, j) && j.fitsBox(id, t.id) && j.playsAt(id, t.id) && !idleLoop(doc, id, t.id, j)).map((t) => t.id).sort(cmp)[0] ?? null;
+}
+/** 箱 y の手と下の枝を x へそのまま移し、y を自動の ↩ x にする (S-51e)。y へ ↩ していた箱は x へ */
+function liftInto(doc: TreeDoc, y: string, x: string): void {
+  const yb = doc.boxes[y]!, xb = doc.boxes[x]!, h = yb.hand!;
+  for (const o of Object.values(doc.boxes)) if (o.back === y) o.back = x;
+  xb.hand = h; xb.outs = yb.outs; xb.back = null; xb.done = null;
+  delete xb.autoBack; delete xb.merged; delete xb.handBack;
+  if (yb.noLost) xb.noLost = true; else delete xb.noLost;
+  if (yb.autoAnnul) xb.autoAnnul = true;
+  if (yb.touched) xb.touched = yb.touched;
+  for (const c of xb.outs) doc.boxes[c]!.parent = x;
+  yb.hand = null; yb.outs = []; delete yb.autoAnnul; delete yb.noLost;
+  yb.back = x; yb.autoBack = true; yb.handBack = { ...h };
+}
+/** 開いた時の組み直しで保存の手を置き直している木 (その間は移さず、組み直しの終わりに 1 回。途中で移すと、まだ置き直していない下の保存の手が行き先を失った) */
+const liftHeld = new WeakSet<TreeDoc>();
+export function holdLift(doc: TreeDoc, on: boolean): void { if (on) liftHeld.add(doc); else liftHeld.delete(doc); }
+/** 木全体で、手のある箱の手と下を浅い段の手の無い同じ枠の箱へ移す (S-51e)。S-51d の幹のまとめの後に呼ぶ。移したら true */
+export function liftToShallow(doc: TreeDoc, judge: () => Judge): boolean {
+  if (!flag("trunkShallow" as Flag) || liftHeld.has(doc)) return false;
+  let changed = false;
+  for (let n = 0; n < 64; n++) {
+    const j = judge(), cmp = shallow(doc);
+    const hit = Object.values(doc.boxes).map((b) => b.id).sort(cmp).map((id) => [id, shallowOpenOf(doc, id, j)] as const).find((x) => !!x[1]);
+    if (!hit) return changed;
+    liftInto(doc, hit[0], hit[1]!);
+    changed = true;
+  }
+  return changed;
 }
 
 /** 手を決めるたびに自動の ↩ を全部「箱どうし」で見直す (合わない物は外して未設定、S-50b)。人が付けた ↩ は触らない。外したら true */
