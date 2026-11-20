@@ -10,7 +10,7 @@ import { ref, type Ref } from "vue";
 import { effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag, type Flag } from "../../../web/release-flags";
-import { idealHidden } from "./tree-ideal-hide";
+import { idealHidden, idealOnlyHidden } from "./tree-ideal-hide";
 import { frontOf } from "./tree-front-path";
 import { treeOrder } from "./tree-order";
 import { flowDepth, flowOnce } from "./tree-flow-once";
@@ -219,6 +219,7 @@ function hiddenRaw(d: TreeDoc, folds: ReadonlyMap<string, StripFold>): Set<strin
   // 札の中の箱へまとめた箱は、親も行き先も描かないので一緒に描かない (前は親子の線なしで札の横に浮いた。S-28g ③、11-12)
   if (flag("treeFoldMerged")) for (const f of folds.values()) for (const id of f.tucked) s.add(id);
   for (const id of idealHidden(d)) s.add(id); // 完成を押すまで隠す外れの箱 (S-142n、スイッチ idealHide)
+  for (const id of idealOnlyHidden(d)) s.add(id); // 理想手だけを描く試し (S-142n3 案、開発版の ?idealOnly)
   return s;
 }
 /** 描く子 (札は止まった箱全部、描かない箱は子無し。札の親はそのまま = 札は親の子の箱の場所) */
