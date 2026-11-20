@@ -11,7 +11,7 @@ import { FRACTURE_POOL } from "../sim-odds";
 import { newlyFractured } from "./tree-frac-pick";
 import { effectOf, engineOmens } from "./tree-hands";
 import { fractureMarks, multiFracWhite, startsFractured, type Hand, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
 /**
@@ -69,11 +69,20 @@ export const sureFracWhyText = (why: "desecrated" | "none"): string =>
  * 確定フラクチャーの使う物 (S-43a)。オーブとお告げは 3 回分。スイッチ sureFracAll の間は、今の品でフラクチャーまでに使った物全部も 3 回分にする
  * (uses − itemUses = 今の品を始めてから使った物、その 2 回分を足す。始まりの品の値段の 2 回分は呼ぶ側が足す = sureFracRedo)
  */
-export function useSureFrac(h: Hand, use: (key: string, n: number) => void, uses: Readonly<Record<string, number>> = {}, itemUses: Readonly<Record<string, number>> = {}): void {
+export function useSureFrac(h: Hand, use: (key: string, n: number) => void, uses: Readonly<Record<string, number>> = {}, itemUses: Readonly<Record<string, number>> = {}, redoUse: (key: string, n: number) => void = use): void {
   use(h.currency, FRACTURE_POOL);
   for (const o of engineOmens(h)) use(o, FRACTURE_POOL);
   if (!flag("sureFracAll")) return;
-  for (const [k, n] of Object.entries(uses)) { const d = n - (itemUses[k] ?? 0); if (d > 0) use(k, d * (FRACTURE_POOL - 1)); }
+  // 作り直しの分 (それまでの使った物の 2 回分) は redoUse へ (まとめの内訳 S-70d。数は同じ)
+  for (const [k, n] of Object.entries(uses)) { const d = n - (itemUses[k] ?? 0); if (d > 0) redoUse(k, d * (FRACTURE_POOL - 1)); }
 }
 /** 確定フラクチャーで足す始まりの品の数 (スイッチ sureFracAll の間は 2 = 3 回分のうち足りない分、閉じている間は 0) */
 export const sureFracRedo = (): number => (flag("sureFracAll") ? FRACTURE_POOL - 1 : 0);
+/** 箱ごとの確定フラクチャーの作り直し分 (神と、足した始まりの品の数) */
+export type FracRedo = Record<string, { div: number; items: number }>;
+/** 作り直し分を箱 at に足す (まとめの内訳 S-70d、スイッチ runSumWords の間だけ数える。100 人回しの数は変えない) */
+export function fracRedoAdd(acc: FracRedo, at: string, div: number, items: number): void {
+  if (!flag("runSumWords" as Flag) || (!div && !items)) return;
+  const a = (acc[at] ??= { div: 0, items: 0 });
+  a.div += div; a.items += items;
+}

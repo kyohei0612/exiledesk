@@ -18,7 +18,7 @@ import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { contentDiff, goalsOn, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { seenTo } from "./tree-foresee";
-import { sureFracOn, sureFracRedo, sureFracture, useSureFrac } from "./tree-sure-frac";
+import { fracRedoAdd, sureFracOn, sureFracRedo, sureFracture, useSureFrac, type FracRedo } from "./tree-sure-frac";
 import { defaultCapDiv } from "./run-price";
 import { essStopOf, goalMarks, goalStopAt, type GoalMark } from "./tree-goal-stop";
 import { lowTierOk, lowTierStopOf } from "./tree-low-tier";
@@ -84,7 +84,7 @@ interface BoxStat {
   /** remain > startCost + perItem (作り直しの方が安い) */
   warn: boolean;
   /** この箱の手で使ったお金の 1 人あたり (神。次の箱に着いた時の費用 − 着いた時の費用、結果のレポートの「一番お金を使った箱」10-22) */
-  spend: number;
+  spend: number; /** そのうち確定フラクチャーの作り直し分 (神) と足した始まりの品の数 (1 人あたり、まとめの内訳 S-70d) */ redo?: number; redoItems?: number;
 }
 export interface TreeRunResult {
   n: number;
@@ -132,7 +132,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck" | "failed";
-interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; /** 確定フラクチャーで足した始まりの品の数 (S-43a) */ redo?: number; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** ☑ した狙いが低いティアで付いた手の箱 (S-33g) */ ltAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; open?: boolean; bug?: boolean; spam?: number } }
+interface Person { /** 止まりの付け先 (体の違う人を送り出した ↩ の箱・移した箱、スイッチ bodyStrict) */ blame?: string; /** 完成の箱で doneOk が false (失敗と同じ数え) */ unmet?: true; end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; /** 確定フラクチャーで足した始まりの品の数 (S-43a) */ redo?: number; /** 箱ごとの作り直し分 (S-70d) */ fracRedo?: FracRedo; odd: Set<string>; /** 予期せぬ狙い MOD で止まった時の狙い無しの手の箱 (S-33g ②) */ goalAt?: string; /** エッセンス / 合金と同じ系統が付いた手の箱 (S-33e ⑧) */ essAt?: string; /** ☑ した狙いが低いティアで付いた手の箱 (S-33g) */ ltAt?: string; /** やり直す前に止まった所 (S-33g ②、tree-run-retry) */ retried?: RetryPart["retried"]; why?: { reason: string; short?: string; item: StageItem; noBox?: boolean; open?: boolean; bug?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 /** 止まった人のアイテム → その時の ☑ */
@@ -155,7 +155,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   // この人の ☑ で付いた狙い (tree-judge。当たりの箱に着いたらその札、消えたら外れる)
   let aimed: ReadonlySet<string> = startAimed(data, doc, item);
   const arrive = (box: string, it: StageItem, was?: StageItem): void => { aimed = nextAimed(data, doc, aimed, box, it, was); };
-  let cost = o.startCost, itemUses: Record<string, number> = {}, redo = 0; // itemUses = 今の品を始めた時の使った物・redo = 確定フラクチャーで足した始まりの品の数 (S-43a)
+  let cost = o.startCost, itemUses: Record<string, number> = {}, redo = 0; const fracRedo: FracRedo = {}; // itemUses = 今の品を始めた時の使った物・redo = 確定フラクチャーで足した始まりの品の数 (S-43a)
   const uses: Record<string, number> = {};
   const visits: Person["visits"] = [];
   const use = (key: string, n = 1): void => { uses[key] = (uses[key] ?? 0) + n; cost += o.price(key) * n; if (light) ops.push({ key, n }); };
@@ -168,7 +168,7 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
   let blame: string | null = null;
   let marks: GoalMark[] = [], okLow: ReadonlySet<string> = new Set(); // 狙い無しの手で付いた完成形の狙い (tree-goal-stop)・☑ した手で付いた低い段の狙い (S-33g ①、lowTierOk)
   const fin = (p0: Person): Person => {
-    const p: Person = redo ? { ...p0, redo } : p0;
+    const p: Person = redo ? { ...p0, redo, fracRedo } : p0;
     // 止まった人の ☑ (止まりの文の外れの数え、tree-check の stuckText)。結果の形 (見張りの JSON) は変えない
     if (p.end === "stuck" && p.why) STOP_AIMED.set(p.why.item, aimed);
     // 未設定の箱 (手も戻りも無い) で止まった人は木の不具合のまま (oddStop の予期せぬに数えない、S-21b2。11-18 前は数えて作り直させ、未設定の止まりが隠れた)
@@ -258,11 +258,11 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
     // 使った物は結果の箱を見てから数える (ヒネコラのハズレの箱 = 手を使わない、S-39)
-    const spent: Array<[string, number]> = [];
+    const spent: Array<[string, number, 1?]> = [];
     // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e): 手を使わず品のまま、boxOutcomeOf が当たり / 塞がったの箱へ分ける。前は「打てません」で止まった
     // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された品、使う物は 3 回分
     const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, item, b.hand) : null;
-    if (sure) { useSureFrac(b.hand, (k, n) => { spent.push([k, n]); }, uses, itemUses); const x = sureFracRedo(); cost += x * o.startCost; redo += x; }
+    if (sure) { useSureFrac(b.hand, (k, n) => { spent.push([k, n]); }, uses, itemUses, (k, n) => { spent.push([k, n, 1]); }); const x = sureFracRedo(); cost += x * o.startCost; redo += x; fracRedoAdd(fracRedo, at, x * o.startCost, x); }
     // 前の手でエッセンス / 合金と同じ系統が付いて打てない人は止まり (S-33e ⑧、スイッチ essSameStop)。耐性のフラックスで変えられる狙いの耐性が無い人 (2 周目でもう変えた後など) は打たずに飛ばす: 品のまま・使わない (S-31h、オーナー 11-13「スキップ処理は必要止まるよ」)
     const es = sure ? null : essStopOf(data, b.hand.currency, item, marks); if (es) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ...(es.box ? { essAt: es.box } : {}), why: { reason: es.why, short: es.why, item } });
     const r: StageApply = sure ?? (essenceHold(data, item, b.hand.currency) || fluxBlock(data, doc, item, b.hand.currency, aimed) ? { applied: true, item, added: [], removed: [] } : yield* playHandSteps(data, item, b.hand, pick ? rngOf(at) : rng, own, (k, n = 1) => { spent.push([k, n]); }, o.slice));
@@ -273,12 +273,12 @@ function* runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], j: Judge, 
     const oc = sb.next ? null : boxOutcomeOf(data, doc, b, before, r.item, aims, aimed);
     // ☑ した狙いが低いティアで付いた人は、結果の箱へ行かずにここで止まる = 予期せぬ狙い MOD (S-33g、スイッチ lowTierBox。使った物は数える)
     const lt = oc ? lowTierStopOf(data, doc, b, oc, r.item, before, okLow) : null;
-    if (lt) { for (const [k, n] of spent) use(k, n); return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ltAt: at, why: { reason: lt.why, short: lt.why, item: r.item } }); }
+    if (lt) { for (const [k, n, rd] of spent) { use(k, n); if (rd) fracRedoAdd(fracRedo, at, o.price(k) * n, 0); } return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, ltAt: at, why: { reason: lt.why, short: lt.why, item: r.item } }); }
     okLow = lowTierOk(data, doc, b, before, r.item, okLow);
     const next = oc ? outBoxOf(data, doc, b, oc, r.item) : null;
     // 予見で当たり以外が見えた人: 手を使わず、アイテム・☑・費用は持つ前のまま、まとめたハズレ箱の手へ (S-39)
     if (next && doc.boxes[next]?.seen && !b.hand.repeat) { const to = seenTo(doc, next); if (to !== next) visit(next, true); at = to; continue; }
-    for (const [k, n] of spent) use(k, n);
+    for (const [k, n, rd] of spent) { use(k, n); if (rd) fracRedoAdd(fracRedo, at, o.price(k) * n, 0); }
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), short: STOP.spam(cap), item: r.item, spam: cap } });
@@ -390,10 +390,10 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const { goalStop, essStop, lowStop, stuckOdd } = stopCounts(people); // 予期せぬ狙い MOD の止まり (やり直した人の分も残す、S-33g ②)
   const moved: Record<string, number> = {};
   for (const p of people) for (const id of new Set(p.visits.filter((v) => v.pass).map((v) => v.box))) moved[id] = (moved[id] ?? 0) + 1;
-  const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number }> = {};
-  for (const id of Object.keys(doc.boxes)) acc[id] = { reach: 0, visits: 0, costIn: 0, remain: 0, spend: 0 };
+  const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number; redo: number; redoItems: number }> = {};
+  for (const id of Object.keys(doc.boxes)) acc[id] = { reach: 0, visits: 0, costIn: 0, remain: 0, spend: 0, redo: 0, redoItems: 0 };
   for (const p of people) {
-    const seen = new Set<string>();
+    const seen = new Set<string>(); for (const [id, f] of Object.entries(p.fracRedo ?? {})) { const a = acc[id]; if (a) { a.redo += f.div; a.redoItems += f.items; } }
     p.visits.forEach((v, i) => {
       const a = acc[v.box];
       if (!a) return;
@@ -411,7 +411,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const boxes: Record<string, BoxStat> = {};
   for (const [id, a] of Object.entries(acc)) {
     const costIn = a.visits ? a.costIn / a.visits : 0, remain = a.visits ? a.remain / a.visits : 0;
-    boxes[id] = { reach: a.reach, visits: a.visits, costIn, remain, warn: a.visits > 0 && Number.isFinite(perItem) && remain > startCost + perItem, spend: a.spend / (n || 1) };
+    boxes[id] = { reach: a.reach, visits: a.visits, costIn, remain, warn: a.visits > 0 && Number.isFinite(perItem) && remain > startCost + perItem, spend: a.spend / (n || 1), ...(a.redo || a.redoItems ? { redo: a.redo / (n || 1), redoItems: a.redoItems / (n || 1) } : {}) };
   }
   return {
     n, finished: fin.length,
@@ -439,7 +439,7 @@ export function withStartCost(r: TreeRunResult, startCost: number): TreeRunResul
   const costs = persons.filter((p) => p.done).map((p) => p.cost).sort((a, b) => a - b);
   const q = (p: number): number => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(p * costs.length))]! : NaN);
   const boxes: Record<string, BoxStat> = {};
-  for (const [id, b] of Object.entries(r.boxes)) boxes[id] = { ...b, costIn: b.visits ? b.costIn + d : b.costIn };
+  for (const [id, b] of Object.entries(r.boxes)) boxes[id] = { ...b, costIn: b.visits ? b.costIn + d : b.costIn, ...(b.redoItems ? { spend: b.spend + d * b.redoItems, redo: (b.redo ?? 0) + d * b.redoItems } : {}) };
   return {
     ...r, startCost, persons, boxes,
     perItem: r.finished ? total / r.finished : NaN,

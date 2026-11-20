@@ -29,11 +29,18 @@ export interface RetryPart {
   goalAt?: string; essAt?: string; ltAt?: string;
   /** やり直す前に予期せぬ狙い MOD で止まった所 (古い順。結果のまとめの「予期せぬ狙い MOD で止まった」の数えに残す) */
   retried?: Array<{ goalAt?: string; essAt?: string; ltAt?: string }>;
+  /** 確定フラクチャーで足した始まりの品の数と箱ごとの作り直し分 (S-43a・S-70d。やり直しの前の分も足す) */
+  redo?: number; fracRedo?: Record<string, { div: number; items: number }>;
 }
 
 /** 予期せぬ狙い MOD (S-33g ②・S-33e ⑧・低いティア S-33g) で止まり、まだやり直せる人か */
 export const retryable = (p: RetryPart): boolean => flag("goalRetry") && p.end === "stuck" && !!(p.goalAt || p.essAt || p.ltAt) && (p.retried?.length ?? 0) < GOAL_RETRY_MAX;
 
+const addFracRedo = (a: RetryPart["fracRedo"], b: RetryPart["fracRedo"]): NonNullable<RetryPart["fracRedo"]> => {
+  const out: NonNullable<RetryPart["fracRedo"]> = {};
+  for (const m of [a, b]) for (const [id, f] of Object.entries(m ?? {})) { const o = (out[id] ??= { div: 0, items: 0 }); o.div += f.div; o.items += f.items; }
+  return out;
+};
 /** 止まった前の挑戦 prev とやり直した挑戦 next を 1 人分に足す (費用・使った物・通った道は足し、止まった所は retried に残す) */
 export function mergeRetry<P extends RetryPart>(prev: P, next: P): P {
   const uses = { ...prev.uses };
@@ -43,6 +50,8 @@ export function mergeRetry<P extends RetryPart>(prev: P, next: P): P {
     ...next, cost: prev.cost + next.cost, uses, restarts: prev.restarts + next.restarts + 1, odd: new Set([...prev.odd, ...next.odd]),
     visits: [...prev.visits, ...next.visits.map((v) => ({ ...v, cost: v.cost + prev.cost }))],
     retried: [...(prev.retried ?? []), stop, ...(next.retried ?? [])],
+    ...(prev.redo || next.redo ? { redo: (prev.redo ?? 0) + (next.redo ?? 0) } : {}),
+    ...(prev.fracRedo || next.fracRedo ? { fracRedo: addFracRedo(prev.fracRedo, next.fracRedo) } : {}),
   };
 }
 

@@ -10,7 +10,7 @@
  */
 import { familiesOf, isCraftedSource, makeStageMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { essenceTarget, isInfiniteEssence } from "../../craft-stage/apply-essence";
-import { flag } from "../../../web/release-flags";
+import { flag, type Flag } from "../../../web/release-flags";
 import { subtree, type Aim, type TreeDoc } from "./tree-model";
 import { aimTargetOf } from "./tree-ele-any";
 import { effectOf } from "./tree-hands";
@@ -22,11 +22,12 @@ import { sameAimMod } from "./tree-hand-core";
  * 箱 id とその下の手で、段で結果が変わる物: 削減 (MOD レベル)・目標を決めた神 (値) があれば all、エッセンス / 合金は同格以上の比べ (S-33e) の相手の系統だけ
  */
 function tierSensitiveBelow(data: PatchData, doc: TreeDoc, id: string, item: StageItem): { all: boolean; fams: Set<string> } {
-  const fams = new Set<string>();
+  const fams = new Set<string>(), whittleToo = !flag("aimFloorWhittle" as Flag);
   for (const x of subtree(doc, id)) {
     const h = doc.boxes[x]?.hand;
     if (!h) continue;
-    if (isWhittleHand(h) || isDivineAim(h)) return { all: true, fams };
+    // (スイッチ aimFloorWhittle、11-20 オーナー「削減ルールにのっとってくれ」) 削減の下でも下限で出し、削減の枠はその下限の MOD レベルで比べる
+    if ((whittleToo && isWhittleHand(h)) || isDivineAim(h)) return { all: true, fams };
     if (effectOf(h.currency) !== "essence") continue;
     const t = isInfiniteEssence(h.currency) ? null : essenceTarget(data, item, h.currency);
     if (t) for (const f of familiesOf(t.mod)) fams.add(f);

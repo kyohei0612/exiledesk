@@ -19,6 +19,7 @@ import { tr } from "../../../i18n/lang";
 import { driveHead } from "./hole-check";
 import { simOp } from "../../../web/track";
 import TreeGoalStop from "./TreeGoalStop.vue";
+import { flag, type Flag } from "../../../web/release-flags";
 
 /** test = 穴チェックの走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
 /** note = 見出しの下の 1 行 (スマホの 10 人の「振れます」、S-94e。11-07〜11-10 は 100 人で渡していなかった) */
@@ -45,6 +46,20 @@ const SHOW = 8;
 const rest = computed(() => uses.value.slice(SHOW).reduce((a, u) => a + u.div, 0));
 /** 一番お金を使った箱 (1 人あたり、上位 3) */
 const spend = computed(() => Object.entries(props.result.boxes).filter(([, b]) => b.spend > 0.005).sort((a, z) => z[1].spend - a[1].spend).slice(0, 3));
+/** (S-70d、スイッチ runSumWords) 見出しの言葉・確定フラクチャーの内訳・始まりの品の行 */
+const words = flag("runSumWords" as Flag);
+/** 確定フラクチャーの行の内訳: オーブ・お告げ 3 回分と、当たるまでの作り直し 2 回分 (神) */
+const redoLine = (b: { spend: number; redo?: number }): string => tr(`オーブ・お告げ 3 回分 ${div(b.spend - (b.redo ?? 0))} 神 ／ 当たるまでの作り直し 2 回分 ${div(b.redo ?? 0)} 神`, `orb + omens ×3 ${div(b.spend - (b.redo ?? 0))} div / redo ×2 until it lands ${div(b.redo ?? 0)} div`);
+/** 確定フラクチャーで足した始まりの品 (1 人あたりの数・神)。値段が無ければ神は — */
+const startRedo = computed(() => { const n = (props.result.persons ?? []).reduce((a, p) => a + (p.redo ?? 0), 0) / (props.result.n || 1); return n > 0.005 ? { n, div: props.result.startCost > 0 ? n * props.result.startCost : NaN } : null; });
+/** 上の欄の行の名前。同じ名前が 2 つ以上なら段を足す (S-70d、フラクチャーが 2 行並ぶ木) */
+const spendName = (id: string): string => {
+  const nm = boxName(id), same = spend.value.map(([x]) => x).filter((x) => boxName(x) === nm);
+  if (!words || same.length < 2) return nm;
+  // 同じ段にも 2 つあれば木の並び (箱の番号) で何番目か
+  const st = stepOf(t.doc.value, id), here = same.filter((x) => stepOf(t.doc.value, x) === st).sort((a, z) => a.localeCompare(z, undefined, { numeric: true })), k = here.indexOf(id) + 1;
+  return here.length > 1 ? tr(`${nm} · ${st} 段目の ${k} つ目`, `${nm} · step ${st} #${k}`) : tr(`${nm} · ${st} 段目`, `${nm} · step ${st}`);
+};
 const stuck = computed(() => Object.entries(props.result.stuckAt).sort((a, z) => z[1] - a[1]));
 /** 止まりのうち木の不具合 (予期せぬ狙い MOD で止まった人を除く。直すと先へ進む、S-72g。11-16 オーナー「箱が止まった時→原因→予期せぬかマジバグか」) */
 /** 予期せぬ狙い MOD の止まり (やり直して完成・失敗で終わった人も含む回数)。止まりで終わった人が 0 でも欄を出す */
@@ -132,20 +147,26 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
       </template>
       <!-- 一番お金を使った箱 -->
       <div v-if="spend.length && !test">
-        <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ tr("一番お金を使った箱 (1 人あたり)", "Most expensive boxes (per run)") }}</h4>
+        <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ words ? tr("お金のかかった手 (1 人あたり)", "Costliest steps (per run)") : tr("一番お金を使った箱 (1 人あたり)", "Most expensive boxes (per run)") }}</h4>
         <button v-for="([id, b], i) in spend" :key="id" type="button" data-tree-run-report-spend class="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-white/[0.06]" @click="emit('go', id)">
-          <span class="w-4 shrink-0 text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ boxName(id) }}</span><span class="shrink-0 tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
+          <span class="w-4 shrink-0 self-start text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1"><span :class="words ? 'block break-words' : 'block truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words'">{{ spendName(id) }}<template v-if="words && b.redo">{{ tr(" (作り直し込み)", " (incl. redo)") }}</template></span><span v-if="words && b.redo" data-tree-run-report-redo class="block break-words text-[11px] leading-snug text-[#a99d86]">{{ redoLine(b) }}</span></span><span class="shrink-0 self-start tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
         </button>
       </div>
       <!-- カレンシー別 -->
       <div v-if="!test">
-        <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ tr("使った物 (1 人あたり)", "Used (per run)") }}</h4>
+        <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ words ? tr("カレンシー別の数 (1 人あたり)", "Currency used (per run)") : tr("使った物 (1 人あたり)", "Used (per run)") }}</h4>
         <div v-for="u in uses.slice(0, SHOW)" :key="u.k" class="flex items-center gap-2 py-0.5">
           <span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ u.name }}</span>
           <span class="shrink-0 tabular-nums text-[#a99d86]">{{ tr(`${div(u.n)} 個`, `×${div(u.n)}`) }}</span>
           <span class="w-16 shrink-0 text-right tabular-nums">{{ div(u.div) }} {{ tr("神", "div") }}</span>
         </div>
         <div v-if="uses.length > SHOW" class="flex py-0.5 text-[#a99d86]"><span class="flex-1">{{ tr(`ほか ${uses.length - SHOW} 種`, `${uses.length - SHOW} more`) }}</span><span class="w-16 text-right tabular-nums">{{ div(rest) }} {{ tr("神", "div") }}</span></div>
+        <!-- (S-70d) 確定フラクチャーで足した始まりの品 (作り直し)。上の合計と 1 個の値段が合うように -->
+        <div v-if="words && startRedo" data-tree-run-report-start-redo class="flex items-center gap-2 py-0.5">
+          <span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ tr("始まりの品 (作り直し)", "Starting item (redo)") }}</span>
+          <span class="shrink-0 tabular-nums text-[#a99d86]">{{ tr(`${div(startRedo.n)} 個`, `×${div(startRedo.n)}`) }}</span>
+          <span class="w-16 shrink-0 text-right tabular-nums">{{ div(startRedo.div) }} {{ tr("神", "div") }}</span>
+        </div>
       </div>
     </div>
   </section>
