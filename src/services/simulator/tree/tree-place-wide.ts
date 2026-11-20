@@ -31,7 +31,7 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
   // (S-142j ③、スイッチ hitsSide) 1 列の取り置きはしない = 孫は下の段で右へずらすだけ (下の段は上の段に縦で重なって良い。11-14 オーナー「縦で重なる分は良しとしてるはずだが」)
   const sibGap = (a: string, b: string): number => (gaps.reserve !== false && kids.get(a)!.length >= 2 ? gaps.deep * 2 + BOX_W : deep(a) || deep(b) ? gaps.deep : gaps.leaf);
   // (S-142p、スイッチ laneBuild、開発版だけ・案) 理想手のレーン = スタートから描く親も理想手だけでたどれる箱。
-  // 先にレーンだけを今の並べで置き、その後に残り (外れ・未設定など) をレーンの一番右の右から置く (未設定の置き場 ア)
+  // 先にレーンだけを今の並べで置き、その後に残り (外れ・未設定など) を段ごとにその段のレーンの一番右の右から置く (未設定の置き場 ア)
   const inLane = new Set<string>();
   if (lane) { const lw = (id: string): void => { inLane.add(id); for (const k of kids.get(id)!) if (lane.has(k)) lw(k); }; lw("start"); }
   const placeRow = (r: number, take: (id: string) => boolean, floor: number): void => {
@@ -75,9 +75,12 @@ export function wideX(d: TreeDoc, L: RowLayout, kidsOf: (id: string) => string[]
   };
   if (!lane) { for (let r = 1; r < byRow.length; r++) placeRow(r, () => true, -Infinity); return x; }
   for (let r = 1; r < byRow.length; r++) placeRow(r, (id) => inLane.has(id), -Infinity);
-  let right = -Infinity;
-  for (const id of inLane) right = Math.max(right, x.get(id)! + ext(id)[1]);
-  for (let r = 1; r < byRow.length; r++) placeRow(r, (id) => !inLane.has(id), right + gaps.deep);
+  // 残りは段ごとに、その段のレーンの一番右の箱の右から左詰め (11-21 オーナー「段ごとに詰めておｋ未設定に関しては。どうせ最終チェックおしたら並ばせるし」)
+  for (let r = 1; r < byRow.length; r++) {
+    let right = -Infinity;
+    for (const id of byRow[r] ?? []) if (inLane.has(id) && x.has(id)) right = Math.max(right, x.get(id)! + ext(id)[1]);
+    placeRow(r, (id) => !inLane.has(id), right + gaps.deep);
+  }
   return x;
 }
 
