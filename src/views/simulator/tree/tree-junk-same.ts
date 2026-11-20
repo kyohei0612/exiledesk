@@ -97,6 +97,17 @@ export function fillLaterSame(data: PatchData, d: TreeDoc, before: ReadonlySet<s
   return any;
 }
 
+/**
+ * (S-28h ④、スイッチ foldFracChaos、11-20 オーナー「1A」) 左の枠へ重ねて畳んだ兄弟の同じ場所の箱 (ids = foldMirrors) にも、替えた手を置く。
+ * 手があっても置き替える。打てない・設定が意味を持たない箱へは写さない (その枠は流れが違うので重なりから出る)。呼ぶ側の edit の中で、元の箱 src に置いた後
+ */
+export function pickFoldMirrors(data: PatchData, d: TreeDoc, src: string, ids: readonly string[], h: Hand, kind: HandKind, aims: Aim[], pre: string | null): void {
+  for (const id of ids) {
+    if (!d.boxes[id] || d.boxes[id]!.done || !playable(data, d, id, h, pre) || !fitsAt(data, d, src, id, h, aims)) continue;
+    holdLinks(() => applyPick(d, id, h, kind, aims, pre, onlyOf(data, d, id, h, pre, aims)));
+  }
+}
+
 /** 決めた手を同じ外れのほかの箱にも置く (呼ぶ側の edit の中で、元の箱 src に置いた後)。間に自動でつながった箱・設定が意味を持たない箱 (fitsAt) は飛ばす */
 export function pickSameJunk(data: PatchData, d: TreeDoc, src: string, ids: string[], h: Hand, kind: HandKind, aims: Aim[], pre: string | null): void {
   for (const id of ids) {

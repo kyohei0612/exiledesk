@@ -19,6 +19,8 @@ import { setSigShown } from "../../../services/simulator/tree/tree-frame";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { useStripFold } from "./use-strip-fold";
 import { useFoldSlide } from "./use-fold-slide";
+import { setStackOff } from "../../../services/simulator/tree/tree-fold-frac-chaos";
+import { tutOn } from "../tutorial/use-sim-tutorial";
 import { useTreeReveal } from "./use-tree-reveal";
 import { boxHeightOf, placeKept, useRowSettle } from "./use-row-settle";
 import { useTreeEdges } from "./use-tree-edges";
@@ -91,6 +93,7 @@ export function useTreeSurface(key: number, p: PageCtx, root: Ref<HTMLElement | 
   // 消去の続きを畳む (S-28g ③、use-strip-fold.ts): 隠した箱は描かず、根の最初の自動の消去の箱は札 (TreeStripFold)、止まった箱は札の下
   // (S-28h ③) 同じ流れの列の札は引き戸で開け閉め (use-fold-slide)。ほかの札は今までどおり
   const slide = useFoldSlide(doc, () => root.value);
+  setStackOff(() => tutOn.value); // (S-28h ④) チュートリアルのコースの中は兄弟の枠を畳まない (目印 T-13 の箱が消えるため)
   const sf = { ...useStripFold(doc, opened, p.keep ? ref(key) : t.active, p.issueBoxes, p.stuckAt), toggle: (head: string): void => void slide.toggle(head) };
   /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
   const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !bandAway(doc.value, b) && !sf.hidden.value.has(b.id)));

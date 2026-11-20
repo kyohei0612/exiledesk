@@ -53,7 +53,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { ODDS_NOTE, RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue"; import DataNote from "../../../components/ui/DataNote.vue";
-import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
+import { drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { setSameHiOwn } from "./tree-same-mod-sync"; import { useJunkTidy } from "./use-junk-tidy"; import { clearHandAt } from "./tree-clear-hand"; import { chaosSkip } from "./tree-chaos-skip"; import { fillLaterSame, pickFoldMirrors, pickSameJunk, sameJunkOf } from "./tree-junk-same"; import { foldMirrors } from "../../../services/simulator/tree/tree-fold-frac-chaos"; import { stripFolds } from "../../../services/simulator/tree/tree-strip-fold"; import { askLane } from "./tree-lane-ask"; import { pickQuit, takeQuitAll } from "./tree-whittle-quit";
 import { installSimMonkey } from "./sim-monkey";
 import TreeTabs from "./TreeTabs.vue";
 import TreeCanvas from "./TreeCanvas.vue"; import type { PageCtx, Panel, Surface } from "./use-tree-surface"; import { tabKeyAt } from "./tree-tab-keys";
@@ -178,13 +178,14 @@ const backLabel = (b: Box): string => backLabelOf(doc.value, b); // 縮めた時
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
   const id = panel.value!.id, q = takeQuitAll(); // q = 確かめの窓で「削減を全部やめる」を選んだ (S-65c5)
   const same = sameJunkOf(doc.value, id); // 同じ外れのほかの決めていない箱にもいつも同じ手 (S-190d、スイッチ junkSameHand)
+  const mirrors = flag("foldFracChaos") ? foldMirrors(doc.value, id, stripFolds(doc.value)) : []; // (S-28h ④) 畳んだ兄弟の同じ場所にも替えた手
   simAct("hand", kind);
   // 外れの箱で打つ前の箱・同じ形の箱と同じ手は applyPick (tree-shape の sameHandReturn) が戻す (S-51。前の sameHandRetry は本番の goalShape で使われなくなったので消した)
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
   // 視点は holdBox (S-147e)。削減の手を打ち直してほかの枠の手が消える時、手の窓の確かめ「この手以降は削除されます」(下の箱が消える時に出る) で伝えていなければ先に聞く (S-65c4)
-  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { const before = new Set(Object.keys(d.boxes)); at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); if (same.length && s.data.value) pickSameJunk(s.data.value, d, id, same, h, kind, aims, pre); if (s.data.value) fillLaterSame(s.data.value, d, before); fillHeldDefaults(d, id); S().tidyOf(d); }); return at; });
+  askLane(doc.value, id, (d) => { pickQuit(q, d, id, h, kind, aims, pre, only); }, () => { void v.holdBox(id, () => { t.edit((d) => { const before = new Set(Object.keys(d.boxes)); at = holdLinks(() => pickQuit(q, d, id, h, kind, aims, pre, only)); if (same.length && s.data.value) pickSameJunk(s.data.value, d, id, same, h, kind, aims, pre); if (mirrors.length && s.data.value) pickFoldMirrors(s.data.value, d, id, mirrors, h, kind, aims, pre); if (s.data.value) fillLaterSame(s.data.value, d, before); fillHeldDefaults(d, id); S().tidyOf(d); }); return at; });
     panel.value = null; }, q || drawnBelow(doc.value, id).length > 0);
 }
 /**
@@ -218,7 +219,7 @@ function closeHand(): void { simOp("cancel", "hand-pick"); panel.value = null; }
 function skipChaos(): void { const id = panel.value!.id, data = s.data.value; if (!data) return; simOp("chaos-skip"); void v.holdBox(id, () => { t.edit((d) => { chaosSkip(data, d, id); S().tidyOf(d); }); return id; }); panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
 /** 箱の × = この箱を作った手 (親の手) を消す。結果の箱すべてとその下も消え、親は手を選び直せる形に (10-27 オーナー、TreeBox の rm) */
-function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; askLane(doc.value, p, (d) => clearHandAt(d, p), () => { simOp("remove-hand"); t.edit((d) => clearHandAt(d, p)); }); }
+function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; const ms = flag("foldFracChaos") ? foldMirrors(doc.value, p, stripFolds(doc.value)) : []; /* (S-28h ④) 畳んだ兄弟の同じ場所の手も消す */ askLane(doc.value, p, (d) => clearHandAt(d, p), () => { simOp("remove-hand"); t.edit((d) => { clearHandAt(d, p); for (const m of ms) if (d.boxes[m]?.hand) clearHandAt(d, m); }); }); }
 function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 /** 縮めて見ている時に押した箱の編集のポップアップ (use-tree-pop.ts) */
 const { pop, popEl, popStyle, popDo, popBoxH } = useTreePop(doc, v);

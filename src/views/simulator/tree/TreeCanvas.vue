@@ -10,6 +10,7 @@ import { VueFlow } from "@vue-flow/core";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeStripFold from "./TreeStripFold.vue";
+import TreeFoldStack from "./TreeFoldStack.vue";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeRunLayer from "./TreeRunLayer.vue";
@@ -47,6 +48,8 @@ const canvasEl = ref<HTMLElement | null>(null);
 let offTurn: (() => void) | null = null;
 onMounted(() => { if (canvasEl.value) offTurn = attachTurnTouch(canvasEl.value, { vp: () => v.flow.viewport.value, put: v.put, pageZ: () => pageZ.value, min: () => v.minZoom.value, max: () => v.maxZoom.value }); });
 onBeforeUnmount(() => offTurn?.());
+/** (S-28h ④) 左の枠の後ろへ重ねている兄弟の畳み (左の枠が描かれている物だけ) */
+const stacks = computed(() => [...sf.folds.value.values()].filter((f) => f.stack && f.keep && doc.value.boxes[f.keep] && !sf.hidden.value.has(f.keep)));
 const bodyH = (id: string): number => root.value?.querySelector<HTMLElement>(`[data-tree-box][data-box-id="${id}"]`)?.offsetHeight || v.flow.findNode(id)?.dimensions.height || BOX_H;
 /**
  * (linkChipHover) ↩ を持つ描いた箱 (「↩ n 段目へ戻る」の枠) に乗せた時も、手の札と同じく戻り先を照らし、箱の上の辺から青い弧で引っ張る
@@ -159,7 +162,9 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         </svg>
         <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
         <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
-        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
+        <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="{ ...posOf(doc.boxes[f.keep ?? f.head]!), inv }" @toggle="sf.toggle(f.head)" />
+        <!-- (S-28h ④) 兄弟の枠を左の枠の後ろへ重ねた形と角の ×n -->
+        <TreeFoldStack v-for="f in rv.done.value ? stacks : []" :key="`stack-${f.head}`" :head="f.head" :keep="f.keep!" v-bind="posOf(doc.boxes[f.keep!]!)" :h="bodyH(f.keep!)" :n="f.cols?.length ?? 1" :issues="sf.countsOf(f.head).issues" :inv="inv" @toggle="sf.toggle(f.head)" />
         <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="chipInv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
         <!-- (linkChipHover) 照らしている間の行き先の箱の写し (読むだけ・押せない。箱の上の辺の真ん中を軸に大きく = 下へ伸びる) -->
         <div v-for="{ id, h, dy } in spotZoom?.items ?? []" :key="`spot-zoom-${id}`" data-tree-spot-zoom :data-spot-zoom-of="id" :data-spot-zoom-dy="Math.round(dy) || undefined" class="pointer-events-none absolute z-[6] rounded-xl"

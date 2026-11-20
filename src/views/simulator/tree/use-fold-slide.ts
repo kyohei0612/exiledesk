@@ -37,22 +37,24 @@ export function useFoldSlide(doc: Ref<TreeDoc>, root: () => HTMLElement | null) 
     busy = true;
     // 線を隠すのは中の箱の線と、畳んだ列のほかの親の手の札 (札へ引いた線)
     const ids = f.mids, lines = [...ids, ...(f.cols ?? []).map((c) => doc.value.boxes[c]?.parent ?? "").filter(Boolean)];
+    // (S-28h ④) 左の枠へ重ねる畳みは、左の枠から出て左の枠へ畳まれに行く (滑る箱は左の枠の後ろを通る)
+    const base = f.keep ?? head, front = f.keep ? `.vue-flow__node[data-id="${f.keep}"]{z-index:3000 !important}` : "";
     try {
       if (!stripOpen.value.has(head)) {
-        const from = doc.value.boxes[head]!.x;
-        css.value = hideRule(ids, lines);
+        css.value = hideRule(ids, lines) + front;
         toggleStripFold(head);
         await settle(ids);
-        css.value = hideRule([], lines);
+        const from = doc.value.boxes[base]!.x;
+        css.value = hideRule([], lines) + front;
         const runs = ids.flatMap((id) => { const el = inner(id), b = doc.value.boxes[id]; return el && b ? [el.animate([{ translate: `${from - b.x}px 0`, opacity: 0.35 }, { translate: "0 0", opacity: 1 }], { duration: SLIDE_MS, easing: "cubic-bezier(.2,.8,.2,1)" })] : []; });
         await Promise.all(runs.map((a) => a.finished.catch(() => undefined)));
       } else {
-        const to = doc.value.boxes[head]!.x;
-        css.value = hideRule([], lines);
-        const runs = ids.flatMap((id) => { const el = inner(id), b = doc.value.boxes[id]; return el && b ? [el.animate([{ translate: "0 0", opacity: 1 }, { translate: `${to - b.x}px 0`, opacity: id === head ? 1 : 0.35 }], { duration: SLIDE_MS, easing: "cubic-bezier(.6,0,.8,.4)", fill: "forwards" })] : []; });
+        const to = doc.value.boxes[base]!.x;
+        css.value = hideRule([], lines) + front;
+        const runs = ids.flatMap((id) => { const el = inner(id), b = doc.value.boxes[id]; return el && b ? [el.animate([{ translate: "0 0", opacity: 1 }, { translate: `${to - b.x}px 0`, opacity: id === head && !f.keep ? 1 : 0.35 }], { duration: SLIDE_MS, easing: "cubic-bezier(.6,0,.8,.4)", fill: "forwards" })] : []; });
         await Promise.all(runs.map((a) => a.finished.catch(() => undefined)));
         toggleStripFold(head);
-        await settle([head]);
+        await settle([base]);
         for (const a of runs) a.cancel();
       }
     } finally { css.value = ""; busy = false; }

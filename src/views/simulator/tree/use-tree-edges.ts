@@ -47,7 +47,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   // 畳んだ消去の続き (S-28g ③): 根の線は札へ、札の線は止まった箱へ、隠した箱からは引かない
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   /** (S-28h ③) 畳んだ同じ流れの列の頭 → 札。ほかの親の手の札からも札へ線を引く (並べ方では親の子にしない) */
-  const sameTo = computed(() => new Map([...fold.value.folds.values()].flatMap((f) => (f.kind === "same" ? (f.cols ?? []).filter((c) => c !== f.head).map((c) => [c, f.head] as const) : []))));
+  const sameTo = computed(() => new Map([...fold.value.folds.values()].flatMap((f) => (f.kind === "same" ? (f.cols ?? []).filter((c) => c !== f.head || f.stack).map((c) => [c, f.keep ?? f.head] as const) : [])))); // (④) 左の枠へ重ねた時は左の枠へ
   const outsOf = (b: TreeBox): string[] => {
     const o = foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
     const add = sameTo.value.size && !fold.value.hidden.has(b.id) ? b.outs.flatMap((x) => sameTo.value.get(x) ?? []) : [];
