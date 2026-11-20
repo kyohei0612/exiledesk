@@ -105,8 +105,13 @@ await todayFromProd();
  */
 async function todayFromProd() {
   const id = `d${dayName(today)}`;
-  const has = (await (await fetch(`${BASE}/daily.json`)).json()).week?.some((d) => d.today && d.t);
-  if (has) return;
+  // `-- --prod-today` = 手元で組めても本番の今日のお題で上書きし、手元の今日の挑戦を消す (11-20 創生の樹スタートの確かめ。本番は読むだけ)
+  const force = process.argv.includes("--prod-today");
+  if (!force) {
+    let has = false;
+    for (let i = 0; i < 3; i++) { try { has = !!(await (await fetch(`${BASE}/daily.json`)).json()).week?.some((d) => d.today && d.t); break; } catch { await new Promise((r) => setTimeout(r, 2000)); } } // 組んだ直後は口が切れる事がある (ECONNRESET、11-20)
+    if (has) return;
+  }
   const rd = wr(["d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `"SELECT * FROM daily_topics WHERE id = '${id}'"`], { maxBuffer: 64 * 1024 * 1024 });
   let row = null;
   try { row = JSON.parse(rd.stdout)[0].results[0] ?? null; } catch { /* 読めない (ログイン切れ等) */ }
@@ -115,7 +120,7 @@ async function todayFromProd() {
   const val = (c) => (c === "prices" && big ? "''" : row[c] == null ? "NULL" : typeof row[c] === "number" ? String(row[c]) : q(row[c]));
   const parts = [];
   for (let i = 0; big && i < big.length; i += 60000) parts.push(`UPDATE daily_topics SET prices = prices || ${q(big.slice(i, i + 60000))} WHERE id = ${q(id)};`);
-  sql([`INSERT OR REPLACE INTO daily_topics (${cols.join(", ")}) VALUES (${cols.map(val).join(", ")});`, ...parts].join("\n"));
+  sql([...(force ? [`DELETE FROM daily_tries WHERE topic_id = ${q(id)};`] : []), `INSERT OR REPLACE INTO daily_topics (${cols.join(", ")}) VALUES (${cols.map(val).join(", ")});`, ...parts].join("\n"));
   console.log(`[dev:daily-api] お題 ${dayName(today)}: 手元で組めないので本番のお題を写した (${row.base}、読むだけ)`);
 }
 

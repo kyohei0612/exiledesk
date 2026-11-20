@@ -113,7 +113,8 @@ watch([() => s.data.value, phone], () => { if (!phone.value) void begin(); }, { 
  */
 const genesisAim = computed<string | null>(() => { const d = s.data.value, x = tryOf.value; return d && x ? x.aims.find((a) => isGenesis(d, a.modId))?.modId ?? null : null; });
 const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended && !genesisAim.value);
-watch([tryOf, genesisAim], () => { const x = tryOf.value, g = genesisAim.value; if (x && g && !x.fractured && !x.ended) pick(g, "fractured"); });
+// 開発版の見本は上の begin (immediate) がこの watch より先に挑戦を入れるので immediate に。pick の中の物が揃ってから回す (nextTick)
+watch([tryOf, genesisAim], () => void nextTick(() => { const x = tryOf.value, g = genesisAim.value; if (x && g && !x.fractured && !x.ended) pick(g, "fractured"); }), { immediate: true });
 
 /** お題の木を開く。覚えた木があればそれを、無ければお題から白紙で */
 function openTree(): void {
