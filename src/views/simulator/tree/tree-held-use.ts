@@ -8,10 +8,10 @@ import { craftStage } from "../../../state/craft-stage";
 import { bandsOn } from "../../../services/simulator/tree/tree-band";
 import { holdsAt } from "../../../services/simulator/tree/tree-foresee";
 import { boxAims, clearHand, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { isWhittleHand, LV_ORDER, lvClassesOf, lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle";
+import { handWhittleSide, isWhittleHand, LV_ORDER, lvClassesOf, lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle";
 import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
-import { frameHandOf, frameSiblings, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
+import { frameHandOf, frameSiblings, twoWays, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
 import { applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 
 /** 枠ごとの 打つ / 打たない の欄に出す枠 (予見の箱が枠に分かれ、枠の組のどれかが削減を持つ時)。use = null は手の無い枠 */
@@ -46,6 +46,8 @@ export function heldPickRows(data: PatchData, d: TreeDoc, id: string, item: Stag
   const now = heldUseRows(d, id), mine = pending.get(id) ?? {};
   let cls: LvClass[];
   if (now.length) cls = now.map((r) => r.lv);
+  // 側のお告げの削減はパターン 1 = 帯に割らない (S-65c7)
+  else if (twoWays() && handWhittleSide(h)) cls = [];
   else { const { wanted, side } = whittleCompare(data, d, h, sampleAimed(data, d, id, 1), item); cls = [...(lvClassesOf(data, item, wanted, side) ?? [])]; }
   cls = LV_ORDER.filter((c) => cls.includes(c));
   if (cls.length < 2) return [];

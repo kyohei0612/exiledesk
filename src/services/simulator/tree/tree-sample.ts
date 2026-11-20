@@ -21,6 +21,7 @@ import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf } from "./tree-outcome";
 import { aimedAims, carryFloors, handWhittleSide, isWhittleHand, rankVariants } from "./tree-whittle";
+import { bandSideOf } from "./tree-whittle-scene";
 import { sampleAimed } from "./tree-judge";
 import { isRevealHand, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, junkKeyOf } from "./tree-frac-pick";
@@ -358,7 +359,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   try {
     for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims, seed + 7919 * k); if (!r.note) return r; }
     // 削減の順位の箱は、箱を作る時と同じく親の見本の外れをその順位の段へ差し替えて打つ (差し替えないと順位の箱の見本が作れない、S-65b)
-    if (isWhittleHand(p.hand)) for (const v of rankVariants(data, base.item, aims, p.junkKey, undefined, handWhittleSide(p.hand))) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
+    if (isWhittleHand(p.hand)) for (const v of rankVariants(data, base.item, aims, p.junkKey, undefined, handWhittleSide(p.hand), bandSideOf(doc, p.id))) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
   } finally { altDeep = false; }
   return r0;
 }

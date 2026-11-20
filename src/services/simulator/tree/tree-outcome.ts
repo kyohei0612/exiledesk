@@ -16,7 +16,7 @@ import { isRevealHand, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } 
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { namedGoneOf, nextKeyOf, sideKeyOf } from "./tree-junk-side";
 import { isWhittleHand, joinKeys, lvClassOf, lvPart, rankVariants, stripLv, withLv } from "./tree-whittle";
-import { frameHandOf, whittleCompare } from "./tree-whittle-scene";
+import { bandCompare, frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { goalTierOf, gotOf, isSwapEssence, keptAimedOf, keptAimsOf, swapKeyOf, veilSwapKeyOf, withGot } from "./tree-keep";
 import { mainSideOf } from "./tree-uncountable";
@@ -437,8 +437,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const aimed = aimedOfSample(boxId, smp.item) ?? sampleAimed(data, doc, boxId, seed);
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
     // 差し替えで見る欲しい MOD と組の比べの相手は同じ札 (tree-whittle-scene の whittleCompare、枠を作る所と同じ)
-    const w = isWhittleHand(h) ? whittleCompare(data, doc, h, aimed, item) : null;
-    const all = w ? rankVariants(data, item, w.wanted, doc.boxes[boxId]?.junkKey, w.miss, w.side).map((v) => v.item) : [item];
+    const w = isWhittleHand(h) ? whittleCompare(data, doc, h, aimed, item) : null, bw = w ? bandCompare(data, doc, boxId, aimed, item) : null; // 帯の枠は帯の比べる手で絞る (S-65c7)
+    const all = w ? rankVariants(data, item, w.wanted, doc.boxes[boxId]?.junkKey, bw ? bw.miss : w.miss, w.side, bw?.side).map((v) => v.item) : [item];
     for (const it of all) {
       // 打たないエッセンス / 合金 (飛ばす / 塞がる、S-33e) は品のままの 1 枝
       // スイッチ essSameStop の間は打てない見本として飛ばす (その人はエッセンスの箱で止まり、S-33e ⑧)

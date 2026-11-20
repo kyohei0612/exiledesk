@@ -6,7 +6,7 @@
  * 乱数も打ち直しも無い。行き先の箱が無い枝 = 起こりうるのに枝が無い結果 (miss)。
  * 段階 2: まだ組む所は使わない (今の見本の作りと並べて違いを数えるだけ)
  */
-import { aimHits, mulberry32, occupiedFamiliesOf, sameAimTarget, stageTuning, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { aimHits, mulberry32, occupiedFamiliesOf, sameAimTarget, stageTuning, unrevealedOf, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
 import { stepOutcomesOrTooMany } from "../sim-engine/outcomes";
 import { revealOutcomes } from "../sim-engine/reveal-outcomes";
 import { boxOutcomeOf, essenceHold } from "./tree-outcome";
@@ -22,7 +22,7 @@ import { blockMarkOf, contentAimsKey, contentOf, keyForBox, nextAimed, startAime
 import { docPartOf, itemKeyOf } from "./tree-sample-key";
 import { isRevealHand, veilPick } from "./tree-veil";
 import { carryFloors, floorKeyOf, handWhittleSide, isWhittleHand, lvClassOf, lvPart, rankVariants } from "./tree-whittle";
-import { frameGroupKey, frameHandOf, whittleCompare } from "./tree-whittle-scene";
+import { bandCompare, frameGroupKey, frameHandOf, whittleCompare } from "./tree-whittle-scene";
 import type { MissAims } from "./tree-miss";
 import { withTreeTune } from "./tree-tune";
 import { setFlowShown } from "./tree-flow-once";
@@ -63,7 +63,7 @@ const ODD = 3;
  * 手の起こりうる行き先 (打たない)。数え上げで表せない手 (ルーン・品質・無限のエッセンスなど結果が 1 つに決まる物) は決まった種で 1 回当てるだけ、
  * カタリストは回す時と同じ playHand (品質の上限まで繰り返す 1 手、11-06 オーナー「A」)。発現で選ぶ手は未発現を出うる MOD ごとに分ける (revealOutcomes)
  */
-function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = [], lvMiss?: MissAims): Br[] | "tooMany" {
+function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = [], lvMiss?: MissAims, lvSide?: StageSide | null): Br[] | "tooMany" {
   const h = b.hand!, key = h.currency;
   let rs: Br[];
   if (isRevealHand(key)) rs = [{ p: 1, item }];
@@ -76,7 +76,7 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
     // 削減は一番低い MOD レベルの MOD が消える (E-33)。外れの MOD レベルは、その外れが付いた手の池で出うる MOD レベルの出方ごとに差し替えて打つ
     // (tree-whittle の rankVariants、割合 = その出方の重み)。消えうる MOD が 1 つなら 1 枝 (11-07 オーナー「削減の対象先がハズレMODの場合かな」で決め (a) の「2 枝を必ず」をやめた、S-65b)
     rs = [];
-    for (const v of rankVariants(data, item, wanted, b.junkKey, lvMiss, handWhittleSide(h))) {
+    for (const v of rankVariants(data, item, wanted, b.junkKey, lvMiss, handWhittleSide(h), lvSide)) {
       const s = stepOutcomesOrTooMany(data, v.item, key, engineOmens(h), { merge: (r) => itemKeyOf(r.item) });
       if (s === "tooMany") return s;
       // 残った外れに、消えた MOD の MOD レベルを下限として持たせる (次の削減で絞る、S-65b)
@@ -101,8 +101,8 @@ function outsOf(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly A
  * (スマホ 390 で開く時の固まりの 1 割前後、11-10 開く速さの案 D)
  */
 const OUTS = new WeakMap<PatchData, Map<string, Br[] | "tooMany">>();
-function outsOfMemo(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = [], lvMiss?: MissAims): Br[] | "tooMany" {
-  if (isWhittleHand(b.hand)) return outsOf(data, item, b, wanted, lvMiss);
+function outsOfMemo(data: PatchData, item: StageItem, b: TreeBox, wanted: readonly Aim[] = [], lvMiss?: MissAims, lvSide?: StageSide | null): Br[] | "tooMany" {
+  if (isWhittleHand(b.hand)) return outsOf(data, item, b, wanted, lvMiss, lvSide);
   let m = OUTS.get(data);
   if (!m) OUTS.set(data, (m = new Map()));
   const k = `${JSON.stringify(b.hand)}|${JSON.stringify(stageTuning())}|${floorKeyOf(item)}|${itemKeyOf(item)}`;
@@ -135,8 +135,8 @@ function splitRaw(data: PatchData, doc: TreeDoc, b: TreeBox, f: { item: StageIte
   // デイリーの確定フラクチャー (D-03): ✦ の MOD が固定された 1 枝 (印の MOD が固定されえない品はいつもどおり)
   const sure = sureFracOn(doc, b.hand) ? sureFracture(data, doc, f.item, b.hand!) : null;
   // 削減の差し替えで見る欲しい MOD と組の比べの相手は同じ札 (tree-whittle-scene の whittleCompare、枠を作る・回す時と同じ)
-  const w = isWhittleHand(b.hand!) ? whittleCompare(data, doc, b.hand, f.aimed, f.item) : null;
-  const rs = sure ? [{ p: 1, item: sure.item }] : outsOfMemo(data, f.item, b, w ? w.wanted : [], w?.miss);
+  const w = isWhittleHand(b.hand!) ? whittleCompare(data, doc, b.hand, f.aimed, f.item) : null, bw = w ? bandCompare(data, doc, b.id, f.aimed, f.item) : null; // 帯の枠は帯の比べる手で絞る (S-65c7)
+  const rs = sure ? [{ p: 1, item: sure.item }] : outsOfMemo(data, f.item, b, w ? w.wanted : [], bw ? bw.miss : w?.miss, bw?.side);
   if (rs === "tooMany") return rs;
   let ocs = rs.map((r) => ({ r, oc: boxOutcomeOf(data, doc, b, f.item, r.item, aims, f.aimed) }));
   let noHit = false;

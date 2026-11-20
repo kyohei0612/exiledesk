@@ -88,12 +88,13 @@ const FREE_MAX = 2;
  * 削減の手で見る見本の差し替え (割合 p 付き、p の和 1)。boxKey = 手の箱の junkKey (前の削減で順位の決まった外れは差し替えない)。
  * 欲しい MOD が無い・差し替える外れが無ければ見本 1 つ (p 1)
  */
-export function rankVariants(data: PatchData, item: StageItem, aims: readonly AimLike[], boxKey?: string, lvMiss?: MissAims, side?: StageSide | null): Array<{ p: number; item: StageItem }> {
+/** lvSide = 枠の組で絞る時の比べる側 (帯の比べる手の側、S-65c7。undefined = side と同じ) */
+export function rankVariants(data: PatchData, item: StageItem, aims: readonly AimLike[], boxKey?: string, lvMiss?: MissAims, side?: StageSide | null, lvSide?: StageSide | null): Array<{ p: number; item: StageItem }> {
   const all = rankVariantsAll(data, item, aims, boxKey, side), want = lvPart(boxKey);
   if (!want || all.length < 2) return all;
   // 削減の手前の枠 (S-65c) の箱は、その枠の組の出方だけ (枠に着く人は外れの MOD レベルがその組)。組の合う出方が無ければ今のまま。
   // 組の比べの相手は lvMiss (外れの式 aimedMiss = 回す時・判定と同じ)、無ければ aims
-  const miss = lvMiss ?? missAims(data, aims), fit = all.filter((v) => lvClassOf(v.item, miss, side) === want), t = fit.reduce((n, v) => n + v.p, 0);
+  const miss = lvMiss ?? missAims(data, aims), fit = all.filter((v) => lvClassOf(v.item, miss, lvSide === undefined ? side : lvSide) === want), t = fit.reduce((n, v) => n + v.p, 0);
   return fit.length && t > 0 ? fit.map((v) => ({ p: v.p / t, item: v.item })) : all;
 }
 /** side = お告げで消える側 (handWhittleSide)。その側の残したい MOD とだけ比べ、その側の外れだけ差し替える (ほかの側は削減で消えない) */

@@ -12,7 +12,7 @@ import { drop, subtree, type Hand, type OutKind, type TreeBox, type TreeDoc } fr
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { handWhittleSide, isWhittleHand, LV_ORDER, lvClassesOf, lvClassOf, lvPart, stripLv, withLv, type LvClass } from "../../../services/simulator/tree/tree-whittle";
-import { frameGroupKey as groupKey, frameHandOf, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
+import { frameGroupKey as groupKey, frameHandOf, twoWays, whittleCompare } from "../../../services/simulator/tree/tree-whittle-scene";
 import { keepsMods } from "../../../services/simulator/sim-engine";
 import type { StageItem, StageSide } from "../../../services/craft-stage/engine";
 
@@ -49,9 +49,11 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
   let ft: ReturnType<typeof frameOfDoc> | null = null;
   for (const ids of groups.values()) {
     const holders = ids.filter((id) => isWhittleHand(d.boxes[id]!.hand));
+    // 帯を割る手 (S-65c7、スイッチ whittleTwoWays): 側のお告げの無い削減の手 (パターン 2 = 付いている一番低い MOD と比べる)。側のお告げの手だけならパターン 1 = 帯に割らない
+    const head = twoWays() ? holders.find((id) => !handWhittleSide(d.boxes[id]!.hand)) : holders[0];
     // 付きうる組 (どの箱の代表の品でも、乱数の外れは全部の出方に差し替えて見るので同じ答え)
     let cls: Set<LvClass> | null = null, own: LvClass | null = null;
-    if (holders.length) {
+    if (head) {
       ft ??= frameOfDoc(data, d);
       for (const id of [...holders, ...ids]) {
         // 代表の品 (配置) が無い箱 (↩ で着く人だけの箱など) は見本で見る (エッセンスと同じ MOD の枠の needsSameMod と同じ)
@@ -61,7 +63,7 @@ export function syncWhittlePre(data: PatchData, d: TreeDoc, a: string | null, ch
         // 残したい MOD は外れの式の札 (完成形の ☑ の狙い・置き石) で見る = 回す時の lvKeyed・判定と同じ (完成形に無いエッセンスの MOD は外れ、S-33c)
         // 削減の手で残したい MOD を決めていれば、☑ を外した MOD は外れとして比べる (S-27b 11-10)
         // 比べるのは削減の手のお告げで消える側の MOD だけ (左側の抹消ならプレフィックス、11-10)。札と側は tree-whittle-scene の 1 つ
-        const { wanted, miss, side } = whittleCompare(data, d, d.boxes[holders[0]!]!.hand, aimed, item);
+        const { wanted, miss, side } = whittleCompare(data, d, d.boxes[head]!.hand, aimed, item);
         cls = lvClassesOf(data, item, wanted, side);
         own = lvClassOf(item, miss, side);
         // 上の段で組の決まった枠の下 (MOD を変えない手だけを挟む) は、その組の枠だけ (S-65c ②b)

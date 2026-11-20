@@ -136,24 +136,8 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
           <div class="rounded-md bg-white/[0.04] py-1"><div class="text-[11px] text-[#a99d86]">{{ tr("高い 10%", "Priciest 10%") }}</div>{{ div(result.p90) }}</div>
         </div>
       </div>
-      <!-- 止まり・沼った場所 -->
-      <div v-if="result.stuck || result.capped || oddN" data-tree-run-report-stuck class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
-        <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 沼った場所 ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} swamped`) }}</div>
-        <h4 v-if="bugStuck.length" class="mt-1 text-[12px] text-rose-200">{{ tr("ツリーの不具合 (直すと先へ進む)", "Tree problems (fix these to continue)") }}</h4>
-        <button v-for="[id, n] in bugStuck" :key="id" type="button" data-tree-run-report-bug class="block w-full break-words py-0.5 text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="shortOf(id)" class="block text-[11px] text-rose-200/85">→ {{ shortOf(id) }}</span></button>
-        <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
-        <TreeGoalStop :goal-stop="result.goalStop" :ess-stop="result.essStop" :low-stop="result.lowStop" @go="emit('go', $event)" />
-      </div>
-      </template>
-      <!-- 一番お金を使った箱 -->
-      <div v-if="spend.length && !test">
-        <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ words ? tr("お金のかかった手 (1 人あたり)", "Costliest steps (per run)") : tr("一番お金を使った箱 (1 人あたり)", "Most expensive boxes (per run)") }}</h4>
-        <button v-for="([id, b], i) in spend" :key="id" type="button" data-tree-run-report-spend class="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-white/[0.06]" @click="emit('go', id)">
-          <span class="w-4 shrink-0 self-start text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1"><span :class="words ? 'block break-words' : 'block truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words'">{{ spendName(id) }}<template v-if="words && b.redo">{{ tr(" (作り直し込み)", " (incl. redo)") }}</template></span><span v-if="words && b.redo" data-tree-run-report-redo class="block break-words text-[11px] leading-snug text-[#a99d86]">{{ redoLine(b) }}</span></span><span class="shrink-0 self-start tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
-        </button>
-      </div>
-      <!-- カレンシー別 -->
-      <div v-if="!test">
+      <!-- カレンシー別 (スイッチ runSumWords の間は主の欄 = 費用の幅のすぐ下、オーナー「下の一人当たりの金額のが知りたいこと多い」。閉じている間は今までどおり一番下) -->
+      <div v-if="!test" data-tree-run-report-uses :class="words ? '' : 'order-2'">
         <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ words ? tr("カレンシー別の数 (1 人あたり)", "Currency used (per run)") : tr("使った物 (1 人あたり)", "Used (per run)") }}</h4>
         <div v-for="u in uses.slice(0, SHOW)" :key="u.k" class="flex items-center gap-2 py-0.5">
           <span class="min-w-0 flex-1 truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words">{{ u.name }}</span>
@@ -167,6 +151,22 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
           <span class="shrink-0 tabular-nums text-[#a99d86]">{{ tr(`${div(startRedo.n)} 個`, `×${div(startRedo.n)}`) }}</span>
           <span class="w-16 shrink-0 text-right tabular-nums">{{ div(startRedo.div) }} {{ tr("神", "div") }}</span>
         </div>
+      </div>
+      <!-- 止まり・沼った場所 -->
+      <div v-if="result.stuck || result.capped || oddN" data-tree-run-report-stuck class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
+        <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 沼った場所 ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} swamped`) }}</div>
+        <h4 v-if="bugStuck.length" class="mt-1 text-[12px] text-rose-200">{{ tr("ツリーの不具合 (直すと先へ進む)", "Tree problems (fix these to continue)") }}</h4>
+        <button v-for="[id, n] in bugStuck" :key="id" type="button" data-tree-run-report-bug class="block w-full break-words py-0.5 text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="shortOf(id)" class="block text-[11px] text-rose-200/85">→ {{ shortOf(id) }}</span></button>
+        <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
+        <TreeGoalStop :goal-stop="result.goalStop" :ess-stop="result.essStop" :low-stop="result.lowStop" @go="emit('go', $event)" />
+      </div>
+      </template>
+      <!-- 一番お金を使った箱 (S-70d 11-20 夜: スイッチ runSumWords の間は出さない。オーナー「なら金のかかった手いらんわ」) -->
+      <div v-if="spend.length && !test && !words" class="order-1">
+        <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ words ? tr("お金のかかった手 (1 人あたり)", "Costliest steps (per run)") : tr("一番お金を使った箱 (1 人あたり)", "Most expensive boxes (per run)") }}</h4>
+        <button v-for="([id, b], i) in spend" :key="id" type="button" data-tree-run-report-spend class="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-white/[0.06]" @click="emit('go', id)">
+          <span class="w-4 shrink-0 self-start text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1"><span :class="words ? 'block break-words' : 'block truncate max-[48rem]:overflow-visible max-[48rem]:whitespace-normal max-[48rem]:break-words'">{{ spendName(id) }}<template v-if="words && b.redo">{{ tr(" (作り直し込み)", " (incl. redo)") }}</template></span><span v-if="words && b.redo" data-tree-run-report-redo class="block break-words text-[11px] leading-snug text-[#a99d86]">{{ redoLine(b) }}</span></span><span class="shrink-0 self-start tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
+        </button>
       </div>
     </div>
   </section>
