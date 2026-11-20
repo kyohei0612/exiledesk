@@ -23,6 +23,7 @@ import pkg from "../../../package.json";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { tradeSkill } from "../../state/emulator/trade-skill";
 import type { ModGroup } from "../../services/craft-stage/trade-search";
+import { phoneDevice } from "../../utils/phone-pc-view";
 
 defineProps<{ phone: boolean }>();
 const s = craftStage;
@@ -31,7 +32,9 @@ const inApp = isTauriRuntime();
 const EMU_TO_SIM = flag("emuToSim");
 /** シミュへ持っていく入口はシミュを見るだけの幅 (768 未満) では出さない (M-06、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
 const viewOnly = useViewOnlyWidth();
-const TO_SIM_ON = computed(() => TREE_ON && !viewOnly.value && s.mode.value === "hand" && !!s.item.value);
+/** シミュの phoneGoalSteps と同じ条件 (エミュからシミュのファイルを読まない G-40 ので共通の部品から組む) */
+const PHONE_GOAL = (): boolean => flag("phoneGoalSteps") && flag("phonePcView") && phoneDevice();
+const TO_SIM_ON = computed(() => TREE_ON && (!viewOnly.value || PHONE_GOAL()) && s.mode.value === "hand" && !!s.item.value); // スマホの端末はシミュでベース・完成の MOD を組めるので出す (S-94l2)
 /** 「デイリーに投稿 →」(D-10・M-06b、スイッチ emuToDaily)。スマホの幅でも出す。投稿の中のエミュ (D-12) では帯の「この品で投稿へ」と 2 重になるので出さない */
 const TO_DAILY_ON = computed(() => flag("emuToDaily") && DAILY_ON && s.mode.value === "hand" && !!s.item.value && dailyPage.value?.q !== "post-emu");
 const hasMods = computed(() => !!s.item.value && allMods(s.item.value).length > 0);
