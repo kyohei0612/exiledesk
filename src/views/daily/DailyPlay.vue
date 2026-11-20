@@ -20,6 +20,7 @@ import DailyEssNote from "./DailyEssNote.vue";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc, setGoalQuality } from "./daily-aims";
+import { isGenesis } from "./daily-check";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
 import { DONE_BY_PRESS, doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
 import { qualityWords } from "./daily-quality-words";
@@ -106,7 +107,13 @@ const phone = flag("dailyFit") ? useViewOnlyWidth() : usePhone();
 watch([() => s.data.value, phone], () => { if (!phone.value) void begin(); }, { immediate: true });
 
 /** 始め方とフラクチャー予定の MOD を選ぶ画面 (D-37c・D-37j、DailyFracPick)。諦めた後は選ばない */
-const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended);
+/**
+ * 創生の樹スタート (D-03・D-37j、11-20 オーナー「創生の樹が1つあるコースは基本的にフラクチャースタートで選べないとしよう。要は始めた瞬間ツリーから始まる」):
+ * 狙いに創生の樹の MOD (クラフトで付かない) があれば始め方を選ばせず、その MOD 1 つが ✦ で付いた品 ((a) の形、ここまでの費用 0) の木から始める
+ */
+const genesisAim = computed<string | null>(() => { const d = s.data.value, x = tryOf.value; return d && x ? x.aims.find((a) => isGenesis(d, a.modId))?.modId ?? null : null; });
+const picking = computed(() => !!tryOf.value && !tryOf.value.fractured && !tryOf.value.ended && !genesisAim.value);
+watch([tryOf, genesisAim], () => { const x = tryOf.value, g = genesisAim.value; if (x && g && !x.fractured && !x.ended) pick(g, "fractured"); });
 
 /** お題の木を開く。覚えた木があればそれを、無ければお題から白紙で */
 function openTree(): void {
