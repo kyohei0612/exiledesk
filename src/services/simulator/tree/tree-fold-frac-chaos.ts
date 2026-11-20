@@ -84,8 +84,9 @@ function sameFolds(d: TreeDoc, out: Map<string, StripFold>): void {
   const byRow = new Map<string, TreeBox[]>();
   if (!stackOn()) return;
   for (const b of Object.values(d.boxes)) {
-    if (!b.hand || inside.has(b.id) || out.has(b.id)) continue;
-    const frac = effectOf(b.hand.currency) === "fracture";
+    // 手の無い枠も出た時から兄弟 (11-20 夜オーナー「枠が出来た瞬間兄弟だよね」)。完成・↩ の箱は手を置く枠でないので入れない
+    if ((!b.hand && (b.done || b.back)) || inside.has(b.id) || out.has(b.id)) continue;
+    const frac = !!b.hand && effectOf(b.hand.currency) === "fracture";
     const k = frac ? "F" : siblingKey(d, b);
     if (k === null) continue;
     const r = `${flowDepth(d, b.id)}|${k}`;
@@ -96,7 +97,8 @@ function sameFolds(d: TreeDoc, out: Map<string, StripFold>): void {
     const groups: Array<{ lv: string[]; ids: string[] }> = [];
     for (const b of row.filter((x) => !inside.has(x.id)).sort((x, y) => cmp(x.id, y.id))) {
       const lv = handLevels(d, b.id, true);
-      const g = groups.find((x) => sameFlow(x.lv, lv));
+      // 手の無い枠どうしは 1 つの組 (どれかに手を置くと兄弟へ写る)。手のある組には入れない = 写した先で打てずに手の無いまま残った枠は重なりから出て開く (今のまま)
+      const g = groups.find((x) => (x.lv.length === 0) === (lv.length === 0) && sameFlow(x.lv, lv));
       if (g) g.ids.push(b.id); else groups.push({ lv, ids: [b.id] });
     }
     for (const { ids } of groups) {
