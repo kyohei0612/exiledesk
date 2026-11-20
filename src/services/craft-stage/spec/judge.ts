@@ -48,12 +48,11 @@ export function targetBlock(t: Target, item: StageItem): string | null {
  * 「ジュエルにアイテムレベルって意味あるんか」)。カレンシー・骨のアイテムレベルの制限も掛けない
  */
 /**
- * 白もマジックも無いベース = 創生の樹のベース 17 個と割れた湖の鏡のベース 8 個 (E-18c)。poe2db の enable_rarity では白もあり得る扱いだが、手に入るのはレアだけ。
+ * 白もマジックも無いベース = 創生の樹のベース 13 個と割れた湖の鏡のベース 8 個 (E-18c。創生の樹の首飾り 4 個はノーマルからある = 11-20 オーナーのトレード確かめ)。poe2db の enable_rarity では白もあり得る扱いだが、手に入るのはレアだけ。
  * 外の正解 = 公式トレード (オーナー 11-20 Forbidden Rites・オフライン込みで白・マジックを検索して「全部ない」)
  */
 export const RARE_START_BASES: ReadonlySet<string> = new Set([
   "Biostatic Ring", "Vitalic Ring", "Mnemonic Ring", "Kinetic Ring", "Oneiric Ring", "Grasping Ring", "Breach Ring", "Refined Breach Ring",
-  "Absent Amulet", "Corona Amulet", "Lament Amulet", "Portent Amulet",
   "Forking Belt", "Invoking Belt", "Sinew Belt", "Stalking Belt",
   "Grasping Mail",
   "Dusk Ring", "Gloam Ring", "Penumbra Ring", "Tenebrous Ring", "Dusk Amulet", "Gloam Amulet", "Penumbra Amulet", "Tenebrous Amulet",
