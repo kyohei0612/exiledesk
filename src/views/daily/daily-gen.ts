@@ -4,7 +4,7 @@
  * 週のファイルが 1 つも無い時は手の辞書 daily-types.ts から見本の型を作る (D-80 の控え)。乱数は mulberry32
  */
 import { freshItem, mulberry32, type PatchData } from "../../services/craft-stage/engine";
-import { modListFor, type ListRow } from "../../services/craft-stage/mod-list";
+import { modListFor, tiersOfMod, type ListRow } from "../../services/craft-stage/mod-list";
 import { baseStatsOf } from "../../services/craft-stage/stage-bases";
 import { clientClassOf, ENGINE_CATEGORIES, handsOf, inGroup, kindOf } from "../../services/mods/item-classes";
 import { goalBlock } from "../../services/simulator/sim-engine";
@@ -72,10 +72,13 @@ export const TIER_FLOOR = 2;
 export const tierFloor = (_tier: number): number => TIER_FLOOR;
 /**
  * 行の段のうちアイテムレベルで出る物から、下限 (D-04 = T2) の段。無ければその下の段の一番近い物、それも無ければ持っている中で一番下の段
- * (下限の段を持たない MOD は「持っている中で一番下」= どれが付いても達成)。段が 1 つも無ければ undefined
+ * (下限の段を持たない MOD は「持っている中で一番下」= どれが付いても達成)。段が 1 つも無ければ undefined。
+ * 同じ系統をまとめた行 (麻痺のスタッフの「全てのスペル」と「全ての雷スペル」など) は段ごとに modId が違うので、modId を渡せば
+ * その modId の段だけから選ぶ (無い時だけ行の段全部から)。前は段の番号だけで並べて別の modId の T1 を取り、雷スペルのお題が全てのスペルに替わった (11-19、D-04)
  */
-const floorTierOf = (r: ListRow | undefined, ilvl: number, tier: number): { able: ListRow["tiers"]; t: ListRow["tiers"][number] | undefined } => {
-  const want = tierFloor(tier), able = (r?.tiers ?? []).filter((x) => x.ilvl <= ilvl).sort((x, y) => x.tier - y.tier);
+const floorTierOf = (r: ListRow | undefined, ilvl: number, tier: number, modId?: string): { able: ListRow["tiers"]; t: ListRow["tiers"][number] | undefined } => {
+  const all = (r?.tiers ?? []).filter((x) => x.ilvl <= ilvl), same = r && modId ? tiersOfMod(r, modId).filter((x) => x.ilvl <= ilvl) : [];
+  const want = tierFloor(tier), able = (same.length ? same : all).sort((x, y) => x.tier - y.tier);
   // スキルのレベル系は D-04 の例外: アイテムレベルの中で付く一番上の段を必ず求める (11-11 オーナー「スキルレベル系はt1にしよう強制。マックスやないとなMODでつく中で」)
   if (r && isSkillLevel(r)) return { able, t: able[0] };
   return { able, t: able.find((x) => x.tier === want) ?? able.find((x) => x.tier > want) ?? able[able.length - 1] };
@@ -96,7 +99,8 @@ export function aimsOfSample(data: PatchData, s: DailySample, ilvl = TOPIC_ILVL)
   for (const m of s.mods) {
     const r = rows.find((x) => nameOf(x) === m.name);
     if (!r) return null;
-    const f = floorTierOf(r, ilvl, m.tier), t = f.t ?? f.able[0];
+    // 見本は行の名前しか持たない (忍者の品を読んだ時に行へまとめる) ので、狙いの modId = 行の id の段から選ぶ
+    const f = floorTierOf(r, ilvl, m.tier, r.id), t = f.t ?? f.able[0];
     if (!t) return null;
     const modId = t.modId ?? r.id;
     if (goalBlock(data, s.base, ilvl, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId, tier: t.tier })) return null;
@@ -147,7 +151,7 @@ export function floorAims(data: PatchData, base: string, ilvl: number, aims: rea
     const r = rowOfAim(rows, a);
     // エッセンスの MOD (D-04b) は段がエッセンスで決まっているので動かさない
     if (r && r.group !== "normal") return a;
-    const { t } = floorTierOf(r, ilvl, a.tier);
+    const { t } = floorTierOf(r, ilvl, a.tier, a.modId);
     if (!r || !t) return { ...a, tier: tierFloor(a.tier) };
     // 字も揃えた段の物に引き直す (前は段だけ下げて元の段の値の字が残り、T3 のお題に T1 の値が書かれていた、11-11)
     const modId = t.modId ?? r.id;
