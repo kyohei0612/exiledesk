@@ -260,6 +260,7 @@ export const FLAGS = {
   foldFracChaos: "シミュの木: ✦ が 2 つ以上でフラクチャーの結果が ✦ の枝に分かれた時、左の 1 本 (完成のある枝、無ければ木の並びの 1 本目) だけ開き、ほかの ✦ の枝は札 1 枚に畳む・カオスを 2 段以上続けた所を消去と同じく「カオス × n 段」の札 1 枚に畳む (押すと開く。S-28h、オーナー 11-19「左枠にたたんでいいかも　カオススパムとかも」)。閉じている間は全部の箱を並べる",
   tierNumFit: "MOD の段の表: スマホ・狭い列で右の数 (出やすさ・ティア・Lv) の欄を中身の幅に。前は欄が 1px で数が左の文へ重なった (U-12j2、オーナー「修正」。開発版だけ)",
   wordPhrase: "MOD の表: 系統の名前と段の文を言葉の切れ目で折り返す (word-break: auto-phrase、日本語だけ。前は「ダメー|ジ」のように語の途中で折れた、U-12j3、オーナー「修正」。開発版だけ)",
+  missNoTier: "シミュの木の外れ MOD の行 (箱のカード・手の窓・スマホの道の画面) は左の札に段の数を出さず側の字だけ「P 外れ MOD」「S 外れ MOD」にする (未発現の冒涜の行と同じ形。S-82b、tree-row-tags の missTag・StageItemCard の sideTier)。オーナー 11-20「段はいらんね」。閉じている間は今のまま (「P1 外れ MOD」)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
@@ -285,8 +286,7 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "barSlim", "failRuneFree", "failRuneSample",
   // 0.1.748 出し待ちの表で見た目 OK の物 (オーナー 11-17「出す準備 完了時」「んまぁおすすめで」、ブラック 129〜132): デイリーの木をシミュの設定のまま・数を 1 行・完成形の札をシミュのまま・文の折り方、完成形の札を送り棒なしで全部・ティア調整・字の大きさ・自動ルーンの行を出さない、右の列を上まで・幅・色のプルダウンを出さない、結果の箱のルーン・偶然付いた狙いの箱、スマホの URL の案内・横持ちの PC の画面、木を描く・配置を 1 回だけ作る、古いレシピの書き直し・保存 15 個と共有で聞く、手の札のアイコンを縦に。barSlim・failRuneSample・failRuneFree は入れない
   "dailyTreeAsSim", "dailyNumLine",
-  "dailySimCard",
-  "goalCardFull",
+  "dailySimCard", "goalCardFull",
   "sideTop",
   "goalTierTop",
   "sideLikeDaily",

@@ -152,7 +152,8 @@ const tierLabel = (m: StageMod): string => (ESS_CARD && craftStage.data.value ? 
 const tierNo = (m: StageMod): string => tierLabel(m).replace(/^T/, "");
 /** 行の左の札 (P3・S2)。tierAtLeast なら「S2 以上」/「S2+」(1 と、エッセンス・合金の 0 はそのまま。10-25 オーナー「P0 以上」が変) */
 const sideTier = (r: { side: string; m: StageMod }): string => {
-  const n = tierNo(r.m);
+  // 札が段を出さないと言う行 (シミュの外れ MOD、S-82b) は側の字だけ
+  const n = props.rowTags?.get(r.m.modId)?.noTier ? "" : tierNo(r.m);
   return `${r.side === "プレフィックス" ? "P" : "S"}${n}${props.tierAtLeast && n && n !== "1" && n !== "0" ? tr(" 以上", "+") : ""}`;
 };
 const isRareNew = (m: StageMod): boolean => isNew(m) && chanceOf(m) != null && isRareChance(chanceOf(m)!);
