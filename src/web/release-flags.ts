@@ -470,20 +470,14 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "noCtxMenu",
   "junkFrameOnly",
   "goalMetTag",
-  "lowTierBox",
-  "junkSideTitle",
-  "spotNoZoom",
-  "fracSetting",
-  "fracOneRow",
-  "essEleHit",
-  "veilPickKeep",
-  "resetDim",
-  "chipShrink",
+  "lowTierBox", "junkSideTitle", "spotNoZoom", "fracSetting", "fracOneRow", "essEleHit", "veilPickKeep", "resetDim", "chipShrink",
   "essSameStop", "goalRetry", "aimFloor", "modOneLine", "oldRecipeView",
   // 2 完成の MOD の品質の欄を消す (オーナー 11-16 夕「そこ品質決めなくていんじゃね削除でいい気がする」、大改装の出しと一緒、ブラック 124)
   "noGoalQuality",
   // ☑ した手で狙いが低いティアで付いた人を外れの箱へ (オーナー 11-16 夜「先低ティア扱いと未設定だけ直して即リリースしてくれるかそこ」、至急 0.1.744、ブラック 125)
   "lowTierJunk",
+  // シミュの畳み・100 人回しのまとめ・削減 2 パターン・削減の下限・スマホで白紙からツリー・デイリーの並び a (オーナー 11-20 夜「出して」、ブラック 143)
+  "foldFracChaos", "runSumWords", "whittleTwoWays", "aimFloorWhittle", "phoneGoalSteps", "dailyRankWide",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

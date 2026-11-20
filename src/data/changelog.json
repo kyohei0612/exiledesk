@@ -1,5 +1,47 @@
 [
  {
+  "v": "0.1.771",
+  "date": "2026-11-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: ✦ が複数の木で、フラクチャー後の ✦ の枝は 1 本だけ開いてほかを札 1 枚に、カオスを続けた所も「カオス × n 段」の札に、同じ手の兄弟の枠も左の枠の後ろに畳むようにしました (押すと開きます)",
+    "en": "Simulator: with several ✦ mods, only one ✦ branch after the Fracture stays open and the others fold into a card; repeated Chaos steps fold into a \"Chaos × n steps\" card, and sibling boxes from the same craft fold behind the leftmost one (click to open)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 100 人回しの結果で、1 人あたりのカレンシー別の数と費用を上に出し、フラクチャーの作り直しで使った始まりの品も数えるようにしました",
+    "en": "Simulator: the 100-run result now shows per-run currency counts and cost near the top, including starting items used for fracture redos"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 削減のお告げの枠 (低い・同じ・高い) の比べる相手を枠ごとにずれないようにし、左側・右側の抹消を使う削減では枠に分けないようにしました",
+    "en": "Simulator: Whittling frames (lower / same / higher) now compare against the same mod across the band, and Whittling with a side omen no longer splits into frames"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: 削減のお告げを使う手の前の箱でも、狙いの MOD を狙いの段の一番下の値で見せるようにしました",
+    "en": "Simulator: boxes before a Whittling craft now also show target mods at the lowest tier you aim for"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュ: スマホでもベース選びから木を作れるようにしました (ツリーは横持ちで)",
+    "en": "Simulator: you can now start a tree from base selection on phones (the tree itself in landscape)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "デイリー: 一覧から昨日の上位を外し、PC では順位を広く・品を右端に並べてひとことが切れないようにしました",
+    "en": "Daily: the list no longer shows yesterday’s top players; on PC the ranking is wider and items sit on the right so comments are not cut off"
+   }
+  ]
+ },
+ {
   "v": "0.1.770",
   "date": "2026-11-20",
   "items": [
@@ -1054,36 +1096,6 @@
     "area": "",
     "text": "シミュレーターの木で、左の段の札に箱や線がかぶらなくなりました",
     "en": "In the simulator tree, boxes and lines no longer overlap the stage labels on the left"
-   }
-  ]
- },
- {
-  "v": "0.1.731",
-  "date": "2026-11-13",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: 順位のひとことを名前の横に並べるようにしました",
-    "en": "Daily: Notes now sit next to the name in the ranking"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "デイリー: ニックネームを全角 10 字 (半角 20 字) まで付けられるようにしました",
-    "en": "Daily: Nicknames can now be up to 20 characters (10 for Japanese)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 消去の後の自動の続きが 1 段だけの時は、札に畳まずに箱をそのまま並べるようにしました",
-    "en": "Simulator: when the automatic follow-up after an Orb of Annulment is only one step, its boxes are now shown as they are instead of being folded into a tag"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形のカードは、狙いを決めた後は MOD の札を出さず「ティア調整」だけにしました (MOD の選び直しは上の「完成の MOD」から)",
-    "en": "Simulator: once targets are set, the goal card shows only the tier adjust button instead of the mod tag (change the mods from the final mods step above)"
    }
   ]
  }

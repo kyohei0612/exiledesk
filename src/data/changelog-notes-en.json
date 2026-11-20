@@ -1,4 +1,12 @@
 {
+  "0.1.771": [
+    "Simulator: with several ✦ mods, only one ✦ branch after the Fracture stays open and the others fold into a card; repeated Chaos steps fold into a \"Chaos × n steps\" card, and sibling boxes from the same craft fold behind the leftmost one (click to open)",
+    "Simulator: the 100-run result now shows per-run currency counts and cost near the top, including starting items used for fracture redos",
+    "Simulator: Whittling frames (lower / same / higher) now compare against the same mod across the band, and Whittling with a side omen no longer splits into frames",
+    "Simulator: boxes before a Whittling craft now also show target mods at the lowest tier you aim for",
+    "Simulator: you can now start a tree from base selection on phones (the tree itself in landscape)",
+    "Daily: the list no longer shows yesterday’s top players; on PC the ranking is wider and items sit on the right so comments are not cut off"
+  ],
   "0.1.770": [
     "Daily: challenges with a mod only the Genesis Tree can add now start in the tree from an item with that mod already fractured. Today's challenge attempts have been reset"
   ],
