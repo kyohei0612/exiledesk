@@ -29,8 +29,8 @@ export interface StripFold { head: string; mids: string[]; stops: string[]; step
   /** (S-28h ④) 兄弟の枠を左の枠 (keep) の後ろへ重ねる畳み: 札は描かず head も隠し、keep の後ろに重ねて角に ×n */ stack?: true; keep?: string }
 
 /**
- * (S-28i、スイッチ annulStack、開発版だけ・案) 消去の縦の続きも札をやめ、手の札 (消去のオーブ) を段々に重ねる (カオスは S-28h ② の札のまま):
- * 一番上の箱 (head) を普通の箱で描き (keep = head)、残りの箱を隠して手の札の後ろに札を重ね、札の右上に ×n (n = 隠した箱の数)。開くと下へ滑る (use-fold-slide)
+ * (S-28i、スイッチ annulStack、開発版だけ・試し) 消去の続きは人が置いた消去の箱 (head = keep) を普通に描き、その手の札 1 枚に ×n (n = 隠した箱の数)、
+ * 下に止まった箱だけを並べる (annulHeadFolds。カオスは S-28h ② の札のまま)。開くと下へ滑る (use-fold-slide)
  */
 export const annulStackOn = (): boolean => flag("annulStack" as Flag);
 /** 札 (TreeStripFold) を描く畳みか (重ねる畳み・直に線・↩ の畳みは札を描かない) */
@@ -74,7 +74,8 @@ const oneBranch = (): boolean => flag("treeNoAnnulAuto");
 export const stripChains = (d: TreeDoc): Map<string, StripFold> => flowOnce("chains", d, null, () => chainsRaw(d)); // 画面の木は同じ流れで 1 回 (S-196i)。返す物は書き換えない
 function chainsRaw(d: TreeDoc): Map<string, StripFold> {
   const out = new Map<string, StripFold>();
-  for (const h of Object.values(d.boxes)) {
+  if (annulStackOn()) annulHeadFolds(d, out);
+  else for (const h of Object.values(d.boxes)) {
     // head = 止まらずに続く箱の並びの一番上 (親は続くだけの箱でない)。続くだけの箱が 2 段以上の時だけ畳む (S-28g ③)
     if (!through(d, h) || through(d, d.boxes[h.parent ?? ""])) continue;
     const mids: string[] = [], stops: string[] = [];
@@ -112,6 +113,33 @@ function chainsRaw(d: TreeDoc): Map<string, StripFold> {
   }
   return out;
 }
+/**
+ * (S-28i 試し、スイッチ annulStack、開発版だけ) 消去の畳みの決まりを 1 つに: 人が置いた消去の箱 (h) → すぐ下にその消去の手の札 1 枚 (×n) → 止まった箱だけ。
+ * h の結果から下へ、自動の消去の箱は全部 (1 発目の結果の兄弟も、1 回で止まった結果を持つ箱も) 間の箱として隠し、それ以外 (設定できる枠・MOD 1 つ) を止まった箱として札の下に横に並べる。
+ * 間の箱が 1 つも無い (1 発目で全部止まった) 時は畳まない (11-21 オーナー「1発目消去打った瞬間下に消去手の札に枠数nでかいて、止まるところまでってイメージ」「いろんなルールごちゃってない？」)
+ */
+function annulHeadFolds(d: TreeDoc, out: Map<string, StripFold>): void {
+  for (const h of Object.values(d.boxes)) {
+    if (!isAnnul(h) || h.autoAnnul) continue;
+    const mids: string[] = [], stops: string[] = [], seen = new Set<string>();
+    let steps = 1;
+    const walk = (id: string, n: number): void => {
+      const b = d.boxes[id];
+      if (!b || seen.has(id)) return;
+      seen.add(id);
+      if (!inner(b)) { stops.push(id); return; }
+      mids.push(id); steps = Math.max(steps, n);
+      for (const o of b.outs) walk(o, n + 1);
+    };
+    for (const o of h.outs) walk(o, 2);
+    if (!mids.length) continue;
+    const inside = new Set(mids);
+    const tuck = (id: string): boolean => { const b = d.boxes[id]!; return !!(b.merged && b.back && inside.has(b.back)); };
+    out.set(h.id, { head: h.id, mids, stops: stops.filter((id) => !tuck(id)), steps, tucked: stops.filter(tuck), stack: true, keep: h.id });
+  }
+}
+/** 隠した箱の数 (札の ×n。前の箱 keep は数えない) */
+export const hiddenCount = (f: StripFold): number => f.mids.filter((id) => id !== f.keep).length;
 /**
  * (S-142j ②、スイッチ hitsSide) 畳む箱 = 行き先を指すだけで下に何も無い箱 (当たりの → 同じ中身の箱の続きへ・同じ枠へ・↩、完成でない・手も下も無い)。
  * 自分の下に続きを持つ当たりは畳まない (11-14 オーナー「これもたたむし」)

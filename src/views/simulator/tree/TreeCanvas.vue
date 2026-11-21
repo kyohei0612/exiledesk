@@ -22,7 +22,7 @@ import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { useTreeSurface, type PageCtx } from "./use-tree-surface";
 import { spotArc, spotCss, spotZoomRim, type SpotArc } from "./tree-spot-arc";
-import { downStack, drawnBackOf, foldCard } from "../../../services/simulator/tree/tree-strip-fold";
+import { downStack, drawnBackOf, foldCard, hiddenCount } from "../../../services/simulator/tree/tree-strip-fold";
 
 type Lane = { text: string };
 type ChipEdge = { chip?: unknown };
@@ -180,7 +180,7 @@ const backLinesOf =(id: string | null): Array<{ id: string; d: string }> => (id 
         <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
         <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :kind="f.kind" :fold="refoldAt(f)" @toggle="sf.toggle(f.head)" />
         <!-- (S-28h ④) 兄弟の枠を左の枠の後ろへ重ねた形と角の ×n -->
-        <TreeFoldStack v-for="f in rv.done.value ? stacks : []" :key="`stack-${f.head}`" :head="f.head" :keep="f.keep!" v-bind="posOf(doc.boxes[f.keep!]!)" :h="bodyH(f.keep!)" :n="downStack(f) ? f.mids.length - 1 : f.cols?.length ?? 1" :issues="sf.countsOf(f.head).issues" :inv="inv" :chip="downStack(f) ? chipOf(f.head) : null" :down="downStack(f)" @toggle="sf.toggle(f.head)" />
+        <TreeFoldStack v-for="f in rv.done.value ? stacks : []" :key="`stack-${f.head}`" :head="f.head" :keep="f.keep!" v-bind="posOf(doc.boxes[f.keep!]!)" :h="bodyH(f.keep!)" :n="downStack(f) ? hiddenCount(f) : f.cols?.length ?? 1" :issues="sf.countsOf(f.head).issues" :inv="inv" :chip="downStack(f) ? chipOf(f.head) : null" :down="downStack(f)" @toggle="sf.toggle(f.head)" />
         <TreeHandChip v-for="e in shownEdges.filter((x: ChipEdge) => x.chip)" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="chipInv" :off="hand" :room="chipRoom.get(e.id) ?? 340" :lane="e.lane" :links="flag('linkChipHover') && hoverChip === e.id ? e.links : 0" :backs="flag('linkChipHover') && hoverChip === e.id ? e.backs : 0" @mouseenter="hoverChip = e.id" @mouseleave="hoverChip = hoverChip === e.id ? null : hoverChip" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
         <!-- (linkChipHover) 照らしている間の行き先の箱の写し (読むだけ・押せない。箱の上の辺の真ん中を軸に大きく = 下へ伸びる) -->
         <div v-for="{ id, h, dy } in spotZoom?.items ?? []" :key="`spot-zoom-${id}`" data-tree-spot-zoom :data-spot-zoom-of="id" :data-spot-zoom-dy="Math.round(dy) || undefined" class="pointer-events-none absolute z-[6] rounded-xl"
