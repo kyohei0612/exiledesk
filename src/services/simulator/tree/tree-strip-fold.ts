@@ -29,8 +29,8 @@ export interface StripFold { head: string; mids: string[]; stops: string[]; step
   /** (S-28h ④) 兄弟の枠を左の枠 (keep) の後ろへ重ねる畳み: 札は描かず head も隠し、keep の後ろに重ねて角に ×n */ stack?: true; keep?: string }
 
 /**
- * (S-28i、スイッチ annulStack、開発版だけ・案) 消去とカオスの縦の続きも札をやめ、兄弟の畳み (S-28h ④) と同じ段々の重ねにする:
- * 一番上の箱 (head) を普通の箱で描き (keep = head)、残りの箱を隠して後ろにカードと手の札を重ね、角に ×n (n = 隠した箱の数)。開くと下へ滑る (use-fold-slide)
+ * (S-28i、スイッチ annulStack、開発版だけ・案) 消去の縦の続きも札をやめ、手の札 (消去のオーブ) を段々に重ねる (カオスは S-28h ② の札のまま):
+ * 一番上の箱 (head) を普通の箱で描き (keep = head)、残りの箱を隠して手の札の後ろに札を重ね、札の右上に ×n (n = 隠した箱の数)。開くと下へ滑る (use-fold-slide)
  */
 export const annulStackOn = (): boolean => flag("annulStack" as Flag);
 /** 札 (TreeStripFold) を描く畳みか (重ねる畳み・直に線・↩ の畳みは札を描かない) */

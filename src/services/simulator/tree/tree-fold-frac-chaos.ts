@@ -10,7 +10,7 @@ import { canSpam, effectOf } from "./tree-hands";
 import { subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { treeOrder } from "./tree-order";
 import { flowDepth } from "./tree-flow-once";
-import { annulStackOn, type StripFold } from "./tree-strip-fold";
+import type { StripFold } from "./tree-strip-fold";
 
 const isChaos = (b: TreeBox | undefined): boolean => !!b?.hand && canSpam(b.hand.currency) && !b.done;
 /** カオスの続きの中の箱 (当たりでない結果で、カオスの手が置かれた物) */
@@ -48,8 +48,7 @@ function chaosFolds(d: TreeDoc, out: Map<string, StripFold>): void {
         for (const o of b.outs) { const x = d.boxes[o]; if (!x) continue; if (next.has(o)) walk(x, n + 1); else stops.push(o); }
       };
       walk(c, 2);
-      if (annulStackOn() && mids.length < 2) continue; // (S-28i) 重ねでは前の箱 c だけなら隠す箱が無い (×0) ので畳まない
-      out.set(c.id, { head: c.id, mids, stops, steps, tucked: [], kind: "chaos", ...(annulStackOn() ? { stack: true as const, keep: c.id } : {}) }); // (S-28i) 消去と同じ縦の重ね
+      out.set(c.id, { head: c.id, mids, stops, steps, tucked: [], kind: "chaos" });
     }
   }
 }
