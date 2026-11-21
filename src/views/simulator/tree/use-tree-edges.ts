@@ -9,7 +9,7 @@ import { nudgeLines, segsOfPts } from "./tree-lines-nudge";
 import { gridRoute, sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
-import { backTargets, FOLD_H, foldCard, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { annulStackOn, backTargets, FOLD_H, foldCard, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
 
@@ -206,7 +206,9 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
    */
   const chipRoom = computed(() => {
     const out = new Map<string, number>();
-    const shown = edges.value.filter((e) => e.chip);
+    // (S-28i) 縦の重ねの中に隠した箱の札は描かないので隣に数えない (数えると開いた時に隣の列の消去の札が細く縦に潰れた、11-21 ブラック)
+    const hid = annulStackOn() ? fold.value.hidden : null;
+    const shown = edges.value.filter((e) => e.chip && !hid?.has(e.id));
     for (const e of shown) {
       const near = Math.min(...shown.filter((f) => f !== e && Math.abs(f.jy - e.jy) < CHIP_HALF * 2).map((f) => Math.abs(f.jx - e.jx)));
       out.set(e.id, Math.min(CHIP_MAX, near - 12));
