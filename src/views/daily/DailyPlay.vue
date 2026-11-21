@@ -20,7 +20,7 @@ import DailyEssNote from "./DailyEssNote.vue";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { StartFrom, TreeDoc } from "../../services/simulator/tree/tree-model";
 import { fillTopicDoc, setGoalQuality } from "./daily-aims";
-import { setEleTopic } from "./daily-ele";
+import { eleMissText, setEleTopic } from "./daily-ele";
 import { isGenesis } from "./daily-check";
 import { liveAct, liveDoc, liveStart, liveStop } from "./daily-live";
 import { DONE_BY_PRESS, doneOkOf, fourOnlyOn, metBoxes, markMet, missingAims, perBoxOn, qualityShort, setJudgeDay, topicPrice, unmetDone } from "./daily-cost";
@@ -197,7 +197,7 @@ function doneGate(d: TreeDoc): boolean {
       : tr(`完成形を満たさない「完成」の印を ${fresh.length} つ外しました。デイリーで完成にできるのは、完成形の MOD を全部持つ箱だけです。`, `Removed ${fresh.length} "finished" mark(s) that don't match the target item. In the daily challenge, only boxes with every target mod can be finished.`);
     t.edit((doc) => { for (const id of fresh) if (doc.boxes[id]) doc.boxes[id]!.done = null; });
   } else {
-    const miss = missingAims(data, d, fresh[0]!, x.aims).map((a) => `${t.aimShort({ modId: a.modId, tier: a.tier })} (${tierRankLabel(a.tier)})`);
+    const miss = missingAims(data, d, fresh[0]!, x.aims).map((a) => `${eleMissText(data, a, t.aimShort({ modId: a.modId, tier: a.tier }))} (${tierRankLabel(a.tier)})`);
     // 品質が足りない時も同じ 1 行に (D-03d)
     if (x.quality && qualityShort(data, d, fresh[0]!, x.quality)) miss.push(qualityWords(x.quality));
     doneNote.value = tr(`完成にできません。完成形に足りない MOD: ${miss.join("・")}`, `Can't mark this as finished. Missing from the target item: ${miss.join(", ")}`);

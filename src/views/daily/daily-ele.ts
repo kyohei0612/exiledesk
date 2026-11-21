@@ -8,7 +8,7 @@
  * 今のお題がどちらか (と、木を組む時のデータ) は挑戦の画面・16:00 の検算が setEleTopic で置く (daily-judge-day の setJudgeDay と同じ置き方)
  */
 import { anyEleIds, anyEleMod, type PatchData, type StageMod } from "../../services/craft-stage/engine";
-import { tidyGoals } from "../../services/simulator/tree/tree-ele-any";
+import { eleAnyText, tidyGoals } from "../../services/simulator/tree/tree-ele-any";
 import type { Aim } from "../../services/simulator/tree/tree-model";
 import { flag, type Flag } from "../../web/release-flags";
 
@@ -38,6 +38,12 @@ export function eleUnmet<A extends { modId: string; tier: number }>(data: PatchD
   }
   return aims.filter((a) => miss.includes(a));
 }
+
+/**
+ * 完成を押した時の訳 (D-35b ③) の狙いの名前: 「いずれか」で数える狙いは元素の語を「いずれかの元素耐性」に (完成形のカードと同じ字、番号は付けない。D-06c ⑥、スイッチ dailyEleReason)。
+ * text = 木の狙いの短い名前 (aimShort)。それ以外の狙い・スイッチが切れている間はそのまま
+ */
+export const eleMissText = (data: PatchData, a: { modId: string }, text: string): string => (flag("dailyEleReason" as Flag) && eleAim(data, a) ? eleAnyText(text) : text);
 
 /** お題の木の完成形の狙いを「いずれか」に (✦ と冒涜で付ける物は元素のまま)。今のお題が忍者産でない・データが無い時はそのまま */
 export function eleGoals(list: Aim[], data: PatchData | null | undefined = topicData): Aim[] {
