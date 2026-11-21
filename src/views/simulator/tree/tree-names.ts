@@ -16,7 +16,7 @@ import { isStripKey, namedGoneOf, stripKeyLabel } from "../../../services/simula
 import { lvLabel, lvPart, rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { swapGoneOf } from "../../../services/simulator/tree/tree-keep"; import { oddOf } from "../../../services/simulator/tree/tree-odd"; import { lowTierAimOf, lowTierModOf } from "../../../services/simulator/tree/tree-low-tier";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
-import { tr } from "../../../i18n/lang"; import { OUT_WORDS } from "../../../services/simulator/tree/tree-out-words"; import { flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
+import { tr } from "../../../i18n/lang"; import { OUT_WORDS } from "../../../services/simulator/tree/tree-out-words"; import { flag, type Flag } from "../../../web/release-flags"; import { isDivineAim } from "../../../services/simulator/tree/tree-divine";
 
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
@@ -145,6 +145,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
   // 完成形に無いエッセンスの MOD は外れなので、消えても MOD 名の題は作らない (S-33c、11-07。前の「<MOD> が消えた」は撤回)
   const bid = (b as { id?: string }).id, stoneGone = !!bid && !!s.data.value && stoneGoneAt(s.data.value, useTree().doc.value, bid); // 置き石が消えた (S-33h ②、スイッチ veilStoneAim)
+  // (S-31b、スイッチ catLabel、開発版だけ・案) カタリストの手の結果の箱は用語の表どおり「品質を上げた後」(前は狙い無しの手と同じ「打った後」)
+  if (flag("catLabel" as Flag) && b.out === "any" && !b.mergedOuts?.length && ph && isCatalyst(ph.currency)) return tr(OUT_WORDS.pass[0], OUT_WORDS.pass[1]);
   const base0 = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : stoneGone ? tr("置き石が消えた", "Placed mod removed") : junkSideHead(b, k) ?? outsName(b);
   // 木の手で付けたエッセンス / 合金の MOD が消えた枝 (鍵 n:、S-65b): MOD の名前は出さず「エッセンスの MOD が消えた」とだけ付ける (S-33c の MOD 名の題は作らないまま)
   // 合金で付けた MOD なら「合金の MOD が消えた」(11-11 オーナー「おけ」)。種類は親の見本にあってこの箱の見本に無いクラフト MOD をエンジンの craftedKindOf で

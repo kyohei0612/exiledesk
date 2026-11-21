@@ -22,7 +22,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { lvNote, lvPart } from "../../../services/simulator/tree/tree-whittle";
-import { effectOf } from "../../../services/simulator/tree/tree-hands";
+import { effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands"; import { flag, type Flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 import { subtree } from "../../../services/simulator/tree/tree-model";
 import { useArmed } from "../../../utils/use-armed";
@@ -130,6 +130,7 @@ const sit = computed((): [string, string] => {
     if (o === "lost") return [tr(`${n}で狙いが消えた場合`, `If ${n} removes a target`), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
     if (o === "junkGone") return [tr(`${n}で外れが消えた場合`, `If ${n} removes a miss`), q.boxTitle(props.boxId)];
     if (o === "hit") return [tr(`${n}で当たった場合`, `If ${n} hits`), q.boxTitle(props.boxId)];
+    if (o === "any" && flag("catLabel" as Flag) && isCatalyst(ph.currency)) return [tr(`${n}で品質を上げた後`, `Quality raised by ${n}`), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")]; // (S-31b、スイッチ catLabel、開発版だけ・案)
     if (o === "any") return [tr(`${n}を打った後`, `After ${n}`), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")];
     // 次のエッセンス / 合金と同じ系統の MOD が付いた (エッセンスを打つ前の分かれ、S-33e)
     if (o === "blocked") return [tr(`${n}で${sameModHead(props.boxId ? q.doc.value.boxes[props.boxId]?.parent ?? null : null)}が付いた場合`, `If ${n} adds the ${sameModHead(props.boxId ? q.doc.value.boxes[props.boxId]?.parent ?? null : null).replace(/^Same/, "same")}`), tr("次に打つエッセンス / 合金と同じ系統の MOD が付いた (そのままではエッセンス / 合金を打てない)", "A mod of the same group as the next essence / alloy was added (it can't be used as is)")];
