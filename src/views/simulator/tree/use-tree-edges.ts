@@ -9,7 +9,7 @@ import { nudgeLines, segsOfPts } from "./tree-lines-nudge";
 import { gridRoute, sideRoute } from "./tree-lines-grid";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
-import { annulStackOn, backTargets, FOLD_H, foldCard, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
+import { annulLinks, annulStackOn, backTargets, FOLD_H, foldCard, foldOuts, homeMoveOn, linkTargets, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 import { bandAway, bandGroup, bandHead, bandMidX, headBands } from "../../../services/simulator/tree/tree-band";
 import { lvPart, type LvClass } from "../../../services/simulator/tree/tree-whittle"; import { flag } from "../../../web/release-flags"; import { lvLook } from "./tree-whittle-marks";
 
@@ -48,9 +48,11 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
   /** (S-28h ③) 畳んだ同じ流れの列の頭 → 札。ほかの親の手の札からも札へ線を引く (並べ方では親の子にしない) */
   const sameTo = computed(() => new Map([...fold.value.folds.values()].flatMap((f) => (f.kind === "same" ? (f.cols ?? []).filter((c) => c !== f.head || f.stack).map((c) => [c, f.keep ?? f.head] as const) : [])))); // (④) 左の枠へ重ねた時は左の枠へ
+  /** (S-28i、スイッチ annulStack) 隣で別に消去を置いた箱の札 → 左の畳みの止まった箱 (普通の線) */
+  const annulTo = computed(() => annulLinks(doc.value, fold.value.folds));
   const outsOf = (b: TreeBox): string[] => {
     const o = foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
-    const add = sameTo.value.size && !fold.value.hidden.has(b.id) ? b.outs.flatMap((x) => sameTo.value.get(x) ?? []) : [];
+    const add = [...(sameTo.value.size && !fold.value.hidden.has(b.id) ? b.outs.flatMap((x) => sameTo.value.get(x) ?? []) : []), ...(annulTo.value.get(b.id) ?? [])];
     return add.length ? [...new Set([...o, ...add])] : o;
   };
   /** (S-142j ③、スイッチ hitsSide) 札も描かず直に線を引く畳み: 親 → 行き先の箱 (→ 同じ枠へ・→ 同じ中身の箱の続きへ) */

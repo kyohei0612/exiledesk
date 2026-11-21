@@ -1,7 +1,7 @@
 <!--
   TreeFoldStack.vue — 兄弟の枠を左の枠の後ろへ重ねた形 (S-28h ④、スイッチ foldFracChaos、11-20 オーナー「3B」)。
   左の枠 (keep) の後ろに重なったカード (畳んだ数に合わせて 2 枚まで) を描き、角に「×n」と中の足りない所の「!」。押すと引き戸で開く (use-fold-slide)。
-  (S-28i、スイッチ annulStack) 消去の縦の続き (down) は箱のカードを描かず、前の箱の手の札 (消去のオーブ、chip) の後ろに同じ段々で札を重ね、札の右上に「×n」。押すと下へ滑り出る
+  (S-28i 試し、スイッチ annulStack) 消去の続き (down) は箱も札も重ねず、人が置いた消去の箱 (keep) の手の札 1 枚の右上に「×n」(間に隠した箱の数)。押すと下へ滑り出る
   (11-21 オーナー「てっきりカレンシーに重なるもんだと手の札に」「消去手の札に✖️nだして設定枠までたたんだら」)。
   Vue Flow の倍率と移動が掛かる層 (zoom-pane) に置く。カードは箱の後ろ (z-index -1)、手の札の重ねは手の札の後ろ (4)、角の印は箱の前
 -->
@@ -20,7 +20,7 @@ const cards = (): number[] => [2, 1].filter((k) => k <= Math.min(2, p.n));
  */
 const tag = computed(() => {
   const c = p.down ? p.chip : null, m = Math.min(2, p.n);
-  if (c) return { left: c.x + (c.w * c.k) / 2 + STEP * m - 8 * p.inv, top: c.y - (c.h * c.k) / 2 - 18 * p.inv, corner: true };
+  if (c) return { left: c.x + (Math.max(c.w, 160) * c.k) / 2 + 2 * p.inv, top: c.y - (c.h * c.k) / 2 - 18 * p.inv, corner: true };
   return { left: p.x + BOX_W + STEP * (p.down ? 0 : m), top: p.y - 6, corner: false };
 });
 </script>
@@ -31,14 +31,10 @@ const tag = computed(() => {
     <div v-for="i in cards()" :key="i" data-tree-fold-stack-card :data-stack-of="keep" class="pointer-events-none absolute rounded-xl border-[1.5px] border-[#a88a5c] bg-[#1d1811]"
       :style="{ left: `${x + STEP * i}px`, top: `${y + STEP * i}px`, width: `${BOX_W}px`, height: `${h}px`, zIndex: -1, opacity: i === 1 ? 1 : 0.75, boxShadow: '0 4px 10px rgba(0,0,0,0.6)' }" />
   </template>
-  <!-- (S-28i) 手の札 (消去のオーブ) を段々に後ろへ重ねる -->
-  <template v-if="down && chip">
-    <div v-for="i in cards()" :key="`c${i}`" data-tree-fold-stack-chip :data-stack-of="keep" class="pointer-events-none absolute rounded-2xl border border-amber-400/60 bg-[#1a140d]"
-      :style="{ left: `${chip.x + STEP * i}px`, top: `${chip.y + STEP * i}px`, width: `${chip.w}px`, height: `${chip.h}px`, translate: '-50% -50%', scale: String(chip.k), zIndex: 4, opacity: i === 1 ? 1 : 0.75, boxShadow: '0 2px 8px rgba(0,0,0,0.6)' }" />
-  </template>
+  <!-- (S-28i 試し) 消去 (down) は手の札 1 枚に ×n だけ (札も箱も重ねない) -->
   <button type="button" data-tree-fold-stack :data-box-id="head" :data-stack-of="keep" :data-stack-down="down || undefined" class="nodrag nopan pointer-events-auto absolute z-[5] flex items-center gap-1 whitespace-nowrap rounded-full border-2 border-emerald-300/80 bg-[#0f1a16] px-2.5 text-[13px] font-bold leading-6 text-emerald-200 shadow-[0_2px_8px_rgba(0,0,0,0.6)] hover:bg-emerald-500/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-200"
     :style="{ left: `${tag.left}px`, top: `${tag.top}px`, translate: tag.corner ? '0 0' : '-50% 0', scale: String(inv), transformOrigin: tag.corner ? 'left top' : 'center top', zIndex: down ? 6 : undefined }"
-    :title="down ? tr(`続く消去 ${n} 回を重ねている。押すと下へ滑り出る`, `${n} more annuls are stacked here. Click to slide them down`) : tr(`同じ流れの兄弟の枠 ${n} つを重ねている。押すと右へ滑り出る`, `${n} sibling boxes with the same flow are stacked here. Click to slide them open`)" @click.stop="emit('toggle')">
+    :title="down ? tr(`止まるまでの間の箱 ${n} つを畳んでいる。押すと下へ滑り出る`, `${n} boxes before the stop are folded here. Click to slide them down`) : tr(`同じ流れの兄弟の枠 ${n} つを重ねている。押すと右へ滑り出る`, `${n} sibling boxes with the same flow are stacked here. Click to slide them open`)" @click.stop="emit('toggle')">
     ×{{ n }}<b v-if="issues" data-tree-strip-issues class="text-rose-400">! {{ issues }}</b>
   </button>
 </template>
