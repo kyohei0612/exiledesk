@@ -48,6 +48,7 @@ function chaosFolds(d: TreeDoc, out: Map<string, StripFold>): void {
         for (const o of b.outs) { const x = d.boxes[o]; if (!x) continue; if (next.has(o)) walk(x, n + 1); else stops.push(o); }
       };
       walk(c, 2);
+      if (annulStackOn() && mids.length < 2) continue; // (S-28i) 重ねでは前の箱 c だけなら隠す箱が無い (×0) ので畳まない
       out.set(c.id, { head: c.id, mids, stops, steps, tucked: [], kind: "chaos", ...(annulStackOn() ? { stack: true as const, keep: c.id } : {}) }); // (S-28i) 消去と同じ縦の重ね
     }
   }
